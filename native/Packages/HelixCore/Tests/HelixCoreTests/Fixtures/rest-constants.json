@@ -1,0 +1,16 @@
+{
+  "module": "training/restTargets",
+  "fn": "REST_STEP_SEC / REST_MIN_SEC / REST_MAX_SEC",
+  "note": "The 15 s grid and its bounds.",
+  "cases": [
+    {
+      "name": "the grid",
+      "input": {},
+      "expected": {
+        "step": 15,
+        "min": 15,
+        "max": 300
+      }
+    }
+  ]
+}

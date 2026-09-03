@@ -1,0 +1,327 @@
+{
+  "module": "training/restTargets",
+  "fn": "clampRestSec / formatRestTarget",
+  "note": "clamp: Math.round(sec / 15) × 15, then 15–300. format is of the CLAMPED value: \"45s\" under a minute, else m:ss.",
+  "cases": [
+    {
+      "name": "0",
+      "input": {
+        "sec": 0
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "1",
+      "input": {
+        "sec": 1
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "7",
+      "input": {
+        "sec": 7
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "7.5",
+      "input": {
+        "sec": 7.5
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "8",
+      "input": {
+        "sec": 8
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "14",
+      "input": {
+        "sec": 14
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "15",
+      "input": {
+        "sec": 15
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "22",
+      "input": {
+        "sec": 22
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "22.5",
+      "input": {
+        "sec": 22.5
+      },
+      "expected": {
+        "clamped": 30,
+        "formatted": "30s"
+      }
+    },
+    {
+      "name": "23",
+      "input": {
+        "sec": 23
+      },
+      "expected": {
+        "clamped": 30,
+        "formatted": "30s"
+      }
+    },
+    {
+      "name": "30",
+      "input": {
+        "sec": 30
+      },
+      "expected": {
+        "clamped": 30,
+        "formatted": "30s"
+      }
+    },
+    {
+      "name": "45",
+      "input": {
+        "sec": 45
+      },
+      "expected": {
+        "clamped": 45,
+        "formatted": "45s"
+      }
+    },
+    {
+      "name": "59",
+      "input": {
+        "sec": 59
+      },
+      "expected": {
+        "clamped": 60,
+        "formatted": "1:00"
+      }
+    },
+    {
+      "name": "60",
+      "input": {
+        "sec": 60
+      },
+      "expected": {
+        "clamped": 60,
+        "formatted": "1:00"
+      }
+    },
+    {
+      "name": "61",
+      "input": {
+        "sec": 61
+      },
+      "expected": {
+        "clamped": 60,
+        "formatted": "1:00"
+      }
+    },
+    {
+      "name": "90",
+      "input": {
+        "sec": 90
+      },
+      "expected": {
+        "clamped": 90,
+        "formatted": "1:30"
+      }
+    },
+    {
+      "name": "97",
+      "input": {
+        "sec": 97
+      },
+      "expected": {
+        "clamped": 90,
+        "formatted": "1:30"
+      }
+    },
+    {
+      "name": "98",
+      "input": {
+        "sec": 98
+      },
+      "expected": {
+        "clamped": 105,
+        "formatted": "1:45"
+      }
+    },
+    {
+      "name": "105",
+      "input": {
+        "sec": 105
+      },
+      "expected": {
+        "clamped": 105,
+        "formatted": "1:45"
+      }
+    },
+    {
+      "name": "119",
+      "input": {
+        "sec": 119
+      },
+      "expected": {
+        "clamped": 120,
+        "formatted": "2:00"
+      }
+    },
+    {
+      "name": "120",
+      "input": {
+        "sec": 120
+      },
+      "expected": {
+        "clamped": 120,
+        "formatted": "2:00"
+      }
+    },
+    {
+      "name": "135",
+      "input": {
+        "sec": 135
+      },
+      "expected": {
+        "clamped": 135,
+        "formatted": "2:15"
+      }
+    },
+    {
+      "name": "150",
+      "input": {
+        "sec": 150
+      },
+      "expected": {
+        "clamped": 150,
+        "formatted": "2:30"
+      }
+    },
+    {
+      "name": "180",
+      "input": {
+        "sec": 180
+      },
+      "expected": {
+        "clamped": 180,
+        "formatted": "3:00"
+      }
+    },
+    {
+      "name": "292",
+      "input": {
+        "sec": 292
+      },
+      "expected": {
+        "clamped": 285,
+        "formatted": "4:45"
+      }
+    },
+    {
+      "name": "293",
+      "input": {
+        "sec": 293
+      },
+      "expected": {
+        "clamped": 300,
+        "formatted": "5:00"
+      }
+    },
+    {
+      "name": "299",
+      "input": {
+        "sec": 299
+      },
+      "expected": {
+        "clamped": 300,
+        "formatted": "5:00"
+      }
+    },
+    {
+      "name": "300",
+      "input": {
+        "sec": 300
+      },
+      "expected": {
+        "clamped": 300,
+        "formatted": "5:00"
+      }
+    },
+    {
+      "name": "301",
+      "input": {
+        "sec": 301
+      },
+      "expected": {
+        "clamped": 300,
+        "formatted": "5:00"
+      }
+    },
+    {
+      "name": "4000",
+      "input": {
+        "sec": 4000
+      },
+      "expected": {
+        "clamped": 300,
+        "formatted": "5:00"
+      }
+    },
+    {
+      "name": "-30",
+      "input": {
+        "sec": -30
+      },
+      "expected": {
+        "clamped": 15,
+        "formatted": "15s"
+      }
+    },
+    {
+      "name": "62.4",
+      "input": {
+        "sec": 62.4
+      },
+      "expected": {
+        "clamped": 60,
+        "formatted": "1:00"
+      }
+    }
+  ]
+}

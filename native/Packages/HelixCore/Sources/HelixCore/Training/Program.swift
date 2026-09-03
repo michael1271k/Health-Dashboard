@@ -113,12 +113,10 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
     /// on `"-"` returns the whole string and the ceiling silently becomes the
     /// floor, which is how a double-progression ceiling stops being reachable.
     public var repWindow: (floor: Int, ceiling: Int)? {
-        let parts = reps.split(whereSeparator: { $0 == "\u{2013}" || $0 == "-" })
-        guard parts.count == 2,
-              let low = Int(parts[0].trimmingCharacters(in: .whitespaces)),
-              let high = Int(parts[1].trimmingCharacters(in: .whitespaces))
-        else { return nil }
-        return (low, high)
+        // One parser — `Ceilings.parseRepWindow` is the port of the web's, and
+        // the golden vectors hold it to every string in the deck.
+        guard let w = Ceilings.parseRepWindow(reps) else { return nil }
+        return (Int(w.floor), Int(w.ceiling))
     }
 }
 

@@ -1,0 +1,8981 @@
+{
+  "module": "training/ceilings + training/restTargets",
+  "fn": "repWindowFor / holdTargetFor / programRestSec",
+  "note": "Canonical, lower-cased, trimmed name match against the phase's deck. The day wins when known; with no day: the STRICTEST window (highest ceiling, its own floor), the LONGEST hold, the LONGEST rest. null off-program.",
+  "cases": [
+    {
+      "name": "Incline DB Press · no day · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · cb_a · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · legs_a · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · arms · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · cb_b · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · legs_b · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · bogus · cut",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Lat Pulldown · no day · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · cb_a · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · legs_a · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · arms · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · cb_b · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · legs_b · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · bogus · cut",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · no day · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · cb_a · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · legs_a · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · arms · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · cb_b · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · legs_b · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · bogus · cut",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · no day · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · cb_a · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · legs_a · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · arms · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · cb_b · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · legs_b · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · bogus · cut",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · no day · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · cb_a · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · legs_a · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · arms · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · cb_b · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · legs_b · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · bogus · cut",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · no day · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · cb_a · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · legs_a · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · arms · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · cb_b · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · legs_b · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · bogus · cut",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · no day · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · cb_a · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · legs_a · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · arms · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · cb_b · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · legs_b · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · bogus · cut",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Leg Press · no day · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · cb_a · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · legs_a · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · arms · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · cb_b · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · legs_b · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · bogus · cut",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · no day · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · cb_a · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · legs_a · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · arms · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · cb_b · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · legs_b · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · bogus · cut",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Extension · no day · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · cb_a · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · legs_a · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · arms · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · cb_b · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · legs_b · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · bogus · cut",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Leg Curl · no day · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · cb_a · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · legs_a · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · arms · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · cb_b · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · legs_b · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · bogus · cut",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · no day · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · cb_a · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · legs_a · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Calf Press · arms · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · cb_b · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · legs_b · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · bogus · cut",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Crunch Machine · no day · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · cb_a · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · legs_a · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · arms · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · cb_b · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · legs_b · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · bogus · cut",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse Crunch · no day · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · cb_a · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · legs_a · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · arms · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · cb_b · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · legs_b · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · bogus · cut",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "DB Shoulder Press · no day · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · cb_a · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · legs_a · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · arms · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · cb_b · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · legs_b · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · bogus · cut",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · no day · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · cb_a · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · legs_a · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · arms · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · cb_b · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · legs_b · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · bogus · cut",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · no day · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · cb_a · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · legs_a · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · arms · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · cb_b · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · legs_b · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · bogus · cut",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · no day · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · cb_a · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · legs_a · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · arms · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · cb_b · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · legs_b · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · bogus · cut",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "DB Hammer Curl · no day · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · cb_a · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · legs_a · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · arms · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · cb_b · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · legs_b · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · bogus · cut",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · no day · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · cb_a · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · legs_a · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · arms · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · cb_b · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · legs_b · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · bogus · cut",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · no day · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · cb_a · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · legs_a · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · arms · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · cb_b · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · legs_b · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · bogus · cut",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · no day · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · cb_a · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · legs_a · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · arms · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · cb_b · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · legs_b · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · bogus · cut",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · no day · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · cb_a · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · legs_a · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · arms · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · cb_b · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · legs_b · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · bogus · cut",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · no day · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · cb_a · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · legs_a · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · arms · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · cb_b · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · legs_b · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · bogus · cut",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · no day · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · cb_a · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · legs_a · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · arms · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · cb_b · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · legs_b · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · bogus · cut",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · no day · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · cb_a · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · legs_a · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · arms · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · cb_b · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · legs_b · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · bogus · cut",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · no day · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · cb_a · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · legs_a · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · arms · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · cb_b · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · legs_b · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · bogus · cut",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · no day · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · cb_a · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · legs_a · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · arms · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · cb_b · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · legs_b · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · bogus · cut",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · no day · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · cb_a · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · legs_a · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · arms · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · cb_b · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · legs_b · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · bogus · cut",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · no day · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · cb_a · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · legs_a · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · arms · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · cb_b · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · legs_b · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · bogus · cut",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · no day · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · cb_a · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · legs_a · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · arms · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · cb_b · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · legs_b · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · bogus · cut",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · no day · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · cb_a · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · legs_a · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · arms · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · cb_b · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · legs_b · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Hip Adduction · bogus · cut",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · no day · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · cb_a · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · legs_a · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · arms · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · cb_b · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · legs_b · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · bogus · cut",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "leg press horizontal · no day · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · cb_a · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · legs_a · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · arms · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · cb_b · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · legs_b · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · bogus · cut",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · no day · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · cb_a · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · legs_a · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · arms · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · cb_b · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · legs_b · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · bogus · cut",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": " Calf Press  · no day · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · cb_a · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · legs_a · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": " Calf Press  · arms · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · cb_b · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · legs_b · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · bogus · cut",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Zercher Squat · no day · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · cb_a · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · legs_a · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · arms · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · cb_b · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · legs_b · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · bogus · cut",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · no day · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · cb_a · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · legs_a · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · arms · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · cb_b · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · legs_b · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · bogus · cut",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · no day · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · cb_a · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · legs_a · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · arms · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · cb_b · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · legs_b · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · bogus · cut",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · no day · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · cb_a · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · legs_a · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · arms · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · cb_b · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · legs_b · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · bogus · cut",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "empty · no day · cut",
+      "input": {
+        "name": "",
+        "dayKey": null,
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · cb_a · cut",
+      "input": {
+        "name": "",
+        "dayKey": "cb_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · legs_a · cut",
+      "input": {
+        "name": "",
+        "dayKey": "legs_a",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · arms · cut",
+      "input": {
+        "name": "",
+        "dayKey": "arms",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · cb_b · cut",
+      "input": {
+        "name": "",
+        "dayKey": "cb_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · legs_b · cut",
+      "input": {
+        "name": "",
+        "dayKey": "legs_b",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · bogus · cut",
+      "input": {
+        "name": "",
+        "dayKey": "bogus",
+        "phase": "cut"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Incline DB Press · no day · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · cb_a · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · legs_a · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · arms · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · cb_b · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · legs_b · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Press · bogus · bulk",
+      "input": {
+        "name": "Incline DB Press",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Lat Pulldown · no day · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · cb_a · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · legs_a · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · arms · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · cb_b · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · legs_b · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Lat Pulldown · bogus · bulk",
+      "input": {
+        "name": "Lat Pulldown",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · no day · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · cb_a · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · legs_a · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · arms · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · cb_b · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · legs_b · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Chest Press (Machine) · bogus · bulk",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · no day · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · cb_a · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · legs_a · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · arms · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · cb_b · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · legs_b · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · bogus · bulk",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · no day · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · cb_a · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · legs_a · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · arms · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · cb_b · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · legs_b · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Pec Deck · bogus · bulk",
+      "input": {
+        "name": "Pec Deck",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · no day · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · cb_a · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · legs_a · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · arms · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · cb_b · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · legs_b · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown · bogus · bulk",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · no day · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · cb_a · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · legs_a · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · arms · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · cb_b · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · legs_b · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Face Pull · bogus · bulk",
+      "input": {
+        "name": "Face Pull",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Leg Press · no day · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · cb_a · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · legs_a · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · arms · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · cb_b · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · legs_b · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Press · bogus · bulk",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · no day · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · cb_a · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · legs_a · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · arms · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · cb_b · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · legs_b · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hack Squat · bogus · bulk",
+      "input": {
+        "name": "Hack Squat",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Leg Extension · no day · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · cb_a · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · legs_a · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · arms · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · cb_b · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · legs_b · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Leg Extension · bogus · bulk",
+      "input": {
+        "name": "Leg Extension",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Leg Curl · no day · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · cb_a · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · legs_a · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · arms · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · cb_b · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · legs_b · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Leg Curl · bogus · bulk",
+      "input": {
+        "name": "Seated Leg Curl",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · no day · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · cb_a · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · legs_a · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Calf Press · arms · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · cb_b · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · legs_b · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Calf Press · bogus · bulk",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Crunch Machine · no day · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · cb_a · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · legs_a · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · arms · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · cb_b · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · legs_b · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Crunch Machine · bogus · bulk",
+      "input": {
+        "name": "Crunch Machine",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse Crunch · no day · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · cb_a · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · legs_a · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · arms · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · cb_b · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · legs_b · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "Reverse Crunch · bogus · bulk",
+      "input": {
+        "name": "Reverse Crunch",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 75
+      }
+    },
+    {
+      "name": "DB Shoulder Press · no day · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · cb_a · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · legs_a · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · arms · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · cb_b · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · legs_b · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Shoulder Press · bogus · bulk",
+      "input": {
+        "name": "DB Shoulder Press",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 10
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · no day · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · cb_a · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · legs_a · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · arms · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · cb_b · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · legs_b · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · bogus · bulk",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · no day · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · cb_a · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · legs_a · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · arms · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · cb_b · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · legs_b · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl · bogus · bulk",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · no day · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · cb_a · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · legs_a · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · arms · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · cb_b · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · legs_b · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Overhead Extension · bogus · bulk",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "DB Hammer Curl · no day · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · cb_a · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · legs_a · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · arms · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · cb_b · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · legs_b · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "DB Hammer Curl · bogus · bulk",
+      "input": {
+        "name": "DB Hammer Curl",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · no day · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · cb_a · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · legs_a · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · arms · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · cb_b · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · legs_b · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown · bogus · bulk",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · no day · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · cb_a · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · legs_a · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · arms · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · cb_b · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · legs_b · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · bogus · bulk",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · no day · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · cb_a · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · legs_a · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · arms · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · cb_b · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · legs_b · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · bogus · bulk",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · no day · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · cb_a · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · legs_a · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · arms · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · cb_b · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · legs_b · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover · bogus · bulk",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · no day · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · cb_a · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · legs_a · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · arms · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · cb_b · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · legs_b · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · bogus · bulk",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · no day · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · cb_a · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · legs_a · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · arms · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · cb_b · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · legs_b · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine) · bogus · bulk",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · no day · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · cb_a · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · legs_a · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · arms · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · cb_b · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · legs_b · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · bogus · bulk",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · no day · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · cb_a · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · legs_a · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · arms · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · cb_b · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · legs_b · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · bogus · bulk",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · no day · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · cb_a · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · legs_a · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · arms · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · cb_b · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · legs_b · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine) · bogus · bulk",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · no day · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · cb_a · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · legs_a · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · arms · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · cb_b · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · legs_b · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hanging Knee Raise · bogus · bulk",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · no day · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · cb_a · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · legs_a · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · arms · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · cb_b · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · legs_b · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Side Plank · bogus · bulk",
+      "input": {
+        "name": "Side Plank",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": 55,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · no day · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · cb_a · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · legs_a · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · arms · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · cb_b · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · legs_b · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl · bogus · bulk",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · no day · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · cb_a · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · legs_a · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · arms · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · cb_b · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · legs_b · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Hip Adduction · bogus · bulk",
+      "input": {
+        "name": "Hip Adduction",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · no day · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · cb_a · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · legs_a · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · arms · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · cb_b · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 15,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · legs_b · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Cable Lateral Raise · bogus · bulk",
+      "input": {
+        "name": "Cable Lateral Raise",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 20
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "leg press horizontal · no day · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · cb_a · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · legs_a · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · arms · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · cb_b · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · legs_b · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "leg press horizontal · bogus · bulk",
+      "input": {
+        "name": "leg press horizontal",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 12,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · no day · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · cb_a · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · legs_a · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · arms · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · cb_b · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · legs_b · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": "HACK SQUAT · bogus · bulk",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 135
+      }
+    },
+    {
+      "name": " Calf Press  · no day · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · cb_a · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · legs_a · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 90
+      }
+    },
+    {
+      "name": " Calf Press  · arms · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · cb_b · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · legs_b · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": " Calf Press  · bogus · bulk",
+      "input": {
+        "name": " Calf Press ",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 15
+        },
+        "hold": null,
+        "restSec": 105
+      }
+    },
+    {
+      "name": "Zercher Squat · no day · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · cb_a · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · legs_a · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · arms · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · cb_b · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · legs_b · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Zercher Squat · bogus · bulk",
+      "input": {
+        "name": "Zercher Squat",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · no day · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · cb_a · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · legs_a · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · arms · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · cb_b · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · legs_b · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "Seated Cable Row · bogus · bulk",
+      "input": {
+        "name": "Seated Cable Row",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · no day · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · cb_a · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · legs_a · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · arms · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · cb_b · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · legs_b · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip · bogus · bulk",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 10,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · no day · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · cb_a · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · legs_a · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · arms · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · cb_b · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · legs_b · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "Incline DB Bench Press · bogus · bulk",
+      "input": {
+        "name": "Incline DB Bench Press",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": {
+          "floor": 8,
+          "ceiling": 12
+        },
+        "hold": null,
+        "restSec": 120
+      }
+    },
+    {
+      "name": "empty · no day · bulk",
+      "input": {
+        "name": "",
+        "dayKey": null,
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · cb_a · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "cb_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · legs_a · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "legs_a",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · arms · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "arms",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · cb_b · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "cb_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · legs_b · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "legs_b",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    },
+    {
+      "name": "empty · bogus · bulk",
+      "input": {
+        "name": "",
+        "dayKey": "bogus",
+        "phase": "bulk"
+      },
+      "expected": {
+        "window": null,
+        "hold": null,
+        "restSec": null
+      }
+    }
+  ]
+}

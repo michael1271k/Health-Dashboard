@@ -1,0 +1,8563 @@
+{
+  "module": "training/ceilings",
+  "fn": "progressionVerdict",
+  "note": "Newest LAST. Both of the last two cleared (topLoadCleared) → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no.",
+  "cases": [
+    {
+      "name": "clean65 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single alone @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty alone @12",
+      "input": {
+        "sessions": [
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty alone @15",
+      "input": {
+        "sessions": [
+          []
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean65 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean65 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean65 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "clean65 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "clean65 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "clean65 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "dirty65 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "dirty65 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "dirty65 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "dirty65 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "dirty65 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "dirty65 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "dirty65 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "reported then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "reported then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "reported then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "reported then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "reported then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "reported then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bumped then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean20 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean20 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean20 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "clean20 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "clean20 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "clean20 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean20 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean18 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean18 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean18 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "clean18 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "clean18 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "clean18 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean18 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "mixed then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "oneGood then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fade then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "drop then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean35 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean35 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "clean35 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "clean35 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "clean35 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "clean35 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean35 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "bw16 then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "bw16 then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "bw16 then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "bw16 then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 20.5
+      }
+    },
+    {
+      "name": "bw16 then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 37.5
+      }
+    },
+    {
+      "name": "bw16 then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bw16 then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bwShort then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then clean65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then dirty65 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then reported @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then bumped @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then clean20 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then clean18 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then mixed @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then oneGood @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then fade @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then drop @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then clean35 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then bw16 @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then bwShort @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then single @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "single then empty @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then clean65 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then dirty65 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then reported @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then bumped @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then clean20 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then clean18 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then mixed @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 18,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then oneGood @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then fade @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then drop @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 30,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then clean35 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then bw16 @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then bwShort @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 9
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then single @12",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then empty @12",
+      "input": {
+        "sessions": [
+          [],
+          []
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 twice @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "dirty65 then clean65 @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "reported twice @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 14
+            },
+            {
+              "weightKg": 65,
+              "reps": 13
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "clean65 then bumped @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 67.5,
+              "reps": 12
+            },
+            {
+              "weightKg": 67.5,
+              "reps": 11
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "unprogrammed",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15
+            },
+            {
+              "weightKg": 65,
+              "reps": 15
+            }
+          ]
+        ],
+        "ceiling": null
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": null,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "no sessions",
+      "input": {
+        "sessions": [],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "three sessions — only the last two count",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 12,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "three sessions, last two clean",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            }
+          ]
+        ],
+        "ceiling": 12
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 12,
+        "suggestKg": 22.5
+      }
+    },
+    {
+      "name": "bodyweight ready suggests no load",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "fractional top load rounds to one decimal",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 5.25,
+              "reps": 20
+            },
+            {
+              "weightKg": 5.25,
+              "reps": 20
+            }
+          ],
+          [
+            {
+              "weightKg": 5.25,
+              "reps": 20
+            },
+            {
+              "weightKg": 5.25,
+              "reps": 20
+            }
+          ]
+        ],
+        "ceiling": 20
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 20,
+        "suggestKg": 7.8
+      }
+    }
+  ]
+}

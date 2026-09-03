@@ -1,0 +1,213 @@
+{
+  "module": "training/ceilings",
+  "fn": "parseRepWindow",
+  "note": "Trailing s (any case) is a timed hold → null; else first and last digit runs are floor and ceiling; ceiling < floor → null; no digits → null.",
+  "cases": [
+    {
+      "name": "\"10–15\"",
+      "input": {
+        "reps": "10–15"
+      },
+      "expected": {
+        "floor": 10,
+        "ceiling": 15
+      }
+    },
+    {
+      "name": "\"8-12\"",
+      "input": {
+        "reps": "8-12"
+      },
+      "expected": {
+        "floor": 8,
+        "ceiling": 12
+      }
+    },
+    {
+      "name": "\"12–20\"",
+      "input": {
+        "reps": "12–20"
+      },
+      "expected": {
+        "floor": 12,
+        "ceiling": 20
+      }
+    },
+    {
+      "name": "\"10\"",
+      "input": {
+        "reps": "10"
+      },
+      "expected": {
+        "floor": 10,
+        "ceiling": 10
+      }
+    },
+    {
+      "name": "\"55s\"",
+      "input": {
+        "reps": "55s"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"55 s\"",
+      "input": {
+        "reps": "55 s"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"45S\"",
+      "input": {
+        "reps": "45S"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"AMRAP\"",
+      "input": {
+        "reps": "AMRAP"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "reps": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "\" 8 – 12 \"",
+      "input": {
+        "reps": " 8 – 12 "
+      },
+      "expected": {
+        "floor": 8,
+        "ceiling": 12
+      }
+    },
+    {
+      "name": "\"12–8\"",
+      "input": {
+        "reps": "12–8"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"8–12 reps\"",
+      "input": {
+        "reps": "8–12 reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"3x10\"",
+      "input": {
+        "reps": "3x10"
+      },
+      "expected": {
+        "floor": 3,
+        "ceiling": 10
+      }
+    },
+    {
+      "name": "\"10-12-15\"",
+      "input": {
+        "reps": "10-12-15"
+      },
+      "expected": {
+        "floor": 10,
+        "ceiling": 15
+      }
+    },
+    {
+      "name": "\"0–0\"",
+      "input": {
+        "reps": "0–0"
+      },
+      "expected": {
+        "floor": 0,
+        "ceiling": 0
+      }
+    },
+    {
+      "name": "\"15–20\"",
+      "input": {
+        "reps": "15–20"
+      },
+      "expected": {
+        "floor": 15,
+        "ceiling": 20
+      }
+    },
+    {
+      "name": "\"8–10\"",
+      "input": {
+        "reps": "8–10"
+      },
+      "expected": {
+        "floor": 8,
+        "ceiling": 10
+      }
+    },
+    {
+      "name": "\"12–15\"",
+      "input": {
+        "reps": "12–15"
+      },
+      "expected": {
+        "floor": 12,
+        "ceiling": 15
+      }
+    },
+    {
+      "name": "\"10–12\"",
+      "input": {
+        "reps": "10–12"
+      },
+      "expected": {
+        "floor": 10,
+        "ceiling": 12
+      }
+    },
+    {
+      "name": "\"8–15\"",
+      "input": {
+        "reps": "8–15"
+      },
+      "expected": {
+        "floor": 8,
+        "ceiling": 15
+      }
+    },
+    {
+      "name": "\"hold 30s\"",
+      "input": {
+        "reps": "hold 30s"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"30s hold\"",
+      "input": {
+        "reps": "30s hold"
+      },
+      "expected": {
+        "floor": 30,
+        "ceiling": 30
+      }
+    },
+    {
+      "name": "\"5\"",
+      "input": {
+        "reps": "5"
+      },
+      "expected": {
+        "floor": 5,
+        "ceiling": 5
+      }
+    }
+  ]
+}

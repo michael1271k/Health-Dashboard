@@ -1,0 +1,849 @@
+{
+  "module": "training/ceilings",
+  "fn": "timedProgressionVerdict",
+  "note": "reps carry SECONDS. A session clears when every set met the target; two consecutive → ready, never a kg suggestion; ceiling echoes the target.",
+  "cases": [
+    {
+      "name": "cleared then cleared",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "cleared then short",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "cleared then exact",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "cleared then one",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "cleared then empty",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short then cleared",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short then short",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short then exact",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short then one",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short then empty",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact then cleared",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact then short",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact then exact",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact then one",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact then empty",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ],
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one then cleared",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one then short",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one then exact",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one then one",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one then empty",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ],
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then cleared",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then short",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then exact",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then one",
+      "input": {
+        "sessions": [
+          [],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty then empty",
+      "input": {
+        "sessions": [
+          [],
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "cleared alone",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "short alone",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 40
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "exact alone",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 55
+            },
+            {
+              "weightKg": 0,
+              "reps": 55
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "one alone",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "empty alone",
+      "input": {
+        "sessions": [
+          []
+        ],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "no target",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ]
+        ],
+        "ceiling": null
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": null,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "no sessions",
+      "input": {
+        "sessions": [],
+        "ceiling": 55
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 55,
+        "suggestKg": null
+      }
+    }
+  ]
+}

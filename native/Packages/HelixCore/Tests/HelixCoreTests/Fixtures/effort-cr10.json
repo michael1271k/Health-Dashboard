@@ -1,0 +1,77 @@
+{
+  "module": "training/effort",
+  "fn": "effortCr10",
+  "note": "The stored number for a word key; null for anything else.",
+  "cases": [
+    {
+      "name": "easy",
+      "input": {
+        "key": "easy"
+      },
+      "expected": 5
+    },
+    {
+      "name": "solid",
+      "input": {
+        "key": "solid"
+      },
+      "expected": 6.5
+    },
+    {
+      "name": "hard",
+      "input": {
+        "key": "hard"
+      },
+      "expected": 8
+    },
+    {
+      "name": "brutal",
+      "input": {
+        "key": "brutal"
+      },
+      "expected": 9
+    },
+    {
+      "name": "everything",
+      "input": {
+        "key": "everything"
+      },
+      "expected": 10
+    },
+    {
+      "name": "nonsense",
+      "input": {
+        "key": "nonsense"
+      },
+      "expected": null
+    },
+    {
+      "name": "empty",
+      "input": {
+        "key": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "null",
+      "input": {
+        "key": null
+      },
+      "expected": null
+    },
+    {
+      "name": "Hard",
+      "input": {
+        "key": "Hard"
+      },
+      "expected": null
+    },
+    {
+      "name": "HARD",
+      "input": {
+        "key": "HARD"
+      },
+      "expected": null
+    }
+  ]
+}

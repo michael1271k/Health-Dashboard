@@ -49,6 +49,22 @@ import {
 } from '@/lib/nutrition/context'
 import { BUILTIN_PROFILES, profileByKey, profileToDailyTarget, matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
 import { tracksCarbs, tracksFat, hasDailyTarget, applyDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
+import { activeProgram, type ProgramPhase } from '@/lib/programs'
+import {
+  parseRepWindow, repWindowFor, holdTargetFor, clearedCeiling, loadLadder, workLoads, ladderVerdict,
+  topLoadCleared, levelUpCue, progressionVerdict, timedProgressionVerdict,
+  type WorkingSet, type RepWindow, type ProgressionVerdict,
+} from '@/lib/training/ceilings'
+import {
+  CR10_MIN, CR10_MAX, CR10_ANCHORS, cr10Label, normalizeCr10, RPE_LADDER, rpeStopIndex, rpeLabel, nudgeRpe,
+  EFFORT_WORDS, effortCr10, effortWordFor, EFFORT_COLD_BASELINE, EFFORT_MIN_HISTORY, suggestEffortWord, type EffortWord,
+} from '@/lib/training/effort'
+import {
+  SET_TAGS, isWorkingSet, setTagFor, setComposition, SET_QUALITY, SET_QUALITY_KEYS, setQualityFor, isSetQuality,
+} from '@/lib/training/setTags'
+import {
+  REST_STEP_SEC, REST_MIN_SEC, REST_MAX_SEC, clampRestSec, programRestSec, restTargetKey, sessionRestKey, formatRestTarget,
+} from '@/lib/training/restTargets'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -2707,6 +2723,373 @@ describe('golden vectors — daily targets and profiles', () => {
       fn: 'matchesProfile',
       note: 'Compared on the four food figures and both tracking flags (absent = tracked); steps excluded; the stamp is NOT consulted.',
       cases: matches,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Training — ceilings, effort, set tags and the pure half of rest targets
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The Helix-5 deck as each phase trains it — the ONLY program the Swift carries. */
+const HELIX5_ID = 'apex51'
+
+/** Run `fn` with the active phase pinned, then restore the default. */
+function withPhase<T>(phase: ProgramPhase, fn: () => T): T {
+  window.localStorage.setItem('helix_active_phase', phase)
+  try { return fn() } finally { window.localStorage.removeItem('helix_active_phase') }
+}
+
+describe('golden vectors — program deck', () => {
+  it('exports the Helix-5 deck per phase', () => {
+    const cases: Case<{ phase: ProgramPhase }, unknown>[] = []
+    for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
+      const p = activeProgram(HELIX5_ID, phase)
+      cases.push({
+        name: phase,
+        input: { phase },
+        expected: {
+          id: p.id,
+          days: p.days.map((d) => ({
+            key: d.key, label: d.label, weekday: d.weekday,
+            exercises: d.exercises.map((e) => ({ name: e.name, sets: e.sets, reps: e.reps, restSec: e.restSec ?? null, wk1Kg: e.wk1Kg })),
+          })),
+        },
+      })
+    }
+    emit('program-helix5.json', {
+      module: 'programs',
+      fn: 'activeProgram(apex51, phase)',
+      note: 'The deck as the phase trains it: cutSets resolved into sets and lifts at 0 dropped. Names, windows, rest and seed loads must equal the Swift Program.helix5.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — ceilings', () => {
+  const S = (weightKg: number, reps: number): WorkingSet => ({ weightKg, reps })
+
+  it('exports the rep-window parser and the program lookups', () => {
+    const strings = [
+      '10–15', '8-12', '12–20', '10', '55s', '55 s', '45S', 'AMRAP', '', ' 8 – 12 ', '12–8', '8–12 reps', '3x10', '10-12-15', '0–0', '15–20',
+      '8–10', '12–15', '10–12', '8–15', 'hold 30s', '30s hold', '5',
+    ]
+    emit('rep-window.json', {
+      module: 'training/ceilings',
+      fn: 'parseRepWindow',
+      note: 'Trailing s (any case) is a timed hold → null; else first and last digit runs are floor and ceiling; ceiling < floor → null; no digits → null.',
+      cases: strings.map((reps) => ({ name: JSON.stringify(reps), input: { reps }, expected: parseRepWindow(reps) })),
+    })
+
+    interface LookupIn { name: string; dayKey: string | null; phase: ProgramPhase }
+    interface LookupOut { window: RepWindow | null; hold: number | null; restSec: number | null }
+    const names = new Set<string>()
+    for (const phase of ['cut', 'bulk'] as ProgramPhase[]) for (const d of activeProgram(HELIX5_ID, phase).days) for (const e of d.exercises) names.add(e.name)
+    const extra = ['Cable Lateral Raise', 'leg press horizontal', 'HACK SQUAT', ' Calf Press ', 'Zercher Squat', 'Seated Cable Row', 'seated cable row - bar wide grip', 'Incline DB Bench Press', '']
+    const dayKeys: Array<string | null> = [null, 'cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b', 'bogus']
+    const lookups: Case<LookupIn, LookupOut>[] = []
+    for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
+      withPhase(phase, () => {
+        for (const name of [...names, ...extra]) for (const dayKey of dayKeys) {
+          lookups.push({
+            name: `${name || 'empty'} · ${dayKey ?? 'no day'} · ${phase}`,
+            input: { name, dayKey, phase },
+            expected: {
+              window: repWindowFor(name, dayKey, HELIX5_ID),
+              hold: holdTargetFor(name, dayKey, HELIX5_ID),
+              restSec: programRestSec(name, dayKey, HELIX5_ID),
+            },
+          })
+        }
+      })
+    }
+    emit('program-lookups.json', {
+      module: 'training/ceilings + training/restTargets',
+      fn: 'repWindowFor / holdTargetFor / programRestSec',
+      note: 'Canonical, lower-cased, trimmed name match against the phase\'s deck. The day wins when known; with no day: the STRICTEST window (highest ceiling, its own floor), the LONGEST hold, the LONGEST rest. null off-program.',
+      cases: lookups,
+    })
+  })
+
+  it('exports every verdict over one session', () => {
+    interface SessIn { sets: WorkingSet[]; ceiling: number; floor: number }
+    interface SessOut {
+      working: WorkingSet[]
+      cleared: boolean
+      ladder: ReturnType<typeof loadLadder>
+      verdict: ReturnType<typeof ladderVerdict>
+      topLoadCleared: boolean
+      levelUp: ReturnType<typeof levelUpCue>
+    }
+    const run = (i: SessIn): SessOut => ({
+      working: workLoads(i.sets),
+      cleared: clearedCeiling(i.sets, i.ceiling),
+      ladder: loadLadder(i.sets, i.ceiling),
+      verdict: ladderVerdict(i.sets, i.ceiling),
+      topLoadCleared: topLoadCleared(i.sets, i.ceiling),
+      levelUp: levelUpCue(i.sets, { floor: i.floor, ceiling: i.ceiling }),
+    })
+    const cases: Case<SessIn, SessOut>[] = []
+    const push = (name: string, sets: WorkingSet[], ceiling = 12, floor = 8) => {
+      const input = { sets, ceiling, floor }
+      cases.push({ name, input, expected: run(input) })
+    }
+
+    push('empty', [])
+    push('the reported 15/14/13 Calf Press', [S(65, 15), S(65, 14), S(65, 13)], 15, 10)
+    push('every set at the ceiling on one load', [S(65, 15), S(65, 16), S(65, 15)], 15, 10)
+    push('ceiling reached by dropping the load', [S(65, 15), S(55, 15)], 15, 10)
+    push('bodyweight single set at 20', [S(0, 20)])
+    push('heavy first — 20×12 then 18×10 (blocked, 2 owed)', [S(20, 12), S(18, 10)])
+    push('light first — 18×10 then 20×12 (same verdict)', [S(18, 10), S(20, 12)])
+    push('18×12 then 20×8 — collapse-ready', [S(18, 12), S(20, 8)])
+    push('ceiling reps at both loads is still not one load', [S(20, 12), S(18, 12)])
+    push('two clean sets at 20', [S(20, 12), S(20, 12)])
+    push('20×12, 20×11 — incomplete', [S(20, 12), S(20, 11)])
+    push('three-load ladder binding on 18', [S(22.5, 12), S(20, 12), S(18, 9)])
+    push('all-bodyweight is one rung at 0', [S(0, 20)])
+    push('an unfilled 0 kg row beside real work is dropped', [S(0, 5), S(20, 12)])
+    push('worst set at the binding load decides the reps owed', [S(18, 12), S(18, 8), S(20, 12)])
+    push('loadLadder groups lightest first', [S(20, 12), S(18, 12), S(20, 10)])
+    push('level-up: two at 20 cleared, one at 18 cleared', [S(20, 12), S(20, 12), S(18, 12)])
+    push('level-up is order-independent', [S(18, 12), S(20, 12), S(20, 12)])
+    push('level-up silent while the top load is earned', [S(18, 12), S(20, 9)])
+    push('one lone top set is not a capability', [S(18, 12), S(20, 12)])
+    push('bodyweight clears on reps', [S(0, 30), S(0, 30)])
+    push('bodyweight, one set', [S(0, 30)])
+    push('bodyweight, one short', [S(0, 30), S(0, 9)])
+    push('35, 35, 30 all at 12 — no clear, but a cue', [S(35, 12), S(35, 12), S(30, 12)])
+    push('two at ceiling then a fade at the same load', [S(20, 12), S(20, 12), S(20, 8)])
+    push('the real Leg Press Jul 20', [S(72.5, 12), S(72.5, 12), S(72.5, 11)])
+    push('the real Leg Press Jul 27', [S(72.5, 13), S(72.5, 12), S(72.5, 12)])
+    push('fractional loads and a 0.25 microload rung', [S(5, 20), S(5.25, 20), S(5.25, 18)], 20, 12)
+    push('negative reps do not crash the min', [S(20, -1), S(20, 12)])
+
+    // Grid: every session of one and two sets over a 3×3 (load, reps) pool,
+    // plus every three-set session opening with a clean 20×12.
+    const pool: WorkingSet[] = []
+    for (const w of [0, 18, 20]) for (const r of [8, 10, 12]) pool.push(S(w, r))
+    const tag = (s: WorkingSet) => `${s.weightKg}×${s.reps}`
+    for (const a of pool) push(`grid ${tag(a)}`, [a])
+    for (const a of pool) for (const b of pool) push(`grid ${tag(a)}, ${tag(b)}`, [a, b])
+    for (const b of pool) for (const c of pool) push(`grid 20×12, ${tag(b)}, ${tag(c)}`, [S(20, 12), b, c])
+
+    emit('ceiling-session.json', {
+      module: 'training/ceilings',
+      fn: 'workLoads / clearedCeiling / loadLadder / ladderVerdict / topLoadCleared / levelUpCue',
+      note: 'One session, every verdict. workLoads drops 0 kg rows only when some set carried load. The binding rung is the LOWEST load; topLoadCleared needs ONE load, ≥ 2 sets, all at the ceiling; levelUpCue needs ≥ 2 loads (>0 kg only) and the top rung cleared with ≥ 2 sets.',
+      cases,
+    })
+  })
+
+  it('exports the two-session progression verdicts', () => {
+    interface ProgIn { sessions: WorkingSet[][]; ceiling: number | null }
+    const sessions: Array<[string, WorkingSet[]]> = [
+      ['clean65', [S(65, 15), S(65, 15)]],
+      ['dirty65', [S(65, 15), S(65, 13)]],
+      ['reported', [S(65, 15), S(65, 14), S(65, 13)]],
+      ['bumped', [S(67.5, 12), S(67.5, 11)]],
+      ['clean20', [S(20, 12), S(20, 12)]],
+      ['clean18', [S(18, 12), S(18, 12)]],
+      ['mixed', [S(18, 12), S(20, 9)]],
+      ['oneGood', [S(20, 12), S(20, 9)]],
+      ['fade', [S(20, 12), S(20, 12), S(20, 8)]],
+      ['drop', [S(35, 12), S(35, 12), S(30, 12)]],
+      ['clean35', [S(35, 12), S(35, 12), S(35, 12)]],
+      ['bw16', [S(0, 16), S(0, 16)]],
+      ['bwShort', [S(0, 16), S(0, 9)]],
+      ['single', [S(20, 12)]],
+      ['empty', []],
+    ]
+    const cases: Case<ProgIn, ProgressionVerdict>[] = []
+    const push = (name: string, sess: WorkingSet[][], ceiling: number | null) =>
+      cases.push({ name, input: { sessions: sess, ceiling }, expected: progressionVerdict(sess, ceiling) })
+    for (const [na, a] of sessions) for (const ceiling of [12, 15]) push(`${na} alone @${ceiling}`, [a], ceiling)
+    for (const [na, a] of sessions) for (const [nb, b] of sessions) push(`${na} then ${nb} @12`, [a, b], 12)
+    push('clean65 twice @15', [sessions[0][1], sessions[0][1]], 15)
+    push('dirty65 then clean65 @15', [sessions[1][1], sessions[0][1]], 15)
+    push('reported twice @15', [sessions[2][1], sessions[2][1]], 15)
+    push('clean65 then bumped @15', [sessions[0][1], sessions[3][1]], 15)
+    push('unprogrammed', [sessions[0][1], sessions[0][1]], null)
+    push('no sessions', [], 12)
+    push('three sessions — only the last two count', [sessions[4][1], sessions[8][1], sessions[4][1]], 12)
+    push('three sessions, last two clean', [sessions[8][1], sessions[4][1], sessions[4][1]], 12)
+    push('bodyweight ready suggests no load', [sessions[11][1], sessions[11][1]], 15)
+    push('fractional top load rounds to one decimal', [[S(5.25, 20), S(5.25, 20)], [S(5.25, 20), S(5.25, 20)]], 20)
+    emit('progression-verdict.json', {
+      module: 'training/ceilings',
+      fn: 'progressionVerdict',
+      note: 'Newest LAST. Both of the last two cleared (topLoadCleared) → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no.',
+      cases,
+    })
+
+    const holds: Array<[string, WorkingSet[]]> = [
+      ['cleared', [S(0, 60), S(0, 58)]], ['short', [S(0, 40), S(0, 55)]], ['exact', [S(0, 55), S(0, 55)]], ['one', [S(0, 60)]], ['empty', []],
+    ]
+    const timed: Case<ProgIn, ProgressionVerdict>[] = []
+    for (const [na, a] of holds) for (const [nb, b] of holds) {
+      timed.push({ name: `${na} then ${nb}`, input: { sessions: [a, b], ceiling: 55 }, expected: timedProgressionVerdict([a, b], 55) })
+    }
+    for (const [na, a] of holds) timed.push({ name: `${na} alone`, input: { sessions: [a], ceiling: 55 }, expected: timedProgressionVerdict([a], 55) })
+    timed.push({ name: 'no target', input: { sessions: [holds[0][1], holds[0][1]], ceiling: null }, expected: timedProgressionVerdict([holds[0][1], holds[0][1]], null) })
+    timed.push({ name: 'no sessions', input: { sessions: [], ceiling: 55 }, expected: timedProgressionVerdict([], 55) })
+    emit('timed-progression-verdict.json', {
+      module: 'training/ceilings',
+      fn: 'timedProgressionVerdict',
+      note: 'reps carry SECONDS. A session clears when every set met the target; two consecutive → ready, never a kg suggestion; ceiling echoes the target.',
+      cases: timed,
+    })
+  })
+})
+
+describe('golden vectors — effort', () => {
+  it('exports the CR10 scale, the per-set ladder and the session words', () => {
+    emit('effort-tables.json', {
+      module: 'training/effort',
+      fn: 'CR10_ANCHORS / RPE_LADDER / EFFORT_WORDS / constants',
+      note: 'Data. Colours are not exported — a hex is a HelixUI token.',
+      cases: [{
+        name: 'the tables',
+        input: {},
+        expected: {
+          cr10Min: CR10_MIN, cr10Max: CR10_MAX,
+          anchors: Object.entries(CR10_ANCHORS).map(([k, v]) => ({ value: Number(k), label: v })),
+          ladder: RPE_LADDER, words: EFFORT_WORDS,
+          coldBaseline: EFFORT_COLD_BASELINE, minHistory: EFFORT_MIN_HISTORY,
+        },
+      }],
+    })
+
+    const values: Array<number | null> = [null, 0, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 9.75, 10, 10.5, 11, -1, 0.25, 7.25, 7.75, 8.24, 8.26, 100]
+    emit('cr10.json', {
+      module: 'training/effort',
+      fn: 'cr10Label / normalizeCr10 / rpeStopIndex / rpeLabel / nudgeRpe / effortWordFor',
+      note: 'Per value: the nearest anchor at or below; snapped to the 0.5 grid and clamped 1–10 (null stays null); the lit ladder pip or -1; ladder label else CR10 anchor; ±0.5 nudges; the nearest session word (ties keep the lower).',
+      cases: values.map((v) => ({
+        name: v === null ? 'null' : String(v),
+        input: { v },
+        expected: {
+          label: cr10Label(v), normalized: normalizeCr10(v), stopIndex: rpeStopIndex(v), rpeLabel: rpeLabel(v),
+          up: nudgeRpe(v, 1), down: nudgeRpe(v, -1), word: effortWordFor(v),
+        },
+      })),
+    })
+
+    const keys: Array<string | null> = [...EFFORT_WORDS.map((w) => w.key), 'nonsense', '', null, 'Hard', 'HARD']
+    emit('effort-cr10.json', {
+      module: 'training/effort',
+      fn: 'effortCr10',
+      note: 'The stored number for a word key; null for anything else.',
+      cases: keys.map((key) => ({ name: key === null ? 'null' : key || 'empty', input: { key }, expected: effortCr10(key) })),
+    })
+
+    interface SuggestIn { mean: number | null; history: number[] }
+    const suggest: Case<SuggestIn, EffortWord | null>[] = []
+    const push = (name: string, mean: number | null, history: number[]) =>
+      suggest.push({ name, input: { mean, history }, expected: suggestEffortWord(mean, history) })
+    push('typical session against its own shape', 8.875, [8.8, 8.9, 8.8, 9])
+    push('cold baseline itself, no history', EFFORT_COLD_BASELINE, [])
+    for (const b of [7, 8, 8.5, 8.8, 9, 9.5]) push(`matches its own baseline ${b}`, b, [b, b, b])
+    push('+0.5 is Brutal', 9, [8.5, 8.5, 8.5])
+    push('+1.1 is Everything', 9.6, [8.5, 8.5, 8.5])
+    push('−0.5 is Solid', 8.3, [8.8, 8.8, 8.8])
+    push('−1.0 is Easy', 7.8, [8.8, 8.8, 8.8])
+    push('median ignores one savage session', 8.8, [8.8, 8.8, 8.8, 10])
+    push('two sessions are not a baseline', 8.8, [5, 5])
+    push('null mean', null, [8.8, 8.8, 8.8])
+    push('even-length history takes the midpoint', 8.5, [8, 9, 8, 9])
+    push('unsorted history', 9.25, [9, 8, 10, 8.5, 8.5])
+    for (const delta of [-1, -0.75, -0.74, -0.5, -0.25, -0.24, 0, 0.24, 0.25, 0.5, 0.74, 0.75, 1]) {
+      push(`delta ${delta} off an 8.5 baseline`, 8.5 + delta, [8.5, 8.5, 8.5])
+      push(`delta ${delta} off the cold baseline`, EFFORT_COLD_BASELINE + delta, [])
+    }
+    emit('effort-suggest.json', {
+      module: 'training/effort',
+      fn: 'suggestEffortWord',
+      note: 'mean − baseline, baseline = median of history when ≥ 3 entries else 8.8. Bands: ≤ −0.75 Easy, ≤ −0.25 Solid, < 0.25 Hard, < 0.75 Brutal, else Everything. null mean → null.',
+      cases: suggest,
+    })
+  })
+})
+
+describe('golden vectors — set tags', () => {
+  it('exports the tag and quality vocabularies and their readers', () => {
+    const strip = (t: { label: string; full: string }) => ({ label: t.label, full: t.full })
+    emit('set-tags-table.json', {
+      module: 'training/setTags',
+      fn: 'SET_TAGS / SET_QUALITY / SET_QUALITY_KEYS',
+      note: 'Data, colours stripped (HelixUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.',
+      cases: [{
+        name: 'the vocabularies',
+        input: {},
+        expected: {
+          tags: Object.fromEntries(Object.entries(SET_TAGS).map(([k, t]) => [k, strip(t)])),
+          quality: SET_QUALITY,
+          qualityKeys: SET_QUALITY_KEYS,
+        },
+      }],
+    })
+    const types: Array<string | null> = [null, '', 'warmup', 'failure', 'dropset', 'ghost', 'working', 'Warmup', 'top', 'momentum']
+    emit('set-type.json', {
+      module: 'training/setTags',
+      fn: 'isWorkingSet / setTagFor / setQualityFor / isSetQuality',
+      note: 'isWorkingSet excludes exactly warmup and ghost. setTagFor / setQualityFor read the table by exact key, null for a plain set. isSetQuality is a closed-vocabulary guard.',
+      cases: [...types, ...SET_QUALITY_KEYS, 'partial', 'Momentum'].map((v) => ({
+        name: v === null ? 'null' : v || 'empty',
+        input: { v },
+        expected: {
+          working: isWorkingSet(v),
+          tag: setTagFor(v) ? strip(setTagFor(v)!) : null,
+          quality: setQualityFor(v) ?? null,
+          isQuality: isSetQuality(v),
+        },
+      })),
+    })
+    const counts: Array<[string, Record<string, number>]> = [
+      ['none', {}],
+      ['2W 1F 1D', { warmup: 2, failure: 1, dropset: 1 }],
+      ['out of order in, fixed order out', { ghost: 1, dropset: 2, warmup: 1 }],
+      ['zeros vanish', { warmup: 0, failure: 3 }],
+      ['unknown keys are ignored', { top: 4, failure: 1 }],
+      ['negative is not a count', { warmup: -1, ghost: 2 }],
+    ]
+    emit('set-composition.json', {
+      module: 'training/setTags',
+      fn: 'setComposition',
+      note: 'Only kinds that occurred (> 0), in the fixed order warmup, failure, dropset, ghost. Colours stripped.',
+      cases: counts.map(([name, c]) => ({ name, input: { counts: c }, expected: setComposition(c).map((t) => ({ ...strip(t), count: t.count })) })),
+    })
+  })
+})
+
+describe('golden vectors — rest targets', () => {
+  it('exports the pure half — grid, keys and the chip format', () => {
+    emit('rest-constants.json', {
+      module: 'training/restTargets',
+      fn: 'REST_STEP_SEC / REST_MIN_SEC / REST_MAX_SEC',
+      note: 'The 15 s grid and its bounds.',
+      cases: [{ name: 'the grid', input: {}, expected: { step: REST_STEP_SEC, min: REST_MIN_SEC, max: REST_MAX_SEC } }],
+    })
+    const secs = [0, 1, 7, 7.5, 8, 14, 15, 22, 22.5, 23, 30, 45, 59, 60, 61, 90, 97, 98, 105, 119, 120, 135, 150, 180, 292, 293, 299, 300, 301, 4000, -30, 62.4]
+    emit('rest-clamp-format.json', {
+      module: 'training/restTargets',
+      fn: 'clampRestSec / formatRestTarget',
+      note: 'clamp: Math.round(sec / 15) × 15, then 15–300. format is of the CLAMPED value: "45s" under a minute, else m:ss.',
+      cases: secs.map((sec) => ({ name: String(sec), input: { sec }, expected: { clamped: clampRestSec(sec), formatted: formatRestTarget(clampRestSec(sec)) } })),
+    })
+    const keyCases: Array<[string, string | null, string | null]> = [
+      ['Leg Press', 'legs_a', HELIX5_ID], ['leg press', 'legs_a', HELIX5_ID], ['Leg Press Horizontal (Machine)', 'legs_a', HELIX5_ID],
+      ['Calf Press', null, HELIX5_ID], ['Calf Press', 'legs_b', 'axis4'], [' Cable Lateral Raise ', 'arms', HELIX5_ID], ['HACK SQUAT', undefined as unknown as null, HELIX5_ID],
+    ]
+    emit('rest-keys.json', {
+      module: 'training/restTargets',
+      fn: 'restTargetKey / sessionRestKey',
+      note: 'programId|day or -|canonical lower-cased trimmed name; the session key prefixes the ISO date. programId is always given here (the TS default reads the active plan).',
+      cases: keyCases.map(([name, dayKey, programId]) => ({
+        name: `${name} · ${dayKey ?? 'no day'} · ${programId}`,
+        input: { name, dayKey: dayKey ?? null, programId, date: '2026-09-03' },
+        expected: { plan: restTargetKey(name, dayKey, programId!), session: sessionRestKey('2026-09-03', name, dayKey, programId!) },
+      })),
     })
   })
 })
