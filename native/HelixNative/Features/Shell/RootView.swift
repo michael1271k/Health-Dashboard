@@ -51,8 +51,8 @@ private struct SignedInTabs: View {
             Tab("Progress", systemImage: "chart.xyaxis.line") {
                 NavigationStack { PlaceholderScreen(name: "Pathfinder", wave: 4) }
             }
-            Tab("Settings", systemImage: "gearshape") {
-                NavigationStack { SettingsScreen() }
+            Tab("You", systemImage: "person.crop.circle") {
+                NavigationStack { YouTabView() }
             }
         }
     }
@@ -103,6 +103,23 @@ private struct WorkoutTab: View {
     }
 
     var body: some View {
+        content
+            // The library is a sub-screen of Training, not a sixth tab — five is
+            // where iOS stops giving you a tab and starts giving you a "More"
+            // list, and a library is somewhere you go FROM training.
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        ExerciseLibraryView()
+                    } label: {
+                        Label("Exercises", systemImage: "list.bullet.rectangle")
+                    }
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if let day = today {
             LiveLoggerView(model: LoggerModel(
                 day: day,
@@ -122,31 +139,5 @@ private struct WorkoutTab: View {
             }
             .navigationTitle("Workout")
         }
-    }
-}
-
-private struct SettingsScreen: View {
-    @Environment(AppEnvironment.self) private var environment
-
-    var body: some View {
-        List {
-            Section("Domain") {
-                // The port, visible. `HelixCore` is pure and has no idea a
-                // database or a view exists, so it can be called from anywhere —
-                // including here, to show the arithmetic is live.
-                LabeledContent("Battery drain budget") {
-                    Text(Battery.maxTotalDrain, format: .number)
-                }
-                LabeledContent("TEF factor") {
-                    Text(Energy.tefFactor, format: .percent.precision(.fractionLength(1)))
-                }
-            }
-            Section {
-                Button("Sign out", role: .destructive) {
-                    Task { await environment.signOut() }
-                }
-            }
-        }
-        .navigationTitle("Settings")
     }
 }
