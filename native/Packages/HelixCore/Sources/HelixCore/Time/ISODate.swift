@@ -47,4 +47,37 @@ public enum ISODate {
     public static func addDays(_ iso: String, _ n: Int) -> String? {
         dayNumber(iso).map { self.iso(dayNumber: $0 + n) }
     }
+
+    private static let instantPattern = try! NSRegularExpression(
+        pattern: #"^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$"#
+    )
+
+    /// `Date.parse` for the two shapes this app stores — an ISO instant
+    /// (`2026-08-28T12:00:00.594Z`, `…+02:00`, fractional seconds optional) or a
+    /// bare `YYYY-MM-DD` (UTC midnight) — as epoch MILLISECONDS, computed with
+    /// integer arithmetic so `.594` is exactly 594 and never 593.9999. Nil for
+    /// anything else, where the web reads NaN.
+    public static func parseMillis(_ s: String) -> Double? {
+        if let day = dayNumber(s) { return Double(day) * 86_400_000 }
+        let ns = s as NSString
+        guard let m = instantPattern.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) else { return nil }
+        func group(_ i: Int) -> String? {
+            let r = m.range(at: i)
+            return r.location == NSNotFound ? nil : ns.substring(with: r)
+        }
+        guard let day = dayNumber(group(1)!), let h = Int(group(2)!), let mi = Int(group(3)!), let sec = Int(group(4)!),
+              h < 24, mi < 60, sec < 60
+        else { return nil }
+        var millis = 0
+        if let f = group(5) { millis = Int((f + "000").prefix(3))! }
+        var offset = 0
+        let zone = group(6)!
+        if zone != "Z" {
+            let sign = zone.hasPrefix("-") ? -1 : 1
+            let body = zone.dropFirst()
+            offset = sign * (Int(body.prefix(2))! * 3600 + Int(body.suffix(2))! * 60)
+        }
+        let seconds = day * 86_400 + h * 3600 + mi * 60 + sec - offset
+        return Double(seconds) * 1000 + Double(millis)
+    }
 }

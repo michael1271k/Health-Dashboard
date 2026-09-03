@@ -1,0 +1,435 @@
+{
+  "module": "sessions/sessionClock",
+  "fn": "setClockMode / startClock / pauseClock / resetClock / restartClock / setDurationSec",
+  "note": "Each transition as a pure step over the stored clock at `now` (Date.now() at the moment of the call). The stored row is read through getSessionClock first, so a stale clock is idle before the step applies.",
+  "cases": [
+    {
+      "name": "start timer from idle",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "start stopwatch explicitly from idle timer",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start",
+          "mode": "stopwatch"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "start while running is a no-op",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565595000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": 1787565595000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "start a different mode while running restarts in that mode",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565595000,
+          "accumulatedMs": 3000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start",
+          "mode": "stopwatch"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "start resumes a paused stopwatch",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": null,
+          "accumulatedMs": 20000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 20000,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "pause folds the open segment",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565580000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "pause"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 20000,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "pause adds to the bank",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565580000,
+          "accumulatedMs": 30000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "pause"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 50000,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "pause while idle is a no-op",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "pause"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "pause with a backwards clock banks zero",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565605000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "pause"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "reset keeps mode and duration",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565595000,
+          "accumulatedMs": 9000,
+          "durationSec": 120
+        },
+        "op": {
+          "kind": "reset"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 120
+      }
+    },
+    {
+      "name": "restart runs from zero",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565550000,
+          "accumulatedMs": 9000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "restart"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "restart from idle",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "restart"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "setMode stops the clock",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565595000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setMode",
+          "mode": "stopwatch"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "setMode to the same mode is a no-op",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565595000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setMode",
+          "mode": "timer"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": 1787565595000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "setDuration resets a mid-flight countdown",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565570000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setDuration",
+          "sec": 90
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 90
+      }
+    },
+    {
+      "name": "setDuration clamps low",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setDuration",
+          "sec": -15
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 15
+      }
+    },
+    {
+      "name": "setDuration clamps high",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setDuration",
+          "sec": 4200
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 3600
+      }
+    },
+    {
+      "name": "setDuration rounds",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "setDuration",
+          "sec": 44.5
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 45
+      }
+    },
+    {
+      "name": "start on a stale clock starts fresh",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787558400000,
+          "accumulatedMs": 5000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "start"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565600000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "pause on a stale clock is a no-op on the idle state",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787558400000,
+          "accumulatedMs": 5000,
+          "durationSec": 60
+        },
+        "op": {
+          "kind": "pause"
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "module": "sessions/estimates",
+  "fn": "metKcalPerMin",
+  "note": "6.0 × 3.5 × kg / 200; null without a positive bodyweight.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "bodyweightKg": null
+      },
+      "expected": null
+    },
+    {
+      "name": "0",
+      "input": {
+        "bodyweightKg": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "-5",
+      "input": {
+        "bodyweightKg": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "50",
+      "input": {
+        "bodyweightKg": 50
+      },
+      "expected": 5.25
+    },
+    {
+      "name": "70",
+      "input": {
+        "bodyweightKg": 70
+      },
+      "expected": 7.35
+    },
+    {
+      "name": "75",
+      "input": {
+        "bodyweightKg": 75
+      },
+      "expected": 7.875
+    },
+    {
+      "name": "80",
+      "input": {
+        "bodyweightKg": 80
+      },
+      "expected": 8.4
+    },
+    {
+      "name": "100.5",
+      "input": {
+        "bodyweightKg": 100.5
+      },
+      "expected": 10.5525
+    }
+  ]
+}

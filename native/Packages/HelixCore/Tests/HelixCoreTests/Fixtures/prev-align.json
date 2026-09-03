@@ -1,0 +1,497 @@
+{
+  "module": "sessions/prevAlign",
+  "fn": "previousDisplayRows + alignPreviousSets",
+  "note": "History pairs fold to their first row; then like against like — today's warm-up rows take the history's non-working rows in order, working rows take working rows; surplus is null.",
+  "cases": [
+    {
+      "name": "the 28 Aug Leg Press",
+      "input": {
+        "todayWarmup": [
+          true,
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 60,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 60,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 60,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "no warm-up in history",
+      "input": {
+        "todayWarmup": [
+          true,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ],
+        "aligned": [
+          null,
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          }
+        ]
+      }
+    },
+    {
+      "name": "runs out",
+      "input": {
+        "todayWarmup": [
+          false,
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 40,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 40,
+            "reps": 12
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 40,
+            "reps": 12
+          },
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "name": "no history",
+      "input": {
+        "todayWarmup": [
+          true,
+          false,
+          false,
+          false
+        ],
+        "previous": null
+      },
+      "expected": {
+        "rows": [],
+        "aligned": [
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "name": "empty history",
+      "input": {
+        "todayWarmup": [
+          false
+        ],
+        "previous": []
+      },
+      "expected": {
+        "rows": [],
+        "aligned": [
+          null
+        ]
+      }
+    },
+    {
+      "name": "history warm-up, none today",
+      "input": {
+        "todayWarmup": [
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 60,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 60,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 72.5,
+            "reps": 13
+          },
+          {
+            "weightKg": 72.5,
+            "reps": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "pair folds to its first row",
+      "input": {
+        "todayWarmup": [
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9
+          }
+        ]
+      }
+    },
+    {
+      "name": "paired history against a paired deck",
+      "input": {
+        "todayWarmup": [
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "side": "R",
+            "pairId": "p2"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "side": "L",
+            "pairId": "p2"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "side": "R",
+            "pairId": "p2"
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "side": "R",
+            "pairId": "p2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ghost is a warm-up row here",
+      "input": {
+        "todayWarmup": [
+          true,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 40,
+            "reps": 5,
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 50,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 40,
+            "reps": 5,
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 50,
+            "reps": 10
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 40,
+            "reps": 5,
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 50,
+            "reps": 10
+          }
+        ]
+      }
+    },
+    {
+      "name": "two warm-ups today, one in history",
+      "input": {
+        "todayWarmup": [
+          true,
+          true,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 60,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 60,
+            "reps": 10
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "setType": "warmup"
+          },
+          null,
+          {
+            "weightKg": 60,
+            "reps": 10
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty today",
+      "input": {
+        "todayWarmup": [],
+        "previous": [
+          {
+            "weightKg": 1,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 1,
+            "reps": 1
+          }
+        ],
+        "aligned": []
+      }
+    },
+    {
+      "name": "empty pairId does not fold",
+      "input": {
+        "todayWarmup": [
+          false,
+          false
+        ],
+        "previous": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": ""
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "pairId": ""
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": ""
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "pairId": ""
+          }
+        ],
+        "aligned": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": ""
+          },
+          {
+            "weightKg": 12,
+            "reps": 9,
+            "pairId": ""
+          }
+        ]
+      }
+    }
+  ]
+}

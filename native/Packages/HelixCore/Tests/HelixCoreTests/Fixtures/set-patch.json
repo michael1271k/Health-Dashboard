@@ -1,0 +1,377 @@
+{
+  "module": "sessions/draft",
+  "fn": "applySetPatch",
+  "note": "Any touch of `rpe` (present, even undefined) releases the seed; ticking a RATED set releases it too; rpe 10 sets failure unless an explicit setType is in the patch or the set is a warm-up/dropset; leaving 10 clears a failure tag. In the fixture `rpe: null` / `setType: null` mean present-and-undefined.",
+  "cases": [
+    {
+      "name": "plain weight edit",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10
+        },
+        "patch": {
+          "weightKg": 45
+        }
+      },
+      "expected": {
+        "weightKg": 45,
+        "reps": 10
+      }
+    },
+    {
+      "name": "rating to 10 tags failure",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10
+        },
+        "patch": {
+          "rpe": 10
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "rpe": 10,
+        "setType": "failure"
+      }
+    },
+    {
+      "name": "rating to 10 on a warm-up leaves the tag",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10,
+          "setType": "warmup"
+        },
+        "patch": {
+          "rpe": 10
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "setType": "warmup",
+        "rpe": 10
+      }
+    },
+    {
+      "name": "rating to 10 on a dropset leaves the tag",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10,
+          "setType": "dropset"
+        },
+        "patch": {
+          "rpe": 10
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "setType": "dropset",
+        "rpe": 10
+      }
+    },
+    {
+      "name": "rating away from 10 clears failure",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10,
+          "rpe": 10,
+          "setType": "failure"
+        },
+        "patch": {
+          "rpe": 9.5
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "rpe": 9.5
+      }
+    },
+    {
+      "name": "rating away from 10 leaves an explicit warm-up",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10,
+          "rpe": 10,
+          "setType": "warmup"
+        },
+        "patch": {
+          "rpe": 9
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "rpe": 9,
+        "setType": "warmup"
+      }
+    },
+    {
+      "name": "an explicit setType in the same patch wins",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10
+        },
+        "patch": {
+          "rpe": 10,
+          "setType": "dropset"
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "rpe": 10,
+        "setType": "dropset"
+      }
+    },
+    {
+      "name": "explicit setType undefined with rpe 10 — no failure tag",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10,
+          "setType": "failure"
+        },
+        "patch": {
+          "rpe": 10,
+          "setType": null
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "rpe": 10
+      }
+    },
+    {
+      "name": "clearing the rating releases the seed",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "rpe": null
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10
+      }
+    },
+    {
+      "name": "clearing the rating on a set at 10 drops failure",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 10,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10,
+          "setType": "failure"
+        },
+        "patch": {
+          "rpe": null
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10
+      }
+    },
+    {
+      "name": "rating a seeded set takes ownership",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "rpe": 9
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10,
+        "rpe": 9
+      }
+    },
+    {
+      "name": "ticking a rated seeded set takes ownership",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "done": true
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10,
+        "rpe": 8,
+        "done": true
+      }
+    },
+    {
+      "name": "ticking an unrated stale set keeps the seed",
+      "input": {
+        "set": {
+          "weightKg": 65,
+          "reps": 10,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10,
+          "rpeStale": true
+        },
+        "patch": {
+          "done": true
+        }
+      },
+      "expected": {
+        "weightKg": 65,
+        "reps": 10,
+        "rpeSeed": 8,
+        "rpeSeedWeightKg": 60,
+        "rpeSeedReps": 10,
+        "rpeStale": true,
+        "done": true
+      }
+    },
+    {
+      "name": "unticking changes nothing about ownership",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "done": false
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10,
+        "rpe": 8,
+        "rpeSeed": 8,
+        "rpeSeedWeightKg": 60,
+        "rpeSeedReps": 10,
+        "done": false
+      }
+    },
+    {
+      "name": "a weight edit alone leaves the seed in place",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "weightKg": 65
+        }
+      },
+      "expected": {
+        "weightKg": 65,
+        "reps": 10,
+        "rpe": 8,
+        "rpeSeed": 8,
+        "rpeSeedWeightKg": 60,
+        "rpeSeedReps": 10
+      }
+    },
+    {
+      "name": "quality patch",
+      "input": {
+        "set": {
+          "weightKg": 40,
+          "reps": 10
+        },
+        "patch": {
+          "quality": "momentum"
+        }
+      },
+      "expected": {
+        "weightKg": 40,
+        "reps": 10,
+        "quality": "momentum"
+      }
+    },
+    {
+      "name": "empty patch",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {}
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10,
+        "rpe": 8,
+        "rpeSeed": 8,
+        "rpeSeedWeightKg": 60,
+        "rpeSeedReps": 10
+      }
+    },
+    {
+      "name": "rpe 10 patch with done in the same patch",
+      "input": {
+        "set": {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        "patch": {
+          "rpe": 10,
+          "done": true
+        }
+      },
+      "expected": {
+        "weightKg": 60,
+        "reps": 10,
+        "rpe": 10,
+        "done": true,
+        "setType": "failure"
+      }
+    }
+  ]
+}

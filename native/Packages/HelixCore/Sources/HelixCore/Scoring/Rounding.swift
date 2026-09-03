@@ -51,21 +51,31 @@ public func jsIntegerString(_ x: Double) -> String {
 /// a double near any sleep duration cannot sit within 1e-20 of a tenth-tie
 /// without being exactly on it, so the digits after the first decimal are either
 /// `5000…` (a tie, round up) or unambiguous.
-public func jsToFixed1(_ x: Double) -> String {
+public func jsToFixed1(_ x: Double) -> String { jsToFixed(x, 1) }
+
+/// `Number.prototype.toFixed(digits)` for any small `digits` — the same rule
+/// as `jsToFixed1`: the exact decimal expansion decides, and an exact tie goes
+/// to the LARGER candidate. `(-0.001).toFixed(2)` is `"-0.00"` in JavaScript
+/// and here. Loads over 1e15 are not a thing this app prints; they fall back to
+/// the shortest round-trip form rather than overflow.
+public func jsToFixed(_ x: Double, _ digits: Int) -> String {
+    guard x.isFinite, abs(x) < 1e15 else { return String(x) }
     let negative = x < 0
-    let expanded = String(format: "%.30f", abs(x))
+    let expanded = String(format: "%.40f", abs(x))
     let parts = expanded.split(separator: ".", maxSplits: 1)
-    var integer = String(parts[0])
-    let fraction = Array(parts[1])
-    var tenth = Int(String(fraction[0]))!
-    // "5" followed by anything is a tie or above it; ECMAScript takes the
-    // larger n on a tie. Anything below "5" rounds down.
-    if fraction[1] >= "5" {
-        tenth += 1
-        if tenth == 10 {
-            tenth = 0
-            integer = String(Int(integer)! + 1)
+    var integer = Int(parts[0])!
+    let frac = Array(parts[1]).map { Int(String($0))! }
+    var kept = Array(frac[0..<digits])
+    if frac[digits] >= 5 {
+        var i = digits - 1
+        var carry = true
+        while carry && i >= 0 {
+            kept[i] += 1
+            if kept[i] == 10 { kept[i] = 0; i -= 1 } else { carry = false }
         }
+        if carry { integer += 1 }
     }
-    return (negative ? "-" : "") + integer + "." + String(tenth)
+    let sign = negative ? "-" : ""
+    let fraction = kept.map(String.init).joined()
+    return digits == 0 ? "\(sign)\(integer)" : "\(sign)\(integer).\(fraction)"
 }

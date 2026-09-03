@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -65,6 +65,25 @@ import {
 import {
   REST_STEP_SEC, REST_MIN_SEC, REST_MAX_SEC, clampRestSec, programRestSec, restTargetKey, sessionRestKey, formatRestTarget,
 } from '@/lib/training/restTargets'
+import {
+  draftTotals, draftVolumeSeries, isPairCompactable, pairAsymmetry, applySetPatch, cascadeSetEdit,
+  cardioSummary, cleanSessionTitle, type SessionDraft, type DraftSet, type DraftExercise,
+} from '@/lib/sessions/draft'
+import type { SplitDay } from '@/lib/types/workout'
+import { resolveSeededRpe, deriveSessionRpe } from '@/lib/training/rpeMemory'
+import { findNextSet, formatLastTime, formatLastRpe, formatLoad, formatRpe, type NextSet } from '@/lib/sessions/nextSet'
+import { previousDisplayRows, alignPreviousSets } from '@/lib/sessions/prevAlign'
+import type { HistorySet, ExerciseHistory } from '@/lib/hooks/useExerciseSetHistory'
+import { isTimedExercise } from '@/lib/exercises/timed'
+import { livePrDigest, computeLivePrs } from '@/lib/sessions/livePrs'
+import type { AxisRecord } from '@/lib/training/prEngine'
+import { metKcalPerMin, medianKcalPerMin, estimateCalories, estimateAvgBpm, type KcalSample } from '@/lib/sessions/estimates'
+import { sessionElapsedSec, sessionActiveSec, elapsedDurationMin, pausedMsAt, MAX_SESSION_SEC } from '@/lib/sessions/sessionElapsed'
+import {
+  CLOCK_KEY, getSessionClock, setClockMode, startClock, pauseClock, resetClock, restartClock, setDurationSec,
+  elapsedMs, elapsedSec, remainingSec, isTimerDone, clockReadingSec, clockIsLive, formatClock, clampDuration,
+  type SessionClock, type ClockMode,
+} from '@/lib/sessions/sessionClock'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -3089,6 +3108,595 @@ describe('golden vectors — rest targets', () => {
         name: `${name} · ${dayKey ?? 'no day'} · ${programId}`,
         input: { name, dayKey: dayKey ?? null, programId, date: '2026-09-03' },
         expected: { plan: restTargetKey(name, dayKey, programId!), session: sessionRestKey('2026-09-03', name, dayKey, programId!) },
+      })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sessions — the draft's pure functions, RPE memory, next set, previous-set
+// alignment, live PRs, estimates, elapsed time and the rest clock model
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A patch as the fixture spells it. `Partial<DraftSet>` cannot cross JSON —
+ * `JSON.stringify` drops an `undefined` field, and `applySetPatch` treats a
+ * PRESENT-but-undefined `rpe` (a clearing) differently from an absent one. So
+ * `null` here means "present and undefined" on the TypeScript side.
+ */
+interface PatchSpec {
+  weightKg?: number
+  reps?: number
+  rpe?: number | null
+  setType?: DraftSet['setType'] | null
+  done?: boolean
+  quality?: string
+}
+function patchOf(spec: PatchSpec): Partial<DraftSet> {
+  const p: Partial<DraftSet> = {}
+  if ('weightKg' in spec) p.weightKg = spec.weightKg
+  if ('reps' in spec) p.reps = spec.reps
+  if ('rpe' in spec) p.rpe = spec.rpe ?? undefined
+  if ('setType' in spec) p.setType = spec.setType ?? undefined
+  if ('done' in spec) p.done = spec.done
+  if ('quality' in spec) p.quality = spec.quality
+  return p
+}
+
+const draftOf = (exercises: DraftExercise[], over: Partial<SessionDraft> = {}): SessionDraft => ({
+  splitDay: 'upper', date: '2026-08-25', notes: '', startedAt: '2026-08-25T09:00:00.000Z', exercises, ...over,
+})
+const exOf = (name: string, sets: DraftSet[], over: Partial<DraftExercise> = {}): DraftExercise => ({ localId: name, name, sets, ...over })
+
+describe('golden vectors — RPE memory', () => {
+  it('exports resolveSeededRpe and deriveSessionRpe', () => {
+    interface SeedIn { seed: { rpe: number; weightKg: number; reps: number } | null; weightKg: number; reps: number }
+    const seedCases: Case<SeedIn, { rpe: number | null; stale: boolean }>[] = []
+    const seeds: SeedIn['seed'][] = [null, { rpe: 8, weightKg: 60, reps: 10 }, { rpe: 10, weightKg: 0, reps: 15 }, { rpe: 7.5, weightKg: 32.5, reps: 12 }]
+    for (const seed of seeds) for (const weightKg of [0, 30, 32.5, 57.5, 60, 62.5]) for (const reps of [8, 10, 12, 15, 16]) {
+      const r = resolveSeededRpe(seed ?? undefined, { weightKg, reps })
+      seedCases.push({ name: `${seed ? `${seed.rpe}@${seed.weightKg}×${seed.reps}` : 'no seed'} vs ${weightKg}×${reps}`, input: { seed, weightKg, reps }, expected: { rpe: r.rpe ?? null, stale: r.stale } })
+    }
+    emit('rpe-seed.json', {
+      module: 'training/rpeMemory',
+      fn: 'resolveSeededRpe',
+      note: 'A remembered rating clears (stale) when the load rose, or when reps rose at the SAME load. A lighter set keeps it. 0 kg is real data — the reps branch is the only one that can fire there.',
+      cases: seedCases,
+    })
+
+    type Rated = { weightKg: number; reps: number; rpe?: number | null; setType?: string | null }
+    const rated: Array<[string, Rated[]]> = [
+      ['empty', []],
+      ['unrated', [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10, rpe: null }]],
+      ['typical', [{ weightKg: 40, reps: 10, rpe: 8.5 }, { weightKg: 40, reps: 10, rpe: 9 }, { weightKg: 50, reps: 8, rpe: 9 }, { weightKg: 50, reps: 8, rpe: 9.5 }]],
+      ['warm-up and ghost excluded', [{ weightKg: 20, reps: 12, rpe: 5, setType: 'warmup' }, { weightKg: 20, reps: 12, rpe: 5, setType: 'ghost' }, { weightKg: 40, reps: 10, rpe: 9 }]],
+      ['failure and dropset count', [{ weightKg: 40, reps: 10, rpe: 10, setType: 'failure' }, { weightKg: 30, reps: 12, rpe: 9, setType: 'dropset' }]],
+      ['bodyweight weighs 1', [{ weightKg: 0, reps: 15, rpe: 8 }, { weightKg: 0, reps: 12, rpe: 9 }]],
+      ['bodyweight beside loaded', [{ weightKg: 0, reps: 15, rpe: 6 }, { weightKg: 100, reps: 10, rpe: 9 }]],
+      ['off-grid mean snaps to 0.5', [{ weightKg: 40, reps: 10, rpe: 8 }, { weightKg: 40, reps: 10, rpe: 8 }, { weightKg: 40, reps: 10, rpe: 9 }]],
+      ['a single rated set', [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10, rpe: 7 }]],
+      ['a pair counts both rows', [{ weightKg: 5, reps: 10, rpe: 7 }, { weightKg: 5, reps: 14, rpe: 9 }]],
+    ]
+    emit('session-rpe.json', {
+      module: 'training/rpeMemory',
+      fn: 'deriveSessionRpe',
+      note: 'Tonnage-weighted mean of rated WORKING sets (unloaded weigh 1), snapped through normalizeCr10; null when nothing is rated.',
+      cases: rated.map(([name, sets]) => ({ name, input: { sets }, expected: deriveSessionRpe(sets) })),
+    })
+  })
+})
+
+describe('golden vectors — session draft', () => {
+  const seeded = (over: Partial<DraftSet> = {}): DraftSet => ({ weightKg: 60, reps: 10, rpe: 8, rpeSeed: 8, rpeSeedWeightKg: 60, rpeSeedReps: 10, ...over })
+
+  it('exports applySetPatch and cascadeSetEdit', () => {
+    const patchCases: Case<{ set: DraftSet; patch: PatchSpec }, DraftSet>[] = []
+    const push = (name: string, set: DraftSet, patch: PatchSpec) => patchCases.push({ name, input: { set, patch }, expected: applySetPatch(set, patchOf(patch)) })
+    push('plain weight edit', { weightKg: 40, reps: 10 }, { weightKg: 45 })
+    push('rating to 10 tags failure', { weightKg: 40, reps: 10 }, { rpe: 10 })
+    push('rating to 10 on a warm-up leaves the tag', { weightKg: 40, reps: 10, setType: 'warmup' }, { rpe: 10 })
+    push('rating to 10 on a dropset leaves the tag', { weightKg: 40, reps: 10, setType: 'dropset' }, { rpe: 10 })
+    push('rating away from 10 clears failure', { weightKg: 40, reps: 10, rpe: 10, setType: 'failure' }, { rpe: 9.5 })
+    push('rating away from 10 leaves an explicit warm-up', { weightKg: 40, reps: 10, rpe: 10, setType: 'warmup' }, { rpe: 9 })
+    push('an explicit setType in the same patch wins', { weightKg: 40, reps: 10 }, { rpe: 10, setType: 'dropset' })
+    push('explicit setType undefined with rpe 10 — no failure tag', { weightKg: 40, reps: 10, setType: 'failure' }, { rpe: 10, setType: null })
+    push('clearing the rating releases the seed', seeded(), { rpe: null })
+    push('clearing the rating on a set at 10 drops failure', seeded({ rpe: 10, setType: 'failure' }), { rpe: null })
+    push('rating a seeded set takes ownership', seeded(), { rpe: 9 })
+    push('ticking a rated seeded set takes ownership', seeded(), { done: true })
+    push('ticking an unrated stale set keeps the seed', { weightKg: 65, reps: 10, rpeSeed: 8, rpeSeedWeightKg: 60, rpeSeedReps: 10, rpeStale: true }, { done: true })
+    push('unticking changes nothing about ownership', seeded(), { done: false })
+    push('a weight edit alone leaves the seed in place', seeded(), { weightKg: 65 })
+    push('quality patch', { weightKg: 40, reps: 10 }, { quality: 'momentum' })
+    push('empty patch', seeded(), {})
+    push('rpe 10 patch with done in the same patch', seeded(), { rpe: 10, done: true })
+    emit('set-patch.json', {
+      module: 'sessions/draft',
+      fn: 'applySetPatch',
+      note: 'Any touch of `rpe` (present, even undefined) releases the seed; ticking a RATED set releases it too; rpe 10 sets failure unless an explicit setType is in the patch or the set is a warm-up/dropset; leaving 10 clears a failure tag. In the fixture `rpe: null` / `setType: null` mean present-and-undefined.',
+      cases: patchCases,
+    })
+
+    const cascade: Case<{ sets: DraftSet[]; setIdx: number; patch: PatchSpec }, DraftSet[]>[] = []
+    const cpush = (name: string, sets: DraftSet[], setIdx: number, patch: PatchSpec) => cascade.push({ name, input: { sets, setIdx, patch }, expected: cascadeSetEdit(sets, setIdx, patchOf(patch)) })
+    const three = [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 8 }]
+    cpush('set 1 weight carries to set 2 only', three, 0, { weightKg: 45 })
+    cpush('a diverged set 2 is left alone', [{ weightKg: 40, reps: 10 }, { weightKg: 50, reps: 10 }], 0, { weightKg: 45 })
+    cpush('middle edit carries to its successor only', [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }], 1, { weightKg: 60 })
+    cpush('setType never cascades', [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }], 0, { setType: 'warmup' })
+    cpush('reps cascade one step', three, 0, { reps: 11 })
+    cpush('reps only cascade to a matching heir', three, 1, { reps: 11 })
+    cpush('0 → n weight is a change of kind, not cascaded', [{ weightKg: 0, reps: 15 }, { weightKg: 0, reps: 15 }], 0, { weightKg: 10 })
+    cpush('last set has no heir', three, 2, { weightKg: 45 })
+    cpush('out-of-range index returns the input', three, 5, { weightKg: 45 })
+    cpush('cascade re-resolves the inherited rating on the heir', [seeded(), seeded()], 0, { weightKg: 62.5 })
+    cpush('a lighter cascade keeps the heir\'s remembered rating', [seeded(), seeded()], 0, { weightKg: 57.5 })
+    cpush('rating the edited set drops its seed, the heir keeps its own', [seeded(), seeded()], 0, { rpe: 9 })
+    cpush('a bodyweight rep increase clears the inherited rating', [seeded({ weightKg: 0, rpeSeedWeightKg: 0, reps: 15, rpeSeedReps: 15 }), seeded({ weightKg: 0, rpeSeedWeightKg: 0, reps: 15, rpeSeedReps: 15 })], 0, { reps: 16 })
+    cpush('restoring the numbers restores the rating', [{ weightKg: 62.5, reps: 10, rpeSeed: 8, rpeSeedWeightKg: 60, rpeSeedReps: 10, rpeStale: true }], 0, { weightKg: 60 })
+    cpush('a partial seed is left untouched', [{ weightKg: 62.5, reps: 10, rpeSeed: 8 }], 0, { weightKg: 65 })
+    cpush('unilateral rows cascade like any other (the store bypasses this for pairs)', [{ weightKg: 15, reps: 12, side: 'L', pairId: 'p1' }, { weightKg: 15, reps: 12, side: 'R', pairId: 'p1' }], 0, { weightKg: 17.5 })
+    emit('cascade-set-edit.json', {
+      module: 'sessions/draft',
+      fn: 'cascadeSetEdit',
+      note: 'Apply the patch to setIdx, carry weight (only from a load > 0) and reps to the NEXT set if it still holds the previous value, then re-resolve every inherited rating (applyRpeMemory) over the whole list.',
+      cases: cascade,
+    })
+  })
+
+  it('exports the totals, the sparkline, the pair rules and the strings', () => {
+    interface TotIn { draft: SessionDraft; cap: number }
+    const tot: Case<TotIn, { volumeKg: number; sets: number; series: number[] }>[] = []
+    const tpush = (name: string, draft: SessionDraft, cap = 12) => tot.push({ name, input: { draft, cap }, expected: { ...draftTotals(draft), series: draftVolumeSeries(draft, cap) } })
+    tpush('warm-ups count', draftOf([exOf('Chest Press (Machine)', [{ weightKg: 20, reps: 10, setType: 'warmup' }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10, setType: 'failure' }])]))
+    tpush('unticked sets do not', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: true }, { weightKg: 50, reps: 10, done: false }, { weightKg: 50, reps: 10 }])]))
+    tpush('cardio is skipped', draftOf([exOf('Treadmill', [{ weightKg: 0, reps: 1 }], { kind: 'cardio', distanceKm: 1 }), exOf('Row', [{ weightKg: 50, reps: 10 }])]))
+    tpush('a pair scores at the weaker side once', draftOf([exOf('SA', [{ weightKg: 20, reps: 10, side: 'R', pairId: 'p1' }, { weightKg: 18, reps: 10, side: 'L', pairId: 'p1' }])]))
+    tpush('cumulative series', draftOf([exOf('X', [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10 }, { weightKg: 50, reps: 8 }])]))
+    tpush('one set draws nothing', draftOf([exOf('X', [{ weightKg: 40, reps: 10 }])]))
+    tpush('empty draft', draftOf([]))
+    tpush('40 sets sampled to 12', draftOf([exOf('X', Array.from({ length: 40 }, () => ({ weightKg: 10, reps: 10 })))]))
+    tpush('13 sets sampled to 12', draftOf([exOf('X', Array.from({ length: 13 }, (_, i) => ({ weightKg: 10, reps: 10 + i })))]))
+    tpush('cap 5 over 9 sets', draftOf([exOf('X', Array.from({ length: 9 }, (_, i) => ({ weightKg: 10 + i, reps: 10 })))]), 5)
+    tpush('cap 2 keeps both endpoints', draftOf([exOf('X', Array.from({ length: 7 }, () => ({ weightKg: 10, reps: 10 })))]), 2)
+    tpush('quarter-kilo volumes keep their decimals', draftOf([exOf('X', [{ weightKg: 3.75, reps: 15 }, { weightKg: 3.75, reps: 15 }, { weightKg: 12.5, reps: 13 }])]))
+    tpush('a split pair across exercises', draftOf([exOf('A', [{ weightKg: 5, reps: 10, side: 'L', pairId: 'a' }, { weightKg: 5, reps: 12, side: 'R', pairId: 'a' }, { weightKg: 5, reps: 12 }]), exOf('B', [{ weightKg: 0, reps: 20 }, { weightKg: 30, reps: 10, done: false }])]))
+    emit('draft-totals.json', {
+      module: 'sessions/draft',
+      fn: 'draftTotals + draftVolumeSeries',
+      note: 'Committed strength sets only (warm-ups included, cardio excluded); volume through sessionVolumeKg; the sparkline is the rounded cumulative volume over each prefix, sampled to `cap` points with both endpoints kept, empty below two sets.',
+      cases: tot,
+    })
+
+    interface PairIn { l: DraftSet | null; r: DraftSet | null }
+    const side = (s: 'L' | 'R', over: Partial<DraftSet> = {}): DraftSet => ({ weightKg: 32.5, reps: 10, side: s, pairId: 'p1', rpe: 8, ...over })
+    const pairs: Array<[string, DraftSet | null, DraftSet | null]> = [
+      ['same load, different effort', side('L', { rpe: 9 }), side('R')],
+      ['identical', side('L'), side('R')],
+      ['different load', side('L', { weightKg: 30 }), side('R')],
+      ['different reps', side('L', { reps: 9 }), side('R')],
+      ['left unticked', side('L', { done: false }), side('R')],
+      ['right unticked', side('L'), side('R', { done: false })],
+      ['warm-up left', side('L', { setType: 'warmup' }), side('R')],
+      ['both failure', side('L', { setType: 'failure' }), side('R', { setType: 'failure' })],
+      ['no right', side('L'), null],
+      ['no left', null, side('R')],
+      ['30×8 vs 30×10', side('L', { weightKg: 30, reps: 8 }), side('R', { weightKg: 30, reps: 10 })],
+      ['30×10 vs 27.5×10', side('L', { weightKg: 30, reps: 10 }), side('R', { weightKg: 27.5, reps: 10 })],
+      ['trivial gap 49 vs 50', side('L', { weightKg: 30, reps: 49 }), side('R', { weightKg: 30, reps: 50 })],
+      ['timed hold 40 s vs 65 s', side('L', { weightKg: 0, reps: 40 }), side('R', { weightKg: 0, reps: 65 })],
+      ['bodyweight 12 vs 10', side('L', { weightKg: 0, reps: 12 }), side('R', { weightKg: 0, reps: 10 })],
+      ['unloaded match', side('L', { weightKg: 0, reps: 60 }), side('R', { weightKg: 0, reps: 60 })],
+      ['loaded 5×40 vs 5×65', side('L', { weightKg: 5, reps: 40 }), side('R', { weightKg: 5, reps: 65 })],
+      ['no work either side', side('L', { weightKg: 0, reps: 0 }), side('R', { weightKg: 0, reps: 0 })],
+      ['one side zero', side('L', { weightKg: 0, reps: 0 }), side('R', { weightKg: 0, reps: 10 })],
+      ['3% exactly', side('L', { weightKg: 100, reps: 97 }), side('R', { weightKg: 100, reps: 100 })],
+      ['2.5% rounds to 3', side('L', { weightKg: 100, reps: 39 }), side('R', { weightKg: 100, reps: 40 })],
+    ]
+    emit('pair-row.json', {
+      module: 'sessions/draft',
+      fn: 'isPairCompactable + pairAsymmetry',
+      note: 'Compactable: both present, both committed, same setType (absent = normal), same weight AND reps. Asymmetry: work = weight × reps when loaded else reps; pct = round((1 − min/max) × 100), null under 3 or with no work.',
+      cases: pairs.map(([name, l, r]) => ({ name, input: { l, r }, expected: { compactable: isPairCompactable(l ?? undefined, r ?? undefined), asymmetry: pairAsymmetry(l ?? undefined, r ?? undefined) } })),
+    })
+
+    const cardio: Array<[string, DraftExercise]> = [
+      ['distance and minutes', exOf('Treadmill', [], { kind: 'cardio', distanceKm: 0.4, durationSec: 300 })],
+      ['seconds too', exOf('Treadmill', [], { kind: 'cardio', distanceKm: 1.25, durationSec: 305 })],
+      ['incline', exOf('Treadmill', [], { kind: 'cardio', distanceKm: 2, durationSec: 1200, inclinePct: 12 })],
+      ['zero incline is not printed', exOf('Treadmill', [], { kind: 'cardio', durationSec: 60, inclinePct: 0 })],
+      ['nothing', exOf('Bike', [], { kind: 'cardio' })],
+      ['distance only', exOf('Row Erg', [], { kind: 'cardio', distanceKm: 5 })],
+      ['long duration', exOf('Walk', [], { kind: 'cardio', durationSec: 3661 })],
+      ['sub-minute', exOf('Sprint', [], { kind: 'cardio', durationSec: 45 })],
+      ['fractional incline', exOf('Treadmill', [], { kind: 'cardio', inclinePct: 2.5 })],
+    ]
+    emit('cardio-summary.json', {
+      module: 'sessions/draft',
+      fn: 'cardioSummary',
+      note: '"Treadmill: 0.4 km · 5 min" — distance, m or m:ss min, incline (only when non-zero), joined by · ; the bare name when nothing is set.',
+      cases: cardio.map(([name, ex]) => ({ name, input: { ex }, expected: cardioSummary(ex) })),
+    })
+
+    const titles: Array<[string, string | null, string | null, string]> = [
+      ['day label wins', 'Legs & Core B · Posterior Focus', 'legs_b', 'lower'],
+      ['unknown day falls to the title head', 'Legs & Core B · Posterior Focus', 'bogus', 'lower'],
+      ['no day, title head', 'Upper A · Chest + Back', null, 'upper'],
+      ['no separator', 'Push Day', null, 'push'],
+      ['empty title falls to the split', '', null, 'push'],
+      ['no title', null, null, 'legs'],
+      ['nothing at all', null, null, ''],
+      ['padded head', '  Arms  ·  x', null, 'arms'],
+      ['separator first', '· x', null, 'pull'],
+    ]
+    emit('clean-title.json', {
+      module: 'sessions/draft',
+      fn: 'cleanSessionTitle',
+      note: 'The program day\'s label if dayKey resolves (Helix-5), else the title up to its first ·, else the split, else "Workout".',
+      cases: titles.map(([name, title, dayKey, splitDay]) => ({
+        name,
+        input: { title, dayKey, splitDay },
+        expected: cleanSessionTitle({ title: title ?? undefined, dayKey: (dayKey ?? undefined) as SessionDraft['dayKey'], splitDay: splitDay as SplitDay }),
+      })),
+    })
+  })
+})
+
+describe('golden vectors — next set and previous alignment', () => {
+  const hist = (sets: HistorySet[]): ExerciseHistory => ({ date: '2026-08-18', sets })
+
+  it('exports findNextSet and its strings', () => {
+    interface In { draft: SessionDraft | null; history: Array<{ name: string; history: ExerciseHistory }> | null }
+    interface Out { next: NextSet | null; lastTime: string; lastRpe: string; load: string; rpe: string }
+    const run = (i: In): Out => {
+      const next = findNextSet(i.draft, i.history ? new Map(i.history.map((h) => [h.name, h.history])) : undefined)
+      return { next, lastTime: formatLastTime(next), lastRpe: formatLastRpe(next), load: formatLoad(next), rpe: formatRpe(next) }
+    }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, draft: SessionDraft | null, history: In['history'] = null) => cases.push({ name, input: { draft, history }, expected: run({ draft, history }) })
+    push('null draft', null)
+    push('first unticked, in deck order', draftOf([
+      exOf('Incline Press', [{ weightKg: 60, reps: 8, done: true }, { weightKg: 60, reps: 8, done: true }]),
+      exOf('Lateral Raise Cable', [{ weightKg: 3.75, reps: 16, done: true }, { weightKg: 3.75, reps: 16, done: false }]),
+    ]))
+    push('ghosts carry no ordinal', draftOf([exOf('Bench Press', [{ weightKg: 80, reps: 6, setType: 'ghost', done: true }, { weightKg: 80, reps: 6, done: false }, { weightKg: 80, reps: 6, done: false }])]))
+    push('warm-ups carry no ordinal', draftOf([exOf('Bench Press', [{ weightKg: 20, reps: 12, setType: 'warmup', done: false }, { weightKg: 80, reps: 6, done: false }])]))
+    push('cardio skipped', draftOf([exOf('Treadmill', [], { kind: 'cardio' }), exOf('Row', [{ weightKg: 50, reps: 10, done: false }])]))
+    push('a pair is one set', draftOf([exOf('Single Arm Pushdown', [
+      { weightKg: 15, reps: 12, side: 'L', pairId: 'p1', done: true }, { weightKg: 15, reps: 12, side: 'R', pairId: 'p1', done: true },
+      { weightKg: 15, reps: 12, side: 'L', pairId: 'p2', done: false }, { weightKg: 15, reps: 12, side: 'R', pairId: 'p2', done: false },
+    ])]))
+    push('all done', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: true }])]))
+    push('an exercise with only warm-ups is skipped', draftOf([exOf('A', [{ weightKg: 20, reps: 12, setType: 'warmup', done: false }]), exOf('B', [{ weightKg: 50, reps: 10, done: false }])]))
+    push('last time aligned by working set number', draftOf([exOf('Bench Press', [{ weightKg: 80, reps: 6, done: true }, { weightKg: 80, reps: 6, done: false }])]),
+      [{ name: 'Bench Press', history: hist([{ weightKg: 20, reps: 12, setType: 'warmup' }, { weightKg: 77.5, reps: 7, rpe: 8 }, { weightKg: 77.5, reps: 6, rpe: 9.5 }]) }])
+    push('last time had fewer sets', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: true }, { weightKg: 50, reps: 10, done: false }])]), [{ name: 'Row', history: hist([{ weightKg: 47.5, reps: 11 }]) }])
+    push('history pair folds to its first row', draftOf([exOf('SA', [{ weightKg: 15, reps: 12, side: 'L', pairId: 'p1', done: true }, { weightKg: 15, reps: 12, side: 'R', pairId: 'p1', done: true }, { weightKg: 15, reps: 12, done: false }])]),
+      [{ name: 'SA', history: hist([{ weightKg: 12, reps: 10, side: 'R', pairId: 'h1', rpe: 8 }, { weightKg: 12, reps: 10, side: 'L', pairId: 'h1', rpe: 9 }, { weightKg: 12, reps: 9, rpe: 7 }]) }])
+    push('history ghost stripped', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: false }])]), [{ name: 'Row', history: hist([{ weightKg: 40, reps: 5, setType: 'ghost' }, { weightKg: 47.5, reps: 11 }]) }])
+    push('history for another exercise is ignored', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: false }])]), [{ name: 'Bench', history: hist([{ weightKg: 47.5, reps: 11 }]) }])
+    push('unloaded next set with unloaded history', draftOf([exOf('Reverse Crunch', [{ weightKg: 0, reps: 17, done: false }])]), [{ name: 'Reverse Crunch', history: hist([{ weightKg: 0, reps: 15, rpe: 10 }]) }])
+    push('quarter-plate load on the set you are on', draftOf([exOf('Lateral Raise', [{ weightKg: 3.75, reps: 16, rpe: 8, done: false }])]), [{ name: 'Lateral Raise', history: hist([{ weightKg: 3.75, reps: 15, rpe: 9 }]) }])
+    push('empty pairId is no pair', draftOf([exOf('X', [{ weightKg: 10, reps: 10, pairId: '', done: true }, { weightKg: 10, reps: 10, pairId: '', done: false }])]))
+    emit('next-set.json', {
+      module: 'sessions/nextSet',
+      fn: 'findNextSet + formatLastTime / formatLastRpe / formatLoad / formatRpe',
+      note: 'First uncommitted working set in deck order (cardio, warm-ups and ghosts skipped, a pair counted once); last time is the history\'s Nth working set (pairs folded to their first row). `history` is a list of {name, history} standing in for the Map.',
+      cases,
+    })
+
+    interface FmtIn { w: number | null; r: number | null; rpe: number | null }
+    const fmt: Case<FmtIn, { lastTime: string; lastRpe: string; load: string; rpe: string }>[] = []
+    for (const w of [null, 0, 2.5, 3.75, 12.125, 20, 60, 77.5, 3.333, 100.05, 0.1]) for (const r of [null, 0, 16]) for (const rpe of [null, 8, 9.5, 10]) {
+      const n: NextSet = { exercise: 'X', setNumber: 1, setTotal: 1, lastWeightKg: w, lastReps: r, lastRpe: rpe, weightKg: w, reps: r, rpe }
+      fmt.push({ name: `${w} × ${r} @ ${rpe}`, input: { w, r, rpe }, expected: { lastTime: formatLastTime(n), lastRpe: formatLastRpe(n), load: formatLoad(n), rpe: formatRpe(n) } })
+    }
+    emit('next-set-format.json', {
+      module: 'sessions/nextSet',
+      fn: 'formatLastTime / formatLastRpe / formatLoad / formatRpe',
+      note: 'toFixed(0) for a whole load, toFixed(1) when tenths suffice, else toFixed(2); unloaded prints "N reps"; a half-typed row prints what it has; never a zero it does not have.',
+      cases: fmt,
+    })
+  })
+
+  it('exports previous-set alignment', () => {
+    const warm = (kg: number, reps: number): HistorySet => ({ weightKg: kg, reps, setType: 'warmup' })
+    const work = (kg: number, reps: number): HistorySet => ({ weightKg: kg, reps })
+    interface In { todayWarmup: boolean[]; previous: HistorySet[] | null }
+    const cases: Array<[string, boolean[], HistorySet[] | null]> = [
+      ['the 28 Aug Leg Press', [true, false, false], [warm(60, 15), work(72.5, 13), work(72.5, 14)]],
+      ['no warm-up in history', [true, false], [work(72.5, 13), work(72.5, 14)]],
+      ['runs out', [false, false, false], [work(40, 12)]],
+      ['no history', [true, false, false, false], null],
+      ['empty history', [false], []],
+      ['history warm-up, none today', [false, false], [warm(60, 15), work(72.5, 13), work(72.5, 14)]],
+      ['pair folds to its first row', [false, false], [{ weightKg: 12, reps: 10, side: 'R', pairId: 'p1' }, { weightKg: 12, reps: 10, side: 'L', pairId: 'p1' }, work(12, 9)]],
+      ['paired history against a paired deck', [false, false], [{ weightKg: 12, reps: 10, side: 'R', pairId: 'p1' }, { weightKg: 12, reps: 10, side: 'L', pairId: 'p1' }, { weightKg: 12, reps: 9, side: 'R', pairId: 'p2' }, { weightKg: 12, reps: 9, side: 'L', pairId: 'p2' }]],
+      ['ghost is a warm-up row here', [true, false], [{ weightKg: 40, reps: 5, setType: 'ghost' }, work(50, 10)]],
+      ['two warm-ups today, one in history', [true, true, false], [warm(40, 12), work(60, 10)]],
+      ['empty today', [], [work(1, 1)]],
+      ['empty pairId does not fold', [false, false], [{ weightKg: 12, reps: 10, pairId: '' }, { weightKg: 12, reps: 9, pairId: '' }]],
+    ]
+    emit('prev-align.json', {
+      module: 'sessions/prevAlign',
+      fn: 'previousDisplayRows + alignPreviousSets',
+      note: 'History pairs fold to their first row; then like against like — today\'s warm-up rows take the history\'s non-working rows in order, working rows take working rows; surplus is null.',
+      cases: cases.map(([name, todayWarmup, previous]) => ({ name, input: { todayWarmup, previous } as In, expected: { rows: previousDisplayRows(previous ?? undefined), aligned: alignPreviousSets(todayWarmup, previous ?? undefined) } })),
+    })
+
+    const names: Array<string | null> = [null, '', 'Side Plank', 'side plank', 'Plank', 'Hollow Hold', 'hollow  hold', 'Dead Hang', 'deadhang', 'Wall Sit', 'L-Sit', 'L Sit', 'Lsit', 'Farmer Carry', 'Suitcase Carry', 'Carryover Press', 'Hold', 'Household', 'Planks', 'Leg Press', 'Hip Thrust (Machine)', 'Hanging Knee Raise', 'Reverse Crunch']
+    emit('timed-exercise.json', {
+      module: 'exercises/timed',
+      fn: 'isTimedExercise',
+      note: 'Word-bounded, case-insensitive match on plank / hollow hold / hold / dead hang / wall sit / l-sit / carry.',
+      cases: names.map((name) => ({ name: name === null ? 'null' : name || 'empty', input: { name }, expected: isTimedExercise(name) })),
+    })
+  })
+})
+
+describe('golden vectors — live PRs', () => {
+  it('exports livePrDigest and computeLivePrs', () => {
+    interface In { draft: SessionDraft | null; baselines: PrBaselines | null }
+    interface Out { digest: string; bySet: Array<{ key: string; axes: PrAxis[] }>; detail: Array<{ key: string; records: Partial<Record<PrAxis, AxisRecord>> }>; count: number }
+    const run = (i: In): Out => {
+      const r = computeLivePrs(i.draft, i.baselines ?? undefined)
+      return {
+        digest: livePrDigest(i.draft),
+        bySet: [...r.bySet].map(([key, axes]) => ({ key, axes })),
+        detail: [...r.detailBySet].map(([key, records]) => ({ key, records })),
+        count: r.count,
+      }
+    }
+    const HIP = 'Hip Thrust (Machine)'
+    const PLANK = 'Side Plank'
+    const bl = buildBaselines([
+      { key: HIP, weightKg: 25, reps: 14 }, { key: HIP, weightKg: 27.5, reps: 12 },
+      { key: PLANK, weightKg: 0, reps: 57 },
+      { key: 'Single Arm Lateral Raise (Cable)', weightKg: 5, reps: 12, side: 'L', pairId: 'h' }, { key: 'Single Arm Lateral Raise (Cable)', weightKg: 5, reps: 12, side: 'R', pairId: 'h' },
+    ], (k) => k === PLANK)
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, draft: SessionDraft | null, baselines: PrBaselines | null = bl) => cases.push({ name, input: { draft, baselines }, expected: run({ draft, baselines }) })
+    push('null draft', null)
+    push('no baselines', draftOf([exOf(HIP, [{ weightKg: 30, reps: 10 }])]), null)
+    push('nothing committed', draftOf([exOf(HIP, [{ weightKg: 30, reps: 10, done: false }])]))
+    push('July 31 shape — records on set 2 and the plank', draftOf([
+      exOf(HIP, [{ weightKg: 25, reps: 14 }, { weightKg: 27.5, reps: 13 }, { weightKg: 27.5, reps: 13 }]),
+      exOf(PLANK, [{ weightKg: 0, reps: 58 }, { weightKg: 0, reps: 55, done: false }]),
+    ], { date: '2026-08-25' }))
+    push('an asserted date takes the record book', draftOf([exOf('DB Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-07-21' }))
+    push('a live date derives', draftOf([exOf('DB Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-08-25' }))
+    push('supersession — only the surviving axes keep a delta', draftOf([exOf(HIP, [{ weightKg: 25, reps: 15 }, { weightKg: 27.5, reps: 14 }, { weightKg: 27.5, reps: 13 }])]))
+    push('a pair collapses on the tick', draftOf([exOf('Single Arm Lateral Raise (Cable)', [{ weightKg: 5, reps: 14, side: 'L', pairId: 't' }, { weightKg: 5, reps: 14, side: 'R', pairId: 't' }])]))
+    push('warm-up committed, no record', draftOf([exOf(HIP, [{ weightKg: 40, reps: 20, setType: 'warmup' }])]))
+    push('cardio ignored in the digest', draftOf([exOf('Treadmill', [{ weightKg: 0, reps: 1 }], { kind: 'cardio' }), exOf(HIP, [{ weightKg: 30, reps: 10, quality: 'momentum' }])]))
+    push('digest carries side and pair', draftOf([exOf('X', [{ weightKg: 5.25, reps: 10, side: 'L', pairId: 'p', setType: 'failure' }, { weightKg: 5.25, reps: 10, side: 'R', pairId: 'p', done: false }])]))
+    push('timed exercise by name — a plank variant', draftOf([exOf('Side Plank', [{ weightKg: 0, reps: 60 }])]))
+    emit('live-prs.json', {
+      module: 'sessions/livePrs',
+      fn: 'livePrDigest + computeLivePrs',
+      note: 'Only committed strength sets reach the engine, in deck order, keyed `${localId}|${setIdx}`; the draft date is passed so an asserted date takes the record book; detail keeps only the axes that survived supersession. bySet/detail are the Maps as insertion-ordered lists.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — estimates', () => {
+  it('exports the calorie and heart-rate estimates', () => {
+    const samples = (n: number, kcalPerMin: number): KcalSample[] => Array.from({ length: n }, () => ({ kcal: kcalPerMin * 60, durationMin: 60 }))
+    emit('met-kcal-per-min.json', {
+      module: 'sessions/estimates',
+      fn: 'metKcalPerMin',
+      note: '6.0 × 3.5 × kg / 200; null without a positive bodyweight.',
+      cases: [null, 0, -5, 50, 70, 75, 80, 100.5].map((bw) => ({ name: bw === null ? 'null' : String(bw), input: { bodyweightKg: bw }, expected: metKcalPerMin(bw) })),
+    })
+    const medians: Array<[string, KcalSample[]]> = [
+      ['empty', []],
+      ['four is too few', samples(4, 8)],
+      ['five', samples(5, 8)],
+      ['outlier', [...samples(4, 8), { kcal: 900, durationMin: 60 }]],
+      ['even count', [60, 70, 80, 90, 100, 110].map((k) => ({ kcal: k, durationMin: 10 }))],
+      ['unusable rows dropped', [...samples(4, 8), { kcal: 0, durationMin: 60 }, { kcal: 400, durationMin: 0 }]],
+      ['negative rows dropped', [...samples(5, 8), { kcal: -5, durationMin: 60 }, { kcal: 300, durationMin: -1 }]],
+      ['unsorted', [10, 6, 8, 7, 9].map((k) => ({ kcal: k * 30, durationMin: 30 }))],
+    ]
+    emit('kcal-median.json', {
+      module: 'sessions/estimates',
+      fn: 'medianKcalPerMin',
+      note: 'Median kcal/min over usable samples (both > 0 and finite); null below 5.',
+      cases: medians.map(([name, s]) => ({ name, input: { samples: s }, expected: medianKcalPerMin(s) })),
+    })
+    interface EstIn { durationMin: number | null; samples: KcalSample[]; bodyweightKg: number | null }
+    const est: Array<[string, EstIn]> = [
+      ['personal median', { durationMin: 60, samples: samples(6, 9), bodyweightKg: 75 }],
+      ['met fallback', { durationMin: 60, samples: samples(2, 9), bodyweightKg: 75 }],
+      ['nothing to fire', { durationMin: 60, samples: [], bodyweightKg: null }],
+      ['no duration', { durationMin: null, samples: samples(9, 8), bodyweightKg: 75 }],
+      ['zero duration', { durationMin: 0, samples: samples(9, 8), bodyweightKg: 75 }],
+      ['half hour', { durationMin: 30, samples: samples(6, 8), bodyweightKg: 75 }],
+      ['fractional duration rounds', { durationMin: 47.5, samples: [], bodyweightKg: 72.3 }],
+      ['negative duration', { durationMin: -10, samples: samples(6, 8), bodyweightKg: 75 }],
+    ]
+    emit('calorie-estimate.json', {
+      module: 'sessions/estimates',
+      fn: 'estimateCalories',
+      note: 'Personal median first, MET formula second, null when neither can fire; kcal is Math.round(rate × minutes).',
+      cases: est.map(([name, i]) => ({ name, input: i, expected: estimateCalories(i) })),
+    })
+    emit('bpm-estimate.json', {
+      module: 'sessions/estimates',
+      fn: 'estimateAvgBpm',
+      note: 'The previous value, rounded; null for nothing or non-positive.',
+      cases: [null, 0, -1, 118, 117.6, 117.5, 60.4999].map((b) => ({ name: b === null ? 'null' : String(b), input: { previousBpm: b }, expected: estimateAvgBpm(b) })),
+    })
+  })
+})
+
+describe('golden vectors — session elapsed and the rest clock', () => {
+  it('exports the elapsed and pause arithmetic', () => {
+    interface In { startedAt: string | null; now: number; pause: { pausedMs?: number; pausedAt?: string | null } | null }
+    interface Out { elapsed: number | null; active: number | null; durationMin: number | null; pausedMs: number }
+    const run = (i: In): Out => {
+      const active = sessionActiveSec(i.startedAt, i.now, i.pause)
+      return { elapsed: sessionElapsedSec(i.startedAt, i.now), active, durationMin: elapsedDurationMin(active), pausedMs: pausedMsAt(i.pause, i.now) }
+    }
+    const NOW = Date.parse('2026-08-28T13:10:40.000Z')
+    const cases: Array<[string, In]> = [
+      ['live session, 70m40s', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: null }],
+      ['no ms, Z', { startedAt: '2026-08-28T12:00:00Z', now: NOW, pause: null }],
+      ['offset +00:00', { startedAt: '2026-08-28T12:00:00.000+00:00', now: NOW, pause: null }],
+      ['offset +02:00', { startedAt: '2026-08-28T14:00:00.000+02:00', now: NOW, pause: null }],
+      ['back-dated six days', { startedAt: '2026-08-22T12:00:00.000Z', now: NOW, pause: null }],
+      ['future start', { startedAt: '2026-08-28T14:00:00.000Z', now: NOW, pause: null }],
+      ['exactly the bound', { startedAt: new Date(NOW - MAX_SESSION_SEC * 1000).toISOString(), now: NOW, pause: null }],
+      ['one past the bound', { startedAt: new Date(NOW - (MAX_SESSION_SEC + 1) * 1000).toISOString(), now: NOW, pause: null }],
+      ['null', { startedAt: null, now: NOW, pause: null }],
+      ['empty', { startedAt: '', now: NOW, pause: null }],
+      ['garbage', { startedAt: 'not a date', now: NOW, pause: null }],
+      ['under 30 s', { startedAt: new Date(NOW - 20_000).toISOString(), now: NOW, pause: null }],
+      ['31 s', { startedAt: new Date(NOW - 31_000).toISOString(), now: NOW, pause: null }],
+      ['61:40 rounds to 62', { startedAt: new Date(NOW - (61 * 60 + 40) * 1000).toISOString(), now: NOW, pause: null }],
+      ['61:20 rounds to 61', { startedAt: new Date(NOW - (61 * 60 + 20) * 1000).toISOString(), now: NOW, pause: null }],
+      ['closed pause of 10 min', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 600_000 } }],
+      ['open pause since 12:40', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 0, pausedAt: '2026-08-28T12:40:00.000Z' } }],
+      ['open pause plus bank', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 300_000, pausedAt: '2026-08-28T13:07:00.000Z' } }],
+      ['pause in the future', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 120_000, pausedAt: '2026-08-28T13:30:00.000Z' } }],
+      ['negative bank', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: -900 } }],
+      ['unparseable pausedAt', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 180_000, pausedAt: 'not a date' } }],
+      ['over-long pause clamps to zero', { startedAt: '2026-08-28T13:05:00.000Z', now: NOW, pause: { pausedMs: 3_600_000 } }],
+      ['mis-dated draft not rescued by a pause', { startedAt: '2026-08-25T12:00:00.000Z', now: NOW, pause: { pausedMs: 3 * 24 * 3_600_000 } }],
+      ['empty pause object', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: {} }],
+      ['pausedAt empty string', { startedAt: '2026-08-28T12:00:00.000Z', now: NOW, pause: { pausedMs: 1000, pausedAt: '' } }],
+      ['date-only startedAt', { startedAt: '2026-08-28', now: Date.parse('2026-08-28T01:00:00Z'), pause: null }],
+      ['fractional seconds .5', { startedAt: '2026-08-28T12:00:00.500Z', now: NOW, pause: null }],
+    ]
+    emit('session-elapsed.json', {
+      module: 'sessions/sessionElapsed',
+      fn: 'sessionElapsedSec / sessionActiveSec / elapsedDurationMin / pausedMsAt',
+      note: 'Elapsed = floor((now − started) / 1000), null outside 0…6 h or unparseable; active subtracts banked + open pause (never negative) after the wall-clock bound; durationMin rounds and refuses < 30 s. `now` is epoch ms.',
+      cases: cases.map(([name, i]) => ({ name, input: i, expected: run(i) })),
+    })
+  })
+
+  it('exports the rest clock model', () => {
+    const T0 = Date.parse('2026-08-24T10:00:00Z')
+    const clock = (over: Partial<SessionClock> = {}): SessionClock => ({ mode: 'timer', startedAt: null, accumulatedMs: 0, durationSec: 60, ...over })
+
+    // parse + staleness, through the store's own reader
+    interface ParseIn { raw: string | null; now: number }
+    const raws: Array<[string, string | null, number]> = [
+      ['empty', null, T0],
+      ['garbage', '{not json', T0],
+      ['v1 targetSec', JSON.stringify({ startedAt: null, targetSec: 120 }), T0],
+      ['stopwatch running', JSON.stringify({ mode: 'stopwatch', startedAt: T0 - 5000, accumulatedMs: 0, durationSec: 60 }), T0],
+      ['unknown mode is timer', JSON.stringify({ mode: 'countdown', startedAt: null, accumulatedMs: 0, durationSec: 45 }), T0],
+      ['negative accumulated clamps', JSON.stringify({ mode: 'timer', startedAt: null, accumulatedMs: -5, durationSec: 45 }), T0],
+      ['duration out of bounds', JSON.stringify({ mode: 'timer', startedAt: null, accumulatedMs: 0, durationSec: 5000 }), T0],
+      ['duration fractional', JSON.stringify({ mode: 'timer', startedAt: null, accumulatedMs: 0, durationSec: 44.4 }), T0],
+      ['startedAt as string is ignored', JSON.stringify({ mode: 'timer', startedAt: 'yesterday', accumulatedMs: 0, durationSec: 60 }), T0],
+      ['stale — started 61 min ago', JSON.stringify({ mode: 'timer', startedAt: T0 - 61 * 60_000, accumulatedMs: 30_000, durationSec: 90 }), T0],
+      ['not stale — started 59 min ago', JSON.stringify({ mode: 'stopwatch', startedAt: T0 - 59 * 60_000, accumulatedMs: 30_000, durationSec: 90 }), T0],
+      ['paused is never stale', JSON.stringify({ mode: 'stopwatch', startedAt: null, accumulatedMs: 30_000_000, durationSec: 90 }), T0],
+      ['array is idle', '[1,2]', T0],
+      ['durationSec null falls to default', JSON.stringify({ mode: 'timer', startedAt: null, accumulatedMs: 0, durationSec: null }), T0],
+    ]
+    const parseCases: Case<ParseIn, SessionClock>[] = []
+    for (const [name, raw, now] of raws) {
+      vi.useFakeTimers(); vi.setSystemTime(now)
+      localStorage.clear()
+      if (raw !== null) localStorage.setItem(CLOCK_KEY, raw)
+      parseCases.push({ name, input: { raw, now }, expected: getSessionClock() })
+      vi.useRealTimers()
+    }
+    emit('session-clock-parse.json', {
+      module: 'sessions/sessionClock',
+      fn: 'getSessionClock (parse + staleness)',
+      note: 'Tolerant read of the stored row: unknown mode → timer, non-number startedAt → null, accumulatedMs ≥ 0, duration clamped 15–3600 with the v1 `targetSec` honoured; a clock started more than an hour before `now` is discarded to idle (mode and duration kept).',
+      cases: parseCases,
+    })
+
+    interface ReadIn { clock: SessionClock; now: number }
+    const reads: Array<[string, SessionClock, number]> = [
+      ['idle timer', clock(), T0],
+      ['timer just started', clock({ startedAt: T0 }), T0],
+      ['timer at 0.9 s', clock({ startedAt: T0 }), T0 + 900],
+      ['timer at 1 s', clock({ startedAt: T0 }), T0 + 1000],
+      ['timer at 59.999 s', clock({ startedAt: T0 }), T0 + 59_999],
+      ['timer done at 60 s', clock({ startedAt: T0 }), T0 + 60_000],
+      ['timer well past', clock({ startedAt: T0 }), T0 + 120_000],
+      ['timer paused with 20 s banked', clock({ accumulatedMs: 20_000 }), T0 + 999_999],
+      ['timer resumed with bank', clock({ startedAt: T0, accumulatedMs: 20_000 }), T0 + 10_000],
+      ['stopwatch running', clock({ mode: 'stopwatch', startedAt: T0 }), T0 + 72_000],
+      ['stopwatch paused', clock({ mode: 'stopwatch', accumulatedMs: 20_000 }), T0 + 9_000_000],
+      ['stopwatch bank + open', clock({ mode: 'stopwatch', startedAt: T0, accumulatedMs: 30_000 }), T0 + 20_000],
+      ['stopwatch never done', clock({ mode: 'stopwatch', startedAt: T0 }), T0 + 3_600_000],
+      ['clock moved backwards', clock({ mode: 'stopwatch', startedAt: T0 + 5000 }), T0],
+      ['idle stopwatch', clock({ mode: 'stopwatch' }), T0],
+      ['fractional ms', clock({ mode: 'stopwatch', startedAt: T0, accumulatedMs: 1500 }), T0 + 2499],
+    ]
+    emit('session-clock-read.json', {
+      module: 'sessions/sessionClock',
+      fn: 'elapsedMs / elapsedSec / remainingSec / isTimerDone / clockReadingSec / clockIsLive',
+      note: 'elapsed = banked + max(0, now − startedAt); remaining = max(0, duration − floor(elapsed s)); done only for a timer at or past its duration; live when running or with a bank.',
+      cases: reads.map(([name, c, now]) => ({
+        name, input: { clock: c, now } as ReadIn,
+        expected: { elapsedMs: elapsedMs(c, now), elapsedSec: elapsedSec(c, now), remainingSec: remainingSec(c, now), done: isTimerDone(c, now), reading: clockReadingSec(c, now), live: clockIsLive(c) },
+      })),
+    })
+
+    interface Op { kind: 'setMode' | 'start' | 'pause' | 'reset' | 'restart' | 'setDuration'; mode?: ClockMode; sec?: number }
+    interface OpIn { clock: SessionClock; op: Op; now: number }
+    const ops: Array<[string, SessionClock, Op, number]> = [
+      ['start timer from idle', clock(), { kind: 'start' }, T0],
+      ['start stopwatch explicitly from idle timer', clock(), { kind: 'start', mode: 'stopwatch' }, T0],
+      ['start while running is a no-op', clock({ startedAt: T0 - 5000 }), { kind: 'start' }, T0],
+      ['start a different mode while running restarts in that mode', clock({ startedAt: T0 - 5000, accumulatedMs: 3000 }), { kind: 'start', mode: 'stopwatch' }, T0],
+      ['start resumes a paused stopwatch', clock({ mode: 'stopwatch', accumulatedMs: 20_000 }), { kind: 'start' }, T0],
+      ['pause folds the open segment', clock({ mode: 'stopwatch', startedAt: T0 - 20_000 }), { kind: 'pause' }, T0],
+      ['pause adds to the bank', clock({ mode: 'stopwatch', startedAt: T0 - 20_000, accumulatedMs: 30_000 }), { kind: 'pause' }, T0],
+      ['pause while idle is a no-op', clock(), { kind: 'pause' }, T0],
+      ['pause with a backwards clock banks zero', clock({ mode: 'stopwatch', startedAt: T0 + 5000 }), { kind: 'pause' }, T0],
+      ['reset keeps mode and duration', clock({ mode: 'stopwatch', startedAt: T0 - 5000, accumulatedMs: 9000, durationSec: 120 }), { kind: 'reset' }, T0],
+      ['restart runs from zero', clock({ mode: 'stopwatch', startedAt: T0 - 50_000, accumulatedMs: 9000 }), { kind: 'restart' }, T0],
+      ['restart from idle', clock(), { kind: 'restart' }, T0],
+      ['setMode stops the clock', clock({ startedAt: T0 - 5000 }), { kind: 'setMode', mode: 'stopwatch' }, T0],
+      ['setMode to the same mode is a no-op', clock({ startedAt: T0 - 5000 }), { kind: 'setMode', mode: 'timer' }, T0],
+      ['setDuration resets a mid-flight countdown', clock({ startedAt: T0 - 30_000 }), { kind: 'setDuration', sec: 90 }, T0],
+      ['setDuration clamps low', clock(), { kind: 'setDuration', sec: -15 }, T0],
+      ['setDuration clamps high', clock(), { kind: 'setDuration', sec: 4200 }, T0],
+      ['setDuration rounds', clock(), { kind: 'setDuration', sec: 44.5 }, T0],
+      ['start on a stale clock starts fresh', clock({ mode: 'stopwatch', startedAt: T0 - 2 * 3_600_000, accumulatedMs: 5000 }), { kind: 'start' }, T0],
+      ['pause on a stale clock is a no-op on the idle state', clock({ startedAt: T0 - 2 * 3_600_000, accumulatedMs: 5000 }), { kind: 'pause' }, T0],
+    ]
+    const opCases: Case<OpIn, SessionClock>[] = []
+    for (const [name, c, op, now] of ops) {
+      vi.useFakeTimers(); vi.setSystemTime(now)
+      localStorage.clear()
+      localStorage.setItem(CLOCK_KEY, JSON.stringify(c))
+      switch (op.kind) {
+        case 'setMode': setClockMode(op.mode!); break
+        case 'start': startClock(op.mode); break
+        case 'pause': pauseClock(); break
+        case 'reset': resetClock(); break
+        case 'restart': restartClock(); break
+        case 'setDuration': setDurationSec(op.sec!); break
+      }
+      opCases.push({ name, input: { clock: c, op, now }, expected: getSessionClock() })
+      vi.useRealTimers()
+    }
+    localStorage.clear()
+    emit('session-clock-ops.json', {
+      module: 'sessions/sessionClock',
+      fn: 'setClockMode / startClock / pauseClock / resetClock / restartClock / setDurationSec',
+      note: 'Each transition as a pure step over the stored clock at `now` (Date.now() at the moment of the call). The stored row is read through getSessionClock first, so a stale clock is idle before the step applies.',
+      cases: opCases,
+    })
+
+    emit('clock-format.json', {
+      module: 'sessions/sessionClock',
+      fn: 'formatClock + clampDuration',
+      note: 'm:ss always, h:mm:ss only past an hour, negatives and fractions floor to whole seconds; clampDuration rounds then clamps 15–3600.',
+      cases: [0, 0.4, 9, 9.9, 59, 60, 90, 599, 600, 724, 3599, 3600, 3661, 3723, 36000, -5, 14.5, 15, 44.5, 45.5, 3600.4, 3601, 100000].map((sec) => ({
+        name: String(sec), input: { sec }, expected: { formatted: formatClock(sec), clamped: clampDuration(sec) },
       })),
     })
   })

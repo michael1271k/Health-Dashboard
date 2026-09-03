@@ -1,0 +1,198 @@
+{
+  "module": "training/rpeMemory",
+  "fn": "deriveSessionRpe",
+  "note": "Tonnage-weighted mean of rated WORKING sets (unloaded weigh 1), snapped through normalizeCr10; null when nothing is rated.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": []
+      },
+      "expected": null
+    },
+    {
+      "name": "unrated",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": null
+          }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "typical",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 8.5
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 9
+          },
+          {
+            "weightKg": 50,
+            "reps": 8,
+            "rpe": 9
+          },
+          {
+            "weightKg": 50,
+            "reps": 8,
+            "rpe": 9.5
+          }
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "warm-up and ghost excluded",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 20,
+            "reps": 12,
+            "rpe": 5,
+            "setType": "warmup"
+          },
+          {
+            "weightKg": 20,
+            "reps": 12,
+            "rpe": 5,
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "failure and dropset count",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 10,
+            "setType": "failure"
+          },
+          {
+            "weightKg": 30,
+            "reps": 12,
+            "rpe": 9,
+            "setType": "dropset"
+          }
+        ]
+      },
+      "expected": 9.5
+    },
+    {
+      "name": "bodyweight weighs 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 15,
+            "rpe": 8
+          },
+          {
+            "weightKg": 0,
+            "reps": 12,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": 8.5
+    },
+    {
+      "name": "bodyweight beside loaded",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 15,
+            "rpe": 6
+          },
+          {
+            "weightKg": 100,
+            "reps": 10,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "off-grid mean snaps to 0.5",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 8
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 8
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": 8.5
+    },
+    {
+      "name": "a single rated set",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": 7
+          }
+        ]
+      },
+      "expected": 7
+    },
+    {
+      "name": "a pair counts both rows",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "rpe": 7
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": 8
+    }
+  ]
+}

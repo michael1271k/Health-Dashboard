@@ -1,0 +1,1855 @@
+{
+  "module": "sessions/nextSet",
+  "fn": "formatLastTime / formatLastRpe / formatLoad / formatRpe",
+  "note": "toFixed(0) for a whole load, toFixed(1) when tenths suffice, else toFixed(2); unloaded prints \"N reps\"; a half-typed row prints what it has; never a zero it does not have.",
+  "cases": [
+    {
+      "name": "null × null @ null",
+      "input": {
+        "w": null,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "null × null @ 8",
+      "input": {
+        "w": null,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "null × null @ 9.5",
+      "input": {
+        "w": null,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "null × null @ 10",
+      "input": {
+        "w": null,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "null × 0 @ null",
+      "input": {
+        "w": null,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "",
+        "load": "0 reps",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "null × 0 @ 8",
+      "input": {
+        "w": null,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 8",
+        "load": "0 reps",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "null × 0 @ 9.5",
+      "input": {
+        "w": null,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 9.5",
+        "load": "0 reps",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "null × 0 @ 10",
+      "input": {
+        "w": null,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 10",
+        "load": "0 reps",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "null × 16 @ null",
+      "input": {
+        "w": null,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "",
+        "load": "16 reps",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "null × 16 @ 8",
+      "input": {
+        "w": null,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 8",
+        "load": "16 reps",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "null × 16 @ 9.5",
+      "input": {
+        "w": null,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 9.5",
+        "load": "16 reps",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "null × 16 @ 10",
+      "input": {
+        "w": null,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 10",
+        "load": "16 reps",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0 × null @ null",
+      "input": {
+        "w": 0,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0 × null @ 8",
+      "input": {
+        "w": 0,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0 × null @ 9.5",
+      "input": {
+        "w": 0,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0 × null @ 10",
+      "input": {
+        "w": 0,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0 × 0 @ null",
+      "input": {
+        "w": 0,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "",
+        "load": "0 reps",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0 × 0 @ 8",
+      "input": {
+        "w": 0,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 8",
+        "load": "0 reps",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0 × 0 @ 9.5",
+      "input": {
+        "w": 0,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 9.5",
+        "load": "0 reps",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0 × 0 @ 10",
+      "input": {
+        "w": 0,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "0 reps",
+        "lastRpe": "RPE 10",
+        "load": "0 reps",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0 × 16 @ null",
+      "input": {
+        "w": 0,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "",
+        "load": "16 reps",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0 × 16 @ 8",
+      "input": {
+        "w": 0,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 8",
+        "load": "16 reps",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0 × 16 @ 9.5",
+      "input": {
+        "w": 0,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 9.5",
+        "load": "16 reps",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0 × 16 @ 10",
+      "input": {
+        "w": 0,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "16 reps",
+        "lastRpe": "RPE 10",
+        "load": "16 reps",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "2.5 × null @ null",
+      "input": {
+        "w": 2.5,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "2.5 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "2.5 × null @ 8",
+      "input": {
+        "w": 2.5,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "2.5 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "2.5 × null @ 9.5",
+      "input": {
+        "w": 2.5,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "2.5 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "2.5 × null @ 10",
+      "input": {
+        "w": 2.5,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "2.5 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "2.5 × 0 @ null",
+      "input": {
+        "w": 2.5,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 0",
+        "lastRpe": "",
+        "load": "2.5 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "2.5 × 0 @ 8",
+      "input": {
+        "w": 2.5,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "2.5 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "2.5 × 0 @ 9.5",
+      "input": {
+        "w": 2.5,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "2.5 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "2.5 × 0 @ 10",
+      "input": {
+        "w": 2.5,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "2.5 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "2.5 × 16 @ null",
+      "input": {
+        "w": 2.5,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 16",
+        "lastRpe": "",
+        "load": "2.5 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "2.5 × 16 @ 8",
+      "input": {
+        "w": 2.5,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "2.5 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "2.5 × 16 @ 9.5",
+      "input": {
+        "w": 2.5,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "2.5 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "2.5 × 16 @ 10",
+      "input": {
+        "w": 2.5,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "2.5 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "2.5 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.75 × null @ null",
+      "input": {
+        "w": 3.75,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "3.75 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.75 × null @ 8",
+      "input": {
+        "w": 3.75,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "3.75 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.75 × null @ 9.5",
+      "input": {
+        "w": 3.75,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "3.75 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.75 × null @ 10",
+      "input": {
+        "w": 3.75,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "3.75 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.75 × 0 @ null",
+      "input": {
+        "w": 3.75,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 0",
+        "lastRpe": "",
+        "load": "3.75 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.75 × 0 @ 8",
+      "input": {
+        "w": 3.75,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "3.75 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.75 × 0 @ 9.5",
+      "input": {
+        "w": 3.75,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "3.75 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.75 × 0 @ 10",
+      "input": {
+        "w": 3.75,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "3.75 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.75 × 16 @ null",
+      "input": {
+        "w": 3.75,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 16",
+        "lastRpe": "",
+        "load": "3.75 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.75 × 16 @ 8",
+      "input": {
+        "w": 3.75,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "3.75 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.75 × 16 @ 9.5",
+      "input": {
+        "w": 3.75,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "3.75 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.75 × 16 @ 10",
+      "input": {
+        "w": 3.75,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "3.75 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "3.75 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "12.125 × null @ null",
+      "input": {
+        "w": 12.125,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "12.13 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "12.125 × null @ 8",
+      "input": {
+        "w": 12.125,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "12.13 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "12.125 × null @ 9.5",
+      "input": {
+        "w": 12.125,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "12.13 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "12.125 × null @ 10",
+      "input": {
+        "w": 12.125,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "12.13 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "12.125 × 0 @ null",
+      "input": {
+        "w": 12.125,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 0",
+        "lastRpe": "",
+        "load": "12.13 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "12.125 × 0 @ 8",
+      "input": {
+        "w": 12.125,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "12.13 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "12.125 × 0 @ 9.5",
+      "input": {
+        "w": 12.125,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "12.13 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "12.125 × 0 @ 10",
+      "input": {
+        "w": 12.125,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "12.13 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "12.125 × 16 @ null",
+      "input": {
+        "w": 12.125,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 16",
+        "lastRpe": "",
+        "load": "12.13 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "12.125 × 16 @ 8",
+      "input": {
+        "w": 12.125,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "12.13 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "12.125 × 16 @ 9.5",
+      "input": {
+        "w": 12.125,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "12.13 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "12.125 × 16 @ 10",
+      "input": {
+        "w": 12.125,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "12.13 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "12.13 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "20 × null @ null",
+      "input": {
+        "w": 20,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "20 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "20 × null @ 8",
+      "input": {
+        "w": 20,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "20 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "20 × null @ 9.5",
+      "input": {
+        "w": 20,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "20 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "20 × null @ 10",
+      "input": {
+        "w": 20,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "20 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "20 × 0 @ null",
+      "input": {
+        "w": 20,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "20 kg × 0",
+        "lastRpe": "",
+        "load": "20 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "20 × 0 @ 8",
+      "input": {
+        "w": 20,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "20 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "20 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "20 × 0 @ 9.5",
+      "input": {
+        "w": 20,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "20 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "20 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "20 × 0 @ 10",
+      "input": {
+        "w": 20,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "20 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "20 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "20 × 16 @ null",
+      "input": {
+        "w": 20,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "20 kg × 16",
+        "lastRpe": "",
+        "load": "20 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "20 × 16 @ 8",
+      "input": {
+        "w": 20,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "20 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "20 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "20 × 16 @ 9.5",
+      "input": {
+        "w": 20,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "20 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "20 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "20 × 16 @ 10",
+      "input": {
+        "w": 20,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "20 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "20 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "60 × null @ null",
+      "input": {
+        "w": 60,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "60 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "60 × null @ 8",
+      "input": {
+        "w": 60,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "60 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "60 × null @ 9.5",
+      "input": {
+        "w": 60,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "60 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "60 × null @ 10",
+      "input": {
+        "w": 60,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "60 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "60 × 0 @ null",
+      "input": {
+        "w": 60,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "60 kg × 0",
+        "lastRpe": "",
+        "load": "60 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "60 × 0 @ 8",
+      "input": {
+        "w": 60,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "60 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "60 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "60 × 0 @ 9.5",
+      "input": {
+        "w": 60,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "60 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "60 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "60 × 0 @ 10",
+      "input": {
+        "w": 60,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "60 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "60 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "60 × 16 @ null",
+      "input": {
+        "w": 60,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "60 kg × 16",
+        "lastRpe": "",
+        "load": "60 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "60 × 16 @ 8",
+      "input": {
+        "w": 60,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "60 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "60 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "60 × 16 @ 9.5",
+      "input": {
+        "w": 60,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "60 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "60 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "60 × 16 @ 10",
+      "input": {
+        "w": 60,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "60 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "60 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "77.5 × null @ null",
+      "input": {
+        "w": 77.5,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "77.5 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "77.5 × null @ 8",
+      "input": {
+        "w": 77.5,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "77.5 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "77.5 × null @ 9.5",
+      "input": {
+        "w": 77.5,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "77.5 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "77.5 × null @ 10",
+      "input": {
+        "w": 77.5,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "77.5 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "77.5 × 0 @ null",
+      "input": {
+        "w": 77.5,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 0",
+        "lastRpe": "",
+        "load": "77.5 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "77.5 × 0 @ 8",
+      "input": {
+        "w": 77.5,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "77.5 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "77.5 × 0 @ 9.5",
+      "input": {
+        "w": 77.5,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "77.5 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "77.5 × 0 @ 10",
+      "input": {
+        "w": 77.5,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "77.5 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "77.5 × 16 @ null",
+      "input": {
+        "w": 77.5,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 16",
+        "lastRpe": "",
+        "load": "77.5 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "77.5 × 16 @ 8",
+      "input": {
+        "w": 77.5,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "77.5 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "77.5 × 16 @ 9.5",
+      "input": {
+        "w": 77.5,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "77.5 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "77.5 × 16 @ 10",
+      "input": {
+        "w": 77.5,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "77.5 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "77.5 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.333 × null @ null",
+      "input": {
+        "w": 3.333,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "3.33 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.333 × null @ 8",
+      "input": {
+        "w": 3.333,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "3.33 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.333 × null @ 9.5",
+      "input": {
+        "w": 3.333,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "3.33 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.333 × null @ 10",
+      "input": {
+        "w": 3.333,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "3.33 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.333 × 0 @ null",
+      "input": {
+        "w": 3.333,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 0",
+        "lastRpe": "",
+        "load": "3.33 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.333 × 0 @ 8",
+      "input": {
+        "w": 3.333,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "3.33 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.333 × 0 @ 9.5",
+      "input": {
+        "w": 3.333,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "3.33 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.333 × 0 @ 10",
+      "input": {
+        "w": 3.333,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "3.33 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "3.333 × 16 @ null",
+      "input": {
+        "w": 3.333,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 16",
+        "lastRpe": "",
+        "load": "3.33 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "3.333 × 16 @ 8",
+      "input": {
+        "w": 3.333,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "3.33 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "3.333 × 16 @ 9.5",
+      "input": {
+        "w": 3.333,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "3.33 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "3.333 × 16 @ 10",
+      "input": {
+        "w": 3.333,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "3.33 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "3.33 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "100.05 × null @ null",
+      "input": {
+        "w": 100.05,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "100.05 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "100.05 × null @ 8",
+      "input": {
+        "w": 100.05,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "100.05 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "100.05 × null @ 9.5",
+      "input": {
+        "w": 100.05,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "100.05 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "100.05 × null @ 10",
+      "input": {
+        "w": 100.05,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "100.05 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "100.05 × 0 @ null",
+      "input": {
+        "w": 100.05,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 0",
+        "lastRpe": "",
+        "load": "100.05 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "100.05 × 0 @ 8",
+      "input": {
+        "w": 100.05,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "100.05 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "100.05 × 0 @ 9.5",
+      "input": {
+        "w": 100.05,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "100.05 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "100.05 × 0 @ 10",
+      "input": {
+        "w": 100.05,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "100.05 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "100.05 × 16 @ null",
+      "input": {
+        "w": 100.05,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 16",
+        "lastRpe": "",
+        "load": "100.05 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "100.05 × 16 @ 8",
+      "input": {
+        "w": 100.05,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "100.05 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "100.05 × 16 @ 9.5",
+      "input": {
+        "w": 100.05,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "100.05 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "100.05 × 16 @ 10",
+      "input": {
+        "w": 100.05,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "100.05 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "100.05 kg × 16",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0.1 × null @ null",
+      "input": {
+        "w": 0.1,
+        "r": null,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "0.1 kg",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0.1 × null @ 8",
+      "input": {
+        "w": 0.1,
+        "r": null,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 8",
+        "load": "0.1 kg",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0.1 × null @ 9.5",
+      "input": {
+        "w": 0.1,
+        "r": null,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 9.5",
+        "load": "0.1 kg",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0.1 × null @ 10",
+      "input": {
+        "w": 0.1,
+        "r": null,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "",
+        "lastRpe": "RPE 10",
+        "load": "0.1 kg",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0.1 × 0 @ null",
+      "input": {
+        "w": 0.1,
+        "r": 0,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 0",
+        "lastRpe": "",
+        "load": "0.1 kg × 0",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0.1 × 0 @ 8",
+      "input": {
+        "w": 0.1,
+        "r": 0,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 0",
+        "lastRpe": "RPE 8",
+        "load": "0.1 kg × 0",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0.1 × 0 @ 9.5",
+      "input": {
+        "w": 0.1,
+        "r": 0,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 0",
+        "lastRpe": "RPE 9.5",
+        "load": "0.1 kg × 0",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0.1 × 0 @ 10",
+      "input": {
+        "w": 0.1,
+        "r": 0,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 0",
+        "lastRpe": "RPE 10",
+        "load": "0.1 kg × 0",
+        "rpe": "RPE 10"
+      }
+    },
+    {
+      "name": "0.1 × 16 @ null",
+      "input": {
+        "w": 0.1,
+        "r": 16,
+        "rpe": null
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 16",
+        "lastRpe": "",
+        "load": "0.1 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "0.1 × 16 @ 8",
+      "input": {
+        "w": 0.1,
+        "r": 16,
+        "rpe": 8
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 16",
+        "lastRpe": "RPE 8",
+        "load": "0.1 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "0.1 × 16 @ 9.5",
+      "input": {
+        "w": 0.1,
+        "r": 16,
+        "rpe": 9.5
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 16",
+        "lastRpe": "RPE 9.5",
+        "load": "0.1 kg × 16",
+        "rpe": "RPE 9.5"
+      }
+    },
+    {
+      "name": "0.1 × 16 @ 10",
+      "input": {
+        "w": 0.1,
+        "r": 16,
+        "rpe": 10
+      },
+      "expected": {
+        "lastTime": "0.1 kg × 16",
+        "lastRpe": "RPE 10",
+        "load": "0.1 kg × 16",
+        "rpe": "RPE 10"
+      }
+    }
+  ]
+}

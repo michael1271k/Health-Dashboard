@@ -1,0 +1,168 @@
+{
+  "module": "exercises/timed",
+  "fn": "isTimedExercise",
+  "note": "Word-bounded, case-insensitive match on plank / hollow hold / hold / dead hang / wall sit / l-sit / carry.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "name": null
+      },
+      "expected": false
+    },
+    {
+      "name": "empty",
+      "input": {
+        "name": ""
+      },
+      "expected": false
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "side plank",
+      "input": {
+        "name": "side plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "Plank",
+      "input": {
+        "name": "Plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "Hollow Hold",
+      "input": {
+        "name": "Hollow Hold"
+      },
+      "expected": true
+    },
+    {
+      "name": "hollow  hold",
+      "input": {
+        "name": "hollow  hold"
+      },
+      "expected": true
+    },
+    {
+      "name": "Dead Hang",
+      "input": {
+        "name": "Dead Hang"
+      },
+      "expected": true
+    },
+    {
+      "name": "deadhang",
+      "input": {
+        "name": "deadhang"
+      },
+      "expected": true
+    },
+    {
+      "name": "Wall Sit",
+      "input": {
+        "name": "Wall Sit"
+      },
+      "expected": true
+    },
+    {
+      "name": "L-Sit",
+      "input": {
+        "name": "L-Sit"
+      },
+      "expected": true
+    },
+    {
+      "name": "L Sit",
+      "input": {
+        "name": "L Sit"
+      },
+      "expected": false
+    },
+    {
+      "name": "Lsit",
+      "input": {
+        "name": "Lsit"
+      },
+      "expected": true
+    },
+    {
+      "name": "Farmer Carry",
+      "input": {
+        "name": "Farmer Carry"
+      },
+      "expected": true
+    },
+    {
+      "name": "Suitcase Carry",
+      "input": {
+        "name": "Suitcase Carry"
+      },
+      "expected": true
+    },
+    {
+      "name": "Carryover Press",
+      "input": {
+        "name": "Carryover Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hold",
+      "input": {
+        "name": "Hold"
+      },
+      "expected": true
+    },
+    {
+      "name": "Household",
+      "input": {
+        "name": "Household"
+      },
+      "expected": false
+    },
+    {
+      "name": "Planks",
+      "input": {
+        "name": "Planks"
+      },
+      "expected": false
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hip Thrust (Machine)",
+      "input": {
+        "name": "Hip Thrust (Machine)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": false
+    },
+    {
+      "name": "Reverse Crunch",
+      "input": {
+        "name": "Reverse Crunch"
+      },
+      "expected": false
+    }
+  ]
+}

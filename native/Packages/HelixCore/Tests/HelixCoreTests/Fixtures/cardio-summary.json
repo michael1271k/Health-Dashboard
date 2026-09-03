@@ -1,0 +1,128 @@
+{
+  "module": "sessions/draft",
+  "fn": "cardioSummary",
+  "note": "\"Treadmill: 0.4 km · 5 min\" — distance, m or m:ss min, incline (only when non-zero), joined by · ; the bare name when nothing is set.",
+  "cases": [
+    {
+      "name": "distance and minutes",
+      "input": {
+        "ex": {
+          "localId": "Treadmill",
+          "name": "Treadmill",
+          "sets": [],
+          "kind": "cardio",
+          "distanceKm": 0.4,
+          "durationSec": 300
+        }
+      },
+      "expected": "Treadmill: 0.4 km · 5 min"
+    },
+    {
+      "name": "seconds too",
+      "input": {
+        "ex": {
+          "localId": "Treadmill",
+          "name": "Treadmill",
+          "sets": [],
+          "kind": "cardio",
+          "distanceKm": 1.25,
+          "durationSec": 305
+        }
+      },
+      "expected": "Treadmill: 1.25 km · 5:05 min"
+    },
+    {
+      "name": "incline",
+      "input": {
+        "ex": {
+          "localId": "Treadmill",
+          "name": "Treadmill",
+          "sets": [],
+          "kind": "cardio",
+          "distanceKm": 2,
+          "durationSec": 1200,
+          "inclinePct": 12
+        }
+      },
+      "expected": "Treadmill: 2 km · 20 min · 12% incline"
+    },
+    {
+      "name": "zero incline is not printed",
+      "input": {
+        "ex": {
+          "localId": "Treadmill",
+          "name": "Treadmill",
+          "sets": [],
+          "kind": "cardio",
+          "durationSec": 60,
+          "inclinePct": 0
+        }
+      },
+      "expected": "Treadmill: 1 min"
+    },
+    {
+      "name": "nothing",
+      "input": {
+        "ex": {
+          "localId": "Bike",
+          "name": "Bike",
+          "sets": [],
+          "kind": "cardio"
+        }
+      },
+      "expected": "Bike"
+    },
+    {
+      "name": "distance only",
+      "input": {
+        "ex": {
+          "localId": "Row Erg",
+          "name": "Row Erg",
+          "sets": [],
+          "kind": "cardio",
+          "distanceKm": 5
+        }
+      },
+      "expected": "Row Erg: 5 km"
+    },
+    {
+      "name": "long duration",
+      "input": {
+        "ex": {
+          "localId": "Walk",
+          "name": "Walk",
+          "sets": [],
+          "kind": "cardio",
+          "durationSec": 3661
+        }
+      },
+      "expected": "Walk: 61:01 min"
+    },
+    {
+      "name": "sub-minute",
+      "input": {
+        "ex": {
+          "localId": "Sprint",
+          "name": "Sprint",
+          "sets": [],
+          "kind": "cardio",
+          "durationSec": 45
+        }
+      },
+      "expected": "Sprint: 0:45 min"
+    },
+    {
+      "name": "fractional incline",
+      "input": {
+        "ex": {
+          "localId": "Treadmill",
+          "name": "Treadmill",
+          "sets": [],
+          "kind": "cardio",
+          "inclinePct": 2.5
+        }
+      },
+      "expected": "Treadmill: 2.5% incline"
+    }
+  ]
+}

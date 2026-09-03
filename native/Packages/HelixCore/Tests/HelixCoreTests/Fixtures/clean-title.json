@@ -1,0 +1,88 @@
+{
+  "module": "sessions/draft",
+  "fn": "cleanSessionTitle",
+  "note": "The program day's label if dayKey resolves (Helix-5), else the title up to its first ·, else the split, else \"Workout\".",
+  "cases": [
+    {
+      "name": "day label wins",
+      "input": {
+        "title": "Legs & Core B · Posterior Focus",
+        "dayKey": "legs_b",
+        "splitDay": "lower"
+      },
+      "expected": "Legs & Core B"
+    },
+    {
+      "name": "unknown day falls to the title head",
+      "input": {
+        "title": "Legs & Core B · Posterior Focus",
+        "dayKey": "bogus",
+        "splitDay": "lower"
+      },
+      "expected": "Legs & Core B"
+    },
+    {
+      "name": "no day, title head",
+      "input": {
+        "title": "Upper A · Chest + Back",
+        "dayKey": null,
+        "splitDay": "upper"
+      },
+      "expected": "Upper A"
+    },
+    {
+      "name": "no separator",
+      "input": {
+        "title": "Push Day",
+        "dayKey": null,
+        "splitDay": "push"
+      },
+      "expected": "Push Day"
+    },
+    {
+      "name": "empty title falls to the split",
+      "input": {
+        "title": "",
+        "dayKey": null,
+        "splitDay": "push"
+      },
+      "expected": "push"
+    },
+    {
+      "name": "no title",
+      "input": {
+        "title": null,
+        "dayKey": null,
+        "splitDay": "legs"
+      },
+      "expected": "legs"
+    },
+    {
+      "name": "nothing at all",
+      "input": {
+        "title": null,
+        "dayKey": null,
+        "splitDay": ""
+      },
+      "expected": "Workout"
+    },
+    {
+      "name": "padded head",
+      "input": {
+        "title": "  Arms  ·  x",
+        "dayKey": null,
+        "splitDay": "arms"
+      },
+      "expected": "Arms"
+    },
+    {
+      "name": "separator first",
+      "input": {
+        "title": "· x",
+        "dayKey": null,
+        "splitDay": "pull"
+      },
+      "expected": "pull"
+    }
+  ]
+}

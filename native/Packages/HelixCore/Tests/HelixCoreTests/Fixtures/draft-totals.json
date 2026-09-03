@@ -1,0 +1,774 @@
+{
+  "module": "sessions/draft",
+  "fn": "draftTotals + draftVolumeSeries",
+  "note": "Committed strength sets only (warm-ups included, cardio excluded); volume through sessionVolumeKg; the sparkline is the rounded cumulative volume over each prefix, sampled to `cap` points with both endpoints kept, empty below two sets.",
+  "cases": [
+    {
+      "name": "warm-ups count",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Chest Press (Machine)",
+              "name": "Chest Press (Machine)",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 10,
+                  "setType": "warmup"
+                },
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 40,
+                  "reps": 10,
+                  "setType": "failure"
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 1000,
+        "sets": 3,
+        "series": [
+          200,
+          600,
+          1000
+        ]
+      }
+    },
+    {
+      "name": "unticked sets do not",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": true
+                },
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                },
+                {
+                  "weightKg": 50,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 1000,
+        "sets": 2,
+        "series": [
+          500,
+          1000
+        ]
+      }
+    },
+    {
+      "name": "cardio is skipped",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Treadmill",
+              "name": "Treadmill",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 1
+                }
+              ],
+              "kind": "cardio",
+              "distanceKm": 1
+            },
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 500,
+        "sets": 1,
+        "series": []
+      }
+    },
+    {
+      "name": "a pair scores at the weaker side once",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "SA",
+              "name": "SA",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 10,
+                  "side": "R",
+                  "pairId": "p1"
+                },
+                {
+                  "weightKg": 18,
+                  "reps": 10,
+                  "side": "L",
+                  "pairId": "p1"
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 180,
+        "sets": 2,
+        "series": [
+          200,
+          180
+        ]
+      }
+    },
+    {
+      "name": "cumulative series",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 50,
+                  "reps": 8
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 1200,
+        "sets": 3,
+        "series": [
+          400,
+          800,
+          1200
+        ]
+      }
+    },
+    {
+      "name": "one set draws nothing",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 400,
+        "sets": 1,
+        "series": []
+      }
+    },
+    {
+      "name": "empty draft",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": []
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 0,
+        "sets": 0,
+        "series": []
+      }
+    },
+    {
+      "name": "40 sets sampled to 12",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 4000,
+        "sets": 40,
+        "series": [
+          100,
+          500,
+          800,
+          1200,
+          1500,
+          1900,
+          2200,
+          2600,
+          2900,
+          3300,
+          3600,
+          4000
+        ]
+      }
+    },
+    {
+      "name": "13 sets sampled to 12",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 11
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 12
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 13
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 14
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 16
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 17
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 18
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 19
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 20
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 21
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 22
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 2080,
+        "sets": 13,
+        "series": [
+          100,
+          210,
+          330,
+          460,
+          600,
+          750,
+          1080,
+          1260,
+          1450,
+          1650,
+          1860,
+          2080
+        ]
+      }
+    },
+    {
+      "name": "cap 5 over 9 sets",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 11,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 12,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 13,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 14,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 16,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 17,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 18,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 5
+      },
+      "expected": {
+        "volumeKg": 1260,
+        "sets": 9,
+        "series": [
+          100,
+          330,
+          600,
+          910,
+          1260
+        ]
+      }
+    },
+    {
+      "name": "cap 2 keeps both endpoints",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 2
+      },
+      "expected": {
+        "volumeKg": 700,
+        "sets": 7,
+        "series": [
+          100,
+          700
+        ]
+      }
+    },
+    {
+      "name": "quarter-kilo volumes keep their decimals",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 3.75,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 3.75,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 12.5,
+                  "reps": 13
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 275,
+        "sets": 3,
+        "series": [
+          56,
+          113,
+          275
+        ]
+      }
+    },
+    {
+      "name": "a split pair across exercises",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "A",
+              "name": "A",
+              "sets": [
+                {
+                  "weightKg": 5,
+                  "reps": 10,
+                  "side": "L",
+                  "pairId": "a"
+                },
+                {
+                  "weightKg": 5,
+                  "reps": 12,
+                  "side": "R",
+                  "pairId": "a"
+                },
+                {
+                  "weightKg": 5,
+                  "reps": 12
+                }
+              ]
+            },
+            {
+              "localId": "B",
+              "name": "B",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 20
+                },
+                {
+                  "weightKg": 30,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "cap": 12
+      },
+      "expected": {
+        "volumeKg": 110,
+        "sets": 4,
+        "series": [
+          50,
+          50,
+          110,
+          110
+        ]
+      }
+    }
+  ]
+}
