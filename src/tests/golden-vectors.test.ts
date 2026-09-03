@@ -102,6 +102,10 @@ import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 import { deriveBodyComp, whrBand, visceralBand, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
 import { deltaVerdict, MAINTENANCE_BAND, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
 import { bodyCompState, missingBodyCompFields, bodyCompGapLabel, bodyCompGapShort, type BodyCompFields } from '@/lib/body/compGap'
+import {
+  mean, pearson, linregSlope, rollingAverage, daysSinceLastSession, trainingGap, fuelVsForce, stallProtocol, computeInsights,
+  type DayPoint, type SessionPoint, type Insight,
+} from '@/lib/coach/insights'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -4147,7 +4151,7 @@ describe('golden vectors — body', () => {
     push('percentages without a weight', { body_fat_pct: 17, muscle_percent: 78 })
     push('zero weight is a number', { weight_kg: 0, body_fat_pct: 17 })
     push('rounding to two places', { weight_kg: 64.25, body_fat_pct: 16.75, muscle_percent: 77.77, water_percent: 60.125, bone_mineral: 4.95 })
-    push('a negative zero rounds away', { weight_kg: 60, body_fat_pct: 0, water_percent: 100, bone_mineral: 0 })
+    push('protein floors at zero when the compartments overshoot', { weight_kg: 60, body_fat_pct: 0, water_percent: 90, bone_mineral: 20 })
     emit('body-comp-derive.json', {
       module: 'body/composition',
       fn: 'deriveBodyComp',
@@ -4173,7 +4177,7 @@ describe('golden vectors — body', () => {
 
   it('exports the delta verdict', () => {
     const cases: Case<{ metric: Metric; delta: number; phase: 'cut' | 'bulk'; maintenance: boolean }, Verdict>[] = []
-    const deltas = [-2, -0.6, -0.5, -0.4, -0.3, -0.29, -0.2, -0.05, -0.01, -0.009, 0, 0.009, 0.01, 0.05, 0.2, 0.29, 0.3, 0.4, 0.5, 0.6, 2]
+    const deltas = [-2, -0.6, -0.5, -0.4, -0.3, -0.29, -0.2, -0.1, -0.05, -0.01, -0.009, 0, 0.009, 0.01, 0.05, 0.1, 0.2, 0.29, 0.3, 0.4, 0.5, 0.6, 2]
     for (const metric of ['weight', 'fat', 'muscle', 'water'] as Metric[]) for (const phase of ['cut', 'bulk'] as const) for (const maintenance of [false, true]) for (const delta of deltas) {
       cases.push({ name: `${metric} ${delta} on a ${phase}${maintenance ? ' (maintenance)' : ''}`, input: { metric, delta, phase, maintenance }, expected: deltaVerdict(metric, delta, phase, maintenance) })
     }
@@ -4213,6 +4217,145 @@ describe('golden vectors — body', () => {
         name, input: { row },
         expected: { state: bodyCompState(row), missing: missingBodyCompFields(row), label: bodyCompGapLabel(row), short: bodyCompGapShort(row) },
       })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Coach insights — deterministic, zero-model analytics
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — coach insights', () => {
+  const dayAt = (i: number) => isoAddDays('2026-08-01', i)
+  const dp = (i: number, over: Partial<DayPoint> = {}): DayPoint => ({
+    date: dayAt(i), sleepMin: null, restHr: null, respiratory: null, weightKg: null, calories: null, calorieGoal: null, ...over,
+  })
+
+  it('exports the math', () => {
+    const series: Array<[string, number[], number[]]> = [
+      ['too few', [1, 2, 3], [1, 2, 3]],
+      ['perfect positive', [1, 2, 3, 4], [2, 4, 6, 8]],
+      ['perfect negative', [1, 2, 3, 4], [8, 6, 4, 2]],
+      ['zero variance x', [5, 5, 5, 5], [1, 2, 3, 4]],
+      ['zero variance y', [1, 2, 3, 4], [7, 7, 7, 7]],
+      ['noisy', [420, 390, 480, 450, 300, 510], [8200, 7900, 8600, 8400, 7200, 8800]],
+      ['unequal lengths — the shorter wins', [1, 2, 3, 4, 5, 6], [1, 3, 2, 5, 4]],
+      ['empty', [], []],
+    ]
+    emit('insight-math.json', {
+      module: 'coach/insights', fn: 'mean / pearson / linregSlope / rollingAverage',
+      note: 'mean of [] is 0; pearson null under 4 pairs or zero variance; slope null under 3 points; rolling average over a 7-day window.',
+      cases: series.map(([name, xs, ys]) => ({
+        name, input: { xs, ys },
+        expected: { meanX: mean(xs), pearson: pearson(xs, ys), slopeY: linregSlope(ys), rolling7: rollingAverage(ys), rolling3: rollingAverage(ys, 3) },
+      })),
+    })
+  })
+
+  it('exports the builders and the ranked set', () => {
+    interface In { days: DayPoint[]; sessions: SessionPoint[]; contextMode: string | null; todayISO: string; limit: number }
+    interface Out {
+      gapDays: number | null
+      trainingGap: Insight | null
+      fuelVsForce: Insight | null
+      stall: Insight | null
+      insights: Insight[]
+      all: Insight[]
+    }
+    const run = (i: In): Out => ({
+      gapDays: daysSinceLastSession(i.sessions, i.todayISO),
+      trainingGap: trainingGap(i.sessions, i.todayISO),
+      fuelVsForce: fuelVsForce(i.days, i.sessions),
+      stall: stallProtocol(i.days, i.sessions),
+      insights: computeInsights({ days: i.days, sessions: i.sessions, contextMode: i.contextMode ?? undefined, todayISO: i.todayISO }, i.limit),
+      all: computeInsights({ days: i.days, sessions: i.sessions, contextMode: i.contextMode ?? undefined, todayISO: i.todayISO }, 99),
+    })
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, days: DayPoint[], sessions: SessionPoint[], over: Partial<In> = {}) => {
+      const input: In = { days, sessions, contextMode: null, todayISO: dayAt(27), limit: 3, ...over }
+      cases.push({ name, input, expected: run(input) })
+    }
+
+    // A 28-day window with everything logged, sleep driving volume, a cut losing weight on target.
+    const sessionDays = [1, 2, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 22, 23, 25, 27]
+    const fullDays: DayPoint[] = Array.from({ length: 28 }, (_, i) => dp(i, {
+      sleepMin: [420, 380, 470, 500, 360, 440, 480][i % 7],
+      restHr: 52 + (i % 3),
+      respiratory: 14 + (i % 2) * 0.4,
+      weightKg: 66 - i * 0.065 + (i % 2) * 0.1,
+      calories: 1950 + (i % 5) * 30,
+      calorieGoal: 1955,
+      carbsG: 180 + (i % 6) * 15,
+      steps: 9000 + (i % 4) * 800,
+      waterMl: 3000,
+    }))
+    const fullSessions: SessionPoint[] = sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 7000 + ([420, 380, 470, 500, 360, 440, 480][i % 7] - 420) * 12 + (i % 3) * 150 }))
+    push('a full four weeks on a cut', fullDays, fullSessions)
+    push('the same week under travel', fullDays, fullSessions, { contextMode: 'travel' })
+    push('limit 1', fullDays, fullSessions, { limit: 1 })
+    push('limit 0', fullDays, fullSessions, { limit: 0 })
+    push('no sessions at all', fullDays, [])
+    push('a nine-day training gap', fullDays, fullSessions.filter((s) => s.date <= dayAt(18)))
+    push('a five-day gap is not a gap', fullDays, fullSessions.filter((s) => s.date <= dayAt(22)))
+    push('a six-day gap is not a gap either', fullDays, fullSessions.filter((s) => s.date <= dayAt(20)).concat([{ date: dayAt(21), volumeKg: 7200 }]))
+    push('exactly seven days is a gap', fullDays, fullSessions.filter((s) => s.date <= dayAt(20)))
+    push('no data', [], [])
+    push('too few days', fullDays.slice(0, 5), fullSessions.slice(0, 2))
+
+    // Resting HR creeping up in the last three days, respiratory too.
+    const drift = fullDays.map((d, i) => ({ ...d, restHr: i >= 25 ? 58 : 52, respiratory: i >= 25 ? 15.5 : 14 }))
+    push('resting HR creeping up with respiratory corroboration', drift, fullSessions)
+    push('resting HR trending down', fullDays.map((d, i) => ({ ...d, restHr: i >= 25 ? 48 : 53 })), fullSessions)
+
+    // Adherence: prior week all on target, recent week mostly off — with one exception day that must not count.
+    const adherence = fullDays.map((d, i) => ({
+      ...d,
+      calories: i >= 21 ? (i === 26 ? 3200 : 1650) : 1955,
+      exception: i === 26 ? 'Event' : null,
+    }))
+    push('calorie adherence eased off, an exception day excluded', adherence, fullSessions)
+    push('adherence climbing', fullDays.map((d, i) => ({ ...d, calories: i >= 21 ? 1955 : 1600 })), fullSessions)
+    push('adherence silent under five logged days', fullDays.map((d, i) => ({ ...d, calories: i % 2 ? null : d.calories })), fullSessions)
+
+    // Weight trajectories.
+    const flat = fullDays.map((d, i) => ({ ...d, weightKg: 65 + (i % 2) * 0.05 }))
+    push('a true 14-day stall on a cut, no heavy session in 72h', flat, fullSessions.filter((s) => s.date <= dayAt(23)))
+    push('stall masked by a heavy session in the last 72h', flat, fullSessions)
+    push('stall — steps are the weakest lever', flat.map((d) => ({ ...d, steps: 6000 })), fullSessions.filter((s) => s.date <= dayAt(23)))
+    push('stall — carbs are the lever', flat.map((d) => ({ ...d, steps: 11000, carbsG: 220 })), fullSessions.filter((s) => s.date <= dayAt(23)))
+    push('stall — cut a set', flat.map((d) => ({ ...d, steps: 11000, carbsG: 120 })), fullSessions.filter((s) => s.date <= dayAt(23)))
+    push('scale spike after a heavy session on a cut', fullDays.map((d, i) => ({ ...d, weightKg: i === 27 ? 66.4 : 65.6 - i * 0.02 })), fullSessions)
+    push('glycogen rebound entering maintenance', fullDays.map((d, i) => ({ ...d, calorieGoal: 2151, weightKg: i >= 21 ? 65.2 : 64.5 })), fullSessions)
+    push('a bulk on target', fullDays.map((d, i) => ({ ...d, calorieGoal: 2600, weightKg: 70 + i * 0.032 })), fullSessions)
+    push('a bulk off target', fullDays.map((d, i) => ({ ...d, calorieGoal: 2600, weightKg: 70 + i * 0.1 })), fullSessions)
+    push('cut rate off target — too slow', fullDays.map((d, i) => ({ ...d, weightKg: 66 - i * 0.01 })), fullSessions.filter((s) => s.date <= dayAt(23)).concat([{ date: dayAt(27), volumeKg: 0 }]))
+    push('no goal — the neutral trend', fullDays.map((d, i) => ({ ...d, calorieGoal: null, weightKg: 66 - i * 0.03 })), fullSessions)
+    push('holding steady with no goal', fullDays.map((d) => ({ ...d, calorieGoal: null, weightKg: 66 })), fullSessions)
+    push('fewer than eight weigh-ins', fullDays.map((d, i) => ({ ...d, weightKg: i < 5 ? d.weightKg : null })), fullSessions)
+
+    // Fuel vs force: carbs the day before drive volume.
+    const fuelSessions = sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 6000 + (fullDays[i - 1].carbsG ?? 0) * 12 }))
+    push('carbs the day before are worth volume', fullDays, fuelSessions)
+    push('carbs inversely related', fullDays, sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 9000 - (fullDays[i - 1].carbsG ?? 0) * 12 })))
+    push('sleep costing volume — the median split', fullDays, sessionDays.map((i) => ({ date: dayAt(i), volumeKg: fullDays[i].sleepMin! < 390 ? 6000 : fullDays[i].sleepMin! >= 450 ? 8000 : 7000 })))
+    push('sleep correlates without a bucket split', fullDays.map((d, i) => ({ ...d, sleepMin: 400 + (i % 4) * 12 })), sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 7000 + ((i % 4) * 12) * 30 })))
+
+    // The auditor's boundaries: silent floors, a tie in confidence, a short weight window, a zero goal.
+    push('sleep silent — sessions on nights with no sleep logged', fullDays.map((d, i) => ({ ...d, sleepMin: sessionDays.includes(i) ? null : d.sleepMin })), fullSessions)
+    push('sleep silent — constant volume has no correlation', fullDays, sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 7000 })))
+    push('fuel silent — under eight pairs', fullDays.map((d, i) => ({ ...d, carbsG: i < 20 ? null : d.carbsG })), fuelSessions)
+    push('fuel silent — under 5% separation', fullDays, sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 7000 + ((fullDays[i - 1].carbsG ?? 0) - 217) * 0.5 })))
+    push('recovery silent — four HR days', fullDays.map((d, i) => ({ ...d, restHr: i < 4 ? 52 : null })), fullSessions)
+    push('a tie on confidence keeps builder order — HR drift and fuel both at 0.9', fullDays.map((d, i) => ({ ...d, restHr: i >= 25 ? 60 : 52 })), fuelSessions)
+    push('eight to thirteen weigh-ins — the short prior window', fullDays.map((d, i) => ({ ...d, weightKg: i >= 18 ? d.weightKg : null })), fullSessions)
+    push('a calorie goal of zero is no goal', fullDays.map((d) => ({ ...d, calorieGoal: 0 })), fullSessions)
+    push('a zero goal on the last day falls back to it', fullDays.map((d, i) => ({ ...d, calorieGoal: i === 27 ? 0 : null })), fullSessions)
+
+    emit('insights.json', {
+      module: 'coach/insights',
+      fn: 'daysSinceLastSession / trainingGap / fuelVsForce / stallProtocol / computeInsights',
+      note: 'Deterministic. `insights` is computeInsights at the given limit and `all` at 99 — ranked by confidence, stable on ties in builder order. Numbers in the prose use toLocaleString (en-US thousands separators).',
+      cases,
     })
   })
 })

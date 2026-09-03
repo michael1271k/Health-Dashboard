@@ -180,20 +180,20 @@
       }
     },
     {
-      "name": "a negative zero rounds away",
+      "name": "protein floors at zero when the compartments overshoot",
       "input": {
         "weight_kg": 60,
         "body_fat_pct": 0,
         "muscle_percent": null,
-        "water_percent": 100,
-        "bone_mineral": 0,
+        "water_percent": 90,
+        "bone_mineral": 20,
         "protein_percent": null
       },
       "expected": {
         "fat_mass_kg": 0,
         "fat_free_mass_kg": 60,
-        "water_mass_kg": 60,
-        "bone_mineral_kg": 0,
+        "water_mass_kg": 54,
+        "bone_mineral_kg": 12,
         "protein_mass_kg": 0
       }
     }
