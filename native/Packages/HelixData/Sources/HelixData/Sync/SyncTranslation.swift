@@ -41,6 +41,8 @@ public enum SyncKind {
     public static let setEventPrefix = "set_event."
     /// Any mirrored row, by table name and id. See `RowPush`.
     public static let rowUpsert = "row.upsert"
+    /// A mirrored row to delete, by table name and key columns. See `RowPush`.
+    public static let rowDelete = "row.delete"
 }
 
 /// The payload of a `session.upsert` item: an id, and deliberately nothing else.

@@ -54,7 +54,7 @@ public struct MirrorTable: Sendable {
     /// A closure for the same reason `pull` is one: the catalogue is a
     /// heterogeneous list of twenty-six row types, and only the generator knows
     /// which type each name means.
-    let push: @Sendable (AppDatabase, any MirrorPushRemote, String) async throws -> Bool
+    let push: @Sendable (AppDatabase, any MirrorPushRemote, RowRef) async throws -> Bool
 
     public init(
         name: String,
@@ -62,7 +62,7 @@ public struct MirrorTable: Sendable {
         strategy: MirrorStrategy,
         conflict: String = "id",
         pull: @escaping @Sendable (MirrorPuller, MirrorRequest) async throws -> Int,
-        push: @escaping @Sendable (AppDatabase, any MirrorPushRemote, String) async throws -> Bool
+        push: @escaping @Sendable (AppDatabase, any MirrorPushRemote, RowRef) async throws -> Bool
     ) {
         self.name = name
         self.group = group

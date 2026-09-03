@@ -25,11 +25,56 @@ import GRDB
 public struct RowRef: Codable, Sendable, Equatable {
     public var table: String
     public var id: String
+    /// Columns to send as an explicit `null` when the row no longer has them.
+    ///
+    /// The upsert is a MERGE (see `pushRow`): a `nil` column is omitted from
+    /// the body, so clearing a value locally leaves the server's copy standing.
+    /// Naming the column here is how a clear reaches the server — an exception
+    /// day un-marked, a water override handed back to HealthKit. Only a column
+    /// that is ABSENT from the body at drain time is nulled, so a value typed
+    /// back in after the clear is sent as itself. Decoded as empty when absent,
+    /// so an item queued by an earlier build still drains.
+    public var nulls: [String]
 
-    public init(table: String, id: String) {
+    public init(table: String, id: String, nulls: [String] = []) {
         self.table = table
         self.id = id
+        self.nulls = nulls
     }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        table = try container.decode(String.self, forKey: .table)
+        id = try container.decode(String.self, forKey: .id)
+        nulls = try container.decodeIfPresent([String].self, forKey: .nulls) ?? []
+    }
+}
+
+/// A row to DELETE, named by the columns PostgREST filters on.
+///
+/// A dictionary rather than an id because a delete has no body: the server is
+/// told `?user_id=eq.…&date=eq.…&item_key=eq.…`, and only the writer knows
+/// which columns make the row unique. For an `id`-keyed table that is
+/// `["id": …]`.
+public struct RowDeleteRef: Codable, Sendable, Equatable {
+    public var table: String
+    public var key: [String: String]
+
+    public init(table: String, key: [String: String]) {
+        self.table = table
+        self.key = key
+    }
+}
+
+/// What can go wrong queuing a delete that is not a database error.
+public enum RowPushError: Error, Equatable {
+    /// `enqueueRowDelete` was handed a key missing one of the table's
+    /// primary-key columns. Thrown rather than guessed: a delete addressed by
+    /// half a key is a delete of the wrong rows.
+    case incompleteKey(table: String, missing: String)
+    /// A delete with no filter is `DELETE` of every row the policy lets this
+    /// user see. Never sent, whatever queued it.
+    case emptyKey(table: String)
 }
 
 /// PostgREST, for one already-shaped row.
@@ -38,9 +83,16 @@ public struct RowRef: Codable, Sendable, Equatable {
 /// reason `SyncRemote` and `MirrorRemote` are protocols.
 public protocol MirrorPushRemote: Sendable {
     /// `POST /rest/v1/<table>` with `Prefer: resolution=merge-duplicates`.
+    /// `nulls` names columns to send as an explicit `null` when the encoded row
+    /// omits them — see `RowRef.nulls`.
     func upsertRow<T: Encodable & Sendable>(
-        _ row: T, table: String, conflict: String
+        _ row: T, table: String, conflict: String, nulls: [String]
     ) async throws
+
+    /// `DELETE /rest/v1/<table>?<column>=eq.<value>…`, one filter per key
+    /// column. A delete of a row the server never had is a no-op, which is what
+    /// makes a replay safe.
+    func deleteRow(table: String, key: [String: String]) async throws
 }
 
 public extension MirrorPushRemote {
@@ -57,14 +109,14 @@ public extension MirrorPushRemote {
     /// and it is what keeps a HealthKit push from blanking a hand-entered
     /// InBody reading it knows nothing about.
     ///
-    /// The cost is that clearing a value locally does not clear it server-side.
-    /// Nothing in the app clears a mirrored column today; when something does,
-    /// it wants its own explicit-null row type, the way `RemoteSessionRow` has.
+    /// The cost is that clearing a value locally does not clear it server-side
+    /// — unless the writer names the column in `RowRef.nulls`, which is the one
+    /// deliberate exception to the merge and is what Wave 4's clears use.
     func pushRow<T: MirrorRow>(
-        _ type: T.Type, from database: AppDatabase, table: String, conflict: String, id: String
+        _ type: T.Type, from database: AppDatabase, table: String, conflict: String, ref: RowRef
     ) async throws -> Bool {
-        guard let row = try database.mirrorRow(T.self, id: id) else { return false }
-        try await upsertRow(row, table: table, conflict: conflict)
+        guard let row = try database.mirrorRow(T.self, id: ref.id) else { return false }
+        try await upsertRow(row, table: table, conflict: conflict, nulls: ref.nulls)
         return true
     }
 }
@@ -154,8 +206,8 @@ public extension AppDatabase {
     /// signal is one upload rather than five. The key is unique in the schema,
     /// so accumulating would throw anyway — but the reason to collapse is that
     /// five identical writes are five round trips that all do the same thing.
-    func enqueueRowUpsert(table: String, id: String) throws {
-        try writer.write { db in try Self.enqueueRowUpsert(table: table, id: id, in: db) }
+    func enqueueRowUpsert(table: String, id: String, nulls: [String] = []) throws {
+        try writer.write { db in try Self.enqueueRowUpsert(table: table, id: id, nulls: nulls, in: db) }
     }
 
     /// The same, inside a transaction the caller already owns.
@@ -165,14 +217,74 @@ public extension AppDatabase {
     /// that queues it is a row that exists on the phone and will never reach the
     /// server if the process dies in between — the failure the outbox exists to
     /// make impossible.
-    static func enqueueRowUpsert(table: String, id: String, in db: Database) throws {
+    ///
+    /// ── CLEARS ACCUMULATE ACROSS THE COLLAPSE ───────────────────────────────
+    /// Replacing the queued item is what makes five edits one upload, but a
+    /// clear is a fact about the row's history, not about the latest edit: if
+    /// the exception flag was cleared and then the calories were nudged before a
+    /// signal, the second item must still carry the first one's null or the
+    /// server keeps the flag. So the `nulls` are UNIONED with the item being
+    /// replaced, and `pushRow` only nulls what the row is actually missing.
+    ///
+    /// A pending delete of the same row is dropped: the row exists again.
+    static func enqueueRowUpsert(table: String, id: String, nulls: [String] = [], in db: Database) throws {
         let key = "row:\(table):\(id)"
-        try db.execute(sql: "DELETE FROM outbox WHERE idempotency_key = ?", arguments: [key])
+        var cleared = Set(nulls)
+        if let previous = try OutboxItem.filter(Column("idempotency_key") == key).fetchOne(db),
+           let ref = try? HelixJSON.decoder.decode(RowRef.self, from: previous.payload) {
+            cleared.formUnion(ref.nulls)
+        }
+        try db.execute(
+            sql: "DELETE FROM outbox WHERE idempotency_key IN (?, ?)",
+            arguments: [key, Self.deleteKey(table, id)]
+        )
         var item = OutboxItem(
             kind: SyncKind.rowUpsert,
-            payload: try HelixJSON.encoder.encode(RowRef(table: table, id: id)),
+            payload: try HelixJSON.encoder.encode(RowRef(table: table, id: id, nulls: cleared.sorted())),
             idempotencyKey: key
         )
         try item.insert(db)
     }
+
+    /// Queue a DELETE of a mirrored row, inside the caller's transaction.
+    ///
+    /// `key` is column → value for EVERY primary-key column of the local table,
+    /// which is also what the server is filtered on. The caller deletes the
+    /// local row in the same transaction; this queues the server's half.
+    ///
+    /// A pending upsert of the same row is dropped: a queue that deleted a row
+    /// and then re-created it from a stale item behind the delete would undo
+    /// the user's gesture on the next drain. Re-creating the row afterwards
+    /// (`enqueueRowUpsert`) drops the delete in turn, so the queue never holds
+    /// both opinions about one row.
+    static func enqueueRowDelete(table: String, key: [String: String], in db: Database) throws {
+        let id = try rowID(table: table, key: key, in: db)
+        try db.execute(
+            sql: "DELETE FROM outbox WHERE idempotency_key IN (?, ?)",
+            arguments: ["row:\(table):\(id)", Self.deleteKey(table, id)]
+        )
+        var item = OutboxItem(
+            kind: SyncKind.rowDelete,
+            payload: try HelixJSON.encoder.encode(RowDeleteRef(table: table, key: key)),
+            idempotencyKey: Self.deleteKey(table, id)
+        )
+        try item.insert(db)
+    }
+
+    /// The outbox id of a row addressed by column → value.
+    ///
+    /// Reads the primary-key column ORDER from the schema, so a writer can name
+    /// the columns in any order and still produce the id `mirrorRow` will split
+    /// back correctly. Throws rather than guesses when a key column is missing.
+    static func rowID(table: String, key: [String: String], in db: Database) throws -> String {
+        let columns = try db.primaryKey(table).columns
+        return rowID(try columns.map { column in
+            guard let value = key[column] else {
+                throw RowPushError.incompleteKey(table: table, missing: column)
+            }
+            return value
+        })
+    }
+
+    private static func deleteKey(_ table: String, _ id: String) -> String { "rowdel:\(table):\(id)" }
 }

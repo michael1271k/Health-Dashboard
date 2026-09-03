@@ -105,15 +105,33 @@ public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
     /// PostgREST, not about the schema — and the mirror needs both columns on
     /// the way IN.
     public func upsertRow<T: Encodable & Sendable>(
-        _ row: T, table: String, conflict: String
+        _ row: T, table: String, conflict: String, nulls: [String]
     ) async throws {
         var body = try JSONDecoder().decode([String: AnyJSON].self, from: HelixJSON.encoder.encode(row))
         body.removeValue(forKey: "created_at")
         body.removeValue(forKey: "updated_at")
+        // A cleared column is absent from the body (`encodeIfPresent`), which
+        // the merge reads as "no opinion". Saying `null` out loud is the one
+        // way a clear reaches the server — and only where the row is actually
+        // missing the column, so a value typed back in is never overwritten.
+        for column in nulls where body[column] == nil {
+            body[column] = .null
+        }
         try await client
             .from(table)
             .upsert(body, onConflict: conflict, returning: .minimal)
             .execute()
+    }
+
+    public func deleteRow(table: String, key: [String: String]) async throws {
+        guard !key.isEmpty else { throw RowPushError.emptyKey(table: table) }
+        var query = client.from(table).delete(returning: .minimal)
+        // Sorted so the request is byte-identical on a replay; a dictionary's
+        // order is not.
+        for (column, value) in key.sorted(by: { $0.key < $1.key }) {
+            query = query.eq(column, value: value)
+        }
+        try await query.execute()
     }
 
     public func select<T: Decodable & Sendable>(

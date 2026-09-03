@@ -134,10 +134,13 @@ public actor SyncEngine {
         // somebody logged.
         var work: [(item: OutboxItem, sessionId: String, setId: String?)] = []
         var rowWork: [(item: OutboxItem, ref: RowRef)] = []
+        var deleteWork: [(item: OutboxItem, ref: RowDeleteRef)] = []
         for item in batch {
             do {
                 if item.kind == SyncKind.rowUpsert {
                     rowWork.append((item, try Self.rowRef(of: item)))
+                } else if item.kind == SyncKind.rowDelete {
+                    deleteWork.append((item, try Self.rowDeleteRef(of: item)))
                 } else {
                     work.append(try Self.target(of: item))
                 }
@@ -153,7 +156,7 @@ public actor SyncEngine {
         // thirty-second window of signal lands the day rather than half a
         // workout — and the workout, unlike the day, is never at risk of being
         // superseded before the next drain.
-        let rowOutcome = try await pushRows(rowWork, now: now)
+        let rowOutcome = try await pushRows(rowWork, deletes: deleteWork, now: now)
         report.pushed += rowOutcome.pushed
         report.failed += rowOutcome.failed
 
@@ -357,28 +360,47 @@ public actor SyncEngine {
     /// Never throws on a remote failure, for the same reason `push` does not:
     /// one unreachable table must not abandon the rest of the batch.
     private func pushRows(
-        _ entries: [(item: OutboxItem, ref: RowRef)], now: Date
+        _ entries: [(item: OutboxItem, ref: RowRef)],
+        deletes: [(item: OutboxItem, ref: RowDeleteRef)],
+        now: Date
     ) async throws -> (pushed: Int, failed: Int) {
-        guard !entries.isEmpty else { return (0, 0) }
+        guard !entries.isEmpty || !deletes.isEmpty else { return (0, 0) }
         guard let rows else {
             // No push remote was supplied. The items stay queued and back off;
             // they are not dropped, because the row they name is real.
-            for entry in entries {
-                try database.outboxFailed(
-                    entry.item.id, error: "no MirrorPushRemote on this engine", now: now
-                )
+            for item in entries.map(\.item) + deletes.map(\.item) {
+                try database.outboxFailed(item.id, error: "no MirrorPushRemote on this engine", now: now)
             }
-            return (0, entries.count)
+            return (0, entries.count + deletes.count)
         }
 
         var pushed = 0
         var failed = 0
+        // Deletes first. The queue never holds a delete and an upsert of the
+        // SAME row (`enqueueRowUpsert` and `enqueueRowDelete` each drop the
+        // other), so the order only matters for a row that was deleted and
+        // re-created under a fresh id in one gap — the water override does
+        // exactly that — and there the delete must land before the insert or
+        // the server briefly holds two rows for one day.
+        for entry in deletes {
+            do {
+                guard catalogue[entry.ref.table] != nil else {
+                    throw SyncError.unmirroredTable(entry.ref.table)
+                }
+                try await rows.deleteRow(table: entry.ref.table, key: entry.ref.key)
+                try database.outboxSucceeded(entry.item.id)
+                pushed += 1
+            } catch {
+                try database.outboxFailed(entry.item.id, error: describe(error), now: now)
+                failed += 1
+            }
+        }
         for entry in entries {
             do {
                 guard let table = catalogue[entry.ref.table] else {
                     throw SyncError.unmirroredTable(entry.ref.table)
                 }
-                guard try await table.push(database, rows, entry.ref.id) else {
+                guard try await table.push(database, rows, entry.ref) else {
                     throw SyncError.unknownRow(table: entry.ref.table, id: entry.ref.id)
                 }
                 try database.outboxSucceeded(entry.item.id)
@@ -397,6 +419,15 @@ public actor SyncEngine {
     static func rowRef(of item: OutboxItem) throws -> RowRef {
         do {
             return try HelixJSON.decoder.decode(RowRef.self, from: item.payload)
+        } catch {
+            throw SyncError.undecodablePayload(kind: item.kind, detail: "\(error)")
+        }
+    }
+
+    /// What a `row.delete` item names.
+    static func rowDeleteRef(of item: OutboxItem) throws -> RowDeleteRef {
+        do {
+            return try HelixJSON.decoder.decode(RowDeleteRef.self, from: item.payload)
         } catch {
             throw SyncError.undecodablePayload(kind: item.kind, detail: "\(error)")
         }

@@ -7,15 +7,21 @@ import Testing
 /// The write half of the mirror, recorded.
 private actor RecordingPush: MirrorPushRemote {
     /// Table → the JSON bodies it was sent, in order.
-    var sent: [(table: String, conflict: String, json: String)] = []
+    var sent: [(table: String, conflict: String, json: String, nulls: [String])] = []
+    var deleted: [RowDeleteRef] = []
     var failing: Set<String> = []
 
     func fail(_ table: String) { failing.insert(table) }
 
-    func upsertRow<T: Encodable & Sendable>(_ row: T, table: String, conflict: String) async throws {
+    func upsertRow<T: Encodable & Sendable>(_ row: T, table: String, conflict: String, nulls: [String]) async throws {
         if failing.contains(table) { throw URLError(.notConnectedToInternet) }
         let data = try HelixJSON.encoder.encode(row)
-        sent.append((table, conflict, String(decoding: data, as: UTF8.self)))
+        sent.append((table, conflict, String(decoding: data, as: UTF8.self), nulls))
+    }
+
+    func deleteRow(table: String, key: [String: String]) async throws {
+        if failing.contains(table) { throw URLError(.notConnectedToInternet) }
+        deleted.append(RowDeleteRef(table: table, key: key))
     }
 }
 
@@ -242,6 +248,100 @@ struct RowPushTests {
 
         #expect(report.failed == 1)
         #expect(try db.pendingOutbox().count == 1)
+    }
+
+    // MARK: Clears and deletes
+
+    @Test("a cleared column is carried to the remote, and survives the collapse")
+    func clearsAccumulate() async throws {
+        let db = try store()
+        try seedGoals(db, calorieGoal: 1955)
+        try db.enqueueRowUpsert(table: "user_goals", id: "g1", nulls: ["active_lever"])
+        // A later edit before a signal REPLACES the item — and must not lose
+        // the clear, or the server keeps a lever the user released.
+        try db.enqueueRowUpsert(table: "user_goals", id: "g1")
+
+        let pending = try db.pendingOutbox()
+        #expect(pending.count == 1)
+        let ref = try HelixJSON.decoder.decode(RowRef.self, from: pending[0].payload)
+        #expect(ref.nulls == ["active_lever"])
+
+        let push = RecordingPush()
+        _ = try await engine(db, push).drain()
+        #expect(await push.sent.first?.nulls == ["active_lever"])
+    }
+
+    @Test("an item queued by an earlier build, without `nulls`, still decodes")
+    func legacyRowRefDecodes() throws {
+        let ref = try HelixJSON.decoder.decode(
+            RowRef.self, from: Data(#"{"table":"user_goals","id":"g1"}"#.utf8)
+        )
+        #expect(ref == RowRef(table: "user_goals", id: "g1"))
+    }
+
+    @Test("a delete drains as a DELETE by key, and drops the pending upsert")
+    func deleteDrains() async throws {
+        let db = try store()
+        try seedGoals(db, calorieGoal: 1955)
+        try db.enqueueRowUpsert(table: "user_goals", id: "g1")
+        try await db.writer.write { conn in
+            try AppDatabase.enqueueRowDelete(table: "user_goals", key: ["id": "g1"], in: conn)
+        }
+        let pending = try db.pendingOutbox()
+        #expect(pending.count == 1)
+        #expect(pending[0].kind == SyncKind.rowDelete)
+
+        let push = RecordingPush()
+        let report = try await engine(db, push).drain()
+        #expect(report.pushed == 1)
+        #expect(await push.sent.isEmpty)
+        #expect(await push.deleted == [RowDeleteRef(table: "user_goals", key: ["id": "g1"])])
+        #expect(try db.pendingOutbox().isEmpty)
+    }
+
+    @Test("re-creating a deleted row supersedes the delete")
+    func recreateSupersedesDelete() throws {
+        let db = try store()
+        try seedGoals(db, calorieGoal: 1955)
+        try db.writer.write { conn in
+            try AppDatabase.enqueueRowDelete(table: "user_goals", key: ["id": "g1"], in: conn)
+        }
+        try db.enqueueRowUpsert(table: "user_goals", id: "g1")
+        let pending = try db.pendingOutbox()
+        #expect(pending.count == 1)
+        #expect(pending[0].kind == SyncKind.rowUpsert)
+    }
+
+    @Test("a composite delete is keyed the way its upsert is")
+    func compositeDeleteKey() throws {
+        // The two idempotency keys must agree on the id, or a delete cannot
+        // find the upsert it is meant to supersede.
+        let db = try store()
+        try db.writer.write { conn in
+            try AppDatabase.enqueueRowUpsert(
+                table: "supplement_log", id: AppDatabase.rowID(["u1", "2026-09-03", "creatine"]), in: conn
+            )
+            try AppDatabase.enqueueRowDelete(
+                table: "supplement_log",
+                key: ["user_id": "u1", "date": "2026-09-03", "item_key": "creatine"],
+                in: conn
+            )
+        }
+        let pending = try db.pendingOutbox()
+        #expect(pending.count == 1)
+        #expect(pending[0].kind == SyncKind.rowDelete)
+    }
+
+    @Test("a delete addressed by half a key is refused, not guessed")
+    func incompleteKeyIsRefused() throws {
+        let db = try store()
+        #expect(throws: RowPushError.self) {
+            try db.writer.write { conn in
+                try AppDatabase.enqueueRowDelete(
+                    table: "supplement_log", key: ["user_id": "u1", "date": "2026-09-03"], in: conn
+                )
+            }
+        }
     }
 }
 

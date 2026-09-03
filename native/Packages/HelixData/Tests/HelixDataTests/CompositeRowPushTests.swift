@@ -24,10 +24,12 @@ struct CompositeRowPushTests {
     private actor RecordingPush: MirrorPushRemote {
         var sent: [(table: String, conflict: String, json: String)] = []
 
-        func upsertRow<T: Encodable & Sendable>(_ row: T, table: String, conflict: String) async throws {
+        func upsertRow<T: Encodable & Sendable>(_ row: T, table: String, conflict: String, nulls: [String]) async throws {
             let data = try HelixJSON.encoder.encode(row)
             sent.append((table, conflict, String(decoding: data, as: UTF8.self)))
         }
+
+        func deleteRow(table: String, key: [String: String]) async throws {}
     }
 
     private struct IdleSyncRemote: SyncRemote {
