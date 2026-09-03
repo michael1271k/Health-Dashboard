@@ -1,0 +1,1032 @@
+{
+  "module": "charts/muscleAggregate",
+  "fn": "aggregateMuscleSets",
+  "note": "Six stats rows always, in MUSCLE_GROUPS order; volume is Math.round of the sum; daysSince is null with no rows. A unilateral pair (shared pairId AND sides L+R, exactly two rows) is ONE set and ONE tonnage at the weaker side. `weekly` is Sunday-anchored weeks ascending, `week` = MM-DD, every group present.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "rows": [],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": []
+      }
+    },
+    {
+      "name": "one bilateral set credits two groups once each",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 100,
+            "reps": 10,
+            "pairId": null,
+            "groups": [
+              "Legs",
+              "Core"
+            ],
+            "date": "2026-08-03"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 1,
+            "volume": 1000,
+            "daysSince": 5
+          },
+          {
+            "group": "Core",
+            "sets": 1,
+            "volume": 1000,
+            "daysSince": 5
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 1,
+            "Core": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a unilateral pair is ONE set at the weaker side",
+      "input": {
+        "rows": [
+          {
+            "id": "l",
+            "weightKg": 5,
+            "reps": 10,
+            "pairId": "p1",
+            "side": "L",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-04"
+          },
+          {
+            "id": "r",
+            "weightKg": 5,
+            "reps": 14,
+            "pairId": "p1",
+            "side": "R",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 1,
+            "volume": 50,
+            "daysSince": 4
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 1,
+            "Arms": 0,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "a pair without sides is two rows at logged tonnage but one set",
+      "input": {
+        "rows": [
+          {
+            "id": "l",
+            "weightKg": 5,
+            "reps": 10,
+            "pairId": "p1",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-04"
+          },
+          {
+            "id": "r",
+            "weightKg": 5,
+            "reps": 14,
+            "pairId": "p1",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 1,
+            "volume": 120,
+            "daysSince": 4
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 1,
+            "Arms": 0,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "a lone side scores as logged",
+      "input": {
+        "rows": [
+          {
+            "id": "l",
+            "weightKg": 6,
+            "reps": 12,
+            "pairId": "p1",
+            "side": "L",
+            "groups": [
+              "Arms"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 1,
+            "volume": 72,
+            "daysSince": 4
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 1,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "a malformed three-row bucket scores as logged",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 6,
+            "reps": 12,
+            "pairId": "p1",
+            "side": "L",
+            "groups": [
+              "Arms"
+            ],
+            "date": "2026-08-04"
+          },
+          {
+            "id": "b",
+            "weightKg": 6,
+            "reps": 12,
+            "pairId": "p1",
+            "side": "R",
+            "groups": [
+              "Arms"
+            ],
+            "date": "2026-08-04"
+          },
+          {
+            "id": "c",
+            "weightKg": 6,
+            "reps": 12,
+            "pairId": "p1",
+            "side": "R",
+            "groups": [
+              "Arms"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 1,
+            "volume": 216,
+            "daysSince": 4
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 1,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "duplicate group tags count once",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 50,
+            "reps": 10,
+            "pairId": null,
+            "groups": [
+              "Legs",
+              "Legs",
+              "Legs"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 1,
+            "volume": 500,
+            "daysSince": 4
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 1,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "rows with no groups are skipped",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 50,
+            "reps": 10,
+            "pairId": null,
+            "groups": [],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": []
+      }
+    },
+    {
+      "name": "a three-week series with recency and week bucketing",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 80,
+            "reps": 8,
+            "pairId": null,
+            "groups": [
+              "Chest",
+              "Arms"
+            ],
+            "date": "2026-07-20"
+          },
+          {
+            "id": "b",
+            "weightKg": 60,
+            "reps": 10,
+            "pairId": null,
+            "groups": [
+              "Back"
+            ],
+            "date": "2026-07-21"
+          },
+          {
+            "id": "c",
+            "weightKg": 100,
+            "reps": 8,
+            "pairId": null,
+            "groups": [
+              "Legs"
+            ],
+            "date": "2026-07-27"
+          },
+          {
+            "id": "d",
+            "weightKg": 0,
+            "reps": 15,
+            "pairId": null,
+            "groups": [
+              "Core"
+            ],
+            "date": "2026-07-27"
+          },
+          {
+            "id": "e",
+            "weightKg": 80,
+            "reps": 9,
+            "pairId": null,
+            "groups": [
+              "Chest",
+              "Arms"
+            ],
+            "date": "2026-08-03"
+          },
+          {
+            "id": "f",
+            "weightKg": 7.5,
+            "reps": 12,
+            "pairId": "p",
+            "side": "L",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-05"
+          },
+          {
+            "id": "g",
+            "weightKg": 7.5,
+            "reps": 11,
+            "pairId": "p",
+            "side": "R",
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-05"
+          },
+          {
+            "id": "h",
+            "weightKg": 20,
+            "reps": 12,
+            "pairId": null,
+            "groups": [
+              "Shoulders"
+            ],
+            "date": "2026-08-08"
+          },
+          {
+            "id": "i",
+            "weightKg": 40,
+            "reps": 12.5,
+            "pairId": null,
+            "groups": [
+              "Back"
+            ],
+            "date": "2026-08-02"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 2,
+            "volume": 1360,
+            "daysSince": 5
+          },
+          {
+            "group": "Back",
+            "sets": 2,
+            "volume": 1100,
+            "daysSince": 6
+          },
+          {
+            "group": "Shoulders",
+            "sets": 2,
+            "volume": 323,
+            "daysSince": 0
+          },
+          {
+            "group": "Arms",
+            "sets": 2,
+            "volume": 1360,
+            "daysSince": 5
+          },
+          {
+            "group": "Legs",
+            "sets": 1,
+            "volume": 800,
+            "daysSince": 12
+          },
+          {
+            "group": "Core",
+            "sets": 1,
+            "volume": 0,
+            "daysSince": 12
+          }
+        ],
+        "weekly": [
+          {
+            "week": "07-19",
+            "Chest": 1,
+            "Back": 1,
+            "Shoulders": 0,
+            "Arms": 1,
+            "Legs": 0,
+            "Core": 0
+          },
+          {
+            "week": "07-26",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 1,
+            "Core": 1
+          },
+          {
+            "week": "08-02",
+            "Chest": 1,
+            "Back": 1,
+            "Shoulders": 2,
+            "Arms": 1,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "zero weight and zero reps are tonnage 0, sets still counted",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 0,
+            "reps": 0,
+            "pairId": null,
+            "groups": [
+              "Core"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 1,
+            "volume": 0,
+            "daysSince": 4
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 0,
+            "Core": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a group outside the six is aggregated but not reported",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 10,
+            "reps": 10,
+            "pairId": null,
+            "groups": [
+              "Neck"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "rounding of tonnage at .5",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 2.5,
+            "reps": 9,
+            "pairId": null,
+            "groups": [
+              "Arms"
+            ],
+            "date": "2026-08-04"
+          },
+          {
+            "id": "b",
+            "weightKg": 1.25,
+            "reps": 9,
+            "pairId": null,
+            "groups": [
+              "Core"
+            ],
+            "date": "2026-08-04"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 1,
+            "volume": 23,
+            "daysSince": 4
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 1,
+            "volume": 11,
+            "daysSince": 4
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-02",
+            "Chest": 0,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 1,
+            "Legs": 0,
+            "Core": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a future date gives a negative daysSince",
+      "input": {
+        "rows": [
+          {
+            "id": "a",
+            "weightKg": 10,
+            "reps": 10,
+            "pairId": null,
+            "groups": [
+              "Chest"
+            ],
+            "date": "2026-08-12"
+          }
+        ],
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "stats": [
+          {
+            "group": "Chest",
+            "sets": 1,
+            "volume": 100,
+            "daysSince": -4
+          },
+          {
+            "group": "Back",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Shoulders",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Arms",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Legs",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          },
+          {
+            "group": "Core",
+            "sets": 0,
+            "volume": 0,
+            "daysSince": null
+          }
+        ],
+        "weekly": [
+          {
+            "week": "08-09",
+            "Chest": 1,
+            "Back": 0,
+            "Shoulders": 0,
+            "Arms": 0,
+            "Legs": 0,
+            "Core": 0
+          }
+        ]
+      }
+    }
+  ]
+}

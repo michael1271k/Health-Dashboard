@@ -1,0 +1,135 @@
+{
+  "module": "utils/format",
+  "fn": "formatRelativeTime",
+  "note": "Now is pinned to 2026-08-06T12:00:00Z. Rounds at each rung (sec → min → hr → day); under 45 s is \"just now\"; from 7 days it is an en-IL \"6 Aug\" date (UTC).",
+  "cases": [
+    {
+      "name": "<null>",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": null
+      },
+      "expected": "—"
+    },
+    {
+      "name": "<empty>",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": ""
+      },
+      "expected": "—"
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "garbage"
+      },
+      "expected": "—"
+    },
+    {
+      "name": "2026-08-06T12:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T12:00:00Z"
+      },
+      "expected": "just now"
+    },
+    {
+      "name": "2026-08-06T11:59:20Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T11:59:20Z"
+      },
+      "expected": "just now"
+    },
+    {
+      "name": "2026-08-06T11:59:15Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T11:59:15Z"
+      },
+      "expected": "1m ago"
+    },
+    {
+      "name": "2026-08-06T11:48:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T11:48:00Z"
+      },
+      "expected": "12m ago"
+    },
+    {
+      "name": "2026-08-06T11:00:30Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T11:00:30Z"
+      },
+      "expected": "1h ago"
+    },
+    {
+      "name": "2026-08-06T10:59:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-06T10:59:00Z"
+      },
+      "expected": "1h ago"
+    },
+    {
+      "name": "2026-08-05T13:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-05T13:00:00Z"
+      },
+      "expected": "23h ago"
+    },
+    {
+      "name": "2026-08-05T12:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-08-05T12:00:00Z"
+      },
+      "expected": "1d ago"
+    },
+    {
+      "name": "2026-07-31T12:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-07-31T12:00:00Z"
+      },
+      "expected": "6d ago"
+    },
+    {
+      "name": "2026-07-30T12:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-07-30T12:00:00Z"
+      },
+      "expected": "30 Jul"
+    },
+    {
+      "name": "2026-07-01T00:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-07-01T00:00:00Z"
+      },
+      "expected": "1 Jul"
+    },
+    {
+      "name": "2025-12-25T00:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2025-12-25T00:00:00Z"
+      },
+      "expected": "25 Dec"
+    },
+    {
+      "name": "2026-09-01T00:00:00Z",
+      "input": {
+        "now": "2026-08-06T12:00:00Z",
+        "iso": "2026-09-01T00:00:00Z"
+      },
+      "expected": "just now"
+    }
+  ]
+}

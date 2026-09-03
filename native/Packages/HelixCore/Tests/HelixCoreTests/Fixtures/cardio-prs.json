@@ -1,0 +1,2319 @@
+{
+  "module": "cardio/cardioPrs",
+  "fn": "axisValue / cardioRecords / axesHeldBy",
+  "note": "Pace is a MINIMUM with a 1 km floor; every other axis is a maximum. Ties keep the EARLIER row. `axisValues` is per row in the order [distance, duration, pace, calories]; null = cannot compete. Non-finite numbers in the input are serialised as null by JSON — Swift decodes them as absent, which is what the TS treats them as.",
+  "cases": [
+    {
+      "name": "runs — the faster 5k takes pace, the 8k takes distance and calories",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "run",
+        "rowId": "r2"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 8000,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 52,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 5.5,
+            "id": "r5",
+            "date": "2026-08-17"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 600,
+            "id": "r3",
+            "date": "2026-08-15"
+          }
+        },
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "the 8k row holds distance, duration and calories",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "run",
+        "rowId": "r3"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 8000,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 52,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 5.5,
+            "id": "r5",
+            "date": "2026-08-17"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 600,
+            "id": "r3",
+            "date": "2026-08-15"
+          }
+        },
+        "held": [
+          "distance",
+          "duration",
+          "calories"
+        ],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "the bus dash holds nothing",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "run",
+        "rowId": "r4"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 8000,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 52,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 5.5,
+            "id": "r5",
+            "date": "2026-08-17"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 600,
+            "id": "r3",
+            "date": "2026-08-15"
+          }
+        },
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "walks — a tie on calories keeps the earlier row",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "walk",
+        "rowId": "w1"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 9000,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 110,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 11.666666666666666,
+            "id": "w2",
+            "date": "2026-08-09"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 300,
+            "id": "w1",
+            "date": "2026-08-02"
+          }
+        },
+        "held": [
+          "distance",
+          "duration",
+          "calories"
+        ],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "the later walk wins pace and duration only",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "walk",
+        "rowId": "w2"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 9000,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 110,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 11.666666666666666,
+            "id": "w2",
+            "date": "2026-08-09"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 300,
+            "id": "w1",
+            "date": "2026-08-02"
+          }
+        },
+        "held": [
+          "pace"
+        ],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "zero, missing and negative values do not compete",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "walk",
+        "rowId": "w4"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 9000,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 110,
+            "id": "w1",
+            "date": "2026-08-02"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 11.666666666666666,
+            "id": "w2",
+            "date": "2026-08-09"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 300,
+            "id": "w1",
+            "date": "2026-08-02"
+          }
+        },
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "NaN calories are no contest",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "elliptical",
+        "rowId": "e1"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 3000,
+            "id": "e1",
+            "date": "2026-08-12"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 25,
+            "id": "e1",
+            "date": "2026-08-12"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 8.333333333333334,
+            "id": "e1",
+            "date": "2026-08-12"
+          }
+        },
+        "held": [
+          "distance",
+          "duration",
+          "pace"
+        ],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Infinity distance is no contest",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "elliptical",
+        "rowId": "e2"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 3000,
+            "id": "e1",
+            "date": "2026-08-12"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 25,
+            "id": "e1",
+            "date": "2026-08-12"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 8.333333333333334,
+            "id": "e1",
+            "date": "2026-08-12"
+          }
+        },
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a kind with no rows",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "rowing",
+        "rowId": "r1"
+      },
+      "expected": {
+        "records": {},
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "an unknown row id holds nothing",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          },
+          {
+            "id": "r2",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28,
+            "active_kcal": 370,
+            "date": "2026-08-08"
+          },
+          {
+            "id": "r3",
+            "kind": "run",
+            "distance_m": 8000,
+            "duration_min": 52,
+            "kcal": 600,
+            "date": "2026-08-15"
+          },
+          {
+            "id": "r4",
+            "kind": "run",
+            "distance_m": 200,
+            "duration_min": 0.63,
+            "active_kcal": 20,
+            "date": "2026-08-16"
+          },
+          {
+            "id": "r5",
+            "kind": "run",
+            "distance_m": 1000,
+            "duration_min": 5.5,
+            "active_kcal": null,
+            "kcal": null,
+            "date": "2026-08-17"
+          },
+          {
+            "id": "w1",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 110,
+            "active_kcal": 300,
+            "date": "2026-08-02"
+          },
+          {
+            "id": "w2",
+            "kind": "walk",
+            "distance_m": 9000,
+            "duration_min": 105,
+            "active_kcal": 300,
+            "date": "2026-08-09"
+          },
+          {
+            "id": "w3",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 40,
+            "active_kcal": 0,
+            "date": "2026-08-10"
+          },
+          {
+            "id": "w4",
+            "kind": "walk",
+            "distance_m": 0,
+            "duration_min": null,
+            "active_kcal": -5,
+            "date": "2026-08-11"
+          },
+          {
+            "id": "e1",
+            "kind": "elliptical",
+            "distance_m": 3000,
+            "duration_min": 25,
+            "active_kcal": null,
+            "date": "2026-08-12"
+          },
+          {
+            "id": "e2",
+            "kind": "elliptical",
+            "distance_m": null,
+            "duration_min": 25
+          }
+        ],
+        "kind": "run",
+        "rowId": "nope"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 8000,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 52,
+            "id": "r3",
+            "date": "2026-08-15"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 5.5,
+            "id": "r5",
+            "date": "2026-08-17"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 600,
+            "id": "r3",
+            "date": "2026-08-15"
+          }
+        },
+        "held": [],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          },
+          {
+            "id": "r2",
+            "values": [
+              5000,
+              28,
+              5.6,
+              370
+            ]
+          },
+          {
+            "id": "r3",
+            "values": [
+              8000,
+              52,
+              6.5,
+              600
+            ]
+          },
+          {
+            "id": "r4",
+            "values": [
+              200,
+              0.63,
+              null,
+              20
+            ]
+          },
+          {
+            "id": "r5",
+            "values": [
+              1000,
+              5.5,
+              5.5,
+              null
+            ]
+          },
+          {
+            "id": "w1",
+            "values": [
+              9000,
+              110,
+              12.222222222222221,
+              300
+            ]
+          },
+          {
+            "id": "w2",
+            "values": [
+              9000,
+              105,
+              11.666666666666666,
+              300
+            ]
+          },
+          {
+            "id": "w3",
+            "values": [
+              null,
+              40,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "w4",
+            "values": [
+              null,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "id": "e1",
+            "values": [
+              3000,
+              25,
+              8.333333333333334,
+              null
+            ]
+          },
+          {
+            "id": "e2",
+            "values": [
+              null,
+              25,
+              null,
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a single run holds every axis it can",
+      "input": {
+        "rows": [
+          {
+            "id": "r1",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 30,
+            "active_kcal": 380,
+            "date": "2026-08-01"
+          }
+        ],
+        "kind": "run",
+        "rowId": "r1"
+      },
+      "expected": {
+        "records": {
+          "distance": {
+            "axis": "distance",
+            "value": 5000,
+            "id": "r1",
+            "date": "2026-08-01"
+          },
+          "duration": {
+            "axis": "duration",
+            "value": 30,
+            "id": "r1",
+            "date": "2026-08-01"
+          },
+          "pace": {
+            "axis": "pace",
+            "value": 6,
+            "id": "r1",
+            "date": "2026-08-01"
+          },
+          "calories": {
+            "axis": "calories",
+            "value": 380,
+            "id": "r1",
+            "date": "2026-08-01"
+          }
+        },
+        "held": [
+          "distance",
+          "duration",
+          "pace",
+          "calories"
+        ],
+        "axisValues": [
+          {
+            "id": "r1",
+            "values": [
+              5000,
+              30,
+              6,
+              380
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty ledger",
+      "input": {
+        "rows": [],
+        "kind": "run",
+        "rowId": "r1"
+      },
+      "expected": {
+        "records": {},
+        "held": [],
+        "axisValues": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "module": "sessions/detail",
+  "fn": "pctOf",
+  "note": "Extracted from MetricGrid. Null without both sides or with a zero previous; a rounded 0% is null; good = (pct > 0) === higherIsBetter.",
+  "cases": [
+    {
+      "name": "undefined",
+      "input": {
+        "metric": null,
+        "i": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "volume 12480 vs 11000",
+      "input": {
+        "metric": {
+          "key": "volume",
+          "label": "Volume",
+          "value": 12480,
+          "previous": 11000,
+          "delta": 1480,
+          "higherIsBetter": true
+        },
+        "i": 1
+      },
+      "expected": {
+        "pct": 13,
+        "good": true
+      }
+    },
+    {
+      "name": "volume 10000 vs 11000",
+      "input": {
+        "metric": {
+          "key": "volume",
+          "label": "Volume",
+          "value": 10000,
+          "previous": 11000,
+          "delta": -1000,
+          "higherIsBetter": true
+        },
+        "i": 2
+      },
+      "expected": {
+        "pct": -9,
+        "good": false
+      }
+    },
+    {
+      "name": "duration 50 vs 60",
+      "input": {
+        "metric": {
+          "key": "duration",
+          "label": "Duration",
+          "value": 50,
+          "previous": 60,
+          "delta": -10,
+          "higherIsBetter": false
+        },
+        "i": 3
+      },
+      "expected": {
+        "pct": -17,
+        "good": true
+      }
+    },
+    {
+      "name": "duration 66 vs 60",
+      "input": {
+        "metric": {
+          "key": "duration",
+          "label": "Duration",
+          "value": 66,
+          "previous": 60,
+          "delta": 6,
+          "higherIsBetter": false
+        },
+        "i": 4
+      },
+      "expected": {
+        "pct": 10,
+        "good": false
+      }
+    },
+    {
+      "name": "sets 20 vs 20",
+      "input": {
+        "metric": {
+          "key": "sets",
+          "label": "Sets",
+          "value": 20,
+          "previous": 20,
+          "delta": 0,
+          "higherIsBetter": true
+        },
+        "i": 5
+      },
+      "expected": null
+    },
+    {
+      "name": "sets 20 vs 0",
+      "input": {
+        "metric": {
+          "key": "sets",
+          "label": "Sets",
+          "value": 20,
+          "previous": 0,
+          "delta": null,
+          "higherIsBetter": true
+        },
+        "i": 6
+      },
+      "expected": null
+    },
+    {
+      "name": "sets null vs 20",
+      "input": {
+        "metric": {
+          "key": "sets",
+          "label": "Sets",
+          "value": null,
+          "previous": 20,
+          "delta": null,
+          "higherIsBetter": true
+        },
+        "i": 7
+      },
+      "expected": null
+    },
+    {
+      "name": "sets 20 vs null",
+      "input": {
+        "metric": {
+          "key": "sets",
+          "label": "Sets",
+          "value": 20,
+          "previous": null,
+          "delta": null,
+          "higherIsBetter": true
+        },
+        "i": 8
+      },
+      "expected": null
+    },
+    {
+      "name": "prs 1 vs 2",
+      "input": {
+        "metric": {
+          "key": "prs",
+          "label": "PRs",
+          "value": 1,
+          "previous": 2,
+          "delta": -1,
+          "higherIsBetter": true
+        },
+        "i": 9
+      },
+      "expected": {
+        "pct": -50,
+        "good": false
+      }
+    },
+    {
+      "name": "avgBpm 100.4 vs 100",
+      "input": {
+        "metric": {
+          "key": "avgBpm",
+          "label": "HR",
+          "value": 100.4,
+          "previous": 100,
+          "delta": 0.4,
+          "higherIsBetter": false
+        },
+        "i": 10
+      },
+      "expected": null
+    },
+    {
+      "name": "avgBpm 100.5 vs 100",
+      "input": {
+        "metric": {
+          "key": "avgBpm",
+          "label": "HR",
+          "value": 100.5,
+          "previous": 100,
+          "delta": 0.5,
+          "higherIsBetter": false
+        },
+        "i": 11
+      },
+      "expected": {
+        "pct": 1,
+        "good": false
+      }
+    },
+    {
+      "name": "calories 99.5 vs 100",
+      "input": {
+        "metric": {
+          "key": "calories",
+          "label": "kcal",
+          "value": 99.5,
+          "previous": 100,
+          "delta": -0.5,
+          "higherIsBetter": true
+        },
+        "i": 12
+      },
+      "expected": null
+    }
+  ]
+}

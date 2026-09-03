@@ -1,0 +1,2393 @@
+{
+  "module": "widget/derive + training/streak",
+  "fn": "calendarDays / streakFrom / programDayCount / weeklyVolume",
+  "note": "`schedule` is the injected scheduledFor as a map (a missing date is {dayKey: null, scheduled: false}). streakFrom skips unscheduled days, does not count an unlogged today or any future day against you. programDayCount counts from HELIX_CUT_START (2026-07-15 = day 1), 0 before it. weeklyVolume buckets by weekStartOf(date, weekStartDay).",
+  "cases": [
+    {
+      "name": "a clean fortnight",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08",
+          "2026-08-09",
+          "2026-08-10",
+          "2026-08-11",
+          "2026-08-12",
+          "2026-08-13",
+          "2026-08-14",
+          "2026-08-15"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": 9000
+          },
+          {
+            "date": "2026-08-04",
+            "volumeKg": 5000
+          },
+          {
+            "date": "2026-08-06",
+            "volumeKg": 7500
+          },
+          {
+            "date": "2026-08-07",
+            "volumeKg": 9500
+          },
+          {
+            "date": "2026-08-09",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-10",
+            "volumeKg": 9100
+          },
+          {
+            "date": "2026-08-11",
+            "volumeKg": 5100
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-09": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-10": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-11": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-12": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-13": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-14": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-15": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-12",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 5000
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 7500
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9500
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-09",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8100
+          },
+          {
+            "d": "2026-08-10",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9100
+          },
+          {
+            "d": "2026-08-11",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 5100
+          },
+          {
+            "d": "2026-08-12",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-13",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-14",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-15",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 8,
+          "best": 8
+        },
+        "programDay": 29,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 39000
+          },
+          {
+            "d": "2026-08-09",
+            "v": 22300
+          }
+        ]
+      }
+    },
+    {
+      "name": "today scheduled but not yet logged does not break the streak",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": 9000
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-04",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 2,
+          "best": 2
+        },
+        "programDay": 21,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 17000
+          }
+        ]
+      }
+    },
+    {
+      "name": "today logged counts",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": 9000
+          },
+          {
+            "date": "2026-08-04",
+            "volumeKg": 1000
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-04",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 1000
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 3,
+          "best": 3
+        },
+        "programDay": 21,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 18000
+          }
+        ]
+      }
+    },
+    {
+      "name": "a missed scheduled day breaks it; best exceeds current",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08",
+          "2026-08-09",
+          "2026-08-10",
+          "2026-08-11",
+          "2026-08-12",
+          "2026-08-13",
+          "2026-08-14",
+          "2026-08-15"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": 9000
+          },
+          {
+            "date": "2026-08-04",
+            "volumeKg": 5000
+          },
+          {
+            "date": "2026-08-06",
+            "volumeKg": 7500
+          },
+          {
+            "date": "2026-08-10",
+            "volumeKg": 9100
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-09": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-10": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-11": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-12": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-13": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-14": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-15": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-11",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 5000
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 7500
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-09",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-10",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9100
+          },
+          {
+            "d": "2026-08-11",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-12",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-13",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-14",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-15",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 1,
+          "best": 4
+        },
+        "programDay": 28,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 29500
+          },
+          {
+            "d": "2026-08-09",
+            "v": 9100
+          }
+        ]
+      }
+    },
+    {
+      "name": "two sessions on one date sum; a null volume stays null",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 3000
+          },
+          {
+            "date": "2026-08-02",
+            "volumeKg": 4000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "volumeKg": 2000
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-08",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 7000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": true,
+            "volumeKg": 2000
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 2
+        },
+        "programDay": 25,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 9000
+          }
+        ]
+      }
+    },
+    {
+      "name": "a session on a rest day is logged but unscheduled",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-05",
+            "volumeKg": 2000
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-08",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": true,
+            "volumeKg": 2000
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 0
+        },
+        "programDay": 25,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 2000
+          }
+        ]
+      }
+    },
+    {
+      "name": "future scheduled days owe nothing",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08",
+          "2026-08-09",
+          "2026-08-10",
+          "2026-08-11",
+          "2026-08-12",
+          "2026-08-13",
+          "2026-08-14",
+          "2026-08-15"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": 9000
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-09": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-10": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-11": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-12": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-13": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-14": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-15": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-03",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-09",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-10",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-11",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-12",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-13",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-14",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-15",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 2,
+          "best": 2
+        },
+        "programDay": 20,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 17000
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty history",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08"
+        ],
+        "sessions": [],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-08",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 0
+        },
+        "programDay": 25,
+        "weekly": []
+      }
+    },
+    {
+      "name": "before the cut opened — program day 0",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04"
+        ],
+        "sessions": [],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          }
+        },
+        "todayISO": "2026-07-01",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 0
+        },
+        "programDay": 0,
+        "weekly": []
+      }
+    },
+    {
+      "name": "the cut's first day is day 1",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04"
+        ],
+        "sessions": [],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          }
+        },
+        "todayISO": "2026-07-15",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 0
+        },
+        "programDay": 1,
+        "weekly": []
+      }
+    },
+    {
+      "name": "a label omitted by the caller defaults to null",
+      "input": {
+        "days": [
+          "2026-08-02",
+          "2026-08-03"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-02",
+            "volumeKg": 100
+          }
+        ],
+        "schedule": {
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true
+          },
+          "2026-08-03": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-03",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": null,
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 100
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 1,
+          "best": 1
+        },
+        "programDay": 20,
+        "weekly": [
+          {
+            "d": "2026-08-02",
+            "v": 100
+          }
+        ]
+      }
+    },
+    {
+      "name": "weekly volume — Monday-start weeks, limit 2",
+      "input": {
+        "days": [
+          "2026-07-20",
+          "2026-07-21",
+          "2026-07-22",
+          "2026-07-23",
+          "2026-07-24",
+          "2026-07-25",
+          "2026-07-26",
+          "2026-07-27",
+          "2026-07-28",
+          "2026-07-29",
+          "2026-07-30",
+          "2026-07-31",
+          "2026-08-01",
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08",
+          "2026-08-09"
+        ],
+        "sessions": [
+          {
+            "date": "2026-07-20",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-07-26",
+            "volumeKg": 1000
+          },
+          {
+            "date": "2026-07-27",
+            "volumeKg": 9000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "volumeKg": 500
+          }
+        ],
+        "schedule": {
+          "2026-07-20": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-07-21": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-07-22": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-23": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-07-24": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-07-25": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-26": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-07-27": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-07-28": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-07-29": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-30": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-07-31": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-01": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-09": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          }
+        },
+        "todayISO": "2026-08-09",
+        "weekStartDay": 1,
+        "limit": 2
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-07-20",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-07-21",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-22",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-23",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-24",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-25",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-26",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 1000
+          },
+          {
+            "d": "2026-07-27",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 9000
+          },
+          {
+            "d": "2026-07-28",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-29",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-30",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-31",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-01",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-09",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 500
+          }
+        ],
+        "streak": {
+          "current": 1,
+          "best": 2
+        },
+        "programDay": 26,
+        "weekly": [
+          {
+            "d": "2026-07-27",
+            "v": 9000
+          },
+          {
+            "d": "2026-08-03",
+            "v": 500
+          }
+        ]
+      }
+    },
+    {
+      "name": "weekly volume — a week with sessions but no tonnage is 0, a week without sessions is omitted",
+      "input": {
+        "days": [
+          "2026-07-19",
+          "2026-07-20",
+          "2026-07-21",
+          "2026-07-22",
+          "2026-07-23",
+          "2026-07-24",
+          "2026-07-25",
+          "2026-07-26",
+          "2026-07-27",
+          "2026-07-28",
+          "2026-07-29",
+          "2026-07-30",
+          "2026-07-31",
+          "2026-08-01",
+          "2026-08-02",
+          "2026-08-03",
+          "2026-08-04",
+          "2026-08-05",
+          "2026-08-06",
+          "2026-08-07",
+          "2026-08-08",
+          "2026-08-09",
+          "2026-08-10",
+          "2026-08-11",
+          "2026-08-12",
+          "2026-08-13",
+          "2026-08-14",
+          "2026-08-15"
+        ],
+        "sessions": [
+          {
+            "date": "2026-07-20",
+            "volumeKg": 8000
+          },
+          {
+            "date": "2026-08-03",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-08-04",
+            "volumeKg": null
+          }
+        ],
+        "schedule": {
+          "2026-07-19": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-07-20": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-07-21": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-07-22": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-23": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-07-24": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-07-25": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-26": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-07-27": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-07-28": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-07-29": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-07-30": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-07-31": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-01": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-02": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-03": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-04": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-05": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-06": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-07": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-08": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-09": {
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "label": "Upper A"
+          },
+          "2026-08-10": {
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "label": "Legs & Core A"
+          },
+          "2026-08-11": {
+            "dayKey": "arms",
+            "scheduled": true,
+            "label": "Delts & Arms"
+          },
+          "2026-08-12": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          },
+          "2026-08-13": {
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "label": "Upper B"
+          },
+          "2026-08-14": {
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "label": "Legs & Core B"
+          },
+          "2026-08-15": {
+            "dayKey": null,
+            "scheduled": false,
+            "label": null
+          }
+        },
+        "todayISO": "2026-08-15",
+        "weekStartDay": 0,
+        "limit": 8
+      },
+      "expected": {
+        "calendar": [
+          {
+            "d": "2026-07-19",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-20",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": 8000
+          },
+          {
+            "d": "2026-07-21",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-22",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-23",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-24",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-25",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-26",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-27",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-28",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-29",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-30",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-07-31",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-01",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-02",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-03",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-04",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": true,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-05",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-06",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-07",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-08",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-09",
+            "dayKey": "cb_a",
+            "label": "Upper A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-10",
+            "dayKey": "legs_a",
+            "label": "Legs & Core A",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-11",
+            "dayKey": "arms",
+            "label": "Delts & Arms",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-12",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-13",
+            "dayKey": "cb_b",
+            "label": "Upper B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-14",
+            "dayKey": "legs_b",
+            "label": "Legs & Core B",
+            "scheduled": true,
+            "logged": false,
+            "volumeKg": null
+          },
+          {
+            "d": "2026-08-15",
+            "dayKey": null,
+            "label": null,
+            "scheduled": false,
+            "logged": false,
+            "volumeKg": null
+          }
+        ],
+        "streak": {
+          "current": 0,
+          "best": 2
+        },
+        "programDay": 32,
+        "weekly": [
+          {
+            "d": "2026-07-19",
+            "v": 8000
+          },
+          {
+            "d": "2026-08-02",
+            "v": 0
+          }
+        ]
+      }
+    }
+  ]
+}

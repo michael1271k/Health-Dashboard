@@ -1,0 +1,474 @@
+{
+  "module": "sessions/deck",
+  "fn": "groupSets / STATUS_META labels / setValueLabel",
+  "note": "Extracted from ExerciseCard. A pairId (truthy) folds two rows into ONE numbered group in first-seen order; side R goes right, anything else left (a second left overwrites). STATUS_META colours are not ported; labels are. setValueLabel is from command-center/setGrid.ts.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": []
+      },
+      "expected": {
+        "groups": [],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "three singles",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 10
+          },
+          {
+            "weightKg": 60,
+            "reps": 9
+          },
+          {
+            "weightKg": 60,
+            "reps": 8,
+            "setType": "warmup"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "single",
+            "idx": 0,
+            "set": {
+              "weightKg": 60,
+              "reps": 10
+            },
+            "num": 1
+          },
+          {
+            "kind": "single",
+            "idx": 1,
+            "set": {
+              "weightKg": 60,
+              "reps": 9
+            },
+            "num": 2
+          },
+          {
+            "kind": "single",
+            "idx": 2,
+            "set": {
+              "weightKg": 60,
+              "reps": 8,
+              "setType": "warmup"
+            },
+            "num": 3
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "a pair L then R",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": "p1",
+            "side": "L"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "pairId": "p1",
+            "side": "R"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "pair",
+            "pairId": "p1",
+            "num": 1,
+            "left": {
+              "idx": 0,
+              "set": {
+                "weightKg": 12,
+                "reps": 10,
+                "pairId": "p1",
+                "side": "L"
+              }
+            },
+            "right": {
+              "idx": 1,
+              "set": {
+                "weightKg": 12,
+                "reps": 11,
+                "pairId": "p1",
+                "side": "R"
+              }
+            }
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "a pair R then L keeps one number",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "pairId": "p1",
+            "side": "R"
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": "p1",
+            "side": "L"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "pair",
+            "pairId": "p1",
+            "num": 1,
+            "right": {
+              "idx": 0,
+              "set": {
+                "weightKg": 12,
+                "reps": 11,
+                "pairId": "p1",
+                "side": "R"
+              }
+            },
+            "left": {
+              "idx": 1,
+              "set": {
+                "weightKg": 12,
+                "reps": 10,
+                "pairId": "p1",
+                "side": "L"
+              }
+            }
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "a pair with only a left side",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": "p1",
+            "side": "L"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "pair",
+            "pairId": "p1",
+            "num": 1,
+            "left": {
+              "idx": 0,
+              "set": {
+                "weightKg": 12,
+                "reps": 10,
+                "pairId": "p1",
+                "side": "L"
+              }
+            }
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "a pair without sides — both land left, last wins",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "pair",
+            "pairId": "p1",
+            "num": 1,
+            "left": {
+              "idx": 1,
+              "set": {
+                "weightKg": 12,
+                "reps": 11,
+                "pairId": "p1"
+              }
+            }
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "singles around a pair",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 100,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "pairId": "p1",
+            "side": "L"
+          },
+          {
+            "weightKg": 90,
+            "reps": 10
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "pairId": "p1",
+            "side": "R"
+          },
+          {
+            "weightKg": 80,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "single",
+            "idx": 0,
+            "set": {
+              "weightKg": 100,
+              "reps": 8
+            },
+            "num": 1
+          },
+          {
+            "kind": "pair",
+            "pairId": "p1",
+            "num": 2,
+            "left": {
+              "idx": 1,
+              "set": {
+                "weightKg": 12,
+                "reps": 10,
+                "pairId": "p1",
+                "side": "L"
+              }
+            },
+            "right": {
+              "idx": 3,
+              "set": {
+                "weightKg": 12,
+                "reps": 11,
+                "pairId": "p1",
+                "side": "R"
+              }
+            }
+          },
+          {
+            "kind": "single",
+            "idx": 2,
+            "set": {
+              "weightKg": 90,
+              "reps": 10
+            },
+            "num": 3
+          },
+          {
+            "kind": "single",
+            "idx": 4,
+            "set": {
+              "weightKg": 80,
+              "reps": 12
+            },
+            "num": 4
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "an empty pairId is a single",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 50,
+            "reps": 10,
+            "pairId": ""
+          },
+          {
+            "weightKg": 50,
+            "reps": 10,
+            "pairId": "",
+            "side": "R"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "single",
+            "idx": 0,
+            "set": {
+              "weightKg": 50,
+              "reps": 10,
+              "pairId": ""
+            },
+            "num": 1
+          },
+          {
+            "kind": "single",
+            "idx": 1,
+            "set": {
+              "weightKg": 50,
+              "reps": 10,
+              "pairId": "",
+              "side": "R"
+            },
+            "num": 2
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "two pairs interleaved",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1,
+            "reps": 1,
+            "pairId": "a",
+            "side": "L"
+          },
+          {
+            "weightKg": 2,
+            "reps": 2,
+            "pairId": "b",
+            "side": "L"
+          },
+          {
+            "weightKg": 1,
+            "reps": 1,
+            "pairId": "a",
+            "side": "R"
+          },
+          {
+            "weightKg": 2,
+            "reps": 2,
+            "pairId": "b",
+            "side": "R"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "kind": "pair",
+            "pairId": "a",
+            "num": 1,
+            "left": {
+              "idx": 0,
+              "set": {
+                "weightKg": 1,
+                "reps": 1,
+                "pairId": "a",
+                "side": "L"
+              }
+            },
+            "right": {
+              "idx": 2,
+              "set": {
+                "weightKg": 1,
+                "reps": 1,
+                "pairId": "a",
+                "side": "R"
+              }
+            }
+          },
+          {
+            "kind": "pair",
+            "pairId": "b",
+            "num": 2,
+            "left": {
+              "idx": 1,
+              "set": {
+                "weightKg": 2,
+                "reps": 2,
+                "pairId": "b",
+                "side": "L"
+              }
+            },
+            "right": {
+              "idx": 3,
+              "set": {
+                "weightKg": 2,
+                "reps": 2,
+                "pairId": "b",
+                "side": "R"
+              }
+            }
+          }
+        ],
+        "statusLabels": null,
+        "valueLabels": null
+      }
+    },
+    {
+      "name": "the vocabularies",
+      "input": {
+        "sets": []
+      },
+      "expected": {
+        "groups": [],
+        "statusLabels": {
+          "PR": "PR",
+          "PROGRESS": "PROG ▲",
+          "HOLD": "HOLD",
+          "REGRESS": "REGR ▼",
+          "NEW": "NEW"
+        },
+        "valueLabels": {
+          "loaded": "Reps",
+          "reps": "Reps",
+          "time": "Sec",
+          "cardio": "Min"
+        }
+      }
+    }
+  ]
+}

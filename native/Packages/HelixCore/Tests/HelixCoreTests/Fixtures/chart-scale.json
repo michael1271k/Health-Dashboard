@@ -1,0 +1,1099 @@
+{
+  "module": "charts/scale",
+  "fn": "niceDomain / tightDomain / compactKg / axisBound",
+  "note": "A null option object means \"not exercised\". Non-finite inputs serialise as null (compactKg(null) must be \"—\"; an axisBound value of null is NaN). axisBound falls back to toLocaleString (en-US grouping) when the span is under twice the compactKg rounding.",
+  "cases": [
+    {
+      "name": "weekly volume 8–12 t",
+      "input": {
+        "values": [
+          8400,
+          9100,
+          11800,
+          12000,
+          10400
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          8000,
+          14000
+        ],
+        "tight": [
+          8184,
+          12216
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "zero-based",
+      "input": {
+        "values": [
+          8400,
+          9100,
+          11800
+        ],
+        "nice": {
+          "zeroBased": true
+        },
+        "tight": null,
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          0,
+          15000
+        ],
+        "tight": null,
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "flat series",
+      "input": {
+        "values": [
+          9000,
+          9000,
+          9000
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          8000,
+          10000
+        ],
+        "tight": [
+          8974.8,
+          9025.2
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "flat at zero",
+      "input": {
+        "values": [
+          0,
+          0
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          -1,
+          1
+        ],
+        "tight": [
+          -0.56,
+          0.56
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "values": [],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          0,
+          1
+        ],
+        "tight": [
+          0,
+          1
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "all null",
+      "input": {
+        "values": [
+          null,
+          null
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          0,
+          1
+        ],
+        "tight": [
+          0,
+          1
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "nulls among values",
+      "input": {
+        "values": [
+          null,
+          70.2,
+          69.8,
+          null,
+          70.5
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          69.5,
+          71
+        ],
+        "tight": [
+          69.758,
+          70.542
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "hardMin 0 on a count axis",
+      "input": {
+        "values": [
+          1,
+          2,
+          3
+        ],
+        "nice": {
+          "hardMin": 0
+        },
+        "tight": {
+          "hardMin": 0
+        },
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          0,
+          4
+        ],
+        "tight": [
+          0.88,
+          3.12
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "hardMin above lo on tight",
+      "input": {
+        "values": [
+          100,
+          101
+        ],
+        "nice": null,
+        "tight": {
+          "hardMin": 100.5
+        },
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": [
+          100.5,
+          101.06
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "wide padding",
+      "input": {
+        "values": [
+          10,
+          20
+        ],
+        "nice": {
+          "padPct": 0.5
+        },
+        "tight": {
+          "padPct": 0.5
+        },
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          5,
+          25
+        ],
+        "tight": [
+          5,
+          25
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "single value",
+      "input": {
+        "values": [
+          3100
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          2600,
+          3600
+        ],
+        "tight": [
+          3091.32,
+          3108.68
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "negative values",
+      "input": {
+        "values": [
+          -5,
+          -2
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          -6,
+          -1
+        ],
+        "tight": [
+          -5.18,
+          -1.82
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "span floor — 12400/12500/12600",
+      "input": {
+        "values": [
+          12400,
+          12500,
+          12600
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          12300,
+          12700
+        ],
+        "tight": [
+          12388,
+          12612
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "span floor — quarter kilo microload stays flat",
+      "input": {
+        "values": [
+          3000,
+          3000.25,
+          3000.5
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          2999.8,
+          3000.6
+        ],
+        "tight": [
+          2991.8493,
+          3008.6507
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "span floor — five kilos on three tonnes",
+      "input": {
+        "values": [
+          3000,
+          3005
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          2998,
+          3006
+        ],
+        "tight": [
+          2994.093,
+          3010.907
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "custom minSpanPct",
+      "input": {
+        "values": [
+          3000,
+          3005
+        ],
+        "nice": null,
+        "tight": {
+          "minSpanPct": 0.05
+        },
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": [
+          2918.43,
+          3086.57
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "tiny values",
+      "input": {
+        "values": [
+          0.001,
+          0.002
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          0.0005,
+          0.0025
+        ],
+        "tight": [
+          0.00094,
+          0.00206
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "huge values",
+      "input": {
+        "values": [
+          1000000000,
+          2000000000
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          500000000,
+          2500000000
+        ],
+        "tight": [
+          940000000,
+          2060000000
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "bodyweight kg",
+      "input": {
+        "values": [
+          66.2,
+          66,
+          65.9,
+          65.7,
+          65.8
+        ],
+        "nice": {},
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": [
+          65.6,
+          66.4
+        ],
+        "tight": [
+          65.67,
+          66.23
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "a domain narrower than 1e-6 collapses and is re-opened",
+      "input": {
+        "values": [
+          1e-9,
+          2e-9
+        ],
+        "nice": null,
+        "tight": {},
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": [
+          0,
+          1
+        ],
+        "compact": null,
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 0",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 0,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "0",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 999",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 999,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "999",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 1000",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 1000,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "1.0k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 1049",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 1049,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "1.0k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 1050",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 1050,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "1.1k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 8400",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 8400,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "8.4k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 9100",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 9100,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "9.1k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 9950",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 9950,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "9.9k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 9999",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 9999,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "10.0k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 10000",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 10000,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "10k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 10499",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 10499,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "10k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 10500",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 10500,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "11k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 12345",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 12345,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "12k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 99999",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 99999,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "100k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg -8400",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": -8400,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "-8.4k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg -12000",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": -12000,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "-12k",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg NaN",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "—",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg Infinity",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "—",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 0.4",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 0.4,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "0",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 0.5",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 0.5,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "1",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 1.5",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 1.5,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "2",
+        "axis": null
+      }
+    },
+    {
+      "name": "compactKg 2.5",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": 2.5,
+        "axis": null
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": "3",
+        "axis": null
+      }
+    },
+    {
+      "name": "axisBound 12335 span 280",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 12335,
+          "span": 280
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "12,335"
+      }
+    },
+    {
+      "name": "axisBound 12615 span 280",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 12615,
+          "span": 280
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "12,615"
+      }
+    },
+    {
+      "name": "axisBound 12000 span 2000",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 12000,
+          "span": 2000
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "12k"
+      }
+    },
+    {
+      "name": "axisBound 12000 span 1999",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 12000,
+          "span": 1999
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "12,000"
+      }
+    },
+    {
+      "name": "axisBound 9100 span 200",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 9100,
+          "span": 200
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "9.1k"
+      }
+    },
+    {
+      "name": "axisBound 9100 span 199",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 9100,
+          "span": 199
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "9,100"
+      }
+    },
+    {
+      "name": "axisBound 950 span 3",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 950,
+          "span": 3
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "950"
+      }
+    },
+    {
+      "name": "axisBound 950 span 1",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 950,
+          "span": 1
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "950"
+      }
+    },
+    {
+      "name": "axisBound 0 span 0",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 0,
+          "span": 0
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "0"
+      }
+    },
+    {
+      "name": "axisBound 123456 span 100",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 123456,
+          "span": 100
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "123,456"
+      }
+    },
+    {
+      "name": "axisBound 1234.5 span 50",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": 1234.5,
+          "span": 50
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "1,235"
+      }
+    },
+    {
+      "name": "axisBound NaN span 100",
+      "input": {
+        "values": [],
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": {
+          "value": null,
+          "span": 100
+        }
+      },
+      "expected": {
+        "nice": null,
+        "tight": null,
+        "compact": null,
+        "axis": "—"
+      }
+    }
+  ]
+}

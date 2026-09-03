@@ -1,0 +1,269 @@
+{
+  "module": "sleep/nightWindow",
+  "fn": "prevDayISO / nextDayISO / nightWindow / fallbackBedTime / nightOf",
+  "note": "The night that ends on the morning of D is [prev(D) 12:00Z, D 12:00Z) — half-open, exactly 24 h, tiling. `nightOf` reads the hour at chars 11–13; anything at or after noon belongs to the NEXT day; an unparseable hour keeps the date.",
+  "cases": [
+    {
+      "name": "window of 2026-07-23",
+      "input": {
+        "dateISO": "2026-07-23",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-07-22",
+        "next": "2026-07-24",
+        "window": {
+          "from": "2026-07-22T12:00:00Z",
+          "to": "2026-07-23T12:00:00Z"
+        },
+        "fallback": "2026-07-22T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2026-08-01",
+      "input": {
+        "dateISO": "2026-08-01",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-07-31",
+        "next": "2026-08-02",
+        "window": {
+          "from": "2026-07-31T12:00:00Z",
+          "to": "2026-08-01T12:00:00Z"
+        },
+        "fallback": "2026-07-31T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2026-03-01",
+      "input": {
+        "dateISO": "2026-03-01",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-02-28",
+        "next": "2026-03-02",
+        "window": {
+          "from": "2026-02-28T12:00:00Z",
+          "to": "2026-03-01T12:00:00Z"
+        },
+        "fallback": "2026-02-28T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2028-03-01",
+      "input": {
+        "dateISO": "2028-03-01",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2028-02-29",
+        "next": "2028-03-02",
+        "window": {
+          "from": "2028-02-29T12:00:00Z",
+          "to": "2028-03-01T12:00:00Z"
+        },
+        "fallback": "2028-02-29T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2026-12-31",
+      "input": {
+        "dateISO": "2026-12-31",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-12-30",
+        "next": "2027-01-01",
+        "window": {
+          "from": "2026-12-30T12:00:00Z",
+          "to": "2026-12-31T12:00:00Z"
+        },
+        "fallback": "2026-12-30T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2027-01-01",
+      "input": {
+        "dateISO": "2027-01-01",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-12-31",
+        "next": "2027-01-02",
+        "window": {
+          "from": "2026-12-31T12:00:00Z",
+          "to": "2027-01-01T12:00:00Z"
+        },
+        "fallback": "2026-12-31T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2026-02-28",
+      "input": {
+        "dateISO": "2026-02-28",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2026-02-27",
+        "next": "2026-03-01",
+        "window": {
+          "from": "2026-02-27T12:00:00Z",
+          "to": "2026-02-28T12:00:00Z"
+        },
+        "fallback": "2026-02-27T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "window of 2024-02-29",
+      "input": {
+        "dateISO": "2024-02-29",
+        "startTime": null
+      },
+      "expected": {
+        "prev": "2024-02-28",
+        "next": "2024-03-01",
+        "window": {
+          "from": "2024-02-28T12:00:00Z",
+          "to": "2024-02-29T12:00:00Z"
+        },
+        "fallback": "2024-02-28T23:00:00Z",
+        "nightOf": null
+      }
+    },
+    {
+      "name": "nightOf 2026-07-22T20:45:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-22T20:45:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23T01:10:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23T01:10:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23T11:59:59Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23T11:59:59Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23T12:00:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23T12:00:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-24"
+      }
+    },
+    {
+      "name": "nightOf 2026-12-31T23:30:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-12-31T23:30:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2027-01-01"
+      }
+    },
+    {
+      "name": "nightOf 2026-12-31T12:00:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-12-31T12:00:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2027-01-01"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23T00:00:00Z",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23T00:00:00Z"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    },
+    {
+      "name": "nightOf 2026-07-23Txx",
+      "input": {
+        "dateISO": null,
+        "startTime": "2026-07-23Txx"
+      },
+      "expected": {
+        "prev": null,
+        "next": null,
+        "window": null,
+        "fallback": null,
+        "nightOf": "2026-07-23"
+      }
+    }
+  ]
+}

@@ -53,10 +53,15 @@ public struct DraftExercise: Codable, Equatable, Sendable {
     public var done: Bool?
     public var note: String?
     public var sets: [DraftSet]
+    /// The coach verdict chip: PR / PROGRESS / HOLD / REGRESS / NEW.
+    public var status: String?
+    /// The stored `exercises.muscle_groups` column, the fallback when the name is unknown to the dictionary.
+    public var muscleGroups: [String]?
 
-    public init(localId: String, name: String, kind: String? = nil, distanceKm: Double? = nil, durationSec: Double? = nil, inclinePct: Double? = nil, done: Bool? = nil, note: String? = nil, sets: [DraftSet]) {
+    public init(localId: String, name: String, kind: String? = nil, distanceKm: Double? = nil, durationSec: Double? = nil, inclinePct: Double? = nil, done: Bool? = nil, note: String? = nil, sets: [DraftSet], status: String? = nil, muscleGroups: [String]? = nil) {
         self.localId = localId; self.name = name; self.kind = kind; self.distanceKm = distanceKm
         self.durationSec = durationSec; self.inclinePct = inclinePct; self.done = done; self.note = note; self.sets = sets
+        self.status = status; self.muscleGroups = muscleGroups
     }
 
     public var isCardio: Bool { kind == "cardio" }

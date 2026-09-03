@@ -23,13 +23,8 @@ import { EMERALD, OXIDE } from '@/lib/theme/palette'
  * their number. Nothing downstream repeats an absolute.
  */
 
-/** Percent change for a metric, in the direction that metric considers good. */
-export function pctOf(m: IntelMetric | undefined): { pct: number; good: boolean } | null {
-  if (!m || m.value == null || m.previous == null || m.previous === 0) return null
-  const pct = Math.round(((m.value - m.previous) / m.previous) * 100)
-  if (pct === 0) return null
-  return { pct, good: pct > 0 === m.higherIsBetter }
-}
+import { pctOf } from '@/lib/sessions/detail'
+export { pctOf }
 
 /**
  * The ▲6% / ▼4% that qualifies a headline number.

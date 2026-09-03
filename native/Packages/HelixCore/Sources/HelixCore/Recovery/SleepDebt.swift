@@ -47,3 +47,12 @@ public extension SleepDebt {
         return SleepDebt(debtHours: jsRound1(debt), nights: withData.count, worstNightMin: worst, goalHours: goalHours)
     }
 }
+
+public extension SleepDebt {
+    /// The gauge's hue band — `debtBand` in `src/lib/sleep/debt.ts`.
+    static func band(_ debtHours: Double) -> String {
+        if debtHours <= 2 { return "ember" }
+        if debtHours <= 5 { return "gold" }
+        return "oxide"
+    }
+}

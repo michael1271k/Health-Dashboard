@@ -1,4 +1,5 @@
 'use client'
+import { mean, vsBaseline } from '@/lib/dashboard/tiles'
 
 import { useEffect, useRef, useState } from 'react'
 import { KineticNumber } from '@/components/fx/KineticNumber'
@@ -265,25 +266,8 @@ export function Ring({ pct, color, r, width = 7, track = 'rgba(255,255,255,0.07)
   )
 }
 
-/** Mean of the values that exist, or null when none do. */
-export function mean(vals: Array<number | null | undefined>): number | null {
-  const ok = vals.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
-  return ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null
-}
-
-/**
- * Today against the mean of the days BEFORE it.
- *
- * Excluding today from its own baseline is the whole point: a seven-day mean
- * that includes today is a mean today is being compared against itself inside,
- * which damps every real move and makes a genuinely bad night look average.
- */
-export function vsBaseline(series: Array<number | null>, today: number | null): number | null {
-  if (today == null) return null
-  const base = mean(series.slice(0, -1))
-  if (base == null) return null
-  return Math.round((today - base) * 10) / 10
-}
+// `mean` and `vsBaseline` live in `lib/dashboard/tiles.ts` (pure, vectored, ported).
+export { mean, vsBaseline }
 
 
 /* ────────────────────────────────────────────────────────────────────────────

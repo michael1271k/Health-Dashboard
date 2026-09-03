@@ -1,0 +1,115 @@
+{
+  "module": "cardio/zone2",
+  "fn": "isZone2",
+  "note": "A session counts at ZONE2_MIN_MINUTES=20 or more; the weekly target is 2 sessions. Non-finite inputs serialise as null.",
+  "cases": [
+    {
+      "name": "null min",
+      "input": {
+        "durationMin": null,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "undefined min",
+      "input": {
+        "durationMin": null,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "NaN min",
+      "input": {
+        "durationMin": null,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "0 min",
+      "input": {
+        "durationMin": 0,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "5 min",
+      "input": {
+        "durationMin": 5,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "19 min",
+      "input": {
+        "durationMin": 19,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "19.99 min",
+      "input": {
+        "durationMin": 19.99,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    },
+    {
+      "name": "20 min",
+      "input": {
+        "durationMin": 20,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": true
+    },
+    {
+      "name": "20.5 min",
+      "input": {
+        "durationMin": 20.5,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": true
+    },
+    {
+      "name": "45 min",
+      "input": {
+        "durationMin": 45,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": true
+    },
+    {
+      "name": "120 min",
+      "input": {
+        "durationMin": 120,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": true
+    },
+    {
+      "name": "-3 min",
+      "input": {
+        "durationMin": -3,
+        "minMinutes": 20,
+        "weeklyTarget": 2
+      },
+      "expected": false
+    }
+  ]
+}

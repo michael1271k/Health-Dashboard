@@ -1,0 +1,987 @@
+{
+  "module": "utils/{format,duration,measure}",
+  "fn": "formatSleep / formatSleepLong / mlToL / parseDurationMin / validWeight / fmtVolume / normalizeSpO2",
+  "note": "fmtVolume rounds to one place then toLocaleString with exactly one fraction digit (en-US grouping in the test environment). Non-finite inputs serialise as null. mlToL uses the default of one digit and also digits 2.",
+  "cases": [
+    {
+      "name": "sleep null",
+      "input": {
+        "kind": "sleep",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": "—",
+        "long": "—",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 0",
+      "input": {
+        "kind": "sleep",
+        "value": 0,
+        "text": null
+      },
+      "expected": {
+        "text": "—",
+        "long": "—",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep -5",
+      "input": {
+        "kind": "sleep",
+        "value": -5,
+        "text": null
+      },
+      "expected": {
+        "text": "—",
+        "long": "—",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 45",
+      "input": {
+        "kind": "sleep",
+        "value": 45,
+        "text": null
+      },
+      "expected": {
+        "text": "45m",
+        "long": "45 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 60",
+      "input": {
+        "kind": "sleep",
+        "value": 60,
+        "text": null
+      },
+      "expected": {
+        "text": "1h",
+        "long": "1 hour",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 61",
+      "input": {
+        "kind": "sleep",
+        "value": 61,
+        "text": null
+      },
+      "expected": {
+        "text": "1h 1m",
+        "long": "1 hour 1 minute",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 90",
+      "input": {
+        "kind": "sleep",
+        "value": 90,
+        "text": null
+      },
+      "expected": {
+        "text": "1h 30m",
+        "long": "1 hour 30 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 420",
+      "input": {
+        "kind": "sleep",
+        "value": 420,
+        "text": null
+      },
+      "expected": {
+        "text": "7h",
+        "long": "7 hours",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 457",
+      "input": {
+        "kind": "sleep",
+        "value": 457,
+        "text": null
+      },
+      "expected": {
+        "text": "7h 37m",
+        "long": "7 hours 37 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 457.4",
+      "input": {
+        "kind": "sleep",
+        "value": 457.4,
+        "text": null
+      },
+      "expected": {
+        "text": "7h 37m",
+        "long": "7 hours 37 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 457.5",
+      "input": {
+        "kind": "sleep",
+        "value": 457.5,
+        "text": null
+      },
+      "expected": {
+        "text": "7h 38m",
+        "long": "7 hours 38 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 59.5",
+      "input": {
+        "kind": "sleep",
+        "value": 59.5,
+        "text": null
+      },
+      "expected": {
+        "text": "1h",
+        "long": "1 hour",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 1",
+      "input": {
+        "kind": "sleep",
+        "value": 1,
+        "text": null
+      },
+      "expected": {
+        "text": "1m",
+        "long": "1 minute",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 1439",
+      "input": {
+        "kind": "sleep",
+        "value": 1439,
+        "text": null
+      },
+      "expected": {
+        "text": "23h 59m",
+        "long": "23 hours 59 minutes",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "sleep 1440",
+      "input": {
+        "kind": "sleep",
+        "value": 1440,
+        "text": null
+      },
+      "expected": {
+        "text": "24h",
+        "long": "24 hours",
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "ml null",
+      "input": {
+        "kind": "ml",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": "—",
+        "long": null,
+        "text2": "—",
+        "number": null
+      }
+    },
+    {
+      "name": "ml 0",
+      "input": {
+        "kind": "ml",
+        "value": 0,
+        "text": null
+      },
+      "expected": {
+        "text": "0.0",
+        "long": null,
+        "text2": "0.00",
+        "number": null
+      }
+    },
+    {
+      "name": "ml 2500",
+      "input": {
+        "kind": "ml",
+        "value": 2500,
+        "text": null
+      },
+      "expected": {
+        "text": "2.5",
+        "long": null,
+        "text2": "2.50",
+        "number": null
+      }
+    },
+    {
+      "name": "ml 2550",
+      "input": {
+        "kind": "ml",
+        "value": 2550,
+        "text": null
+      },
+      "expected": {
+        "text": "2.5",
+        "long": null,
+        "text2": "2.55",
+        "number": null
+      }
+    },
+    {
+      "name": "ml 999",
+      "input": {
+        "kind": "ml",
+        "value": 999,
+        "text": null
+      },
+      "expected": {
+        "text": "1.0",
+        "long": null,
+        "text2": "1.00",
+        "number": null
+      }
+    },
+    {
+      "name": "ml 1234.5",
+      "input": {
+        "kind": "ml",
+        "value": 1234.5,
+        "text": null
+      },
+      "expected": {
+        "text": "1.2",
+        "long": null,
+        "text2": "1.23",
+        "number": null
+      }
+    },
+    {
+      "name": "ml -100",
+      "input": {
+        "kind": "ml",
+        "value": -100,
+        "text": null
+      },
+      "expected": {
+        "text": "-0.1",
+        "long": null,
+        "text2": "-0.10",
+        "number": null
+      }
+    },
+    {
+      "name": "duration null",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "duration \"\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": ""
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "duration \"1h 20\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1h 20"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"1h20\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1h20"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"1 hour 5\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1 hour 5"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 65
+      }
+    },
+    {
+      "name": "duration \"2h\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "2h"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 120
+      }
+    },
+    {
+      "name": "duration \"2 hours\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "2 hours"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 120
+      }
+    },
+    {
+      "name": "duration \"1:20\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1:20"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"01:05\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "01:05"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 65
+      }
+    },
+    {
+      "name": "duration \"80m\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "80m"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"80 min\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "80 min"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"80\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "80"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \" 45 \"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": " 45 "
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 45
+      }
+    },
+    {
+      "name": "duration \"1h 20m\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1h 20m"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 80
+      }
+    },
+    {
+      "name": "duration \"3:\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "3:"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "duration \"abc\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "abc"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "duration \"1.5h\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "1.5h"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 300
+      }
+    },
+    {
+      "name": "duration \"90 minutes\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "90 minutes"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 90
+      }
+    },
+    {
+      "name": "duration \"h 20\"",
+      "input": {
+        "kind": "duration",
+        "value": null,
+        "text": "h 20"
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight null",
+      "input": {
+        "kind": "weight",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight 0",
+      "input": {
+        "kind": "weight",
+        "value": 0,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight 49.99",
+      "input": {
+        "kind": "weight",
+        "value": 49.99,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight 50",
+      "input": {
+        "kind": "weight",
+        "value": 50,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 50
+      }
+    },
+    {
+      "name": "weight 66.25",
+      "input": {
+        "kind": "weight",
+        "value": 66.25,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 66.25
+      }
+    },
+    {
+      "name": "weight NaN",
+      "input": {
+        "kind": "weight",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight Infinity",
+      "input": {
+        "kind": "weight",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "weight -1",
+      "input": {
+        "kind": "weight",
+        "value": -1,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume null",
+      "input": {
+        "kind": "volume",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": "0.0",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 0",
+      "input": {
+        "kind": "volume",
+        "value": 0,
+        "text": null
+      },
+      "expected": {
+        "text": "0.0",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 12102.5",
+      "input": {
+        "kind": "volume",
+        "value": 12102.5,
+        "text": null
+      },
+      "expected": {
+        "text": "12,102.5",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 12102.55",
+      "input": {
+        "kind": "volume",
+        "value": 12102.55,
+        "text": null
+      },
+      "expected": {
+        "text": "12,102.6",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 12102.45",
+      "input": {
+        "kind": "volume",
+        "value": 12102.45,
+        "text": null
+      },
+      "expected": {
+        "text": "12,102.5",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 999.94",
+      "input": {
+        "kind": "volume",
+        "value": 999.94,
+        "text": null
+      },
+      "expected": {
+        "text": "999.9",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 999.95",
+      "input": {
+        "kind": "volume",
+        "value": 999.95,
+        "text": null
+      },
+      "expected": {
+        "text": "1,000.0",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 1000",
+      "input": {
+        "kind": "volume",
+        "value": 1000,
+        "text": null
+      },
+      "expected": {
+        "text": "1,000.0",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume 123456789.25",
+      "input": {
+        "kind": "volume",
+        "value": 123456789.25,
+        "text": null
+      },
+      "expected": {
+        "text": "123,456,789.3",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume NaN",
+      "input": {
+        "kind": "volume",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": "0.0",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "volume -50.5",
+      "input": {
+        "kind": "volume",
+        "value": -50.5,
+        "text": null
+      },
+      "expected": {
+        "text": "-50.5",
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "spo2 null",
+      "input": {
+        "kind": "spo2",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    },
+    {
+      "name": "spo2 0.982",
+      "input": {
+        "kind": "spo2",
+        "value": 0.982,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 98.2
+      }
+    },
+    {
+      "name": "spo2 0.9825",
+      "input": {
+        "kind": "spo2",
+        "value": 0.9825,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 98.3
+      }
+    },
+    {
+      "name": "spo2 1",
+      "input": {
+        "kind": "spo2",
+        "value": 1,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 100
+      }
+    },
+    {
+      "name": "spo2 1.5",
+      "input": {
+        "kind": "spo2",
+        "value": 1.5,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 150
+      }
+    },
+    {
+      "name": "spo2 1.51",
+      "input": {
+        "kind": "spo2",
+        "value": 1.51,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 1.51
+      }
+    },
+    {
+      "name": "spo2 97.79",
+      "input": {
+        "kind": "spo2",
+        "value": 97.79,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 97.79
+      }
+    },
+    {
+      "name": "spo2 98",
+      "input": {
+        "kind": "spo2",
+        "value": 98,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 98
+      }
+    },
+    {
+      "name": "spo2 0",
+      "input": {
+        "kind": "spo2",
+        "value": 0,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": 0
+      }
+    },
+    {
+      "name": "spo2 NaN",
+      "input": {
+        "kind": "spo2",
+        "value": null,
+        "text": null
+      },
+      "expected": {
+        "text": null,
+        "long": null,
+        "text2": null,
+        "number": null
+      }
+    }
+  ]
+}

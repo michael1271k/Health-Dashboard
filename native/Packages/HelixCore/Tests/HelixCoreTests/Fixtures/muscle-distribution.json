@@ -1,0 +1,559 @@
+{
+  "module": "sessions/muscleDistribution",
+  "fn": "draftMuscleSets / draftPhysicalSets",
+  "note": "Extracted from MuscleDistribution. Committed = done !== false. Weighted: every committed non-ghost set (WARM-UPS COUNT), a pair once, primary 1.0 / secondary 0.5 with an overlap keeping full credit, resolved by name then the stored muscleGroups column. Physical: committed sets INCLUDING ghosts and warm-ups, a pair once. `weighted` is keyed by landmark muscle.",
+  "cases": [
+    {
+      "name": "null draft",
+      "input": {
+        "draft": null
+      },
+      "expected": {
+        "weighted": {},
+        "physical": 0
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": []
+        }
+      },
+      "expected": {
+        "weighted": {},
+        "physical": 0
+      }
+    },
+    {
+      "name": "a leg press — Quads full, Glutes and Hamstrings half",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "leg-press",
+              "name": "Leg Press",
+              "sets": [
+                {
+                  "weightKg": 200,
+                  "reps": 8
+                },
+                {
+                  "weightKg": 200,
+                  "reps": 8
+                },
+                {
+                  "weightKg": 200,
+                  "reps": 7
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Glutes": 1.5,
+          "Hamstrings": 1.5,
+          "Quads": 3
+        },
+        "physical": 3
+      }
+    },
+    {
+      "name": "warm-ups count, a ghost does not",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "leg-press",
+              "name": "Leg Press",
+              "sets": [
+                {
+                  "weightKg": 100,
+                  "reps": 12,
+                  "setType": "warmup"
+                },
+                {
+                  "weightKg": 200,
+                  "reps": 8
+                },
+                {
+                  "weightKg": 200,
+                  "reps": 8,
+                  "setType": "ghost"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Glutes": 1,
+          "Hamstrings": 1,
+          "Quads": 2
+        },
+        "physical": 3
+      }
+    },
+    {
+      "name": "an uncommitted set is not work",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "leg-press",
+              "name": "Leg Press",
+              "sets": [
+                {
+                  "weightKg": 200,
+                  "reps": 8
+                },
+                {
+                  "weightKg": 200,
+                  "reps": 8,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Glutes": 0.5,
+          "Hamstrings": 0.5,
+          "Quads": 1
+        },
+        "physical": 1
+      }
+    },
+    {
+      "name": "a unilateral pair is ONE set",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "cable-lateral-raise-single-arm-",
+              "name": "Cable Lateral Raise (Single Arm)",
+              "sets": [
+                {
+                  "weightKg": 7.5,
+                  "reps": 12,
+                  "pairId": "p",
+                  "side": "L"
+                },
+                {
+                  "weightKg": 7.5,
+                  "reps": 12,
+                  "pairId": "p",
+                  "side": "R"
+                },
+                {
+                  "weightKg": 7.5,
+                  "reps": 12
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Side delts": 2
+        },
+        "physical": 2
+      }
+    },
+    {
+      "name": "cardio is skipped",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "treadmill",
+              "name": "Treadmill",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 0
+                }
+              ],
+              "kind": "cardio"
+            },
+            {
+              "localId": "pec-deck",
+              "name": "Pec Deck",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 12
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Chest": 1
+        },
+        "physical": 1
+      }
+    },
+    {
+      "name": "an unknown lift falls back to its stored groups",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "mystery-machine",
+              "name": "Mystery Machine",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                }
+              ],
+              "muscleGroups": [
+                "glutes",
+                "hamstrings",
+                "quadriceps"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Hamstrings": 1,
+          "Quads": 1,
+          "Glutes": 2
+        },
+        "physical": 2
+      }
+    },
+    {
+      "name": "an unknown lift with no groups credits nothing",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "mystery-machine",
+              "name": "Mystery Machine",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {},
+        "physical": 1
+      }
+    },
+    {
+      "name": "overlap keeps FULL credit — RDL lats + a pulldown",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "romanian-deadlift-dumbbell-",
+              "name": "Romanian Deadlift (Dumbbell)",
+              "sets": [
+                {
+                  "weightKg": 24,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 24,
+                  "reps": 10
+                }
+              ]
+            },
+            {
+              "localId": "lat-pulldown",
+              "name": "Lat Pulldown",
+              "sets": [
+                {
+                  "weightKg": 70,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Glutes": 1,
+          "Lower back": 1,
+          "Upper back": 1.5,
+          "Lats": 2,
+          "Forearms": 1.5,
+          "Hamstrings": 2,
+          "Biceps": 0.5
+        },
+        "physical": 3
+      }
+    },
+    {
+      "name": "a whole Upper A",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "chest-press-machine-",
+              "name": "Chest Press (Machine)",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 12,
+                  "setType": "warmup"
+                },
+                {
+                  "weightKg": 60,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 60,
+                  "reps": 9
+                },
+                {
+                  "weightKg": 60,
+                  "reps": 8
+                }
+              ]
+            },
+            {
+              "localId": "lat-pulldown-neutral-grip-",
+              "name": "Lat Pulldown (Neutral Grip)",
+              "sets": [
+                {
+                  "weightKg": 70,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 70,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 70,
+                  "reps": 9
+                }
+              ]
+            },
+            {
+              "localId": "seated-cable-row-wide-grip-",
+              "name": "Seated Cable Row (Wide Grip)",
+              "sets": [
+                {
+                  "weightKg": 55,
+                  "reps": 12
+                },
+                {
+                  "weightKg": 55,
+                  "reps": 12
+                }
+              ]
+            },
+            {
+              "localId": "pec-deck",
+              "name": "Pec Deck",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 12
+                },
+                {
+                  "weightKg": 50,
+                  "reps": 12
+                }
+              ]
+            },
+            {
+              "localId": "face-pull",
+              "name": "Face Pull",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 20,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 20,
+                  "reps": 15
+                }
+              ]
+            },
+            {
+              "localId": "romanian-deadlift-dumbbell-",
+              "name": "Romanian Deadlift (Dumbbell)",
+              "sets": [
+                {
+                  "weightKg": 24,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 24,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 24,
+                  "reps": 10
+                }
+              ]
+            },
+            {
+              "localId": "shoulder-press-db-",
+              "name": "Shoulder Press (DB)",
+              "sets": [
+                {
+                  "weightKg": 16,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 16,
+                  "reps": 10
+                },
+                {
+                  "weightKg": 16,
+                  "reps": 9
+                }
+              ]
+            },
+            {
+              "localId": "hanging-knee-raise",
+              "name": "Hanging Knee Raise",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 15
+                },
+                {
+                  "weightKg": 0,
+                  "reps": 15
+                }
+              ]
+            },
+            {
+              "localId": "side-plank",
+              "name": "Side Plank",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 45,
+                  "pairId": "sp",
+                  "side": "L"
+                },
+                {
+                  "weightKg": 0,
+                  "reps": 45,
+                  "pairId": "sp",
+                  "side": "R"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {
+          "Triceps": 3.5,
+          "Front delts": 5,
+          "Chest": 6,
+          "Upper back": 5,
+          "Biceps": 4,
+          "Forearms": 4,
+          "Lats": 5.5,
+          "Rear delts": 3,
+          "Glutes": 1.5,
+          "Lower back": 1.5,
+          "Hamstrings": 3,
+          "Abs/core": 3
+        },
+        "physical": 23
+      }
+    },
+    {
+      "name": "exercises with only uncommitted sets are skipped entirely",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-02",
+          "notes": "",
+          "startedAt": "2026-08-02T09:00:00Z",
+          "exercises": [
+            {
+              "localId": "leg-press",
+              "name": "Leg Press",
+              "sets": [
+                {
+                  "weightKg": 200,
+                  "reps": 8,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "weighted": {},
+        "physical": 0
+      }
+    }
+  ]
+}

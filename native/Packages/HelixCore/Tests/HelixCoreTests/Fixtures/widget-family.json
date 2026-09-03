@@ -1,0 +1,263 @@
+{
+  "module": "widget/derive",
+  "fn": "volumeByFamily",
+  "note": "resolveMovers(name) by NAME only (no stored fallback in this fixture); toLandmarkMuscle then familyOf. Primary full, secondary half (SECONDARY_SET_CREDIT), never both for one family. Warm-ups COUNT. kg is Math.round, sets one place. Sorted kg desc then sets desc; families with nothing are dropped.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": []
+      },
+      "expected": []
+    },
+    {
+      "name": "a leg press credits Legs once in full",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Legs",
+          "kg": 1600,
+          "sets": 1
+        }
+      ]
+    },
+    {
+      "name": "a lat pulldown — Back primary, Arms half",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Back",
+          "kg": 700,
+          "sets": 1
+        },
+        {
+          "family": "Arms",
+          "kg": 350,
+          "sets": 0.5
+        }
+      ]
+    },
+    {
+      "name": "an unloaded set counts a set with no tonnage",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Hanging Knee Raise",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 15
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Core",
+          "kg": 0,
+          "sets": 1
+        }
+      ]
+    },
+    {
+      "name": "a warm-up counts",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Chest Press (Machine)",
+            "day": "2026-08-05",
+            "weightKg": 40,
+            "reps": 12,
+            "setType": "warmup"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Chest",
+          "kg": 480,
+          "sets": 1
+        },
+        {
+          "family": "Arms",
+          "kg": 240,
+          "sets": 0.5
+        },
+        {
+          "family": "Shoulders",
+          "kg": 240,
+          "sets": 0.5
+        }
+      ]
+    },
+    {
+      "name": "unknown lift contributes nothing",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Mystery Machine",
+            "day": "2026-08-05",
+            "weightKg": 40,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "a full Upper A",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Chest Press (Machine)",
+            "day": "2026-08-02",
+            "weightKg": 60,
+            "reps": 10
+          },
+          {
+            "exercise": "Chest Press (Machine)",
+            "day": "2026-08-02",
+            "weightKg": 60,
+            "reps": 9
+          },
+          {
+            "exercise": "Lat Pulldown (Neutral Grip)",
+            "day": "2026-08-02",
+            "weightKg": 70,
+            "reps": 10
+          },
+          {
+            "exercise": "Seated Cable Row (Wide Grip)",
+            "day": "2026-08-02",
+            "weightKg": 55,
+            "reps": 12
+          },
+          {
+            "exercise": "Pec Deck",
+            "day": "2026-08-02",
+            "weightKg": 50,
+            "reps": 12
+          },
+          {
+            "exercise": "Face Pull",
+            "day": "2026-08-02",
+            "weightKg": 20,
+            "reps": 15
+          },
+          {
+            "exercise": "Romanian Deadlift (Dumbbell)",
+            "day": "2026-08-02",
+            "weightKg": 24,
+            "reps": 10
+          },
+          {
+            "exercise": "Shoulder Press (DB)",
+            "day": "2026-08-02",
+            "weightKg": 16,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Chest",
+          "kg": 1740,
+          "sets": 3
+        },
+        {
+          "family": "Arms",
+          "kg": 1600,
+          "sets": 3.5
+        },
+        {
+          "family": "Back",
+          "kg": 1480,
+          "sets": 2.5
+        },
+        {
+          "family": "Shoulders",
+          "kg": 1030,
+          "sets": 3
+        },
+        {
+          "family": "Legs",
+          "kg": 240,
+          "sets": 1
+        }
+      ]
+    },
+    {
+      "name": "a tie on kg is broken by sets",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Extension",
+            "day": "2026-08-05",
+            "weightKg": 50,
+            "reps": 10
+          },
+          {
+            "exercise": "Leg Extension",
+            "day": "2026-08-05",
+            "weightKg": 0,
+            "reps": 10
+          },
+          {
+            "exercise": "Pec Deck",
+            "day": "2026-08-05",
+            "weightKg": 50,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Legs",
+          "kg": 500,
+          "sets": 2
+        },
+        {
+          "family": "Chest",
+          "kg": 500,
+          "sets": 1
+        }
+      ]
+    },
+    {
+      "name": "null weight and reps",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": null,
+            "reps": null
+          }
+        ]
+      },
+      "expected": [
+        {
+          "family": "Legs",
+          "kg": 0,
+          "sets": 1
+        }
+      ]
+    }
+  ]
+}
