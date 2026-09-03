@@ -1,0 +1,201 @@
+{
+  "module": "body/composition",
+  "fn": "deriveBodyComp",
+  "note": "Every mass = weight × % to 2 dp; fat-free = weight × (1 − bf/100); protein from its own % else max(0, FFM − water − bone) when all three exist. Only fields whose inputs are present are returned. Skeletal muscle is NEVER derived.",
+  "cases": [
+    {
+      "name": "nothing",
+      "input": {
+        "weight_kg": null,
+        "body_fat_pct": null,
+        "muscle_percent": null,
+        "water_percent": null,
+        "bone_mineral": null,
+        "protein_percent": null
+      },
+      "expected": {}
+    },
+    {
+      "name": "weight only",
+      "input": {
+        "weight_kg": 64.2,
+        "body_fat_pct": null,
+        "muscle_percent": null,
+        "water_percent": null,
+        "bone_mineral": null,
+        "protein_percent": null
+      },
+      "expected": {}
+    },
+    {
+      "name": "the live reading",
+      "input": {
+        "weight_kg": 64.2,
+        "body_fat_pct": 16.8,
+        "muscle_percent": 78.3,
+        "water_percent": 60.1,
+        "bone_mineral": 4.9,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 10.79,
+        "fat_free_mass_kg": 53.41,
+        "muscle_mass_kg": 50.27,
+        "water_mass_kg": 38.58,
+        "bone_mineral_kg": 3.15,
+        "protein_mass_kg": 11.68
+      }
+    },
+    {
+      "name": "with a protein % — it wins",
+      "input": {
+        "weight_kg": 64.2,
+        "body_fat_pct": 16.8,
+        "muscle_percent": 78.3,
+        "water_percent": 60.1,
+        "bone_mineral": 4.9,
+        "protein_percent": 17.1
+      },
+      "expected": {
+        "fat_mass_kg": 10.79,
+        "fat_free_mass_kg": 53.41,
+        "muscle_mass_kg": 50.27,
+        "water_mass_kg": 38.58,
+        "bone_mineral_kg": 3.15,
+        "protein_mass_kg": 10.98
+      }
+    },
+    {
+      "name": "protein backed out of the fat-free compartment",
+      "input": {
+        "weight_kg": 65,
+        "body_fat_pct": 17,
+        "muscle_percent": null,
+        "water_percent": 58,
+        "bone_mineral": 5,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 11.05,
+        "fat_free_mass_kg": 53.95,
+        "water_mass_kg": 37.7,
+        "bone_mineral_kg": 3.25,
+        "protein_mass_kg": 13
+      }
+    },
+    {
+      "name": "protein floor at zero",
+      "input": {
+        "weight_kg": 65,
+        "body_fat_pct": 17,
+        "muscle_percent": null,
+        "water_percent": 80,
+        "bone_mineral": 5,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 11.05,
+        "fat_free_mass_kg": 53.95,
+        "water_mass_kg": 52,
+        "bone_mineral_kg": 3.25,
+        "protein_mass_kg": 0
+      }
+    },
+    {
+      "name": "no protein without water",
+      "input": {
+        "weight_kg": 65,
+        "body_fat_pct": 17,
+        "muscle_percent": null,
+        "water_percent": null,
+        "bone_mineral": 5,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 11.05,
+        "fat_free_mass_kg": 53.95,
+        "bone_mineral_kg": 3.25
+      }
+    },
+    {
+      "name": "no protein without bone",
+      "input": {
+        "weight_kg": 65,
+        "body_fat_pct": 17,
+        "muscle_percent": null,
+        "water_percent": 58,
+        "bone_mineral": null,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 11.05,
+        "fat_free_mass_kg": 53.95,
+        "water_mass_kg": 37.7
+      }
+    },
+    {
+      "name": "percentages without a weight",
+      "input": {
+        "weight_kg": null,
+        "body_fat_pct": 17,
+        "muscle_percent": 78,
+        "water_percent": null,
+        "bone_mineral": null,
+        "protein_percent": null
+      },
+      "expected": {}
+    },
+    {
+      "name": "zero weight is a number",
+      "input": {
+        "weight_kg": 0,
+        "body_fat_pct": 17,
+        "muscle_percent": null,
+        "water_percent": null,
+        "bone_mineral": null,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 0,
+        "fat_free_mass_kg": 0
+      }
+    },
+    {
+      "name": "rounding to two places",
+      "input": {
+        "weight_kg": 64.25,
+        "body_fat_pct": 16.75,
+        "muscle_percent": 77.77,
+        "water_percent": 60.125,
+        "bone_mineral": 4.95,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 10.76,
+        "fat_free_mass_kg": 53.49,
+        "muscle_mass_kg": 49.97,
+        "water_mass_kg": 38.63,
+        "bone_mineral_kg": 3.18,
+        "protein_mass_kg": 11.68
+      }
+    },
+    {
+      "name": "a negative zero rounds away",
+      "input": {
+        "weight_kg": 60,
+        "body_fat_pct": 0,
+        "muscle_percent": null,
+        "water_percent": 100,
+        "bone_mineral": 0,
+        "protein_percent": null
+      },
+      "expected": {
+        "fat_mass_kg": 0,
+        "fat_free_mass_kg": 60,
+        "water_mass_kg": 60,
+        "bone_mineral_kg": 0,
+        "protein_mass_kg": 0
+      }
+    }
+  ]
+}

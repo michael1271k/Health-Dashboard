@@ -99,6 +99,9 @@ import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { weighInSkipReason, isDefaultSkipReason } from '@/lib/body/weighIn'
 import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
 import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
+import { deriveBodyComp, whrBand, visceralBand, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
+import { deltaVerdict, MAINTENANCE_BAND, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
+import { bodyCompState, missingBodyCompFields, bodyCompGapLabel, bodyCompGapShort, type BodyCompFields } from '@/lib/body/compGap'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -4117,6 +4120,99 @@ describe('golden vectors — weekly export', () => {
           unilateral: UNILATERAL_VOLUME_NOTE, epley: EPLEY_NOTE, watch: APPLE_WATCH_DISCLAIMER,
         },
       }],
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Body — composition, the delta verdict, the composition gap
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — body', () => {
+  it('exports the InBody engine', () => {
+    interface In { weight_kg: number | null; body_fat_pct: number | null; muscle_percent: number | null; water_percent: number | null; bone_mineral: number | null; protein_percent: number | null }
+    const cases: Case<In, BodyCompDerived>[] = []
+    const push = (name: string, i: Partial<In>) => {
+      const input: In = { weight_kg: null, body_fat_pct: null, muscle_percent: null, water_percent: null, bone_mineral: null, protein_percent: null, ...i }
+      cases.push({ name, input, expected: deriveBodyComp(input) })
+    }
+    push('nothing', {})
+    push('weight only', { weight_kg: 64.2 })
+    push('the live reading', { weight_kg: 64.2, body_fat_pct: 16.8, muscle_percent: 78.3, water_percent: 60.1, bone_mineral: 4.9 })
+    push('with a protein % — it wins', { weight_kg: 64.2, body_fat_pct: 16.8, muscle_percent: 78.3, water_percent: 60.1, bone_mineral: 4.9, protein_percent: 17.1 })
+    push('protein backed out of the fat-free compartment', { weight_kg: 65, body_fat_pct: 17, water_percent: 58, bone_mineral: 5 })
+    push('protein floor at zero', { weight_kg: 65, body_fat_pct: 17, water_percent: 80, bone_mineral: 5 })
+    push('no protein without water', { weight_kg: 65, body_fat_pct: 17, bone_mineral: 5 })
+    push('no protein without bone', { weight_kg: 65, body_fat_pct: 17, water_percent: 58 })
+    push('percentages without a weight', { body_fat_pct: 17, muscle_percent: 78 })
+    push('zero weight is a number', { weight_kg: 0, body_fat_pct: 17 })
+    push('rounding to two places', { weight_kg: 64.25, body_fat_pct: 16.75, muscle_percent: 77.77, water_percent: 60.125, bone_mineral: 4.95 })
+    push('a negative zero rounds away', { weight_kg: 60, body_fat_pct: 0, water_percent: 100, bone_mineral: 0 })
+    emit('body-comp-derive.json', {
+      module: 'body/composition',
+      fn: 'deriveBodyComp',
+      note: 'Every mass = weight × % to 2 dp; fat-free = weight × (1 − bf/100); protein from its own % else max(0, FFM − water − bone) when all three exist. Only fields whose inputs are present are returned. Skeletal muscle is NEVER derived.',
+      cases,
+    })
+
+    const whr: Case<{ ratio: number; sex: 'male' | 'female' }, WhrBand>[] = []
+    for (const sex of ['male', 'female'] as const) for (const ratio of [0.7, 0.79, 0.8, 0.84, 0.85, 0.89, 0.9, 0.95, 0.99, 1, 1.1]) {
+      whr.push({ name: `${sex} ${ratio}`, input: { ratio, sex }, expected: whrBand(ratio, sex) })
+    }
+    emit('whr-band.json', {
+      module: 'body/composition', fn: 'whrBand',
+      note: 'WHO bands on the SCALE\'s own ratio: male low < 0.90 ≤ moderate < 1.00 ≤ high; female 0.80 / 0.85.',
+      cases: whr,
+    })
+    emit('visceral-band.json', {
+      module: 'body/composition', fn: 'visceralBand',
+      note: 'Stricter than the scale: optimal < 5, elevated 5–7, high above.',
+      cases: [0, 3, 4.9, 5, 6, 7, 7.5, 8, 12].map((index) => ({ name: String(index), input: { index }, expected: visceralBand(index) })),
+    })
+  })
+
+  it('exports the delta verdict', () => {
+    const cases: Case<{ metric: Metric; delta: number; phase: 'cut' | 'bulk'; maintenance: boolean }, Verdict>[] = []
+    const deltas = [-2, -0.6, -0.5, -0.4, -0.3, -0.29, -0.2, -0.05, -0.01, -0.009, 0, 0.009, 0.01, 0.05, 0.2, 0.29, 0.3, 0.4, 0.5, 0.6, 2]
+    for (const metric of ['weight', 'fat', 'muscle', 'water'] as Metric[]) for (const phase of ['cut', 'bulk'] as const) for (const maintenance of [false, true]) for (const delta of deltas) {
+      cases.push({ name: `${metric} ${delta} on a ${phase}${maintenance ? ' (maintenance)' : ''}`, input: { metric, delta, phase, maintenance }, expected: deltaVerdict(metric, delta, phase, maintenance) })
+    }
+    emit('delta-verdict.json', {
+      module: 'body/deltaVerdict',
+      fn: 'deltaVerdict',
+      note: 'Under 0.01 is noise; water is never a verdict; muscle is good up / bad down in every phase; maintenance has a dead band (0.5 weight, 0.3 fat) and judges like a cut outside it; fat loss is good everywhere and fat gain is neutral on a bulk; weight flips with the phase.',
+      cases,
+    })
+    emit('maintenance-band.json', {
+      module: 'body/deltaVerdict', fn: 'MAINTENANCE_BAND',
+      note: 'The dead band per metric; water is unbounded (never a verdict) and is exported as null.',
+      cases: [{ name: 'the band', input: {}, expected: { weight: MAINTENANCE_BAND.weight, fat: MAINTENANCE_BAND.fat, muscle: MAINTENANCE_BAND.muscle, water: null } }],
+    })
+  })
+
+  it('exports the composition gap', () => {
+    const rows: Array<[string, BodyCompFields | null]> = [
+      ['null', null],
+      ['empty', {}],
+      ['weight only', { weight_kg: 64.2 }],
+      ['weight with nulls', { weight_kg: 64.2, body_fat_pct: null, muscle_mass_kg: null, skeletal_muscle_mass_kg: null }],
+      ['zero weight is no weight', { weight_kg: 0, body_fat_pct: 17 }],
+      ['body fat only', { weight_kg: 64.2, body_fat_pct: 16.8 }],
+      ['lean soft tissue only', { weight_kg: 64.2, muscle_mass_kg: 50.3 }],
+      ['skeletal only', { weight_kg: 64.2, skeletal_muscle_mass_kg: 26.8 }],
+      ['two of three', { weight_kg: 64.2, body_fat_pct: 16.8, muscle_mass_kg: 50.3 }],
+      ['complete', { weight_kg: 64.2, body_fat_pct: 16.8, muscle_mass_kg: 50.3, skeletal_muscle_mass_kg: 26.8 }],
+      ['a zero body fat is not present', { weight_kg: 64.2, body_fat_pct: 0, muscle_mass_kg: 50.3, skeletal_muscle_mass_kg: 26.8 }],
+      ['no weight but composition', { body_fat_pct: 16.8, muscle_mass_kg: 50.3 }],
+    ]
+    emit('body-comp-gap.json', {
+      module: 'body/compGap',
+      fn: 'bodyCompState / missingBodyCompFields / bodyCompGapLabel / bodyCompGapShort',
+      note: 'A weigh-in with an empty composition is a STATE, not an absence. Present means a finite number > 0. The label names the owed fields in entry order, "lean soft tissue" never "muscle".',
+      cases: rows.map(([name, row]) => ({
+        name, input: { row },
+        expected: { state: bodyCompState(row), missing: missingBodyCompFields(row), label: bodyCompGapLabel(row), short: bodyCompGapShort(row) },
+      })),
     })
   })
 })
