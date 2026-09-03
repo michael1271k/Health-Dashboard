@@ -1,0 +1,59 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "priorReportNote / fatigueLabelsFor / constants",
+  "note": "The closing line per label, the two fatigue slot triples, and the three standing notes verbatim.",
+  "cases": [
+    {
+      "name": "the strings",
+      "input": {},
+      "expected": {
+        "notes": [
+          {
+            "label": null,
+            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
+          },
+          {
+            "label": null,
+            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
+          },
+          {
+            "label": "",
+            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
+          },
+          {
+            "label": "  ",
+            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
+          },
+          {
+            "label": "Week 7",
+            "note": "*Note: Week 7 report is provided manually for reference and comparison.*"
+          },
+          {
+            "label": " Week 7 ",
+            "note": "*Note: Week 7 report is provided manually for reference and comparison.*"
+          }
+        ],
+        "training": [
+          "Waking",
+          "Before training",
+          "After training"
+        ],
+        "rest": [
+          "Waking",
+          "Midday",
+          "Night"
+        ],
+        "slots": [
+          "Waking",
+          "Midday",
+          "Before training",
+          "After training",
+          "Night"
+        ],
+        "unilateral": "*Note: Unilateral (single-arm / single-leg) work is logged per side and scored ONCE at the WEAKER side: min(weight) × min(reps). \"L 5 kg × 10 · R 5 kg × 14\" is 50 kg of volume, not 70 and not 100 — crediting the strong side's extra reps to the weak one would inflate the trend without the work being there, and doubling it would make the same physical set weigh twice as much purely for having been recorded per side. Each side keeps its own failure tag, and the pair counts as ONE set.*",
+        "epley": "*Note: every \"1RM\" here is an ESTIMATE from the Epley formula (weight × (1 + reps/30)), not a lift that was performed. Hevy estimates it differently, so the two will not agree exactly. Unloaded work has no 1RM estimate at all and shows none.*",
+        "watch": "*Note: Heart rate, calories, and steps data are sourced from the Apple Watch and may not be entirely accurate.*"
+      }
+    }
+  ]
+}

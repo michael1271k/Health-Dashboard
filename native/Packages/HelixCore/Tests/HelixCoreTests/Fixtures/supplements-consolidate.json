@@ -1,0 +1,105 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "consolidateSupplements",
+  "note": "One chronological list deduped by lower-cased name; a split dose is stated as a rule; blank names dropped; sorted by time with — first.",
+  "cases": [
+    {
+      "name": "the rich protocol",
+      "input": {
+        "protocol": [
+          {
+            "time": "07:00",
+            "name": "Creatine",
+            "dose": "5 g"
+          },
+          {
+            "time": "07:00",
+            "name": "Vitamin D3 + K2",
+            "dose": "2000 IU",
+            "notes": "with breakfast"
+          },
+          {
+            "time": "11:45",
+            "name": "L-Citrulline",
+            "dose": "3 g",
+            "trainingOnly": true
+          },
+          {
+            "time": "11:45",
+            "name": "Caffeine",
+            "dose": "200 mg",
+            "trainingDose": "200 mg",
+            "restDose": "100 mg",
+            "trainingOnly": true,
+            "notes": "not after 14:00"
+          },
+          {
+            "time": "22:00",
+            "name": "Magnesium",
+            "dose": "400 mg",
+            "trainingDose": "400 mg",
+            "restDose": "400 mg"
+          },
+          {
+            "time": null,
+            "name": "Omega-3",
+            "dose": "2 caps"
+          },
+          {
+            "time": "07:00",
+            "name": "creatine",
+            "dose": "10 g"
+          },
+          {
+            "time": "09:00",
+            "name": "  ",
+            "dose": "x"
+          },
+          {
+            "time": " 22:00 ",
+            "name": "Glycine",
+            "dose": " 5 g ",
+            "notes": "  "
+          }
+        ]
+      },
+      "expected": [
+        "— · Omega-3 — 2 caps",
+        "07:00 · Creatine — 5 g",
+        "07:00 · Vitamin D3 + K2 — 2000 IU · with breakfast",
+        "11:45 · L-Citrulline — 3 g (training days only)",
+        "11:45 · Caffeine — 200 mg on training days / 100 mg on rest days (training days only) · not after 14:00",
+        "22:00 · Magnesium — 400 mg",
+        "22:00 · Glycine — 5 g"
+      ]
+    },
+    {
+      "name": "empty",
+      "input": {
+        "protocol": []
+      },
+      "expected": []
+    },
+    {
+      "name": "same time keeps input order",
+      "input": {
+        "protocol": [
+          {
+            "time": "07:00",
+            "name": "B",
+            "dose": "1"
+          },
+          {
+            "time": "07:00",
+            "name": "A",
+            "dose": "2"
+          }
+        ]
+      },
+      "expected": [
+        "07:00 · B — 1",
+        "07:00 · A — 2"
+      ]
+    }
+  ]
+}

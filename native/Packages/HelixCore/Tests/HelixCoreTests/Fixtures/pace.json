@@ -1,0 +1,117 @@
+{
+  "module": "cardio/metrics",
+  "fn": "paceMinPerKm / formatPace",
+  "note": "min/km, null unless both inputs are positive; formatted by rounding to the nearest SECOND first; ≥ 100 min/km is a typo and prints —.",
+  "cases": [
+    {
+      "name": "5000 m in 25.5 min",
+      "input": {
+        "distanceM": 5000,
+        "durationMin": 25.5
+      },
+      "expected": {
+        "pace": 5.1,
+        "formatted": "5:06 /km"
+      }
+    },
+    {
+      "name": "4200 m in 48 min",
+      "input": {
+        "distanceM": 4200,
+        "durationMin": 48
+      },
+      "expected": {
+        "pace": 11.428571428571429,
+        "formatted": "11:26 /km"
+      }
+    },
+    {
+      "name": "1000 m in 5.05 min",
+      "input": {
+        "distanceM": 1000,
+        "durationMin": 5.05
+      },
+      "expected": {
+        "pace": 5.05,
+        "formatted": "5:03 /km"
+      }
+    },
+    {
+      "name": "0 m in 10 min",
+      "input": {
+        "distanceM": 0,
+        "durationMin": 10
+      },
+      "expected": {
+        "pace": null,
+        "formatted": "—"
+      }
+    },
+    {
+      "name": "5000 m in 0 min",
+      "input": {
+        "distanceM": 5000,
+        "durationMin": 0
+      },
+      "expected": {
+        "pace": null,
+        "formatted": "—"
+      }
+    },
+    {
+      "name": "null m in 10 min",
+      "input": {
+        "distanceM": null,
+        "durationMin": 10
+      },
+      "expected": {
+        "pace": null,
+        "formatted": "—"
+      }
+    },
+    {
+      "name": "5000 m in null min",
+      "input": {
+        "distanceM": 5000,
+        "durationMin": null
+      },
+      "expected": {
+        "pace": null,
+        "formatted": "—"
+      }
+    },
+    {
+      "name": "1 m in 60 min",
+      "input": {
+        "distanceM": 1,
+        "durationMin": 60
+      },
+      "expected": {
+        "pace": 60000,
+        "formatted": "—"
+      }
+    },
+    {
+      "name": "10000 m in 999 min",
+      "input": {
+        "distanceM": 10000,
+        "durationMin": 999
+      },
+      "expected": {
+        "pace": 99.9,
+        "formatted": "99:54 /km"
+      }
+    },
+    {
+      "name": "3000 m in 15 min",
+      "input": {
+        "distanceM": 3000,
+        "durationMin": 15
+      },
+      "expected": {
+        "pace": 5,
+        "formatted": "5:00 /km"
+      }
+    }
+  ]
+}

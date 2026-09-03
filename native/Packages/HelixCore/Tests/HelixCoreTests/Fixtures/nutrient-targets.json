@@ -1,0 +1,193 @@
+{
+  "module": "nutrition/nutrientTargets",
+  "fn": "NUTRIENT_TARGETS",
+  "note": "Data: key, label, target, unit, kind, group, fromStack — in table order. The `why` and HealthKit identifiers are documentation.",
+  "cases": [
+    {
+      "name": "the table",
+      "input": {},
+      "expected": [
+        {
+          "key": "fiber",
+          "label": "Fiber",
+          "target": 30,
+          "unit": "g",
+          "kind": "floor",
+          "group": "Fuel",
+          "fromStack": false
+        },
+        {
+          "key": "protein",
+          "label": "Protein",
+          "target": 170,
+          "unit": "g",
+          "kind": "floor",
+          "group": "Fuel",
+          "fromStack": false
+        },
+        {
+          "key": "sodium",
+          "label": "Sodium",
+          "target": 3000,
+          "unit": "mg",
+          "kind": "ceiling",
+          "group": "Electrolytes",
+          "fromStack": false
+        },
+        {
+          "key": "potassium",
+          "label": "Potassium",
+          "target": 3400,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Electrolytes",
+          "fromStack": false
+        },
+        {
+          "key": "calcium",
+          "label": "Calcium",
+          "target": 1000,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Electrolytes",
+          "fromStack": false
+        },
+        {
+          "key": "iron",
+          "label": "Iron",
+          "target": 10,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Vitamins & minerals",
+          "fromStack": false
+        },
+        {
+          "key": "magnesium",
+          "label": "Magnesium",
+          "target": 400,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Electrolytes",
+          "fromStack": false
+        },
+        {
+          "key": "vitaminC",
+          "label": "Vitamin C",
+          "target": 90,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Vitamins & minerals",
+          "fromStack": false
+        },
+        {
+          "key": "vitaminD",
+          "label": "Vitamin D",
+          "target": 2000,
+          "unit": "IU",
+          "kind": "floor",
+          "group": "Vitamins & minerals",
+          "fromStack": false
+        },
+        {
+          "key": "satFat",
+          "label": "Saturated Fat",
+          "target": 20,
+          "unit": "g",
+          "kind": "ceiling",
+          "group": "Fuel",
+          "fromStack": false
+        },
+        {
+          "key": "sugar",
+          "label": "Added Sugar",
+          "target": 40,
+          "unit": "g",
+          "kind": "ceiling",
+          "group": "Fuel",
+          "fromStack": false
+        },
+        {
+          "key": "vitaminB12",
+          "label": "Vitamin B12",
+          "target": 2.4,
+          "unit": "mcg",
+          "kind": "floor",
+          "group": "Vitamins & minerals",
+          "fromStack": true
+        },
+        {
+          "key": "folate",
+          "label": "Folate",
+          "target": 400,
+          "unit": "mcg",
+          "kind": "floor",
+          "group": "Vitamins & minerals",
+          "fromStack": true
+        },
+        {
+          "key": "epa",
+          "label": "EPA",
+          "target": 500,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "dha",
+          "label": "DHA",
+          "target": 250,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "creatine",
+          "label": "Creatine",
+          "target": 5000,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "citrulline",
+          "label": "L-Citrulline",
+          "target": 3000,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "caffeine",
+          "label": "Caffeine",
+          "target": 400,
+          "unit": "mg",
+          "kind": "ceiling",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "theanine",
+          "label": "L-Theanine",
+          "target": 200,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        },
+        {
+          "key": "glycine",
+          "label": "Glycine",
+          "target": 3000,
+          "unit": "mg",
+          "kind": "floor",
+          "group": "Performance stack",
+          "fromStack": true
+        }
+      ]
+    }
+  ]
+}

@@ -84,6 +84,21 @@ import {
   elapsedMs, elapsedSec, remainingSec, isTimerDone, clockReadingSec, clockIsLive, formatClock, clampDuration,
   type SessionClock, type ClockMode,
 } from '@/lib/sessions/sessionClock'
+import { weekStartOf } from '@/lib/utils/week'
+import { weekNumberOf, weekLabelOf } from '@/lib/reports/weekNumber'
+import {
+  buildWeeklyExport, weeklySummary, trendTotals, energyBalance, sparkline, markdownTable, nutrientLine, flaggedNutrients,
+  setDetail, consolidateSupplements, trendLedger, priorReportNote, fatigueLabelsFor, FATIGUE_SLOT_LABELS,
+  UNILATERAL_VOLUME_NOTE, EPLEY_NOTE, APPLE_WATCH_DISCLAIMER,
+  type WeeklyExportInput, type ExportDay, type ExportSet, type ExportSession, type WeeklySummary, type TrendTotals, type EnergyBalance,
+} from '@/lib/reports/weeklyExport'
+import { derivedWeek, type DerivedWeek } from '@/lib/reports/derived'
+import { weekJsonBlock } from '@/lib/reports/weekJson'
+import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
+import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
+import { weighInSkipReason, isDefaultSkipReason } from '@/lib/body/weighIn'
+import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
+import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -3698,6 +3713,410 @@ describe('golden vectors — session elapsed and the rest clock', () => {
       cases: [0, 0.4, 9, 9.9, 59, 60, 90, 599, 600, 724, 3599, 3600, 3661, 3723, 36000, -5, 14.5, 15, 44.5, 45.5, 3600.4, 3601, 100000].map((sec) => ({
         name: String(sec), input: { sec }, expected: { formatted: formatClock(sec), clamped: clampDuration(sec) },
       })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reports — the weekly export and everything it renders from
+// ─────────────────────────────────────────────────────────────────────────────
+
+const emptyExportDay = (date: string, weekdayLabel: string, over: Partial<ExportDay> = {}): ExportDay => ({
+  date, weekdayLabel, isTrainingDay: false,
+  weightKg: null, calories: null, proteinG: null, carbsG: null, fatG: null,
+  steps: null, distanceM: null, trainingMin: null,
+  sleepMin: null, deepMin: null, remMin: null, restingHr: null, hrvMs: null,
+  wristTempDeltaC: null, bloodOxygenPct: null,
+  waterMl: null, supplementsTaken: null, activeKcal: null, bmrKcal: null,
+  weighInSkipReason: null, nutritionException: null, nutritionEstimated: false,
+  ...over,
+})
+const xset = (weightKg: number, reps: number, over: Partial<ExportSet> = {}): ExportSet =>
+  ({ weightKg, reps, rpe: null, side: null, failure: false, pairId: null, ...over })
+
+describe('golden vectors — week numbering', () => {
+  it('exports weekStartOf, weekNumberOf, weekLabelOf', () => {
+    const dates = [
+      '2026-03-01', '2026-03-08', '2026-05-10', '2026-06-21', '2026-06-28', '2026-07-05', '2026-07-11', '2026-07-12', '2026-07-15',
+      '2026-07-18', '2026-07-19', '2026-08-03', '2026-08-23', '2026-08-29', '2026-08-30', '2026-09-03', '2026-09-05', '2026-09-06',
+      '2026-10-18', '2026-12-31', '2027-01-16', '2027-01-17', 'garbage', '',
+    ]
+    const cases: Case<{ date: string; startDay: number }, { weekStart: string; weekNumber: number; label: string; weekNumberForDate: number }>[] = []
+    for (const date of dates) for (const startDay of [0, 1]) {
+      const ws = weekStartOf(date, startDay)
+      cases.push({
+        name: `${date || 'empty'} · start ${startDay}`,
+        input: { date, startDay },
+        expected: { weekStart: ws, weekNumber: weekNumberOf(ws), label: weekLabelOf(ws), weekNumberForDate: weekNumberOf(weekStartOf(date, startDay)) },
+      })
+    }
+    emit('week-number.json', {
+      module: 'reports/weekNumber + utils/week',
+      fn: 'weekStartOf / weekNumberOf / weekLabelOf',
+      note: 'weekStartOf echoes an unparseable date; weekNumberOf is Math.round(weeks since 2026-07-12) and 0 when unparseable; a negative week draws its label from the phase, else "Week N".',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — weekly export', () => {
+  const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const baseDays = WEEK.map((wd, i) => emptyExportDay(`2026-08-2${3 + i}`, wd))
+  const BASE: WeeklyExportInput = {
+    weekStart: '2026-08-23', weekEnd: '2026-08-29', programLabel: 'Helix Cut',
+    calorieGoal: 1955, proteinGoalG: 170, stepsGoal: 10000, sleepGoalHours: 8,
+    days: baseDays, sessions: [], volumeByMuscle: [], doms: [],
+  }
+
+  const SA = 'Single Arm Lateral Raise (Cable)'
+  const richDays: ExportDay[] = [
+    emptyExportDay('2026-08-30', 'Sun', {
+      sleepMin: 551, deepMin: 62, remMin: 118, coreMin: 350, awakeMin: 21, bedTime: '2026-08-29T23:10:00', wakeTime: '2026-08-30T08:21:00', sleepOnsetTrouble: false,
+      restingHr: 52, hrvMs: 61.5, wristTempDeltaC: 0.2, bloodOxygenPct: 97, avgHr: 71, respiratoryRate: 14.5, vo2max: 46.1, daylightMin: 42, exerciseMin: 31, standHours: 12, standMin: 58,
+      weightKg: 64.9, bmrKcal: 1516, calories: 2151, proteinG: 172, carbsG: 244, fatG: 55, waterMl: 3100, steps: 7842, distanceM: 6120, activeKcal: 412,
+      supplementsTaken: 6, supplementsPlanned: 7, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'd3k2', time: '07:00' }, { key: 'omega3', time: '12:30' }, { key: 'magnesium', time: '22:00' }, { key: 'glycine', time: '22:00' }, { key: 'theanine', time: null }],
+      supplementsSkipped: ['Caffeine'],
+      nutrientsFood: { fiber: 31, protein: 172, sodium: 2400, potassium: 3100, calcium: 950, iron: 12, magnesium: 380, vitaminC: 124, satFat: 14, sugar: 22 },
+      nutrientsStack: { vitaminC: 470, vitaminD: 2000, vitaminB12: 300, folate: 680, epa: 600, dha: 300, creatine: 5000, glycine: 5000, theanine: 200, magnesium: 200 },
+    }),
+    emptyExportDay('2026-08-31', 'Mon', {
+      isTrainingDay: true,
+      sleepMin: 470, deepMin: 40, remMin: 95, coreMin: 320, awakeMin: 15, bedTime: '2026-08-30T23:50:00', wakeTime: '2026-08-31T07:55:00', sleepOnsetTrouble: true,
+      restingHr: 54, hrvMs: 48, wristTempDeltaC: -0.1, bloodOxygenPct: 96, avgHr: 84, respiratoryRate: 15.1, vo2max: 46.1, daylightMin: 12, exerciseMin: 78, standHours: 14, standMin: 40,
+      weightKg: 64.6, bmrKcal: 1514, calories: 2160, proteinG: 175, carbsG: 250, fatG: 52, waterMl: 3500, steps: 11204, distanceM: 8900, trainingMin: 78, activeKcal: 688,
+      supplementsTaken: 7, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'citrulline', time: '11:45' }, { key: 'caffeine', time: '11:45' }],
+      nutrientsFood: { fiber: 28, protein: 175, sodium: 3100, potassium: 3000, calcium: 3074, iron: 9, magnesium: 300, vitaminC: 80, satFat: 24, sugar: 45 },
+      nutrientsStack: { creatine: 5000, citrulline: 3000, caffeine: 200 },
+    }),
+    emptyExportDay('2026-09-01', 'Tue', {
+      isTrainingDay: true, nutritionException: 'Illness',
+      sleepMin: 505, deepMin: 55, remMin: 100, coreMin: 335, awakeMin: 15, restingHr: 58, hrvMs: 39, wristTempDeltaC: 0.6, bloodOxygenPct: 95,
+      weightKg: null, weighInSkipReason: 'Sick', calories: 1800, proteinG: 150, carbsG: 200, fatG: 45, waterMl: 2000, steps: 4100, activeKcal: 210,
+      supplementsTaken: null, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }],
+      nutrientsFood: { fiber: 20, protein: 150 }, nutrientsStack: {},
+    }),
+    emptyExportDay('2026-09-02', 'Wed', {
+      nutritionException: 'Illness',
+      sleepMin: 600, restingHr: 57, hrvMs: 41, weightKg: 64.4, bmrKcal: 1512, calories: 1900, proteinG: 160, carbsG: 210, fatG: 50, waterMl: 2500, steps: 3000, activeKcal: 150,
+      supplementsTaken: 4, supplementsPlanned: 7, nutrientsStack: { vitaminD: 2000, creatine: 5000 },
+    }),
+    emptyExportDay('2026-09-03', 'Thu', {
+      isTrainingDay: true, targetProfile: 'Restaurant', trackCarbs: false, trackFat: false, nutritionEstimated: true,
+      sleepMin: 490, deepMin: 50, remMin: 90, coreMin: 330, awakeMin: 20, restingHr: 53, hrvMs: 55, wristTempDeltaC: 0, bloodOxygenPct: 98,
+      weightKg: null, calories: 2380, proteinG: 168, carbsG: 290, fatG: 96, waterMl: 2800, steps: 9500, distanceM: 7400, trainingMin: 65, activeKcal: 590,
+      supplementsTaken: 8, supplementsPlanned: 9,
+    }),
+    emptyExportDay('2026-09-04', 'Fri', {
+      isTrainingDay: true, nutritionException: 'Refeed',
+      sleepMin: 520, restingHr: 52, hrvMs: 60, weightKg: 64.2, bmrKcal: 1511, calories: 2600, proteinG: 170, carbsG: 330, fatG: 70, waterMl: 3000, steps: 10200, trainingMin: 70, activeKcal: 620,
+      supplementsTaken: 9, supplementsPlanned: 9,
+    }),
+    emptyExportDay('2026-09-05', 'Sat', { weighInSkipReason: 'Travel' }),
+  ]
+
+  const richSessions: ExportSession[] = [
+    {
+      date: '2026-08-31', label: 'Legs & Core A', sessionNumber: 41, startedAt: '2026-08-31T09:02:00', endedAt: '2026-08-31T10:20:00',
+      volumeKg: 8329.25, setCount: 9, failureSets: 1, durationMin: 78, avgBpm: 118, caloriesBurned: 512, sessionRpe: 8.5,
+      exercises: [
+        { name: 'Leg Press', topKg: 75, repWindow: '8–12', restTargetSec: 150, restPlanSec: 135, sets: [
+          xset(40, 15, { warmup: true }), xset(75, 12, { rpe: 8.5 }), xset(75, 12, { rpe: 9.5, quality: 'momentum' }), xset(75, 10, { rpe: 10, failure: true }),
+        ] },
+        { name: 'Hack Squat', topKg: 55, repWindow: '10–12', restTargetSec: 135, restPlanSec: 135, sets: [
+          xset(55, 12, { rpe: 9 }), xset(55, 12, { ghost: true }), xset(55, 11, { rpe: null, failure: true }),
+        ] },
+        { name: 'Reverse Crunch', topKg: 0, repWindow: '12–15', sets: [xset(0, 17, { rpe: 8 }), xset(0, 15)] },
+        { name: 'Calf Press', topKg: 70, repWindow: null, sets: [] },
+      ],
+      prs: [
+        { name: 'Leg Press', weightKg: 75, reps: 12, axes: ['weight', 'volume', 'e1rm'], volumeKg: 900, e1rmKg: 105 },
+        { name: 'Reverse Crunch', weightKg: 0, reps: 17, axes: ['reps'], volumeKg: 0, e1rmKg: null },
+      ],
+    },
+    {
+      date: '2026-09-01', label: 'Delts & Arms', sessionNumber: 42,
+      volumeKg: 1210.5, setCount: 6, failureSets: 0, durationMin: 55, avgBpm: 110, caloriesBurned: 380, caloriesEstimated: true, avgBpmEstimated: true, sessionRpe: null,
+      exercises: [
+        { name: SA, topKg: 5, repWindow: '12–20', sets: [
+          xset(2.5, 15, { warmup: true, side: 'L', pairId: 'w1' }), xset(2.5, 15, { warmup: true, side: 'R', pairId: 'w1' }),
+          xset(5, 15, { rpe: 8, side: 'L', pairId: 'p1' }), xset(5, 17, { rpe: 9, side: 'R', pairId: 'p1' }),
+          xset(5, 14, { rpe: 9.5, side: 'L', pairId: 'p2', failure: true }), xset(5, 16, { rpe: null, side: 'R', pairId: 'p2' }),
+          xset(5, 14, { rpe: null, side: 'L', pairId: 'p3', ghost: true }), xset(5, 14, { rpe: null, side: 'R', pairId: 'p3', ghost: true }),
+          xset(5, 12, { rpe: 9, side: 'L' }),
+        ] },
+        { name: 'Side Plank', topKg: 0, repWindow: null, sets: [xset(0, 55, { rpe: 9, side: 'L', pairId: 'h1' }), xset(0, 60, { rpe: 9.5, side: 'R', pairId: 'h1' })] },
+        { name: 'DB Hammer Curl', topKg: 20, repWindow: '10–12', sets: [xset(20, 12, { rpe: 10 }), xset(20, 10, { rpe: 9, quality: 'form_breakdown' })] },
+      ],
+      prs: [
+        { name: 'Side Plank', weightKg: 0, reps: 60, axes: ['reps'], volumeKg: null, e1rmKg: null },
+        { name: SA, weightKg: 5, reps: 17, axes: ['volume', 'e1rm'], volumeKg: 85, e1rmKg: 7.8 },
+      ],
+    },
+    {
+      date: '2026-09-03', label: 'Upper B', startedAt: '2026-09-03T18:30:00',
+      volumeKg: 5400, setCount: 7, failureSets: 0, durationMin: 65, avgBpm: null, caloriesBurned: null, sessionRpe: 8,
+      exercises: [
+        { name: 'Preacher Curl (Machine)', topKg: 18.75, repWindow: '8–12', sets: [xset(18.75, 12, { rpe: 9.5 }), xset(12.5, 8, { rpe: 10, dropset: true })] },
+        { name: 'Chest Press (Machine)', topKg: 40, repWindow: '10–12', sets: [xset(40, 12), xset(40, 11), xset(40, 10)] },
+        { name: 'Leg Press', topKg: 72.5, repWindow: '12–15', sets: [xset(72.5, 14, { rpe: 8 }), xset(72.5, 13, { rpe: 8.5 })] },
+      ],
+      prs: [],
+    },
+    {
+      date: '2026-09-04', label: 'Legs & Core B', sessionNumber: 43,
+      volumeKg: null, setCount: null, failureSets: null, durationMin: null, avgBpm: null, caloriesBurned: null, sessionRpe: 6.5,
+      exercises: [{ name: 'Hip Thrust (Machine)', topKg: null, repWindow: '8–15', sets: [] }],
+      prs: [{ name: 'Hip Thrust (Machine)', weightKg: 30, reps: 12, axes: ['weight'], volumeKg: 360, e1rmKg: 42 }],
+    },
+  ]
+
+  const RICH: WeeklyExportInput = {
+    weekStart: '2026-08-30', weekEnd: '2026-09-05', weekLabel: 'Week 7', programLabel: 'Helix-5', phaseLabel: ' Cut ',
+    calorieGoal: 2151, proteinGoalG: 170, stepsGoal: 7500, sleepGoalHours: 8, waterGoalMl: 3000,
+    targetPeriods: [
+      { leverId: 'maintenance-week', label: 'Maintenance Week', goals: { calorie: 2151, protein: 170, carbs: 244, fat: 55, steps: 7500 }, dates: ['2026-08-30', '2026-08-31', '2026-09-01', '2026-09-02'] },
+      { leverId: 'custom', label: 'Custom', goals: { calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000 }, dates: ['2026-09-03', '2026-09-04', '2026-09-05'] },
+    ],
+    days: richDays,
+    sessions: richSessions,
+    volumeByMuscle: [
+      { muscle: 'Quadriceps', sets: 12, target: 10, directSets: 12, indirectSets: 0 },
+      { muscle: 'Glutes', sets: 7.5, target: 8, directSets: 3, indirectSets: 4.5 },
+      { muscle: 'Side delts', sets: 14, target: 10, directSets: 14 },
+      { muscle: 'Adductors', sets: 2, target: 0 },
+      { muscle: 'Hamstrings', sets: 3, target: 10, directSets: 1, indirectSets: 2 },
+    ],
+    tonnageByMuscle: [
+      { muscle: 'Quadriceps', volumeKg: 9800.5, directKg: 9800.5 },
+      { muscle: 'Glutes', volumeKg: 4200, directKg: 1100.25 },
+      { muscle: 'Side delts', volumeKg: 1210.5 },
+    ],
+    doms: [
+      { date: '2026-09-01', muscle: 'Quadriceps', severity: 2, sourceLabel: 'Legs & Core A', sourceDate: '2026-08-31' },
+      { date: '2026-09-01', muscle: 'Glutes', severity: 1, sourceLabel: 'Legs & Core B', sourceDate: '2026-08-28' },
+      { date: '2026-09-02', muscle: 'Hamstrings', severity: 3 },
+      { date: '2026-09-02', muscle: 'Quadriceps', severity: 0 },
+      { date: '2026-09-04', muscle: 'Biceps', severity: 1, sourceLabel: 'Delts & Arms' },
+    ],
+    fatigue: [
+      { date: '2026-08-30', slot: 'Waking', level: 1, label: 'Fresh' }, { date: '2026-08-30', slot: 'Midday', level: 2, label: 'Fine' }, { date: '2026-08-30', slot: 'Night', level: 3, label: 'Tired' },
+      { date: '2026-08-31', slot: 'Waking', level: 2, label: 'Fine' }, { date: '2026-08-31', slot: 'Before training', level: 2, label: 'Fine' }, { date: '2026-08-31', slot: 'After training', level: 4, label: 'Heavy' },
+      { date: '2026-09-01', slot: 'Waking', level: 4, label: 'Heavy' },
+      { date: '2026-09-03', slot: 'Before training', level: 3, label: 'Tired' }, { date: '2026-09-03', slot: 'After training', level: 2, label: 'Fine' },
+      { date: '2026-09-04', slot: 'Waking', level: 2, label: 'Fine' }, { date: '2026-09-04', slot: 'After training', level: 2, label: 'Fine' },
+    ],
+    bodyComp: [
+      { date: '2026-08-30', weightKg: 64.9, bmi: 22.5, bodyFatPct: 16.8, musclePercent: 77.4, waterPercent: 60.1, visceralFat: 5, bmr: 1516, boneMineral: 4.9, muscleMassKg: 50.2, fatFreeMassKg: 54, fatMassKg: 10.9, proteinMassKg: 11.1, boneMineralKg: 3.18, waterMassKg: 39, proteinPercent: 17.1, skeletalMuscleMassKg: 26.9, estimatedWaistToHipRatio: 0.83 },
+      { date: '2026-09-03', weightKg: null, bmi: null, bodyFatPct: null, musclePercent: null, waterPercent: null, visceralFat: null, bmr: null, boneMineral: null, muscleMassKg: null, fatFreeMassKg: null, fatMassKg: null, proteinMassKg: null, boneMineralKg: null, waterMassKg: null, skeletalMuscleMassKg: 26.8, estimatedWaistToHipRatio: 0.83 },
+      { date: '2026-09-04', weightKg: 64.2, bmi: 22.2, bodyFatPct: 16.5, musclePercent: 77.6, waterPercent: 60.3, visceralFat: 5, bmr: 1511, boneMineral: 5, muscleMassKg: 49.8, fatFreeMassKg: 53.6, fatMassKg: 10.6, proteinMassKg: 11, boneMineralKg: 3.2, waterMassKg: 38.7, skeletalMuscleMassKg: 26.7, estimatedWaistToHipRatio: null },
+    ],
+    cardio: [
+      { date: '2026-08-31', kind: 'walk', distanceM: 4200, durationMin: 48, kcal: 190, totalKcal: 260, avgHr: 104, effort: 3 },
+      { date: '2026-09-03', kind: 'run', distanceM: 5050, durationMin: 25.5, kcal: null, totalKcal: null, avgHr: null, effort: null },
+      { date: '2026-09-03', kind: '', distanceM: null, durationMin: 10, kcal: 40, totalKcal: 55, avgHr: 90, effort: 2.5 },
+    ],
+    supplementProtocol: [
+      { time: '07:00', name: 'Creatine', dose: '5 g' },
+      { time: '07:00', name: 'Vitamin D3 + K2', dose: '2000 IU', notes: 'with breakfast' },
+      { time: '11:45', name: 'L-Citrulline', dose: '3 g', trainingOnly: true },
+      { time: '11:45', name: 'Caffeine', dose: '200 mg', trainingDose: '200 mg', restDose: '100 mg', trainingOnly: true, notes: 'not after 14:00' },
+      { time: '22:00', name: 'Magnesium', dose: '400 mg', trainingDose: '400 mg', restDose: '400 mg' },
+      { time: null, name: 'Omega-3', dose: '2 caps' },
+      { time: '07:00', name: 'creatine', dose: '10 g' },
+      { time: '09:00', name: '  ', dose: 'x' },
+      { time: ' 22:00 ', name: 'Glycine', dose: ' 5 g ', notes: '  ' },
+    ],
+    ledger: [
+      { label: 'Week 5', weekStart: '2026-08-16', totals: { avgKcal: 1885, totalVolumeKg: 26340, avgSteps: 10850, cardioMinutes: 120, avgWaterMl: 3050, avgWeightKg: 65.7 } },
+      { label: 'Week 6', weekStart: '2026-08-23', totals: { avgKcal: 1999, totalVolumeKg: 25102.25, avgSteps: 9800, cardioMinutes: null, avgWaterMl: 2900, avgWeightKg: 65.2 } },
+      { label: 'Week 7', weekStart: '2026-08-30', totals: { avgKcal: 2165, totalVolumeKg: 14939.75, avgSteps: 7641, cardioMinutes: 83.5, avgWaterMl: 2816.67, avgWeightKg: 64.525 } },
+      { label: 'Week 8', weekStart: '2026-09-06', totals: { avgKcal: null, totalVolumeKg: null, avgSteps: null, cardioMinutes: null, avgWaterMl: null, avgWeightKg: null } },
+    ],
+  }
+
+  type ExportOut = {
+    markdown: string
+    summary: WeeklySummary
+    totals: TrendTotals
+    energy: EnergyBalance
+    derived: DerivedWeek
+    json: unknown
+  }
+  const run = (input: WeeklyExportInput): ExportOut => ({
+    markdown: buildWeeklyExport(input),
+    summary: weeklySummary(input),
+    totals: trendTotals(input.days, input.sessions, input.cardio ?? []),
+    energy: energyBalance(input.days),
+    derived: derivedWeek(input),
+    json: JSON.parse(weekJsonBlock(input)[1]),
+  })
+
+  it('exports whole documents', () => {
+    const cases: Array<[string, WeeklyExportInput]> = [
+      ['the empty week', BASE],
+      ['the rich week — every section lit', RICH],
+      ['the rich week without ledger, periods, label, phase or water goal', { ...RICH, ledger: undefined, targetPeriods: undefined, weekLabel: undefined, phaseLabel: undefined, waterGoalMl: undefined }],
+      ['the rich week under one rung', { ...RICH, targetPeriods: [RICH.targetPeriods![0]] }],
+      ['the rich week with an empty ledger and empty periods', { ...RICH, ledger: [], targetPeriods: [], phaseLabel: '  ' }],
+      ['no days at all', { ...BASE, days: [], sessions: [] }],
+      ['sessions on a week with empty days', { ...BASE, sessions: richSessions.slice(0, 1), cardio: RICH.cardio, bodyComp: RICH.bodyComp, doms: RICH.doms, fatigue: RICH.fatigue }],
+      ['a first week — ledger holds only itself', { ...RICH, ledger: [RICH.ledger![2]] }],
+    ]
+    emit('weekly-export.json', {
+      module: 'reports/weeklyExport + derived + weekJson',
+      fn: 'buildWeeklyExport / weeklySummary / trendTotals / energyBalance / derivedWeek / weekJsonBlock',
+      note: 'The whole document, byte for byte, plus the aggregates it renders from. `json` is the machine block PARSED — the Swift compares structure, not key order or whitespace.',
+      cases: cases.map(([name, input]) => ({ name, input, expected: run(input) })),
+    })
+  })
+
+  it('exports the small renderers', () => {
+    const sparks: Array<[string, Array<number | null>]> = [
+      ['empty', []], ['all missing', [null, null]], ['flat', [11200, 11400, 11700]], ['zeros', [0, 0, 0]], ['one day', [5000]],
+      ['gap in the middle', [3000, null, 12000, 6000]], ['negative', [-5, 10]], ['rest zeros with volume', [0, 8329.25, 0, 1210.5, 0, 5400, 0]],
+    ]
+    emit('sparkline.json', {
+      module: 'reports/weeklyExport', fn: 'sparkline',
+      note: 'Eight bars scaled from ZERO to the max; a missing day is ·; empty when nothing was logged; max ≤ 0 draws the lowest bar.',
+      cases: sparks.map(([name, values]) => ({ name, input: { values }, expected: sparkline(values) })),
+    })
+
+    const tables: Array<[string, string[], string[][], Array<'left' | 'right' | 'center'>]> = [
+      ['three columns', ['Week', 'Kcal', ''], [['Week 5', '1885', '↑'], ['Week 10', '—', '→']], ['left', 'right', 'center']],
+      ['code points not utf-16', ['A', 'B'], [['▁▂▃', 'x'], ['—', 'yy'], ['💪🏋️', 'z']], ['left', 'left']],
+      ['header only', ['A', 'B'], [], ['center', 'right']],
+      ['ragged rows', ['A', 'B', 'C'], [['1'], ['1', '2', '3', '4']], ['left', 'left', 'left']],
+    ]
+    emit('markdown-table.json', {
+      module: 'reports/weeklyExport', fn: 'markdownTable',
+      note: 'Padded to a common width counted in CODE POINTS; the rule row carries the alignment colons.',
+      cases: tables.map(([name, header, body, align]) => ({ name, input: { header, body, align }, expected: markdownTable(header, body, align) })),
+    })
+
+    const paces: Array<[number | null, number | null]> = [[5000, 25.5], [4200, 48], [1000, 5.05], [0, 10], [5000, 0], [null, 10], [5000, null], [1, 60], [10000, 999], [3000, 15]]
+    emit('pace.json', {
+      module: 'cardio/metrics', fn: 'paceMinPerKm / formatPace',
+      note: 'min/km, null unless both inputs are positive; formatted by rounding to the nearest SECOND first; ≥ 100 min/km is a typo and prints —.',
+      cases: paces.map(([d, m]) => ({ name: `${d} m in ${m} min`, input: { distanceM: d, durationMin: m }, expected: { pace: paceMinPerKm(d, m), formatted: formatPace(paceMinPerKm(d, m)) } })),
+    })
+
+    interface SetFmtIn { weightKg: number | null; reps: number | null; timed: boolean; bare: boolean; unit: string | null }
+    const fmts: Case<SetFmtIn, { text: string; unloaded: boolean }>[] = []
+    for (const weightKg of [null, 0, -1, 5, 3.75, 60]) for (const reps of [null, 0, 1, 12]) for (const timed of [false, true]) for (const bare of [false, true]) {
+      const unit = weightKg === 60 && !bare ? 'lb' : null
+      fmts.push({
+        name: `${weightKg} × ${reps}${timed ? ' timed' : ''}${bare ? ' bare' : ''}${unit ? ` ${unit}` : ''}`,
+        input: { weightKg, reps, timed, bare, unit },
+        expected: { text: formatSet(weightKg, reps, { timed, bare, ...(unit ? { unit } : {}) }), unloaded: isUnloadedSet(weightKg) },
+      })
+    }
+    emit('set-format.json', {
+      module: 'utils/setFormat', fn: 'formatSet / isUnloadedSet',
+      note: '`60kg × 12` · `17 reps` (singular at 1) · `58 sec`; bare drops the unit words; null reps read 0; unloaded is ≤ 0 or absent.',
+      cases: fmts,
+    })
+
+    const reasons: Array<string | null> = [null, '', '  ', 'No BM', 'Travel', ' Sick ', 'As Planned', 'anything']
+    emit('weigh-in-skip.json', {
+      module: 'body/weighIn', fn: 'weighInSkipReason / isDefaultSkipReason',
+      note: 'Trimmed stored reason, else "As Planned" — the protocol default, not a logging gap.',
+      cases: reasons.map((r) => ({ name: JSON.stringify(r), input: { stored: r }, expected: { reason: weighInSkipReason(r), isDefault: isDefaultSkipReason(r) } })),
+    })
+
+    emit('nutrient-targets.json', {
+      module: 'nutrition/nutrientTargets', fn: 'NUTRIENT_TARGETS',
+      note: 'Data: key, label, target, unit, kind, group, fromStack — in table order. The `why` and HealthKit identifiers are documentation.',
+      cases: [{ name: 'the table', input: {}, expected: NUTRIENT_TARGETS.map((t) => ({ key: t.key, label: t.label, target: t.target, unit: t.unit, kind: t.kind, group: t.group, fromStack: t.fromStack ?? false })) }],
+    })
+
+    const zones: Case<{ sets: number; target: number; direct: number }, VolumeZone>[] = []
+    for (const target of [0, 8, 10]) for (const sets of [0, 3, 4, 5, 7.5, 8, 10, 12, 13, 14]) for (const direct of [0, 3, 8, 10, 13, 14]) {
+      zones.push({ name: `${sets}/${target} (${direct} direct)`, input: { sets, target, direct }, expected: volumeZone(sets, target, direct) })
+    }
+    emit('volume-zone.json', {
+      module: 'training/landmarks', fn: 'volumeZone',
+      note: 'na at target ≤ 0; OVER only when DIRECT/target > 1.3; else the TOTAL grades under (< 0.5) / building (< 1) / optimal.',
+      cases: zones,
+    })
+
+    const nutrientCases: Array<[string, ExportDay['nutrientsFood'], ExportDay['nutrientsStack']]> = [
+      ['nothing', undefined, undefined],
+      ['empty maps', {}, {}],
+      ['Sunday of the rich week', richDays[0].nutrientsFood, richDays[0].nutrientsStack],
+      ['implausible calcium', richDays[1].nutrientsFood, richDays[1].nutrientsStack],
+      ['zeros are absent', { fiber: 0, protein: 0 }, { creatine: 0 }],
+      ['ceiling overshoot is not flagged', { sodium: 9000, caffeine: 0 }, { caffeine: 1500 }],
+      ['stack covers a floor overshoot', { calcium: 3000 }, { calcium: 1 }],
+      ['fractional values print exact', { fiber: 30.25, iron: 9.999999 }, { epa: 600.5 }],
+    ]
+    emit('nutrient-line.json', {
+      module: 'reports/weeklyExport', fn: 'nutrientLine + flaggedNutrients',
+      note: 'Every target every time in table order; provenance split only when both sides are non-zero; ⚠ on a FOOD-only floor above 2.5× target.',
+      cases: nutrientCases.map(([name, food, stack]) => ({
+        name, input: { food: food ?? null, stack: stack ?? null },
+        expected: { line: nutrientLine(food, stack), flagged: flaggedNutrients([emptyExportDay('2026-09-01', 'Tue', { nutrientsFood: food, nutrientsStack: stack })]) },
+      })),
+    })
+
+    const details: Array<[string, ExportSet[], string | undefined]> = [
+      ['empty', [], 'Leg Press'],
+      ['the rich Leg Press', richSessions[0].exercises[0].sets, 'Leg Press'],
+      ['the rich Hack Squat — a ghost, an unrated failure', richSessions[0].exercises[1].sets, 'Hack Squat'],
+      ['unloaded reverse crunch', richSessions[0].exercises[2].sets, 'Reverse Crunch'],
+      ['the mixed lateral raise', richSessions[1].exercises[0].sets, SA],
+      ['the timed plank pair', richSessions[1].exercises[1].sets, 'Side Plank'],
+      ['hammer curl — failure by rating and a quality flag', richSessions[1].exercises[2].sets, 'DB Hammer Curl'],
+      ['a drop set', richSessions[2].exercises[0].sets, 'Preacher Curl (Machine)'],
+      ['nothing rated at all', richSessions[2].exercises[1].sets, 'Chest Press (Machine)'],
+      ['no exercise name', [xset(40, 12, { rpe: 9 })], undefined],
+      ['failure with rating 9 says to failure', [xset(40, 12, { rpe: 9, failure: true })], 'X'],
+      ['failure with rating 10 does not repeat itself', [xset(40, 12, { rpe: 10, failure: true })], 'X'],
+      ['pair with only a left half', [xset(5, 12, { rpe: 8, side: 'L', pairId: 'p' })], SA],
+      ['pair with a sideless half lands on the left', [xset(5, 12, { rpe: 8, pairId: 'p' }), xset(5, 14, { rpe: 9, side: 'R', pairId: 'p' })], SA],
+      ['a bare side without a pair is a plain set', [xset(5, 12, { rpe: 8, side: 'R' })], SA],
+      ['warm-up pair with a rating', [xset(2, 15, { warmup: true, side: 'L', pairId: 'w', rpe: 5 }), xset(2, 15, { warmup: true, side: 'R', pairId: 'w' })], SA],
+      ['quarter-kilo loads', [xset(3.75, 16, { rpe: 8.5 }), xset(5.25, 12)], 'X'],
+      ['unknown quality key is ignored', [xset(40, 12, { rpe: 9, quality: 'wobbly' })], 'X'],
+      ['one unloaded rep still says reps (as the export does)', [xset(0, 1, { rpe: 8 })], 'Hanging Knee Raise'],
+    ]
+    emit('set-detail.json', {
+      module: 'reports/weeklyExport', fn: 'setDetail',
+      note: 'One line per set; warm-ups and ghosts carry no number; per-set rating and word, "RPE not reported" on unrated working sets only when some set was rated, else one closing note.',
+      cases: details.map(([name, sets, exerciseName]) => ({ name, input: { sets, exerciseName: exerciseName ?? null }, expected: setDetail(sets, exerciseName) })),
+    })
+
+    emit('supplements-consolidate.json', {
+      module: 'reports/weeklyExport', fn: 'consolidateSupplements',
+      note: 'One chronological list deduped by lower-cased name; a split dose is stated as a rule; blank names dropped; sorted by time with — first.',
+      cases: [
+        { name: 'the rich protocol', input: { protocol: RICH.supplementProtocol }, expected: consolidateSupplements(RICH.supplementProtocol!) },
+        { name: 'empty', input: { protocol: [] }, expected: consolidateSupplements([]) },
+        { name: 'same time keeps input order', input: { protocol: [{ time: '07:00', name: 'B', dose: '1' }, { time: '07:00', name: 'A', dose: '2' }] }, expected: consolidateSupplements([{ time: '07:00', name: 'B', dose: '1' }, { time: '07:00', name: 'A', dose: '2' }]) },
+      ],
+    })
+
+    emit('trend-ledger.json', {
+      module: 'reports/weeklyExport', fn: 'trendLedger',
+      note: 'One row per week, oldest first; Δ kg to two places against the row above; the arrow is direction only.',
+      cases: [
+        { name: 'the rich ledger', input: { weeks: RICH.ledger }, expected: trendLedger(RICH.ledger!) },
+        { name: 'one week', input: { weeks: [RICH.ledger![0]] }, expected: trendLedger([RICH.ledger![0]]) },
+        { name: 'empty', input: { weeks: [] }, expected: trendLedger([]) },
+        { name: 'a tie and a fractional volume', input: { weeks: [RICH.ledger![0], { ...RICH.ledger![0], label: 'W', totals: { ...RICH.ledger![0].totals, avgWeightKg: 65.7, totalVolumeKg: 8329.249999999 } }] }, expected: trendLedger([RICH.ledger![0], { ...RICH.ledger![0], label: 'W', totals: { ...RICH.ledger![0].totals, avgWeightKg: 65.7, totalVolumeKg: 8329.249999999 } }]) },
+      ],
+    })
+
+    emit('report-notes.json', {
+      module: 'reports/weeklyExport', fn: 'priorReportNote / fatigueLabelsFor / constants',
+      note: 'The closing line per label, the two fatigue slot triples, and the three standing notes verbatim.',
+      cases: [{
+        name: 'the strings', input: {},
+        expected: {
+          notes: ([undefined, null, '', '  ', 'Week 7', ' Week 7 '] as Array<string | null | undefined>).map((l) => ({ label: l ?? null, note: priorReportNote(l) })),
+          training: fatigueLabelsFor(true), rest: fatigueLabelsFor(false), slots: FATIGUE_SLOT_LABELS,
+          unilateral: UNILATERAL_VOLUME_NOTE, epley: EPLEY_NOTE, watch: APPLE_WATCH_DISCLAIMER,
+        },
+      }],
     })
   })
 })

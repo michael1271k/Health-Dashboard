@@ -1,0 +1,153 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "nutrientLine + flaggedNutrients",
+  "note": "Every target every time in table order; provenance split only when both sides are non-zero; ⚠ on a FOOD-only floor above 2.5× target.",
+  "cases": [
+    {
+      "name": "nothing",
+      "input": {
+        "food": null,
+        "stack": null
+      },
+      "expected": {
+        "line": "Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "empty maps",
+      "input": {
+        "food": {},
+        "stack": {}
+      },
+      "expected": {
+        "line": "Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "Sunday of the rich week",
+      "input": {
+        "food": {
+          "fiber": 31,
+          "protein": 172,
+          "sodium": 2400,
+          "potassium": 3100,
+          "calcium": 950,
+          "iron": 12,
+          "magnesium": 380,
+          "vitaminC": 124,
+          "satFat": 14,
+          "sugar": 22
+        },
+        "stack": {
+          "vitaminC": 470,
+          "vitaminD": 2000,
+          "vitaminB12": 300,
+          "folate": 680,
+          "epa": 600,
+          "dha": 300,
+          "creatine": 5000,
+          "glycine": 5000,
+          "theanine": 200,
+          "magnesium": 200
+        }
+      },
+      "expected": {
+        "line": "Fiber: 31/30 g · Protein: 172/170 g · Sodium: 2400/3000 mg (ceiling) · Potassium: 3100/3400 mg · Calcium: 950/1000 mg · Iron: 12/10 mg · Magnesium: 580/400 mg (380 food + 200 stack) · Vitamin C: 594/90 mg (124 food + 470 stack) · Vitamin D: 2000/2000 IU · Saturated Fat: 14/20 g (ceiling) · Added Sugar: 22/40 g (ceiling) · Vitamin B12: 300/2.4 mcg (stack) · Folate: 680/400 mcg (stack) · EPA: 600/500 mg (stack) · DHA: 300/250 mg (stack) · Creatine: 5000/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: 200/200 mg (stack) · Glycine: 5000/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "implausible calcium",
+      "input": {
+        "food": {
+          "fiber": 28,
+          "protein": 175,
+          "sodium": 3100,
+          "potassium": 3000,
+          "calcium": 3074,
+          "iron": 9,
+          "magnesium": 300,
+          "vitaminC": 80,
+          "satFat": 24,
+          "sugar": 45
+        },
+        "stack": {
+          "creatine": 5000,
+          "citrulline": 3000,
+          "caffeine": 200
+        }
+      },
+      "expected": {
+        "line": "Fiber: 28/30 g · Protein: 175/170 g · Sodium: 3100/3000 mg (ceiling) · Potassium: 3000/3400 mg · Calcium: ⚠ 3074/1000 mg · Iron: 9/10 mg · Magnesium: 300/400 mg · Vitamin C: 80/90 mg · Vitamin D: —/2000 IU · Saturated Fat: 24/20 g (ceiling) · Added Sugar: 45/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: 5000/5000 mg (stack) · L-Citrulline: 3000/3000 mg (stack) · Caffeine: 200/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": [
+          "Calcium 3074 mg on 2026-09-01"
+        ]
+      }
+    },
+    {
+      "name": "zeros are absent",
+      "input": {
+        "food": {
+          "fiber": 0,
+          "protein": 0
+        },
+        "stack": {
+          "creatine": 0
+        }
+      },
+      "expected": {
+        "line": "Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "ceiling overshoot is not flagged",
+      "input": {
+        "food": {
+          "sodium": 9000,
+          "caffeine": 0
+        },
+        "stack": {
+          "caffeine": 1500
+        }
+      },
+      "expected": {
+        "line": "Fiber: —/30 g · Protein: —/170 g · Sodium: 9000/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: —/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: 1500/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "stack covers a floor overshoot",
+      "input": {
+        "food": {
+          "calcium": 3000
+        },
+        "stack": {
+          "calcium": 1
+        }
+      },
+      "expected": {
+        "line": "Fiber: —/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: 3001/1000 mg (3000 food + 1 stack) · Iron: —/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: —/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    },
+    {
+      "name": "fractional values print exact",
+      "input": {
+        "food": {
+          "fiber": 30.25,
+          "iron": 9.999999
+        },
+        "stack": {
+          "epa": 600.5
+        }
+      },
+      "expected": {
+        "line": "Fiber: 30.25/30 g · Protein: —/170 g · Sodium: —/3000 mg (ceiling) · Potassium: —/3400 mg · Calcium: —/1000 mg · Iron: 9.999999/10 mg · Magnesium: —/400 mg · Vitamin C: —/90 mg · Vitamin D: —/2000 IU · Saturated Fat: —/20 g (ceiling) · Added Sugar: —/40 g (ceiling) · Vitamin B12: —/2.4 mcg (stack) · Folate: —/400 mcg (stack) · EPA: 600.5/500 mg (stack) · DHA: —/250 mg (stack) · Creatine: —/5000 mg (stack) · L-Citrulline: —/3000 mg (stack) · Caffeine: —/400 mg (ceiling, stack) · L-Theanine: —/200 mg (stack) · Glycine: —/3000 mg (stack)",
+        "flagged": []
+      }
+    }
+  ]
+}

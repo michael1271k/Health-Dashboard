@@ -1,0 +1,631 @@
+{
+  "module": "reports/weekNumber + utils/week",
+  "fn": "weekStartOf / weekNumberOf / weekLabelOf",
+  "note": "weekStartOf echoes an unparseable date; weekNumberOf is Math.round(weeks since 2026-07-12) and 0 when unparseable; a negative week draws its label from the phase, else \"Week N\".",
+  "cases": [
+    {
+      "name": "2026-03-01 · start 0",
+      "input": {
+        "date": "2026-03-01",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-03-01",
+        "weekNumber": -19,
+        "label": "Week -19",
+        "weekNumberForDate": -19
+      }
+    },
+    {
+      "name": "2026-03-01 · start 1",
+      "input": {
+        "date": "2026-03-01",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-02-23",
+        "weekNumber": -20,
+        "label": "Week -20",
+        "weekNumberForDate": -20
+      }
+    },
+    {
+      "name": "2026-03-08 · start 0",
+      "input": {
+        "date": "2026-03-08",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-03-08",
+        "weekNumber": -18,
+        "label": "PPL Bulk · Week 1",
+        "weekNumberForDate": -18
+      }
+    },
+    {
+      "name": "2026-03-08 · start 1",
+      "input": {
+        "date": "2026-03-08",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-03-02",
+        "weekNumber": -19,
+        "label": "Week -19",
+        "weekNumberForDate": -19
+      }
+    },
+    {
+      "name": "2026-05-10 · start 0",
+      "input": {
+        "date": "2026-05-10",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-05-10",
+        "weekNumber": -9,
+        "label": "PPL Cut · Week 1",
+        "weekNumberForDate": -9
+      }
+    },
+    {
+      "name": "2026-05-10 · start 1",
+      "input": {
+        "date": "2026-05-10",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-05-04",
+        "weekNumber": -10,
+        "label": "Week -10",
+        "weekNumberForDate": -10
+      }
+    },
+    {
+      "name": "2026-06-21 · start 0",
+      "input": {
+        "date": "2026-06-21",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-06-21",
+        "weekNumber": -3,
+        "label": "PPL Peak",
+        "weekNumberForDate": -3
+      }
+    },
+    {
+      "name": "2026-06-21 · start 1",
+      "input": {
+        "date": "2026-06-21",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-06-15",
+        "weekNumber": -4,
+        "label": "Week -4",
+        "weekNumberForDate": -4
+      }
+    },
+    {
+      "name": "2026-06-28 · start 0",
+      "input": {
+        "date": "2026-06-28",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-06-28",
+        "weekNumber": -2,
+        "label": "Thailand Vacation (Deload)",
+        "weekNumberForDate": -2
+      }
+    },
+    {
+      "name": "2026-06-28 · start 1",
+      "input": {
+        "date": "2026-06-28",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-06-22",
+        "weekNumber": -3,
+        "label": "Week -3",
+        "weekNumberForDate": -3
+      }
+    },
+    {
+      "name": "2026-07-05 · start 0",
+      "input": {
+        "date": "2026-07-05",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-05",
+        "weekNumber": -1,
+        "label": "Thailand Vacation (Deload)",
+        "weekNumberForDate": -1
+      }
+    },
+    {
+      "name": "2026-07-05 · start 1",
+      "input": {
+        "date": "2026-07-05",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-06-29",
+        "weekNumber": -2,
+        "label": "Week -2",
+        "weekNumberForDate": -2
+      }
+    },
+    {
+      "name": "2026-07-11 · start 0",
+      "input": {
+        "date": "2026-07-11",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-05",
+        "weekNumber": -1,
+        "label": "Thailand Vacation (Deload)",
+        "weekNumberForDate": -1
+      }
+    },
+    {
+      "name": "2026-07-11 · start 1",
+      "input": {
+        "date": "2026-07-11",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-07-06",
+        "weekNumber": -1,
+        "label": "Week -1",
+        "weekNumberForDate": -1
+      }
+    },
+    {
+      "name": "2026-07-12 · start 0",
+      "input": {
+        "date": "2026-07-12",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-12",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-07-12 · start 1",
+      "input": {
+        "date": "2026-07-12",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-07-06",
+        "weekNumber": -1,
+        "label": "Week -1",
+        "weekNumberForDate": -1
+      }
+    },
+    {
+      "name": "2026-07-15 · start 0",
+      "input": {
+        "date": "2026-07-15",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-12",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-07-15 · start 1",
+      "input": {
+        "date": "2026-07-15",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-07-13",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-07-18 · start 0",
+      "input": {
+        "date": "2026-07-18",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-12",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-07-18 · start 1",
+      "input": {
+        "date": "2026-07-18",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-07-13",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-07-19 · start 0",
+      "input": {
+        "date": "2026-07-19",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-07-19",
+        "weekNumber": 1,
+        "label": "Week 1",
+        "weekNumberForDate": 1
+      }
+    },
+    {
+      "name": "2026-07-19 · start 1",
+      "input": {
+        "date": "2026-07-19",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-07-13",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "2026-08-03 · start 0",
+      "input": {
+        "date": "2026-08-03",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-02",
+        "weekNumber": 3,
+        "label": "Week 3",
+        "weekNumberForDate": 3
+      }
+    },
+    {
+      "name": "2026-08-03 · start 1",
+      "input": {
+        "date": "2026-08-03",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-03",
+        "weekNumber": 3,
+        "label": "Week 3",
+        "weekNumberForDate": 3
+      }
+    },
+    {
+      "name": "2026-08-23 · start 0",
+      "input": {
+        "date": "2026-08-23",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-23",
+        "weekNumber": 6,
+        "label": "Week 6",
+        "weekNumberForDate": 6
+      }
+    },
+    {
+      "name": "2026-08-23 · start 1",
+      "input": {
+        "date": "2026-08-23",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-17",
+        "weekNumber": 5,
+        "label": "Week 5",
+        "weekNumberForDate": 5
+      }
+    },
+    {
+      "name": "2026-08-29 · start 0",
+      "input": {
+        "date": "2026-08-29",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-23",
+        "weekNumber": 6,
+        "label": "Week 6",
+        "weekNumberForDate": 6
+      }
+    },
+    {
+      "name": "2026-08-29 · start 1",
+      "input": {
+        "date": "2026-08-29",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-24",
+        "weekNumber": 6,
+        "label": "Week 6",
+        "weekNumberForDate": 6
+      }
+    },
+    {
+      "name": "2026-08-30 · start 0",
+      "input": {
+        "date": "2026-08-30",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-30",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-08-30 · start 1",
+      "input": {
+        "date": "2026-08-30",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-24",
+        "weekNumber": 6,
+        "label": "Week 6",
+        "weekNumberForDate": 6
+      }
+    },
+    {
+      "name": "2026-09-03 · start 0",
+      "input": {
+        "date": "2026-09-03",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-30",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-09-03 · start 1",
+      "input": {
+        "date": "2026-09-03",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-31",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-09-05 · start 0",
+      "input": {
+        "date": "2026-09-05",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-08-30",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-09-05 · start 1",
+      "input": {
+        "date": "2026-09-05",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-31",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-09-06 · start 0",
+      "input": {
+        "date": "2026-09-06",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-09-06",
+        "weekNumber": 8,
+        "label": "Week 8",
+        "weekNumberForDate": 8
+      }
+    },
+    {
+      "name": "2026-09-06 · start 1",
+      "input": {
+        "date": "2026-09-06",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-08-31",
+        "weekNumber": 7,
+        "label": "Week 7",
+        "weekNumberForDate": 7
+      }
+    },
+    {
+      "name": "2026-10-18 · start 0",
+      "input": {
+        "date": "2026-10-18",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-10-18",
+        "weekNumber": 14,
+        "label": "Week 14",
+        "weekNumberForDate": 14
+      }
+    },
+    {
+      "name": "2026-10-18 · start 1",
+      "input": {
+        "date": "2026-10-18",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-10-12",
+        "weekNumber": 13,
+        "label": "Week 13",
+        "weekNumberForDate": 13
+      }
+    },
+    {
+      "name": "2026-12-31 · start 0",
+      "input": {
+        "date": "2026-12-31",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2026-12-27",
+        "weekNumber": 24,
+        "label": "Week 24",
+        "weekNumberForDate": 24
+      }
+    },
+    {
+      "name": "2026-12-31 · start 1",
+      "input": {
+        "date": "2026-12-31",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2026-12-28",
+        "weekNumber": 24,
+        "label": "Week 24",
+        "weekNumberForDate": 24
+      }
+    },
+    {
+      "name": "2027-01-16 · start 0",
+      "input": {
+        "date": "2027-01-16",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2027-01-10",
+        "weekNumber": 26,
+        "label": "Week 26",
+        "weekNumberForDate": 26
+      }
+    },
+    {
+      "name": "2027-01-16 · start 1",
+      "input": {
+        "date": "2027-01-16",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2027-01-11",
+        "weekNumber": 26,
+        "label": "Week 26",
+        "weekNumberForDate": 26
+      }
+    },
+    {
+      "name": "2027-01-17 · start 0",
+      "input": {
+        "date": "2027-01-17",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "2027-01-17",
+        "weekNumber": 27,
+        "label": "Week 27",
+        "weekNumberForDate": 27
+      }
+    },
+    {
+      "name": "2027-01-17 · start 1",
+      "input": {
+        "date": "2027-01-17",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "2027-01-11",
+        "weekNumber": 26,
+        "label": "Week 26",
+        "weekNumberForDate": 26
+      }
+    },
+    {
+      "name": "garbage · start 0",
+      "input": {
+        "date": "garbage",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "garbage",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "garbage · start 1",
+      "input": {
+        "date": "garbage",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "garbage",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "empty · start 0",
+      "input": {
+        "date": "",
+        "startDay": 0
+      },
+      "expected": {
+        "weekStart": "",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    },
+    {
+      "name": "empty · start 1",
+      "input": {
+        "date": "",
+        "startDay": 1
+      },
+      "expected": {
+        "weekStart": "",
+        "weekNumber": 0,
+        "label": "Week 0",
+        "weekNumberForDate": 0
+      }
+    }
+  ]
+}
