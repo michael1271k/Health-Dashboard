@@ -7,6 +7,7 @@ import { useLatestBodyReading, type CarryField } from '@/lib/hooks/useLatestBody
 import { useFlash } from '@/lib/hooks/useFlash'
 import { deriveBodyComp, whrBand, visceralBand, type BodyCompInput, type BodyCompDerived, type WhrBand, type VisceralBand } from '@/lib/body/composition'
 import { EMBER, EMERALD, GOLD, OXIDE } from '@/lib/theme/palette'
+import { hasScaleMetrics as hasScaleReadings } from '@/lib/body/readings'
 
 // Was `const ACCENT = '#E0703C'` — a name that lied about its value in two
 // separate files. The Body domain's accent is the signature ember.
@@ -63,11 +64,7 @@ const DERIVED: Array<{ key: keyof BodyCompDerived; label: string; unit: string }
  * panel wears, and that decision has to agree with what this form writes.
  */
 export function hasScaleMetrics(log: DayVaultData['log']): boolean {
-  if (!log) return false
-  const r = log as Record<string, number | null>
-  return ['weight_kg', 'body_fat_pct', 'muscle_percent', 'water_percent', 'muscle_mass_kg',
-    'fat_free_mass_kg', 'bone_mineral', 'visceral_fat', 'bmr', 'bmi',
-    'skeletal_muscle_mass_kg', 'estimated_waist_to_hip_ratio'].some((k) => r[k] != null)
+  return hasScaleReadings(log as Record<string, unknown> | null)
 }
 
 /**

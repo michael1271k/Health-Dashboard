@@ -14,8 +14,7 @@ import { AMBER, EMERALD_DEEP, EMERALD_LIGHT, MUTED, STEEL } from '@/lib/theme/pa
 import { setQualityFor } from '@/lib/training/setTags'
 
 /** Plate step (a tap on ±) and the microload step (a press-and-hold). */
-const PLATE_STEP = 2.5
-const FINE_STEP = 0.25
+import { PLATE_STEP, FINE_STEP, nudgeLoad, nudgeReps as stepReps } from '@/lib/sessions/deck'
 const ORANGE = '#E0703C' // warm-up
 const DANGER = '#C4514E' // failure
 const DROP = '#9A6DD7'   // drop set
@@ -222,11 +221,10 @@ export const SetEditorRow = memo(function SetEditorRow({ index, displayNum, subR
   const hasPr = prAxes.length > 0
 
   const nudgeWeight = useCallback((delta: number) => {
-    // Snap to the 0.25 kg grid (quarter-kg microloads), not the old 0.5 grid.
-    onChange(index, { weightKg: Math.max(0, Math.round((set.weightKg + delta) * 4) / 4) })
+    onChange(index, { weightKg: nudgeLoad(set.weightKg, delta) })
   }, [onChange, index, set.weightKg])
   const nudgeReps = useCallback((delta: number) => {
-    onChange(index, { reps: Math.max(1, set.reps + delta) })
+    onChange(index, { reps: stepReps(set.reps, delta) })
   }, [onChange, index, set.reps])
 
   /**

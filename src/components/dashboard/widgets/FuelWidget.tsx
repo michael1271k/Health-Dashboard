@@ -1,4 +1,5 @@
 'use client'
+import { nutrientRisk } from '@/lib/dashboard/tiles'
 
 import { memo, useMemo } from 'react'
 import { WidgetFrame, WidgetEmpty } from '@/components/dashboard/WidgetFrame'
@@ -177,27 +178,8 @@ function FuelWidgetImpl({ size, onOpen, kcal, kcalGoal, protein, carbs, fat, goa
  * that is easy to blow through, and one floor that quietly matters for training
  * turnover. Large adds the rest of the table.
  */
-/**
- * How far off target a nutrient is, as a fraction — 0 when it is fine.
- *
- * A floor is missed by its SHORTFALL (18 g of a 30 g fibre target is 0.4 short);
- * a ceiling is missed by its OVERAGE (4,200 mg against a 3,000 mg sodium ceiling
- * is 0.4 over). Expressing both as a fraction of their own target is what makes
- * milligrams of sodium and grams of fibre comparable at all — the alternative
- * ranks by raw magnitude, which puts sodium first every single day purely
- * because it is measured in a smaller unit.
- *
- * An unmeasured nutrient scores -1 and sorts last. It is not at risk; it is
- * unknown, and promoting it would push a real shortfall off the tile in favour
- * of a row reading "—".
- */
-export function nutrientRisk(have: number | null, target: number, kind: 'floor' | 'ceiling'): number {
-  if (have == null) return -1
-  if (target <= 0) return 0
-  return kind === 'ceiling'
-    ? Math.max(0, have / target - 1)
-    : Math.max(0, 1 - have / target)
-}
+// `nutrientRisk` lives in `lib/dashboard/tiles.ts` (pure, vectored, ported).
+export { nutrientRisk }
 
 /**
  * The micronutrient checklist.

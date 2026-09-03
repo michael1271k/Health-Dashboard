@@ -6,6 +6,8 @@ import {
 } from 'recharts'
 import { ChartScrubber, SmartLegend, useScrub, lastValues, SCRUB_TOUCH } from './SmartLegend'
 import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
+import { mergeBodyComposition, type BodyCompositionPoint } from '@/lib/body/readings'
+export { mergeBodyComposition, type BodyCompositionPoint }
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { HELIX_CUT_START } from '@/lib/programs'
 import { niceDomain } from '@/lib/charts/scale'
@@ -71,74 +73,6 @@ const FAMILY_SERIES: Record<Family, Array<{ key: string; name: string; color: st
 
 const fmtDate = (d: string) =>
   new Intl.DateTimeFormat('en-GB', { month: 'short', day: 'numeric' }).format(new Date(`${d}T12:00:00Z`))
-
-export interface BodyCompositionPoint {
-  date: string
-  weight: number | null
-  /** Weight × muscle% — skeletal muscle only. Null when muscle% wasn't measured. */
-  muscleMass: number | null
-  /** Weight − fat mass. Includes bone, water and organs, so it always runs higher. */
-  fatFreeMass: number | null
-  fatMass: number | null
-  fatPct: number | null
-  water: number | null
-  musclePct: number | null
-  visceral: number | null
-}
-
-/**
- * Join the two body-composition sources by date.
- *
- * `useWeightTrend` carries weight / fat% / muscle mass (unioned from the
- * `body_composition` ledger and `daily_logs`); `useBodyDetailTrend` carries the
- * scale's extra readings. Both are read-only here — nothing is derived except
- * fat mass and lean mass, which are simple products of numbers already present.
- */
-export function mergeBodyComposition(
-  trend: BodyTrendRow[],
-  detail: BodyDetailRow[],
-  toDisplay: (kg: number | null) => number | null,
-): BodyCompositionPoint[] {
-  const byDate = new Map<string, BodyCompositionPoint>()
-  const blank = (date: string): BodyCompositionPoint => ({
-    date, weight: null, muscleMass: null, fatFreeMass: null, fatMass: null,
-    fatPct: null, water: null, musclePct: null, visceral: null,
-  })
-
-  for (const r of trend) {
-    const p = byDate.get(r.date) ?? blank(r.date)
-    p.weight = toDisplay(r.weight_kg)
-    p.fatPct = r.body_fat_pct ?? p.fatPct
-    // TWO series, never one.
-    //
-    // There used to be a single `lean` that meant weight − fat when body-fat %
-    // was recorded and muscle mass otherwise. Those are ~2.6 kg apart, so the
-    // line stepped up 2.6 kg on 2026-07-23 — the date HealthKit started filling
-    // the column — and read as lean-mass gain during a cut. Each series is now
-    // drawn only from its own definition, and stays null where its inputs are
-    // missing rather than borrowing the other one's value.
-    if (r.weight_kg != null && r.body_fat_pct != null) {
-      const fatKg = (r.weight_kg * r.body_fat_pct) / 100
-      p.fatMass = toDisplay(fatKg)
-      p.fatFreeMass = toDisplay(r.weight_kg - fatKg)
-    } else if (r.fat_free_mass_kg != null) {
-      p.fatFreeMass = toDisplay(r.fat_free_mass_kg)
-    }
-    if (r.muscle_mass_kg != null) p.muscleMass = toDisplay(r.muscle_mass_kg)
-    byDate.set(r.date, p)
-  }
-
-  for (const r of detail) {
-    const p = byDate.get(r.date) ?? blank(r.date)
-    p.water = r.water_percent ?? p.water
-    p.musclePct = r.muscle_percent ?? p.musclePct
-    p.visceral = r.visceral_fat ?? p.visceral
-    p.fatPct = p.fatPct ?? r.body_fat_pct ?? null
-    byDate.set(r.date, p)
-  }
-
-  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
-}
 
 /**
  * ONE body-composition chart, with the metric families toggled rather than

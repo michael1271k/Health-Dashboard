@@ -89,8 +89,8 @@ describe('every invalidated key prefix has a consumer', () => {
   })
 
   it('RealtimeProvider fans every table out to keys that exist', () => {
-    const code = SOURCES.find((s) => s.path.endsWith('RealtimeProvider.tsx'))!.code
-    const map = code.slice(code.indexOf('const TABLE_KEYS'), code.indexOf('const TABLES'))
+    const code = SOURCES.find((s) => s.path.endsWith('lib/query/realtimeKeys.ts'))!.code
+    const map = code.slice(code.indexOf('const TABLE_KEYS'), code.indexOf('const REALTIME_TABLES'))
     const roots = [...map.matchAll(/\[\s*'([^']+)'\s*\]/g)].map((m) => m[1])
     expect(roots.length).toBeGreaterThan(20)
     expect(roots.filter((r) => !REGISTERED.has(r))).toEqual([])
@@ -160,8 +160,8 @@ for (const { code } of SOURCES) {
 
 /** Every root the realtime socket fans a table change out to. */
 function realtimeRoots(): Set<string> {
-  const code = SOURCES.find((s) => s.path.endsWith('RealtimeProvider.tsx'))!.code
-  const map = code.slice(code.indexOf('const TABLE_KEYS'), code.indexOf('const TABLES'))
+  const code = SOURCES.find((s) => s.path.endsWith('lib/query/realtimeKeys.ts'))!.code
+  const map = code.slice(code.indexOf('const TABLE_KEYS'), code.indexOf('const REALTIME_TABLES'))
   return new Set([...map.matchAll(/\[\s*'([^']+)'\s*\]/g)].map((m) => m[1]))
 }
 
@@ -220,7 +220,7 @@ describe('the surfaces a score recompute has to reach', () => {
    * A sleep sync on the desktop left the phone's dashboard on stale numbers for
    * the full 90 s staleTime, and longer from a cold open since the key persists.
    */
-  const code = SOURCES.find((s) => s.path.endsWith('RealtimeProvider.tsx'))!.code
+  const code = SOURCES.find((s) => s.path.endsWith('lib/query/realtimeKeys.ts'))!.code
   const entry = (table: string) => {
     const at = code.indexOf(`${table}: [`)
     return at < 0 ? '' : code.slice(at, code.indexOf(']]', at))
