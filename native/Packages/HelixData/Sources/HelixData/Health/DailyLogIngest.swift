@@ -82,7 +82,10 @@ public extension AppDatabase {
 
 // MARK: - The flat row
 
-private extension AppDatabase {
+// Internal rather than private: `DayEditing` patches the same row by hand and
+// must mint the day exactly the way HealthKit does, or the two paths create two
+// rows for one date.
+extension AppDatabase {
 
     /// `daily_logs` — one row per day, merged.
     ///
