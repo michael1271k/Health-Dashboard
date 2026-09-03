@@ -1,0 +1,228 @@
+#!/usr/bin/env node
+/**
+ * native/schema/supabase.json  →  the GRDB mirror, in Swift.
+ *
+ * ── WHY THIS IS GENERATED ────────────────────────────────────────────────────
+ * `src/lib/supabase/types.ts` declares 17 tables; the app queries 29, and
+ * fourteen of those call sites are silently `any`. The file drifted because
+ * nothing made it fail when it did. Twenty-nine hand-written Swift structs
+ * would drift the same way, for the same reason, and the symptom would be a
+ * column that silently stops syncing.
+ *
+ * So the mirror is generated from one introspected fixture, and `--check` fails
+ * the build when the checked-in Swift no longer matches it — the same contract
+ * `gen-atlas-swift.mjs` already enforces on the body atlas, and for the same
+ * reason: two copies of one fact, and only one of them is looked at.
+ *
+ *   node scripts/gen-mirror-swift.mjs           # write
+ *   node scripts/gen-mirror-swift.mjs --check   # fail if the output would differ
+ *
+ * Re-introspecting is a separate, manual step (the `schema-truth-checker` agent
+ * or the Supabase MCP): this script never touches the network, so it runs in CI
+ * and on a plane.
+ */
+
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+const SCHEMA = join(ROOT, 'native/schema/supabase.json')
+const OUT = join(ROOT, 'native/Packages/HelixData/Sources/HelixData/Mirror/MirrorModels.swift')
+
+/**
+ * Postgres → Swift.
+ *
+ * `date` is a STRING, not a Date, and deliberately: SQLite has no date type,
+ * every other date in this store is `yyyy-MM-dd` text, and a string that sorts
+ * correctly is worth more in a query than an epoch nobody can read. `timestamptz`
+ * IS a Date — those are instants, not days.
+ *
+ * `numeric` is Double. Postgres numeric is arbitrary precision and Double is
+ * not, but every numeric column here holds a body weight, a load or a macro —
+ * quantities that were measured to one decimal place by a scale or typed by a
+ * human. None of them is money.
+ */
+const TYPES = {
+  uuid: 'String',
+  text: 'String',
+  date: 'String',
+  timestamptz: 'Date',
+  timestamp: 'Date',
+  numeric: 'Double',
+  float8: 'Double',
+  float4: 'Double',
+  int2: 'Int',
+  int4: 'Int',
+  int8: 'Int',
+  bool: 'Bool',
+  jsonb: 'JSONText',
+  json: 'JSONText',
+  _text: 'JSONText',
+}
+
+/** GRDB column types, for the CREATE TABLE. */
+const SQLITE = {
+  String: '.text', Date: '.datetime', Double: '.double', Int: '.integer',
+  Bool: '.boolean', JSONText: '.text',
+}
+
+const RESERVED = new Set(['default', 'case', 'class', 'return', 'where', 'in', 'is', 'as', 'operator', 'protocol', 'extension', 'repeat', 'self', 'static', 'switch', 'true', 'false', 'nil'])
+
+const camel = (s) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())
+const pascal = (s) => {
+  const c = camel(s)
+  return c.charAt(0).toUpperCase() + c.slice(1)
+}
+/**
+ * `workout_sessions` → `WorkoutSession`.
+ *
+ * `ies` → `y` FIRST: without it `nutrition_entries` singularises to
+ * `NutritionEntrie`, which compiles and reads like a typo forever. `ss` is
+ * left alone so nothing turns `..._progress` into `..._progres`.
+ */
+const typeName = (table) => {
+  const p = pascal(table)
+  if (p.endsWith('ies')) return `${p.slice(0, -3)}y`
+  return p.endsWith('ss') ? p : p.replace(/s$/, '')
+}
+const swiftName = (col) => {
+  const c = camel(col)
+  return RESERVED.has(c) ? `\`${c}\`` : c
+}
+
+function parseCols(spec) {
+  return spec.split(',').map((raw) => {
+    const [name, rawType] = raw.trim().split(':')
+    const nullable = rawType.endsWith('?')
+    const pg = nullable ? rawType.slice(0, -1) : rawType
+    const swift = TYPES[pg]
+    if (!swift) throw new Error(`no Swift type for Postgres \`${pg}\` (column ${name})`)
+    return { name, pg, nullable, swift }
+  })
+}
+
+function structFor(table, def) {
+  const cols = parseCols(def.cols)
+  const type = typeName(table)
+  const lines = []
+
+  lines.push(`// MARK: - ${table}`)
+  lines.push('')
+  lines.push(`/// Mirrors \`public.${table}\` (${def.group}). ${
+    def.cursor ? `Delta by \`${def.cursor}\`.`
+    : def.window ? `Windowed on \`${def.window}\`.`
+    : def.children_of ? `Pulled with its parent \`${def.children_of}\`.`
+    : 'Pulled whole.'}`)
+  lines.push(`public struct ${type}Row: Codable, FetchableRecord, PersistableRecord, Sendable, Equatable {`)
+  lines.push(`    public static let databaseTableName = "${table}"`)
+  lines.push('')
+  for (const c of cols) {
+    lines.push(`    public var ${swiftName(c.name)}: ${c.swift}${c.nullable ? '?' : ''}`)
+  }
+  lines.push('')
+  lines.push('    public enum CodingKeys: String, CodingKey {')
+  for (const c of cols) {
+    const s = swiftName(c.name).replace(/`/g, '')
+    lines.push(s === c.name ? `        case ${swiftName(c.name)}` : `        case ${swiftName(c.name)} = "${c.name}"`)
+  }
+  lines.push('    }')
+  lines.push('}')
+  lines.push('')
+  return lines.join('\n')
+}
+
+function migrationFor(table, def) {
+  const cols = parseCols(def.cols)
+  const pk = def.pk ?? []
+  const lines = []
+  lines.push(`            try db.create(table: "${table}") { t in`)
+  if (pk.length === 1) {
+    const c = cols.find((x) => x.name === pk[0])
+    lines.push(`                t.primaryKey("${pk[0]}", ${SQLITE[c.swift]})`)
+  }
+  for (const c of cols) {
+    if (pk.length === 1 && c.name === pk[0]) continue
+    // NOT NULL follows Postgres exactly. A column that is NOT NULL there and
+    // nullable here would let a decode failure land as a silent gap.
+    lines.push(`                t.column("${c.name}", ${SQLITE[c.swift]})${c.nullable ? '' : '.notNull()'}`)
+  }
+  if (pk.length > 1) {
+    lines.push(`                t.primaryKey([${pk.map((p) => `"${p}"`).join(', ')}])`)
+  }
+  lines.push('            }')
+  return lines.join('\n')
+}
+
+function registryFor(tables) {
+  const lines = []
+  lines.push('/// Every mirrored table, with the strategy that keeps it current.')
+  lines.push('///')
+  lines.push('/// Generated, so the list cannot fall behind the schema fixture the way a')
+  lines.push('/// hand-maintained one would. `bespoke` tables are absent on purpose: they')
+  lines.push('/// land in tables the logger already owns, through `SyncTranslation`.')
+  lines.push('public enum MirrorCatalogue {')
+  lines.push('    public static let tables: [MirrorTable] = [')
+  for (const [table, def] of tables) {
+    if (def.bespoke) continue
+    const strategy = def.cursor ? `.delta(column: "${def.cursor}")`
+      : def.window ? `.window(column: "${def.window}")`
+      : '.full'
+    lines.push(`        MirrorTable(name: "${table}", group: .${def.group}, strategy: ${strategy},`)
+    lines.push(`                    pull: { try await $0.pull(${typeName(table)}Row.self, from: $1) }),`)
+  }
+  lines.push('    ]')
+  lines.push('}')
+  return lines.join('\n')
+}
+
+function generate() {
+  const schema = JSON.parse(readFileSync(SCHEMA, 'utf8'))
+  const entries = Object.entries(schema.tables)
+  const generated = entries.filter(([, d]) => !d.bespoke)
+
+  const out = []
+  out.push('// GENERATED by scripts/gen-mirror-swift.mjs — DO NOT EDIT.')
+  out.push('//')
+  out.push(`// Source: native/schema/supabase.json (introspected ${schema.introspected}).`)
+  out.push('// Edit the fixture and re-run `npm run mirror`; `npm run check:mirror`')
+  out.push('// fails the build when this file and the fixture disagree.')
+  out.push('')
+  out.push('import Foundation')
+  out.push('import GRDB')
+  out.push('')
+  for (const [table, def] of generated) out.push(structFor(table, def))
+
+  out.push('// MARK: - Schema')
+  out.push('')
+  out.push('extension AppDatabase {')
+  out.push('    /// The mirror\'s tables, as one migration.')
+  out.push('    ///')
+  out.push('    /// Registered by `AppDatabase.migrator`. Append-only like every other')
+  out.push('    /// migration here: a regenerated schema is a NEW migration, never an edit')
+  out.push('    /// to this one, because an edited migration runs on a fresh install and')
+  out.push('    /// not on yours.')
+  out.push('    static func migrateMirrorV1(_ db: Database) throws {')
+  for (const [table, def] of generated) out.push(migrationFor(table, def))
+  out.push('    }')
+  out.push('}')
+  out.push('')
+  out.push(registryFor(entries))
+  out.push('')
+
+  return out.join('\n')
+}
+
+const text = generate()
+if (process.argv.includes('--check')) {
+  let current = ''
+  try { current = readFileSync(OUT, 'utf8') } catch { /* missing counts as stale */ }
+  if (current !== text) {
+    console.error('MirrorModels.swift is stale. Run `npm run mirror`.')
+    process.exit(1)
+  }
+  console.log('mirror: up to date')
+} else {
+  writeFileSync(OUT, text)
+  console.log(`mirror: wrote ${OUT}`)
+}

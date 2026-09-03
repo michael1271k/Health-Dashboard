@@ -198,15 +198,18 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
     /// moment the row was created, and the delta pull that Wave 2 builds on top
     /// of it would never see the edit.
     ///
-    /// ── AND IT IS THE DEVICE'S CLOCK, WHICH IS A PROBLEM FOR THE PULL ───────
-    /// A delta pull filters `updated_at > cursor`, and the cursor comes from
-    /// the server. A phone three minutes slow stamps an edit in the past and
-    /// that edit is skipped forever, silently. Writing it here is right for
-    /// TODAY, where nothing reads it; before the 29-table mirror lands, put a
-    /// `BEFORE UPDATE` trigger on the column (paste-SQL, by hand) and delete
-    /// this field — a cursor can only be compared against one clock, and it has
-    /// to be the server's.
-    public var updatedAt: Date
+    /// ── IT IS READ, AND NEVER WRITTEN ───────────────────────────────────────
+    /// This field is decoded on the way IN, where it is the mirror's delta
+    /// cursor, and deliberately absent from `encode(to:)` on the way out.
+    ///
+    /// The device must not write it. A delta pull filters `updated_at >= cursor`
+    /// against a cursor that came from the server, so a phone running three
+    /// minutes slow would stamp an edit in the past — into a range the next pull
+    /// has already been through — and that edit would never be seen again.
+    /// Server-side, `updated_at` is `DEFAULT now()` on INSERT and a
+    /// `BEFORE UPDATE` trigger on UPDATE; both are the server's clock, which is
+    /// the only clock a cursor can be compared against.
+    public var updatedAt: Date?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -243,7 +246,7 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         try c.encode(notes, forKey: .notes)
         try c.encode(durationMin, forKey: .durationMin)
         try c.encode(sessionRpe, forKey: .sessionRpe)
-        try c.encode(updatedAt, forKey: .updatedAt)
+        // `updated_at` is NOT encoded — see the field. The server owns it.
     }
 }
 
@@ -361,7 +364,8 @@ public extension SyncTranslation {
             // whole batch down in the one way nothing recovers from.
             durationMin: session.durationMin.flatMap { Int(exactly: jsRound($0)) },
             sessionRpe: rpe(session.sessionRpe),
-            updatedAt: now
+            // Never sent. Present only so a PULLED row can carry the cursor.
+            updatedAt: nil
         )
     }
 
@@ -401,6 +405,21 @@ public extension SyncTranslation {
     /// server's, which is why `/api/today` took the date as a parameter.
     static func sessionDate(for startedAt: Date, calendar: Calendar = .current) -> String {
         LogicalDay.iso(startedAt, calendar: calendar)
+    }
+
+    /// `L`/`R` (Postgres) → `left`/`right` (local). The inverse of `side`.
+    ///
+    /// Unlike its outbound twin this one does NOT throw. A value nobody
+    /// recognises is a row already on the server, and refusing to store it would
+    /// hide a set that exists; dropping the side shows the set with one field
+    /// missing, which is visible and fixable. Outbound, a bad value would have
+    /// written a second vocabulary into the column, which is neither.
+    static func localSide(_ remote: String?) -> String? {
+        switch remote?.uppercased() {
+        case "L", "LEFT": return "left"
+        case "R", "RIGHT": return "right"
+        default: return nil
+        }
     }
 
     /// A rating the `rpe_range` CHECK will accept, or nothing.

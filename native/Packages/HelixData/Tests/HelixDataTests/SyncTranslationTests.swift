@@ -58,6 +58,9 @@ struct SyncTranslationTests {
         ) as? [String: Any]
         #expect(json?["date"] == nil, "workout_sessions has no `date` column")
         #expect(json?["started_at"] != nil)
+        // And the server owns `updated_at`: a client-stamped one from a slow
+        // phone lands in a range the delta pull has already passed.
+        #expect(json?["updated_at"] == nil)
     }
 
     @Test("`date` is derived back out of `started_at`, in the DEVICE's calendar")
@@ -208,7 +211,7 @@ struct SyncTranslationTests {
             return Set(object?.keys ?? [:].keys)
         }
         #expect(try sessionKeys(quiet) == sessionKeys(loud))
-        #expect(try sessionKeys(quiet).count == 10, "every RemoteSessionRow CodingKey is encoded")
+        #expect(try sessionKeys(quiet).count == 9, "every encoded RemoteSessionRow key, and updated_at is not one")
     }
 
     @Test("the columns Track D owns are absent, not zeroed")

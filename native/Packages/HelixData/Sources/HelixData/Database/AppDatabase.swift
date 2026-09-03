@@ -403,6 +403,39 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v9 ── The mirror. Twenty-six tables, generated, plus its cursors.
+        //
+        // ── AND THE TWO IT REPLACES ─────────────────────────────────────────
+        // `v6.nutritionReadCache` created `nutrition_days` and `user_goals` for
+        // one screen: a hand-joined view of three server tables, filled by four
+        // hand-written queries in `NutritionSync`. The mirror pulls all three of
+        // those tables — plus the other twenty-three — from a generated
+        // catalogue, so keeping v6's pair would mean two pull paths writing
+        // overlapping facts, and one of them would go stale the first time
+        // nobody noticed.
+        //
+        // `user_goals` in particular COLLIDES: the mirror's version of that
+        // table is the real one, all thirty-one columns of it, keyed on `id`
+        // rather than on `user_id`. Only one of the two can exist.
+        //
+        // Dropping them loses nothing. Neither table ever held a fact this
+        // device produced — v6's own comment says so — and both are refetched
+        // on the first refresh.
+        migrator.registerMigration("v9.mirror") { db in
+            try db.drop(table: "nutrition_days")
+            try db.drop(table: "user_goals")
+
+            try Self.migrateMirrorV1(db)
+
+            // How far each table has been pulled. One row per table, written
+            // only by `setMirrorCursor`, which moves it forward and never back.
+            try db.create(table: "sync_cursors") { t in
+                t.primaryKey("table_name", .text)
+                t.column("cursor_at", .datetime).notNull()
+                t.column("pulled_at", .datetime).notNull()
+            }
+        }
+
         return migrator
     }
 }

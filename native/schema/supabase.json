@@ -1,0 +1,123 @@
+{
+  "introspected": "2026-09-03",
+  "why": [
+    "The GRDB mirror is generated from THIS file, and this file is written from a live",
+    "introspection of Supabase (information_schema + pg_catalog) — never from",
+    "src/lib/supabase/types.ts, which declares 17 tables while the app queries 29 and",
+    "has fourteen call sites silently typed `any`.",
+    "",
+    "Column syntax is `name:pgtype`, with a trailing `?` meaning NULLABLE IN POSTGRES.",
+    "Nothing is defaulted to zero on the way in: `nil` is not `0` in at least three",
+    "places in this app that have caused real bugs, and the mirror is not the layer",
+    "that gets to erase the distinction.",
+    "",
+    "FOUR live tables are deliberately absent:",
+    "  · body_measurements — the tape table. HELIX does not do manual waist/limb",
+    "    measuring; it has been removed from the product twice. Mirroring it would",
+    "    put the fields back within reach of the next screen that goes looking.",
+    "  · notion_credentials, notion_exports — the Notion integration was deleted on",
+    "    2026-08-22 and these two are waiting on drop-SQL.",
+    "  · widget_tokens — dies with the token-authenticated snapshot endpoint the",
+    "    moment the App Group exists.",
+    "That leaves the 29 the app actually reads.",
+    "",
+    "`bespoke: true` means the table is NOT generated. Three of them already exist",
+    "locally in a DIFFERENT shape that the logger owns — `workout_sets.set_index` is",
+    "`set_number` here, `workout_sessions.date` does not exist here at all — so they",
+    "are pulled through SyncTranslation into the tables that are already there,",
+    "rather than mirrored beside them under a second name."
+  ],
+  "strategies": {
+    "cursor": "Delta by a monotonic timestamp column. Only trustworthy on a table whose updated_at is maintained by the server-side trigger; a client-written timestamp from a slow phone lands in the past and is skipped forever.",
+    "window": "A trailing window on a date/timestamp column, for the append-mostly day-keyed tables that carry no updated_at. Misses an edit to a row older than the window; realtime is what catches those.",
+    "full": "Small and rarely written. Cheaper to re-read than to reason about."
+  },
+  "tables": {
+    "daily_logs": { "group": "daily", "pk": ["id"], "cursor": "updated_at",
+      "cols": "id:uuid,user_id:uuid,date:date,steps:int4?,water_ml:numeric?,sleep_minutes:int4?,carbs_g:numeric?,protein_g:numeric?,fats_g:numeric?,weight_kg:numeric?,lean_mass_kg:numeric?,bmi:numeric?,training_minutes:int4?,active_energy:numeric?,body_fat_pct:numeric?,standing_minutes:int4?,avg_heart_rate:int4?,avg_rest_heart_rate:int4?,respiratory_rate:numeric?,blood_oxygen:numeric?,muscle_percent:numeric?,water_percent:numeric?,bone_mineral:numeric?,visceral_fat:numeric?,bmr:numeric?,created_at:timestamptz,updated_at:timestamptz,hrv_ms:numeric?,exercise_minutes:int4?,stand_hours:int4?,vo2max:numeric?,wrist_temp_delta:numeric?,time_in_daylight_min:int4?,effort_rating:int2?,mood:int2?,journal_md:text?,distance_m:numeric?,protein_percent:numeric?,muscle_mass_kg:numeric?,water_mass_kg:numeric?,fat_mass_kg:numeric?,bone_mineral_kg:numeric?,protein_mass_kg:numeric?,fat_free_mass_kg:numeric?,weighin_skip_reason:text?,skeletal_muscle_mass_kg:numeric?,estimated_waist_to_hip_ratio:numeric?,nutrition_exception:text?,nutrition_estimated:bool,sleep_onset_trouble:bool" },
+
+    "daily_metrics": { "group": "daily", "pk": ["id"], "cursor": "updated_at",
+      "cols": "id:uuid,user_id:uuid,date:date,steps:int4?,active_cal:int4?,rest_hr:int4?,created_at:timestamptz,updated_at:timestamptz" },
+
+    "daily_scores": { "group": "daily", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,date:date,score:int4,sleep_score:int4?,nutrition_score:int4?,activity_score:int4?,workout_score:int4?,recovery_score:int4?,battery_pct:int4?,computed_at:timestamptz,finalized:bool" },
+
+    "daily_targets": { "group": "daily", "pk": ["user_id", "date"], "cursor": "updated_at",
+      "cols": "user_id:uuid,date:date,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,steps_goal:int4?,note:text?,updated_at:timestamptz,profile_key:text?,track_carbs:bool,track_fat:bool" },
+
+    "nutrition_entries": { "group": "daily", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,hk_uuid:text?,logged_at:timestamptz,date:date,meal_type:text?,calories:numeric,protein_g:numeric,carbs_g:numeric,fat_g:numeric,fiber_g:numeric?,phase:text?,created_at:timestamptz,target_kcal:int4?,micros:jsonb?" },
+
+    "water_intake": { "group": "daily", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,hk_uuid:text?,logged_at:timestamptz,date:date,amount_ml:numeric,created_at:timestamptz" },
+
+    "supplement_log": { "group": "daily", "pk": ["user_id", "date", "item_key"], "cursor": "updated_at",
+      "cols": "user_id:uuid,date:date,item_key:text,taken:bool,taken_at:timestamptz?,updated_at:timestamptz" },
+
+    "supplement_dose_overrides": { "group": "daily", "pk": ["user_id", "date", "supplement_key"], "window": "date",
+      "cols": "user_id:uuid,date:date,supplement_key:text,dose:text" },
+
+    "custom_supplements": { "group": "daily", "pk": ["id"], "full": true,
+      "cols": "id:uuid,user_id:uuid,name:text,dose:text,color:text?,form:text?,time:text?,schedule:jsonb?,micros:jsonb?,created_at:timestamptz?" },
+
+    "fatigue_logs": { "group": "daily", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,date:date,slot:text,level:int2,note:text?,created_at:timestamptz?" },
+
+    "doms_logs": { "group": "daily", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,date:date,muscle_group:text,severity:int2,created_at:timestamptz?,source_session_id:uuid?,source_day_key:text?" },
+
+    "body_composition": { "group": "body", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,hk_uuid:text?,measured_at:timestamptz,date:date,weight_kg:numeric,body_fat_pct:numeric?,muscle_mass_kg:numeric?,water_pct:numeric?,bone_mass_kg:numeric?,bmi:numeric?,created_at:timestamptz,fat_mass_kg:numeric?,body_water_mass_kg:numeric?,protein_mass_kg:numeric?,muscle_pct:numeric?,protein_pct:numeric?,bone_mineral_pct:numeric?,skeletal_muscle_mass_kg:numeric?,fat_free_mass_kg:numeric?,visceral_fat:numeric?,bmr:numeric?,estimated_waist_to_hip_ratio:numeric?" },
+
+    "sleep_sessions": { "group": "body", "pk": ["id"], "window": "start_time",
+      "cols": "id:uuid,user_id:uuid,hk_uuid:text?,start_time:timestamptz,end_time:timestamptz,duration_min:int4,deep_min:int4?,rem_min:int4?,core_min:int4?,awake_min:int4?,sleep_score:int4?,created_at:timestamptz" },
+
+    "cardio_logs": { "group": "body", "pk": ["id"], "window": "date",
+      "cols": "id:uuid,user_id:uuid,date:date,kind:text,distance_m:numeric?,duration_min:numeric?,kcal:numeric?,from_healthkit:bool?,created_at:timestamptz?,active_kcal:numeric?,total_kcal:numeric?,avg_hr:numeric?,effort:numeric?,session_id:uuid?,incline_pct:numeric?" },
+
+    "personal_records": { "group": "training", "pk": ["user_id", "exercise_key", "axis"], "cursor": "updated_at",
+      "cols": "user_id:uuid,exercise_key:text,axis:text,value:numeric,reps:int4?,weight_kg:numeric?,session_id:uuid?,achieved_on:date,updated_at:timestamptz?" },
+
+    "routine_templates": { "group": "training", "pk": ["user_id", "day_key"], "cursor": "updated_at",
+      "cols": "user_id:uuid,day_key:text,payload:jsonb,source_session_id:uuid?,updated_at:timestamptz" },
+
+    "workout_sessions": { "group": "training", "pk": ["id"], "cursor": "updated_at", "bespoke": true,
+      "cols": "id:uuid,user_id:uuid,notion_page_id:text?,started_at:timestamptz,ended_at:timestamptz?,split_day:text,notes:text?,total_volume_kg:numeric?,session_score:int4?,set_count:int4?,pr_count:int4?,duration_min:int4?,calories_burned:int4?,avg_bpm:int4?,report_md:text?,migrated_from_notion:bool,status:text,created_at:timestamptz,updated_at:timestamptz,client_session_id:text?,day_key:text?,next_session_flag:text?,session_rpe:numeric?,calories_estimated:bool,avg_bpm_estimated:bool" },
+
+    "workout_sets": { "group": "training", "pk": ["id"], "children_of": "workout_sessions", "bespoke": true,
+      "cols": "id:uuid,session_id:uuid,exercise_id:uuid,user_id:uuid,set_number:int4,weight_kg:numeric,reps:int4,rpe:numeric?,is_pr:bool?,est_1rm_kg:numeric?,created_at:timestamptz,exercise_order:int4?,set_type:text,side:text?,pair_id:text?,quality:text?" },
+
+    "exercises": { "group": "training", "pk": ["id"], "full": true, "bespoke": true,
+      "cols": "id:uuid,user_id:uuid,name:text,name_he:text?,split_day:text,muscle_groups:_text?,is_compound:bool?,created_at:timestamptz" },
+
+    "user_goals": { "group": "plan", "pk": ["id"], "cursor": "updated_at",
+      "cols": "id:uuid,user_id:uuid,sleep_goal_hours:numeric?,calorie_goal:int4?,protein_goal_g:int4?,carbs_goal_g:int4?,fat_goal_g:int4?,steps_goal:int4?,active_cal_goal:int4?,water_goal_ml:int4?,context_mode:text,goal_preset:text?,created_at:timestamptz,updated_at:timestamptz,auto_log_supplements:bool,active_program:text,day_cutoff_hour:int4,unit_system:text,reduce_motion:bool,timezone:text,target_weight_kg:numeric?,week_end_day:int2?,active_plan:text?,target_body_fat_pct:numeric?,target_muscle_mass_kg:numeric?,active_phase:text?,phase_started_on:date?,track_rpe:bool,active_lever:text?,context_since:date?,maintenance_until:date?" },
+
+    "target_profiles": { "group": "plan", "pk": ["user_id", "key"], "cursor": "updated_at",
+      "cols": "user_id:uuid,key:text,label:text,summary:text?,sort:int4,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,steps_goal:int4?,updated_at:timestamptz" },
+
+    "plans": { "group": "plan", "pk": ["id"], "full": true,
+      "cols": "id:uuid,user_id:uuid,name:text,program_id:text?,active:bool?,started_on:date?,created_at:timestamptz?" },
+
+    "plan_phase_goals": { "group": "plan", "pk": ["user_id", "plan_id", "phase"], "cursor": "updated_at",
+      "cols": "user_id:uuid,plan_id:text,phase:text,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,fiber_min:int4?,fiber_max:int4?,updated_at:timestamptz?,steps_goal:int4?,target_weight_kg:numeric?,target_body_fat_pct:numeric?,target_muscle_mass_kg:numeric?,rate_min_kg_wk:numeric?,rate_max_kg_wk:numeric?" },
+
+    "plan_phase_volume": { "group": "plan", "pk": ["user_id", "plan_id", "phase", "muscle"], "cursor": "updated_at",
+      "cols": "user_id:uuid,plan_id:text,phase:text,muscle:text,target_sets:int4,updated_at:timestamptz?" },
+
+    "program_day_layout": { "group": "plan", "pk": ["user_id", "program_id"], "cursor": "updated_at",
+      "cols": "user_id:uuid,program_id:text,layout:jsonb,updated_at:timestamptz" },
+
+    "schedule_overrides": { "group": "plan", "pk": ["user_id", "date"], "cursor": "updated_at",
+      "cols": "user_id:uuid,date:date,day_key:text,updated_at:timestamptz" },
+
+    "dashboard_layouts": { "group": "plan", "pk": ["user_id"], "cursor": "updated_at",
+      "cols": "user_id:uuid,layout:jsonb,updated_at:timestamptz" },
+
+    "profiles": { "group": "plan", "pk": ["user_id"], "cursor": "updated_at",
+      "cols": "user_id:uuid,display_name:text?,role:text,updated_at:timestamptz,created_at:timestamptz" },
+
+    "reports": { "group": "reports", "pk": ["id"], "full": true,
+      "cols": "id:uuid,user_id:uuid,type:text,period_start:date,period_end:date,content_md:text?,session_summary_md:text?,weight_report_md:text?,metrics:jsonb?,notion_page_id:text?,created_at:timestamptz" }
+  }
+}

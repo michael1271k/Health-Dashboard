@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1788426985.9396844,
-    "ast_hash": "1f18093994e83152dc08aad1a141e634",
+    "mtime": 1788434591.0918097,
+    "ast_hash": "5690dc03dd5c5aef48462e7e0f442dad",
     "semantic_hash": ""
   },
   "playwright.config.ts": {
@@ -3390,8 +3390,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Database/AppDatabase.swift": {
-    "mtime": 1788429288.6617558,
-    "ast_hash": "87764dac6c1d82dd7fb59fcac120c76e",
+    "mtime": 1788434177.605294,
+    "ast_hash": "b36edadeb5cca4970d3a4156e3519105",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Database/Models.swift": {
@@ -3584,21 +3584,6 @@
     "ast_hash": "156ae0997b9d7a5f0b5b2704f5ba8e7c",
     "semantic_hash": ""
   },
-  "native/Packages/HelixData/Sources/HelixData/Nutrition/NutritionModels.swift": {
-    "mtime": 1788426985.9364755,
-    "ast_hash": "d4a9651e1c22f7a238caa2bb434d1021",
-    "semantic_hash": ""
-  },
-  "native/Packages/HelixData/Sources/HelixData/Nutrition/NutritionStore.swift": {
-    "mtime": 1788426985.9366348,
-    "ast_hash": "698bfe39ead5d8853540565c744e55db",
-    "semantic_hash": ""
-  },
-  "native/Packages/HelixData/Sources/HelixData/Nutrition/NutritionSync.swift": {
-    "mtime": 1788426985.93679,
-    "ast_hash": "b4f2c223bd4c3dc1457269ec60134885",
-    "semantic_hash": ""
-  },
   "native/Packages/HelixData/Tests/HelixDataTests/EventDurabilityTests.swift": {
     "mtime": 1788426985.937268,
     "ast_hash": "a855a925f83d25b94c1930f23e212307",
@@ -3625,8 +3610,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/SyncTranslation.swift": {
-    "mtime": 1788429332.2569351,
-    "ast_hash": "c28145ecfede4874d13c18fcb77e1792",
+    "mtime": 1788434244.5870824,
+    "ast_hash": "c8e534ae012dd5326d106245384939af",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/ExerciseIndex.swift": {
@@ -3640,13 +3625,13 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/PostgRESTRemote.swift": {
-    "mtime": 1788429178.658381,
-    "ast_hash": "f2f3aeb0788baf439040b1bb53403331",
+    "mtime": 1788434347.514968,
+    "ast_hash": "d426e60ddc98193dd735f9c8e411636c",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Tests/HelixDataTests/SyncTranslationTests.swift": {
-    "mtime": 1788429261.1982346,
-    "ast_hash": "a458f2c8ce5e1f3af964889fa9005a50",
+    "mtime": 1788434244.5873835,
+    "ast_hash": "f0a35d78fe08ab81fcb02edd46183a6c",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Tests/HelixDataTests/ExerciseIndexTests.swift": {
@@ -3657,6 +3642,51 @@
   "native/Packages/HelixData/Tests/HelixDataTests/SyncEngineTests.swift": {
     "mtime": 1788429332.256763,
     "ast_hash": "dea7bf0fd58cca7c709ac1dbaceaebae",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/JSONText.swift": {
+    "mtime": 1788434093.7327104,
+    "ast_hash": "e9c81523fa57edd24265794453af2872",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/MirrorModels.swift": {
+    "mtime": 1788434006.4282413,
+    "ast_hash": "970306063b41e393e348c43032825c37",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/MirrorPuller.swift": {
+    "mtime": 1788434258.825202,
+    "ast_hash": "289d4f7b2a4bc1c7344f1a73d7cab0ce",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/MirrorRealtime.swift": {
+    "mtime": 1788434401.6394336,
+    "ast_hash": "4e20fa15c2a97a0ee1ac2f447c85eb93",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/MirrorStore.swift": {
+    "mtime": 1788434163.1673324,
+    "ast_hash": "475e46eafff8094c7c7b8f3403fae4a8",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Mirror/TrainingPuller.swift": {
+    "mtime": 1788434214.4368873,
+    "ast_hash": "31a7e0616da9304c46872520d059d89c",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Tests/HelixDataTests/MirrorTests.swift": {
+    "mtime": 1788434570.0979462,
+    "ast_hash": "da8f9be9e9a8601fa297e94e0b980fc9",
+    "semantic_hash": ""
+  },
+  "native/schema/supabase.json": {
+    "mtime": 1788433929.7666483,
+    "ast_hash": "cf8d5f0a2e830369aea01253d2f40f8c",
+    "semantic_hash": ""
+  },
+  "scripts/gen-mirror-swift.mjs": {
+    "mtime": 1788434006.4040134,
+    "ast_hash": "a5a4af151f291841737312ebc1dfa080",
     "semantic_hash": ""
   }
 }

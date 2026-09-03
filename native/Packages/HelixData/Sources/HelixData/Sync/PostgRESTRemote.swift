@@ -63,3 +63,46 @@ public struct PostgRESTRemote: SyncRemote {
             .execute()
     }
 }
+
+/// `MirrorRemote` over the same client — the READ half of sync.
+///
+/// Every mirrored table carries a `user_id`, so one filter serves all of them,
+/// which is what lets the generated catalogue treat twenty-six tables
+/// identically. RLS already restricts each to `user_id = auth.uid()`; sending
+/// the filter anyway keeps the request honest if a policy is ever widened for
+/// an admin.
+public struct PostgRESTMirrorRemote: MirrorRemote {
+
+    private let client: SupabaseClient
+    private let userId: String
+
+    public init(client: SupabaseClient, userId: String) {
+        self.client = client
+        self.userId = userId
+    }
+
+    public func select<T: Decodable & Sendable>(
+        _ type: T.Type, request: MirrorRequest
+    ) async throws -> [T] {
+        var query = client.from(request.table).select().eq("user_id", value: userId)
+        if let since = request.since {
+            // `gte`, not `gt`: the boundary row is re-read and upserted, which
+            // is a no-op, and two rows sharing a millisecond cannot lose one.
+            query = query.gte(since.column, value: since.value)
+        }
+        return try await query.execute().value
+    }
+
+    public func selectIn<T: Decodable & Sendable>(
+        _ type: T.Type, table: String, column: String, values: [String]
+    ) async throws -> [T] {
+        guard !values.isEmpty else { return [] }
+        return try await client
+            .from(table)
+            .select()
+            .eq("user_id", value: userId)
+            .in(column, values: values)
+            .execute()
+            .value
+    }
+}
