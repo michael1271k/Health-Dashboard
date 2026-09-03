@@ -1,0 +1,4732 @@
+{
+  "module": "scoring/score",
+  "fn": "sleepRecoveryMultiplier",
+  "note": "Threshold = clamp(goal-1, 5..7); goal absent or 0 reads as 8. Piecewise-linear on the deficit below it, floored at 0.10. No sleep data is 1.0, never 0. Context relaxes toward 1.",
+  "cases": [
+    {
+      "name": "h=0 goal=null ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 0,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=null ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=null ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=null ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=null ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=0 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=5 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=6 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=8 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=9 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=12 ctx=null",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=-2 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": -2,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=0.5 goal=null ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.391
+    },
+    {
+      "name": "h=0.5 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.5215
+    },
+    {
+      "name": "h=0.5 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.6955
+    },
+    {
+      "name": "h=0.5 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.391
+    },
+    {
+      "name": "h=0.5 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.5215
+    },
+    {
+      "name": "h=0.5 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.6955
+    },
+    {
+      "name": "h=0.5 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.28
+    },
+    {
+      "name": "h=0.5 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.28
+    },
+    {
+      "name": "h=0.5 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.49600000000000005
+    },
+    {
+      "name": "h=0.5 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.604
+    },
+    {
+      "name": "h=0.5 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.748
+    },
+    {
+      "name": "h=0.5 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.28
+    },
+    {
+      "name": "h=0.5 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.28
+    },
+    {
+      "name": "h=0.5 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.49600000000000005
+    },
+    {
+      "name": "h=0.5 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.604
+    },
+    {
+      "name": "h=0.5 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.748
+    },
+    {
+      "name": "h=0.5 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.391
+    },
+    {
+      "name": "h=0.5 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.5215
+    },
+    {
+      "name": "h=0.5 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.6955
+    },
+    {
+      "name": "h=0.5 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.391
+    },
+    {
+      "name": "h=0.5 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.5215
+    },
+    {
+      "name": "h=0.5 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.6955
+    },
+    {
+      "name": "h=0.5 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.13
+    },
+    {
+      "name": "h=0.5 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.391
+    },
+    {
+      "name": "h=0.5 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.5215
+    },
+    {
+      "name": "h=0.5 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 0.5,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.6955
+    },
+    {
+      "name": "h=1 goal=null ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.41200000000000003
+    },
+    {
+      "name": "h=1 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.5379999999999999
+    },
+    {
+      "name": "h=1 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7060000000000001
+    },
+    {
+      "name": "h=1 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.41200000000000003
+    },
+    {
+      "name": "h=1 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.5379999999999999
+    },
+    {
+      "name": "h=1 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7060000000000001
+    },
+    {
+      "name": "h=1 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=1 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=1 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=1 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=1 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=1 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=1 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=1 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=1 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=1 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=1 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.41200000000000003
+    },
+    {
+      "name": "h=1 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.5379999999999999
+    },
+    {
+      "name": "h=1 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7060000000000001
+    },
+    {
+      "name": "h=1 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.41200000000000003
+    },
+    {
+      "name": "h=1 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.5379999999999999
+    },
+    {
+      "name": "h=1 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7060000000000001
+    },
+    {
+      "name": "h=1 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.16
+    },
+    {
+      "name": "h=1 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.41200000000000003
+    },
+    {
+      "name": "h=1 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.5379999999999999
+    },
+    {
+      "name": "h=1 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 1,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7060000000000001
+    },
+    {
+      "name": "h=2 goal=null ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.45400000000000007
+    },
+    {
+      "name": "h=2 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.571
+    },
+    {
+      "name": "h=2 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.727
+    },
+    {
+      "name": "h=2 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.45400000000000007
+    },
+    {
+      "name": "h=2 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.571
+    },
+    {
+      "name": "h=2 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.727
+    },
+    {
+      "name": "h=2 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=2 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=2 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=2 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=2 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=2 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=2 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=2 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=2 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=2 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=2 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.45400000000000007
+    },
+    {
+      "name": "h=2 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.571
+    },
+    {
+      "name": "h=2 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.727
+    },
+    {
+      "name": "h=2 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.45400000000000007
+    },
+    {
+      "name": "h=2 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.571
+    },
+    {
+      "name": "h=2 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.727
+    },
+    {
+      "name": "h=2 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.22
+    },
+    {
+      "name": "h=2 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.45400000000000007
+    },
+    {
+      "name": "h=2 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.571
+    },
+    {
+      "name": "h=2 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 2,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.727
+    },
+    {
+      "name": "h=3 goal=null ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=3 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=3 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=3 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=3 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=3 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=3 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=3 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=3 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=3 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=3 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=3 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=3 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=3 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=3 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=3 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=3 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=3 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=3 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=3 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=3 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=3 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=3 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.34
+    },
+    {
+      "name": "h=3 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.538
+    },
+    {
+      "name": "h=3 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.637
+    },
+    {
+      "name": "h=3 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 3,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.7689999999999999
+    },
+    {
+      "name": "h=3.966666666666667 goal=null ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.6327333333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.7114333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8163666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.6327333333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.7114333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8163666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.8436666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.8436666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.8905666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.9140166666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9452833333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.8436666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.8436666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.8905666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.9140166666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9452833333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.6327333333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.7114333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8163666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.6327333333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.7114333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8163666666666667
+    },
+    {
+      "name": "h=3.966666666666667 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.47533333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.6327333333333334
+    },
+    {
+      "name": "h=3.966666666666667 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.7114333333333333
+    },
+    {
+      "name": "h=3.966666666666667 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 3.966666666666667,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8163666666666667
+    },
+    {
+      "name": "h=4 goal=null ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=4 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=4 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=4 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=4 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=4 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=4 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=4 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=4 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=4 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=4 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=4 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=4 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=4 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=4 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=4 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=4 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=4 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=4 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=4 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=4 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=4 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=4 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.48
+    },
+    {
+      "name": "h=4 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.636
+    },
+    {
+      "name": "h=4 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.714
+    },
+    {
+      "name": "h=4 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 4,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.8180000000000001
+    },
+    {
+      "name": "h=5 goal=null ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=5 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=5 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=5 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=5 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=5 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=5 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=5 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=5 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=5 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=5 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=5 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=5 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.66
+    },
+    {
+      "name": "h=5 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.762
+    },
+    {
+      "name": "h=5 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.813
+    },
+    {
+      "name": "h=5 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 5,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.881
+    },
+    {
+      "name": "h=5.5 goal=null ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.8285
+    },
+    {
+      "name": "h=5.5 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.86525
+    },
+    {
+      "name": "h=5.5 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.91425
+    },
+    {
+      "name": "h=5.5 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.8285
+    },
+    {
+      "name": "h=5.5 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.86525
+    },
+    {
+      "name": "h=5.5 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.91425
+    },
+    {
+      "name": "h=5.5 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=5.5 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.8285
+    },
+    {
+      "name": "h=5.5 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.86525
+    },
+    {
+      "name": "h=5.5 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.91425
+    },
+    {
+      "name": "h=5.5 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.8285
+    },
+    {
+      "name": "h=5.5 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.86525
+    },
+    {
+      "name": "h=5.5 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.91425
+    },
+    {
+      "name": "h=5.5 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.755
+    },
+    {
+      "name": "h=5.5 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.8285
+    },
+    {
+      "name": "h=5.5 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.86525
+    },
+    {
+      "name": "h=5.5 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 5.5,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.91425
+    },
+    {
+      "name": "h=6 goal=null ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=6 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=6 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=6 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=6 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=6 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=6 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=6 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=6 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.85
+    },
+    {
+      "name": "h=6 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.895
+    },
+    {
+      "name": "h=6 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.9175
+    },
+    {
+      "name": "h=6 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 6,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=null ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 0.95875
+    },
+    {
+      "name": "h=6.5 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 0.97375
+    },
+    {
+      "name": "h=6.5 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 0.95875
+    },
+    {
+      "name": "h=6.5 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 0.97375
+    },
+    {
+      "name": "h=6.5 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=6.5 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 0.95875
+    },
+    {
+      "name": "h=6.5 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 0.97375
+    },
+    {
+      "name": "h=6.5 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 0.95875
+    },
+    {
+      "name": "h=6.5 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 0.97375
+    },
+    {
+      "name": "h=6.5 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 0.925
+    },
+    {
+      "name": "h=6.5 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 0.9475
+    },
+    {
+      "name": "h=6.5 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 0.95875
+    },
+    {
+      "name": "h=6.5 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 6.5,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 0.97375
+    },
+    {
+      "name": "h=7 goal=null ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=7 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 7,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=null ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=8 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 8,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=null ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": null,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=null ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": null,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=null ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": null,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=null ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": null,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=null ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": null,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=0 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 0,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=0 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 0,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=0 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 0,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=0 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 0,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=0 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 0,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=5 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 5,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=5 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 5,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=5 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 5,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=5 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 5,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=5 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 5,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=6 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 6,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=6 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 6,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=6 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 6,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=6 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 6,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=6 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 6,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=8 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 8,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=8 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 8,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=8 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 8,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=8 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 8,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=8 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 8,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=9 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 9,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=9 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 9,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=9 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 9,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=9 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 9,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=9 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 9,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=12 ctx=null",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 12,
+        "contextMode": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=12 ctx=normal",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 12,
+        "contextMode": "normal"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=12 ctx=travel",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 12,
+        "contextMode": "travel"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=12 ctx=illness",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 12,
+        "contextMode": "illness"
+      },
+      "expected": 1
+    },
+    {
+      "name": "h=9.5 goal=12 ctx=emergency",
+      "input": {
+        "sleepHours": 9.5,
+        "sleepGoalHours": 12,
+        "contextMode": "emergency"
+      },
+      "expected": 1
+    }
+  ]
+}

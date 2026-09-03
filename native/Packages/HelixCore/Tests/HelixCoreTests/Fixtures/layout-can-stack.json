@@ -1,0 +1,253 @@
+{
+  "module": "dashboard/layout",
+  "fn": "canStack",
+  "note": "Same size only, never the same slot, never on a desktop.",
+  "cases": [
+    {
+      "name": "a/s + b/s @phone",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "b",
+          "size": "s",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "phone"
+      },
+      "expected": true
+    },
+    {
+      "name": "a/s + b/s @desktop",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "b",
+          "size": "s",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + b/m @phone",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "b",
+          "size": "m",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "phone"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + b/m @desktop",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "b",
+          "size": "m",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + a/s @phone",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "phone"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + a/s @desktop",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "sleep"
+          ]
+        },
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + null/- @phone",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": null,
+        "surface": "phone"
+      },
+      "expected": false
+    },
+    {
+      "name": "a/s + null/- @desktop",
+      "input": {
+        "a": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "b": null,
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "null/- + a/s @phone",
+      "input": {
+        "a": null,
+        "b": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "surface": "phone"
+      },
+      "expected": false
+    },
+    {
+      "name": "null/- + a/s @desktop",
+      "input": {
+        "a": null,
+        "b": {
+          "id": "a",
+          "size": "s",
+          "items": [
+            "fuel"
+          ]
+        },
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "null/- + null/- @phone",
+      "input": {
+        "a": null,
+        "b": null,
+        "surface": "phone"
+      },
+      "expected": false
+    },
+    {
+      "name": "null/- + null/- @desktop",
+      "input": {
+        "a": null,
+        "b": null,
+        "surface": "desktop"
+      },
+      "expected": false
+    },
+    {
+      "name": "x/xl + y/xl @phone",
+      "input": {
+        "a": {
+          "id": "x",
+          "size": "xl",
+          "items": [
+            "sleep"
+          ]
+        },
+        "b": {
+          "id": "y",
+          "size": "xl",
+          "items": [
+            "body"
+          ]
+        },
+        "surface": "phone"
+      },
+      "expected": true
+    },
+    {
+      "name": "x/xl + y/xl @desktop",
+      "input": {
+        "a": {
+          "id": "x",
+          "size": "xl",
+          "items": [
+            "sleep"
+          ]
+        },
+        "b": {
+          "id": "y",
+          "size": "xl",
+          "items": [
+            "body"
+          ]
+        },
+        "surface": "desktop"
+      },
+      "expected": false
+    }
+  ]
+}

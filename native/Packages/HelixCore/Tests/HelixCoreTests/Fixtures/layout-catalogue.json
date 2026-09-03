@@ -1,0 +1,165 @@
+{
+  "module": "dashboard/layout",
+  "fn": "WIDGET_IDS / WIDGET_SIZES / defaultSizeFor",
+  "note": "Catalogue order is first-run order. Sizes are the bodies each widget actually has; defaults differ per surface.",
+  "cases": [
+    {
+      "name": "catalogue",
+      "input": {},
+      "expected": {
+        "ids": [
+          "recovery",
+          "sleep",
+          "vitals",
+          "fuel",
+          "water",
+          "micros",
+          "deficit",
+          "train",
+          "bar",
+          "body",
+          "muscle",
+          "volume",
+          "pr",
+          "consistency",
+          "steps",
+          "cardio",
+          "stack",
+          "fatigue"
+        ],
+        "sizes": {
+          "recovery": [
+            "m",
+            "l",
+            "w",
+            "xl"
+          ],
+          "sleep": [
+            "s",
+            "m",
+            "l",
+            "w",
+            "xl"
+          ],
+          "vitals": [
+            "s",
+            "m",
+            "l"
+          ],
+          "fuel": [
+            "s",
+            "m",
+            "l"
+          ],
+          "micros": [
+            "s",
+            "m",
+            "l"
+          ],
+          "water": [
+            "s",
+            "m"
+          ],
+          "deficit": [
+            "s",
+            "m",
+            "l"
+          ],
+          "train": [
+            "s",
+            "m",
+            "l"
+          ],
+          "bar": [
+            "s",
+            "m",
+            "l"
+          ],
+          "body": [
+            "s",
+            "m",
+            "l",
+            "w",
+            "xl"
+          ],
+          "muscle": [
+            "s",
+            "m",
+            "l"
+          ],
+          "volume": [
+            "s",
+            "m",
+            "l"
+          ],
+          "pr": [
+            "s",
+            "m"
+          ],
+          "consistency": [
+            "s",
+            "m",
+            "l"
+          ],
+          "steps": [
+            "s",
+            "m",
+            "l"
+          ],
+          "cardio": [
+            "s",
+            "m"
+          ],
+          "stack": [
+            "s",
+            "m"
+          ],
+          "fatigue": [
+            "s",
+            "m"
+          ]
+        },
+        "defaultPhone": {
+          "recovery": "l",
+          "sleep": "m",
+          "vitals": "m",
+          "fuel": "m",
+          "water": "s",
+          "micros": "s",
+          "deficit": "m",
+          "train": "m",
+          "bar": "s",
+          "body": "m",
+          "muscle": "s",
+          "volume": "s",
+          "pr": "s",
+          "consistency": "s",
+          "steps": "s",
+          "cardio": "s",
+          "stack": "s",
+          "fatigue": "s"
+        },
+        "defaultDesktop": {
+          "recovery": "xl",
+          "sleep": "w",
+          "vitals": "l",
+          "fuel": "l",
+          "water": "m",
+          "micros": "m",
+          "deficit": "l",
+          "train": "l",
+          "bar": "m",
+          "body": "w",
+          "muscle": "l",
+          "volume": "l",
+          "pr": "m",
+          "consistency": "m",
+          "steps": "m",
+          "cardio": "m",
+          "stack": "m",
+          "fatigue": "m"
+        }
+      }
+    }
+  ]
+}

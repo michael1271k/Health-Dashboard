@@ -1,0 +1,769 @@
+{
+  "module": "dashboard/layout",
+  "fn": "sizesFor",
+  "note": "The sizes every member can draw, in growing order; a phone never offers w/xl. Empty items → every size the surface has.",
+  "cases": [
+    {
+      "name": "(none) @phone",
+      "input": {
+        "items": [],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "(none) @desktop",
+      "input": {
+        "items": [],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "recovery @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "recovery @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "sleep @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "sleep @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "vitals @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "vitals @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "fuel @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "fuel @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "water @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "water @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "micros @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "micros @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "deficit @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "deficit @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "train @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "train @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "bar @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "bar @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "body @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "body @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "muscle @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "muscle @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "volume @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "volume @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "pr @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "pr @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "consistency @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "consistency @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "steps @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "steps @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "cardio @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "cardio @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "stack @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "stack @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "fatigue @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "fatigue @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "sleep+cardio @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "sleep+cardio @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "cardio+pr+stack @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "cardio+pr+stack @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "recovery+water @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "m"
+      ]
+    },
+    {
+      "name": "recovery+water @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "m"
+      ]
+    },
+    {
+      "name": "recovery+sleep @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "recovery+sleep @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "body+sleep @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "body+sleep @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "recovery+sleep+body @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "recovery+sleep+body @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "m",
+        "l",
+        "w",
+        "xl"
+      ]
+    },
+    {
+      "name": "fuel+fuel @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "fuel+fuel @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "sleep+train @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    },
+    {
+      "name": "sleep+train @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m",
+        "l"
+      ]
+    }
+  ]
+}

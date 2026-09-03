@@ -1,0 +1,5287 @@
+{
+  "module": "scoring/score",
+  "fn": "computeActivityScore",
+  "note": "Half steps, half active kcal, each capped at 100. Illness/emergency are null (not asked); travel is NOT. Both zero is null. A zero goal scores 100.",
+  "cases": [
+    {
+      "name": "steps=0/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=0/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=0/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=0/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=0/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=0/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=0/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=0/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=0/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=0/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 0,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=-5/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=-5/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=-5/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=-5/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=-5/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 25
+    },
+    {
+      "name": "steps=-5/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=-5/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=-5/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": -5,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=3000/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=3000/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=3000/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 15
+    },
+    {
+      "name": "steps=3000/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 15
+    },
+    {
+      "name": "steps=3000/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 15
+    },
+    {
+      "name": "steps=3000/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=3000/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=3000/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=3000/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 40
+    },
+    {
+      "name": "steps=3000/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 40
+    },
+    {
+      "name": "steps=3000/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 40
+    },
+    {
+      "name": "steps=3000/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=3000/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 65
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=3000/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 3000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=10000/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=10000/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=10000/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 10000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=15000/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=15000/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=15000/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 15000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=0/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=0/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/0 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/0 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/0 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=0/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=0/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=0/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=0/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=0/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=0/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/10000 cal=0/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/10000 cal=0/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 50
+    },
+    {
+      "name": "steps=40000/10000 cal=0/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=0/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 0,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=250/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=250/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/0 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/0 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/0 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=250/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=250/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=250/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=250/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=250/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=250/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/10000 cal=250/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/10000 cal=250/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 75
+    },
+    {
+      "name": "steps=40000/10000 cal=250/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=250/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 250,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=500/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=500/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=500/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=500/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=500/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=500/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=500/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 500,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/0 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/0 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 0,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/0 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/0 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/0 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/0 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/0 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 0,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/500 ctx=null",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": null
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/500 ctx=normal",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "normal"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/500 ctx=travel",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "travel"
+      },
+      "expected": 100
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/500 ctx=illness",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "illness"
+      },
+      "expected": null
+    },
+    {
+      "name": "steps=40000/10000 cal=1000/500 ctx=emergency",
+      "input": {
+        "steps": 40000,
+        "activeCal": 1000,
+        "stepsGoal": 10000,
+        "activeCalGoal": 500,
+        "contextMode": "emergency"
+      },
+      "expected": null
+    }
+  ]
+}

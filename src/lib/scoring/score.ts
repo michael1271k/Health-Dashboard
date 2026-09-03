@@ -389,7 +389,14 @@ export function computeDailyScore(inputs: ScoringInputs): ScoreComponents {
  * Returns an ordered array of actionable alerts.
  * Caller should display the top 2–3 on the dashboard.
  */
-export function computeAlerts(inputs: ScoringInputs, battery: number): ScoringAlert[] {
+export function computeAlerts(
+  inputs: ScoringInputs,
+  battery: number,
+  // The local hour, injectable so the golden vectors (and the Swift port that
+  // replays them) can pin the protein alert at 17:59 and 18:00 rather than at
+  // whatever time the test happened to run.
+  hour: number = new Date().getHours(),
+): ScoringAlert[] {
   const alerts: ScoringAlert[] = []
   const ctx = inputs.contextMode ?? 'normal'
 
@@ -422,7 +429,6 @@ export function computeAlerts(inputs: ScoringInputs, battery: number): ScoringAl
   }
 
   // Protein behind (useful any time of day, scaled by progress)
-  const hour = new Date().getHours()
   if (hour >= 18 && inputs.proteinG < inputs.proteinGoalG * 0.70) {
     const remaining = Math.round(inputs.proteinGoalG - inputs.proteinG)
     alerts.push({

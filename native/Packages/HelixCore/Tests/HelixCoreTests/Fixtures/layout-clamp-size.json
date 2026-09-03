@@ -1,0 +1,3057 @@
+{
+  "module": "dashboard/layout",
+  "fn": "clampSize",
+  "note": "The nearest size the slot can draw, by rank distance, ties to the smaller. No sizes at all → s.",
+  "cases": [
+    {
+      "name": "(none) want=s @phone",
+      "input": {
+        "items": [],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "(none) want=s @desktop",
+      "input": {
+        "items": [],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "(none) want=m @phone",
+      "input": {
+        "items": [],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "(none) want=m @desktop",
+      "input": {
+        "items": [],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "(none) want=l @phone",
+      "input": {
+        "items": [],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "(none) want=l @desktop",
+      "input": {
+        "items": [],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "(none) want=w @phone",
+      "input": {
+        "items": [],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "(none) want=w @desktop",
+      "input": {
+        "items": [],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "(none) want=xl @phone",
+      "input": {
+        "items": [],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "(none) want=xl @desktop",
+      "input": {
+        "items": [],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "recovery want=s @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery want=s @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery want=m @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery want=m @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery want=l @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery want=l @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery want=w @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery want=w @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "recovery want=xl @phone",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery want=xl @desktop",
+      "input": {
+        "items": [
+          "recovery"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "sleep want=s @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep want=s @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep want=m @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep want=m @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep want=l @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep want=l @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep want=w @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep want=w @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "sleep want=xl @phone",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep want=xl @desktop",
+      "input": {
+        "items": [
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "vitals want=s @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "vitals want=s @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "vitals want=m @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "vitals want=m @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "vitals want=l @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "vitals want=l @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "vitals want=w @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "vitals want=w @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "vitals want=xl @phone",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "vitals want=xl @desktop",
+      "input": {
+        "items": [
+          "vitals"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=s @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fuel want=s @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fuel want=m @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fuel want=m @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fuel want=l @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=l @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=w @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=w @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=xl @phone",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel want=xl @desktop",
+      "input": {
+        "items": [
+          "fuel"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "water want=s @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "water want=s @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "water want=m @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=m @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=l @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=l @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=w @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=w @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=xl @phone",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "water want=xl @desktop",
+      "input": {
+        "items": [
+          "water"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "micros want=s @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "micros want=s @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "micros want=m @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "micros want=m @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "micros want=l @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "micros want=l @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "micros want=w @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "micros want=w @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "micros want=xl @phone",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "micros want=xl @desktop",
+      "input": {
+        "items": [
+          "micros"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=s @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "deficit want=s @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "deficit want=m @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "deficit want=m @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "deficit want=l @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=l @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=w @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=w @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=xl @phone",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "deficit want=xl @desktop",
+      "input": {
+        "items": [
+          "deficit"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=s @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "train want=s @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "train want=m @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "train want=m @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "train want=l @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=l @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=w @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=w @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=xl @phone",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "train want=xl @desktop",
+      "input": {
+        "items": [
+          "train"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=s @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "bar want=s @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "bar want=m @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "bar want=m @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "bar want=l @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=l @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=w @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=w @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=xl @phone",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "bar want=xl @desktop",
+      "input": {
+        "items": [
+          "bar"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body want=s @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "body want=s @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "body want=m @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "body want=m @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "body want=l @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body want=l @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body want=w @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body want=w @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "body want=xl @phone",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body want=xl @desktop",
+      "input": {
+        "items": [
+          "body"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "muscle want=s @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "muscle want=s @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "muscle want=m @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "muscle want=m @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "muscle want=l @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "muscle want=l @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "muscle want=w @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "muscle want=w @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "muscle want=xl @phone",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "muscle want=xl @desktop",
+      "input": {
+        "items": [
+          "muscle"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=s @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "volume want=s @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "volume want=m @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "volume want=m @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "volume want=l @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=l @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=w @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=w @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=xl @phone",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "volume want=xl @desktop",
+      "input": {
+        "items": [
+          "volume"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "pr want=s @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "pr want=s @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "pr want=m @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=m @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=l @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=l @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=w @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=w @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=xl @phone",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "pr want=xl @desktop",
+      "input": {
+        "items": [
+          "pr"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "consistency want=s @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "consistency want=s @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "consistency want=m @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "consistency want=m @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "consistency want=l @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "consistency want=l @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "consistency want=w @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "consistency want=w @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "consistency want=xl @phone",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "consistency want=xl @desktop",
+      "input": {
+        "items": [
+          "consistency"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=s @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "steps want=s @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "steps want=m @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "steps want=m @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "steps want=l @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=l @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=w @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=w @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=xl @phone",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "steps want=xl @desktop",
+      "input": {
+        "items": [
+          "steps"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "cardio want=s @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "cardio want=s @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "cardio want=m @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=m @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=l @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=l @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=w @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=w @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=xl @phone",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio want=xl @desktop",
+      "input": {
+        "items": [
+          "cardio"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=s @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "stack want=s @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "stack want=m @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=m @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=l @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=l @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=w @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=w @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=xl @phone",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "stack want=xl @desktop",
+      "input": {
+        "items": [
+          "stack"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=s @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fatigue want=s @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fatigue want=m @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=m @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=l @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=l @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=w @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=w @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=xl @phone",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fatigue want=xl @desktop",
+      "input": {
+        "items": [
+          "fatigue"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=s @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep+cardio want=s @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep+cardio want=m @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=m @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=l @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=l @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=w @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=w @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=xl @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+cardio want=xl @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "cardio"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=s @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "cardio+pr+stack want=s @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "cardio+pr+stack want=m @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=m @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=l @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=l @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=w @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=w @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=xl @phone",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "cardio+pr+stack want=xl @desktop",
+      "input": {
+        "items": [
+          "cardio",
+          "pr",
+          "stack"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=s @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=s @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=m @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=m @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=l @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=l @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=w @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=w @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=xl @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+water want=xl @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "water"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep want=s @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep want=s @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep want=m @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep want=m @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep want=l @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep want=l @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep want=w @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep want=w @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "recovery+sleep want=xl @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep want=xl @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "body+sleep want=s @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "body+sleep want=s @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "body+sleep want=m @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "body+sleep want=m @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "body+sleep want=l @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body+sleep want=l @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body+sleep want=w @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body+sleep want=w @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "body+sleep want=xl @phone",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "body+sleep want=xl @desktop",
+      "input": {
+        "items": [
+          "body",
+          "sleep"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "recovery+sleep+body want=s @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep+body want=s @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep+body want=m @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep+body want=m @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "recovery+sleep+body want=l @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep+body want=l @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep+body want=w @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep+body want=w @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "w"
+    },
+    {
+      "name": "recovery+sleep+body want=xl @phone",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "recovery+sleep+body want=xl @desktop",
+      "input": {
+        "items": [
+          "recovery",
+          "sleep",
+          "body"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "xl"
+    },
+    {
+      "name": "fuel+fuel want=s @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fuel+fuel want=s @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "fuel+fuel want=m @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fuel+fuel want=m @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "fuel+fuel want=l @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel+fuel want=l @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel+fuel want=w @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel+fuel want=w @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel+fuel want=xl @phone",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "fuel+fuel want=xl @desktop",
+      "input": {
+        "items": [
+          "fuel",
+          "fuel"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=s @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep+train want=s @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "sleep+train want=m @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+train want=m @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "sleep+train want=l @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=l @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=w @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=w @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=xl @phone",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "l"
+    },
+    {
+      "name": "sleep+train want=xl @desktop",
+      "input": {
+        "items": [
+          "sleep",
+          "train"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "l"
+    }
+  ]
+}

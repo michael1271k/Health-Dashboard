@@ -1,0 +1,283 @@
+{
+  "module": "dashboard/layout",
+  "fn": "defaultLayout",
+  "note": "One slot per catalogue widget, in catalogue order, id sl-<widget>, nothing hidden, updatedAt 0.",
+  "cases": [
+    {
+      "name": "phone",
+      "input": {
+        "surface": "phone"
+      },
+      "expected": {
+        "slots": [
+          {
+            "id": "sl-recovery",
+            "size": "l",
+            "items": [
+              "recovery"
+            ]
+          },
+          {
+            "id": "sl-sleep",
+            "size": "m",
+            "items": [
+              "sleep"
+            ]
+          },
+          {
+            "id": "sl-vitals",
+            "size": "m",
+            "items": [
+              "vitals"
+            ]
+          },
+          {
+            "id": "sl-fuel",
+            "size": "m",
+            "items": [
+              "fuel"
+            ]
+          },
+          {
+            "id": "sl-water",
+            "size": "s",
+            "items": [
+              "water"
+            ]
+          },
+          {
+            "id": "sl-micros",
+            "size": "s",
+            "items": [
+              "micros"
+            ]
+          },
+          {
+            "id": "sl-deficit",
+            "size": "m",
+            "items": [
+              "deficit"
+            ]
+          },
+          {
+            "id": "sl-train",
+            "size": "m",
+            "items": [
+              "train"
+            ]
+          },
+          {
+            "id": "sl-bar",
+            "size": "s",
+            "items": [
+              "bar"
+            ]
+          },
+          {
+            "id": "sl-body",
+            "size": "m",
+            "items": [
+              "body"
+            ]
+          },
+          {
+            "id": "sl-muscle",
+            "size": "s",
+            "items": [
+              "muscle"
+            ]
+          },
+          {
+            "id": "sl-volume",
+            "size": "s",
+            "items": [
+              "volume"
+            ]
+          },
+          {
+            "id": "sl-pr",
+            "size": "s",
+            "items": [
+              "pr"
+            ]
+          },
+          {
+            "id": "sl-consistency",
+            "size": "s",
+            "items": [
+              "consistency"
+            ]
+          },
+          {
+            "id": "sl-steps",
+            "size": "s",
+            "items": [
+              "steps"
+            ]
+          },
+          {
+            "id": "sl-cardio",
+            "size": "s",
+            "items": [
+              "cardio"
+            ]
+          },
+          {
+            "id": "sl-stack",
+            "size": "s",
+            "items": [
+              "stack"
+            ]
+          },
+          {
+            "id": "sl-fatigue",
+            "size": "s",
+            "items": [
+              "fatigue"
+            ]
+          }
+        ],
+        "hidden": [],
+        "updatedAt": 0
+      }
+    },
+    {
+      "name": "desktop",
+      "input": {
+        "surface": "desktop"
+      },
+      "expected": {
+        "slots": [
+          {
+            "id": "sl-recovery",
+            "size": "xl",
+            "items": [
+              "recovery"
+            ]
+          },
+          {
+            "id": "sl-sleep",
+            "size": "w",
+            "items": [
+              "sleep"
+            ]
+          },
+          {
+            "id": "sl-vitals",
+            "size": "l",
+            "items": [
+              "vitals"
+            ]
+          },
+          {
+            "id": "sl-fuel",
+            "size": "l",
+            "items": [
+              "fuel"
+            ]
+          },
+          {
+            "id": "sl-water",
+            "size": "m",
+            "items": [
+              "water"
+            ]
+          },
+          {
+            "id": "sl-micros",
+            "size": "m",
+            "items": [
+              "micros"
+            ]
+          },
+          {
+            "id": "sl-deficit",
+            "size": "l",
+            "items": [
+              "deficit"
+            ]
+          },
+          {
+            "id": "sl-train",
+            "size": "l",
+            "items": [
+              "train"
+            ]
+          },
+          {
+            "id": "sl-bar",
+            "size": "m",
+            "items": [
+              "bar"
+            ]
+          },
+          {
+            "id": "sl-body",
+            "size": "w",
+            "items": [
+              "body"
+            ]
+          },
+          {
+            "id": "sl-muscle",
+            "size": "l",
+            "items": [
+              "muscle"
+            ]
+          },
+          {
+            "id": "sl-volume",
+            "size": "l",
+            "items": [
+              "volume"
+            ]
+          },
+          {
+            "id": "sl-pr",
+            "size": "m",
+            "items": [
+              "pr"
+            ]
+          },
+          {
+            "id": "sl-consistency",
+            "size": "m",
+            "items": [
+              "consistency"
+            ]
+          },
+          {
+            "id": "sl-steps",
+            "size": "m",
+            "items": [
+              "steps"
+            ]
+          },
+          {
+            "id": "sl-cardio",
+            "size": "m",
+            "items": [
+              "cardio"
+            ]
+          },
+          {
+            "id": "sl-stack",
+            "size": "m",
+            "items": [
+              "stack"
+            ]
+          },
+          {
+            "id": "sl-fatigue",
+            "size": "m",
+            "items": [
+              "fatigue"
+            ]
+          }
+        ],
+        "hidden": [],
+        "updatedAt": 0
+      }
+    }
+  ]
+}
