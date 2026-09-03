@@ -67,11 +67,22 @@ public actor SyncEngine {
 
     private let database: AppDatabase
     private let remote: any SyncRemote
+    /// The generic half: any mirrored row, by table and id. Optional so a target
+    /// that only logs workouts — the Watch — can build an engine without one.
+    private let rows: (any MirrorPushRemote)?
+    private let catalogue: [String: MirrorTable]
     private var isDraining = false
 
-    public init(database: AppDatabase, remote: any SyncRemote) {
+    public init(
+        database: AppDatabase,
+        remote: any SyncRemote,
+        rows: (any MirrorPushRemote)? = nil,
+        catalogue: [String: MirrorTable] = MirrorCatalogue.byName
+    ) {
         self.database = database
         self.remote = remote
+        self.rows = rows
+        self.catalogue = catalogue
     }
 
     /// Push everything the queue is ready to push.
@@ -122,14 +133,30 @@ public actor SyncEngine {
         // dropped — because a row nobody can read is still evidence of a set
         // somebody logged.
         var work: [(item: OutboxItem, sessionId: String, setId: String?)] = []
+        var rowWork: [(item: OutboxItem, ref: RowRef)] = []
         for item in batch {
             do {
-                work.append(try Self.target(of: item))
+                if item.kind == SyncKind.rowUpsert {
+                    rowWork.append((item, try Self.rowRef(of: item)))
+                } else {
+                    work.append(try Self.target(of: item))
+                }
             } catch {
                 try database.outboxFailed(item.id, error: describe(error), now: now)
                 report.failed += 1
             }
         }
+        // The mirrored rows go first, and it is not arbitrary. A day's macros,
+        // metrics and score are small, independent, single-request writes with
+        // no foreign keys between them; a workout is a catalogue read plus two
+        // or three requests per session. Draining the cheap ones first means a
+        // thirty-second window of signal lands the day rather than half a
+        // workout — and the workout, unlike the day, is never at risk of being
+        // superseded before the next drain.
+        let rowOutcome = try await pushRows(rowWork, now: now)
+        report.pushed += rowOutcome.pushed
+        report.failed += rowOutcome.failed
+
         guard !work.isEmpty else { return report }
 
         // One catalogue read for the whole drain, and only when there is a set
@@ -317,7 +344,63 @@ public actor SyncEngine {
         return (ok.count, failed)
     }
 
+    // MARK: - Mirrored rows
+
+    /// Push queued mirrored rows — a day's metrics, a macro row, a preference,
+    /// a score.
+    ///
+    /// One request per row and no grouping, because unlike a workout these rows
+    /// are unrelated to each other: they hit six different tables with six
+    /// different conflict targets, and batching them would mean one table's
+    /// CHECK violation failing five innocent writes.
+    ///
+    /// Never throws on a remote failure, for the same reason `push` does not:
+    /// one unreachable table must not abandon the rest of the batch.
+    private func pushRows(
+        _ entries: [(item: OutboxItem, ref: RowRef)], now: Date
+    ) async throws -> (pushed: Int, failed: Int) {
+        guard !entries.isEmpty else { return (0, 0) }
+        guard let rows else {
+            // No push remote was supplied. The items stay queued and back off;
+            // they are not dropped, because the row they name is real.
+            for entry in entries {
+                try database.outboxFailed(
+                    entry.item.id, error: "no MirrorPushRemote on this engine", now: now
+                )
+            }
+            return (0, entries.count)
+        }
+
+        var pushed = 0
+        var failed = 0
+        for entry in entries {
+            do {
+                guard let table = catalogue[entry.ref.table] else {
+                    throw SyncError.unmirroredTable(entry.ref.table)
+                }
+                guard try await table.push(database, rows, entry.ref.id) else {
+                    throw SyncError.unknownRow(table: entry.ref.table, id: entry.ref.id)
+                }
+                try database.outboxSucceeded(entry.item.id)
+                pushed += 1
+            } catch {
+                try database.outboxFailed(entry.item.id, error: describe(error), now: now)
+                failed += 1
+            }
+        }
+        return (pushed, failed)
+    }
+
     // MARK: - Reading an item
+
+    /// What a `row.upsert` item names.
+    static func rowRef(of item: OutboxItem) throws -> RowRef {
+        do {
+            return try HelixJSON.decoder.decode(RowRef.self, from: item.payload)
+        } catch {
+            throw SyncError.undecodablePayload(kind: item.kind, detail: "\(error)")
+        }
+    }
 
     /// What an outbox item is about: a session, and at most one set.
     static func target(of item: OutboxItem) throws -> (item: OutboxItem, sessionId: String, setId: String?) {
@@ -358,6 +441,8 @@ public actor SyncEngine {
                 return "no catalogue row for \(name ?? slug) (\(slug))"
             case .ambiguousExercise(let name, let candidates):
                 return "\(name) matches \(candidates.count) catalogue rows: \(candidates.joined(separator: ", "))"
+            case .unmirroredTable(let table): return "\(table) is not in the mirror catalogue"
+            case .unknownRow(let table, let id): return "\(table) row \(id) is not in the local store"
             }
         }
         return String(describing: error)

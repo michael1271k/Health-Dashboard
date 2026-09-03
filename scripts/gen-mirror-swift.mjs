@@ -127,6 +127,16 @@ function structFor(table, def) {
     lines.push(s === c.name ? `        case ${swiftName(c.name)}` : `        case ${swiftName(c.name)} = "${c.name}"`)
   }
   lines.push('    }')
+  lines.push('')
+  // Every nullable column defaults to nil, so a writer names only the columns
+  // Postgres actually requires. The synthesised memberwise init cannot do this
+  // — it has no defaults and is internal — and a forty-field call site written
+  // by hand is where a column silently ends up in the wrong argument.
+  lines.push('    public init(')
+  lines.push(cols.map((c) => `        ${swiftName(c.name)}: ${c.swift}${c.nullable ? '? = nil' : ''}`).join(',\n'))
+  lines.push('    ) {')
+  for (const c of cols) lines.push(`        self.${swiftName(c.name)} = ${swiftName(c.name)}`)
+  lines.push('    }')
   lines.push('}')
   lines.push('')
   return lines.join('\n')
@@ -161,6 +171,12 @@ function registryFor(tables) {
   lines.push('/// Generated, so the list cannot fall behind the schema fixture the way a')
   lines.push('/// hand-maintained one would. `bespoke` tables are absent on purpose: they')
   lines.push('/// land in tables the logger already owns, through `SyncTranslation`.')
+  lines.push('///')
+  lines.push('/// `conflict` is the PostgREST upsert target for a LOCAL write of the table,')
+  lines.push('/// and it is the NATURAL key wherever one exists — introspected, not guessed.')
+  lines.push('/// Upserting `daily_logs` on `id` would insert a second row for a day the')
+  lines.push('/// server already holds under a different uuid, and then fail on')
+  lines.push('/// `daily_logs_user_id_date_key` forever.')
   lines.push('public enum MirrorCatalogue {')
   lines.push('    public static let tables: [MirrorTable] = [')
   for (const [table, def] of tables) {
@@ -168,10 +184,21 @@ function registryFor(tables) {
     const strategy = def.cursor ? `.delta(column: "${def.cursor}")`
       : def.window ? `.window(column: "${def.window}")`
       : '.full'
+    const conflict = def.conflict ?? (def.pk ?? ['id']).join(',')
+    const type = `${typeName(table)}Row`
     lines.push(`        MirrorTable(name: "${table}", group: .${def.group}, strategy: ${strategy},`)
-    lines.push(`                    pull: { try await $0.pull(${typeName(table)}Row.self, from: $1) }),`)
+    lines.push(`                    conflict: "${conflict}",`)
+    lines.push(`                    pull: { try await $0.pull(${type}.self, from: $1) },`)
+    lines.push(`                    push: { try await $1.pushRow(${type}.self, from: $0, table: "${table}", conflict: "${conflict}", id: $2) }),`)
   }
   lines.push('    ]')
+  lines.push('')
+  lines.push('    /// By name. Every lookup the pusher and the realtime wiring do is by name,')
+  lines.push('    /// and rebuilding the dictionary per call would be a linear scan of')
+  lines.push('    /// twenty-six entries on the drain path.')
+  lines.push('    public static let byName: [String: MirrorTable] = Dictionary(')
+  lines.push('        tables.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first }')
+  lines.push('    )')
   lines.push('}')
   return lines.join('\n')
 }

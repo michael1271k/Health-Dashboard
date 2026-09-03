@@ -39,18 +39,37 @@ public struct MirrorTable: Sendable {
     public let name: String
     public let group: MirrorGroup
     public let strategy: MirrorStrategy
+    /// The PostgREST conflict target for a LOCAL write of this table — the
+    /// natural key wherever Postgres has one, `id` otherwise.
+    ///
+    /// Load-bearing. Every one of these tables has an `id` primary key, so
+    /// upserting on `id` compiles, reads right and is wrong: a day this device
+    /// invented a uuid for is a row the server already holds under a different
+    /// one, and the insert dies on `daily_logs_user_id_date_key` every time it
+    /// is retried. Introspected from `pg_constraint`, not assumed.
+    public let conflict: String
     let pull: @Sendable (MirrorPuller, MirrorRequest) async throws -> Int
+    /// Read one local row by id and upsert it. `false` when the row is gone.
+    ///
+    /// A closure for the same reason `pull` is one: the catalogue is a
+    /// heterogeneous list of twenty-six row types, and only the generator knows
+    /// which type each name means.
+    let push: @Sendable (AppDatabase, any MirrorPushRemote, String) async throws -> Bool
 
     public init(
         name: String,
         group: MirrorGroup,
         strategy: MirrorStrategy,
-        pull: @escaping @Sendable (MirrorPuller, MirrorRequest) async throws -> Int
+        conflict: String = "id",
+        pull: @escaping @Sendable (MirrorPuller, MirrorRequest) async throws -> Int,
+        push: @escaping @Sendable (AppDatabase, any MirrorPushRemote, String) async throws -> Bool
     ) {
         self.name = name
         self.group = group
         self.strategy = strategy
+        self.conflict = conflict
         self.pull = pull
+        self.push = push
     }
 }
 

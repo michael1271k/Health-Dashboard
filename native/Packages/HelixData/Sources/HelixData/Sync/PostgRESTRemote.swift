@@ -71,7 +71,7 @@ public struct PostgRESTRemote: SyncRemote {
 /// identically. RLS already restricts each to `user_id = auth.uid()`; sending
 /// the filter anyway keeps the request honest if a policy is ever widened for
 /// an admin.
-public struct PostgRESTMirrorRemote: MirrorRemote {
+public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
 
     private let client: SupabaseClient
     private let userId: String
@@ -79,6 +79,41 @@ public struct PostgRESTMirrorRemote: MirrorRemote {
     public init(client: SupabaseClient, userId: String) {
         self.client = client
         self.userId = userId
+    }
+
+    /// The write half. `conflict` comes from the generated catalogue and is the
+    /// table's NATURAL key wherever Postgres has one — see `MirrorTable`.
+    ///
+    /// RLS supplies the `user_id` guard on the way in; the row carries its own
+    /// `user_id` because these tables are `NOT NULL` on it.
+    ///
+    /// ── THE SERVER OWNS ITS OWN TIMESTAMPS ──────────────────────────────────
+    /// `created_at` and `updated_at` are stripped from the body. Both default to
+    /// `now()` on every one of these tables and a `BEFORE UPDATE` trigger
+    /// maintains `updated_at`, so sending them can only ever be worse than not:
+    ///
+    ///   · `updated_at` is the DELTA CURSOR. On an INSERT no trigger fires, so a
+    ///     phone whose clock is three minutes slow would stamp a brand-new row
+    ///     in the past — where every other device's `>= cursor` filter would
+    ///     step straight over it and never see the row again.
+    ///   · `created_at` on a row this device is updating is the server's own
+    ///     record of when the row first appeared. Echoing our mirrored copy back
+    ///     is at best a no-op and at worst overwrites it with a value that has
+    ///     been through two clocks and a decode.
+    ///
+    /// Done here rather than in the row types because it is a fact about
+    /// PostgREST, not about the schema — and the mirror needs both columns on
+    /// the way IN.
+    public func upsertRow<T: Encodable & Sendable>(
+        _ row: T, table: String, conflict: String
+    ) async throws {
+        var body = try JSONDecoder().decode([String: AnyJSON].self, from: HelixJSON.encoder.encode(row))
+        body.removeValue(forKey: "created_at")
+        body.removeValue(forKey: "updated_at")
+        try await client
+            .from(table)
+            .upsert(body, onConflict: conflict, returning: .minimal)
+            .execute()
     }
 
     public func select<T: Decodable & Sendable>(

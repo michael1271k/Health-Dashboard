@@ -183,14 +183,10 @@ public struct MirrorSync: MirrorRefreshing {
 
     private let puller: MirrorPuller
     private let training: TrainingPuller
-    private let byName: [String: MirrorTable]
 
     public init(puller: MirrorPuller, training: TrainingPuller) {
         self.puller = puller
         self.training = training
-        self.byName = Dictionary(
-            MirrorCatalogue.tables.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first }
-        )
     }
 
     public func refresh(table: String?) async {
@@ -198,7 +194,7 @@ public struct MirrorSync: MirrorRefreshing {
             _ = try? await training.refresh()
             return
         }
-        guard let entry = byName[table] else { return }
+        guard let entry = MirrorCatalogue.byName[table] else { return }
         _ = try? await puller.refresh(entry)
     }
 

@@ -33,19 +33,19 @@
     "full": "Small and rarely written. Cheaper to re-read than to reason about."
   },
   "tables": {
-    "daily_logs": { "group": "daily", "pk": ["id"], "cursor": "updated_at",
+    "daily_logs": { "group": "daily", "conflict": "user_id,date", "pk": ["id"], "cursor": "updated_at",
       "cols": "id:uuid,user_id:uuid,date:date,steps:int4?,water_ml:numeric?,sleep_minutes:int4?,carbs_g:numeric?,protein_g:numeric?,fats_g:numeric?,weight_kg:numeric?,lean_mass_kg:numeric?,bmi:numeric?,training_minutes:int4?,active_energy:numeric?,body_fat_pct:numeric?,standing_minutes:int4?,avg_heart_rate:int4?,avg_rest_heart_rate:int4?,respiratory_rate:numeric?,blood_oxygen:numeric?,muscle_percent:numeric?,water_percent:numeric?,bone_mineral:numeric?,visceral_fat:numeric?,bmr:numeric?,created_at:timestamptz,updated_at:timestamptz,hrv_ms:numeric?,exercise_minutes:int4?,stand_hours:int4?,vo2max:numeric?,wrist_temp_delta:numeric?,time_in_daylight_min:int4?,effort_rating:int2?,mood:int2?,journal_md:text?,distance_m:numeric?,protein_percent:numeric?,muscle_mass_kg:numeric?,water_mass_kg:numeric?,fat_mass_kg:numeric?,bone_mineral_kg:numeric?,protein_mass_kg:numeric?,fat_free_mass_kg:numeric?,weighin_skip_reason:text?,skeletal_muscle_mass_kg:numeric?,estimated_waist_to_hip_ratio:numeric?,nutrition_exception:text?,nutrition_estimated:bool,sleep_onset_trouble:bool" },
 
-    "daily_metrics": { "group": "daily", "pk": ["id"], "cursor": "updated_at",
+    "daily_metrics": { "group": "daily", "conflict": "user_id,date", "pk": ["id"], "cursor": "updated_at",
       "cols": "id:uuid,user_id:uuid,date:date,steps:int4?,active_cal:int4?,rest_hr:int4?,created_at:timestamptz,updated_at:timestamptz" },
 
-    "daily_scores": { "group": "daily", "pk": ["id"], "window": "date",
+    "daily_scores": { "group": "daily", "conflict": "user_id,date", "pk": ["id"], "window": "date",
       "cols": "id:uuid,user_id:uuid,date:date,score:int4,sleep_score:int4?,nutrition_score:int4?,activity_score:int4?,workout_score:int4?,recovery_score:int4?,battery_pct:int4?,computed_at:timestamptz,finalized:bool" },
 
     "daily_targets": { "group": "daily", "pk": ["user_id", "date"], "cursor": "updated_at",
       "cols": "user_id:uuid,date:date,kcal:int4?,protein_g:int4?,carbs_g:int4?,fat_g:int4?,steps_goal:int4?,note:text?,updated_at:timestamptz,profile_key:text?,track_carbs:bool,track_fat:bool" },
 
-    "nutrition_entries": { "group": "daily", "pk": ["id"], "window": "date",
+    "nutrition_entries": { "group": "daily", "conflict": "user_id,date,meal_type", "pk": ["id"], "window": "date",
       "cols": "id:uuid,user_id:uuid,hk_uuid:text?,logged_at:timestamptz,date:date,meal_type:text?,calories:numeric,protein_g:numeric,carbs_g:numeric,fat_g:numeric,fiber_g:numeric?,phase:text?,created_at:timestamptz,target_kcal:int4?,micros:jsonb?" },
 
     "water_intake": { "group": "daily", "pk": ["id"], "window": "date",
@@ -90,7 +90,7 @@
     "exercises": { "group": "training", "pk": ["id"], "full": true, "bespoke": true,
       "cols": "id:uuid,user_id:uuid,name:text,name_he:text?,split_day:text,muscle_groups:_text?,is_compound:bool?,created_at:timestamptz" },
 
-    "user_goals": { "group": "plan", "pk": ["id"], "cursor": "updated_at",
+    "user_goals": { "group": "plan", "conflict": "user_id", "pk": ["id"], "cursor": "updated_at",
       "cols": "id:uuid,user_id:uuid,sleep_goal_hours:numeric?,calorie_goal:int4?,protein_goal_g:int4?,carbs_goal_g:int4?,fat_goal_g:int4?,steps_goal:int4?,active_cal_goal:int4?,water_goal_ml:int4?,context_mode:text,goal_preset:text?,created_at:timestamptz,updated_at:timestamptz,auto_log_supplements:bool,active_program:text,day_cutoff_hour:int4,unit_system:text,reduce_motion:bool,timezone:text,target_weight_kg:numeric?,week_end_day:int2?,active_plan:text?,target_body_fat_pct:numeric?,target_muscle_mass_kg:numeric?,active_phase:text?,phase_started_on:date?,track_rpe:bool,active_lever:text?,context_since:date?,maintenance_until:date?" },
 
     "target_profiles": { "group": "plan", "pk": ["user_id", "key"], "cursor": "updated_at",

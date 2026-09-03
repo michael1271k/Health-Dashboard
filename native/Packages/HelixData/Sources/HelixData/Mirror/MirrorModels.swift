@@ -116,6 +116,110 @@ public struct DailyLogRow: Codable, FetchableRecord, PersistableRecord, Sendable
         case nutritionEstimated = "nutrition_estimated"
         case sleepOnsetTrouble = "sleep_onset_trouble"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        steps: Int? = nil,
+        waterMl: Double? = nil,
+        sleepMinutes: Int? = nil,
+        carbsG: Double? = nil,
+        proteinG: Double? = nil,
+        fatsG: Double? = nil,
+        weightKg: Double? = nil,
+        leanMassKg: Double? = nil,
+        bmi: Double? = nil,
+        trainingMinutes: Int? = nil,
+        activeEnergy: Double? = nil,
+        bodyFatPct: Double? = nil,
+        standingMinutes: Int? = nil,
+        avgHeartRate: Int? = nil,
+        avgRestHeartRate: Int? = nil,
+        respiratoryRate: Double? = nil,
+        bloodOxygen: Double? = nil,
+        musclePercent: Double? = nil,
+        waterPercent: Double? = nil,
+        boneMineral: Double? = nil,
+        visceralFat: Double? = nil,
+        bmr: Double? = nil,
+        createdAt: Date,
+        updatedAt: Date,
+        hrvMs: Double? = nil,
+        exerciseMinutes: Int? = nil,
+        standHours: Int? = nil,
+        vo2max: Double? = nil,
+        wristTempDelta: Double? = nil,
+        timeInDaylightMin: Int? = nil,
+        effortRating: Int? = nil,
+        mood: Int? = nil,
+        journalMd: String? = nil,
+        distanceM: Double? = nil,
+        proteinPercent: Double? = nil,
+        muscleMassKg: Double? = nil,
+        waterMassKg: Double? = nil,
+        fatMassKg: Double? = nil,
+        boneMineralKg: Double? = nil,
+        proteinMassKg: Double? = nil,
+        fatFreeMassKg: Double? = nil,
+        weighinSkipReason: String? = nil,
+        skeletalMuscleMassKg: Double? = nil,
+        estimatedWaistToHipRatio: Double? = nil,
+        nutritionException: String? = nil,
+        nutritionEstimated: Bool,
+        sleepOnsetTrouble: Bool
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.steps = steps
+        self.waterMl = waterMl
+        self.sleepMinutes = sleepMinutes
+        self.carbsG = carbsG
+        self.proteinG = proteinG
+        self.fatsG = fatsG
+        self.weightKg = weightKg
+        self.leanMassKg = leanMassKg
+        self.bmi = bmi
+        self.trainingMinutes = trainingMinutes
+        self.activeEnergy = activeEnergy
+        self.bodyFatPct = bodyFatPct
+        self.standingMinutes = standingMinutes
+        self.avgHeartRate = avgHeartRate
+        self.avgRestHeartRate = avgRestHeartRate
+        self.respiratoryRate = respiratoryRate
+        self.bloodOxygen = bloodOxygen
+        self.musclePercent = musclePercent
+        self.waterPercent = waterPercent
+        self.boneMineral = boneMineral
+        self.visceralFat = visceralFat
+        self.bmr = bmr
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.hrvMs = hrvMs
+        self.exerciseMinutes = exerciseMinutes
+        self.standHours = standHours
+        self.vo2max = vo2max
+        self.wristTempDelta = wristTempDelta
+        self.timeInDaylightMin = timeInDaylightMin
+        self.effortRating = effortRating
+        self.mood = mood
+        self.journalMd = journalMd
+        self.distanceM = distanceM
+        self.proteinPercent = proteinPercent
+        self.muscleMassKg = muscleMassKg
+        self.waterMassKg = waterMassKg
+        self.fatMassKg = fatMassKg
+        self.boneMineralKg = boneMineralKg
+        self.proteinMassKg = proteinMassKg
+        self.fatFreeMassKg = fatFreeMassKg
+        self.weighinSkipReason = weighinSkipReason
+        self.skeletalMuscleMassKg = skeletalMuscleMassKg
+        self.estimatedWaistToHipRatio = estimatedWaistToHipRatio
+        self.nutritionException = nutritionException
+        self.nutritionEstimated = nutritionEstimated
+        self.sleepOnsetTrouble = sleepOnsetTrouble
+    }
 }
 
 // MARK: - daily_metrics
@@ -142,6 +246,26 @@ public struct DailyMetricRow: Codable, FetchableRecord, PersistableRecord, Senda
         case restHr = "rest_hr"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        steps: Int? = nil,
+        activeCal: Int? = nil,
+        restHr: Int? = nil,
+        createdAt: Date,
+        updatedAt: Date
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.steps = steps
+        self.activeCal = activeCal
+        self.restHr = restHr
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }
 
@@ -178,6 +302,34 @@ public struct DailyScoreRow: Codable, FetchableRecord, PersistableRecord, Sendab
         case computedAt = "computed_at"
         case finalized
     }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        score: Int,
+        sleepScore: Int? = nil,
+        nutritionScore: Int? = nil,
+        activityScore: Int? = nil,
+        workoutScore: Int? = nil,
+        recoveryScore: Int? = nil,
+        batteryPct: Int? = nil,
+        computedAt: Date,
+        finalized: Bool
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.score = score
+        self.sleepScore = sleepScore
+        self.nutritionScore = nutritionScore
+        self.activityScore = activityScore
+        self.workoutScore = workoutScore
+        self.recoveryScore = recoveryScore
+        self.batteryPct = batteryPct
+        self.computedAt = computedAt
+        self.finalized = finalized
+    }
 }
 
 // MARK: - daily_targets
@@ -212,6 +364,34 @@ public struct DailyTargetRow: Codable, FetchableRecord, PersistableRecord, Senda
         case profileKey = "profile_key"
         case trackCarbs = "track_carbs"
         case trackFat = "track_fat"
+    }
+
+    public init(
+        userId: String,
+        date: String,
+        kcal: Int? = nil,
+        proteinG: Int? = nil,
+        carbsG: Int? = nil,
+        fatG: Int? = nil,
+        stepsGoal: Int? = nil,
+        note: String? = nil,
+        updatedAt: Date,
+        profileKey: String? = nil,
+        trackCarbs: Bool,
+        trackFat: Bool
+    ) {
+        self.userId = userId
+        self.date = date
+        self.kcal = kcal
+        self.proteinG = proteinG
+        self.carbsG = carbsG
+        self.fatG = fatG
+        self.stepsGoal = stepsGoal
+        self.note = note
+        self.updatedAt = updatedAt
+        self.profileKey = profileKey
+        self.trackCarbs = trackCarbs
+        self.trackFat = trackFat
     }
 }
 
@@ -254,6 +434,40 @@ public struct NutritionEntryRow: Codable, FetchableRecord, PersistableRecord, Se
         case targetKcal = "target_kcal"
         case micros
     }
+
+    public init(
+        id: String,
+        userId: String,
+        hkUuid: String? = nil,
+        loggedAt: Date,
+        date: String,
+        mealType: String? = nil,
+        calories: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+        fiberG: Double? = nil,
+        phase: String? = nil,
+        createdAt: Date,
+        targetKcal: Int? = nil,
+        micros: JSONText? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.hkUuid = hkUuid
+        self.loggedAt = loggedAt
+        self.date = date
+        self.mealType = mealType
+        self.calories = calories
+        self.proteinG = proteinG
+        self.carbsG = carbsG
+        self.fatG = fatG
+        self.fiberG = fiberG
+        self.phase = phase
+        self.createdAt = createdAt
+        self.targetKcal = targetKcal
+        self.micros = micros
+    }
 }
 
 // MARK: - water_intake
@@ -279,6 +493,24 @@ public struct WaterIntakeRow: Codable, FetchableRecord, PersistableRecord, Senda
         case amountMl = "amount_ml"
         case createdAt = "created_at"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        hkUuid: String? = nil,
+        loggedAt: Date,
+        date: String,
+        amountMl: Double,
+        createdAt: Date
+    ) {
+        self.id = id
+        self.userId = userId
+        self.hkUuid = hkUuid
+        self.loggedAt = loggedAt
+        self.date = date
+        self.amountMl = amountMl
+        self.createdAt = createdAt
+    }
 }
 
 // MARK: - supplement_log
@@ -302,6 +534,22 @@ public struct SupplementLogRow: Codable, FetchableRecord, PersistableRecord, Sen
         case takenAt = "taken_at"
         case updatedAt = "updated_at"
     }
+
+    public init(
+        userId: String,
+        date: String,
+        itemKey: String,
+        taken: Bool,
+        takenAt: Date? = nil,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.date = date
+        self.itemKey = itemKey
+        self.taken = taken
+        self.takenAt = takenAt
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - supplement_dose_overrides
@@ -320,6 +568,18 @@ public struct SupplementDoseOverrideRow: Codable, FetchableRecord, PersistableRe
         case date
         case supplementKey = "supplement_key"
         case dose
+    }
+
+    public init(
+        userId: String,
+        date: String,
+        supplementKey: String,
+        dose: String
+    ) {
+        self.userId = userId
+        self.date = date
+        self.supplementKey = supplementKey
+        self.dose = dose
     }
 }
 
@@ -352,6 +612,30 @@ public struct CustomSupplementRow: Codable, FetchableRecord, PersistableRecord, 
         case micros
         case createdAt = "created_at"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        name: String,
+        dose: String,
+        color: String? = nil,
+        form: String? = nil,
+        time: String? = nil,
+        schedule: JSONText? = nil,
+        micros: JSONText? = nil,
+        createdAt: Date? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.name = name
+        self.dose = dose
+        self.color = color
+        self.form = form
+        self.time = time
+        self.schedule = schedule
+        self.micros = micros
+        self.createdAt = createdAt
+    }
 }
 
 // MARK: - fatigue_logs
@@ -376,6 +660,24 @@ public struct FatigueLogRow: Codable, FetchableRecord, PersistableRecord, Sendab
         case level
         case note
         case createdAt = "created_at"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        slot: String,
+        level: Int,
+        note: String? = nil,
+        createdAt: Date? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.slot = slot
+        self.level = level
+        self.note = note
+        self.createdAt = createdAt
     }
 }
 
@@ -403,6 +705,26 @@ public struct DomsLogRow: Codable, FetchableRecord, PersistableRecord, Sendable,
         case createdAt = "created_at"
         case sourceSessionId = "source_session_id"
         case sourceDayKey = "source_day_key"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        muscleGroup: String,
+        severity: Int,
+        createdAt: Date? = nil,
+        sourceSessionId: String? = nil,
+        sourceDayKey: String? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.muscleGroup = muscleGroup
+        self.severity = severity
+        self.createdAt = createdAt
+        self.sourceSessionId = sourceSessionId
+        self.sourceDayKey = sourceDayKey
     }
 }
 
@@ -461,6 +783,56 @@ public struct BodyCompositionRow: Codable, FetchableRecord, PersistableRecord, S
         case bmr
         case estimatedWaistToHipRatio = "estimated_waist_to_hip_ratio"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        hkUuid: String? = nil,
+        measuredAt: Date,
+        date: String,
+        weightKg: Double,
+        bodyFatPct: Double? = nil,
+        muscleMassKg: Double? = nil,
+        waterPct: Double? = nil,
+        boneMassKg: Double? = nil,
+        bmi: Double? = nil,
+        createdAt: Date,
+        fatMassKg: Double? = nil,
+        bodyWaterMassKg: Double? = nil,
+        proteinMassKg: Double? = nil,
+        musclePct: Double? = nil,
+        proteinPct: Double? = nil,
+        boneMineralPct: Double? = nil,
+        skeletalMuscleMassKg: Double? = nil,
+        fatFreeMassKg: Double? = nil,
+        visceralFat: Double? = nil,
+        bmr: Double? = nil,
+        estimatedWaistToHipRatio: Double? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.hkUuid = hkUuid
+        self.measuredAt = measuredAt
+        self.date = date
+        self.weightKg = weightKg
+        self.bodyFatPct = bodyFatPct
+        self.muscleMassKg = muscleMassKg
+        self.waterPct = waterPct
+        self.boneMassKg = boneMassKg
+        self.bmi = bmi
+        self.createdAt = createdAt
+        self.fatMassKg = fatMassKg
+        self.bodyWaterMassKg = bodyWaterMassKg
+        self.proteinMassKg = proteinMassKg
+        self.musclePct = musclePct
+        self.proteinPct = proteinPct
+        self.boneMineralPct = boneMineralPct
+        self.skeletalMuscleMassKg = skeletalMuscleMassKg
+        self.fatFreeMassKg = fatFreeMassKg
+        self.visceralFat = visceralFat
+        self.bmr = bmr
+        self.estimatedWaistToHipRatio = estimatedWaistToHipRatio
+    }
 }
 
 // MARK: - sleep_sessions
@@ -495,6 +867,34 @@ public struct SleepSessionRow: Codable, FetchableRecord, PersistableRecord, Send
         case awakeMin = "awake_min"
         case sleepScore = "sleep_score"
         case createdAt = "created_at"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        hkUuid: String? = nil,
+        startTime: Date,
+        endTime: Date,
+        durationMin: Int,
+        deepMin: Int? = nil,
+        remMin: Int? = nil,
+        coreMin: Int? = nil,
+        awakeMin: Int? = nil,
+        sleepScore: Int? = nil,
+        createdAt: Date
+    ) {
+        self.id = id
+        self.userId = userId
+        self.hkUuid = hkUuid
+        self.startTime = startTime
+        self.endTime = endTime
+        self.durationMin = durationMin
+        self.deepMin = deepMin
+        self.remMin = remMin
+        self.coreMin = coreMin
+        self.awakeMin = awakeMin
+        self.sleepScore = sleepScore
+        self.createdAt = createdAt
     }
 }
 
@@ -537,6 +937,40 @@ public struct CardioLogRow: Codable, FetchableRecord, PersistableRecord, Sendabl
         case sessionId = "session_id"
         case inclinePct = "incline_pct"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        date: String,
+        kind: String,
+        distanceM: Double? = nil,
+        durationMin: Double? = nil,
+        kcal: Double? = nil,
+        fromHealthkit: Bool? = nil,
+        createdAt: Date? = nil,
+        activeKcal: Double? = nil,
+        totalKcal: Double? = nil,
+        avgHr: Double? = nil,
+        effort: Double? = nil,
+        sessionId: String? = nil,
+        inclinePct: Double? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.date = date
+        self.kind = kind
+        self.distanceM = distanceM
+        self.durationMin = durationMin
+        self.kcal = kcal
+        self.fromHealthkit = fromHealthkit
+        self.createdAt = createdAt
+        self.activeKcal = activeKcal
+        self.totalKcal = totalKcal
+        self.avgHr = avgHr
+        self.effort = effort
+        self.sessionId = sessionId
+        self.inclinePct = inclinePct
+    }
 }
 
 // MARK: - personal_records
@@ -566,6 +1000,28 @@ public struct PersonalRecordRow: Codable, FetchableRecord, PersistableRecord, Se
         case achievedOn = "achieved_on"
         case updatedAt = "updated_at"
     }
+
+    public init(
+        userId: String,
+        exerciseKey: String,
+        axis: String,
+        value: Double,
+        reps: Int? = nil,
+        weightKg: Double? = nil,
+        sessionId: String? = nil,
+        achievedOn: String,
+        updatedAt: Date? = nil
+    ) {
+        self.userId = userId
+        self.exerciseKey = exerciseKey
+        self.axis = axis
+        self.value = value
+        self.reps = reps
+        self.weightKg = weightKg
+        self.sessionId = sessionId
+        self.achievedOn = achievedOn
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - routine_templates
@@ -586,6 +1042,20 @@ public struct RoutineTemplateRow: Codable, FetchableRecord, PersistableRecord, S
         case payload
         case sourceSessionId = "source_session_id"
         case updatedAt = "updated_at"
+    }
+
+    public init(
+        userId: String,
+        dayKey: String,
+        payload: JSONText,
+        sourceSessionId: String? = nil,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.dayKey = dayKey
+        self.payload = payload
+        self.sourceSessionId = sourceSessionId
+        self.updatedAt = updatedAt
     }
 }
 
@@ -660,6 +1130,72 @@ public struct UserGoalRow: Codable, FetchableRecord, PersistableRecord, Sendable
         case contextSince = "context_since"
         case maintenanceUntil = "maintenance_until"
     }
+
+    public init(
+        id: String,
+        userId: String,
+        sleepGoalHours: Double? = nil,
+        calorieGoal: Int? = nil,
+        proteinGoalG: Int? = nil,
+        carbsGoalG: Int? = nil,
+        fatGoalG: Int? = nil,
+        stepsGoal: Int? = nil,
+        activeCalGoal: Int? = nil,
+        waterGoalMl: Int? = nil,
+        contextMode: String,
+        goalPreset: String? = nil,
+        createdAt: Date,
+        updatedAt: Date,
+        autoLogSupplements: Bool,
+        activeProgram: String,
+        dayCutoffHour: Int,
+        unitSystem: String,
+        reduceMotion: Bool,
+        timezone: String,
+        targetWeightKg: Double? = nil,
+        weekEndDay: Int? = nil,
+        activePlan: String? = nil,
+        targetBodyFatPct: Double? = nil,
+        targetMuscleMassKg: Double? = nil,
+        activePhase: String? = nil,
+        phaseStartedOn: String? = nil,
+        trackRpe: Bool,
+        activeLever: String? = nil,
+        contextSince: String? = nil,
+        maintenanceUntil: String? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.sleepGoalHours = sleepGoalHours
+        self.calorieGoal = calorieGoal
+        self.proteinGoalG = proteinGoalG
+        self.carbsGoalG = carbsGoalG
+        self.fatGoalG = fatGoalG
+        self.stepsGoal = stepsGoal
+        self.activeCalGoal = activeCalGoal
+        self.waterGoalMl = waterGoalMl
+        self.contextMode = contextMode
+        self.goalPreset = goalPreset
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.autoLogSupplements = autoLogSupplements
+        self.activeProgram = activeProgram
+        self.dayCutoffHour = dayCutoffHour
+        self.unitSystem = unitSystem
+        self.reduceMotion = reduceMotion
+        self.timezone = timezone
+        self.targetWeightKg = targetWeightKg
+        self.weekEndDay = weekEndDay
+        self.activePlan = activePlan
+        self.targetBodyFatPct = targetBodyFatPct
+        self.targetMuscleMassKg = targetMuscleMassKg
+        self.activePhase = activePhase
+        self.phaseStartedOn = phaseStartedOn
+        self.trackRpe = trackRpe
+        self.activeLever = activeLever
+        self.contextSince = contextSince
+        self.maintenanceUntil = maintenanceUntil
+    }
 }
 
 // MARK: - target_profiles
@@ -693,6 +1229,32 @@ public struct TargetProfileRow: Codable, FetchableRecord, PersistableRecord, Sen
         case stepsGoal = "steps_goal"
         case updatedAt = "updated_at"
     }
+
+    public init(
+        userId: String,
+        key: String,
+        label: String,
+        summary: String? = nil,
+        sort: Int,
+        kcal: Int? = nil,
+        proteinG: Int? = nil,
+        carbsG: Int? = nil,
+        fatG: Int? = nil,
+        stepsGoal: Int? = nil,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.key = key
+        self.label = label
+        self.summary = summary
+        self.sort = sort
+        self.kcal = kcal
+        self.proteinG = proteinG
+        self.carbsG = carbsG
+        self.fatG = fatG
+        self.stepsGoal = stepsGoal
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - plans
@@ -717,6 +1279,24 @@ public struct PlanRow: Codable, FetchableRecord, PersistableRecord, Sendable, Eq
         case active
         case startedOn = "started_on"
         case createdAt = "created_at"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        name: String,
+        programId: String? = nil,
+        active: Bool? = nil,
+        startedOn: String? = nil,
+        createdAt: Date? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.name = name
+        self.programId = programId
+        self.active = active
+        self.startedOn = startedOn
+        self.createdAt = createdAt
     }
 }
 
@@ -761,6 +1341,42 @@ public struct PlanPhaseGoalRow: Codable, FetchableRecord, PersistableRecord, Sen
         case rateMinKgWk = "rate_min_kg_wk"
         case rateMaxKgWk = "rate_max_kg_wk"
     }
+
+    public init(
+        userId: String,
+        planId: String,
+        phase: String,
+        kcal: Int? = nil,
+        proteinG: Int? = nil,
+        carbsG: Int? = nil,
+        fatG: Int? = nil,
+        fiberMin: Int? = nil,
+        fiberMax: Int? = nil,
+        updatedAt: Date? = nil,
+        stepsGoal: Int? = nil,
+        targetWeightKg: Double? = nil,
+        targetBodyFatPct: Double? = nil,
+        targetMuscleMassKg: Double? = nil,
+        rateMinKgWk: Double? = nil,
+        rateMaxKgWk: Double? = nil
+    ) {
+        self.userId = userId
+        self.planId = planId
+        self.phase = phase
+        self.kcal = kcal
+        self.proteinG = proteinG
+        self.carbsG = carbsG
+        self.fatG = fatG
+        self.fiberMin = fiberMin
+        self.fiberMax = fiberMax
+        self.updatedAt = updatedAt
+        self.stepsGoal = stepsGoal
+        self.targetWeightKg = targetWeightKg
+        self.targetBodyFatPct = targetBodyFatPct
+        self.targetMuscleMassKg = targetMuscleMassKg
+        self.rateMinKgWk = rateMinKgWk
+        self.rateMaxKgWk = rateMaxKgWk
+    }
 }
 
 // MARK: - plan_phase_volume
@@ -784,6 +1400,22 @@ public struct PlanPhaseVolumeRow: Codable, FetchableRecord, PersistableRecord, S
         case targetSets = "target_sets"
         case updatedAt = "updated_at"
     }
+
+    public init(
+        userId: String,
+        planId: String,
+        phase: String,
+        muscle: String,
+        targetSets: Int,
+        updatedAt: Date? = nil
+    ) {
+        self.userId = userId
+        self.planId = planId
+        self.phase = phase
+        self.muscle = muscle
+        self.targetSets = targetSets
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - program_day_layout
@@ -802,6 +1434,18 @@ public struct ProgramDayLayoutRow: Codable, FetchableRecord, PersistableRecord, 
         case programId = "program_id"
         case layout
         case updatedAt = "updated_at"
+    }
+
+    public init(
+        userId: String,
+        programId: String,
+        layout: JSONText,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.programId = programId
+        self.layout = layout
+        self.updatedAt = updatedAt
     }
 }
 
@@ -822,6 +1466,18 @@ public struct ScheduleOverrideRow: Codable, FetchableRecord, PersistableRecord, 
         case dayKey = "day_key"
         case updatedAt = "updated_at"
     }
+
+    public init(
+        userId: String,
+        date: String,
+        dayKey: String,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.date = date
+        self.dayKey = dayKey
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - dashboard_layouts
@@ -838,6 +1494,16 @@ public struct DashboardLayoutRow: Codable, FetchableRecord, PersistableRecord, S
         case userId = "user_id"
         case layout
         case updatedAt = "updated_at"
+    }
+
+    public init(
+        userId: String,
+        layout: JSONText,
+        updatedAt: Date
+    ) {
+        self.userId = userId
+        self.layout = layout
+        self.updatedAt = updatedAt
     }
 }
 
@@ -859,6 +1525,20 @@ public struct ProfileRow: Codable, FetchableRecord, PersistableRecord, Sendable,
         case role
         case updatedAt = "updated_at"
         case createdAt = "created_at"
+    }
+
+    public init(
+        userId: String,
+        displayName: String? = nil,
+        role: String,
+        updatedAt: Date,
+        createdAt: Date
+    ) {
+        self.userId = userId
+        self.displayName = displayName
+        self.role = role
+        self.updatedAt = updatedAt
+        self.createdAt = createdAt
     }
 }
 
@@ -892,6 +1572,32 @@ public struct ReportRow: Codable, FetchableRecord, PersistableRecord, Sendable, 
         case metrics
         case notionPageId = "notion_page_id"
         case createdAt = "created_at"
+    }
+
+    public init(
+        id: String,
+        userId: String,
+        type: String,
+        periodStart: String,
+        periodEnd: String,
+        contentMd: String? = nil,
+        sessionSummaryMd: String? = nil,
+        weightReportMd: String? = nil,
+        metrics: JSONText? = nil,
+        notionPageId: String? = nil,
+        createdAt: Date
+    ) {
+        self.id = id
+        self.userId = userId
+        self.type = type
+        self.periodStart = periodStart
+        self.periodEnd = periodEnd
+        self.contentMd = contentMd
+        self.sessionSummaryMd = sessionSummaryMd
+        self.weightReportMd = weightReportMd
+        self.metrics = metrics
+        self.notionPageId = notionPageId
+        self.createdAt = createdAt
     }
 }
 
@@ -1276,59 +1982,124 @@ extension AppDatabase {
 /// Generated, so the list cannot fall behind the schema fixture the way a
 /// hand-maintained one would. `bespoke` tables are absent on purpose: they
 /// land in tables the logger already owns, through `SyncTranslation`.
+///
+/// `conflict` is the PostgREST upsert target for a LOCAL write of the table,
+/// and it is the NATURAL key wherever one exists — introspected, not guessed.
+/// Upserting `daily_logs` on `id` would insert a second row for a day the
+/// server already holds under a different uuid, and then fail on
+/// `daily_logs_user_id_date_key` forever.
 public enum MirrorCatalogue {
     public static let tables: [MirrorTable] = [
         MirrorTable(name: "daily_logs", group: .daily, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(DailyLogRow.self, from: $1) }),
+                    conflict: "user_id,date",
+                    pull: { try await $0.pull(DailyLogRow.self, from: $1) },
+                    push: { try await $1.pushRow(DailyLogRow.self, from: $0, table: "daily_logs", conflict: "user_id,date", id: $2) }),
         MirrorTable(name: "daily_metrics", group: .daily, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(DailyMetricRow.self, from: $1) }),
+                    conflict: "user_id,date",
+                    pull: { try await $0.pull(DailyMetricRow.self, from: $1) },
+                    push: { try await $1.pushRow(DailyMetricRow.self, from: $0, table: "daily_metrics", conflict: "user_id,date", id: $2) }),
         MirrorTable(name: "daily_scores", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(DailyScoreRow.self, from: $1) }),
+                    conflict: "user_id,date",
+                    pull: { try await $0.pull(DailyScoreRow.self, from: $1) },
+                    push: { try await $1.pushRow(DailyScoreRow.self, from: $0, table: "daily_scores", conflict: "user_id,date", id: $2) }),
         MirrorTable(name: "daily_targets", group: .daily, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(DailyTargetRow.self, from: $1) }),
+                    conflict: "user_id,date",
+                    pull: { try await $0.pull(DailyTargetRow.self, from: $1) },
+                    push: { try await $1.pushRow(DailyTargetRow.self, from: $0, table: "daily_targets", conflict: "user_id,date", id: $2) }),
         MirrorTable(name: "nutrition_entries", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(NutritionEntryRow.self, from: $1) }),
+                    conflict: "user_id,date,meal_type",
+                    pull: { try await $0.pull(NutritionEntryRow.self, from: $1) },
+                    push: { try await $1.pushRow(NutritionEntryRow.self, from: $0, table: "nutrition_entries", conflict: "user_id,date,meal_type", id: $2) }),
         MirrorTable(name: "water_intake", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(WaterIntakeRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(WaterIntakeRow.self, from: $1) },
+                    push: { try await $1.pushRow(WaterIntakeRow.self, from: $0, table: "water_intake", conflict: "id", id: $2) }),
         MirrorTable(name: "supplement_log", group: .daily, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(SupplementLogRow.self, from: $1) }),
+                    conflict: "user_id,date,item_key",
+                    pull: { try await $0.pull(SupplementLogRow.self, from: $1) },
+                    push: { try await $1.pushRow(SupplementLogRow.self, from: $0, table: "supplement_log", conflict: "user_id,date,item_key", id: $2) }),
         MirrorTable(name: "supplement_dose_overrides", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(SupplementDoseOverrideRow.self, from: $1) }),
+                    conflict: "user_id,date,supplement_key",
+                    pull: { try await $0.pull(SupplementDoseOverrideRow.self, from: $1) },
+                    push: { try await $1.pushRow(SupplementDoseOverrideRow.self, from: $0, table: "supplement_dose_overrides", conflict: "user_id,date,supplement_key", id: $2) }),
         MirrorTable(name: "custom_supplements", group: .daily, strategy: .full,
-                    pull: { try await $0.pull(CustomSupplementRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(CustomSupplementRow.self, from: $1) },
+                    push: { try await $1.pushRow(CustomSupplementRow.self, from: $0, table: "custom_supplements", conflict: "id", id: $2) }),
         MirrorTable(name: "fatigue_logs", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(FatigueLogRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(FatigueLogRow.self, from: $1) },
+                    push: { try await $1.pushRow(FatigueLogRow.self, from: $0, table: "fatigue_logs", conflict: "id", id: $2) }),
         MirrorTable(name: "doms_logs", group: .daily, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(DomsLogRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(DomsLogRow.self, from: $1) },
+                    push: { try await $1.pushRow(DomsLogRow.self, from: $0, table: "doms_logs", conflict: "id", id: $2) }),
         MirrorTable(name: "body_composition", group: .body, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(BodyCompositionRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(BodyCompositionRow.self, from: $1) },
+                    push: { try await $1.pushRow(BodyCompositionRow.self, from: $0, table: "body_composition", conflict: "id", id: $2) }),
         MirrorTable(name: "sleep_sessions", group: .body, strategy: .window(column: "start_time"),
-                    pull: { try await $0.pull(SleepSessionRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(SleepSessionRow.self, from: $1) },
+                    push: { try await $1.pushRow(SleepSessionRow.self, from: $0, table: "sleep_sessions", conflict: "id", id: $2) }),
         MirrorTable(name: "cardio_logs", group: .body, strategy: .window(column: "date"),
-                    pull: { try await $0.pull(CardioLogRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(CardioLogRow.self, from: $1) },
+                    push: { try await $1.pushRow(CardioLogRow.self, from: $0, table: "cardio_logs", conflict: "id", id: $2) }),
         MirrorTable(name: "personal_records", group: .training, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(PersonalRecordRow.self, from: $1) }),
+                    conflict: "user_id,exercise_key,axis",
+                    pull: { try await $0.pull(PersonalRecordRow.self, from: $1) },
+                    push: { try await $1.pushRow(PersonalRecordRow.self, from: $0, table: "personal_records", conflict: "user_id,exercise_key,axis", id: $2) }),
         MirrorTable(name: "routine_templates", group: .training, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(RoutineTemplateRow.self, from: $1) }),
+                    conflict: "user_id,day_key",
+                    pull: { try await $0.pull(RoutineTemplateRow.self, from: $1) },
+                    push: { try await $1.pushRow(RoutineTemplateRow.self, from: $0, table: "routine_templates", conflict: "user_id,day_key", id: $2) }),
         MirrorTable(name: "user_goals", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(UserGoalRow.self, from: $1) }),
+                    conflict: "user_id",
+                    pull: { try await $0.pull(UserGoalRow.self, from: $1) },
+                    push: { try await $1.pushRow(UserGoalRow.self, from: $0, table: "user_goals", conflict: "user_id", id: $2) }),
         MirrorTable(name: "target_profiles", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(TargetProfileRow.self, from: $1) }),
+                    conflict: "user_id,key",
+                    pull: { try await $0.pull(TargetProfileRow.self, from: $1) },
+                    push: { try await $1.pushRow(TargetProfileRow.self, from: $0, table: "target_profiles", conflict: "user_id,key", id: $2) }),
         MirrorTable(name: "plans", group: .plan, strategy: .full,
-                    pull: { try await $0.pull(PlanRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(PlanRow.self, from: $1) },
+                    push: { try await $1.pushRow(PlanRow.self, from: $0, table: "plans", conflict: "id", id: $2) }),
         MirrorTable(name: "plan_phase_goals", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(PlanPhaseGoalRow.self, from: $1) }),
+                    conflict: "user_id,plan_id,phase",
+                    pull: { try await $0.pull(PlanPhaseGoalRow.self, from: $1) },
+                    push: { try await $1.pushRow(PlanPhaseGoalRow.self, from: $0, table: "plan_phase_goals", conflict: "user_id,plan_id,phase", id: $2) }),
         MirrorTable(name: "plan_phase_volume", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(PlanPhaseVolumeRow.self, from: $1) }),
+                    conflict: "user_id,plan_id,phase,muscle",
+                    pull: { try await $0.pull(PlanPhaseVolumeRow.self, from: $1) },
+                    push: { try await $1.pushRow(PlanPhaseVolumeRow.self, from: $0, table: "plan_phase_volume", conflict: "user_id,plan_id,phase,muscle", id: $2) }),
         MirrorTable(name: "program_day_layout", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(ProgramDayLayoutRow.self, from: $1) }),
+                    conflict: "user_id,program_id",
+                    pull: { try await $0.pull(ProgramDayLayoutRow.self, from: $1) },
+                    push: { try await $1.pushRow(ProgramDayLayoutRow.self, from: $0, table: "program_day_layout", conflict: "user_id,program_id", id: $2) }),
         MirrorTable(name: "schedule_overrides", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(ScheduleOverrideRow.self, from: $1) }),
+                    conflict: "user_id,date",
+                    pull: { try await $0.pull(ScheduleOverrideRow.self, from: $1) },
+                    push: { try await $1.pushRow(ScheduleOverrideRow.self, from: $0, table: "schedule_overrides", conflict: "user_id,date", id: $2) }),
         MirrorTable(name: "dashboard_layouts", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(DashboardLayoutRow.self, from: $1) }),
+                    conflict: "user_id",
+                    pull: { try await $0.pull(DashboardLayoutRow.self, from: $1) },
+                    push: { try await $1.pushRow(DashboardLayoutRow.self, from: $0, table: "dashboard_layouts", conflict: "user_id", id: $2) }),
         MirrorTable(name: "profiles", group: .plan, strategy: .delta(column: "updated_at"),
-                    pull: { try await $0.pull(ProfileRow.self, from: $1) }),
+                    conflict: "user_id",
+                    pull: { try await $0.pull(ProfileRow.self, from: $1) },
+                    push: { try await $1.pushRow(ProfileRow.self, from: $0, table: "profiles", conflict: "user_id", id: $2) }),
         MirrorTable(name: "reports", group: .reports, strategy: .full,
-                    pull: { try await $0.pull(ReportRow.self, from: $1) }),
+                    conflict: "id",
+                    pull: { try await $0.pull(ReportRow.self, from: $1) },
+                    push: { try await $1.pushRow(ReportRow.self, from: $0, table: "reports", conflict: "id", id: $2) }),
     ]
+
+    /// By name. Every lookup the pusher and the realtime wiring do is by name,
+    /// and rebuilding the dictionary per call would be a linear scan of
+    /// twenty-six entries on the drain path.
+    public static let byName: [String: MirrorTable] = Dictionary(
+        tables.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first }
+    )
 }

@@ -39,6 +39,8 @@ public enum SyncTranslation {}
 public enum SyncKind {
     public static let sessionUpsert = "session.upsert"
     public static let setEventPrefix = "set_event."
+    /// Any mirrored row, by table name and id. See `RowPush`.
+    public static let rowUpsert = "row.upsert"
 }
 
 /// The payload of a `session.upsert` item: an id, and deliberately nothing else.
@@ -109,6 +111,12 @@ public enum SyncError: Error, Equatable, Sendable {
     /// Two catalogue rows are equally good matches for one movement. Picking
     /// one at random is how a movement's history silently splits in half.
     case ambiguousExercise(name: String, candidates: [String])
+    /// A `row.upsert` item naming a table the generated catalogue does not
+    /// have. Only reachable by downgrading to a build that predates the table,
+    /// which is why the item is kept rather than dropped.
+    case unmirroredTable(String)
+    /// The row a queued upsert names is no longer in the local store.
+    case unknownRow(table: String, id: String)
 }
 
 // MARK: - Split day
