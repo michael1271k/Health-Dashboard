@@ -18,6 +18,7 @@
     "mirror": "node scripts/gen-mirror-swift.mjs",
     "check:mirror": "node scripts/gen-mirror-swift.mjs --check",
     "golden": "GOLDEN_WRITE=1 vitest run src/tests/golden-vectors.test.ts",
+    "report:bundle": "node scripts/gen-report-bundle.mjs",
     "swift:core": "swift test --package-path native/Packages/HelixCore --scratch-path \"$HOME/Library/Caches/helix-swift/HelixCore\"",
     "swift:data": "swift test --package-path native/Packages/HelixData --scratch-path \"$HOME/Library/Caches/helix-swift/HelixData\"",
     "native:gen": "cd native && xcodegen generate",

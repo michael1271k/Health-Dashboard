@@ -97,7 +97,7 @@ Rule unchanged: **any domain module without golden vectors does not ship.** `jsR
 ### 2.4 Reports split (decision 7, measured)
 
 - **Ports to Swift (~2,750 loc):** `buildWeeklyExport`, `derivedWeek`, `weekJsonBlock`, `weekNumber`, `fmtV2.parseTargets` + `targetMatch` (they feed the *logger*, not the report page).
-- **Stays HTML inside a `WKWebView` (~950 loc):** `MarkdownView`, `FmtV2Report`, `smartBlocks`, react-markdown + remark-gfm. Built once as a static bundle in the app, loaded from the `reports.report_md` column.
+- **Stays HTML inside a `WKWebView` (~950 loc):** `MarkdownView`, `FmtV2Report`, `smartBlocks`, react-markdown + remark-gfm. Built once as a static bundle in the app, loaded from the **`reports.content_md`** column. (Shipped in Wave 3: `npm run report:bundle` generates `native/HelixNative/Resources/ReportRenderer.html` from `fmtV2.ts` + `smartBlocks.ts` + `micromark`, so the parsers are bundled rather than reimplemented. There is no `report_md` column on `reports`; the earlier draft of this line was wrong.)
 
 ### 2.5 Native contracts that survive verbatim
 
