@@ -117,6 +117,10 @@ enum PreviewHarness {
                 ReportReaderView(report: PreviewReport.rows[0], seededBody: PreviewReport.body)
             }
             .environment(AppEnvironment.preview)
+        case "day", "day-empty", "day-inbody", "day-swap":
+            DayPreviews.view(screen)
+        case "fuel", "fuel-over", "fuel-empty":
+            FuelPreviews.view(screen)
         default:
             // Visible rather than silent: a typo in the shot script should
             // produce a photograph of the mistake, not of the last screen.

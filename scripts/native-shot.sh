@@ -80,7 +80,7 @@ SCREENS=("$SCREEN")
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin train you levers plan body volume library exercise reports report)
+  SCREENS=(signin train day day-empty day-inbody day-swap fuel fuel-over fuel-empty you levers plan body volume library exercise reports report)
 fi
 
 for s in "${SCREENS[@]}"; do
