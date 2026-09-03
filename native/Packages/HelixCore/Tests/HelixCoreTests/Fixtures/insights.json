@@ -16634,67 +16634,67 @@
         "sessions": [
           {
             "date": "2026-08-02",
-            "volumeKg": 8160
+            "volumeKg": 9200
           },
           {
             "date": "2026-08-03",
-            "volumeKg": 8340
+            "volumeKg": 9800
           },
           {
             "date": "2026-08-05",
-            "volumeKg": 8700
+            "volumeKg": 11000
           },
           {
             "date": "2026-08-07",
-            "volumeKg": 9060
+            "volumeKg": 12200
           },
           {
             "date": "2026-08-09",
-            "volumeKg": 8340
+            "volumeKg": 9800
           },
           {
             "date": "2026-08-10",
-            "volumeKg": 8520
+            "volumeKg": 10400
           },
           {
             "date": "2026-08-12",
-            "volumeKg": 8880
+            "volumeKg": 11600
           },
           {
             "date": "2026-08-14",
-            "volumeKg": 8160
+            "volumeKg": 9200
           },
           {
             "date": "2026-08-16",
-            "volumeKg": 8520
+            "volumeKg": 10400
           },
           {
             "date": "2026-08-17",
-            "volumeKg": 8700
+            "volumeKg": 11000
           },
           {
             "date": "2026-08-19",
-            "volumeKg": 9060
+            "volumeKg": 12200
           },
           {
             "date": "2026-08-21",
-            "volumeKg": 8340
+            "volumeKg": 9800
           },
           {
             "date": "2026-08-23",
-            "volumeKg": 8700
+            "volumeKg": 11000
           },
           {
             "date": "2026-08-24",
-            "volumeKg": 8880
+            "volumeKg": 11600
           },
           {
             "date": "2026-08-26",
-            "volumeKg": 8160
+            "volumeKg": 9200
           },
           {
             "date": "2026-08-28",
-            "volumeKg": 8520
+            "volumeKg": 10400
           }
         ],
         "contextMode": null,
@@ -16707,9 +16707,9 @@
         "fuelVsForce": {
           "id": "fuel-force",
           "tone": "positive",
-          "headline": "Carbs the day before are worth +6% volume",
-          "detail": "Sessions after a 210g+ carb day averaged 6% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
-          "confidence": 0.65
+          "headline": "Carbs the day before are worth +17% volume",
+          "detail": "Sessions after a 210g+ carb day averaged 17% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
+          "confidence": 0.9
         },
         "stall": null,
         "insights": [
@@ -16721,18 +16721,18 @@
             "confidence": 0.9
           },
           {
+            "id": "fuel-force",
+            "tone": "positive",
+            "headline": "Carbs the day before are worth +17% volume",
+            "detail": "Sessions after a 210g+ carb day averaged 17% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
+            "confidence": 0.9
+          },
+          {
             "id": "weight-trend",
             "headline": "On-target cut rate",
             "detail": "7-day average moved -0.44 kg week-over-week (target -0.5 to -0.4). Rolling average only — single days carry zero authority.",
             "tone": "positive",
             "confidence": 0.7
-          },
-          {
-            "id": "fuel-force",
-            "tone": "positive",
-            "headline": "Carbs the day before are worth +6% volume",
-            "detail": "Sessions after a 210g+ carb day averaged 6% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
-            "confidence": 0.65
           }
         ],
         "all": [
@@ -16744,18 +16744,18 @@
             "confidence": 0.9
           },
           {
+            "id": "fuel-force",
+            "tone": "positive",
+            "headline": "Carbs the day before are worth +17% volume",
+            "detail": "Sessions after a 210g+ carb day averaged 17% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
+            "confidence": 0.9
+          },
+          {
             "id": "weight-trend",
             "headline": "On-target cut rate",
             "detail": "7-day average moved -0.44 kg week-over-week (target -0.5 to -0.4). Rolling average only — single days carry zero authority.",
             "tone": "positive",
             "confidence": 0.7
-          },
-          {
-            "id": "fuel-force",
-            "tone": "positive",
-            "headline": "Carbs the day before are worth +6% volume",
-            "detail": "Sessions after a 210g+ carb day averaged 6% more volume than after lower-carb days (16 sessions). Front-load carbs the evening before training days.",
-            "confidence": 0.65
           }
         ]
       }

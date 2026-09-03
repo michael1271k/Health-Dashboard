@@ -4346,7 +4346,7 @@ describe('golden vectors — coach insights', () => {
     push('fuel silent — under eight pairs', fullDays.map((d, i) => ({ ...d, carbsG: i < 20 ? null : d.carbsG })), fuelSessions)
     push('fuel silent — under 5% separation', fullDays, sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 7000 + ((fullDays[i - 1].carbsG ?? 0) - 217) * 0.5 })))
     push('recovery silent — four HR days', fullDays.map((d, i) => ({ ...d, restHr: i < 4 ? 52 : null })), fullSessions)
-    push('a tie on confidence keeps builder order — HR drift and fuel both at 0.9', fullDays.map((d, i) => ({ ...d, restHr: i >= 25 ? 60 : 52 })), fuelSessions)
+    push('a tie on confidence keeps builder order — HR drift and fuel both at 0.9', fullDays.map((d, i) => ({ ...d, restHr: i >= 25 ? 60 : 52 })), sessionDays.map((i) => ({ date: dayAt(i), volumeKg: 2000 + (fullDays[i - 1].carbsG ?? 0) * 40 })))
     push('eight to thirteen weigh-ins — the short prior window', fullDays.map((d, i) => ({ ...d, weightKg: i >= 18 ? d.weightKg : null })), fullSessions)
     push('a calorie goal of zero is no goal', fullDays.map((d) => ({ ...d, calorieGoal: 0 })), fullSessions)
     push('a zero goal on the last day falls back to it', fullDays.map((d, i) => ({ ...d, calorieGoal: i === 27 ? 0 : null })), fullSessions)
