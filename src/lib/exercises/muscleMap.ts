@@ -238,6 +238,9 @@ const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
  * grip, the implement and the machine are exactly the words that distinguish two
  * movements sharing a stem.
  */
+/** The dictionary, read-only, for the golden vectors — the Swift port asserts its own copy equal. */
+export const MUSCLE_DICT: ReadonlyArray<{ tokens: string[]; muscles: MuscleEntry }> = DICT
+
 function tokenize(name: string): Set<string> {
   return new Set(name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/))
 }

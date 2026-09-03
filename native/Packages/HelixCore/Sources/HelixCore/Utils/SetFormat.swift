@@ -13,11 +13,13 @@ public enum SetFormat {
 
     /// One set as text. `timed` means `reps` carries SECONDS; `bare` drops the
     /// unit words for a column that already names them.
-    public static func format(weightKg: Double?, reps: Double?, timed: Bool = false, unit: String = "kg", bare: Bool = false) -> String {
+    /// `toDisplay` is the unit conversion the caller injects (kg → lb); a nil result prints as JS does, "null".
+    public static func format(weightKg: Double?, reps: Double?, timed: Bool = false, unit: String = "kg", bare: Bool = false, toDisplay: ((Double) -> Double?)? = nil) -> String {
         let n = reps ?? 0
         let ns = jsIntegerString(n)
         if timed { return bare ? "\(ns)s" : "\(ns) sec" }
         if isUnloaded(weightKg) { return bare ? ns : "\(ns) rep\(n == 1 ? "" : "s")" }
-        return "\(jsIntegerString(weightKg!))\(unit) × \(ns)"
+        let w: Double? = toDisplay.map { $0(weightKg!) } ?? weightKg
+        return "\(w.map(jsIntegerString) ?? "null")\(unit) × \(ns)"
     }
 }

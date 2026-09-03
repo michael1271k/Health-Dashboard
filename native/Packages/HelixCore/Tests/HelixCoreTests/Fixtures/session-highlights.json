@@ -1,0 +1,1310 @@
+{
+  "module": "sessions/detail",
+  "fn": "exerciseStats / strongestOf / highlightsOf",
+  "note": "Extracted from ExerciseBreakdown and SessionHighlights. exerciseStats: working sets only, a pair's reps once, avgRpe to one place, topReps is the best SINGLE set. strongestOf: highest bestEst1rm > 0, first on a tie. highlightsOf: one line per exercise with a PR set — the set with the most axes then the heaviest; its axes, else the exercise's; formatSet with the injected unit. A missing prAxes (legacy) is read as empty.",
+  "cases": [
+    {
+      "name": "the whole session in kg",
+      "input": {
+        "exercises": [
+          {
+            "exerciseId": "chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 40,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "warmup",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": 7,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 60,
+                "reps": 9,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 4,
+                "weightKg": 60,
+                "reps": 8,
+                "rpe": 9,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight",
+                  "e1rm"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 60,
+            "volumeKg": 2100,
+            "bestEst1rm": 76,
+            "prAxes": [
+              "weight",
+              "e1rm"
+            ]
+          },
+          {
+            "exerciseId": "cable-lateral-raise-single-arm-",
+            "name": "Cable Lateral Raise (Single Arm)",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "p",
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": 8.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "p",
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 7.5,
+                "reps": 11,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "q",
+                "prAxes": []
+              },
+              {
+                "setNumber": 4,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "q",
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 4,
+            "topKg": 7.5,
+            "volumeKg": 352.5,
+            "bestEst1rm": 10.5,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 0,
+                "reps": 15,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 0,
+                "reps": 17,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 2,
+            "topKg": 0,
+            "volumeKg": 0,
+            "bestEst1rm": null,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "side-plank",
+            "name": "Side Plank",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 0,
+                "reps": 45,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 0,
+                "reps": 50,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 2,
+            "topKg": 0,
+            "volumeKg": 0,
+            "bestEst1rm": 0,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "leg-press",
+            "name": "Leg Press",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 200,
+                "reps": 8,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 200,
+                "reps": 8,
+                "rpe": 8.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 200,
+                "reps": 7,
+                "rpe": 9.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 200,
+            "volumeKg": 4600,
+            "bestEst1rm": 253.3,
+            "prAxes": []
+          },
+          {
+            "exerciseId": "pec-deck",
+            "name": "Pec Deck",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight",
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 55,
+            "volumeKg": 1700,
+            "bestEst1rm": 73.3,
+            "prAxes": [
+              "weight",
+              "volume"
+            ]
+          },
+          {
+            "exerciseId": "face-pull",
+            "name": "Face Pull",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 20,
+                "reps": 15,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 20,
+            "volumeKg": 300,
+            "bestEst1rm": 30,
+            "prAxes": [
+              "volume"
+            ]
+          },
+          {
+            "exerciseId": "legacy-row",
+            "name": "Legacy Row",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 50,
+            "volumeKg": 500,
+            "bestEst1rm": 66.7
+          },
+          {
+            "exerciseId": "leg-extension",
+            "name": "Leg Extension",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight"
+                ]
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 55,
+                "reps": 9,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "e1rm"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 55,
+            "volumeKg": 1645,
+            "bestEst1rm": 73.3,
+            "prAxes": [
+              "weight",
+              "volume",
+              "e1rm"
+            ]
+          }
+        ],
+        "unit": "kg",
+        "lb": false
+      },
+      "expected": {
+        "stats": [
+          {
+            "totalReps": 27,
+            "avgRpe": 8,
+            "topKg": 60,
+            "topReps": 10
+          },
+          {
+            "totalReps": 23,
+            "avgRpe": 8.3,
+            "topKg": 7.5,
+            "topReps": 12
+          },
+          {
+            "totalReps": 32,
+            "avgRpe": null,
+            "topKg": 0,
+            "topReps": 17
+          },
+          {
+            "totalReps": 95,
+            "avgRpe": null,
+            "topKg": 0,
+            "topReps": 50
+          },
+          {
+            "totalReps": 23,
+            "avgRpe": 8.7,
+            "topKg": 200,
+            "topReps": 8
+          },
+          {
+            "totalReps": 32,
+            "avgRpe": null,
+            "topKg": 55,
+            "topReps": 12
+          },
+          {
+            "totalReps": 15,
+            "avgRpe": null,
+            "topKg": 20,
+            "topReps": 15
+          },
+          {
+            "totalReps": 10,
+            "avgRpe": null,
+            "topKg": 50,
+            "topReps": 10
+          },
+          {
+            "totalReps": 31,
+            "avgRpe": null,
+            "topKg": 55,
+            "topReps": 12
+          }
+        ],
+        "strongest": "Leg Press",
+        "highlights": [
+          {
+            "name": "Chest Press (Machine)",
+            "axes": [
+              "Weight",
+              "1RM"
+            ],
+            "detail": "60kg × 8"
+          },
+          {
+            "name": "Cable Lateral Raise (Single Arm)",
+            "axes": [
+              "Reps"
+            ],
+            "detail": "7.5kg × 12"
+          },
+          {
+            "name": "Hanging Knee Raise",
+            "axes": [
+              "Reps"
+            ],
+            "detail": "17 reps"
+          },
+          {
+            "name": "Side Plank",
+            "axes": [
+              "Duration"
+            ],
+            "detail": "50 sec"
+          },
+          {
+            "name": "Pec Deck",
+            "axes": [
+              "Weight",
+              "Volume"
+            ],
+            "detail": "55kg × 10"
+          },
+          {
+            "name": "Face Pull",
+            "axes": [
+              "Volume"
+            ],
+            "detail": "20kg × 15"
+          },
+          {
+            "name": "Legacy Row",
+            "axes": [],
+            "detail": "50kg × 10"
+          },
+          {
+            "name": "Leg Extension",
+            "axes": [
+              "Weight"
+            ],
+            "detail": "55kg × 10"
+          }
+        ]
+      }
+    },
+    {
+      "name": "the whole session in lb",
+      "input": {
+        "exercises": [
+          {
+            "exerciseId": "chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 40,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "warmup",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": 7,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 60,
+                "reps": 9,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 4,
+                "weightKg": 60,
+                "reps": 8,
+                "rpe": 9,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight",
+                  "e1rm"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 60,
+            "volumeKg": 2100,
+            "bestEst1rm": 76,
+            "prAxes": [
+              "weight",
+              "e1rm"
+            ]
+          },
+          {
+            "exerciseId": "cable-lateral-raise-single-arm-",
+            "name": "Cable Lateral Raise (Single Arm)",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "p",
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": 8.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "p",
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 7.5,
+                "reps": 11,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "q",
+                "prAxes": []
+              },
+              {
+                "setNumber": 4,
+                "weightKg": 7.5,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "q",
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 4,
+            "topKg": 7.5,
+            "volumeKg": 352.5,
+            "bestEst1rm": 10.5,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 0,
+                "reps": 15,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 0,
+                "reps": 17,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 2,
+            "topKg": 0,
+            "volumeKg": 0,
+            "bestEst1rm": null,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "side-plank",
+            "name": "Side Plank",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 0,
+                "reps": 45,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 0,
+                "reps": 50,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "reps"
+                ]
+              }
+            ],
+            "workingSets": 2,
+            "topKg": 0,
+            "volumeKg": 0,
+            "bestEst1rm": 0,
+            "prAxes": [
+              "reps"
+            ]
+          },
+          {
+            "exerciseId": "leg-press",
+            "name": "Leg Press",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 200,
+                "reps": 8,
+                "rpe": 8,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 200,
+                "reps": 8,
+                "rpe": 8.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 200,
+                "reps": 7,
+                "rpe": 9.5,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 200,
+            "volumeKg": 4600,
+            "bestEst1rm": 253.3,
+            "prAxes": []
+          },
+          {
+            "exerciseId": "pec-deck",
+            "name": "Pec Deck",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight",
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 55,
+            "volumeKg": 1700,
+            "bestEst1rm": 73.3,
+            "prAxes": [
+              "weight",
+              "volume"
+            ]
+          },
+          {
+            "exerciseId": "face-pull",
+            "name": "Face Pull",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 20,
+                "reps": 15,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 20,
+            "volumeKg": 300,
+            "bestEst1rm": 30,
+            "prAxes": [
+              "volume"
+            ]
+          },
+          {
+            "exerciseId": "legacy-row",
+            "name": "Legacy Row",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 50,
+            "volumeKg": 500,
+            "bestEst1rm": 66.7
+          },
+          {
+            "exerciseId": "leg-extension",
+            "name": "Leg Extension",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 50,
+                "reps": 12,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "volume"
+                ]
+              },
+              {
+                "setNumber": 2,
+                "weightKg": 55,
+                "reps": 10,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "weight"
+                ]
+              },
+              {
+                "setNumber": 3,
+                "weightKg": 55,
+                "reps": 9,
+                "rpe": null,
+                "isPr": true,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": [
+                  "e1rm"
+                ]
+              }
+            ],
+            "workingSets": 3,
+            "topKg": 55,
+            "volumeKg": 1645,
+            "bestEst1rm": 73.3,
+            "prAxes": [
+              "weight",
+              "volume",
+              "e1rm"
+            ]
+          }
+        ],
+        "unit": "lb",
+        "lb": true
+      },
+      "expected": {
+        "stats": [
+          {
+            "totalReps": 27,
+            "avgRpe": 8,
+            "topKg": 60,
+            "topReps": 10
+          },
+          {
+            "totalReps": 23,
+            "avgRpe": 8.3,
+            "topKg": 7.5,
+            "topReps": 12
+          },
+          {
+            "totalReps": 32,
+            "avgRpe": null,
+            "topKg": 0,
+            "topReps": 17
+          },
+          {
+            "totalReps": 95,
+            "avgRpe": null,
+            "topKg": 0,
+            "topReps": 50
+          },
+          {
+            "totalReps": 23,
+            "avgRpe": 8.7,
+            "topKg": 200,
+            "topReps": 8
+          },
+          {
+            "totalReps": 32,
+            "avgRpe": null,
+            "topKg": 55,
+            "topReps": 12
+          },
+          {
+            "totalReps": 15,
+            "avgRpe": null,
+            "topKg": 20,
+            "topReps": 15
+          },
+          {
+            "totalReps": 10,
+            "avgRpe": null,
+            "topKg": 50,
+            "topReps": 10
+          },
+          {
+            "totalReps": 31,
+            "avgRpe": null,
+            "topKg": 55,
+            "topReps": 12
+          }
+        ],
+        "strongest": "Leg Press",
+        "highlights": [
+          {
+            "name": "Chest Press (Machine)",
+            "axes": [
+              "Weight",
+              "1RM"
+            ],
+            "detail": "132.28lb × 8"
+          },
+          {
+            "name": "Cable Lateral Raise (Single Arm)",
+            "axes": [
+              "Reps"
+            ],
+            "detail": "16.53lb × 12"
+          },
+          {
+            "name": "Hanging Knee Raise",
+            "axes": [
+              "Reps"
+            ],
+            "detail": "17 reps"
+          },
+          {
+            "name": "Side Plank",
+            "axes": [
+              "Duration"
+            ],
+            "detail": "50 sec"
+          },
+          {
+            "name": "Pec Deck",
+            "axes": [
+              "Weight",
+              "Volume"
+            ],
+            "detail": "121.25lb × 10"
+          },
+          {
+            "name": "Face Pull",
+            "axes": [
+              "Volume"
+            ],
+            "detail": "44.09lb × 15"
+          },
+          {
+            "name": "Legacy Row",
+            "axes": [],
+            "detail": "110.23lb × 10"
+          },
+          {
+            "name": "Leg Extension",
+            "axes": [
+              "Weight"
+            ],
+            "detail": "121.25lb × 10"
+          }
+        ]
+      }
+    },
+    {
+      "name": "no records, no strongest",
+      "input": {
+        "exercises": [
+          {
+            "exerciseId": "leg-press",
+            "name": "Leg Press",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 200,
+                "reps": 8,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 200,
+            "volumeKg": 1600,
+            "bestEst1rm": null,
+            "prAxes": []
+          },
+          {
+            "exerciseId": "plank",
+            "name": "Plank",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 0,
+                "reps": 60,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 0,
+            "volumeKg": 0,
+            "bestEst1rm": null,
+            "prAxes": []
+          }
+        ],
+        "unit": "kg",
+        "lb": false
+      },
+      "expected": {
+        "stats": [
+          {
+            "totalReps": 8,
+            "avgRpe": null,
+            "topKg": 200,
+            "topReps": 8
+          },
+          {
+            "totalReps": 60,
+            "avgRpe": null,
+            "topKg": 0,
+            "topReps": 60
+          }
+        ],
+        "strongest": null,
+        "highlights": []
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "exercises": [],
+        "unit": "kg",
+        "lb": false
+      },
+      "expected": {
+        "stats": [],
+        "strongest": null,
+        "highlights": []
+      }
+    },
+    {
+      "name": "a tie on est-1RM keeps the first",
+      "input": {
+        "exercises": [
+          {
+            "exerciseId": "a",
+            "name": "A",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 60,
+            "volumeKg": 600,
+            "bestEst1rm": 80,
+            "prAxes": []
+          },
+          {
+            "exerciseId": "b",
+            "name": "B",
+            "order": 0,
+            "muscleGroups": [],
+            "isCompound": false,
+            "sets": [
+              {
+                "setNumber": 1,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            ],
+            "workingSets": 1,
+            "topKg": 60,
+            "volumeKg": 600,
+            "bestEst1rm": 80,
+            "prAxes": []
+          }
+        ],
+        "unit": "kg",
+        "lb": false
+      },
+      "expected": {
+        "stats": [
+          {
+            "totalReps": 10,
+            "avgRpe": null,
+            "topKg": 60,
+            "topReps": 10
+          },
+          {
+            "totalReps": 10,
+            "avgRpe": null,
+            "topKg": 60,
+            "topReps": 10
+          }
+        ],
+        "strongest": "A",
+        "highlights": []
+      }
+    }
+  ]
+}

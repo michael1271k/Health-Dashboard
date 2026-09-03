@@ -1,0 +1,309 @@
+{
+  "module": "types/workout",
+  "fn": "NUTRITION_PRESETS / PLAN_PHASES / phaseGoalsFor / asNutritionMode / PPL_SPLITS",
+  "note": "The two directions and the PPL override merged over the Helix default. Colours are not ported; PPL_SPLITS carries labels only. asNutritionMode narrows anything that is not \"bulk\" (including the deleted \"maintenance\") to \"cut\".",
+  "cases": [
+    {
+      "name": "the tables",
+      "input": null,
+      "expected": {
+        "presets": {
+          "cut": {
+            "mode": "cut",
+            "label": "Cut",
+            "calorieGoal": 1955,
+            "proteinGoalG": 170,
+            "carbsGoalG": 195,
+            "fatGoalG": 55,
+            "fiberGoalG": 30,
+            "fiberMin": 28,
+            "fiberMax": 35,
+            "stepsGoal": 10000,
+            "targetWeightKg": 62,
+            "targetBodyFatPct": 13,
+            "targetMuscleMassKg": 33,
+            "rateMinKgWk": -0.5,
+            "rateMaxKgWk": -0.4
+          },
+          "bulk": {
+            "mode": "bulk",
+            "label": "Lean Bulk",
+            "calorieGoal": 2600,
+            "proteinGoalG": 160,
+            "carbsGoalG": 330,
+            "fatGoalG": 70,
+            "fiberGoalG": 35,
+            "fiberMin": 33,
+            "fiberMax": 38,
+            "stepsGoal": 8000,
+            "targetWeightKg": 70,
+            "targetBodyFatPct": 15,
+            "bodyFatCeilingPct": 16,
+            "targetMuscleMassKg": 37,
+            "rateMinKgWk": 0.2,
+            "rateMaxKgWk": 0.25
+          }
+        },
+        "planPhases": {
+          "ppl": {
+            "cut": {
+              "label": "PPL Cut",
+              "calorieGoal": 1935,
+              "proteinGoalG": 180,
+              "carbsGoalG": 180,
+              "fatGoalG": 55
+            }
+          }
+        },
+        "splits": {
+          "push": {
+            "label": "Push",
+            "labelHe": "דחיפה"
+          },
+          "pull": {
+            "label": "Pull",
+            "labelHe": "משיכה"
+          },
+          "legs": {
+            "label": "Legs",
+            "labelHe": "רגליים"
+          },
+          "upper": {
+            "label": "Upper",
+            "labelHe": "פלג גוף עליון"
+          },
+          "lower": {
+            "label": "Lower",
+            "labelHe": "פלג גוף תחתון"
+          }
+        },
+        "modes": [
+          [
+            "cut",
+            "cut"
+          ],
+          [
+            "bulk",
+            "bulk"
+          ],
+          [
+            "maintenance",
+            "cut"
+          ],
+          [
+            "BULK",
+            "cut"
+          ],
+          [
+            "",
+            "cut"
+          ],
+          [
+            null,
+            "cut"
+          ],
+          [
+            42,
+            "cut"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "apex51 cut",
+      "input": {
+        "planId": "apex51",
+        "mode": "cut"
+      },
+      "expected": {
+        "mode": "cut",
+        "label": "Cut",
+        "calorieGoal": 1955,
+        "proteinGoalG": 170,
+        "carbsGoalG": 195,
+        "fatGoalG": 55,
+        "fiberGoalG": 30,
+        "fiberMin": 28,
+        "fiberMax": 35,
+        "stepsGoal": 10000,
+        "targetWeightKg": 62,
+        "targetBodyFatPct": 13,
+        "targetMuscleMassKg": 33,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4
+      }
+    },
+    {
+      "name": "apex51 bulk",
+      "input": {
+        "planId": "apex51",
+        "mode": "bulk"
+      },
+      "expected": {
+        "mode": "bulk",
+        "label": "Lean Bulk",
+        "calorieGoal": 2600,
+        "proteinGoalG": 160,
+        "carbsGoalG": 330,
+        "fatGoalG": 70,
+        "fiberGoalG": 35,
+        "fiberMin": 33,
+        "fiberMax": 38,
+        "stepsGoal": 8000,
+        "targetWeightKg": 70,
+        "targetBodyFatPct": 15,
+        "bodyFatCeilingPct": 16,
+        "targetMuscleMassKg": 37,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25
+      }
+    },
+    {
+      "name": "helix4 cut",
+      "input": {
+        "planId": "helix4",
+        "mode": "cut"
+      },
+      "expected": {
+        "mode": "cut",
+        "label": "Cut",
+        "calorieGoal": 1955,
+        "proteinGoalG": 170,
+        "carbsGoalG": 195,
+        "fatGoalG": 55,
+        "fiberGoalG": 30,
+        "fiberMin": 28,
+        "fiberMax": 35,
+        "stepsGoal": 10000,
+        "targetWeightKg": 62,
+        "targetBodyFatPct": 13,
+        "targetMuscleMassKg": 33,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4
+      }
+    },
+    {
+      "name": "helix4 bulk",
+      "input": {
+        "planId": "helix4",
+        "mode": "bulk"
+      },
+      "expected": {
+        "mode": "bulk",
+        "label": "Lean Bulk",
+        "calorieGoal": 2600,
+        "proteinGoalG": 160,
+        "carbsGoalG": 330,
+        "fatGoalG": 70,
+        "fiberGoalG": 35,
+        "fiberMin": 33,
+        "fiberMax": 38,
+        "stepsGoal": 8000,
+        "targetWeightKg": 70,
+        "targetBodyFatPct": 15,
+        "bodyFatCeilingPct": 16,
+        "targetMuscleMassKg": 37,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25
+      }
+    },
+    {
+      "name": "ppl cut",
+      "input": {
+        "planId": "ppl",
+        "mode": "cut"
+      },
+      "expected": {
+        "mode": "cut",
+        "label": "PPL Cut",
+        "calorieGoal": 1935,
+        "proteinGoalG": 180,
+        "carbsGoalG": 180,
+        "fatGoalG": 55,
+        "fiberGoalG": 30,
+        "fiberMin": 28,
+        "fiberMax": 35,
+        "stepsGoal": 10000,
+        "targetWeightKg": 62,
+        "targetBodyFatPct": 13,
+        "targetMuscleMassKg": 33,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4
+      }
+    },
+    {
+      "name": "ppl bulk",
+      "input": {
+        "planId": "ppl",
+        "mode": "bulk"
+      },
+      "expected": {
+        "mode": "bulk",
+        "label": "Lean Bulk",
+        "calorieGoal": 2600,
+        "proteinGoalG": 160,
+        "carbsGoalG": 330,
+        "fatGoalG": 70,
+        "fiberGoalG": 35,
+        "fiberMin": 33,
+        "fiberMax": 38,
+        "stepsGoal": 8000,
+        "targetWeightKg": 70,
+        "targetBodyFatPct": 15,
+        "bodyFatCeilingPct": 16,
+        "targetMuscleMassKg": 37,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25
+      }
+    },
+    {
+      "name": "nothing cut",
+      "input": {
+        "planId": "nothing",
+        "mode": "cut"
+      },
+      "expected": {
+        "mode": "cut",
+        "label": "Cut",
+        "calorieGoal": 1955,
+        "proteinGoalG": 170,
+        "carbsGoalG": 195,
+        "fatGoalG": 55,
+        "fiberGoalG": 30,
+        "fiberMin": 28,
+        "fiberMax": 35,
+        "stepsGoal": 10000,
+        "targetWeightKg": 62,
+        "targetBodyFatPct": 13,
+        "targetMuscleMassKg": 33,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4
+      }
+    },
+    {
+      "name": "nothing bulk",
+      "input": {
+        "planId": "nothing",
+        "mode": "bulk"
+      },
+      "expected": {
+        "mode": "bulk",
+        "label": "Lean Bulk",
+        "calorieGoal": 2600,
+        "proteinGoalG": 160,
+        "carbsGoalG": 330,
+        "fatGoalG": 70,
+        "fiberGoalG": 35,
+        "fiberMin": 33,
+        "fiberMax": 38,
+        "stepsGoal": 8000,
+        "targetWeightKg": 70,
+        "targetBodyFatPct": 15,
+        "bodyFatCeilingPct": 16,
+        "targetMuscleMassKg": 37,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25
+      }
+    }
+  ]
+}

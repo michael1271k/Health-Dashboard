@@ -1,0 +1,1050 @@
+{
+  "module": "widget/derive",
+  "fn": "trendPoints / dailySeries / meanBetween / latestDelta / vitalBlock / shiftISO",
+  "note": "Series are oldest-first, values rounded to two places, gaps left as gaps. latestDelta compares against the newest reading that differs by ≥ 0.05. vitalBlock's baseline excludes today and rounds to one place. Null fields mean \"not exercised\".",
+  "cases": [
+    {
+      "name": "weigh-ins sorted, nulls dropped, carried-forward duplicates skipped for the delta",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 66.25
+          },
+          {
+            "date": "2026-08-03",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-02",
+            "value": null
+          },
+          {
+            "date": "2026-08-04",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-05",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-06",
+            "value": 65.87
+          },
+          {
+            "date": "2026-08-07",
+            "value": 65.9
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": "2026-08-01",
+        "to": "2026-08-05",
+        "todayISO": "2026-08-07",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 66.25
+          },
+          {
+            "d": "2026-08-03",
+            "v": 66.1
+          },
+          {
+            "d": "2026-08-04",
+            "v": 66.1
+          },
+          {
+            "d": "2026-08-05",
+            "v": 66.1
+          },
+          {
+            "d": "2026-08-06",
+            "v": 65.87
+          },
+          {
+            "d": "2026-08-07",
+            "v": 65.9
+          }
+        ],
+        "daily": null,
+        "mean": 66.15,
+        "latest": {
+          "value": 65.9,
+          "delta": -0.2
+        },
+        "vital": {
+          "value": 65.9,
+          "baseline": 66.1,
+          "trend": [
+            {
+              "d": "2026-08-01",
+              "v": 66.25
+            },
+            {
+              "d": "2026-08-03",
+              "v": 66.1
+            },
+            {
+              "d": "2026-08-04",
+              "v": 66.1
+            },
+            {
+              "d": "2026-08-05",
+              "v": 66.1
+            },
+            {
+              "d": "2026-08-06",
+              "v": 65.87
+            },
+            {
+              "d": "2026-08-07",
+              "v": 65.9
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "limit keeps the newest",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 66.25
+          },
+          {
+            "date": "2026-08-03",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-02",
+            "value": null
+          },
+          {
+            "date": "2026-08-04",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-05",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-06",
+            "value": 65.87
+          },
+          {
+            "date": "2026-08-07",
+            "value": 65.9
+          }
+        ],
+        "limit": 3,
+        "combine": null,
+        "from": "2026-08-01",
+        "to": "2026-08-08",
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-05",
+            "v": 66.1
+          },
+          {
+            "d": "2026-08-06",
+            "v": 65.87
+          },
+          {
+            "d": "2026-08-07",
+            "v": 65.9
+          }
+        ],
+        "daily": null,
+        "mean": 65.96,
+        "latest": {
+          "value": 65.9,
+          "delta": -0.2
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "rows": [],
+        "limit": 14,
+        "combine": null,
+        "from": "2026-08-01",
+        "to": "2026-08-08",
+        "todayISO": "2026-08-07",
+        "shift": null
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": {
+          "value": null,
+          "baseline": null,
+          "trend": []
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "a single reading has no delta",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 70
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": "2026-08-01",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 70
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 70,
+          "delta": null
+        },
+        "vital": {
+          "value": 70,
+          "baseline": null,
+          "trend": [
+            {
+              "d": "2026-08-01",
+              "v": 70
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "sub-0.05 movement is the same reading",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 70
+          },
+          {
+            "date": "2026-08-02",
+            "value": 70.04
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 70
+          },
+          {
+            "d": "2026-08-02",
+            "v": 70.04
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 70.04,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "exactly 0.05 counts",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 70
+          },
+          {
+            "date": "2026-08-02",
+            "value": 70.05
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 70
+          },
+          {
+            "d": "2026-08-02",
+            "v": 70.05
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 70.05,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "rounding to two places at the half",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 66.125
+          },
+          {
+            "date": "2026-08-02",
+            "value": 66.135
+          },
+          {
+            "date": "2026-08-03",
+            "value": 1.005
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 66.13
+          },
+          {
+            "d": "2026-08-02",
+            "v": 66.14
+          },
+          {
+            "d": "2026-08-03",
+            "v": 1
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 1,
+          "delta": -65.14
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "water arrives one glass at a time — sum",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 250
+          },
+          {
+            "date": "2026-08-01",
+            "value": 500
+          },
+          {
+            "date": "2026-08-02",
+            "value": null
+          },
+          {
+            "date": "2026-08-03",
+            "value": 300
+          },
+          {
+            "date": "2026-08-03",
+            "value": 200
+          }
+        ],
+        "limit": 14,
+        "combine": "sum",
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 250
+          },
+          {
+            "d": "2026-08-01",
+            "v": 500
+          },
+          {
+            "d": "2026-08-03",
+            "v": 300
+          },
+          {
+            "d": "2026-08-03",
+            "v": 200
+          }
+        ],
+        "daily": [
+          {
+            "d": "2026-08-01",
+            "v": 750
+          },
+          {
+            "d": "2026-08-03",
+            "v": 500
+          }
+        ],
+        "mean": null,
+        "latest": {
+          "value": 200,
+          "delta": -100
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "two sleep rows on one night — max",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 420
+          },
+          {
+            "date": "2026-08-01",
+            "value": 450
+          },
+          {
+            "date": "2026-08-03",
+            "value": 300
+          }
+        ],
+        "limit": 14,
+        "combine": "max",
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 420
+          },
+          {
+            "d": "2026-08-01",
+            "v": 450
+          },
+          {
+            "d": "2026-08-03",
+            "v": 300
+          }
+        ],
+        "daily": [
+          {
+            "d": "2026-08-01",
+            "v": 450
+          },
+          {
+            "d": "2026-08-03",
+            "v": 300
+          }
+        ],
+        "mean": null,
+        "latest": {
+          "value": 300,
+          "delta": -150
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "daily limit keeps newest days",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 1
+          },
+          {
+            "date": "2026-08-02",
+            "value": 2
+          },
+          {
+            "date": "2026-08-03",
+            "value": 3
+          }
+        ],
+        "limit": 2,
+        "combine": "sum",
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-02",
+            "v": 2
+          },
+          {
+            "d": "2026-08-03",
+            "v": 3
+          }
+        ],
+        "daily": [
+          {
+            "d": "2026-08-02",
+            "v": 2
+          },
+          {
+            "d": "2026-08-03",
+            "v": 3
+          }
+        ],
+        "mean": null,
+        "latest": {
+          "value": 3,
+          "delta": 1
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "vitals — today excluded from its own baseline, max per day",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 52
+          },
+          {
+            "date": "2026-08-02",
+            "value": 54
+          },
+          {
+            "date": "2026-08-03",
+            "value": null
+          },
+          {
+            "date": "2026-08-04",
+            "value": 53
+          },
+          {
+            "date": "2026-08-04",
+            "value": 55
+          },
+          {
+            "date": "2026-08-05",
+            "value": 60
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": "2026-08-05",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 52
+          },
+          {
+            "d": "2026-08-02",
+            "v": 54
+          },
+          {
+            "d": "2026-08-04",
+            "v": 53
+          },
+          {
+            "d": "2026-08-04",
+            "v": 55
+          },
+          {
+            "d": "2026-08-05",
+            "v": 60
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 60,
+          "delta": 5
+        },
+        "vital": {
+          "value": 60,
+          "baseline": 53.5,
+          "trend": [
+            {
+              "d": "2026-08-01",
+              "v": 52
+            },
+            {
+              "d": "2026-08-02",
+              "v": 54
+            },
+            {
+              "d": "2026-08-04",
+              "v": 55
+            },
+            {
+              "d": "2026-08-05",
+              "v": 60
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "vitals — no reading today",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 52
+          },
+          {
+            "date": "2026-08-02",
+            "value": 54
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": "2026-08-05",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 52
+          },
+          {
+            "d": "2026-08-02",
+            "v": 54
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 54,
+          "delta": 2
+        },
+        "vital": {
+          "value": null,
+          "baseline": 53,
+          "trend": [
+            {
+              "d": "2026-08-01",
+              "v": 52
+            },
+            {
+              "d": "2026-08-02",
+              "v": 54
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "vitals — only today",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-05",
+            "value": 52
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": "2026-08-05",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-05",
+            "v": 52
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 52,
+          "delta": null
+        },
+        "vital": {
+          "value": 52,
+          "baseline": null,
+          "trend": [
+            {
+              "d": "2026-08-05",
+              "v": 52
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "vitals — baseline rounds to one place",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 52
+          },
+          {
+            "date": "2026-08-02",
+            "value": 53
+          },
+          {
+            "date": "2026-08-03",
+            "value": 55
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": "2026-08-05",
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 52
+          },
+          {
+            "d": "2026-08-02",
+            "v": 53
+          },
+          {
+            "d": "2026-08-03",
+            "v": 55
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 55,
+          "delta": 2
+        },
+        "vital": {
+          "value": null,
+          "baseline": 53.3,
+          "trend": [
+            {
+              "d": "2026-08-01",
+              "v": 52
+            },
+            {
+              "d": "2026-08-02",
+              "v": 53
+            },
+            {
+              "d": "2026-08-03",
+              "v": 55
+            }
+          ]
+        },
+        "shifted": null
+      }
+    },
+    {
+      "name": "meanBetween excludes the upper bound",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 10
+          },
+          {
+            "date": "2026-08-02",
+            "value": 20
+          },
+          {
+            "date": "2026-08-03",
+            "value": 30
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": "2026-08-01",
+        "to": "2026-08-03",
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 10
+          },
+          {
+            "d": "2026-08-02",
+            "v": 20
+          },
+          {
+            "d": "2026-08-03",
+            "v": 30
+          }
+        ],
+        "daily": null,
+        "mean": 15,
+        "latest": {
+          "value": 30,
+          "delta": 10
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "meanBetween empty window",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 10
+          }
+        ],
+        "limit": 14,
+        "combine": null,
+        "from": "2026-08-02",
+        "to": "2026-08-05",
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [
+          {
+            "d": "2026-08-01",
+            "v": 10
+          }
+        ],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": 10,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": null
+      }
+    },
+    {
+      "name": "shift forward across a month",
+      "input": {
+        "rows": [],
+        "limit": 1,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": {
+          "date": "2026-08-30",
+          "days": 3
+        }
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": "2026-09-02"
+      }
+    },
+    {
+      "name": "shift back across a year",
+      "input": {
+        "rows": [],
+        "limit": 1,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": {
+          "date": "2027-01-02",
+          "days": -5
+        }
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": "2026-12-28"
+      }
+    },
+    {
+      "name": "shift zero",
+      "input": {
+        "rows": [],
+        "limit": 1,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": {
+          "date": "2026-02-28",
+          "days": 0
+        }
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": "2026-02-28"
+      }
+    },
+    {
+      "name": "shift over a leap day",
+      "input": {
+        "rows": [],
+        "limit": 1,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": {
+          "date": "2028-02-28",
+          "days": 2
+        }
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": "2028-03-01"
+      }
+    },
+    {
+      "name": "limit zero yields nothing",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-01",
+            "value": 66.25
+          },
+          {
+            "date": "2026-08-03",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-02",
+            "value": null
+          },
+          {
+            "date": "2026-08-04",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-05",
+            "value": 66.1
+          },
+          {
+            "date": "2026-08-06",
+            "value": 65.87
+          },
+          {
+            "date": "2026-08-07",
+            "value": 65.9
+          }
+        ],
+        "limit": 0,
+        "combine": null,
+        "from": null,
+        "to": null,
+        "todayISO": null,
+        "shift": null
+      },
+      "expected": {
+        "trend": [],
+        "daily": null,
+        "mean": null,
+        "latest": {
+          "value": null,
+          "delta": null
+        },
+        "vital": null,
+        "shifted": null
+      }
+    }
+  ]
+}

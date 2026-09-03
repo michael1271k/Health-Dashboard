@@ -1,0 +1,496 @@
+{
+  "module": "body/readings",
+  "fn": "mergeBodyComposition",
+  "note": "Extracted from BodyCompositionChart. Joined by date, sorted ascending. fatMass/fatFreeMass from weight × fat% when both present, else fatFreeMass from the stored column; muscleMass only from its own column. Detail fills water/muscle%/visceral (a null keeps the earlier value) and fat% only when the trend left it null. `lb` true converts through kg × 2.20462 rounded to two places.",
+  "cases": [
+    {
+      "name": "both sources in kg",
+      "input": {
+        "trend": [
+          {
+            "date": "2026-08-01",
+            "weight_kg": 66.2,
+            "body_fat_pct": 15.1,
+            "muscle_mass_kg": 50.3
+          },
+          {
+            "date": "2026-08-02",
+            "weight_kg": 66,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null,
+            "fat_free_mass_kg": 56.1
+          },
+          {
+            "date": "2026-08-03",
+            "weight_kg": 65.9,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null
+          },
+          {
+            "date": "2026-08-05",
+            "weight_kg": null,
+            "body_fat_pct": 15,
+            "muscle_mass_kg": 50.1
+          },
+          {
+            "date": "2026-07-31",
+            "weight_kg": 66.4,
+            "body_fat_pct": 15.3,
+            "muscle_mass_kg": 50.4,
+            "fat_free_mass_kg": 99
+          }
+        ],
+        "detail": [
+          {
+            "date": "2026-08-01",
+            "water_percent": 58.2,
+            "muscle_percent": 76.1,
+            "visceral_fat": 5,
+            "body_fat_pct": 15.4
+          },
+          {
+            "date": "2026-08-03",
+            "water_percent": null,
+            "muscle_percent": 76,
+            "visceral_fat": null,
+            "body_fat_pct": 14.9
+          },
+          {
+            "date": "2026-08-04",
+            "water_percent": 58,
+            "muscle_percent": null,
+            "visceral_fat": 6,
+            "body_fat_pct": null
+          },
+          {
+            "date": "2026-08-01",
+            "water_percent": null,
+            "muscle_percent": null,
+            "visceral_fat": null,
+            "body_fat_pct": null
+          }
+        ],
+        "lb": false
+      },
+      "expected": [
+        {
+          "date": "2026-07-31",
+          "weight": 66.4,
+          "muscleMass": 50.4,
+          "fatFreeMass": 56.24080000000001,
+          "fatMass": 10.159200000000002,
+          "fatPct": 15.3,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-01",
+          "weight": 66.2,
+          "muscleMass": 50.3,
+          "fatFreeMass": 56.2038,
+          "fatMass": 9.9962,
+          "fatPct": 15.1,
+          "water": 58.2,
+          "musclePct": 76.1,
+          "visceral": 5
+        },
+        {
+          "date": "2026-08-02",
+          "weight": 66,
+          "muscleMass": null,
+          "fatFreeMass": 56.1,
+          "fatMass": null,
+          "fatPct": null,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-03",
+          "weight": 65.9,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 14.9,
+          "water": null,
+          "musclePct": 76,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-04",
+          "weight": null,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": null,
+          "water": 58,
+          "musclePct": null,
+          "visceral": 6
+        },
+        {
+          "date": "2026-08-05",
+          "weight": null,
+          "muscleMass": 50.1,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 15,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        }
+      ]
+    },
+    {
+      "name": "both sources in lb",
+      "input": {
+        "trend": [
+          {
+            "date": "2026-08-01",
+            "weight_kg": 66.2,
+            "body_fat_pct": 15.1,
+            "muscle_mass_kg": 50.3
+          },
+          {
+            "date": "2026-08-02",
+            "weight_kg": 66,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null,
+            "fat_free_mass_kg": 56.1
+          },
+          {
+            "date": "2026-08-03",
+            "weight_kg": 65.9,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null
+          },
+          {
+            "date": "2026-08-05",
+            "weight_kg": null,
+            "body_fat_pct": 15,
+            "muscle_mass_kg": 50.1
+          },
+          {
+            "date": "2026-07-31",
+            "weight_kg": 66.4,
+            "body_fat_pct": 15.3,
+            "muscle_mass_kg": 50.4,
+            "fat_free_mass_kg": 99
+          }
+        ],
+        "detail": [
+          {
+            "date": "2026-08-01",
+            "water_percent": 58.2,
+            "muscle_percent": 76.1,
+            "visceral_fat": 5,
+            "body_fat_pct": 15.4
+          },
+          {
+            "date": "2026-08-03",
+            "water_percent": null,
+            "muscle_percent": 76,
+            "visceral_fat": null,
+            "body_fat_pct": 14.9
+          },
+          {
+            "date": "2026-08-04",
+            "water_percent": 58,
+            "muscle_percent": null,
+            "visceral_fat": 6,
+            "body_fat_pct": null
+          },
+          {
+            "date": "2026-08-01",
+            "water_percent": null,
+            "muscle_percent": null,
+            "visceral_fat": null,
+            "body_fat_pct": null
+          }
+        ],
+        "lb": true
+      },
+      "expected": [
+        {
+          "date": "2026-07-31",
+          "weight": 146.39,
+          "muscleMass": 111.11,
+          "fatFreeMass": 123.99,
+          "fatMass": 22.4,
+          "fatPct": 15.3,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-01",
+          "weight": 145.95,
+          "muscleMass": 110.89,
+          "fatFreeMass": 123.91,
+          "fatMass": 22.04,
+          "fatPct": 15.1,
+          "water": 58.2,
+          "musclePct": 76.1,
+          "visceral": 5
+        },
+        {
+          "date": "2026-08-02",
+          "weight": 145.5,
+          "muscleMass": null,
+          "fatFreeMass": 123.68,
+          "fatMass": null,
+          "fatPct": null,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-03",
+          "weight": 145.28,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 14.9,
+          "water": null,
+          "musclePct": 76,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-04",
+          "weight": null,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": null,
+          "water": 58,
+          "musclePct": null,
+          "visceral": 6
+        },
+        {
+          "date": "2026-08-05",
+          "weight": null,
+          "muscleMass": 110.45,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 15,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        }
+      ]
+    },
+    {
+      "name": "trend only",
+      "input": {
+        "trend": [
+          {
+            "date": "2026-08-01",
+            "weight_kg": 66.2,
+            "body_fat_pct": 15.1,
+            "muscle_mass_kg": 50.3
+          },
+          {
+            "date": "2026-08-02",
+            "weight_kg": 66,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null,
+            "fat_free_mass_kg": 56.1
+          },
+          {
+            "date": "2026-08-03",
+            "weight_kg": 65.9,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null
+          },
+          {
+            "date": "2026-08-05",
+            "weight_kg": null,
+            "body_fat_pct": 15,
+            "muscle_mass_kg": 50.1
+          },
+          {
+            "date": "2026-07-31",
+            "weight_kg": 66.4,
+            "body_fat_pct": 15.3,
+            "muscle_mass_kg": 50.4,
+            "fat_free_mass_kg": 99
+          }
+        ],
+        "detail": [],
+        "lb": false
+      },
+      "expected": [
+        {
+          "date": "2026-07-31",
+          "weight": 66.4,
+          "muscleMass": 50.4,
+          "fatFreeMass": 56.24080000000001,
+          "fatMass": 10.159200000000002,
+          "fatPct": 15.3,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-01",
+          "weight": 66.2,
+          "muscleMass": 50.3,
+          "fatFreeMass": 56.2038,
+          "fatMass": 9.9962,
+          "fatPct": 15.1,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-02",
+          "weight": 66,
+          "muscleMass": null,
+          "fatFreeMass": 56.1,
+          "fatMass": null,
+          "fatPct": null,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-03",
+          "weight": 65.9,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": null,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-05",
+          "weight": null,
+          "muscleMass": 50.1,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 15,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        }
+      ]
+    },
+    {
+      "name": "detail only",
+      "input": {
+        "trend": [],
+        "detail": [
+          {
+            "date": "2026-08-01",
+            "water_percent": 58.2,
+            "muscle_percent": 76.1,
+            "visceral_fat": 5,
+            "body_fat_pct": 15.4
+          },
+          {
+            "date": "2026-08-03",
+            "water_percent": null,
+            "muscle_percent": 76,
+            "visceral_fat": null,
+            "body_fat_pct": 14.9
+          },
+          {
+            "date": "2026-08-04",
+            "water_percent": 58,
+            "muscle_percent": null,
+            "visceral_fat": 6,
+            "body_fat_pct": null
+          },
+          {
+            "date": "2026-08-01",
+            "water_percent": null,
+            "muscle_percent": null,
+            "visceral_fat": null,
+            "body_fat_pct": null
+          }
+        ],
+        "lb": false
+      },
+      "expected": [
+        {
+          "date": "2026-08-01",
+          "weight": null,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 15.4,
+          "water": 58.2,
+          "musclePct": 76.1,
+          "visceral": 5
+        },
+        {
+          "date": "2026-08-03",
+          "weight": null,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": 14.9,
+          "water": null,
+          "musclePct": 76,
+          "visceral": null
+        },
+        {
+          "date": "2026-08-04",
+          "weight": null,
+          "muscleMass": null,
+          "fatFreeMass": null,
+          "fatMass": null,
+          "fatPct": null,
+          "water": 58,
+          "musclePct": null,
+          "visceral": 6
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "input": {
+        "trend": [],
+        "detail": [],
+        "lb": false
+      },
+      "expected": []
+    },
+    {
+      "name": "the same date twice in trend — last wins per field",
+      "input": {
+        "trend": [
+          {
+            "date": "2026-08-01",
+            "weight_kg": 66.2,
+            "body_fat_pct": 15.1,
+            "muscle_mass_kg": 50.3
+          },
+          {
+            "date": "2026-08-01",
+            "weight_kg": 66.3,
+            "body_fat_pct": null,
+            "muscle_mass_kg": null
+          }
+        ],
+        "detail": [],
+        "lb": false
+      },
+      "expected": [
+        {
+          "date": "2026-08-01",
+          "weight": 66.3,
+          "muscleMass": 50.3,
+          "fatFreeMass": 56.2038,
+          "fatMass": 9.9962,
+          "fatPct": 15.1,
+          "water": null,
+          "musclePct": null,
+          "visceral": null
+        }
+      ]
+    }
+  ]
+}

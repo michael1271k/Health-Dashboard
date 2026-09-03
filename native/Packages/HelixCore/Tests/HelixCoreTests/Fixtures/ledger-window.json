@@ -1,0 +1,332 @@
+{
+  "module": "dashboard/tiles",
+  "fn": "ledgerWindow",
+  "note": "Phase-to-date, floored at 14 days and capped at 30; outside every phase it is the flat month with no label. The label is `${short ?? name} · day N`. Constants asserted.",
+  "cases": [
+    {
+      "name": "2026-06-20",
+      "input": {
+        "todayISO": "2026-06-20",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 42"
+      }
+    },
+    {
+      "name": "2026-06-21",
+      "input": {
+        "todayISO": "2026-06-21",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "Peak · day 1"
+      }
+    },
+    {
+      "name": "2026-06-27",
+      "input": {
+        "todayISO": "2026-06-27",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 7,
+        "label": "Peak · day 7"
+      }
+    },
+    {
+      "name": "2026-06-28",
+      "input": {
+        "todayISO": "2026-06-28",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "Thailand · day 1"
+      }
+    },
+    {
+      "name": "2026-07-11",
+      "input": {
+        "todayISO": "2026-07-11",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 14,
+        "label": "Thailand · day 14"
+      }
+    },
+    {
+      "name": "2026-07-12",
+      "input": {
+        "todayISO": "2026-07-12",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "W0 · day 1"
+      }
+    },
+    {
+      "name": "2026-07-15",
+      "input": {
+        "todayISO": "2026-07-15",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 4,
+        "label": "W0 · day 4"
+      }
+    },
+    {
+      "name": "2026-07-18",
+      "input": {
+        "todayISO": "2026-07-18",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 7,
+        "label": "W0 · day 7"
+      }
+    },
+    {
+      "name": "2026-07-19",
+      "input": {
+        "todayISO": "2026-07-19",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "Cut · day 1"
+      }
+    },
+    {
+      "name": "2026-07-25",
+      "input": {
+        "todayISO": "2026-07-25",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 7,
+        "label": "Cut · day 7"
+      }
+    },
+    {
+      "name": "2026-07-31",
+      "input": {
+        "todayISO": "2026-07-31",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 13,
+        "label": "Cut · day 13"
+      }
+    },
+    {
+      "name": "2026-08-01",
+      "input": {
+        "todayISO": "2026-08-01",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 14,
+        "label": "Cut · day 14"
+      }
+    },
+    {
+      "name": "2026-08-10",
+      "input": {
+        "todayISO": "2026-08-10",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 23,
+        "inPhase": 23,
+        "label": "Cut · day 23"
+      }
+    },
+    {
+      "name": "2026-08-17",
+      "input": {
+        "todayISO": "2026-08-17",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 30"
+      }
+    },
+    {
+      "name": "2026-08-29",
+      "input": {
+        "todayISO": "2026-08-29",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 42"
+      }
+    },
+    {
+      "name": "2026-08-30",
+      "input": {
+        "todayISO": "2026-08-30",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 43"
+      }
+    },
+    {
+      "name": "2026-09-05",
+      "input": {
+        "todayISO": "2026-09-05",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 49"
+      }
+    },
+    {
+      "name": "2026-09-06",
+      "input": {
+        "todayISO": "2026-09-06",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 50"
+      }
+    },
+    {
+      "name": "2026-09-30",
+      "input": {
+        "todayISO": "2026-09-30",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 74"
+      }
+    },
+    {
+      "name": "2026-10-17",
+      "input": {
+        "todayISO": "2026-10-17",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Cut · day 91"
+      }
+    },
+    {
+      "name": "2026-10-18",
+      "input": {
+        "todayISO": "2026-10-18",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "Trans · day 1"
+      }
+    },
+    {
+      "name": "2026-10-31",
+      "input": {
+        "todayISO": "2026-10-31",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 14,
+        "label": "Trans · day 14"
+      }
+    },
+    {
+      "name": "2026-11-01",
+      "input": {
+        "todayISO": "2026-11-01",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 14,
+        "inPhase": 1,
+        "label": "Lean Bulk · day 1"
+      }
+    },
+    {
+      "name": "2027-01-01",
+      "input": {
+        "todayISO": "2027-01-01",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": "Lean Bulk · day 62"
+      }
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "todayISO": "garbage",
+        "floor": 14,
+        "max": 30
+      },
+      "expected": {
+        "days": 30,
+        "inPhase": 30,
+        "label": null
+      }
+    }
+  ]
+}

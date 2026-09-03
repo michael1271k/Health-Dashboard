@@ -1,0 +1,175 @@
+{
+  "module": "sessions/detail",
+  "fn": "progressionCue",
+  "note": "Extracted from ExerciseBreakdown, with the unit conversion INJECTED (`lb` true = kg × 2.20462 rounded to two places, else identity). Colour is not ported. LOAD_STEP_KG is asserted.",
+  "cases": [
+    {
+      "name": "ready with load in kg",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "ready",
+            "ceiling": 12,
+            "suggestKg": 62.5
+          }
+        },
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "+2.5kg",
+        "title": "Cleared twice — add 2.5kg to 62.5kg"
+      }
+    },
+    {
+      "name": "ready with load in lb",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "ready",
+            "ceiling": 12,
+            "suggestKg": 62.5
+          }
+        },
+        "timed": false,
+        "unit": "lb",
+        "lb": true,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "+2.5lb",
+        "title": "Cleared twice — add 2.5lb to 137.79lb"
+      }
+    },
+    {
+      "name": "ready, bodyweight — extend",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "ready",
+            "ceiling": 15,
+            "suggestKg": null
+          }
+        },
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "extend",
+        "title": "Cleared twice — extend past 15 reps"
+      }
+    },
+    {
+      "name": "ready, timed — extend seconds",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "ready",
+            "ceiling": 60,
+            "suggestKg": null
+          }
+        },
+        "timed": true,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "extend",
+        "title": "Cleared twice — extend past 60s"
+      }
+    },
+    {
+      "name": "one more clean session",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "one-more",
+            "ceiling": 12,
+            "suggestKg": 62.5
+          }
+        },
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "1 more",
+        "title": "One more clean session at 12 reps"
+      }
+    },
+    {
+      "name": "one more, timed",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "one-more",
+            "ceiling": 45,
+            "suggestKg": null
+          }
+        },
+        "timed": true,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "1 more",
+        "title": "One more clean session at 45s"
+      }
+    },
+    {
+      "name": "holding — nothing",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "hold",
+            "ceiling": 12,
+            "suggestKg": null
+          }
+        },
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": null
+    },
+    {
+      "name": "undefined — nothing",
+      "input": {
+        "t": null,
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": null
+    },
+    {
+      "name": "ready with a null ceiling",
+      "input": {
+        "t": {
+          "progression": {
+            "state": "ready",
+            "ceiling": null,
+            "suggestKg": 40
+          }
+        },
+        "timed": false,
+        "unit": "kg",
+        "lb": false,
+        "loadStep": 2.5
+      },
+      "expected": {
+        "short": "+2.5kg",
+        "title": "Cleared twice — add 2.5kg to 40kg"
+      }
+    }
+  ]
+}

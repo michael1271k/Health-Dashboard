@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/VolumeChart.tsx": {
-    "mtime": 1788426904.02767,
-    "ast_hash": "af94ebc6c9fe20dde1da5820926415e7",
+    "mtime": 1788454057.354843,
+    "ast_hash": "f12ac82b801269f0c82e14a691502ecb",
     "semantic_hash": ""
   },
   "src/components/command-center/DatePickerPopover.tsx": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseCard.tsx": {
-    "mtime": 1788426904.0281575,
-    "ast_hash": "f50052a44e5b2ae046ffaa8a57fafc00",
+    "mtime": 1788454057.3503993,
+    "ast_hash": "aa204dbf87808cd3f62605a9332727f0",
     "semantic_hash": ""
   },
   "src/components/command-center/ExerciseDeckList.tsx": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/ProgressionAlerts.tsx": {
-    "mtime": 1788426904.0294354,
-    "ast_hash": "257b98c7b88d4e6eb39cfb6cc0d04c56",
+    "mtime": 1788454057.3524668,
+    "ast_hash": "512ee85358864cde66f08454cb968e5a",
     "semantic_hash": ""
   },
   "src/components/command-center/SessionDeck.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/SetEditorRow.tsx": {
-    "mtime": 1788426904.0305026,
-    "ast_hash": "6ea9f42476430ba0a9c770ec7dc19e98",
+    "mtime": 1788454057.3517578,
+    "ast_hash": "23290fd9c711f8a77ff36a664dfca182",
     "semantic_hash": ""
   },
   "src/components/command-center/WeekToDateTargets.tsx": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/day/SleepDebtGauge.tsx": {
-    "mtime": 1788426904.034451,
-    "ast_hash": "bdbbad99489da136b3dc111175701211",
+    "mtime": 1788454057.355856,
+    "ast_hash": "bcc969871d46e4c23e3b982267e98142",
     "semantic_hash": ""
   },
   "src/components/day/SwapDayControl.tsx": {
@@ -520,8 +520,8 @@
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {
-    "mtime": 1788426904.0383406,
-    "ast_hash": "6d111bfd939b518467944fe828180ca3",
+    "mtime": 1788454057.3561432,
+    "ast_hash": "9e8cc12bf91e50df8dbb7aa4524f61b2",
     "semantic_hash": ""
   },
   "src/components/providers/ReloadHome.tsx": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/ExerciseBreakdown.tsx": {
-    "mtime": 1788426904.039804,
-    "ast_hash": "b9926be603d17ea00a9973f2879b6627",
+    "mtime": 1788454100.4255931,
+    "ast_hash": "b9071a92faeb49b97c8dec6c88d899c4",
     "semantic_hash": ""
   },
   "src/components/session-detail/MuscleFocus.tsx": {
@@ -635,8 +635,8 @@
     "semantic_hash": ""
   },
   "src/lib/exercises/muscleMap.ts": {
-    "mtime": 1788426904.0445242,
-    "ast_hash": "ece283225da34eeb37e18c7e5d0711ea",
+    "mtime": 1788452699.1674738,
+    "ast_hash": "0636370670c274e51571bf881ac19230",
     "semantic_hash": ""
   },
   "src/lib/exercises/timed.ts": {
@@ -770,9 +770,9 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSleepDebt.ts": {
-    "mtime": 1788426904.0499012,
-    "ast_hash": "bfb91b69f8154aa9ff5aa6b1a82272ef",
-    "semantic_hash": "bfb91b69f8154aa9ff5aa6b1a82272ef"
+    "mtime": 1788454057.3555968,
+    "ast_hash": "0b06bb29ba0de99be77c5bc19d45b7d9",
+    "semantic_hash": ""
   },
   "src/lib/hooks/useSupplements.ts": {
     "mtime": 1788426904.0501542,
@@ -1370,8 +1370,8 @@
     "semantic_hash": ""
   },
   "src/components/charts/BodyCompositionChart.tsx": {
-    "mtime": 1788426904.02697,
-    "ast_hash": "46d1aab331c635cb861d2776fa88bcd3",
+    "mtime": 1788454079.575882,
+    "ast_hash": "fabaa6675e8822a3ecf69cd69b4f0c97",
     "semantic_hash": ""
   },
   "src/lib/charts/scale.ts": {
@@ -1405,8 +1405,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionHighlights.tsx": {
-    "mtime": 1788426904.0405402,
-    "ast_hash": "995bf5d0e4d84e17914d87f7a611ac7f",
+    "mtime": 1788454100.429152,
+    "ast_hash": "4c1bb411dea5ae59efd795026e137213",
     "semantic_hash": ""
   },
   "src/tests/session-report.test.ts": {
@@ -1450,8 +1450,8 @@
     "semantic_hash": ""
   },
   "src/components/day/InBody.tsx": {
-    "mtime": 1788426904.0342023,
-    "ast_hash": "2e741da61e9be687535674a0feacd95e",
+    "mtime": 1788454057.355335,
+    "ast_hash": "6539e440db278656f588e0ec08213980",
     "semantic_hash": ""
   },
   "src/tests/body-panel.test.tsx": {
@@ -1735,8 +1735,8 @@
     "semantic_hash": ""
   },
   "src/tests/query-key-coverage.test.ts": {
-    "mtime": 1788426904.0702045,
-    "ast_hash": "86d636b9ba13be8ccefb801a2e2d7c6f",
+    "mtime": 1788455256.0877228,
+    "ast_hash": "b777694174d357c45f779d6b03eeb831",
     "semantic_hash": ""
   },
   "src/tests/goal-autoheal.test.ts": {
@@ -2335,8 +2335,8 @@
     "semantic_hash": ""
   },
   "src/components/command-center/MuscleDistribution.tsx": {
-    "mtime": 1788426904.0290954,
-    "ast_hash": "9ad643c9f642f9a698120310623a4e9e",
+    "mtime": 1788454057.3520555,
+    "ast_hash": "27c1c6a168f0a6bda2319228d3ece95d",
     "semantic_hash": ""
   },
   "ios/App/HelixWidgets/HelixAtlasFigure.swift": {
@@ -2450,7 +2450,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788445262.3878605,
+    "mtime": 1788455266.893057,
     "ast_hash": "d94cffed264ff2c846a5f4abd603c06f",
     "semantic_hash": ""
   },
@@ -2480,7 +2480,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788445259.673048,
+    "mtime": 1788455262.7100413,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2515,7 +2515,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788445258.1233866,
+    "mtime": 1788455260.5227134,
     "ast_hash": "7a2ebabd8697d3a4559fc6e239b8da1e",
     "semantic_hash": ""
   },
@@ -2585,7 +2585,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788445260.1613913,
+    "mtime": 1788455263.1436784,
     "ast_hash": "212e09fe60b79f0c008b53dccc1d2a9c",
     "semantic_hash": ""
   },
@@ -2625,8 +2625,8 @@
     "semantic_hash": ""
   },
   "src/components/session-detail/MetricGrid.tsx": {
-    "mtime": 1788426904.0399208,
-    "ast_hash": "4f726dc5825a4e47a39f7806797acf0f",
+    "mtime": 1788454057.3543708,
+    "ast_hash": "01f5d4d43f91494fa2a3499d4b6aa37a",
     "semantic_hash": ""
   },
   "src/components/session-detail/SessionSnippet.tsx": {
@@ -2690,8 +2690,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/parts.tsx": {
-    "mtime": 1788426904.0335908,
-    "ast_hash": "b6fda3bbd70c50e2c3c0fe3b96285e52",
+    "mtime": 1788454057.3527155,
+    "ast_hash": "919a7a205e040ec7f83b9068cb14e73f",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/VitalsWidget.tsx": {
@@ -2700,8 +2700,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/FuelWidget.tsx": {
-    "mtime": 1788426904.0328233,
-    "ast_hash": "6a4234e859790e6d195a446e8fc8c34d",
+    "mtime": 1788454057.353015,
+    "ast_hash": "baaf9bf2382b95fb032c4bdefc17ecfc",
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/BodyWidget.tsx": {
@@ -2720,8 +2720,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/DailyWidgets.tsx": {
-    "mtime": 1788426904.03268,
-    "ast_hash": "540be3f19a9db75e3833be9f77124e5a",
+    "mtime": 1788454079.5785742,
+    "ast_hash": "9cc595a460b1ba33045cba08aa602d9e",
     "semantic_hash": ""
   },
   "src/tests/widget-parts.test.tsx": {
@@ -2750,8 +2750,8 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/widgets/PlanWidgets.tsx": {
-    "mtime": 1788426904.0329647,
-    "ast_hash": "d8aef31f6f59649e386e442198a6a669",
+    "mtime": 1788454057.352875,
+    "ast_hash": "68d570d9060a18be32f96098f977e1b3",
     "semantic_hash": ""
   },
   "src/lib/hooks/useEnergyBalance.ts": {
@@ -3280,63 +3280,63 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/battery-constants.json": {
-    "mtime": 1788445644.405556,
+    "mtime": 1788455073.4693983,
     "ast_hash": "0f0c164c95dc9542738b26793a89ad4b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/battery.json": {
-    "mtime": 1788445644.40751,
+    "mtime": 1788455073.4714804,
     "ast_hash": "2c5ed0a2c7ab0a270ef58e09256b5459",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/epley.json": {
-    "mtime": 1788445644.4047751,
+    "mtime": 1788455073.4686365,
     "ast_hash": "2ba1ead6cac89550272a09452e2934d1",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/readiness.json": {
-    "mtime": 1788445644.408213,
+    "mtime": 1788455073.4722238,
     "ast_hash": "2e2b64ad0819edfb49e59971af24224d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rel-min.json": {
-    "mtime": 1788445644.4057891,
+    "mtime": 1788455073.4696448,
     "ast_hash": "c6570991f44898f9a5a282c79729030d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/sleep-quality.json": {
-    "mtime": 1788445644.4060118,
+    "mtime": 1788455073.469883,
     "ast_hash": "650fd6d94a8fc3a59df600e7e1b1ffe8",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/tdee.json": {
-    "mtime": 1788445644.4053905,
+    "mtime": 1788455073.469228,
     "ast_hash": "95e1e621e25140782e904c3b7047a703",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/tef.json": {
-    "mtime": 1788445644.405148,
+    "mtime": 1788455073.4690132,
     "ast_hash": "dee32ea2e18fe7d9dadf7075bf7f57f3",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/time-drain.json": {
-    "mtime": 1788445644.4061508,
+    "mtime": 1788455073.4700286,
     "ast_hash": "63f65cda2b702914ddef1d1d5f607508",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/workout-drain.json": {
-    "mtime": 1788445644.4072382,
+    "mtime": 1788455073.4712021,
     "ast_hash": "3c703d23545b1495de543b65d5c62020",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/workout-max.json": {
-    "mtime": 1788445644.405713,
+    "mtime": 1788455073.4695647,
     "ast_hash": "36bc61505fae3ba5eb4371e80f0b8b99",
     "semantic_hash": ""
   },
   "src/tests/golden-vectors.test.ts": {
-    "mtime": 1788445643.2851496,
-    "ast_hash": "070ad3edd4304a3877fe358d1edcc22b",
+    "mtime": 1788455072.1062665,
+    "ast_hash": "bc8504dd575f74b40c1e12548f23e16a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/GoldenVector.swift": {
@@ -3525,22 +3525,22 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/estimated-tag.json": {
-    "mtime": 1788445644.4090693,
+    "mtime": 1788455073.473087,
     "ast_hash": "6d6267fadc82ed04f20d18814f164211",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/exception-day.json": {
-    "mtime": 1788445644.4089742,
+    "mtime": 1788455073.4729922,
     "ast_hash": "f0341870f7c1b5411efc5c7fd3f5d016",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrition-phase-derive.json": {
-    "mtime": 1788445644.408393,
+    "mtime": 1788455073.4723995,
     "ast_hash": "1ada39a382a8fc63cc8a43833a50cd5f",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrition-phase-resolve.json": {
-    "mtime": 1788445644.4088094,
+    "mtime": 1788455073.472815,
     "ast_hash": "20bb9055ccacbf50da26e8bcb80b2f27",
     "semantic_hash": ""
   },
@@ -3855,372 +3855,372 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/activity-score.json": {
-    "mtime": 1788445644.412604,
+    "mtime": 1788455073.4770203,
     "ast_hash": "48c392ae5a3acfdc0b9274d8935b04c6",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/alerts.json": {
-    "mtime": 1788445644.4189336,
+    "mtime": 1788455073.4834247,
     "ast_hash": "9b78040d8740f8a1cfd6c77e82464d5f",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/atwater.json": {
-    "mtime": 1788445644.4333744,
+    "mtime": 1788455073.4986322,
     "ast_hash": "6cae4cde6f10efecee86c17c18a37ae2",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/ceiling-session.json": {
-    "mtime": 1788445644.4572003,
+    "mtime": 1788455073.525937,
     "ast_hash": "ee0ca12e3d75bf085b006ffe2d6f029f",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-from-label.json": {
-    "mtime": 1788445644.4374974,
+    "mtime": 1788455073.503114,
     "ast_hash": "740c371092e66cb60bdcbcbdccd6b956",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-from-setting.json": {
-    "mtime": 1788445644.437588,
+    "mtime": 1788455073.5031953,
     "ast_hash": "7ec7c89a7e9a78ca968eec85c39583a8",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-meta.json": {
-    "mtime": 1788445644.4373837,
+    "mtime": 1788455073.5030112,
     "ast_hash": "e20dc018c12825148d231de2bb39765b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-range-covers.json": {
-    "mtime": 1788445644.4378695,
+    "mtime": 1788455073.5035672,
     "ast_hash": "e2f3ef135e903028a6635d59c0619632",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-range-line.json": {
-    "mtime": 1788445644.4379997,
+    "mtime": 1788455073.5037594,
     "ast_hash": "c34e318256b2c7ae08cec3d497d8dd49",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/context-ranges-in.json": {
-    "mtime": 1788445644.443317,
+    "mtime": 1788455073.509954,
     "ast_hash": "ee6e812805860242a671c19d450986f4",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/cr10.json": {
-    "mtime": 1788445644.4587839,
+    "mtime": 1788455073.5277698,
     "ast_hash": "eccd878dd7cebfa943d4657bb0d96ccb",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/daily-score.json": {
-    "mtime": 1788445644.417403,
+    "mtime": 1788455073.4819164,
     "ast_hash": "0fd22276f79c08b7adf7068b836e6549",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/daily-target.json": {
-    "mtime": 1788445644.4437385,
+    "mtime": 1788455073.5105343,
     "ast_hash": "92d24f00e0e5a1fd618e3ab1652e621d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/days-between.json": {
-    "mtime": 1788445644.4376967,
+    "mtime": 1788455073.5032985,
     "ast_hash": "819bdb43dbfa272e3d92577d7408bb66",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/effort-cr10.json": {
-    "mtime": 1788445644.4588716,
+    "mtime": 1788455073.5278738,
     "ast_hash": "7754537c27db774de89845bcc4b5198d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/effort-suggest.json": {
-    "mtime": 1788445644.4590456,
+    "mtime": 1788455073.5280674,
     "ast_hash": "c8f8c28aff4bae741d0fcc7f698c279a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/effort-tables.json": {
-    "mtime": 1788445644.4584758,
+    "mtime": 1788455073.527331,
     "ast_hash": "248f25646716ebb4d4c07c24738da9d5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/enumerate-weeks.json": {
-    "mtime": 1788445644.4329486,
+    "mtime": 1788455073.4981139,
     "ast_hash": "4a9e636b95e5806df8a0271f4e190eeb",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/exercise-aliases.json": {
-    "mtime": 1788445644.423791,
+    "mtime": 1788455073.488758,
     "ast_hash": "eeb9a5540e138bf13270a608f3d2ee53",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/exercise-canonical-name.json": {
-    "mtime": 1788445644.423979,
+    "mtime": 1788455073.4889462,
     "ast_hash": "a3289b7a60400bb0853a4845bf31bf72",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/hydration-score.json": {
-    "mtime": 1788445644.4136956,
+    "mtime": 1788455073.4782534,
     "ast_hash": "17cdd7cb6d9bde6dbb540bbbe5da7c0b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-can-stack.json": {
-    "mtime": 1788445644.4232922,
+    "mtime": 1788455073.4881086,
     "ast_hash": "e25989ef65b91f5c924a4999a796fc00",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-catalogue.json": {
-    "mtime": 1788445644.4195538,
+    "mtime": 1788455073.4842782,
     "ast_hash": "fbe1848bce8e18c600f2162993d75de7",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-clamp-size.json": {
-    "mtime": 1788445644.42015,
+    "mtime": 1788455073.484879,
     "ast_hash": "002786edf75e8e26ac25523a97350c2e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-defaults.json": {
-    "mtime": 1788445644.4203427,
+    "mtime": 1788455073.4850726,
     "ast_hash": "2fcf009d88f75c98708e6908bcd9b616",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-from-stored.json": {
-    "mtime": 1788445644.4214544,
+    "mtime": 1788455073.4862494,
     "ast_hash": "6e68f7c3f3083e012dfa690ad8fc39dd",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-heights.json": {
-    "mtime": 1788445644.4202635,
+    "mtime": 1788455073.484992,
     "ast_hash": "144a1df412930a3d59f23621d33ccb89",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-ops.json": {
-    "mtime": 1788445644.4231932,
+    "mtime": 1788455073.4880056,
     "ast_hash": "3321e8d140124addcb0218c8af087d5a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-queries.json": {
-    "mtime": 1788445644.4234114,
+    "mtime": 1788455073.4882562,
     "ast_hash": "c59563de87b069886fba4958a4e79665",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-serialize.json": {
-    "mtime": 1788445644.4236672,
+    "mtime": 1788455073.4885328,
     "ast_hash": "2ad7eba933001952c06dfc30c1a580d8",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/layout-sizes-for.json": {
-    "mtime": 1788445644.4197476,
+    "mtime": 1788455073.4844794,
     "ast_hash": "85face957237f483b0badfeaa5edb65f",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/lever-by-id.json": {
-    "mtime": 1788445644.433282,
+    "mtime": 1788455073.498512,
     "ast_hash": "b18533a2599a472d1811ef90e1983f48",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/lever-for-date.json": {
-    "mtime": 1788445644.4358225,
+    "mtime": 1788455073.5011137,
     "ast_hash": "794f3b07b8df4b00bcdbbc5ea3f29831",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/lever-periods.json": {
-    "mtime": 1788445644.4364517,
+    "mtime": 1788455073.5017314,
     "ast_hash": "5c7979d8562360e95f68d8b3eb03e21c",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/levers-table.json": {
-    "mtime": 1788445644.4331338,
+    "mtime": 1788455073.4983442,
     "ast_hash": "1a63c974ed0f43e801defb31937347e5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/maintenance-bands.json": {
-    "mtime": 1788445644.4371514,
+    "mtime": 1788455073.502648,
     "ast_hash": "8ddce1a0144be14ad57f10d8172f8209",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/maintenance-span.json": {
-    "mtime": 1788445644.4367208,
+    "mtime": 1788455073.5020044,
     "ast_hash": "e48c985e61f89901713cae1afd22a30e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrition-score.json": {
-    "mtime": 1788445644.412127,
+    "mtime": 1788455073.4761012,
     "ast_hash": "ad57d0ec29a45f29163836ee1d81a0b1",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/phase-span.json": {
-    "mtime": 1788445644.431668,
+    "mtime": 1788455073.4966314,
     "ast_hash": "76a6b9e30071ab6dd6adf2dafe3cb60d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/phases-table.json": {
-    "mtime": 1788445644.4311326,
+    "mtime": 1788455073.4961185,
     "ast_hash": "6dad68ccfd7bdef6ece85be5cc09a634",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-asserted-session.json": {
-    "mtime": 1788445644.4250603,
+    "mtime": 1788455073.490162,
     "ast_hash": "ca6ed20540e06e7b0090eb5d226b7e52",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-axis-label.json": {
-    "mtime": 1788445644.4254737,
+    "mtime": 1788455073.490598,
     "ast_hash": "d9a803252b0bca4dcf08e0c1afd993e0",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-baselines.json": {
-    "mtime": 1788445644.4275033,
+    "mtime": 1788455073.4926684,
     "ast_hash": "f3d3e2041ec0dde93e33cc3d62bffca8",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-e1rm-eligible.json": {
-    "mtime": 1788445644.4252632,
+    "mtime": 1788455073.4903767,
     "ast_hash": "de9b46f095e56f76722140db090a188b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-floor.json": {
-    "mtime": 1788445644.4242887,
+    "mtime": 1788455073.4892745,
     "ast_hash": "a790cb4bb4e457a38e9ed25a1366574d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-ineligible.json": {
-    "mtime": 1788445644.4253366,
+    "mtime": 1788455073.4904585,
     "ast_hash": "636ffc46e547c9f238f8f22e5baba891",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-reps-eligible.json": {
-    "mtime": 1788445644.4254036,
+    "mtime": 1788455073.490525,
     "ast_hash": "e53638c1698b1920c396d14db1204f20",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-seed-book.json": {
-    "mtime": 1788445644.424614,
+    "mtime": 1788455073.4896955,
     "ast_hash": "570d951b9285db981c0afd22e89d9755",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-seeded-axes.json": {
-    "mtime": 1788445644.424975,
+    "mtime": 1788455073.4900737,
     "ast_hash": "9e88d5f7b2a3e25fff9998ce00fddea2",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-session.json": {
-    "mtime": 1788445644.4309244,
+    "mtime": 1788455073.495968,
     "ast_hash": "5368b5b637574993be796ccb4aeb164b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-truth-axis-value.json": {
-    "mtime": 1788445644.4244668,
+    "mtime": 1788455073.4894512,
     "ast_hash": "88efe0312e970d2a14aaddaee7a98dfb",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-truth-book.json": {
-    "mtime": 1788445644.4241295,
+    "mtime": 1788455073.4891074,
     "ast_hash": "532896d7de3b4d217fe0b96107e923c3",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pr-volume-credits.json": {
-    "mtime": 1788445644.425713,
+    "mtime": 1788455073.490844,
     "ast_hash": "87de7031f1966971e4de16e3ac313b3e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/profile-by-key.json": {
-    "mtime": 1788445644.4440162,
+    "mtime": 1788455073.5108688,
     "ast_hash": "0eaf161a99761049e504980d5ca38030",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/profile-matches.json": {
-    "mtime": 1788445644.4442654,
+    "mtime": 1788455073.511363,
     "ast_hash": "248a43a88c7fd6fb8361a868b5a111ca",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/profile-to-daily-target.json": {
-    "mtime": 1788445644.4440997,
+    "mtime": 1788455073.511071,
     "ast_hash": "5c29b4ef9c4010b3d5f7311c0375da69",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/profiles-table.json": {
-    "mtime": 1788445644.4439042,
+    "mtime": 1788455073.510747,
     "ast_hash": "1fbfba3716bdc1cfa20f2cf7419039e5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/program-helix5.json": {
-    "mtime": 1788445644.4445233,
+    "mtime": 1788455073.51182,
     "ast_hash": "43437c4f4ad509eea23f1909b48c86d1",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/program-lookups.json": {
-    "mtime": 1788445644.4554746,
+    "mtime": 1788455073.5237556,
     "ast_hash": "65bf1fb5913169dd35341e6ea49229ae",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/progression-verdict.json": {
-    "mtime": 1788445644.4580925,
+    "mtime": 1788455073.5268917,
     "ast_hash": "d7b7d82117f53d0a1e090d45ec70f3a3",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/recovery-score.json": {
-    "mtime": 1788445644.4162605,
+    "mtime": 1788455073.4808595,
     "ast_hash": "b2083b3e372d7a1122b55e3985199bb5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rep-window.json": {
-    "mtime": 1788445644.4448097,
+    "mtime": 1788455073.512173,
     "ast_hash": "6d2e2b5a8cb247260ee443a82d1dd219",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rest-clamp-format.json": {
-    "mtime": 1788445644.4596927,
+    "mtime": 1788455073.5290363,
     "ast_hash": "bbc1611f7732259192e85eab6fd69eb9",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rest-constants.json": {
-    "mtime": 1788445644.459563,
+    "mtime": 1788455073.5288746,
     "ast_hash": "b71d6affe7f7fdc70bb9d52f34eb3175",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rest-keys.json": {
-    "mtime": 1788445644.4597976,
+    "mtime": 1788455073.5291662,
     "ast_hash": "41cdc92bd2dd6b991480b906262a8b7a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-volume.json": {
-    "mtime": 1788445644.4193344,
+    "mtime": 1788455073.4838805,
     "ast_hash": "9a19ce4335ee47956b866f6da1d7498c",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-composition.json": {
-    "mtime": 1788445644.459448,
+    "mtime": 1788455073.5286865,
     "ast_hash": "08735ab551b43f3e2d63bb75f5c175ae",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-tags-table.json": {
-    "mtime": 1788445644.4591916,
+    "mtime": 1788455073.5282397,
     "ast_hash": "e023a2495aa545b675e67aa097964474",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-type.json": {
-    "mtime": 1788445644.4593263,
+    "mtime": 1788455073.528484,
     "ast_hash": "b15a2d3e8e42bec976e8605ce3ecc9d1",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/sleep-recovery-multiplier.json": {
-    "mtime": 1788445644.4142435,
+    "mtime": 1788455073.4788125,
     "ast_hash": "e6941bdff1cbb0c400d938c738cc9743",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/sleep-score.json": {
-    "mtime": 1788445644.4103575,
+    "mtime": 1788455073.4745286,
     "ast_hash": "ff1c847d508752cdd8c7da063851a842",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/timed-progression-verdict.json": {
-    "mtime": 1788445644.4582698,
+    "mtime": 1788455073.5270958,
     "ast_hash": "a0e629347145bb43f064c66de76304fe",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/week-phase.json": {
-    "mtime": 1788445644.432665,
+    "mtime": 1788455073.4977427,
     "ast_hash": "d16381df889445714c81d7457947e2cd",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/workout-score.json": {
-    "mtime": 1788445644.4135346,
+    "mtime": 1788455073.478061,
     "ast_hash": "a9ebcbd8625f04f12e5221227e426e10",
     "semantic_hash": ""
   },
@@ -4315,8 +4315,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Sessions/Draft.swift": {
-    "mtime": 1788443834.4390306,
-    "ast_hash": "00293746014378385ccde5aa27ba4170",
+    "mtime": 1788454575.8267016,
+    "ast_hash": "aab342e118c8297193ecae5dfbdc1873",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Sessions/Estimates.swift": {
@@ -4360,8 +4360,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Utils/SetFormat.swift": {
-    "mtime": 1788444366.7139723,
-    "ast_hash": "552e3325cba5918fbae446feecb26e36",
+    "mtime": 1788454580.8980353,
+    "ast_hash": "8420f7c5d425ae4e0af173329cb13e8a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/BodyGoldenTests.swift": {
@@ -4370,222 +4370,222 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/body-comp-derive.json": {
-    "mtime": 1788445644.4865937,
+    "mtime": 1788455073.5535421,
     "ast_hash": "b02121254fe0893b57e53110ff12feea",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/body-comp-gap.json": {
-    "mtime": 1788445644.4877272,
+    "mtime": 1788455073.5545146,
     "ast_hash": "307765d339d2975e89d1718b6e61c28e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/bpm-estimate.json": {
-    "mtime": 1788445644.4640179,
+    "mtime": 1788455073.5343583,
     "ast_hash": "61cbef56f52c5a0dfe6f6390df4c6694",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/calorie-estimate.json": {
-    "mtime": 1788445644.463947,
+    "mtime": 1788455073.5342638,
     "ast_hash": "ea07ae45335176e3150ebd82a558bce0",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/cardio-summary.json": {
-    "mtime": 1788445644.4615808,
+    "mtime": 1788455073.5314603,
     "ast_hash": "4aee3bc876df0c1b2a0a3b026d8506cd",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/cascade-set-edit.json": {
-    "mtime": 1788445644.4607806,
+    "mtime": 1788455073.530514,
     "ast_hash": "2eeb12968f3f9fb2ac82c0d72145f239",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/clean-title.json": {
-    "mtime": 1788445644.4617436,
+    "mtime": 1788455073.5316832,
     "ast_hash": "4f713f172540ae3c1e042d16664b2632",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/clock-format.json": {
-    "mtime": 1788445644.468344,
+    "mtime": 1788455073.5384462,
     "ast_hash": "073d381d6bd876ed0f68ed0ba016856e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/delta-verdict.json": {
-    "mtime": 1788445644.4873593,
+    "mtime": 1788455073.5542057,
     "ast_hash": "ebfa710dd65b5bc89ab721f2ec1ff60c",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/draft-totals.json": {
-    "mtime": 1788445644.4612796,
+    "mtime": 1788455073.5311096,
     "ast_hash": "9f7e56b93c0c288a97afb5708e9bb379",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/insight-math.json": {
-    "mtime": 1788445644.4880753,
+    "mtime": 1788455073.5548527,
     "ast_hash": "89f3a1bec5206e24ed1c0d681ef2e21a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/insights.json": {
-    "mtime": 1788445644.496199,
-    "ast_hash": "01edd816c11c1bbd775e0bffdad6734c",
+    "mtime": 1788455073.5622466,
+    "ast_hash": "5c4a86f65b1e3a21026e735563ebf3a0",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/kcal-median.json": {
-    "mtime": 1788445644.4638388,
+    "mtime": 1788455073.5341208,
     "ast_hash": "8f76d2e395fb3d007460f5278e7da43a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/live-prs.json": {
-    "mtime": 1788445644.463515,
+    "mtime": 1788455073.5337996,
     "ast_hash": "d4bc0ae61449ac241dc57a56ef856f79",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/maintenance-band.json": {
-    "mtime": 1788445644.4874542,
+    "mtime": 1788455073.554287,
     "ast_hash": "55945aa2240ac471470b0137cf9832bc",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/markdown-table.json": {
-    "mtime": 1788445644.484285,
+    "mtime": 1788455073.551526,
     "ast_hash": "c9951eccfdc67c97d76afc57ba0fd808",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/met-kcal-per-min.json": {
-    "mtime": 1788445644.4637008,
+    "mtime": 1788455073.5339706,
     "ast_hash": "f27bb5e1329024a40f070f8bc9eb3e2e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/next-set-format.json": {
-    "mtime": 1788445644.4624956,
+    "mtime": 1788455073.532601,
     "ast_hash": "8fe42a6fe39ddd8acd6f977e24c63607",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/next-set.json": {
-    "mtime": 1788445644.46219,
+    "mtime": 1788455073.5322652,
     "ast_hash": "ef88cfce5dfee0f0d04f6c215e239c7c",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrient-line.json": {
-    "mtime": 1788445644.485374,
+    "mtime": 1788455073.5527196,
     "ast_hash": "447f2a72a3ecf5eeb9516f0ea703762a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrient-targets.json": {
-    "mtime": 1788445644.4849162,
+    "mtime": 1788455073.5521045,
     "ast_hash": "49f45681577b258b31df9b9454a097d5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pace.json": {
-    "mtime": 1788445644.4844065,
+    "mtime": 1788455073.5516331,
     "ast_hash": "93f4b47512595c06d3182b567768e647",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/pair-row.json": {
-    "mtime": 1788445644.4614656,
+    "mtime": 1788455073.5313175,
     "ast_hash": "5eaeeacd1b4058c7139577aed67a9cb7",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/prev-align.json": {
-    "mtime": 1788445644.462757,
+    "mtime": 1788455073.5328784,
     "ast_hash": "10d368a26d0c9efc5562b3cfdc895c63",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/report-notes.json": {
-    "mtime": 1788445644.4861472,
+    "mtime": 1788455073.5532627,
     "ast_hash": "c94b8fef94d0ab7abca2804a9cfb9408",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/rpe-seed.json": {
-    "mtime": 1788445644.460123,
+    "mtime": 1788455073.529686,
     "ast_hash": "c4eb896b79184291687d1c17d1d684d2",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-clock-ops.json": {
-    "mtime": 1788445644.4681568,
+    "mtime": 1788455073.538317,
     "ast_hash": "2891fae6cfd4c54ea50718ae81e8cd8f",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-clock-parse.json": {
-    "mtime": 1788445644.4662032,
+    "mtime": 1788455073.5366228,
     "ast_hash": "798d1b453c1c4f6b9c0dc2884d515276",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-clock-read.json": {
-    "mtime": 1788445644.4664044,
+    "mtime": 1788455073.5368466,
     "ast_hash": "6108071cf5b8d5f14050502b338842ad",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-elapsed.json": {
-    "mtime": 1788445644.4643068,
+    "mtime": 1788455073.5346704,
     "ast_hash": "907e1b0618e4f0f4497aa5b6ded96625",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-rpe.json": {
-    "mtime": 1788445644.4602582,
+    "mtime": 1788455073.5299342,
     "ast_hash": "618279b1fb6652d1da6e4b25b53d469d",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-detail.json": {
-    "mtime": 1788445644.4855704,
+    "mtime": 1788455073.552926,
     "ast_hash": "39c2a51883c40a0706e37a3d3d623faf",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-format.json": {
-    "mtime": 1788445644.4846833,
+    "mtime": 1788455073.551905,
     "ast_hash": "08677e8a9573997840c3708f190f6a87",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/set-patch.json": {
-    "mtime": 1788445644.4605553,
+    "mtime": 1788455073.5302641,
     "ast_hash": "9810a865c3d39edb81e826a55d3c5f21",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/sparkline.json": {
-    "mtime": 1788445644.484152,
+    "mtime": 1788455073.551405,
     "ast_hash": "d4ef8b10e9bcbfacfb0ba4b993cb5ff2",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/supplements-consolidate.json": {
-    "mtime": 1788445644.4857628,
+    "mtime": 1788455073.5530193,
     "ast_hash": "92ee4c31380837006dfb3073b3b56c69",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/timed-exercise.json": {
-    "mtime": 1788445644.4629633,
+    "mtime": 1788455073.5331852,
     "ast_hash": "bc1d79f537635dc5ef619d537ac2b98e",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/trend-ledger.json": {
-    "mtime": 1788445644.486019,
+    "mtime": 1788455073.5531452,
     "ast_hash": "565659a0f000b10922b28dfd7a5053b5",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/visceral-band.json": {
-    "mtime": 1788445644.4868834,
+    "mtime": 1788455073.553741,
     "ast_hash": "5e60a5e1d84487a23c865c7256445385",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/volume-zone.json": {
-    "mtime": 1788445644.4850943,
+    "mtime": 1788455073.5524588,
     "ast_hash": "83c2595741ac68afe627df4baea9cc65",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/week-number.json": {
-    "mtime": 1788445644.4690523,
+    "mtime": 1788455073.5391836,
     "ast_hash": "7e0c7fef4771534f43d8d6b5ee5893d8",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/weekly-export.json": {
-    "mtime": 1788445644.4836235,
+    "mtime": 1788455073.550947,
     "ast_hash": "86ff3a628ba7bd544f3396b4263da34b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/weigh-in-skip.json": {
-    "mtime": 1788445644.4848096,
+    "mtime": 1788455073.5520012,
     "ast_hash": "737710000572a362dc2f93fa70283a81",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/whr-band.json": {
-    "mtime": 1788445644.4867616,
+    "mtime": 1788455073.5536683,
     "ast_hash": "e7209f827c016cf7523d1889c8f5c1aa",
     "semantic_hash": ""
   },
@@ -4602,6 +4602,376 @@
   "native/Packages/HelixCore/Tests/HelixCoreTests/SessionsGoldenTests.swift": {
     "mtime": 1788443874.8387177,
     "ast_hash": "6bc58aed06b556bdc56637886e21e55d",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Cardio/CardioPrs.swift": {
+    "mtime": 1788452882.1940162,
+    "ast_hash": "b71f94a60e529807ab6e875201a26a5d",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/cardio-prs.json": {
+    "mtime": 1788455073.562989,
+    "ast_hash": "6ec550e042af52f9588cabcd0e1351f5",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/chart-scale.json": {
+    "mtime": 1788455073.570046,
+    "ast_hash": "b0f6ef71fea8d2f8fffc837abf1a6ec0",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/exercise-flags.json": {
+    "mtime": 1788455073.5792658,
+    "ast_hash": "a3f85d43bf1f1db1b33dbbc4cd88eab4",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/intensity-calendar.json": {
+    "mtime": 1788455073.5685337,
+    "ast_hash": "1de9454639e99a3b766c1456a266b592",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/muscle-aggregate.json": {
+    "mtime": 1788455073.5695183,
+    "ast_hash": "67c7e4cbc43b2341d46ab87e56755487",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/muscle-dict.json": {
+    "mtime": 1788455073.579493,
+    "ast_hash": "d72e1875354411931b95dbaeea9bcb72",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/muscle-family.json": {
+    "mtime": 1788455073.572637,
+    "ast_hash": "db41ece2f58e8342b96b1a6240680bc1",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/muscle-map.json": {
+    "mtime": 1788455073.5689034,
+    "ast_hash": "9321af4a7fadecab7f055871cd0502a1",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/night-window.json": {
+    "mtime": 1788455073.563391,
+    "ast_hash": "15e803bc54e5234929447e40f499ccc3",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/nutrition-presets.json": {
+    "mtime": 1788455073.5803342,
+    "ast_hash": "9817cecaefbce3bf60425799a6eb0f76",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/relative-time.json": {
+    "mtime": 1788455073.5818005,
+    "ast_hash": "6f39c4e72d5c0947e9785deec2640a87",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/schedule-layout.json": {
+    "mtime": 1788455073.5639565,
+    "ast_hash": "3e856e8ed3360eb9b645aa78d5c8320f",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/schedule-swap.json": {
+    "mtime": 1788455073.5652995,
+    "ast_hash": "ebfedde189b06c3105a0624f3a23dc55",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/schedule-week.json": {
+    "mtime": 1788455073.567652,
+    "ast_hash": "45d5e19f76bcba5eedb4b632d3422548",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/supplements.json": {
+    "mtime": 1788455073.5800986,
+    "ast_hash": "c3eaad24a92abe4128be6c289e191317",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/utils-format.json": {
+    "mtime": 1788455073.5811603,
+    "ast_hash": "3ed41059f4da0b0fbb29c250d3ea5cdd",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-cadence.json": {
+    "mtime": 1788455073.5734355,
+    "ast_hash": "77eb6ce38424002e5611f1cb16d07b4a",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-calendar.json": {
+    "mtime": 1788455073.5715764,
+    "ast_hash": "ca6fcf17c745b8d0ff823271d68df5fa",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-cardio.json": {
+    "mtime": 1788455073.5718858,
+    "ast_hash": "085642ca1d23df32e2787f6451be5e77",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-e1rm.json": {
+    "mtime": 1788455073.5724998,
+    "ast_hash": "845438e1894d31f4ca0caa69dfb9fc9e",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-family.json": {
+    "mtime": 1788455073.5732398,
+    "ast_hash": "ea7c75d210a326dfe5684d5caac5b717",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-records.json": {
+    "mtime": 1788455073.5721583,
+    "ast_hash": "be3882784d17e485aa82b4d7dde32f24",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/widget-series.json": {
+    "mtime": 1788455073.570726,
+    "ast_hash": "7a2ba9bcb0b09e2d55cedb59c9ef4919",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/zone2.json": {
+    "mtime": 1788455073.5631495,
+    "ast_hash": "99efc68cf0c0abbc20eec1ee227b7f39",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sleep/NightWindow.swift": {
+    "mtime": 1788452896.1410244,
+    "ast_hash": "e2e36c5aee091dfdddaa6212df1937ae",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Schedule/Swap.swift": {
+    "mtime": 1788453037.4710271,
+    "ast_hash": "97257404b8a841364e2c773a3915be8d",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Charts/IntensityCalendar.swift": {
+    "mtime": 1788453050.252824,
+    "ast_hash": "e85284729fb7c18e0cafd39f0af0eebc",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Charts/MuscleAggregate.swift": {
+    "mtime": 1788453073.860053,
+    "ast_hash": "953ffc48a52f13c01d133a0ced866ca8",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Charts/Scale.swift": {
+    "mtime": 1788453089.2319293,
+    "ast_hash": "b1ab483f69eef4f359fa068f202b9778",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Widget/Derive.swift": {
+    "mtime": 1788453176.1377816,
+    "ast_hash": "dc72ab9e76197834e32691c2b2401d70",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Training/Streak.swift": {
+    "mtime": 1788453190.5887353,
+    "ast_hash": "6c9c3cbaac806c4218091aad865589d1",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Training/MuscleFamily.swift": {
+    "mtime": 1788453205.751287,
+    "ast_hash": "977557d76cd2b70c1b4572fc2c1d3ba6",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Exercises/Flags.swift": {
+    "mtime": 1788453221.5657685,
+    "ast_hash": "d7a05ae6e871d4668af57c68af4d1391",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Exercises/MuscleMap.swift": {
+    "mtime": 1788453236.9868727,
+    "ast_hash": "d16c92ce9393d5682197748cc9e02403",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Nutrition/Supplements.swift": {
+    "mtime": 1788453253.8138487,
+    "ast_hash": "832ccab69081e2aaa28d98b79598a022",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Nutrition/Presets.swift": {
+    "mtime": 1788453269.6755908,
+    "ast_hash": "dc887a37e39de74725b88d6959c85f66",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Body/Readings.swift": {
+    "mtime": 1788454679.0900028,
+    "ast_hash": "d8ec0d301c6a4b46e86a7114544a22ac",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Charts/VolumeSplit.swift": {
+    "mtime": 1788454666.3303418,
+    "ast_hash": "dccf03efac81c7898ead5bbe65fa6b0b",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Dashboard/Tiles.swift": {
+    "mtime": 1788454707.2250526,
+    "ast_hash": "43ed6551d50aa27aae2a6e45151a392e",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Schedule/ScheduleLayout.swift": {
+    "mtime": 1788452910.114261,
+    "ast_hash": "10fd3d5731b054d2a3147633be8f2641",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sessions/Deck.swift": {
+    "mtime": 1788454593.5911326,
+    "ast_hash": "8070c5024ecdd8dde6a967ff4ab5a916",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sessions/Detail.swift": {
+    "mtime": 1788454771.8647244,
+    "ast_hash": "1b6f4e85c5627274a5e181e7c8dea34d",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sessions/MuscleDistribution.swift": {
+    "mtime": 1788454604.0720856,
+    "ast_hash": "16acc3df182ff9e44abd0cd377a14c95",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sleep/Debt.swift": {
+    "mtime": 1788454685.8379395,
+    "ast_hash": "ca289f120f85735736e02dab5562c033",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Sync/RealtimeKeys.swift": {
+    "mtime": 1788454695.746738,
+    "ast_hash": "21ace1f33089be5545bf23b287c1cc10",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Sources/HelixCore/Utils/Format.swift": {
+    "mtime": 1788453290.3051486,
+    "ast_hash": "9179af6a807cca26ff6907deeb1fcd34",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/ExtractedGoldenTests.swift": {
+    "mtime": 1788454892.8607466,
+    "ast_hash": "d251e8e797e53d38e2c23d31a2a688b3",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/body-merge.json": {
+    "mtime": 1788455073.587164,
+    "ast_hash": "142ed56090b5223dd78d1155b106094a",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/deck-groups.json": {
+    "mtime": 1788455073.5821297,
+    "ast_hash": "c6bb294eedaab46169d6078e67985be8",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/deck-ladder.json": {
+    "mtime": 1788455073.5824912,
+    "ast_hash": "37a6c25e2ba99602cf145fa9aaceea6f",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/detail-rows.json": {
+    "mtime": 1788455073.5848947,
+    "ast_hash": "1eaf9fef822a63d38ae91309cf73e078",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/ledger-window.json": {
+    "mtime": 1788455073.583877,
+    "ast_hash": "91526ca30e2f6773f759d495fa4bded3",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/metric-pct.json": {
+    "mtime": 1788455073.5857673,
+    "ast_hash": "ff5ab7fce0770890740005fd1e086910",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/muscle-distribution.json": {
+    "mtime": 1788455073.582977,
+    "ast_hash": "7fd563e21820398c37c3ea911de9ab79",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/progression-cue.json": {
+    "mtime": 1788455073.5851822,
+    "ast_hash": "54555dcee3513ec220e3e8d10301f36d",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/realtime-keys.json": {
+    "mtime": 1788455073.5878592,
+    "ast_hash": "e3b6b018b908fcd4daeec144e12f98a7",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/scale-metrics.json": {
+    "mtime": 1788455073.5873156,
+    "ast_hash": "13c7d94eb37078e2c9634c16de583b74",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/scope-to-day.json": {
+    "mtime": 1788455073.5880814,
+    "ast_hash": "1ebf1407cd5899ac2b369002f3ec3be9",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/session-highlights.json": {
+    "mtime": 1788455073.5856457,
+    "ast_hash": "6abfb71003c44ce2b38460717df62f08",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/sleep-debt.json": {
+    "mtime": 1788455073.5876827,
+    "ast_hash": "3ab05d24ee7d809bc43559f3f5f741d1",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/stack-schedule.json": {
+    "mtime": 1788455073.5844285,
+    "ast_hash": "05455a9bfcdd1cf1b621794b62da0813",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/tiles-stats.json": {
+    "mtime": 1788455073.5836742,
+    "ast_hash": "57664984dc93f64fa31c257b223140f8",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/volume-split.json": {
+    "mtime": 1788455073.5867805,
+    "ast_hash": "82378df7279bee0b2b9c2375789b5052",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixCore/Tests/HelixCoreTests/SmallModulesGoldenTests.swift": {
+    "mtime": 1788453536.0631359,
+    "ast_hash": "4b4724121708317944226a3f81ea2631",
+    "semantic_hash": ""
+  },
+  "src/lib/body/readings.ts": {
+    "mtime": 1788453864.184693,
+    "ast_hash": "33abca4482a270a7e9f8a4a79ecb084e",
+    "semantic_hash": ""
+  },
+  "src/lib/charts/volumeSplit.ts": {
+    "mtime": 1788453849.9464123,
+    "ast_hash": "50c42b385bddccb15906cc9517ca2c1f",
+    "semantic_hash": ""
+  },
+  "src/lib/dashboard/tiles.ts": {
+    "mtime": 1788453805.6859179,
+    "ast_hash": "88f90907f88680d91dc14564a8d47b38",
+    "semantic_hash": ""
+  },
+  "src/lib/query/realtimeKeys.ts": {
+    "mtime": 1788453885.1670227,
+    "ast_hash": "8c006386fae0adae5b401072b45a3ea8",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/deck.ts": {
+    "mtime": 1788453758.3104134,
+    "ast_hash": "bcc301b909d2d68667f65d738bf59a3d",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/detail.ts": {
+    "mtime": 1788453834.1909297,
+    "ast_hash": "30ae57accba9b7e9323380b0522d3e51",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/muscleDistribution.ts": {
+    "mtime": 1788453773.3070471,
+    "ast_hash": "764037ebb606f9dea946e0ca586bb7ab",
+    "semantic_hash": ""
+  },
+  "src/lib/sleep/debt.ts": {
+    "mtime": 1788453872.4487839,
+    "ast_hash": "773e08791f2203db8de09ff1acd2c1f4",
+    "semantic_hash": ""
+  },
+  "src/lib/training/scopeToDay.ts": {
+    "mtime": 1788453776.3709128,
+    "ast_hash": "df097ec4e4f44c6c6ed250faa491dce4",
     "semantic_hash": ""
   }
 }

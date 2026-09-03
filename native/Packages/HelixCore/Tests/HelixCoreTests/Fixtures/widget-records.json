@@ -1,0 +1,449 @@
+{
+  "module": "widget/derive",
+  "fn": "topRecords",
+  "note": "Rows below prFloorFor(exercise)[axis] are DROPPED, not clamped; an axis the book has no key for passes. Values round to two places. `floors` records what prFloorFor answered for the three keys used, so a book edit shows up here.",
+  "cases": [
+    {
+      "name": "newest first, floored by the book, default limit",
+      "input": {
+        "rows": [
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 200,
+            "reps": 8,
+            "achieved_on": "2026-08-05"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 60,
+            "reps": 8,
+            "achieved_on": "2026-08-06"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 50,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 92.345,
+            "reps": 8,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "volume",
+            "value": 1000,
+            "reps": null,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Nobody Knows",
+            "axis": "weight",
+            "value": 10,
+            "reps": 1,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "streak",
+            "value": 4,
+            "reps": null,
+            "achieved_on": "2026-08-03"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": null,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 210,
+            "reps": 8,
+            "achieved_on": null
+          },
+          {
+            "exercise_key": "Chest Press",
+            "axis": "reps",
+            "value": 15,
+            "reps": 15,
+            "achieved_on": "2026-08-02"
+          }
+        ],
+        "limit": null
+      },
+      "expected": {
+        "records": [
+          {
+            "exercise": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achievedOn": "2026-08-07"
+          },
+          {
+            "exercise": "Nobody Knows",
+            "axis": "weight",
+            "value": 10,
+            "reps": 1,
+            "achievedOn": "2026-08-07"
+          },
+          {
+            "exercise": "Leg Press",
+            "axis": "weight",
+            "value": 200,
+            "reps": 8,
+            "achievedOn": "2026-08-05"
+          }
+        ],
+        "floors": [
+          {
+            "key": "Leg Press",
+            "floor": {
+              "weight": 80,
+              "e1rm": 109.59,
+              "volume": 980
+            }
+          },
+          {
+            "key": "Lat Pulldown",
+            "floor": {
+              "weight": 49.5,
+              "e1rm": 67.81,
+              "volume": 585
+            }
+          },
+          {
+            "key": "Chest Press",
+            "floor": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "limit 10",
+      "input": {
+        "rows": [
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 200,
+            "reps": 8,
+            "achieved_on": "2026-08-05"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 60,
+            "reps": 8,
+            "achieved_on": "2026-08-06"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 50,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 92.345,
+            "reps": 8,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "volume",
+            "value": 1000,
+            "reps": null,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Nobody Knows",
+            "axis": "weight",
+            "value": 10,
+            "reps": 1,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "streak",
+            "value": 4,
+            "reps": null,
+            "achieved_on": "2026-08-03"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": null,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 210,
+            "reps": 8,
+            "achieved_on": null
+          },
+          {
+            "exercise_key": "Chest Press",
+            "axis": "reps",
+            "value": 15,
+            "reps": 15,
+            "achieved_on": "2026-08-02"
+          }
+        ],
+        "limit": 10
+      },
+      "expected": {
+        "records": [
+          {
+            "exercise": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achievedOn": "2026-08-07"
+          },
+          {
+            "exercise": "Nobody Knows",
+            "axis": "weight",
+            "value": 10,
+            "reps": 1,
+            "achievedOn": "2026-08-07"
+          },
+          {
+            "exercise": "Leg Press",
+            "axis": "weight",
+            "value": 200,
+            "reps": 8,
+            "achievedOn": "2026-08-05"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 92.35,
+            "reps": 8,
+            "achievedOn": "2026-08-04"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "axis": "volume",
+            "value": 1000,
+            "reps": null,
+            "achievedOn": "2026-08-04"
+          },
+          {
+            "exercise": "Leg Press",
+            "axis": "streak",
+            "value": 4,
+            "reps": null,
+            "achievedOn": "2026-08-03"
+          },
+          {
+            "exercise": "Chest Press",
+            "axis": "reps",
+            "value": 15,
+            "reps": 15,
+            "achievedOn": "2026-08-02"
+          }
+        ],
+        "floors": [
+          {
+            "key": "Leg Press",
+            "floor": {
+              "weight": 80,
+              "e1rm": 109.59,
+              "volume": 980
+            }
+          },
+          {
+            "key": "Lat Pulldown",
+            "floor": {
+              "weight": 49.5,
+              "e1rm": 67.81,
+              "volume": 585
+            }
+          },
+          {
+            "key": "Chest Press",
+            "floor": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "limit 1",
+      "input": {
+        "rows": [
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 200,
+            "reps": 8,
+            "achieved_on": "2026-08-05"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 60,
+            "reps": 8,
+            "achieved_on": "2026-08-06"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 50,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "e1rm",
+            "value": 92.345,
+            "reps": 8,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Lat Pulldown",
+            "axis": "volume",
+            "value": 1000,
+            "reps": null,
+            "achieved_on": "2026-08-04"
+          },
+          {
+            "exercise_key": "Nobody Knows",
+            "axis": "weight",
+            "value": 10,
+            "reps": 1,
+            "achieved_on": "2026-08-07"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "streak",
+            "value": 4,
+            "reps": null,
+            "achieved_on": "2026-08-03"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": null,
+            "reps": 8,
+            "achieved_on": "2026-08-08"
+          },
+          {
+            "exercise_key": "Leg Press",
+            "axis": "weight",
+            "value": 210,
+            "reps": 8,
+            "achieved_on": null
+          },
+          {
+            "exercise_key": "Chest Press",
+            "axis": "reps",
+            "value": 15,
+            "reps": 15,
+            "achieved_on": "2026-08-02"
+          }
+        ],
+        "limit": 1
+      },
+      "expected": {
+        "records": [
+          {
+            "exercise": "Leg Press",
+            "axis": "weight",
+            "value": 80,
+            "reps": 8,
+            "achievedOn": "2026-08-07"
+          }
+        ],
+        "floors": [
+          {
+            "key": "Leg Press",
+            "floor": {
+              "weight": 80,
+              "e1rm": 109.59,
+              "volume": 980
+            }
+          },
+          {
+            "key": "Lat Pulldown",
+            "floor": {
+              "weight": 49.5,
+              "e1rm": 67.81,
+              "volume": 585
+            }
+          },
+          {
+            "key": "Chest Press",
+            "floor": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "rows": [],
+        "limit": null
+      },
+      "expected": {
+        "records": [],
+        "floors": [
+          {
+            "key": "Leg Press",
+            "floor": {
+              "weight": 80,
+              "e1rm": 109.59,
+              "volume": 980
+            }
+          },
+          {
+            "key": "Lat Pulldown",
+            "floor": {
+              "weight": 49.5,
+              "e1rm": 67.81,
+              "volume": 585
+            }
+          },
+          {
+            "key": "Chest Press",
+            "floor": null
+          }
+        ]
+      }
+    }
+  ]
+}

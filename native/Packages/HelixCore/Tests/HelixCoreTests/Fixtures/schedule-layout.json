@@ -1,0 +1,1253 @@
+{
+  "module": "schedule/layout",
+  "fn": "parseLayout / effectiveWeekday / dayKeyForWeekday / fullLayout / moveDay / isAuthoredLayout / canonicalLayout",
+  "note": "Against the Helix-5 program (cb_a Sun, legs_a Mon, arms Tue, cb_b Thu, legs_b Fri). A layout is dayKey → weekday; absent means authored. moveDay is an EXCHANGE and always returns the full layout. `byWeekday` is dayKeyForWeekday for 0…6. Swift must parse `rawEntries` (ordered) rather than `raw`, whose key order JSON does not promise; `move.layout` objects carry at most one key so their order is moot. Output pairs preserve insertion order.",
+  "cases": [
+    {
+      "name": "parse: well-formed",
+      "input": {
+        "raw": {
+          "arms": 3,
+          "legs_a": 2
+        },
+        "rawEntries": [
+          [
+            "arms",
+            3
+          ],
+          [
+            "legs_a",
+            2
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            3
+          ],
+          [
+            "legs_a",
+            2
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            2
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          null,
+          "legs_a",
+          "arms",
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          2,
+          3,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",3],[\"legs_a\",2]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: out of range, non-integer, non-numeric",
+      "input": {
+        "raw": {
+          "arms": 7,
+          "legs_a": 1.5,
+          "cb_a": "2",
+          "cb_b": -1,
+          "legs_b": 6
+        },
+        "rawEntries": [
+          [
+            "arms",
+            7
+          ],
+          [
+            "legs_a",
+            1.5
+          ],
+          [
+            "cb_a",
+            "2"
+          ],
+          [
+            "cb_b",
+            -1
+          ],
+          [
+            "legs_b",
+            6
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "legs_b",
+            6
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            6
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          null,
+          "legs_b"
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          6
+        ],
+        "authored": false,
+        "canonical": "[[\"legs_b\",6]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: duplicate weekday — first key wins",
+      "input": {
+        "raw": {
+          "arms": 3,
+          "legs_a": 3,
+          "cb_b": 4
+        },
+        "rawEntries": [
+          [
+            "arms",
+            3
+          ],
+          [
+            "legs_a",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          "arms",
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          3,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",3],[\"cb_b\",4]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: empty key dropped",
+      "input": {
+        "raw": {
+          "": 3,
+          "arms": 4
+        },
+        "rawEntries": [
+          [
+            "",
+            3
+          ],
+          [
+            "arms",
+            4
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            4
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            4
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          null,
+          "arms",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          4,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",4]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: not an object",
+      "input": {
+        "raw": "arms",
+        "rawEntries": null,
+        "move": null
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: an array",
+      "input": {
+        "raw": [
+          3,
+          4
+        ],
+        "rawEntries": null,
+        "move": null
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: null",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": null
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: a foreign key is kept",
+      "input": {
+        "raw": {
+          "ppl_push_sun": 6
+        },
+        "rawEntries": [
+          [
+            "ppl_push_sun",
+            6
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "ppl_push_sun",
+            6
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[[\"ppl_push_sun\",6]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "parse: canonical sorts keys — insertion order is not key order",
+      "input": {
+        "raw": {
+          "legs_b": 3,
+          "cb_b": 6,
+          "arms": 4
+        },
+        "rawEntries": [
+          [
+            "legs_b",
+            3
+          ],
+          [
+            "cb_b",
+            6
+          ],
+          [
+            "arms",
+            4
+          ]
+        ],
+        "move": null
+      },
+      "expected": {
+        "layout": [
+          [
+            "legs_b",
+            3
+          ],
+          [
+            "cb_b",
+            6
+          ],
+          [
+            "arms",
+            4
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            4
+          ],
+          [
+            "cb_b",
+            6
+          ],
+          [
+            "legs_b",
+            3
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          "legs_b",
+          "arms",
+          null,
+          "cb_b"
+        ],
+        "effective": [
+          0,
+          1,
+          4,
+          6,
+          3
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",4],[\"cb_b\",6],[\"legs_b\",3]]",
+        "moved": null
+      }
+    },
+    {
+      "name": "move: trade — arms onto Monday, legs_a takes Tuesday",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {},
+          "dayKey": "arms",
+          "weekday": 1
+        }
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "arms",
+          "legs_a",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          2,
+          1,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",1],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",2],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            2
+          ],
+          [
+            "arms",
+            1
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: move to a rest day — arms onto Wednesday",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {},
+          "dayKey": "arms",
+          "weekday": 3
+        }
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          "arms",
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          3,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",3],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: move to its own slot is a no-op",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {},
+          "dayKey": "arms",
+          "weekday": 2
+        }
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[[\"arms\",2],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: a day of another plan",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {},
+          "dayKey": "upper_a",
+          "weekday": 3
+        }
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "authored": true,
+        "canonical": "[[\"arms\",2],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: invalid weekday returns the full layout",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {
+            "arms": 3
+          },
+          "dayKey": "arms",
+          "weekday": 9
+        }
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            3
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          "arms",
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          0,
+          1,
+          3,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",3],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: from a sparse layout — the moved day moves again",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {
+            "arms": 3
+          },
+          "dayKey": "arms",
+          "weekday": 6
+        }
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            3
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "cb_a",
+          "legs_a",
+          null,
+          null,
+          "cb_b",
+          "legs_b",
+          "arms"
+        ],
+        "effective": [
+          0,
+          1,
+          6,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",6],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            6
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: from a sparse layout — trade with the moved day",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {
+            "arms": 3
+          },
+          "dayKey": "cb_a",
+          "weekday": 3
+        }
+      },
+      "expected": {
+        "layout": [
+          [
+            "arms",
+            3
+          ]
+        ],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            3
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "arms",
+          "legs_a",
+          null,
+          "cb_a",
+          "cb_b",
+          "legs_b",
+          null
+        ],
+        "effective": [
+          3,
+          1,
+          0,
+          4,
+          5
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",0],[\"cb_a\",3],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]",
+        "moved": [
+          [
+            "cb_a",
+            3
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            0
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "move: legs_b onto Sunday trades with cb_a",
+      "input": {
+        "raw": null,
+        "rawEntries": null,
+        "move": {
+          "layout": {},
+          "dayKey": "legs_b",
+          "weekday": 0
+        }
+      },
+      "expected": {
+        "layout": [],
+        "full": [
+          [
+            "cb_a",
+            0
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            5
+          ]
+        ],
+        "byWeekday": [
+          "legs_b",
+          "legs_a",
+          "arms",
+          null,
+          "cb_b",
+          "cb_a",
+          null
+        ],
+        "effective": [
+          5,
+          1,
+          2,
+          4,
+          0
+        ],
+        "authored": false,
+        "canonical": "[[\"arms\",2],[\"cb_a\",5],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",0]]",
+        "moved": [
+          [
+            "cb_a",
+            5
+          ],
+          [
+            "legs_a",
+            1
+          ],
+          [
+            "arms",
+            2
+          ],
+          [
+            "cb_b",
+            4
+          ],
+          [
+            "legs_b",
+            0
+          ]
+        ]
+      }
+    }
+  ]
+}

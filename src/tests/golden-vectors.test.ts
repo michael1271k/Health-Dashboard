@@ -106,6 +106,56 @@ import {
   mean, pearson, linregSlope, rollingAverage, daysSinceLastSession, trainingGap, fuelVsForce, stallProtocol, computeInsights,
   type DayPoint, type SessionPoint, type Insight,
 } from '@/lib/coach/insights'
+import { axisValue, cardioRecords, axesHeldBy, type CardioAxis, type CardioRecord, type CardioRow as CardioPrRow } from '@/lib/cardio/cardioPrs'
+import { isZone2, ZONE2_MIN_MINUTES, ZONE2_WEEKLY_TARGET } from '@/lib/cardio/zone2'
+import { prevDayISO, nextDayISO, nightWindow, nightOf, fallbackBedTime, type NightWindow } from '@/lib/sleep/nightWindow'
+import {
+  parseLayout, effectiveWeekday, dayKeyForWeekday, fullLayout, moveDay, isAuthoredLayout, canonicalLayout, type DayLayout,
+} from '@/lib/schedule/layout'
+import {
+  planRestDay, describeRestPlan, planDaySwap, blockForPlacement, describeBlock, planPermanentMove, dateForWeekday, weekDatesOf, shortDayLabel,
+  type RestDayPlan, type ScheduleWrite, type SwapBlock, type PermanentMovePlan, type LoggedDay,
+} from '@/lib/schedule/swap'
+import { REST_OVERRIDE } from '@/lib/schedule/overrides'
+import { PROGRAMS, DEFAULT_PROGRAM_ID, type ScheduleDay } from '@/lib/programs'
+import { buildIntensityCalendar, type CalendarModel } from '@/lib/charts/intensityCalendar'
+import { MUSCLE_MAP, MUSCLE_GROUPS, aggregateMuscleSets, type MuscleSetRow, type MuscleAggregate } from '@/lib/charts/muscleAggregate'
+import { niceDomain, tightDomain, compactKg, axisBound, type NiceDomainOptions, type TightDomainOptions } from '@/lib/charts/scale'
+import {
+  trendPoints, meanBetween, dailySeries, latestDelta, calendarDays, weeklyVolume, cardioBlock, topRecords, e1rmTrends, volumeByFamily, shiftISO, vitalBlock,
+  type CalendarSession, type CardioRow as WidgetCardioRow, type LedgerRow, type SetRow as WidgetSetRow,
+} from '@/lib/widget/derive'
+import type { TrendPoint, WidgetFamilyVolume } from '@/lib/widget/snapshot'
+import { streakFrom, programDayCount } from '@/lib/training/streak'
+import { REFRESH_SCHEDULE, FAILURE_MINUTES, refreshMinutesForHour, refreshesPerDay } from '@/lib/widget/cadence'
+import { isBodyweightExercise, isUnloadedExercise, isLoadableBodyweightExercise } from '@/lib/exercises/bodyweight'
+import { isUnilateralExercise } from '@/lib/exercises/unilateral'
+import { exerciseIconFor } from '@/lib/exercises/icons'
+import { MUSCLE_DICT, lookupMuscles, muscleGroupsFor, resolveMovers, type MuscleEntry } from '@/lib/exercises/muscleMap'
+import { LANDMARK_MUSCLES, toLandmarkMuscle } from '@/lib/training/landmarks'
+import { familyOf } from '@/lib/theme/muscleHue'
+import { SUPPLEMENT_PROTOCOL, ALL_SUPPLEMENT_KEYS, stackForDate, type SupplementSlot } from '@/lib/supplements'
+import { NUTRITION_PRESETS, PLAN_PHASES, PPL_SPLITS, phaseGoalsFor, asNutritionMode, type NutritionMode } from '@/lib/types/workout'
+import { formatSleep, formatSleepLong, mlToL, formatRelativeTime } from '@/lib/utils/format'
+import { parseDurationMin } from '@/lib/utils/duration'
+import { validWeight, fmtVolume, normalizeSpO2 } from '@/lib/utils/measure'
+import { STATUS_META, groupSets, PLATE_STEP, FINE_STEP, nudgeLoad, nudgeReps, fmtKg, trimNum } from '@/lib/sessions/deck'
+import { setValueLabel, type SetGridMode } from '@/components/command-center/setGrid'
+import { draftMuscleSets, draftPhysicalSets } from '@/lib/sessions/muscleDistribution'
+import {
+  mean as tileMean, vsBaseline, stepMarks, nutrientRisk, consistencyWindow, daysAgo, parseMin, dueLabel,
+  ledgerWindow, LEDGER_FLOOR_DAYS, LEDGER_MAX_DAYS, stackSchedule, type StackSlot as StackDose, type StackSchedule,
+} from '@/lib/dashboard/tiles'
+import { toRows, rowsWithPrev, deltaGlyph, progressionCue, exerciseStats, strongestOf, highlightsOf, pctOf } from '@/lib/sessions/detail'
+import type { DetailSet, DetailExercise } from '@/lib/hooks/useSessionDetail'
+import type { IntelMetric } from '@/lib/hooks/useSessionIntel'
+import { LOAD_STEP_KG } from '@/lib/training/ceilings'
+import { resolveChartSplit, SPLITS_FOR_ERA, DAY_KEY_SPLIT, splitLabel } from '@/lib/charts/volumeSplit'
+import { mergeBodyComposition, hasScaleMetrics, SCALE_METRIC_KEYS } from '@/lib/body/readings'
+import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
+import { computeSleepDebt, debtBand, type SleepDebt } from '@/lib/sleep/debt'
+import { TABLE_KEYS, REALTIME_TABLES } from '@/lib/query/realtimeKeys'
+import { scopeToDay } from '@/lib/training/scopeToDay'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -4356,6 +4406,1269 @@ describe('golden vectors — coach insights', () => {
       fn: 'daysSinceLastSession / trainingGap / fuelVsForce / stallProtocol / computeInsights',
       note: 'Deterministic. `insights` is computeInsights at the given limit and `all` at 99 — ranked by confidence, stable on ties in builder order. Numbers in the prose use toLocaleString (en-US thousands separators).',
       cases,
+    })
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ITEM #10 — THE SMALL PURE MODULES
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Sunday-anchored weekday of a date, UTC. */
+const utcWeekday = (dateISO: string): number => new Date(`${dateISO}T12:00:00Z`).getUTCDay()
+
+describe('golden vectors — cardio records and Zone 2', () => {
+  it('exports cardioRecords, axesHeldBy and axisValue over one ledger', () => {
+    const rows: CardioPrRow[] = [
+      { id: 'r1', kind: 'run', distance_m: 5000, duration_min: 30, active_kcal: 380, date: '2026-08-01' },
+      { id: 'r2', kind: 'run', distance_m: 5000, duration_min: 28, active_kcal: 370, date: '2026-08-08' },   // faster pace
+      { id: 'r3', kind: 'run', distance_m: 8000, duration_min: 52, kcal: 600, date: '2026-08-15' },         // legacy kcal
+      { id: 'r4', kind: 'run', distance_m: 200, duration_min: 0.63, active_kcal: 20, date: '2026-08-16' },  // bus dash — no pace
+      { id: 'r5', kind: 'run', distance_m: 1000, duration_min: 5.5, active_kcal: null, kcal: null, date: '2026-08-17' }, // exactly at the floor
+      { id: 'w1', kind: 'walk', distance_m: 9000, duration_min: 110, active_kcal: 300, date: '2026-08-02' },
+      { id: 'w2', kind: 'walk', distance_m: 9000, duration_min: 105, active_kcal: 300, date: '2026-08-09' }, // ties calories → earlier keeps
+      { id: 'w3', kind: 'walk', distance_m: null, duration_min: 40, active_kcal: 0, date: '2026-08-10' },
+      { id: 'w4', kind: 'walk', distance_m: 0, duration_min: null, active_kcal: -5, date: '2026-08-11' },
+      { id: 'e1', kind: 'elliptical', distance_m: 3000, duration_min: 25, active_kcal: NaN, date: '2026-08-12' },
+      { id: 'e2', kind: 'elliptical', distance_m: Infinity, duration_min: 25 },
+    ]
+    const axes: CardioAxis[] = ['distance', 'duration', 'pace', 'calories']
+    const cases: Case<
+      { rows: CardioPrRow[]; kind: string; rowId: string },
+      { records: Partial<Record<CardioAxis, CardioRecord>>; held: CardioAxis[]; axisValues: Array<{ id: string; values: Array<number | null> }> }
+    >[] = []
+    const push = (name: string, subset: CardioPrRow[], kind: string, rowId: string) => cases.push({
+      name,
+      input: { rows: subset, kind, rowId },
+      expected: {
+        records: cardioRecords(subset, kind),
+        held: axesHeldBy(subset, rowId),
+        axisValues: subset.map((r) => ({ id: r.id, values: axes.map((a) => axisValue(r, a)) })),
+      },
+    })
+    push('runs — the faster 5k takes pace, the 8k takes distance and calories', rows, 'run', 'r2')
+    push('the 8k row holds distance, duration and calories', rows, 'run', 'r3')
+    push('the bus dash holds nothing', rows, 'run', 'r4')
+    push('walks — a tie on calories keeps the earlier row', rows, 'walk', 'w1')
+    push('the later walk wins pace and duration only', rows, 'walk', 'w2')
+    push('zero, missing and negative values do not compete', rows, 'walk', 'w4')
+    push('NaN calories are no contest', rows, 'elliptical', 'e1')
+    push('Infinity distance is no contest', rows, 'elliptical', 'e2')
+    push('a kind with no rows', rows, 'rowing', 'r1')
+    push('an unknown row id holds nothing', rows, 'run', 'nope')
+    push('a single run holds every axis it can', rows.slice(0, 1), 'run', 'r1')
+    push('empty ledger', [], 'run', 'r1')
+    emit('cardio-prs.json', {
+      module: 'cardio/cardioPrs',
+      fn: 'axisValue / cardioRecords / axesHeldBy',
+      note: 'Pace is a MINIMUM with a 1 km floor; every other axis is a maximum. Ties keep the EARLIER row. `axisValues` is per row in the order [distance, duration, pace, calories]; null = cannot compete. Non-finite numbers in the input are serialised as null by JSON — Swift decodes them as absent, which is what the TS treats them as.',
+      cases,
+    })
+  })
+
+  it('exports the Zone-2 rule', () => {
+    const grid = [null, undefined, NaN, 0, 5, 19, 19.99, 20, 20.5, 45, 120, -3]
+    emit('zone2.json', {
+      module: 'cardio/zone2',
+      fn: 'isZone2',
+      note: `A session counts at ZONE2_MIN_MINUTES=${ZONE2_MIN_MINUTES} or more; the weekly target is ${ZONE2_WEEKLY_TARGET} sessions. Non-finite inputs serialise as null.`,
+      cases: grid.map((v) => ({ name: `${String(v)} min`, input: { durationMin: v ?? null, minMinutes: ZONE2_MIN_MINUTES, weeklyTarget: ZONE2_WEEKLY_TARGET }, expected: isZone2(v) })),
+    })
+  })
+})
+
+describe('golden vectors — the night window', () => {
+  it('exports the window, its inverse and the fallback bedtime', () => {
+    const dates = ['2026-07-23', '2026-08-01', '2026-03-01', '2028-03-01', '2026-12-31', '2027-01-01', '2026-02-28', '2024-02-29']
+    const bedtimes = [
+      '2026-07-22T20:45:00Z', '2026-07-23T01:10:00Z', '2026-07-23T11:59:59Z', '2026-07-23T12:00:00Z',
+      '2026-12-31T23:30:00Z', '2026-12-31T12:00:00Z', '2026-07-23T00:00:00Z', '2026-07-23', '2026-07-23Txx',
+    ]
+    type NightIn = { dateISO: string | null; startTime: string | null }
+    type NightOut = { prev: string | null; next: string | null; window: NightWindow | null; fallback: string | null; nightOf: string | null }
+    const nightCases: Case<NightIn, NightOut>[] = [
+        ...dates.map((d) => ({
+          name: `window of ${d}`,
+          input: { dateISO: d, startTime: null as string | null },
+          expected: { prev: prevDayISO(d), next: nextDayISO(d), window: nightWindow(d), fallback: fallbackBedTime(d), nightOf: null as string | null },
+        })),
+        ...bedtimes.map((t) => ({
+          name: `nightOf ${t}`,
+          input: { dateISO: null as string | null, startTime: t },
+          expected: { prev: null, next: null, window: null, fallback: null, nightOf: nightOf(t) },
+        })),
+    ]
+    emit('night-window.json', {
+      module: 'sleep/nightWindow',
+      fn: 'prevDayISO / nextDayISO / nightWindow / fallbackBedTime / nightOf',
+      note: 'The night that ends on the morning of D is [prev(D) 12:00Z, D 12:00Z) — half-open, exactly 24 h, tiling. `nightOf` reads the hour at chars 11–13; anything at or after noon belongs to the NEXT day; an unparseable hour keeps the date.',
+      cases: nightCases,
+    })
+  })
+})
+
+describe('golden vectors — schedule layout and swaps', () => {
+  const program = PROGRAMS[DEFAULT_PROGRAM_ID]
+  const dayOf = (key: string): ScheduleDay | 'rest' => {
+    const d = program.days.find((x) => x.key === key)
+    return d ? { label: d.label, sub: d.sub, dayKey: d.key } : 'rest'
+  }
+  /** Overrides over the layout over the authored plan — the app's own layering. */
+  const resolver = (overrides: Record<string, string>) => (dateISO: string, layout: DayLayout): ScheduleDay | 'rest' => {
+    const o = overrides[dateISO]
+    if (o !== undefined) return o === REST_OVERRIDE ? 'rest' : o.startsWith('label:') ? { label: o.slice(6) } : dayOf(o)
+    const key = dayKeyForWeekday(program, layout, utcWeekday(dateISO))
+    return key ? dayOf(key) : 'rest'
+  }
+
+  it('exports the layout algebra', () => {
+    const raws: Array<{ name: string; raw: unknown }> = [
+      { name: 'well-formed', raw: { arms: 3, legs_a: 2 } },
+      { name: 'out of range, non-integer, non-numeric', raw: { arms: 7, legs_a: 1.5, cb_a: '2', cb_b: -1, legs_b: 6 } },
+      { name: 'duplicate weekday — first key wins', raw: { arms: 3, legs_a: 3, cb_b: 4 } },
+      { name: 'empty key dropped', raw: { '': 3, arms: 4 } },
+      { name: 'not an object', raw: 'arms' },
+      { name: 'an array', raw: [3, 4] },
+      { name: 'null', raw: null },
+      { name: 'a foreign key is kept', raw: { ppl_push_sun: 6 } },
+      { name: 'canonical sorts keys — insertion order is not key order', raw: { legs_b: 3, cb_b: 6, arms: 4 } },
+    ]
+    const moves: Array<{ name: string; layout: DayLayout; dayKey: string; weekday: number }> = [
+      { name: 'trade — arms onto Monday, legs_a takes Tuesday', layout: {}, dayKey: 'arms', weekday: 1 },
+      { name: 'move to a rest day — arms onto Wednesday', layout: {}, dayKey: 'arms', weekday: 3 },
+      { name: 'move to its own slot is a no-op', layout: {}, dayKey: 'arms', weekday: 2 },
+      { name: 'a day of another plan', layout: {}, dayKey: 'upper_a', weekday: 3 },
+      { name: 'invalid weekday returns the full layout', layout: { arms: 3 }, dayKey: 'arms', weekday: 9 },
+      { name: 'from a sparse layout — the moved day moves again', layout: { arms: 3 }, dayKey: 'arms', weekday: 6 },
+      { name: 'from a sparse layout — trade with the moved day', layout: { arms: 3 }, dayKey: 'cb_a', weekday: 3 },
+      { name: 'legs_b onto Sunday trades with cb_a', layout: {}, dayKey: 'legs_b', weekday: 0 },
+    ]
+    emit('schedule-layout.json', {
+      module: 'schedule/layout',
+      fn: 'parseLayout / effectiveWeekday / dayKeyForWeekday / fullLayout / moveDay / isAuthoredLayout / canonicalLayout',
+      note: 'Against the Helix-5 program (cb_a Sun, legs_a Mon, arms Tue, cb_b Thu, legs_b Fri). A layout is dayKey → weekday; absent means authored. moveDay is an EXCHANGE and always returns the full layout. `byWeekday` is dayKeyForWeekday for 0…6. Swift must parse `rawEntries` (ordered) rather than `raw`, whose key order JSON does not promise; `move.layout` objects carry at most one key so their order is moot. Output pairs preserve insertion order.',
+      cases: [
+        ...raws.map((r) => ({
+          name: `parse: ${r.name}`,
+          input: {
+            raw: r.raw,
+            // The object's OWN key order, which `parseLayout` depends on (first key wins a duplicate weekday) and JSON cannot promise.
+            rawEntries: r.raw && typeof r.raw === 'object' && !Array.isArray(r.raw) ? Object.entries(r.raw as Record<string, unknown>) : null,
+            move: null as null | { layout: DayLayout; dayKey: string; weekday: number },
+          },
+          expected: (() => {
+            const layout = parseLayout(r.raw)
+            return {
+              layout: Object.entries(layout),
+              full: Object.entries(fullLayout(program, layout)),
+              byWeekday: [0, 1, 2, 3, 4, 5, 6].map((w) => dayKeyForWeekday(program, layout, w)),
+              effective: program.days.map((d) => effectiveWeekday(d, layout)),
+              authored: isAuthoredLayout(program, layout),
+              canonical: canonicalLayout(layout),
+              moved: null as null | Array<[string, number]>,
+            }
+          })(),
+        })),
+        ...moves.map((m) => ({
+          name: `move: ${m.name}`,
+          input: { raw: null, rawEntries: null, move: { layout: m.layout, dayKey: m.dayKey, weekday: m.weekday } },
+          expected: (() => {
+            const next = moveDay(program, m.layout, m.dayKey, m.weekday)
+            return {
+              layout: Object.entries(m.layout),
+              full: Object.entries(fullLayout(program, m.layout)),
+              byWeekday: [0, 1, 2, 3, 4, 5, 6].map((w) => dayKeyForWeekday(program, next, w)),
+              effective: program.days.map((d) => effectiveWeekday(d, next)),
+              authored: isAuthoredLayout(program, next),
+              canonical: canonicalLayout(next),
+              moved: Object.entries(next),
+            }
+          })(),
+        })),
+      ],
+    })
+  })
+
+  it('exports rest-day plans, day swaps, placement blocks and permanent moves', () => {
+    // Week of Sun 2026-08-02 … Sat 2026-08-08; the following week starts Sun 08-09.
+    interface SwapIn {
+      overrides: Record<string, string>
+      layout: DayLayout
+      rest: { dateISO: string; horizon: number | null } | null
+      swap: { dateISO: string; dayKey: string; naturalDate: string | null } | null
+      block: { dateISO: string; dayKey: string; logged: LoggedDay[]; sourceDate: string | null } | null
+      permanent: { dayKey: string; weekday: number; todayISO: string; logged: LoggedDay[] } | null
+    }
+    interface SwapOut {
+      rest: (RestDayPlan & { sentence: string }) | null
+      swap: ScheduleWrite[] | null
+      block: { block: SwapBlock | null; sentence: string | null } | null
+      permanent: PermanentMovePlan | null
+    }
+    const cases: Case<SwapIn, SwapOut>[] = []
+    const labelFor = (dayKey: string | null) => (dayKey ? (dayOf(dayKey) as ScheduleDay).label ?? dayKey : 'Rest')
+    const run = (name: string, i: Partial<SwapIn>) => {
+      const input: SwapIn = { overrides: {}, layout: {}, rest: null, swap: null, block: null, permanent: null, ...i }
+      const resolveWith = resolver(input.overrides)
+      const resolve = (d: string) => resolveWith(d, input.layout)
+      const expected: SwapOut = {
+        rest: input.rest ? (() => {
+          const p = planRestDay(input.rest.dateISO, resolve, input.rest.horizon ?? undefined)
+          return { ...p, sentence: describeRestPlan(p) }
+        })() : null,
+        swap: input.swap ? planDaySwap(input.swap.dateISO, input.swap.dayKey, resolve, input.swap.naturalDate) : null,
+        block: input.block ? (() => {
+          const b = blockForPlacement(input.block.dateISO, input.block.dayKey, input.block.logged, input.block.sourceDate)
+          return { block: b, sentence: b ? describeBlock(b, labelFor) : null }
+        })() : null,
+        permanent: input.permanent ? planPermanentMove({ program, layout: input.layout, ...input.permanent, resolveWith }) : null,
+      }
+      cases.push({ name, input, expected })
+    }
+
+    // planRestDay
+    run('rest: Tuesday moves Delts & Arms to Wednesday', { rest: { dateISO: '2026-08-04', horizon: null } })
+    run('rest: Thursday finds Saturday', { rest: { dateISO: '2026-08-06', horizon: null } })
+    run('rest: Friday finds Saturday, never Wednesday', { rest: { dateISO: '2026-08-07', horizon: null } })
+    run('rest: already rest on Wednesday', { rest: { dateISO: '2026-08-05', horizon: null } })
+    run('rest: chained — Wednesday taken, Tuesday goes to Saturday', { overrides: { '2026-08-05': 'legs_a', '2026-08-03': 'rest' }, rest: { dateISO: '2026-08-04', horizon: null } })
+    run('rest: crosses into next week and says so', { overrides: { '2026-08-08': 'cb_b' }, rest: { dateISO: '2026-08-07', horizon: null } })
+    run('rest: no slot inside a 3-day horizon', { overrides: { '2026-08-05': 'legs_a' }, rest: { dateISO: '2026-08-04', horizon: 3 } })
+    run('rest: no slot at the full horizon when every rest day is taken', {
+      overrides: Object.fromEntries(['2026-08-05', '2026-08-08', '2026-08-12', '2026-08-15'].map((d) => [d, 'cb_a'])),
+      rest: { dateISO: '2026-08-04', horizon: null },
+    })
+    run('rest: Saturday rest already', { rest: { dateISO: '2026-08-08', horizon: null } })
+    run('rest: a PPL-era label with no key is unscheduled', { overrides: { '2026-08-04': 'label:Push' }, rest: { dateISO: '2026-08-04', horizon: null } })
+    run('rest: Sunday with the layout moving arms to Wednesday — Saturday is the first free', { layout: { arms: 3 }, rest: { dateISO: '2026-08-02', horizon: null } })
+
+    // planDaySwap
+    run('swap: Friday legs_b onto Wednesday — exchange, Friday becomes rest', { swap: { dateISO: '2026-08-05', dayKey: 'legs_b', naturalDate: '2026-08-07' } })
+    run('swap: Tuesday arms onto Thursday — cb_b takes Tuesday', { swap: { dateISO: '2026-08-06', dayKey: 'arms', naturalDate: '2026-08-04' } })
+    run('swap: follows a day already moved', { overrides: { '2026-08-05': 'arms', '2026-08-04': 'rest' }, swap: { dateISO: '2026-08-08', dayKey: 'arms', naturalDate: '2026-08-04' } })
+    run('swap: already on that date writes one row', { swap: { dateISO: '2026-08-04', dayKey: 'arms', naturalDate: '2026-08-04' } })
+    run('swap: no source at all writes one row', { swap: { dateISO: '2026-08-05', dayKey: 'upper_a', naturalDate: null } })
+    run('swap: target is a PPL label with no key — source gets rest', { overrides: { '2026-08-05': 'label:Push' }, swap: { dateISO: '2026-08-05', dayKey: 'legs_b', naturalDate: '2026-08-07' } })
+
+    // blockForPlacement + describeBlock
+    const logged: LoggedDay[] = [{ date: '2026-08-04', dayKey: 'arms' }, { date: '2026-08-03', dayKey: null }]
+    run('block: target logged a different day', { block: { dateISO: '2026-08-04', dayKey: 'legs_b', logged, sourceDate: '2026-08-07' } })
+    run('block: target logged the same day is a no-op', { block: { dateISO: '2026-08-04', dayKey: 'arms', logged, sourceDate: '2026-08-07' } })
+    run('block: source logged', { block: { dateISO: '2026-08-06', dayKey: 'arms', logged, sourceDate: '2026-08-04' } })
+    run('block: source logged with a null key', { block: { dateISO: '2026-08-06', dayKey: 'legs_a', logged, sourceDate: '2026-08-03' } })
+    run('block: source equals target is not a source block', { block: { dateISO: '2026-08-04', dayKey: 'arms', logged, sourceDate: '2026-08-04' } })
+    run('block: nothing logged', { block: { dateISO: '2026-08-06', dayKey: 'arms', logged: [], sourceDate: '2026-08-04' } })
+    run('block: null source', { block: { dateISO: '2026-08-06', dayKey: 'arms', logged, sourceDate: null } })
+
+    // planPermanentMove
+    run('permanent: forward-only change needs no writes (today Sunday)', { permanent: { dayKey: 'arms', weekday: 3, todayISO: '2026-08-02', logged: [] } })
+    run('permanent: pins the spent Tuesday when arms moves to Wednesday on Thursday', { permanent: { dayKey: 'arms', weekday: 3, todayISO: '2026-08-06', logged: [] } })
+    run('permanent: trade pins both spent days', { permanent: { dayKey: 'legs_b', weekday: 0, todayISO: '2026-08-05', logged: [] } })
+    run('permanent: refused — target date logged another day', { permanent: { dayKey: 'legs_b', weekday: 2, todayISO: '2026-08-06', logged: [{ date: '2026-08-04', dayKey: 'arms' }] } })
+    run('permanent: refused — source logged', { permanent: { dayKey: 'arms', weekday: 3, todayISO: '2026-08-06', logged: [{ date: '2026-08-04', dayKey: 'arms' }] } })
+    run('permanent: an override on a past day is pinned as it was', { overrides: { '2026-08-04': 'rest' }, permanent: { dayKey: 'legs_a', weekday: 2, todayISO: '2026-08-06', logged: [] } })
+    run('permanent: a move that changes nothing in the past', { permanent: { dayKey: 'cb_b', weekday: 6, todayISO: '2026-08-04', logged: [] } })
+    run('permanent: on a Saturday every day is spent', { permanent: { dayKey: 'arms', weekday: 3, todayISO: '2026-08-08', logged: [] } })
+
+    emit('schedule-swap.json', {
+      module: 'schedule/swap',
+      fn: 'planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove',
+      note: 'The resolver is the app\'s layering, rebuilt in the test: `overrides[date]` (a dayKey; "rest"; "label:X" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Helix-5 day whose effective weekday (under `layout`) is the date\'s Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, "Rest" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.',
+      cases,
+    })
+  })
+
+  it('exports the Sunday-anchored week helpers and the short label', () => {
+    const dates = ['2026-08-02', '2026-08-05', '2026-08-08', '2026-08-31', '2026-12-31', '2027-01-01', '2026-02-28', '2028-02-29', '2026-09-01', '2026-01-04']
+    emit('schedule-week.json', {
+      module: 'schedule/swap',
+      fn: 'dateForWeekday / weekDatesOf / shortDayLabel',
+      note: 'Sunday-anchored regardless of the display preference. shortDayLabel is en-GB "Wed 6 Aug" (weekday short, day numeric, month short — September is "Sept").',
+      cases: dates.map((d) => ({
+        name: d,
+        input: { dateISO: d },
+        expected: { week: weekDatesOf(d), forWeekday: [0, 1, 2, 3, 4, 5, 6].map((w) => dateForWeekday(d, w)), label: shortDayLabel(d), weekLabels: weekDatesOf(d).map(shortDayLabel) },
+      })),
+    })
+  })
+})
+
+describe('golden vectors — charts', () => {
+  it('exports the intensity calendar', () => {
+    type Entry = [string, number]
+    const cases: Case<{ volume: Entry[]; days: number; todayISO: string }, CalendarModel | null>[] = []
+    const push = (name: string, volume: Entry[], days: number, todayISO: string) =>
+      cases.push({ name, input: { volume, days, todayISO }, expected: buildIntensityCalendar(new Map(volume), days, todayISO) })
+    const week = (start: string, vols: number[]): Entry[] => vols.map((v, i) => [isoAddDays(start, i), v] as Entry).filter(([, v]) => v > 0)
+    push('empty is null', [], 28, '2026-08-05')
+    push('mid-week — future days are not elapsed', [['2026-08-02', 8000], ['2026-08-03', 12000], ['2026-08-04', 6000]], 28, '2026-08-05')
+    push('a four-day streak', week('2026-08-02', [5000, 5000, 5000, 5000, 0, 3000, 0]), 14, '2026-08-08')
+    push('streak of one for a single day', [['2026-08-04', 9000]], 7, '2026-08-08')
+    push('rows outside the window are ignored', [['2026-01-01', 99999], ['2026-08-04', 9000], ['2026-08-20', 500]], 14, '2026-08-08')
+    push('caps at 16 weeks', [['2026-08-04', 9000], ['2026-01-06', 4000]], 365, '2026-08-08')
+    push('at least one week for a two-day range', [['2026-08-07', 9000]], 2, '2026-08-08')
+    push('zero volumes do not count as active but set no max above 1', [['2026-08-04', 0], ['2026-08-05', 0]], 14, '2026-08-08')
+    push('a tie for hardest keeps the earlier date', [['2026-08-03', 7000], ['2026-08-05', 7000]], 14, '2026-08-08')
+    push('exactly 7 days is one week', week('2026-07-26', [1, 2, 3, 4, 5, 6, 7]), 7, '2026-08-01')
+    push('eight days is two weeks', week('2026-07-26', [1, 2, 3, 4, 5, 6, 7]), 8, '2026-08-01')
+    push('today on a Sunday', [['2026-08-01', 5000], ['2026-08-02', 6000]], 21, '2026-08-02')
+    push('a long streak across a week boundary', week('2026-07-29', [4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 0, 4000]), 28, '2026-08-08')
+    emit('intensity-calendar.json', {
+      module: 'charts/intensityCalendar',
+      fn: 'buildIntensityCalendar',
+      note: '`volume` is the Map as an ordered array of [date, kg]. Null when the map is empty. Cells after today are `elapsed: false`. avgLoad divides by ELAPSED days in the rendered window. Streak = longest run of consecutive active (v > 0) days inside the window. Hardest ties keep the earlier date.',
+      cases,
+    })
+  })
+
+  it('exports the muscle aggregate and its canonical map', () => {
+    emit('muscle-map.json', {
+      module: 'charts/muscleAggregate',
+      fn: 'MUSCLE_MAP / MUSCLE_GROUPS',
+      note: 'Hevy tag → one of six display groups. Ordered as written.',
+      cases: [{ name: 'the table', input: null, expected: { map: Object.entries(MUSCLE_MAP), groups: [...MUSCLE_GROUPS] } }],
+    })
+    const cases: Case<{ rows: MuscleSetRow[]; todayISO: string }, MuscleAggregate>[] = []
+    const push = (name: string, rows: MuscleSetRow[], todayISO = '2026-08-08') =>
+      cases.push({ name, input: { rows, todayISO }, expected: aggregateMuscleSets(rows, todayISO) })
+    push('empty', [])
+    push('one bilateral set credits two groups once each', [
+      { id: 'a', weightKg: 100, reps: 10, pairId: null, groups: ['Legs', 'Core'], date: '2026-08-03' },
+    ])
+    push('a unilateral pair is ONE set at the weaker side', [
+      { id: 'l', weightKg: 5, reps: 10, pairId: 'p1', side: 'L', groups: ['Shoulders'], date: '2026-08-04' },
+      { id: 'r', weightKg: 5, reps: 14, pairId: 'p1', side: 'R', groups: ['Shoulders'], date: '2026-08-04' },
+    ])
+    push('a pair without sides is two rows at logged tonnage but one set', [
+      { id: 'l', weightKg: 5, reps: 10, pairId: 'p1', groups: ['Shoulders'], date: '2026-08-04' },
+      { id: 'r', weightKg: 5, reps: 14, pairId: 'p1', groups: ['Shoulders'], date: '2026-08-04' },
+    ])
+    push('a lone side scores as logged', [
+      { id: 'l', weightKg: 6, reps: 12, pairId: 'p1', side: 'L', groups: ['Arms'], date: '2026-08-04' },
+    ])
+    push('a malformed three-row bucket scores as logged', [
+      { id: 'a', weightKg: 6, reps: 12, pairId: 'p1', side: 'L', groups: ['Arms'], date: '2026-08-04' },
+      { id: 'b', weightKg: 6, reps: 12, pairId: 'p1', side: 'R', groups: ['Arms'], date: '2026-08-04' },
+      { id: 'c', weightKg: 6, reps: 12, pairId: 'p1', side: 'R', groups: ['Arms'], date: '2026-08-04' },
+    ])
+    push('duplicate group tags count once', [
+      { id: 'a', weightKg: 50, reps: 10, pairId: null, groups: ['Legs', 'Legs', 'Legs'], date: '2026-08-04' },
+    ])
+    push('rows with no groups are skipped', [
+      { id: 'a', weightKg: 50, reps: 10, pairId: null, groups: [], date: '2026-08-04' },
+    ])
+    push('a three-week series with recency and week bucketing', [
+      { id: 'a', weightKg: 80, reps: 8, pairId: null, groups: ['Chest', 'Arms'], date: '2026-07-20' },
+      { id: 'b', weightKg: 60, reps: 10, pairId: null, groups: ['Back'], date: '2026-07-21' },
+      { id: 'c', weightKg: 100, reps: 8, pairId: null, groups: ['Legs'], date: '2026-07-27' },
+      { id: 'd', weightKg: 0, reps: 15, pairId: null, groups: ['Core'], date: '2026-07-27' },
+      { id: 'e', weightKg: 80, reps: 9, pairId: null, groups: ['Chest', 'Arms'], date: '2026-08-03' },
+      { id: 'f', weightKg: 7.5, reps: 12, pairId: 'p', side: 'L', groups: ['Shoulders'], date: '2026-08-05' },
+      { id: 'g', weightKg: 7.5, reps: 11, pairId: 'p', side: 'R', groups: ['Shoulders'], date: '2026-08-05' },
+      { id: 'h', weightKg: 20, reps: 12, pairId: null, groups: ['Shoulders'], date: '2026-08-08' },
+      { id: 'i', weightKg: 40, reps: 12.5, pairId: null, groups: ['Back'], date: '2026-08-02' },
+    ])
+    push('zero weight and zero reps are tonnage 0, sets still counted', [
+      { id: 'a', weightKg: 0, reps: 0, pairId: null, groups: ['Core'], date: '2026-08-04' },
+    ])
+    push('a group outside the six is aggregated but not reported', [
+      { id: 'a', weightKg: 10, reps: 10, pairId: null, groups: ['Neck'], date: '2026-08-04' },
+    ])
+    push('rounding of tonnage at .5', [
+      { id: 'a', weightKg: 2.5, reps: 9, pairId: null, groups: ['Arms'], date: '2026-08-04' },   // 22.5 → 23
+      { id: 'b', weightKg: 1.25, reps: 9, pairId: null, groups: ['Core'], date: '2026-08-04' },  // 11.25 → 11
+    ])
+    push('a future date gives a negative daysSince', [
+      { id: 'a', weightKg: 10, reps: 10, pairId: null, groups: ['Chest'], date: '2026-08-12' },
+    ])
+    emit('muscle-aggregate.json', {
+      module: 'charts/muscleAggregate',
+      fn: 'aggregateMuscleSets',
+      note: 'Six stats rows always, in MUSCLE_GROUPS order; volume is Math.round of the sum; daysSince is null with no rows. A unilateral pair (shared pairId AND sides L+R, exactly two rows) is ONE set and ONE tonnage at the weaker side. `weekly` is Sunday-anchored weeks ascending, `week` = MM-DD, every group present.',
+      cases,
+    })
+  })
+
+  it('exports axis scaling', () => {
+    type V = Array<number | null>
+    interface In { values: V; nice: NiceDomainOptions | null; tight: TightDomainOptions | null; compact: number | null; axis: { value: number; span: number } | null }
+    interface Out { nice: [number, number] | null; tight: [number, number] | null; compact: string | null; axis: string | null }
+    const cases: Case<In, Out>[] = []
+    const dom = (name: string, values: V, nice: NiceDomainOptions | null = {}, tight: TightDomainOptions | null = {}) =>
+      cases.push({ name, input: { values, nice, tight, compact: null, axis: null }, expected: { nice: nice ? niceDomain(values, nice) : null, tight: tight ? tightDomain(values, tight) : null, compact: null, axis: null } })
+    dom('weekly volume 8–12 t', [8400, 9100, 11800, 12000, 10400])
+    dom('zero-based', [8400, 9100, 11800], { zeroBased: true }, null)
+    dom('flat series', [9000, 9000, 9000])
+    dom('flat at zero', [0, 0])
+    dom('empty', [])
+    dom('all null', [null, null])
+    dom('nulls among values', [null, 70.2, 69.8, null, 70.5])
+    dom('hardMin 0 on a count axis', [1, 2, 3], { hardMin: 0 }, { hardMin: 0 })
+    dom('hardMin above lo on tight', [100, 101], null, { hardMin: 100.5 })
+    dom('wide padding', [10, 20], { padPct: 0.5 }, { padPct: 0.5 })
+    dom('single value', [3100])
+    dom('negative values', [-5, -2])
+    dom('span floor — 12400/12500/12600', [12400, 12500, 12600])
+    dom('span floor — quarter kilo microload stays flat', [3000, 3000.25, 3000.5])
+    dom('span floor — five kilos on three tonnes', [3000, 3005])
+    dom('custom minSpanPct', [3000, 3005], null, { minSpanPct: 0.05 })
+    dom('tiny values', [0.001, 0.002])
+    dom('huge values', [1e9, 2e9])
+    dom('bodyweight kg', [66.2, 66.0, 65.9, 65.7, 65.8])
+    dom('a domain narrower than 1e-6 collapses and is re-opened', [1e-9, 2e-9], null, {})
+    for (const v of [0, 999, 1000, 1049, 1050, 8400, 9100, 9950, 9999, 10000, 10499, 10500, 12345, 99999, -8400, -12000, NaN, Infinity, 0.4, 0.5, 1.5, 2.5]) {
+      cases.push({ name: `compactKg ${v}`, input: { values: [], nice: null, tight: null, compact: Number.isFinite(v) ? v : null, axis: null }, expected: { nice: null, tight: null, compact: compactKg(v), axis: null } })
+    }
+    const axisGrid: Array<[number, number]> = [[12335, 280], [12615, 280], [12000, 2000], [12000, 1999], [9100, 200], [9100, 199], [950, 3], [950, 1], [0, 0], [123456, 100], [1234.5, 50], [NaN, 100]]
+    for (const [value, span] of axisGrid) {
+      cases.push({ name: `axisBound ${value} span ${span}`, input: { values: [], nice: null, tight: null, compact: null, axis: { value: Number.isFinite(value) ? value : NaN, span } }, expected: { nice: null, tight: null, compact: null, axis: axisBound(value, span) } })
+    }
+    emit('chart-scale.json', {
+      module: 'charts/scale',
+      fn: 'niceDomain / tightDomain / compactKg / axisBound',
+      note: 'A null option object means "not exercised". Non-finite inputs serialise as null (compactKg(null) must be "—"; an axisBound value of null is NaN). axisBound falls back to toLocaleString (en-US grouping) when the span is under twice the compactKg rounding.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — widget derivations', () => {
+  type Row = { date: string; value: number | null }
+
+  it('exports the series helpers', () => {
+    interface In { rows: Row[]; limit: number; combine: 'sum' | 'max' | null; from: string | null; to: string | null; todayISO: string | null; shift: { date: string; days: number } | null }
+    interface Out { trend: TrendPoint[]; daily: TrendPoint[] | null; mean: number | null; latest: { value: number | null; delta: number | null }; vital: { value: number | null; baseline: number | null; trend: TrendPoint[] } | null; shifted: string | null }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, rows: Row[], limit: number, extra: Partial<In> = {}) => {
+      const input: In = { rows, limit, combine: null, from: null, to: null, todayISO: null, shift: null, ...extra }
+      const trend = trendPoints(rows, limit)
+      cases.push({
+        name, input,
+        expected: {
+          trend,
+          daily: input.combine ? dailySeries(rows, { limit, combine: input.combine }) : null,
+          mean: input.from && input.to ? meanBetween(trend, input.from, input.to) : null,
+          latest: latestDelta(trend),
+          vital: input.todayISO ? vitalBlock(rows, input.todayISO, { trendLimit: limit }) : null,
+          shifted: input.shift ? shiftISO(input.shift.date, input.shift.days) : null,
+        },
+      })
+    }
+    const weigh: Row[] = [
+      { date: '2026-08-01', value: 66.25 }, { date: '2026-08-03', value: 66.1 }, { date: '2026-08-02', value: null },
+      { date: '2026-08-04', value: 66.1 }, { date: '2026-08-05', value: 66.1 }, { date: '2026-08-06', value: 65.87 }, { date: '2026-08-07', value: 65.9 },
+    ]
+    push('weigh-ins sorted, nulls dropped, carried-forward duplicates skipped for the delta', weigh, 14, { from: '2026-08-01', to: '2026-08-05', todayISO: '2026-08-07' })
+    push('limit keeps the newest', weigh, 3, { from: '2026-08-01', to: '2026-08-08' })
+    push('empty', [], 14, { from: '2026-08-01', to: '2026-08-08', todayISO: '2026-08-07' })
+    push('a single reading has no delta', [{ date: '2026-08-01', value: 70 }], 14, { todayISO: '2026-08-01' })
+    push('sub-0.05 movement is the same reading', [{ date: '2026-08-01', value: 70 }, { date: '2026-08-02', value: 70.04 }], 14)
+    push('exactly 0.05 counts', [{ date: '2026-08-01', value: 70 }, { date: '2026-08-02', value: 70.05 }], 14)
+    push('rounding to two places at the half', [{ date: '2026-08-01', value: 66.125 }, { date: '2026-08-02', value: 66.135 }, { date: '2026-08-03', value: 1.005 }], 14)
+    push('water arrives one glass at a time — sum', [
+      { date: '2026-08-01', value: 250 }, { date: '2026-08-01', value: 500 }, { date: '2026-08-02', value: null }, { date: '2026-08-03', value: 300 }, { date: '2026-08-03', value: 200 },
+    ], 14, { combine: 'sum' })
+    push('two sleep rows on one night — max', [
+      { date: '2026-08-01', value: 420 }, { date: '2026-08-01', value: 450 }, { date: '2026-08-03', value: 300 },
+    ], 14, { combine: 'max' })
+    push('daily limit keeps newest days', [
+      { date: '2026-08-01', value: 1 }, { date: '2026-08-02', value: 2 }, { date: '2026-08-03', value: 3 },
+    ], 2, { combine: 'sum' })
+    push('vitals — today excluded from its own baseline, max per day', [
+      { date: '2026-08-01', value: 52 }, { date: '2026-08-02', value: 54 }, { date: '2026-08-03', value: null }, { date: '2026-08-04', value: 53 }, { date: '2026-08-04', value: 55 }, { date: '2026-08-05', value: 60 },
+    ], 14, { todayISO: '2026-08-05' })
+    push('vitals — no reading today', [{ date: '2026-08-01', value: 52 }, { date: '2026-08-02', value: 54 }], 14, { todayISO: '2026-08-05' })
+    push('vitals — only today', [{ date: '2026-08-05', value: 52 }], 14, { todayISO: '2026-08-05' })
+    push('vitals — baseline rounds to one place', [{ date: '2026-08-01', value: 52 }, { date: '2026-08-02', value: 53 }, { date: '2026-08-03', value: 55 }], 14, { todayISO: '2026-08-05' })
+    push('meanBetween excludes the upper bound', [{ date: '2026-08-01', value: 10 }, { date: '2026-08-02', value: 20 }, { date: '2026-08-03', value: 30 }], 14, { from: '2026-08-01', to: '2026-08-03' })
+    push('meanBetween empty window', [{ date: '2026-08-01', value: 10 }], 14, { from: '2026-08-02', to: '2026-08-05' })
+    push('shift forward across a month', [], 1, { shift: { date: '2026-08-30', days: 3 } })
+    push('shift back across a year', [], 1, { shift: { date: '2027-01-02', days: -5 } })
+    push('shift zero', [], 1, { shift: { date: '2026-02-28', days: 0 } })
+    push('shift over a leap day', [], 1, { shift: { date: '2028-02-28', days: 2 } })
+    push('limit zero yields nothing', weigh, 0)
+    emit('widget-series.json', {
+      module: 'widget/derive',
+      fn: 'trendPoints / dailySeries / meanBetween / latestDelta / vitalBlock / shiftISO',
+      note: 'Series are oldest-first, values rounded to two places, gaps left as gaps. latestDelta compares against the newest reading that differs by ≥ 0.05. vitalBlock\'s baseline excludes today and rounds to one place. Null fields mean "not exercised".',
+      cases,
+    })
+  })
+
+  it('exports the training calendar, streak, program day and weekly volume', () => {
+    interface In { days: string[]; sessions: CalendarSession[]; schedule: Record<string, { dayKey: string | null; scheduled: boolean; label?: string | null }>; todayISO: string; weekStartDay: number; limit: number }
+    interface Out { calendar: ReturnType<typeof calendarDays>; streak: { current: number; best: number }; programDay: number; weekly: TrendPoint[] }
+    const cases: Case<In, Out>[] = []
+    const program = PROGRAMS[DEFAULT_PROGRAM_ID]
+    const helix5 = (d: string) => {
+      const day = program.days.find((x) => x.weekday === utcWeekday(d))
+      return day ? { dayKey: day.key, scheduled: true, label: day.label } : { dayKey: null, scheduled: false, label: null }
+    }
+    const span = (from: string, n: number) => Array.from({ length: n }, (_, i) => isoAddDays(from, i))
+    const push = (name: string, days: string[], sessions: CalendarSession[], todayISO: string, schedule?: In['schedule'], weekStartDay = 0, limit = 8) => {
+      const sched = schedule ?? Object.fromEntries(days.map((d) => [d, helix5(d)]))
+      const scheduledFor = (d: string) => sched[d] ?? { dayKey: null, scheduled: false }
+      const cal = calendarDays(days, sessions, scheduledFor)
+      cases.push({
+        name, input: { days, sessions, schedule: sched, todayISO, weekStartDay, limit },
+        expected: {
+          calendar: cal,
+          streak: streakFrom(cal, todayISO),
+          programDay: programDayCount(todayISO),
+          weekly: weeklyVolume(sessions, (d) => weekStartOf(d, weekStartDay), limit),
+        },
+      })
+    }
+    const wk = span('2026-08-02', 14)
+    push('a clean fortnight', wk, [
+      { date: '2026-08-02', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: 9000 }, { date: '2026-08-04', volumeKg: 5000 },
+      { date: '2026-08-06', volumeKg: 7500 }, { date: '2026-08-07', volumeKg: 9500 }, { date: '2026-08-09', volumeKg: 8100 },
+      { date: '2026-08-10', volumeKg: 9100 }, { date: '2026-08-11', volumeKg: 5100 },
+    ], '2026-08-12')
+    push('today scheduled but not yet logged does not break the streak', wk.slice(0, 7), [
+      { date: '2026-08-02', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: 9000 },
+    ], '2026-08-04')
+    push('today logged counts', wk.slice(0, 7), [
+      { date: '2026-08-02', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: 9000 }, { date: '2026-08-04', volumeKg: 1000 },
+    ], '2026-08-04')
+    push('a missed scheduled day breaks it; best exceeds current', wk, [
+      { date: '2026-08-02', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: 9000 }, { date: '2026-08-04', volumeKg: 5000 }, { date: '2026-08-06', volumeKg: 7500 },
+      { date: '2026-08-10', volumeKg: 9100 },
+    ], '2026-08-11')
+    push('two sessions on one date sum; a null volume stays null', wk.slice(0, 7), [
+      { date: '2026-08-02', volumeKg: 3000 }, { date: '2026-08-02', volumeKg: 4000 }, { date: '2026-08-03', volumeKg: null }, { date: '2026-08-05', volumeKg: 2000 },
+    ], '2026-08-08')
+    push('a session on a rest day is logged but unscheduled', wk.slice(0, 7), [{ date: '2026-08-05', volumeKg: 2000 }], '2026-08-08')
+    push('future scheduled days owe nothing', wk, [
+      { date: '2026-08-02', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: 9000 },
+    ], '2026-08-03')
+    push('empty history', wk.slice(0, 7), [], '2026-08-08')
+    push('before the cut opened — program day 0', wk.slice(0, 3), [], '2026-07-01')
+    push('the cut\'s first day is day 1', wk.slice(0, 3), [], '2026-07-15')
+    push('a label omitted by the caller defaults to null', ['2026-08-02', '2026-08-03'], [{ date: '2026-08-02', volumeKg: 100 }], '2026-08-03', {
+      '2026-08-02': { dayKey: 'cb_a', scheduled: true }, '2026-08-03': { dayKey: null, scheduled: false, label: null },
+    })
+    push('weekly volume — Monday-start weeks, limit 2', span('2026-07-20', 21), [
+      { date: '2026-07-20', volumeKg: 8000 }, { date: '2026-07-26', volumeKg: 1000 }, { date: '2026-07-27', volumeKg: 9000 }, { date: '2026-08-03', volumeKg: null }, { date: '2026-08-09', volumeKg: 500 },
+    ], '2026-08-09', undefined, 1, 2)
+    push('weekly volume — a week with sessions but no tonnage is 0, a week without sessions is omitted', span('2026-07-19', 28), [
+      { date: '2026-07-20', volumeKg: 8000 }, { date: '2026-08-03', volumeKg: null }, { date: '2026-08-04', volumeKg: null },
+    ], '2026-08-15', undefined, 0, 8)
+    emit('widget-calendar.json', {
+      module: 'widget/derive + training/streak',
+      fn: 'calendarDays / streakFrom / programDayCount / weeklyVolume',
+      note: '`schedule` is the injected scheduledFor as a map (a missing date is {dayKey: null, scheduled: false}). streakFrom skips unscheduled days, does not count an unlogged today or any future day against you. programDayCount counts from HELIX_CUT_START (2026-07-15 = day 1), 0 before it. weeklyVolume buckets by weekStartOf(date, weekStartDay).',
+      cases,
+    })
+  })
+
+  it('exports the cardio block', () => {
+    type Opts = { today: string; weekStart: string; zone2MinMinutes: number; weekTarget: number; trendDays: number }
+    const cases: Case<{ rows: WidgetCardioRow[]; opts: Opts }, ReturnType<typeof cardioBlock>>[] = []
+    const push = (name: string, rows: WidgetCardioRow[], opts: Partial<Opts> = {}) => {
+      const o: Opts = { today: '2026-08-06', weekStart: '2026-08-02', zone2MinMinutes: ZONE2_MIN_MINUTES, weekTarget: ZONE2_WEEKLY_TARGET, trendDays: 7, ...opts }
+      cases.push({ name, input: { rows, opts: o }, expected: cardioBlock(rows, { ...o, paceOf: paceMinPerKm }) })
+    }
+    const rows: WidgetCardioRow[] = [
+      { date: '2026-07-30', kind: 'walk', distance_m: 4000, duration_min: 45 },
+      { date: '2026-08-02', kind: 'run', distance_m: 5000, duration_min: 28 },
+      { date: '2026-08-03', kind: 'walk', distance_m: 2000, duration_min: 20 },       // exactly at the minimum
+      { date: '2026-08-04', kind: null, distance_m: null, duration_min: 19.5 },       // under
+      { date: '2026-08-05', kind: 'bike', distance_m: 12000, duration_min: 35 },
+      { date: '2026-08-05', kind: 'walk', distance_m: 1500, duration_min: 15 },       // same day, later
+      { date: '2026-08-09', kind: 'run', distance_m: 5000, duration_min: 27 },        // future
+    ]
+    push('a normal week', rows)
+    push('the newest at or before today wins; the last logged that day', rows, { today: '2026-08-05' })
+    push('nothing logged', [])
+    push('a row with no kind falls back to "Cardio"', [{ date: '2026-08-04', kind: null, distance_m: null, duration_min: 30 }])
+    push('a row with no distance has no pace', [{ date: '2026-08-04', kind: 'walk', distance_m: null, duration_min: 30 }])
+    push('every row in the future', [{ date: '2026-08-09', kind: 'run', distance_m: 5000, duration_min: 27 }])
+    push('minutes round to a whole', [{ date: '2026-08-04', kind: 'walk', distance_m: 1000, duration_min: 10.4 }, { date: '2026-08-05', kind: 'walk', distance_m: 1000, duration_min: 10.1 }])
+    push('a different Zone-2 minimum and target', rows, { zone2MinMinutes: 30, weekTarget: 3, trendDays: 3 })
+    push('week starts today', rows, { weekStart: '2026-08-06' })
+    emit('widget-cardio.json', {
+      module: 'widget/derive',
+      fn: 'cardioBlock',
+      note: 'paceOf is lib/cardio/metrics paceMinPerKm. Zone 2 is a COUNT of sessions ≥ zone2MinMinutes inside [weekStart, today]. Trend is per-day SUM of minutes, newest `trendDays` days. `last` is the newest row at or before today; on a date tie the later-in-input row wins (stable sort).',
+      cases,
+    })
+  })
+
+  it('exports the record and 1RM blocks', () => {
+    const ledger: LedgerRow[] = [
+      { exercise_key: 'Leg Press', axis: 'weight', value: 200, reps: 8, achieved_on: '2026-08-05' },
+      { exercise_key: 'Leg Press', axis: 'weight', value: 60, reps: 8, achieved_on: '2026-08-06' },         // below the asserted floor (80) — dropped
+      { exercise_key: 'Leg Press', axis: 'weight', value: 80, reps: 8, achieved_on: '2026-08-07' },         // exactly at the floor — kept
+      { exercise_key: 'Lat Pulldown', axis: 'e1rm', value: 50, reps: 8, achieved_on: '2026-08-08' },       // below the e1rm floor (67.81) — dropped
+      { exercise_key: 'Lat Pulldown', axis: 'e1rm', value: 92.345, reps: 8, achieved_on: '2026-08-04' },
+      { exercise_key: 'Lat Pulldown', axis: 'volume', value: 1000, reps: null, achieved_on: '2026-08-04' },
+      { exercise_key: 'Nobody Knows', axis: 'weight', value: 10, reps: 1, achieved_on: '2026-08-07' },     // no book → kept
+      { exercise_key: 'Leg Press', axis: 'streak', value: 4, reps: null, achieved_on: '2026-08-03' },       // unknown axis passes
+      { exercise_key: 'Leg Press', axis: 'weight', value: null, reps: 8, achieved_on: '2026-08-08' },
+      { exercise_key: 'Leg Press', axis: 'weight', value: 210, reps: 8, achieved_on: null },
+      { exercise_key: 'Chest Press', axis: 'reps', value: 15, reps: 15, achieved_on: '2026-08-02' },
+    ]
+    const floors = ['Leg Press', 'Lat Pulldown', 'Chest Press'].map((k) => ({ key: k, floor: prFloorFor(k) ?? null }))
+    const recCases = [
+      { name: 'newest first, floored by the book, default limit', rows: ledger, limit: undefined as number | undefined },
+      { name: 'limit 10', rows: ledger, limit: 10 },
+      { name: 'limit 1', rows: ledger, limit: 1 },
+      { name: 'empty', rows: [] as LedgerRow[], limit: undefined as number | undefined },
+    ].map((c) => ({ name: c.name, input: { rows: c.rows, limit: c.limit ?? null }, expected: { records: c.limit == null ? topRecords(c.rows) : topRecords(c.rows, c.limit), floors } }))
+    emit('widget-records.json', {
+      module: 'widget/derive',
+      fn: 'topRecords',
+      note: 'Rows below prFloorFor(exercise)[axis] are DROPPED, not clamped; an axis the book has no key for passes. Values round to two places. `floors` records what prFloorFor answered for the three keys used, so a book edit shows up here.',
+      cases: recCases,
+    })
+
+    const sets: WidgetSetRow[] = [
+      { exercise: 'Leg Press', day: '2026-07-01', weightKg: 180, reps: 10, est1rmKg: 240, setType: 'normal' },
+      { exercise: 'Leg Press', day: '2026-07-08', weightKg: 190, reps: 8, est1rmKg: null, setType: 'normal' },
+      { exercise: 'Leg Press', day: '2026-07-08', weightKg: 170, reps: 12, setType: 'normal' },
+      { exercise: 'Leg Press', day: '2026-08-05', weightKg: 200, reps: 8, est1rmKg: 253.33, setType: 'normal' },
+      { exercise: 'Leg Press', day: '2026-08-05', weightKg: 100, reps: 15, setType: 'warmup' },
+      { exercise: 'Lat Pulldown', day: '2026-08-04', weightKg: 70, reps: 10, est1rmKg: 0, setType: 'normal' },
+      { exercise: 'Lat Pulldown', day: '2026-08-04', weightKg: 75, reps: 8, setType: 'dropset' },
+      { exercise: 'Plank', day: '2026-08-04', weightKg: 0, reps: 60, est1rmKg: 0, setType: 'normal' },
+      { exercise: 'Pull-Up', day: '2026-08-04', weightKg: null, reps: 10, est1rmKg: null },
+      { exercise: 'Chest Press', day: '2026-08-05', weightKg: 60, reps: 10, setType: 'normal' },
+      { exercise: 'Chest Press', day: '2026-08-05', weightKg: 200, reps: 5, setType: 'warmup' },    // would top the day if warm-ups counted
+      { exercise: 'Chest Press', day: '2026-07-10', weightKg: 55, reps: 10, setType: 'normal' },
+      { exercise: 'Chest Press', day: '2026-07-09', weightKg: 58, reps: 10, setType: 'normal' },
+      { exercise: 'Hammer Curl', day: '2026-08-05', weightKg: 14, reps: 12, est1rmKg: 19.6, setType: 'normal' },
+      { exercise: 'Hammer Curl', day: '2026-08-05', weightKg: 14, reps: 12, est1rmKg: 19.6, setType: 'failure' },
+    ]
+    const e1Cases = [
+      { name: 'four weeks, default limit', opts: { asOf: '2026-08-06' } },
+      { name: 'limit 10', opts: { asOf: '2026-08-06', limit: 10 } },
+      { name: 'a seven-day window', opts: { asOf: '2026-08-06', windowDays: 7, limit: 10 } },
+      { name: 'as-of before everything', opts: { asOf: '2026-06-01', limit: 10 } },
+      { name: 'limit 0', opts: { asOf: '2026-08-06', limit: 0 } },
+    ].map((c) => ({ name: c.name, input: { sets, asOf: c.opts.asOf, windowDays: c.opts.windowDays ?? null, limit: c.opts.limit ?? null }, expected: e1rmTrends(sets, c.opts) }))
+    e1Cases.push({ name: 'empty', input: { sets: [], asOf: '2026-08-06', windowDays: null, limit: null }, expected: e1rmTrends([], { asOf: '2026-08-06' }) })
+    emit('widget-e1rm.json', {
+      module: 'widget/derive',
+      fn: 'e1rmTrends',
+      note: 'Per-exercise per-DAY best of (stored est1rmKg when > 0, else Epley). Only working sets (isWorkingSet). Baseline = newest day at or before asOf − windowDays (default 28); null delta without one. Sorted most-recently-trained first, heaviest breaks the tie; limit default 3. Values round to one place.',
+      cases: e1Cases,
+    })
+  })
+
+  it('exports volume by family and the family fold', () => {
+    const famCases = LANDMARK_MUSCLES.map((m) => ({ name: m, input: { muscle: m }, expected: familyOf(m) }))
+    emit('muscle-family.json', {
+      module: 'theme/muscleHue',
+      fn: 'familyOf',
+      note: 'Landmark muscle → one of six families. Colours are NOT ported.',
+      cases: famCases,
+    })
+    const cases: Case<{ sets: WidgetSetRow[] }, WidgetFamilyVolume[]>[] = []
+    const push = (name: string, sets: WidgetSetRow[]) => cases.push({ name, input: { sets }, expected: volumeByFamily(sets) })
+    push('empty', [])
+    push('a leg press credits Legs once in full', [{ exercise: 'Leg Press', day: '2026-08-05', weightKg: 200, reps: 8 }])
+    push('a lat pulldown — Back primary, Arms half', [{ exercise: 'Lat Pulldown', day: '2026-08-04', weightKg: 70, reps: 10 }])
+    push('an unloaded set counts a set with no tonnage', [{ exercise: 'Hanging Knee Raise', day: '2026-08-04', weightKg: 0, reps: 15 }])
+    push('a warm-up counts', [{ exercise: 'Chest Press (Machine)', day: '2026-08-05', weightKg: 40, reps: 12, setType: 'warmup' }])
+    push('unknown lift contributes nothing', [{ exercise: 'Mystery Machine', day: '2026-08-05', weightKg: 40, reps: 12 }])
+    push('a full Upper A', [
+      { exercise: 'Chest Press (Machine)', day: '2026-08-02', weightKg: 60, reps: 10 },
+      { exercise: 'Chest Press (Machine)', day: '2026-08-02', weightKg: 60, reps: 9 },
+      { exercise: 'Lat Pulldown (Neutral Grip)', day: '2026-08-02', weightKg: 70, reps: 10 },
+      { exercise: 'Seated Cable Row (Wide Grip)', day: '2026-08-02', weightKg: 55, reps: 12 },
+      { exercise: 'Pec Deck', day: '2026-08-02', weightKg: 50, reps: 12 },
+      { exercise: 'Face Pull', day: '2026-08-02', weightKg: 20, reps: 15 },
+      { exercise: 'Romanian Deadlift (Dumbbell)', day: '2026-08-02', weightKg: 24, reps: 10 },
+      { exercise: 'Shoulder Press (DB)', day: '2026-08-02', weightKg: 16, reps: 10 },
+    ])
+    push('a tie on kg is broken by sets', [
+      { exercise: 'Leg Extension', day: '2026-08-05', weightKg: 50, reps: 10 },
+      { exercise: 'Leg Extension', day: '2026-08-05', weightKg: 0, reps: 10 },
+      { exercise: 'Pec Deck', day: '2026-08-05', weightKg: 50, reps: 10 },
+    ])
+    push('null weight and reps', [{ exercise: 'Leg Press', day: '2026-08-05', weightKg: null, reps: null }])
+    emit('widget-family.json', {
+      module: 'widget/derive',
+      fn: 'volumeByFamily',
+      note: 'resolveMovers(name) by NAME only (no stored fallback in this fixture); toLandmarkMuscle then familyOf. Primary full, secondary half (SECONDARY_SET_CREDIT), never both for one family. Warm-ups COUNT. kg is Math.round, sets one place. Sorted kg desc then sets desc; families with nothing are dropped.',
+      cases,
+    })
+  })
+
+  it('exports the refresh cadence', () => {
+    emit('widget-cadence.json', {
+      module: 'widget/cadence',
+      fn: 'REFRESH_SCHEDULE / refreshMinutesForHour / refreshesPerDay / FAILURE_MINUTES',
+      note: 'The web mirror of HelixRefresh.schedule. `perHour` is refreshMinutesForHour for 0…23.',
+      cases: [{ name: 'the table', input: null, expected: { schedule: REFRESH_SCHEDULE.map((r) => [...r]), failureMinutes: FAILURE_MINUTES, perHour: Array.from({ length: 24 }, (_, h) => refreshMinutesForHour(h)), perDay: refreshesPerDay() } }],
+    })
+  })
+})
+
+describe('golden vectors — exercise flags and the muscle dictionary', () => {
+  it('exports the flags over the catalogue and free-typed names', () => {
+    const catalogue = [...new Set([
+      ...Object.values(PROGRAMS).flatMap((p) => p.days.flatMap((d) => d.exercises.map((e) => e.name))),
+      ...Object.keys(EXERCISE_ALIASES), ...Object.values(EXERCISE_ALIASES),
+      ...Object.keys(PR_TRUTH),
+    ])].sort()
+    const typed = [
+      'Hanging Knee Raise', 'Hanging Leg Raises', 'Reverse Crunch', 'Crunch', 'Crunches', 'Crunch Machine', 'Crunch (Machine)', 'Cable Crunch',
+      'Push-Up', 'Push Up', 'Pushups', 'Pull-Up', 'Chin Up', 'Chinups', 'Dips', 'Dip', 'Assisted Dip', 'Assisted Pull-Up (Machine)',
+      'Back Extension', 'Glute Bridge', 'Barbell Glute Bridge', 'Mountain Climbers', 'Bicycle Crunch', 'Flutter Kicks', 'Air Squat',
+      'Lateral Raise', 'Front Raise', 'Leg Raise', 'Plank', 'Side Plank', 'Hollow Hold', 'Dead Hang', 'Wall Sit', 'L-Sit', 'Farmer Carry',
+      'Single Arm Cable Row', 'Single-Leg Press', 'One Arm Dumbbell Row', '1-Arm Lat Pulldown', 'Unilateral Leg Extension', 'Curl per side',
+      'Each arm curl', 'ea leg press', 'Bulgarian Split Squat', 'Split Squat', 'Walking Lunges', 'Lunge', 'Step-Up', 'Step Ups', 'Pistol Squat',
+      'Skater Squats', 'Copenhagen Plank', 'Suitcase Carry', 'Suitcase Deadlift', 'Double Arm Cable Row', 'Two-Arm Lunge', 'Both Leg Press',
+      'Alternating Dumbbell Curl', 'Treadmill Walk', 'Incline Walk', 'Run', 'Cable Lateral Raise (Machine)', 'Smith Squat', 'BB Row', 'DB Fly',
+      'Sled Push', 'Bodyweight Squat', 'Some Unknown Movement', '', '   ', 'Shoulder Press (DB)', 'Seated Cable Row (V-Grip)',
+      'Neutral-Grip Lat Pulldown', 'lat pulldown neutral grip', 'Hip Adduction (Machine)', 'Adductor Machine', 'Overhead Triceps Extension (Cable)',
+      'Rope Face Pull', 'Straight Arm Pulldown', 'Cable Crossover', 'Cable Fly', 'Butterfly', 'Romanian Deadlift', 'RDL (Dumbbell)', 'Wrist Curl',
+      'Reverse Curl', 'Preacher Curl', 'Incline Curl', 'Bicep Curl', 'Biceps Curl', 'Calf Press', 'Standing Calf Raise', 'Russian Twist', 'Hollow Rock',
+    ]
+    const names = [...new Set([...catalogue, ...typed])]
+    interface Out {
+      bodyweight: boolean; unloaded: boolean; loadable: boolean; unilateral: boolean; timed: boolean; icon: string
+      muscles: MuscleEntry | null; groups: string[] | null; movers: MuscleEntry; moversStored: MuscleEntry
+    }
+    const cases: Case<{ name: string | null; stored: string[] }, Out>[] = names.map((n) => ({
+      name: n === '' ? '<empty>' : n.trim() === '' ? '<blank>' : n,
+      input: { name: n, stored: ['glutes', 'hamstrings', 'quads'] },
+      expected: {
+        bodyweight: isBodyweightExercise(n), unloaded: isUnloadedExercise(n), loadable: isLoadableBodyweightExercise(n),
+        unilateral: isUnilateralExercise(n), timed: isTimedExercise(n), icon: exerciseIconFor(n).label,
+        muscles: lookupMuscles(n), groups: muscleGroupsFor(n), movers: resolveMovers(n), moversStored: resolveMovers(n, ['glutes', 'hamstrings', 'quads']),
+      },
+    }))
+    cases.push({
+      name: '<null>', input: { name: null, stored: [] },
+      expected: {
+        bodyweight: isBodyweightExercise(null), unloaded: isUnloadedExercise(null), loadable: isLoadableBodyweightExercise(null),
+        unilateral: isUnilateralExercise(null), timed: isTimedExercise(null), icon: exerciseIconFor(null).label,
+        muscles: null, groups: null, movers: { primary: [], secondary: [] }, moversStored: { primary: [], secondary: [] },
+      },
+    })
+    emit('exercise-flags.json', {
+      module: 'exercises/{bodyweight,unilateral,timed,icons,muscleMap}',
+      fn: 'isBodyweightExercise / isUnloadedExercise / isLoadableBodyweightExercise / isUnilateralExercise / isTimedExercise / exerciseIconFor().label / lookupMuscles / muscleGroupsFor / resolveMovers',
+      note: 'Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is HelixUI\'s. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).',
+      cases,
+    })
+  })
+
+  it('exports the muscle dictionary and the landmark token fold', () => {
+    emit('muscle-dict.json', {
+      module: 'exercises/muscleMap',
+      fn: 'DICT',
+      note: 'Ordered as written; ALL tokens must appear in the tokenised name and the longest match wins (first on a tie).',
+      cases: [{ name: 'the table', input: null, expected: MUSCLE_DICT }],
+    })
+    const tokens = [
+      'chest', 'pecs', 'Chest', 'lats', 'back', 'upper back', 'upper_back', 'Upper-Back', 'traps', 'rhomboids', 'lower back', 'lower_back', 'erectors', 'spinal erectors',
+      'side_delts', 'lateral_delts', 'shoulders', 'delts', 'rear_delts', 'rear_delt', 'rear delts', 'front_delts', 'anterior_delts', 'front delts',
+      'biceps', 'triceps', 'forearms', 'brachioradialis', 'quads', 'quadriceps', 'hamstrings', 'glutes', 'adductors', 'inner_thigh', 'adductor', 'calves',
+      'abs', 'abdominals', 'core', 'obliques', 'abductors', 'neck', '', 'Chest ', 'upper  back',
+    ]
+    emit('landmark-token.json', {
+      module: 'training/landmarks',
+      fn: 'toLandmarkMuscle',
+      note: 'Token → landmark muscle after lower-casing and folding whitespace/hyphens to underscores. Note the trailing-space case: "Chest " folds to "chest_" and is nil.',
+      cases: tokens.map((t) => ({ name: t === '' ? '<empty>' : JSON.stringify(t), input: { token: t }, expected: toLandmarkMuscle(t) })),
+    })
+  })
+})
+
+describe('golden vectors — the supplement seed and nutrition presets', () => {
+  it('exports the seed protocol and the day resolver', () => {
+    const strip = (slots: SupplementSlot[]) => slots.map((s) => ({ key: s.key, time: s.time, label: s.label, items: s.items }))
+    const custom: SupplementSlot[] = [{ key: 'morning', time: '09:00', label: 'Morning', accent: '#000', items: [{ key: 'custom:1', name: 'Zinc', dose: '15 mg', customId: '1' }] }]
+    const cases: Case<{ isTraining: boolean; weekday: number; dbSlots: Array<Omit<SupplementSlot, 'accent'>> }, { stack: Array<Omit<SupplementSlot, 'accent'>>; count: number }>[] = []
+    for (const isTraining of [true, false]) for (const weekday of [0, 1, 2, 3, 4, 5, 6]) {
+      cases.push({
+        name: `${isTraining ? 'training' : 'rest'} weekday ${weekday}`,
+        input: { isTraining, weekday, dbSlots: [] },
+        expected: { stack: strip(stackForDate([], isTraining, weekday)), count: stackForDate([], isTraining, weekday).reduce((n, s) => n + s.items.length, 0) },
+      })
+    }
+    cases.push({
+      name: 'the database wins when it has rows', input: { isTraining: true, weekday: 1, dbSlots: strip(custom) },
+      expected: { stack: strip(stackForDate(custom, true, 1)), count: stackForDate(custom, true, 1).reduce((n, s) => n + s.items.length, 0) },
+    })
+    emit('supplements.json', {
+      module: 'supplements',
+      fn: 'SUPPLEMENT_PROTOCOL / protocolForDate / stackForDate / supplementCountForDate',
+      note: 'The seed protocol WITHOUT accent colours (HelixUI tokens). Rest days drop trainingOnly items and empty slots; the multivitamin is 2 tabs on Monday (1) and Friday (5). Non-empty dbSlots win outright. `count` is the item total of the resolved stack.',
+      cases: [
+        { name: 'the seed', input: { isTraining: true, weekday: -1, dbSlots: [] }, expected: { stack: strip(SUPPLEMENT_PROTOCOL), count: ALL_SUPPLEMENT_KEYS.length } },
+        ...cases,
+      ],
+    })
+  })
+
+  it('exports the nutrition presets and the phase-goal merge', () => {
+    const planIds = [DEFAULT_PROGRAM_ID, 'helix4', 'ppl', 'nothing']
+    const cases: Case<unknown, unknown>[] = planIds.flatMap((p) => (['cut', 'bulk'] as NutritionMode[]).map((m) => ({ name: `${p} ${m}`, input: { planId: p, mode: m }, expected: phaseGoalsFor(p, m) })))
+    emit('nutrition-presets.json', {
+      module: 'types/workout',
+      fn: 'NUTRITION_PRESETS / PLAN_PHASES / phaseGoalsFor / asNutritionMode / PPL_SPLITS',
+      note: 'The two directions and the PPL override merged over the Helix default. Colours are not ported; PPL_SPLITS carries labels only. asNutritionMode narrows anything that is not "bulk" (including the deleted "maintenance") to "cut".',
+      cases: [
+        { name: 'the tables', input: null, expected: { presets: NUTRITION_PRESETS, planPhases: PLAN_PHASES, splits: Object.fromEntries(Object.entries(PPL_SPLITS).map(([k, v]) => [k, { label: v.label, labelHe: v.labelHe }])), modes: ['cut', 'bulk', 'maintenance', 'BULK', '', null, 42].map((v) => [v, asNutritionMode(v)]) } },
+        ...cases,
+      ],
+    })
+  })
+})
+
+describe('golden vectors — small formatters and measures', () => {
+  it('exports sleep, litres, durations, weight validity, volume and SpO2', () => {
+    const mins = [null, 0, -5, 45, 60, 61, 90, 420, 457, 457.4, 457.5, 59.5, 1, 1439, 1440]
+    const mls = [null, 0, 2500, 2550, 999, 1234.5, -100]
+    const durs = [null, '', '1h 20', '1h20', '1 hour 5', '2h', '2 hours', '1:20', '01:05', '80m', '80 min', '80', ' 45 ', '1h 20m', '3:', 'abc', '1.5h', '90 minutes', 'h 20']
+    const kgs = [null, 0, 49.99, 50, 66.25, NaN, Infinity, -1]
+    const vols = [null, 0, 12102.5, 12102.55, 12102.45, 999.94, 999.95, 1000, 123456789.25, NaN, -50.5]
+    const spo2 = [null, 0.982, 0.9825, 1, 1.5, 1.51, 97.79, 98, 0, NaN]
+    type FmtIn = { kind: string; value: number | null; text: string | null }
+    type FmtOut = { text: string | null; long: string | null; text2: string | null; number: number | null }
+    const fmtCases: Case<FmtIn, FmtOut>[] = [
+        ...mins.map((m) => ({ name: `sleep ${m}`, input: { kind: 'sleep', value: m as number | null, text: null as string | null }, expected: { text: formatSleep(m), long: formatSleepLong(m), text2: null as string | null, number: null as number | null } })),
+        ...mls.map((m) => ({ name: `ml ${m}`, input: { kind: 'ml', value: m, text: null }, expected: { text: mlToL(m), long: null, text2: mlToL(m, 2), number: null } })),
+        ...durs.map((s) => ({ name: `duration ${JSON.stringify(s)}`, input: { kind: 'duration', value: null, text: s }, expected: { text: null, long: null, text2: null, number: parseDurationMin(s) } })),
+        ...kgs.map((k) => ({ name: `weight ${k}`, input: { kind: 'weight', value: Number.isFinite(k as number) ? k : null, text: null }, expected: { text: null, long: null, text2: null, number: validWeight(k) } })),
+        ...vols.map((v) => ({ name: `volume ${v}`, input: { kind: 'volume', value: Number.isFinite(v as number) ? v : null, text: null }, expected: { text: fmtVolume(v), long: null, text2: null, number: null } })),
+        ...spo2.map((v) => ({ name: `spo2 ${v}`, input: { kind: 'spo2', value: Number.isFinite(v as number) ? v : null, text: null }, expected: { text: null, long: null, text2: null, number: normalizeSpO2(v) } })),
+    ]
+    emit('utils-format.json', {
+      module: 'utils/{format,duration,measure}',
+      fn: 'formatSleep / formatSleepLong / mlToL / parseDurationMin / validWeight / fmtVolume / normalizeSpO2',
+      note: 'fmtVolume rounds to one place then toLocaleString with exactly one fraction digit (en-US grouping in the test environment). Non-finite inputs serialise as null. mlToL uses the default of one digit and also digits 2.',
+      cases: fmtCases,
+    })
+  })
+
+  it('exports relative time under a pinned clock', () => {
+    vi.useFakeTimers()
+    try {
+      const now = '2026-08-06T12:00:00Z'
+      vi.setSystemTime(new Date(now))
+      const inputs = [null, '', 'garbage', now, '2026-08-06T11:59:20Z', '2026-08-06T11:59:15Z', '2026-08-06T11:48:00Z', '2026-08-06T11:00:30Z', '2026-08-06T10:59:00Z', '2026-08-05T13:00:00Z', '2026-08-05T12:00:00Z', '2026-07-31T12:00:00Z', '2026-07-30T12:00:00Z', '2026-07-01T00:00:00Z', '2025-12-25T00:00:00Z', '2026-09-01T00:00:00Z']
+      emit('relative-time.json', {
+        module: 'utils/format',
+        fn: 'formatRelativeTime',
+        note: 'Now is pinned to 2026-08-06T12:00:00Z. Rounds at each rung (sec → min → hr → day); under 45 s is "just now"; from 7 days it is an en-IL "6 Aug" date (UTC).',
+        cases: inputs.map((s) => ({ name: s === null ? '<null>' : s === '' ? '<empty>' : s, input: { now, iso: s }, expected: formatRelativeTime(s) })),
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ITEM #11 — LOGIC EXTRACTED FROM COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('golden vectors — the deck rows', () => {
+  it('exports set grouping, the load ladder and the small formatters', () => {
+    const s = (weightKg: number, reps: number, extra: Partial<DraftSet> = {}): DraftSet => ({ weightKg, reps, ...extra })
+    const lists: Array<{ name: string; sets: DraftSet[] }> = [
+      { name: 'empty', sets: [] },
+      { name: 'three singles', sets: [s(60, 10), s(60, 9), s(60, 8, { setType: 'warmup' })] },
+      { name: 'a pair L then R', sets: [s(12, 10, { pairId: 'p1', side: 'L' }), s(12, 11, { pairId: 'p1', side: 'R' })] },
+      { name: 'a pair R then L keeps one number', sets: [s(12, 11, { pairId: 'p1', side: 'R' }), s(12, 10, { pairId: 'p1', side: 'L' })] },
+      { name: 'a pair with only a left side', sets: [s(12, 10, { pairId: 'p1', side: 'L' })] },
+      { name: 'a pair without sides — both land left, last wins', sets: [s(12, 10, { pairId: 'p1' }), s(12, 11, { pairId: 'p1' })] },
+      { name: 'singles around a pair', sets: [s(100, 8), s(12, 10, { pairId: 'p1', side: 'L' }), s(90, 10), s(12, 11, { pairId: 'p1', side: 'R' }), s(80, 12)] },
+      { name: 'an empty pairId is a single', sets: [s(50, 10, { pairId: '' }), s(50, 10, { pairId: '', side: 'R' })] },
+      { name: 'two pairs interleaved', sets: [s(1, 1, { pairId: 'a', side: 'L' }), s(2, 2, { pairId: 'b', side: 'L' }), s(1, 1, { pairId: 'a', side: 'R' }), s(2, 2, { pairId: 'b', side: 'R' })] },
+    ]
+    emit('deck-groups.json', {
+      module: 'sessions/deck',
+      fn: 'groupSets / STATUS_META labels / setValueLabel',
+      note: 'Extracted from ExerciseCard. A pairId (truthy) folds two rows into ONE numbered group in first-seen order; side R goes right, anything else left (a second left overwrites). STATUS_META colours are not ported; labels are. setValueLabel is from command-center/setGrid.ts.',
+      cases: [
+        ...lists.map((l) => ({ name: l.name, input: { sets: l.sets }, expected: { groups: groupSets(l.sets), statusLabels: null as null | Record<string, string>, valueLabels: null as null | Record<string, string> } })),
+        {
+          name: 'the vocabularies', input: { sets: [] },
+          expected: {
+            groups: [],
+            statusLabels: Object.fromEntries(Object.entries(STATUS_META).map(([k, v]) => [k, v.label])),
+            valueLabels: Object.fromEntries((['loaded', 'reps', 'time', 'cardio'] as SetGridMode[]).map((m) => [m, setValueLabel(m)])),
+          },
+        },
+      ],
+    })
+    const loads = [0, 0.1, 0.12, 0.13, 0.125, 0.375, 2.5, 3.75, 16.25, 60, 60.1, 60.126, 100.5, 102.25, 0.24, 0.26]
+    const deltas = [PLATE_STEP, -PLATE_STEP, FINE_STEP, -FINE_STEP, 0]
+    const nums: Array<[number, number]> = [[0.37, 2], [0.3, 2], [5, 2], [12.5, 1], [12.5, 2], [0, 2], [100, 0], [1.005, 2], [2.675, 2], [0.00001, 3], [-1.5, 1]]
+    type LadderIn = { kind: string; a: number; b: number }
+    type LadderOut = { number: number | null; text: string | null; plate: number; fine: number }
+    const ladderCases: Case<LadderIn, LadderOut>[] = [
+        ...loads.flatMap((w) => deltas.map((d) => ({ name: `load ${w} ${d >= 0 ? '+' : ''}${d}`, input: { kind: 'load', a: w, b: d }, expected: { number: nudgeLoad(w, d), text: fmtKg(w), plate: PLATE_STEP, fine: FINE_STEP } }))),
+        ...[1, 2, 5, 12].flatMap((r) => [1, -1, -5, 0].map((d) => ({ name: `reps ${r} ${d >= 0 ? '+' : ''}${d}`, input: { kind: 'reps', a: r, b: d }, expected: { number: nudgeReps(r, d), text: null, plate: PLATE_STEP, fine: FINE_STEP } }))),
+        ...nums.map(([v, digits]) => ({ name: `trim ${v} @${digits}`, input: { kind: 'trim', a: v, b: digits }, expected: { number: null, text: trimNum(v, digits), plate: PLATE_STEP, fine: FINE_STEP } })),
+    ]
+    emit('deck-ladder.json', {
+      module: 'sessions/deck',
+      fn: 'nudgeLoad / nudgeReps / fmtKg / trimNum',
+      note: 'The ± chips: 2.5 kg on tap, 0.25 kg on hold, snapped to the quarter-kg grid and floored at 0; reps floor at 1. fmtKg prints the shortest of 0/1/2 decimals that is exact (3.75 never "3.8"). trimNum is toFixed with dead zeros trimmed. Constants are asserted.',
+      cases: ladderCases,
+    })
+  })
+})
+
+describe('golden vectors — muscle distribution of a draft', () => {
+  it('exports weighted and physical set counts', () => {
+    const set = (weightKg: number, reps: number, extra: Partial<DraftSet> = {}): DraftSet => ({ weightKg, reps, ...extra })
+    const ex = (name: string, sets: DraftSet[], extra: Partial<DraftExercise> = {}): DraftExercise => ({ localId: name.toLowerCase().replace(/\W+/g, '-'), name, sets, ...extra })
+    const draft = (exercises: DraftExercise[]): SessionDraft => ({ splitDay: 'upper', date: '2026-08-02', notes: '', startedAt: '2026-08-02T09:00:00Z', exercises } as SessionDraft)
+    const drafts: Array<{ name: string; draft: SessionDraft | null }> = [
+      { name: 'null draft', draft: null },
+      { name: 'empty', draft: draft([]) },
+      { name: 'a leg press — Quads full, Glutes and Hamstrings half', draft: draft([ex('Leg Press', [set(200, 8), set(200, 8), set(200, 7)])]) },
+      { name: 'warm-ups count, a ghost does not', draft: draft([ex('Leg Press', [set(100, 12, { setType: 'warmup' }), set(200, 8), set(200, 8, { setType: 'ghost' })])]) },
+      { name: 'an uncommitted set is not work', draft: draft([ex('Leg Press', [set(200, 8), set(200, 8, { done: false })])]) },
+      { name: 'a unilateral pair is ONE set', draft: draft([ex('Cable Lateral Raise (Single Arm)', [set(7.5, 12, { pairId: 'p', side: 'L' }), set(7.5, 12, { pairId: 'p', side: 'R' }), set(7.5, 12)])]) },
+      { name: 'cardio is skipped', draft: draft([ex('Treadmill', [set(0, 0)], { kind: 'cardio' }), ex('Pec Deck', [set(50, 12)])]) },
+      { name: 'an unknown lift falls back to its stored groups', draft: draft([ex('Mystery Machine', [set(40, 10), set(40, 10)], { muscleGroups: ['glutes', 'hamstrings', 'quadriceps'] })]) },
+      { name: 'an unknown lift with no groups credits nothing', draft: draft([ex('Mystery Machine', [set(40, 10)])]) },
+      { name: 'overlap keeps FULL credit — RDL lats + a pulldown', draft: draft([ex('Romanian Deadlift (Dumbbell)', [set(24, 10), set(24, 10)]), ex('Lat Pulldown', [set(70, 10)])]) },
+      { name: 'a whole Upper A', draft: draft([
+        ex('Chest Press (Machine)', [set(40, 12, { setType: 'warmup' }), set(60, 10), set(60, 9), set(60, 8)]),
+        ex('Lat Pulldown (Neutral Grip)', [set(70, 10), set(70, 10), set(70, 9)]),
+        ex('Seated Cable Row (Wide Grip)', [set(55, 12), set(55, 12)]),
+        ex('Pec Deck', [set(50, 12), set(50, 12)]),
+        ex('Face Pull', [set(20, 15), set(20, 15), set(20, 15)]),
+        ex('Romanian Deadlift (Dumbbell)', [set(24, 10), set(24, 10), set(24, 10)]),
+        ex('Shoulder Press (DB)', [set(16, 10), set(16, 10), set(16, 9)]),
+        ex('Hanging Knee Raise', [set(0, 15), set(0, 15)]),
+        ex('Side Plank', [set(0, 45, { pairId: 'sp', side: 'L' }), set(0, 45, { pairId: 'sp', side: 'R' })]),
+      ]) },
+      { name: 'exercises with only uncommitted sets are skipped entirely', draft: draft([ex('Leg Press', [set(200, 8, { done: false })])]) },
+    ]
+    emit('muscle-distribution.json', {
+      module: 'sessions/muscleDistribution',
+      fn: 'draftMuscleSets / draftPhysicalSets',
+      note: 'Extracted from MuscleDistribution. Committed = done !== false. Weighted: every committed non-ghost set (WARM-UPS COUNT), a pair once, primary 1.0 / secondary 0.5 with an overlap keeping full credit, resolved by name then the stored muscleGroups column. Physical: committed sets INCLUDING ghosts and warm-ups, a pair once. `weighted` is keyed by landmark muscle.',
+      cases: drafts.map((d) => ({ name: d.name, input: { draft: d.draft }, expected: { weighted: draftMuscleSets(d.draft), physical: draftPhysicalSets(d.draft) } })),
+    })
+  })
+})
+
+describe('golden vectors — dashboard tiles', () => {
+  it('exports the stats, marks, risks, windows and labels', () => {
+    interface In { kind: string; series: Array<number | null>; today: number | null; goal: number | null; have: number | null; target: number | null; risk: 'floor' | 'ceiling' | null; weeks: number | null; dateISO: string | null; todayISO: string | null; text: string | null; mins: number | null }
+    interface Out { number: number | null; numbers: number[] | null; text: string | null }
+    const cases: Case<In, Out>[] = []
+    const blank: In = { kind: '', series: [], today: null, goal: null, have: null, target: null, risk: null, weeks: null, dateISO: null, todayISO: null, text: null, mins: null }
+    const push = (name: string, i: Partial<In>, e: Partial<Out>) => cases.push({ name, input: { ...blank, ...i }, expected: { number: null, numbers: null, text: null, ...e } })
+
+    const series: Array<Array<number | null>> = [[], [52], [52, 54, 53, 55, 60], [null, 52, null, 54, 57], [null, null, 50], [52, 54, 53, null], [70, 70, 70, 70]]
+    for (const s of series) for (const t of [null, 60, 52.34, 0]) {
+      push(`vsBaseline ${JSON.stringify(s)} today ${t}`, { kind: 'baseline', series: s, today: t }, { number: vsBaseline(s, t) })
+    }
+    for (const s of series) push(`mean ${JSON.stringify(s)}`, { kind: 'mean', series: s }, { number: tileMean(s) })
+    for (const g of [0, 100, 499, 500, 1000, 2500, 3000, 4999, 5000, 6000, 7500, 8000, 10000, 12000, 12500, 15000, 20000, 25000]) {
+      push(`stepMarks ${g}`, { kind: 'steps', goal: g }, { numbers: stepMarks(g) })
+    }
+    const risks: Array<[number | null, number, 'floor' | 'ceiling']> = [
+      [null, 30, 'floor'], [18, 30, 'floor'], [30, 30, 'floor'], [45, 30, 'floor'], [0, 30, 'floor'],
+      [4200, 3000, 'ceiling'], [3000, 3000, 'ceiling'], [1500, 3000, 'ceiling'], [null, 3000, 'ceiling'],
+      [10, 0, 'floor'], [10, -5, 'ceiling'], [1, 3, 'floor'], [2, 3, 'ceiling'],
+    ]
+    for (const [have, target, kind] of risks) push(`nutrientRisk ${have}/${target} ${kind}`, { kind: 'risk', have, target, risk: kind }, { number: nutrientRisk(have, target, kind) })
+    for (const w of [1, 12, 26, 52]) for (const d of ['2026-08-02', '2026-08-05', '2026-08-08', '2026-12-31']) {
+      push(`consistencyWindow ${w}w on ${d}`, { kind: 'consistency', weeks: w, todayISO: d }, { number: consistencyWindow(w, d) })
+    }
+    for (const [iso, today] of [['2026-08-25', '2026-08-25'], ['2026-08-24', '2026-08-25'], ['2026-08-21', '2026-08-25'], ['2026-08-26', '2026-08-25'], ['2026-07-25', '2026-08-25'], ['2025-08-25', '2026-08-25']]) {
+      push(`daysAgo ${iso} on ${today}`, { kind: 'daysAgo', dateISO: iso, todayISO: today }, { text: daysAgo(iso, today) })
+    }
+    for (const t of ['10:30', '00:00', '23:59', '11:45', '9:05', '24:00', 'noon', '', '10', '10:xx', '10:30:15']) {
+      push(`parseMin ${JSON.stringify(t)}`, { kind: 'parseMin', text: t }, { number: parseMin(t) })
+    }
+    for (const m of [-125, -60, -59, -1, 0, 0.5, 1, 12, 59, 60, 61, 125, 180, 1439]) {
+      push(`dueLabel ${m}`, { kind: 'due', mins: m }, { text: dueLabel(m) })
+    }
+    emit('tiles-stats.json', {
+      module: 'dashboard/tiles',
+      fn: 'mean / vsBaseline / stepMarks / nutrientRisk / consistencyWindow / daysAgo / parseMin / dueLabel',
+      note: 'Extracted from widgets/parts, PlanWidgets, FuelWidget and DailyWidgets. vsBaseline compares today against the mean of series[0..-1] (the series EXCLUDING its last element), rounded to one place. nutrientRisk is -1 when unmeasured, 0 at or past a non-positive target. consistencyWindow = (weeks-1)*7 + Sunday-anchored weekday + 1.',
+      cases,
+    })
+  })
+
+  it('exports the ledger window across the phase calendar', () => {
+    const dates = ['2026-06-20', '2026-06-21', '2026-06-27', '2026-06-28', '2026-07-11', '2026-07-12', '2026-07-15', '2026-07-18', '2026-07-19', '2026-07-25', '2026-07-31', '2026-08-01', '2026-08-10', '2026-08-17', '2026-08-29', '2026-08-30', '2026-09-05', '2026-09-06', '2026-09-30', '2026-10-17', '2026-10-18', '2026-10-31', '2026-11-01', '2027-01-01', 'garbage']
+    emit('ledger-window.json', {
+      module: 'dashboard/tiles',
+      fn: 'ledgerWindow',
+      note: 'Phase-to-date, floored at 14 days and capped at 30; outside every phase it is the flat month with no label. The label is `${short ?? name} · day N`. Constants asserted.',
+      cases: dates.map((d) => ({ name: d, input: { todayISO: d, floor: LEDGER_FLOOR_DAYS, max: LEDGER_MAX_DAYS }, expected: ledgerWindow(d) })),
+    })
+  })
+
+  it('exports the stack schedule', () => {
+    const slots: StackDose[] = [
+      { key: 'multivitamin', name: 'Two Per Day Multivitamin', time: '10:30' },
+      { key: 'd3k2', name: 'Vitamin D3 + K2', time: '10:30' },
+      { key: 'citrulline', name: 'L-Citrulline', time: '11:45' },
+      { key: 'caffeine', name: 'Nutricost Caffeine', time: '11:45' },
+      { key: 'creatine', name: 'Creatine Monohydrate', time: '15:00' },
+      { key: 'omega3', name: 'Omega-3 Fish Oil', time: '15:00' },
+      { key: 'magnesium', name: 'Magnesium Glycinate', time: '22:00' },
+      { key: 'glycine', name: 'Glycine', time: '22:00' },
+      { key: 'theanine', name: 'L-Theanine', time: '22:00' },
+    ]
+    const cases: Case<{ slots: StackDose[]; skipped: string[]; minutes: number }, StackSchedule>[] = []
+    const push = (name: string, s: StackDose[], skipped: string[], minutes: number) =>
+      cases.push({ name, input: { slots: s, skipped, minutes }, expected: stackSchedule(s, new Set(skipped), minutes) })
+    push('early morning — everything ahead', slots, [], 8 * 60)
+    push('exactly at 10:30 — that block is behind', slots, [], 10 * 60 + 30)
+    push('one minute before the pre-workout block', slots, [], 11 * 60 + 44)
+    push('mid-afternoon with caffeine skipped', slots, ['caffeine'], 14 * 60)
+    push('late evening — all done', slots, [], 23 * 60)
+    push('a whole block skipped disappears from ahead and counts as behind', slots, ['magnesium', 'glycine', 'theanine'], 12 * 60)
+    push('an unparseable time sorts to the end and is never behind', [...slots, { key: 'x', name: 'Odd', time: 'noon' }], [], 23 * 60)
+    push('no slots', [], [], 12 * 60)
+    push('unsorted input is sorted by time', [slots[6], slots[0], slots[4], slots[2]], [], 9 * 60)
+    push('midnight', slots, [], 0)
+    emit('stack-schedule.json', {
+      module: 'dashboard/tiles',
+      fn: 'stackSchedule',
+      note: 'Extracted from DailyWidgets\' StackWidget. A dose whose time has passed (<= minutes) is behind, one whose time has not is ahead, a skip removes it from ahead and marks it in behind. Ahead is grouped by EXACT time string, sorted by minutes; behind is most recent first (a stable sort — equal times keep input order).',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — the session report', () => {
+  const ds = (setNumber: number, weightKg: number, reps: number, extra: Partial<DetailSet> = {}): DetailSet =>
+    ({ setNumber, weightKg, reps, rpe: null, isPr: false, est1rmKg: null, setType: 'normal', side: null, pairId: null, prAxes: [], ...extra })
+  const dex = (name: string, sets: DetailSet[], extra: Partial<DetailExercise> = {}): DetailExercise => ({
+    exerciseId: name.toLowerCase().replace(/\W+/g, '-'), name, order: 0, muscleGroups: [], isCompound: false, sets,
+    workingSets: sets.filter((s) => s.setType !== 'warmup').length,
+    topKg: Math.max(0, ...sets.map((s) => s.weightKg)), volumeKg: sets.reduce((n, s) => n + s.weightKg * s.reps, 0),
+    bestEst1rm: null, prAxes: [], ...extra,
+  })
+  const lb = (kg: number) => Math.round(kg * 2.20462 * 100) / 100
+
+  it('exports the ledger rows and the previous-column alignment', () => {
+    const prev: HistorySet[] = [{ weightKg: 58, reps: 10 }, { weightKg: 58, reps: 9 }, { weightKg: 58, reps: 8 }, { weightKg: 12, reps: 10, side: 'L', pairId: 'q' }, { weightKg: 12, reps: 11, side: 'R', pairId: 'q' }]
+    const lists: Array<{ name: string; sets: DetailSet[] }> = [
+      { name: 'empty', sets: [] },
+      { name: 'warm-up then three working', sets: [ds(1, 40, 12, { setType: 'warmup' }), ds(2, 60, 10), ds(3, 60, 9), ds(4, 60, 8)] },
+      { name: 'a pair takes one number and two previous slots', sets: [ds(1, 60, 10), ds(2, 12, 10, { pairId: 'p', side: 'L' }), ds(3, 12, 11, { pairId: 'p', side: 'R' }), ds(4, 60, 9)] },
+      { name: 'a warm-up pair has no number and no previous', sets: [ds(1, 5, 12, { pairId: 'w', side: 'L', setType: 'warmup' }), ds(2, 5, 12, { pairId: 'w', side: 'R', setType: 'warmup' }), ds(3, 12, 10, { pairId: 'p', side: 'L' }), ds(4, 12, 11, { pairId: 'p', side: 'R' })] },
+      { name: 'a pair R first', sets: [ds(1, 12, 11, { pairId: 'p', side: 'R' }), ds(2, 12, 10, { pairId: 'p', side: 'L' })] },
+      { name: 'a drop set and a failure set are numbered', sets: [ds(1, 60, 10), ds(2, 60, 6, { setType: 'failure' }), ds(3, 40, 12, { setType: 'dropset' })] },
+      { name: 'more rows than previous sets', sets: [ds(1, 60, 10), ds(2, 60, 10), ds(3, 60, 10), ds(4, 60, 10), ds(5, 60, 10), ds(6, 60, 10)] },
+    ]
+    emit('detail-rows.json', {
+      module: 'sessions/detail',
+      fn: 'toRows / rowsWithPrev / deltaGlyph',
+      note: 'Extracted from ExerciseBreakdown. Only WORKING sets take an ordinal; a pair is one row (R right, else left) and consumes TWO previous slots; a warm-up row gets no previous. `prev` uses the same five history sets for every case. deltaGlyph: undefined → null, null → 🆕, 1/0/-1 → ⬆️ ═ ⬇️.',
+      cases: [
+        ...lists.map((l) => ({ name: l.name, input: { sets: l.sets, prev }, expected: { rows: toRows(l.sets), withPrev: rowsWithPrev(toRows(l.sets), prev), glyphs: null as null | Array<string | null> } })),
+        { name: 'glyphs', input: { sets: [], prev: [] }, expected: { rows: [], withPrev: [], glyphs: [undefined, null, 1, 0, -1].map((d) => deltaGlyph(d as -1 | 0 | 1 | null | undefined)) } },
+      ],
+    })
+  })
+
+  it('exports the progression cue, the exercise strip, the highlights and the metric delta', () => {
+    type Prog = { progression: { state: string; ceiling: number | null; suggestKg: number | null } } | undefined
+    const progs: Array<{ name: string; t: Prog; timed: boolean; unit: string; lb: boolean }> = [
+      { name: 'ready with load in kg', t: { progression: { state: 'ready', ceiling: 12, suggestKg: 62.5 } }, timed: false, unit: 'kg', lb: false },
+      { name: 'ready with load in lb', t: { progression: { state: 'ready', ceiling: 12, suggestKg: 62.5 } }, timed: false, unit: 'lb', lb: true },
+      { name: 'ready, bodyweight — extend', t: { progression: { state: 'ready', ceiling: 15, suggestKg: null } }, timed: false, unit: 'kg', lb: false },
+      { name: 'ready, timed — extend seconds', t: { progression: { state: 'ready', ceiling: 60, suggestKg: null } }, timed: true, unit: 'kg', lb: false },
+      { name: 'one more clean session', t: { progression: { state: 'one-more', ceiling: 12, suggestKg: 62.5 } }, timed: false, unit: 'kg', lb: false },
+      { name: 'one more, timed', t: { progression: { state: 'one-more', ceiling: 45, suggestKg: null } }, timed: true, unit: 'kg', lb: false },
+      { name: 'holding — nothing', t: { progression: { state: 'hold', ceiling: 12, suggestKg: null } }, timed: false, unit: 'kg', lb: false },
+      { name: 'undefined — nothing', t: undefined, timed: false, unit: 'kg', lb: false },
+      { name: 'ready with a null ceiling', t: { progression: { state: 'ready', ceiling: null, suggestKg: 40 } }, timed: false, unit: 'kg', lb: false },
+    ]
+    emit('progression-cue.json', {
+      module: 'sessions/detail',
+      fn: 'progressionCue',
+      note: 'Extracted from ExerciseBreakdown, with the unit conversion INJECTED (`lb` true = kg × 2.20462 rounded to two places, else identity). Colour is not ported. LOAD_STEP_KG is asserted.',
+      cases: progs.map((p) => {
+        const cue = progressionCue(p.t, p.timed, p.unit, p.lb ? lb : (kg) => kg)
+        return { name: p.name, input: { t: p.t ?? null, timed: p.timed, unit: p.unit, lb: p.lb, loadStep: LOAD_STEP_KG }, expected: cue ? { short: cue.short, title: cue.title } : null }
+      }),
+    })
+
+    const exercises: DetailExercise[] = [
+      dex('Chest Press (Machine)', [ds(1, 40, 12, { setType: 'warmup' }), ds(2, 60, 10, { rpe: 7 }), ds(3, 60, 9, { rpe: 8 }), ds(4, 60, 8, { rpe: 9, isPr: true, prAxes: ['weight', 'e1rm'] })], { bestEst1rm: 76, prAxes: ['weight', 'e1rm'] }),
+      dex('Cable Lateral Raise (Single Arm)', [ds(1, 7.5, 12, { pairId: 'p', side: 'L', rpe: 8 }), ds(2, 7.5, 12, { pairId: 'p', side: 'R', rpe: 8.5 }), ds(3, 7.5, 11, { pairId: 'q', side: 'L' }), ds(4, 7.5, 12, { pairId: 'q', side: 'R', isPr: true, prAxes: ['reps'] })], { bestEst1rm: 10.5, prAxes: ['reps'] }),
+      dex('Hanging Knee Raise', [ds(1, 0, 15), ds(2, 0, 17, { isPr: true, prAxes: ['reps'] })], { bestEst1rm: null, prAxes: ['reps'] }),
+      dex('Side Plank', [ds(1, 0, 45), ds(2, 0, 50, { isPr: true, prAxes: ['reps'] })], { bestEst1rm: 0, prAxes: ['reps'] }),
+      dex('Leg Press', [ds(1, 200, 8, { rpe: 8 }), ds(2, 200, 8, { rpe: 8.5 }), ds(3, 200, 7, { rpe: 9.5 })], { bestEst1rm: 253.3 }),
+      dex('Pec Deck', [ds(1, 50, 12, { isPr: true, prAxes: ['volume'] }), ds(2, 55, 10, { isPr: true, prAxes: ['weight', 'volume'] }), ds(3, 55, 10, { isPr: true, prAxes: ['weight'] })], { bestEst1rm: 73.3, prAxes: ['weight', 'volume'] }),
+      dex('Face Pull', [ds(1, 20, 15, { isPr: true, prAxes: [] })], { bestEst1rm: 30, prAxes: ['volume'] }),
+      dex('Legacy Row', [ds(1, 50, 10, { isPr: true, prAxes: undefined as unknown as PrAxis[] })], { bestEst1rm: 66.7, prAxes: undefined as unknown as PrAxis[] }),
+      dex('Leg Extension', [ds(1, 50, 12, { isPr: true, prAxes: ['volume'] }), ds(2, 55, 10, { isPr: true, prAxes: ['weight'] }), ds(3, 55, 9, { isPr: true, prAxes: ['e1rm'] })], { bestEst1rm: 73.3, prAxes: ['weight', 'volume', 'e1rm'] }),
+    ]
+    const sets = [
+      { name: 'the whole session in kg', ex: exercises, unit: 'kg', lb: false },
+      { name: 'the whole session in lb', ex: exercises, unit: 'lb', lb: true },
+      { name: 'no records, no strongest', ex: [dex('Leg Press', [ds(1, 200, 8)]), dex('Plank', [ds(1, 0, 60)])], unit: 'kg', lb: false },
+      { name: 'empty', ex: [], unit: 'kg', lb: false },
+      { name: 'a tie on est-1RM keeps the first', ex: [dex('A', [ds(1, 60, 10)], { bestEst1rm: 80 }), dex('B', [ds(1, 60, 10)], { bestEst1rm: 80 })], unit: 'kg', lb: false },
+    ]
+    emit('session-highlights.json', {
+      module: 'sessions/detail',
+      fn: 'exerciseStats / strongestOf / highlightsOf',
+      note: 'Extracted from ExerciseBreakdown and SessionHighlights. exerciseStats: working sets only, a pair\'s reps once, avgRpe to one place, topReps is the best SINGLE set. strongestOf: highest bestEst1rm > 0, first on a tie. highlightsOf: one line per exercise with a PR set — the set with the most axes then the heaviest; its axes, else the exercise\'s; formatSet with the injected unit. A missing prAxes (legacy) is read as empty.',
+      cases: sets.map((s) => ({
+        name: s.name,
+        input: { exercises: s.ex, unit: s.unit, lb: s.lb },
+        expected: {
+          stats: s.ex.map((e) => exerciseStats(e)),
+          strongest: strongestOf(s.ex)?.name ?? null,
+          highlights: highlightsOf(s.ex, s.lb ? lb : (kg) => kg, s.unit),
+        },
+      })),
+    })
+
+    const metrics: Array<IntelMetric | undefined> = [
+      undefined,
+      { key: 'volume', label: 'Volume', value: 12480, previous: 11000, delta: 1480, higherIsBetter: true },
+      { key: 'volume', label: 'Volume', value: 10000, previous: 11000, delta: -1000, higherIsBetter: true },
+      { key: 'duration', label: 'Duration', value: 50, previous: 60, delta: -10, higherIsBetter: false },
+      { key: 'duration', label: 'Duration', value: 66, previous: 60, delta: 6, higherIsBetter: false },
+      { key: 'sets', label: 'Sets', value: 20, previous: 20, delta: 0, higherIsBetter: true },
+      { key: 'sets', label: 'Sets', value: 20, previous: 0, delta: null, higherIsBetter: true },
+      { key: 'sets', label: 'Sets', value: null, previous: 20, delta: null, higherIsBetter: true },
+      { key: 'sets', label: 'Sets', value: 20, previous: null, delta: null, higherIsBetter: true },
+      { key: 'prs', label: 'PRs', value: 1, previous: 2, delta: -1, higherIsBetter: true },
+      { key: 'avgBpm', label: 'HR', value: 100.4, previous: 100, delta: 0.4, higherIsBetter: false },
+      { key: 'avgBpm', label: 'HR', value: 100.5, previous: 100, delta: 0.5, higherIsBetter: false },
+      { key: 'calories', label: 'kcal', value: 99.5, previous: 100, delta: -0.5, higherIsBetter: true },
+    ]
+    emit('metric-pct.json', {
+      module: 'sessions/detail',
+      fn: 'pctOf',
+      note: 'Extracted from MetricGrid. Null without both sides or with a zero previous; a rounded 0% is null; good = (pct > 0) === higherIsBetter.',
+      cases: metrics.map((m, i) => ({ name: m ? `${m.key} ${m.value} vs ${m.previous}` : 'undefined', input: { metric: m ?? null, i }, expected: pctOf(m) })),
+    })
+  })
+})
+
+describe('golden vectors — chart splits and body readings', () => {
+  it('exports the volume chart buckets', () => {
+    const dates = ['2026-08-02', '2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07', '2026-08-08']
+    const splits = ['upper', 'legs', 'lower', 'push', 'pull', 'arms', 'upper_a', 'nonsense']
+    const eras: Array<'all' | 'ppl' | 'axis'> = ['all', 'ppl', 'axis']
+    const keys: Array<string | null | undefined> = [undefined, null, '', 'cb_a', 'cb_b', 'arms', 'legs_a', 'legs_b', 'upper_a', 'upper_b', 'lower_a', 'lower_b', 'ppl_push_sun', 'ppl_push_thu', 'ppl_pull_mon', 'ppl_pull_fri', 'ppl_legs_tue', 'unknown_key']
+    const cases: Case<{ dateISO: string; split: string; era: string; dayKey: string | null }, string>[] = []
+    for (const k of keys) for (const era of eras) for (const split of splits) {
+      const d = k == null || k === '' ? dates : [dates[0]]
+      for (const dateISO of d) cases.push({ name: `${dateISO} ${split} ${era} key=${String(k)}`, input: { dateISO, split, era, dayKey: k ?? null }, expected: resolveChartSplit(dateISO, split, era, k) })
+    }
+    emit('volume-split.json', {
+      module: 'charts/volumeSplit',
+      fn: 'resolveChartSplit / SPLITS_FOR_ERA / DAY_KEY_SPLIT / splitLabel',
+      note: 'Extracted from VolumeChart. day_key first (a truthy key found in DAY_KEY_SPLIT), then lower → legs, then the weekday guess for the axis era only, else the split as given. A null dayKey in the input stands for both null and undefined. The first case carries the tables.',
+      cases: [
+        { name: 'the tables', input: { dateISO: '', split: '', era: '', dayKey: null }, expected: JSON.stringify({ forEra: SPLITS_FOR_ERA, dayKey: DAY_KEY_SPLIT, labels: Object.fromEntries(SPLITS_FOR_ERA.all.map((s) => [s, splitLabel(s)])) }) },
+        ...cases,
+      ],
+    })
+  })
+
+  it('exports the body-composition merge and the scale-metrics test', () => {
+    const lb = (kg: number | null) => (kg == null ? null : Math.round(kg * 2.20462 * 100) / 100)
+    const trend: BodyTrendRow[] = [
+      { date: '2026-08-01', weight_kg: 66.2, body_fat_pct: 15.1, muscle_mass_kg: 50.3 },
+      { date: '2026-08-02', weight_kg: 66.0, body_fat_pct: null, muscle_mass_kg: null, fat_free_mass_kg: 56.1 },
+      { date: '2026-08-03', weight_kg: 65.9, body_fat_pct: null, muscle_mass_kg: null },
+      { date: '2026-08-05', weight_kg: null as unknown as number, body_fat_pct: 15.0, muscle_mass_kg: 50.1 },
+      { date: '2026-07-31', weight_kg: 66.4, body_fat_pct: 15.3, muscle_mass_kg: 50.4, fat_free_mass_kg: 99 },
+    ]
+    const detail: BodyDetailRow[] = [
+      { date: '2026-08-01', water_percent: 58.2, muscle_percent: 76.1, visceral_fat: 5, body_fat_pct: 15.4 },
+      { date: '2026-08-03', water_percent: null, muscle_percent: 76.0, visceral_fat: null, body_fat_pct: 14.9 },
+      { date: '2026-08-04', water_percent: 58.0, muscle_percent: null, visceral_fat: 6, body_fat_pct: null },
+      { date: '2026-08-01', water_percent: null, muscle_percent: null, visceral_fat: null, body_fat_pct: null },
+    ]
+    const cases = [
+      { name: 'both sources in kg', trend, detail, lb: false },
+      { name: 'both sources in lb', trend, detail, lb: true },
+      { name: 'trend only', trend, detail: [], lb: false },
+      { name: 'detail only', trend: [], detail, lb: false },
+      { name: 'empty', trend: [], detail: [], lb: false },
+      { name: 'the same date twice in trend — last wins per field', trend: [trend[0], { date: '2026-08-01', weight_kg: 66.3, body_fat_pct: null, muscle_mass_kg: null }], detail: [], lb: false },
+    ].map((c) => ({ name: c.name, input: { trend: c.trend, detail: c.detail, lb: c.lb }, expected: mergeBodyComposition(c.trend, c.detail, c.lb ? lb : (kg) => kg) }))
+    emit('body-merge.json', {
+      module: 'body/readings',
+      fn: 'mergeBodyComposition',
+      note: 'Extracted from BodyCompositionChart. Joined by date, sorted ascending. fatMass/fatFreeMass from weight × fat% when both present, else fatFreeMass from the stored column; muscleMass only from its own column. Detail fills water/muscle%/visceral (a null keeps the earlier value) and fat% only when the trend left it null. `lb` true converts through kg × 2.20462 rounded to two places.',
+      cases,
+    })
+    const logs: Array<Record<string, unknown> | null> = [
+      null, {}, { weight_kg: 66.2 }, { weight_kg: null }, { steps: 9000 }, { bmi: 21.1 }, { estimated_waist_to_hip_ratio: 0.86 }, { skeletal_muscle_mass_kg: 0 }, { weight_kg: null, body_fat_pct: null, bmr: 1500 }, { waist_cm: 80 },
+    ]
+    emit('scale-metrics.json', {
+      module: 'body/readings',
+      fn: 'hasScaleMetrics / SCALE_METRIC_KEYS',
+      note: 'Extracted from InBody. True when ANY of the twelve scale columns is non-null (0 counts). The key list is asserted.',
+      cases: logs.map((l, i) => ({ name: l == null ? '<null>' : JSON.stringify(l), input: { log: l, i, keys: [...SCALE_METRIC_KEYS] }, expected: hasScaleMetrics(l) })),
+    })
+  })
+})
+
+describe('golden vectors — sleep debt and the realtime key map', () => {
+  it('exports the decayed debt', () => {
+    const night = (date: string, sleepMinutes: number | null) => ({ date, sleepMinutes })
+    const span = (from: string, mins: Array<number | null>) => mins.map((m, i) => night(isoAddDays(from, i), m))
+    const weekAgo = '2026-08-06'   // today = 2026-08-13
+    const cases: Case<{ nights: Array<{ date: string; sleepMinutes: number | null }>; goalHours: number; weekAgoISO: string }, SleepDebt & { band: string }>[] = []
+    const push = (name: string, nights: Array<{ date: string; sleepMinutes: number | null }>, goalHours = 8, weekAgoISO = weekAgo) => {
+      const d = computeSleepDebt(nights, goalHours, weekAgoISO)
+      cases.push({ name, input: { nights, goalHours, weekAgoISO }, expected: { ...d, band: debtBand(d.debtHours) } })
+    }
+    push('empty', [])
+    push('one short night', [night('2026-08-12', 360)])
+    push('one long night banks no credit', [night('2026-08-12', 600)])
+    push('a fortnight of 7 h — decay on the first week', span('2026-07-31', Array(14).fill(420)))
+    push('a fortnight of 7 h with 8 h weekends', span('2026-07-31', [420, 480, 480, 420, 420, 420, 420, 420, 480, 480, 420, 420, 420, 420]))
+    push('surplus repays', span('2026-08-07', [300, 600, 300, 600, 480, 480]))
+    push('nulls and zeros are not nights', span('2026-08-07', [null, 0, 420, 420]))
+    push('unsorted input decays chronologically', [night('2026-08-12', 300), night('2026-08-01', 300), night('2026-08-06', 300), night('2026-08-05', 300)])
+    push('a nine-hour goal', span('2026-08-07', [480, 480, 480, 480, 480, 480]), 9)
+    push('exactly at the week boundary keeps full weight', [night('2026-08-06', 300), night('2026-08-05', 300)])
+    push('a 7.5 h goal against 450 min is settled', span('2026-08-07', [450, 450, 450]), 7.5)
+    push('rounding to one place', span('2026-08-07', [437, 437, 437]))
+    emit('sleep-debt.json', {
+      module: 'sleep/debt',
+      fn: 'computeSleepDebt / debtBand',
+      note: 'Extracted from useSleepDebt with the clock INJECTED: nights strictly before weekAgoISO carry SLEEP_DEBT_WEEKLY_DECAY (0.75). Debt never goes below zero; nights with null/zero minutes are dropped; worstNightMin is the shortest kept night. band: ≤2 ember, ≤5 gold, else oxide.',
+      cases,
+    })
+  })
+
+  it('exports the table → query-key map', () => {
+    emit('realtime-keys.json', {
+      module: 'query/realtimeKeys',
+      fn: 'TABLE_KEYS / REALTIME_TABLES',
+      note: 'Extracted from RealtimeProvider. Which query keys a Supabase table change invalidates; workout_sessions and workout_sets share WORKOUT_QUERY_KEYS. HelixData owns the invalidation; this pins the fan-out.',
+      cases: [{ name: 'the map', input: null, expected: { tables: REALTIME_TABLES, keys: TABLE_KEYS } }],
+    })
+  })
+})
+
+describe('golden vectors — scoping the progression queue', () => {
+  it('exports scopeToDay', () => {
+    const alerts = [
+      { id: 'a', dayKey: 'legs_a' }, { id: 'b', dayKey: 'legs_b' }, { id: 'c', dayKey: null }, { id: 'd', dayKey: 'legs_a' }, { id: 'e', dayKey: '' },
+    ]
+    const keys: Array<string | null | undefined> = ['legs_a', 'legs_b', 'cb_a', null, undefined, '']
+    emit('scope-to-day.json', {
+      module: 'training/scopeToDay',
+      fn: 'scopeToDay',
+      note: 'Extracted from ProgressionAlerts. A falsy day key (null, undefined, "") keeps EVERYTHING — the PPL era; a key keeps only alerts carrying exactly that key, in order. `kind` says which falsy value the null in `dayKey` stands for.',
+      cases: keys.map((k) => ({ name: `key=${k === undefined ? 'undefined' : JSON.stringify(k)}`, input: { alerts, dayKey: k ?? null, kind: k === undefined ? 'undefined' : k === null ? 'null' : 'string' }, expected: scopeToDay(alerts, k).map((a) => a.id) })),
     })
   })
 })

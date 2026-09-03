@@ -1,0 +1,322 @@
+{
+  "module": "training/landmarks",
+  "fn": "toLandmarkMuscle",
+  "note": "Token → landmark muscle after lower-casing and folding whitespace/hyphens to underscores. Note the trailing-space case: \"Chest \" folds to \"chest_\" and is nil.",
+  "cases": [
+    {
+      "name": "\"chest\"",
+      "input": {
+        "token": "chest"
+      },
+      "expected": "Chest"
+    },
+    {
+      "name": "\"pecs\"",
+      "input": {
+        "token": "pecs"
+      },
+      "expected": "Chest"
+    },
+    {
+      "name": "\"Chest\"",
+      "input": {
+        "token": "Chest"
+      },
+      "expected": "Chest"
+    },
+    {
+      "name": "\"lats\"",
+      "input": {
+        "token": "lats"
+      },
+      "expected": "Lats"
+    },
+    {
+      "name": "\"back\"",
+      "input": {
+        "token": "back"
+      },
+      "expected": "Lats"
+    },
+    {
+      "name": "\"upper back\"",
+      "input": {
+        "token": "upper back"
+      },
+      "expected": "Upper back"
+    },
+    {
+      "name": "\"upper_back\"",
+      "input": {
+        "token": "upper_back"
+      },
+      "expected": "Upper back"
+    },
+    {
+      "name": "\"Upper-Back\"",
+      "input": {
+        "token": "Upper-Back"
+      },
+      "expected": "Upper back"
+    },
+    {
+      "name": "\"traps\"",
+      "input": {
+        "token": "traps"
+      },
+      "expected": "Upper back"
+    },
+    {
+      "name": "\"rhomboids\"",
+      "input": {
+        "token": "rhomboids"
+      },
+      "expected": "Upper back"
+    },
+    {
+      "name": "\"lower back\"",
+      "input": {
+        "token": "lower back"
+      },
+      "expected": "Lower back"
+    },
+    {
+      "name": "\"lower_back\"",
+      "input": {
+        "token": "lower_back"
+      },
+      "expected": "Lower back"
+    },
+    {
+      "name": "\"erectors\"",
+      "input": {
+        "token": "erectors"
+      },
+      "expected": "Lower back"
+    },
+    {
+      "name": "\"spinal erectors\"",
+      "input": {
+        "token": "spinal erectors"
+      },
+      "expected": "Lower back"
+    },
+    {
+      "name": "\"side_delts\"",
+      "input": {
+        "token": "side_delts"
+      },
+      "expected": "Side delts"
+    },
+    {
+      "name": "\"lateral_delts\"",
+      "input": {
+        "token": "lateral_delts"
+      },
+      "expected": "Side delts"
+    },
+    {
+      "name": "\"shoulders\"",
+      "input": {
+        "token": "shoulders"
+      },
+      "expected": "Side delts"
+    },
+    {
+      "name": "\"delts\"",
+      "input": {
+        "token": "delts"
+      },
+      "expected": "Side delts"
+    },
+    {
+      "name": "\"rear_delts\"",
+      "input": {
+        "token": "rear_delts"
+      },
+      "expected": "Rear delts"
+    },
+    {
+      "name": "\"rear_delt\"",
+      "input": {
+        "token": "rear_delt"
+      },
+      "expected": "Rear delts"
+    },
+    {
+      "name": "\"rear delts\"",
+      "input": {
+        "token": "rear delts"
+      },
+      "expected": "Rear delts"
+    },
+    {
+      "name": "\"front_delts\"",
+      "input": {
+        "token": "front_delts"
+      },
+      "expected": "Front delts"
+    },
+    {
+      "name": "\"anterior_delts\"",
+      "input": {
+        "token": "anterior_delts"
+      },
+      "expected": "Front delts"
+    },
+    {
+      "name": "\"front delts\"",
+      "input": {
+        "token": "front delts"
+      },
+      "expected": "Front delts"
+    },
+    {
+      "name": "\"biceps\"",
+      "input": {
+        "token": "biceps"
+      },
+      "expected": "Biceps"
+    },
+    {
+      "name": "\"triceps\"",
+      "input": {
+        "token": "triceps"
+      },
+      "expected": "Triceps"
+    },
+    {
+      "name": "\"forearms\"",
+      "input": {
+        "token": "forearms"
+      },
+      "expected": "Forearms"
+    },
+    {
+      "name": "\"brachioradialis\"",
+      "input": {
+        "token": "brachioradialis"
+      },
+      "expected": "Forearms"
+    },
+    {
+      "name": "\"quads\"",
+      "input": {
+        "token": "quads"
+      },
+      "expected": "Quads"
+    },
+    {
+      "name": "\"quadriceps\"",
+      "input": {
+        "token": "quadriceps"
+      },
+      "expected": "Quads"
+    },
+    {
+      "name": "\"hamstrings\"",
+      "input": {
+        "token": "hamstrings"
+      },
+      "expected": "Hamstrings"
+    },
+    {
+      "name": "\"glutes\"",
+      "input": {
+        "token": "glutes"
+      },
+      "expected": "Glutes"
+    },
+    {
+      "name": "\"adductors\"",
+      "input": {
+        "token": "adductors"
+      },
+      "expected": "Adductors"
+    },
+    {
+      "name": "\"inner_thigh\"",
+      "input": {
+        "token": "inner_thigh"
+      },
+      "expected": "Adductors"
+    },
+    {
+      "name": "\"adductor\"",
+      "input": {
+        "token": "adductor"
+      },
+      "expected": "Adductors"
+    },
+    {
+      "name": "\"calves\"",
+      "input": {
+        "token": "calves"
+      },
+      "expected": "Calves"
+    },
+    {
+      "name": "\"abs\"",
+      "input": {
+        "token": "abs"
+      },
+      "expected": "Abs/core"
+    },
+    {
+      "name": "\"abdominals\"",
+      "input": {
+        "token": "abdominals"
+      },
+      "expected": "Abs/core"
+    },
+    {
+      "name": "\"core\"",
+      "input": {
+        "token": "core"
+      },
+      "expected": "Abs/core"
+    },
+    {
+      "name": "\"obliques\"",
+      "input": {
+        "token": "obliques"
+      },
+      "expected": "Abs/core"
+    },
+    {
+      "name": "\"abductors\"",
+      "input": {
+        "token": "abductors"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"neck\"",
+      "input": {
+        "token": "neck"
+      },
+      "expected": null
+    },
+    {
+      "name": "<empty>",
+      "input": {
+        "token": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "\"Chest \"",
+      "input": {
+        "token": "Chest "
+      },
+      "expected": null
+    },
+    {
+      "name": "\"upper  back\"",
+      "input": {
+        "token": "upper  back"
+      },
+      "expected": "Upper back"
+    }
+  ]
+}

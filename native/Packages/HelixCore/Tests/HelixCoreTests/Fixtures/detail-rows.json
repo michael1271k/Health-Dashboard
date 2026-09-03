@@ -1,0 +1,1402 @@
+{
+  "module": "sessions/detail",
+  "fn": "toRows / rowsWithPrev / deltaGlyph",
+  "note": "Extracted from ExerciseBreakdown. Only WORKING sets take an ordinal; a pair is one row (R right, else left) and consumes TWO previous slots; a warm-up row gets no previous. `prev` uses the same five history sets for every case. deltaGlyph: undefined → null, null → 🆕, 1/0/-1 → ⬆️ ═ ⬇️.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": [],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [],
+        "withPrev": [],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "warm-up then three working",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "warmup",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 3,
+            "weightKg": 60,
+            "reps": 9,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 4,
+            "weightKg": 60,
+            "reps": 8,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "single",
+            "num": null,
+            "set": {
+              "setNumber": 1,
+              "weightKg": 40,
+              "reps": 12,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "warmup",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 1,
+            "set": {
+              "setNumber": 2,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 2,
+            "set": {
+              "setNumber": 3,
+              "weightKg": 60,
+              "reps": 9,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 3,
+            "set": {
+              "setNumber": 4,
+              "weightKg": 60,
+              "reps": 8,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "single",
+              "num": null,
+              "set": {
+                "setNumber": 1,
+                "weightKg": 40,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "warmup",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 1,
+              "set": {
+                "setNumber": 2,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 2,
+              "set": {
+                "setNumber": 3,
+                "weightKg": 60,
+                "reps": 9,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 9
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 3,
+              "set": {
+                "setNumber": 4,
+                "weightKg": 60,
+                "reps": 8,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 8
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "a pair takes one number and two previous slots",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 12,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "L",
+            "pairId": "p",
+            "prAxes": []
+          },
+          {
+            "setNumber": 3,
+            "weightKg": 12,
+            "reps": 11,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "R",
+            "pairId": "p",
+            "prAxes": []
+          },
+          {
+            "setNumber": 4,
+            "weightKg": 60,
+            "reps": 9,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "single",
+            "num": 1,
+            "set": {
+              "setNumber": 1,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "pair",
+            "num": 2,
+            "left": {
+              "setNumber": 2,
+              "weightKg": 12,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "L",
+              "pairId": "p",
+              "prAxes": []
+            },
+            "right": {
+              "setNumber": 3,
+              "weightKg": 12,
+              "reps": 11,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "R",
+              "pairId": "p",
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 3,
+            "set": {
+              "setNumber": 4,
+              "weightKg": 60,
+              "reps": 9,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "single",
+              "num": 1,
+              "set": {
+                "setNumber": 1,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            }
+          },
+          {
+            "row": {
+              "kind": "pair",
+              "num": 2,
+              "left": {
+                "setNumber": 2,
+                "weightKg": 12,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "p",
+                "prAxes": []
+              },
+              "right": {
+                "setNumber": 3,
+                "weightKg": 12,
+                "reps": 11,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "p",
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 9
+            },
+            "prevRight": {
+              "weightKg": 58,
+              "reps": 8
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 3,
+              "set": {
+                "setNumber": 4,
+                "weightKg": 60,
+                "reps": 9,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 12,
+              "reps": 10,
+              "side": "L",
+              "pairId": "q"
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "a warm-up pair has no number and no previous",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "warmup",
+            "side": "L",
+            "pairId": "w",
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "warmup",
+            "side": "R",
+            "pairId": "w",
+            "prAxes": []
+          },
+          {
+            "setNumber": 3,
+            "weightKg": 12,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "L",
+            "pairId": "p",
+            "prAxes": []
+          },
+          {
+            "setNumber": 4,
+            "weightKg": 12,
+            "reps": 11,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "R",
+            "pairId": "p",
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "pair",
+            "num": null,
+            "left": {
+              "setNumber": 1,
+              "weightKg": 5,
+              "reps": 12,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "warmup",
+              "side": "L",
+              "pairId": "w",
+              "prAxes": []
+            },
+            "right": {
+              "setNumber": 2,
+              "weightKg": 5,
+              "reps": 12,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "warmup",
+              "side": "R",
+              "pairId": "w",
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "pair",
+            "num": 1,
+            "left": {
+              "setNumber": 3,
+              "weightKg": 12,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "L",
+              "pairId": "p",
+              "prAxes": []
+            },
+            "right": {
+              "setNumber": 4,
+              "weightKg": 12,
+              "reps": 11,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "R",
+              "pairId": "p",
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "pair",
+              "num": null,
+              "left": {
+                "setNumber": 1,
+                "weightKg": 5,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "warmup",
+                "side": "L",
+                "pairId": "w",
+                "prAxes": []
+              },
+              "right": {
+                "setNumber": 2,
+                "weightKg": 5,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "warmup",
+                "side": "R",
+                "pairId": "w",
+                "prAxes": []
+              }
+            }
+          },
+          {
+            "row": {
+              "kind": "pair",
+              "num": 1,
+              "left": {
+                "setNumber": 3,
+                "weightKg": 12,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "p",
+                "prAxes": []
+              },
+              "right": {
+                "setNumber": 4,
+                "weightKg": 12,
+                "reps": 11,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "p",
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            },
+            "prevRight": {
+              "weightKg": 58,
+              "reps": 9
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "a pair R first",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 12,
+            "reps": 11,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "R",
+            "pairId": "p",
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 12,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": "L",
+            "pairId": "p",
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "pair",
+            "num": 1,
+            "right": {
+              "setNumber": 1,
+              "weightKg": 12,
+              "reps": 11,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "R",
+              "pairId": "p",
+              "prAxes": []
+            },
+            "left": {
+              "setNumber": 2,
+              "weightKg": 12,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": "L",
+              "pairId": "p",
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "pair",
+              "num": 1,
+              "right": {
+                "setNumber": 1,
+                "weightKg": 12,
+                "reps": 11,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "R",
+                "pairId": "p",
+                "prAxes": []
+              },
+              "left": {
+                "setNumber": 2,
+                "weightKg": 12,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": "L",
+                "pairId": "p",
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            },
+            "prevRight": {
+              "weightKg": 58,
+              "reps": 9
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "a drop set and a failure set are numbered",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 60,
+            "reps": 6,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "failure",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 3,
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "dropset",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "single",
+            "num": 1,
+            "set": {
+              "setNumber": 1,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 2,
+            "set": {
+              "setNumber": 2,
+              "weightKg": 60,
+              "reps": 6,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "failure",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 3,
+            "set": {
+              "setNumber": 3,
+              "weightKg": 40,
+              "reps": 12,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "dropset",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "single",
+              "num": 1,
+              "set": {
+                "setNumber": 1,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 2,
+              "set": {
+                "setNumber": 2,
+                "weightKg": 60,
+                "reps": 6,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "failure",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 9
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 3,
+              "set": {
+                "setNumber": 3,
+                "weightKg": 40,
+                "reps": 12,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "dropset",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 8
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "more rows than previous sets",
+      "input": {
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 2,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 3,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 4,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 5,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          },
+          {
+            "setNumber": 6,
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": null,
+            "isPr": false,
+            "est1rmKg": null,
+            "setType": "normal",
+            "side": null,
+            "pairId": null,
+            "prAxes": []
+          }
+        ],
+        "prev": [
+          {
+            "weightKg": 58,
+            "reps": 10
+          },
+          {
+            "weightKg": 58,
+            "reps": 9
+          },
+          {
+            "weightKg": 58,
+            "reps": 8
+          },
+          {
+            "weightKg": 12,
+            "reps": 10,
+            "side": "L",
+            "pairId": "q"
+          },
+          {
+            "weightKg": 12,
+            "reps": 11,
+            "side": "R",
+            "pairId": "q"
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "kind": "single",
+            "num": 1,
+            "set": {
+              "setNumber": 1,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 2,
+            "set": {
+              "setNumber": 2,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 3,
+            "set": {
+              "setNumber": 3,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 4,
+            "set": {
+              "setNumber": 4,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 5,
+            "set": {
+              "setNumber": 5,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          },
+          {
+            "kind": "single",
+            "num": 6,
+            "set": {
+              "setNumber": 6,
+              "weightKg": 60,
+              "reps": 10,
+              "rpe": null,
+              "isPr": false,
+              "est1rmKg": null,
+              "setType": "normal",
+              "side": null,
+              "pairId": null,
+              "prAxes": []
+            }
+          }
+        ],
+        "withPrev": [
+          {
+            "row": {
+              "kind": "single",
+              "num": 1,
+              "set": {
+                "setNumber": 1,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 10
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 2,
+              "set": {
+                "setNumber": 2,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 9
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 3,
+              "set": {
+                "setNumber": 3,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 58,
+              "reps": 8
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 4,
+              "set": {
+                "setNumber": 4,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 12,
+              "reps": 10,
+              "side": "L",
+              "pairId": "q"
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 5,
+              "set": {
+                "setNumber": 5,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            },
+            "prev": {
+              "weightKg": 12,
+              "reps": 11,
+              "side": "R",
+              "pairId": "q"
+            }
+          },
+          {
+            "row": {
+              "kind": "single",
+              "num": 6,
+              "set": {
+                "setNumber": 6,
+                "weightKg": 60,
+                "reps": 10,
+                "rpe": null,
+                "isPr": false,
+                "est1rmKg": null,
+                "setType": "normal",
+                "side": null,
+                "pairId": null,
+                "prAxes": []
+              }
+            }
+          }
+        ],
+        "glyphs": null
+      }
+    },
+    {
+      "name": "glyphs",
+      "input": {
+        "sets": [],
+        "prev": []
+      },
+      "expected": {
+        "rows": [],
+        "withPrev": [],
+        "glyphs": [
+          null,
+          "🆕",
+          "⬆️",
+          "═",
+          "⬇️"
+        ]
+      }
+    }
+  ]
+}

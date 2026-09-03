@@ -1,0 +1,430 @@
+{
+  "module": "sleep/debt",
+  "fn": "computeSleepDebt / debtBand",
+  "note": "Extracted from useSleepDebt with the clock INJECTED: nights strictly before weekAgoISO carry SLEEP_DEBT_WEEKLY_DECAY (0.75). Debt never goes below zero; nights with null/zero minutes are dropped; worstNightMin is the shortest kept night. band: ≤2 ember, ≤5 gold, else oxide.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "nights": [],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 0,
+        "worstNightMin": null,
+        "goalHours": 8,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "one short night",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 2,
+        "nights": 1,
+        "worstNightMin": 360,
+        "goalHours": 8,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "one long night banks no credit",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 600
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 1,
+        "worstNightMin": 600,
+        "goalHours": 8,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "a fortnight of 7 h — decay on the first week",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-07-31",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-01",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-02",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-03",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-04",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-05",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-06",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-10",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-11",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-13",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 12.5,
+        "nights": 14,
+        "worstNightMin": 420,
+        "goalHours": 8,
+        "band": "oxide"
+      }
+    },
+    {
+      "name": "a fortnight of 7 h with 8 h weekends",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-07-31",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-01",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-02",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-03",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-04",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-05",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-06",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-10",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-11",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-13",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 9,
+        "nights": 14,
+        "worstNightMin": 420,
+        "goalHours": 8,
+        "band": "oxide"
+      }
+    },
+    {
+      "name": "surplus repays",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-10",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-08-11",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 480
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 2,
+        "nights": 6,
+        "worstNightMin": 300,
+        "goalHours": 8,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "nulls and zeros are not nights",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": null
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 0
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-10",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 2,
+        "nights": 2,
+        "worstNightMin": 420,
+        "goalHours": 8,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "unsorted input decays chronologically",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-01",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-06",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-05",
+            "sleepMinutes": 300
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 10.5,
+        "nights": 4,
+        "worstNightMin": 300,
+        "goalHours": 8,
+        "band": "oxide"
+      }
+    },
+    {
+      "name": "a nine-hour goal",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-10",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-11",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-12",
+            "sleepMinutes": 480
+          }
+        ],
+        "goalHours": 9,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 6,
+        "nights": 6,
+        "worstNightMin": 480,
+        "goalHours": 9,
+        "band": "oxide"
+      }
+    },
+    {
+      "name": "exactly at the week boundary keeps full weight",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-06",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-05",
+            "sleepMinutes": 300
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 5.3,
+        "nights": 2,
+        "worstNightMin": 300,
+        "goalHours": 8,
+        "band": "oxide"
+      }
+    },
+    {
+      "name": "a 7.5 h goal against 450 min is settled",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 450
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 450
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 450
+          }
+        ],
+        "goalHours": 7.5,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 3,
+        "worstNightMin": 450,
+        "goalHours": 7.5,
+        "band": "ember"
+      }
+    },
+    {
+      "name": "rounding to one place",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-07",
+            "sleepMinutes": 437
+          },
+          {
+            "date": "2026-08-08",
+            "sleepMinutes": 437
+          },
+          {
+            "date": "2026-08-09",
+            "sleepMinutes": 437
+          }
+        ],
+        "goalHours": 8,
+        "weekAgoISO": "2026-08-06"
+      },
+      "expected": {
+        "debtHours": 2.2,
+        "nights": 3,
+        "worstNightMin": 437,
+        "goalHours": 8,
+        "band": "gold"
+      }
+    }
+  ]
+}
