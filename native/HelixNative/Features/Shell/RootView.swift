@@ -40,16 +40,18 @@ private struct SignedInTabs: View {
     var body: some View {
         TabView {
             Tab("Today", systemImage: "square.grid.2x2") {
-                NavigationStack { PlaceholderScreen(name: "Dashboard", wave: 2) }
+                NavigationStack { PlaceholderScreen(name: "Dashboard", wave: 6) }
             }
-            Tab("Workout", systemImage: "figure.strengthtraining.traditional") {
-                NavigationStack { WorkoutTab() }
+            // The plan's five: Today · Train · Fuel · Body · You. The logger is
+            // NOT the Train root — see `TrainTabView` for why.
+            Tab("Train", systemImage: "figure.strengthtraining.traditional") {
+                NavigationStack { TrainTabView() }
             }
             Tab("Fuel", systemImage: "fork.knife") {
-                NavigationStack { PlaceholderScreen(name: "Nutrition", wave: 3) }
+                NavigationStack { FuelTabView() }
             }
-            Tab("Progress", systemImage: "chart.xyaxis.line") {
-                NavigationStack { PlaceholderScreen(name: "Pathfinder", wave: 4) }
+            Tab("Body", systemImage: "figure.arms.open") {
+                NavigationStack { DayTabView() }
             }
             Tab("You", systemImage: "person.crop.circle") {
                 NavigationStack { YouTabView() }
@@ -70,74 +72,5 @@ private struct PlaceholderScreen: View {
             Text("Arrives in Wave \(wave). The web app is still the place for this.")
         }
         .navigationTitle(name)
-    }
-}
-
-/// Today's deck, or the reason there isn't one.
-///
-/// ── WHY THE DAY IS RESOLVED HERE AND NOT INSIDE THE LOGGER ──────────────────
-/// `LiveLoggerView` takes a `LoggerModel`, which takes a `ProgramDay`. That is
-/// deliberate: the logger can then be previewed on any day of the week, and
-/// the swap/override logic — which is real, dated, and a Wave 6 port — has
-/// exactly one place to land when it arrives.
-///
-/// The weekday lookup below is the PLAN's layout, and it is the only correct
-/// use of a weekday here. Never infer a LOGGED session's split from its
-/// weekday: a swap moves a workout to another date and a Wednesday
-/// "Delts & Arms" landed in the Upper A curve exactly that way.
-private struct WorkoutTab: View {
-    @Environment(AppEnvironment.self) private var environment
-
-    /// Cut is the live block (`Helix Cut 5.1`, open since 2026-07-15). It is
-    /// `@AppStorage` rather than a constant because the phase toggle has to
-    /// survive a relaunch — and `@AppStorage` rather than a GRDB table because
-    /// it is a single scalar preference, not a fact about a workout.
-    @AppStorage("helix.phase") private var storedPhase = ProgramPhase.cut.rawValue
-
-    private var today: ProgramDay? {
-        // `Calendar.component(.weekday:)` is 1-based from Sunday; the program's
-        // own `weekday` is 0-based from Sunday, like `Date.getDay()` in the
-        // TypeScript it was ported from.
-        let weekday = Calendar.current.component(.weekday, from: Date()) - 1
-        return Program.helix5.day(weekday: weekday)
-    }
-
-    var body: some View {
-        content
-            // The library is a sub-screen of Training, not a sixth tab — five is
-            // where iOS stops giving you a tab and starts giving you a "More"
-            // list, and a library is somewhere you go FROM training.
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ExerciseLibraryView()
-                    } label: {
-                        Label("Exercises", systemImage: "list.bullet.rectangle")
-                    }
-                }
-            }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if let day = today {
-            LiveLoggerView(model: LoggerModel(
-                day: day,
-                phase: ProgramPhase(rawValue: storedPhase) ?? .cut,
-                store: environment.database,
-                userId: environment.userIdString
-            ))
-            // The identity is the day. Without it SwiftUI reuses the view — and
-            // therefore the `@State` model — across a date change at midnight,
-            // and tomorrow's deck would render yesterday's logged sets.
-            .id(day.key)
-        } else {
-            ContentUnavailableView {
-                Label("Zone-2 rest", systemImage: "figure.walk")
-            } description: {
-                Text("HELIX-5 trains Sun, Mon, Tue, Thu and Fri. Today is a walk.")
-            }
-            .navigationTitle("Workout")
-        }
     }
 }

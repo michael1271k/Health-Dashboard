@@ -71,7 +71,7 @@ shoot() {
   xcrun simctl launch "$UDID" "$BUNDLE_ID" --helix-screen "$screen" >/dev/null
   # The launch returns as soon as the process exists; the first frame is a
   # few hundred ms later. Shooting too early photographs the launch screen.
-  sleep 2.5
+  sleep 3.5
   xcrun simctl io "$UDID" screenshot --type=png "$OUT/$screen$suffix.png" >/dev/null
   echo "  $OUT/$screen$suffix.png"
 }
@@ -80,7 +80,7 @@ SCREENS=("$SCREEN")
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin you levers plan body volume library exercise reports report)
+  SCREENS=(signin train you levers plan body volume library exercise reports report)
 fi
 
 for s in "${SCREENS[@]}"; do

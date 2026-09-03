@@ -91,6 +91,11 @@ enum PreviewHarness {
             SignInView().environment(AppEnvironment.preview)
         case "you":
             NavigationStack { YouTabView(seeded: model) }.environment(AppEnvironment.preview)
+        case "train":
+            // A fixed day, so the shot does not become a rest-day card on
+            // Wednesdays and Saturdays.
+            NavigationStack { TrainTabView(seededDay: Program.helix5.day(key: "cb_b")) }
+                .environment(AppEnvironment.preview)
         case "levers":
             NavigationStack { LeversView(model: model) }
         case "plan":

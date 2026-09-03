@@ -34,15 +34,23 @@ struct LiveLoggerView: View {
     /// forgotten the activity it started. The visible symptom is a Live Activity
     /// that appears once, never updates, and is still on the Lock Screen after
     /// the session ends, because nothing holds the handle any more.
-    @State private var activity = LiveActivityController()
+    @State private var activity: LiveActivityController
 
     /// The phase survives a relaunch. Written here rather than in the model
     /// because it is a preference, and `LoggerModel` is a session — it should
     /// not know that a phase outlives the workout it was chosen for.
     @AppStorage("helix.phase") private var storedPhase = ProgramPhase.cut.rawValue
 
-    init(model: LoggerModel) {
+    /// Presented as a full-screen cover by `TrainTabView`; this is how it leaves.
+    @Environment(\.dismiss) private var dismiss
+
+    /// `activity` is BORROWED from the Train tab when the logger is presented as
+    /// a cover, so dismissing the cover mid-session keeps the Lock Screen card
+    /// alive and updatable. Previews and the harness pass nothing and get their
+    /// own.
+    init(model: LoggerModel, activity: LiveActivityController? = nil) {
         _model = State(initialValue: model)
+        _activity = State(initialValue: activity ?? LiveActivityController())
     }
 
     private var accent: Color { Color(hex: model.day.accent) }
@@ -171,7 +179,8 @@ struct LiveLoggerView: View {
 
     private var heroHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
+            HStack(alignment: .top, spacing: 10) {
+                leaveButton
                 VStack(alignment: .leading, spacing: 3) {
                     Text(model.day.label)
                         .helixText(.fluid2XL, weight: .bold, leading: .none)
@@ -204,6 +213,7 @@ struct LiveLoggerView: View {
 
     private var compactHeader: some View {
         HStack(spacing: 10) {
+            leaveButton
             Text(model.day.label)
                 .helixText(.fluidLG, weight: .bold, leading: .none)
                 .foregroundStyle(accent)
@@ -433,6 +443,22 @@ struct LiveLoggerView: View {
         model.finish()
         model.stopRest()
         activity.end()
+        dismiss()
+    }
+
+    /// Leave the logger with the session still live — the rest timer keeps
+    /// counting and the Lock Screen card stays, because the workout is not over.
+    private var leaveButton: some View {
+        Button { dismiss() } label: {
+            Image(systemName: "chevron.down")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(HelixPalette.muted)
+                .frame(width: 32, height: 30)
+                .helixRow(radius: HelixRadius.lg)
+        }
+        .helixPress()
+        .accessibilityLabel("Leave workout")
+        .accessibilityHint("The session keeps running. Resume it from the Train tab.")
     }
 }
 
