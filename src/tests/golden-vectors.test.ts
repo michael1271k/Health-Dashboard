@@ -35,6 +35,9 @@ import {
 import { PR_TRUTH, PR_LOGGED, PR_TRUTH_AS_OF, prFloorFor, truthAxisValue } from '@/lib/training/prTruth'
 import { SEEDED_PRS, SEED_CUTOFF, ASSERTED_DATES, seededAxesFor, isAssertedSession } from '@/lib/training/prSeed'
 import { EXERCISE_ALIASES, canonicalExerciseName } from '@/lib/exercises/aliases'
+import { MUSCLE_DICT, lookupMuscles, muscleGroupsFor, resolveMovers, type MuscleEntry } from '@/lib/exercises/muscleMap'
+import { isBodyweightExercise, isLoadableBodyweightExercise, isUnloadedExercise } from '@/lib/exercises/bodyweight'
+import { isUnilateralExercise } from '@/lib/exercises/unilateral'
 import { isoAddDays } from '@/lib/utils/week'
 import { PHASES, phaseSpanFor, getWeekPhase, enumerateWeeks, type PhaseKind } from '@/lib/phases'
 import {
@@ -49,7 +52,7 @@ import {
 } from '@/lib/nutrition/context'
 import { BUILTIN_PROFILES, profileByKey, profileToDailyTarget, matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
 import { tracksCarbs, tracksFat, hasDailyTarget, applyDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
-import { activeProgram, type ProgramPhase } from '@/lib/programs'
+import { activeProgram, activePhase, normalizePlanId, PROGRAMS, DEFAULT_PROGRAM_ID, type Program, type ProgramPhase } from '@/lib/programs'
 import {
   parseRepWindow, repWindowFor, holdTargetFor, clearedCeiling, loadLadder, workLoads, ladderVerdict,
   topLoadCleared, levelUpCue, progressionVerdict, timedProgressionVerdict,
@@ -70,6 +73,7 @@ import {
   cardioSummary, cleanSessionTitle, type SessionDraft, type DraftSet, type DraftExercise,
 } from '@/lib/sessions/draft'
 import type { SplitDay } from '@/lib/types/workout'
+import { NUTRITION_PRESETS, PLAN_PHASES, phaseGoalsFor, asNutritionMode, type NutritionMode, type NutritionPreset } from '@/lib/types/workout'
 import { resolveSeededRpe, deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { findNextSet, formatLastTime, formatLastRpe, formatLoad, formatRpe, type NextSet } from '@/lib/sessions/nextSet'
 import { previousDisplayRows, alignPreviousSets } from '@/lib/sessions/prevAlign'
@@ -98,7 +102,7 @@ import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { weighInSkipReason, isDefaultSkipReason } from '@/lib/body/weighIn'
 import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
-import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
+import { volumeZone, programTargets, toLandmarkMuscle, LANDMARK_MUSCLES, type LandmarkMuscle, type VolumeZone } from '@/lib/training/landmarks'
 import { deriveBodyComp, whrBand, visceralBand, type BodyCompDerived, type WhrBand } from '@/lib/body/composition'
 import { deltaVerdict, MAINTENANCE_BAND, type Metric, type Verdict } from '@/lib/body/deltaVerdict'
 import { bodyCompState, missingBodyCompFields, bodyCompGapLabel, bodyCompGapShort, type BodyCompFields } from '@/lib/body/compGap'
@@ -106,6 +110,8 @@ import {
   mean, pearson, linregSlope, rollingAverage, daysSinceLastSession, trainingGap, fuelVsForce, stallProtocol, computeInsights,
   type DayPoint, type SessionPoint, type Insight,
 } from '@/lib/coach/insights'
+import { parseTargets, hasTargets, type ReportTargets } from '@/lib/reports/fmtV2'
+import { targetForExercise, formatTarget } from '@/lib/reports/targetMatch'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -1816,6 +1822,241 @@ describe('golden vectors — exercise aliases', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// The muscle map — `src/lib/exercises/muscleMap.ts`
+//
+// ── WHY THE VECTOR IS THE WHOLE DICTIONARY ───────────────────────────────────
+// Every other block here samples a formula. This one cannot: the module IS a
+// table, and a table has no interesting inputs to grid over — each entry is its
+// own behaviour, bought line by line by reconciling a real training week
+// against Hevy's breakdown (the fly that is not a triceps movement, the row
+// that is not rear-delt work, the press that pays the triceps and not the side
+// delt). Sampling it would leave whichever line was skipped free to drift, and
+// the drift renders as a per-muscle set count that looks completely ordinary.
+//
+// So `MUSCLE_DICT` crosses whole and Swift asserts equality entry for entry, in
+// order — order is data here, because `lookupMuscles` only replaces its best
+// match on a STRICTLY longer token list, so the first of two equally specific
+// entries wins.
+//
+// The lookup vector then covers the MATCHER on top of the table: a synthesised
+// name per entry (forwards and backwards, since token order does not matter),
+// every name in the live deck, the alias table's keys and its canonical values,
+// case and padding variants, and names nothing matches.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Every lift the live deck prescribes, either phase. A `function` and not a
+ * `const` because `HELIX5_ID` and `activeProgram` are declared further down the
+ * file and this has to read them at TEST time, not at module-evaluation time.
+ */
+function helix5DeckNames(): string[] {
+  const out = new Set<string>()
+  for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
+    for (const d of activeProgram(HELIX5_ID, phase).days) for (const e of d.exercises) out.add(e.name)
+  }
+  return [...out]
+}
+
+describe('golden vectors — muscle map', () => {
+  it('exports the dictionary, the lookup and the stored-column fallback', () => {
+    emit('muscle-map-dict.json', {
+      module: 'exercises/muscleMap',
+      fn: 'MUSCLE_DICT',
+      note: 'Data, not arithmetic — and ORDER IS DATA: of two entries with the same token count the FIRST wins, because lookupMuscles only replaces on a strictly longer match. The Swift table must equal this one, entry for entry, in this order.',
+      cases: [{ name: 'the dictionary', input: {}, expected: MUSCLE_DICT }],
+    })
+
+    /** Fold a mover token list to landmark muscles, first spelling kept. */
+    const landmarks = (tokens: string[]): LandmarkMuscle[] => {
+      const out: LandmarkMuscle[] = []
+      for (const t of tokens) {
+        const m = toLandmarkMuscle(t)
+        // Deduped: a cable row names `upper back` primary and `traps`
+        // secondary and both fold to Upper back. The list is a set of muscles,
+        // not a set of tokens.
+        if (m && !out.includes(m)) out.push(m)
+      }
+      return out
+    }
+
+    const names = [
+      // Every entry, reached by its own tokens — forwards and backwards,
+      // because the matcher is order-independent and that is worth pinning.
+      ...MUSCLE_DICT.map((e) => e.tokens.join(' ')),
+      ...MUSCLE_DICT.map((e) => [...e.tokens].reverse().join(' ').toUpperCase()),
+      // Every lift the program actually prescribes. The Swift deck resolves its
+      // movers through this map, so a miss here is a lift with no anatomy.
+      ...helix5DeckNames(),
+      // Alias keys and canonical values. NOTE: `lookupMuscles` does NOT
+      // canonicalize — the web canonicalizes at the boundary (resolveExercises,
+      // save, the catalog hook) and hands this module a name it already owns.
+      // Both sides are exported so the port stays honest about that.
+      ...Object.keys(EXERCISE_ALIASES),
+      ...new Set(Object.values(EXERCISE_ALIASES)),
+      // Punctuation is a SEPARATOR, never a deletion: the grip, the implement
+      // and the machine live inside the parentheses and are exactly the words
+      // that tell two movements apart.
+      'Seated Cable Row (V-Grip)', 'Seated Cable Row (Wide Grip)', 'Seated Cable Row',
+      'Shoulder Press (DB)', 'DB Shoulder Press', 'Crunch (Machine)', 'Crunch Machine',
+      'Neutral-Grip Lat Pulldown', 'lat pulldown neutral grip',
+      // Case and padding.
+      'PEC DECK', '  pec   deck  ', 'pec-deck', 'Pec\tDeck',
+      // Same specificity, first-written wins.
+      'Cable Overhead Extension', 'Cable Triceps Extension',
+      // Nothing matches these.
+      'Zercher Good Morning', 'Zercher Squat', 'Sled Push', '', '   ', '(((',
+    ]
+
+    interface LookupOut {
+      movers: MuscleEntry | null
+      groups: string[] | null
+      primaryLandmarks: LandmarkMuscle[]
+      secondaryLandmarks: LandmarkMuscle[]
+    }
+    emit('muscle-map-lookup.json', {
+      module: 'exercises/muscleMap',
+      fn: 'lookupMuscles + muscleGroupsFor + the landmark fold',
+      note: 'ALL tokens must be present and the longest matching phrase wins; ties go to the first entry written. null is "this map has never seen the movement", never an empty entry. Landmarks are the mover tokens folded through toLandmarkMuscle, deduped, nulls dropped.',
+      cases: names.map((name) => {
+        const e = lookupMuscles(name)
+        const out: LookupOut = {
+          movers: e,
+          groups: muscleGroupsFor(name),
+          primaryLandmarks: landmarks(e?.primary ?? []),
+          secondaryLandmarks: landmarks(e?.secondary ?? []),
+        }
+        return { name: JSON.stringify(name), input: { name }, expected: out }
+      }),
+    })
+
+    const fallback: Array<{ name: string; stored: string[] | null }> = [
+      // Known name: the column is ignored outright, however wrong it is.
+      { name: 'Face Pull', stored: ['shoulders', 'biceps'] },
+      { name: 'Face Pull', stored: null },
+      { name: 'Leg Press', stored: ['quads'] },
+      // Unknown name: [0] is the primary, the rest are secondaries.
+      { name: 'Zercher Good Morning', stored: ['hamstrings', 'glutes'] },
+      { name: 'Zercher Good Morning', stored: ['hamstrings'] },
+      { name: 'Zercher Good Morning', stored: [] },
+      { name: 'Zercher Good Morning', stored: null },
+      { name: '', stored: ['chest', 'triceps', 'front_delts'] },
+    ]
+    emit('muscle-map-resolve.json', {
+      module: 'exercises/muscleMap',
+      fn: 'resolveMovers',
+      note: 'The name wins. The stored muscle_groups column is only ever read for a row this dictionary has never seen, and splits [0] = primary / rest = secondary — which is how muscleGroupsFor writes it.',
+      cases: fallback.map((i) => ({
+        name: `${i.name || 'empty'} · ${i.stored === null ? 'null' : `[${i.stored.join(',')}]`}`,
+        input: i,
+        expected: resolveMovers(i.name, i.stored),
+      })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bodyweight and unilateral — `src/lib/exercises/bodyweight.ts`, `unilateral.ts`
+//
+// Two name predicates that decide what the logger RENDERS: whether a load
+// control exists at all, and whether the "Split L / R" button appears. Both are
+// pure regex over a name, both have a qualifier list that overrides the pattern
+// (a machine/cable/assisted word means a stack is attached; an explicit
+// "double" beats every unilateral tell-tale), and both are wrong in a way that
+// costs data rather than pixels — splitting a bilateral set logs half a session,
+// because a pair is scored at its weaker side and counts as ONE set.
+//
+// ICU and JavaScript disagree about `$` in the presence of a trailing newline,
+// which is why the anchored patterns are exercised here with real padding: both
+// implementations trim first, and the vectors are what prove it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — bodyweight and unilateral', () => {
+  it('exports isBodyweightExercise, isLoadableBodyweightExercise, isUnloadedExercise', () => {
+    const names: Array<string | null> = [
+      null, '', '   ',
+      // One per BODYWEIGHT_PATTERN, in the order they are written.
+      'Hanging Knee Raise', 'Hanging Leg Raise', 'Knee Raise', 'Leg Raises',
+      'Reverse Crunch', 'Reverse Crunches', 'Crunch', 'Crunches',
+      'Sit-Up', 'Sit Ups', 'Situps', 'Push-Up', 'Push Ups', 'Pushups', 'Push-Ups',
+      'Pull-Up', 'Pull Ups', 'Chin-Ups', 'Chinup', 'Dip', 'Dips',
+      'Back Extension', 'Back Extensions', 'Glute Bridge', 'Glute Bridges',
+      'Mountain Climbers', 'Bicycle Crunch', 'Bicycle Crunches',
+      'Flutter Kicks', 'Air Squat', 'Air Squats',
+      // The anchor: a loaded machine variant shares the word, and the pattern
+      // has to END at the movement or `Crunch Machine` becomes bodyweight.
+      'Crunch Machine', 'Crunch (Machine)', 'Cable Crunch', 'Weighted Crunch',
+      'Leg Raise Machine', 'Reverse Crunch Machine',
+      // Every excluded qualifier, one apiece.
+      'Machine Dip', 'Cable Crunches', 'Smith Push-Up', 'Barbell Glute Bridge',
+      'Dumbbell Sit-Up', 'DB Sit-Up', 'Plate Crunch', 'Assisted Pull-Up',
+      'Assisted Pull-Up (Machine)', 'Assisted Dip',
+      // Loadable vs not: a dip belt exists, a reverse crunch has nothing to hang.
+      'Weighted Dips', 'Pull-Up', 'Back Extension', 'Hanging Knee Raise', 'Glute Bridge',
+      // Timed holds are unloaded for the OTHER reason, and never loadable.
+      'Plank', 'Side Plank', 'Hollow Hold', 'Dead Hang', 'Farmer Carry', 'Wall Sit',
+      // Padding and case.
+      '  push-up  ', 'PULL-UPS', 'dips', ' Dips\t',
+      // Loaded movements, which none of this touches.
+      'Leg Press', 'Hip Thrust (Machine)', 'Lat Pulldown', 'Pec Deck',
+    ]
+    interface Out { bodyweight: boolean; loadable: boolean; unloaded: boolean }
+    emit('bodyweight-exercise.json', {
+      module: 'exercises/bodyweight',
+      fn: 'isBodyweightExercise + isLoadableBodyweightExercise + isUnloadedExercise',
+      note: 'A machine/cable/smith/barbell/dumbbell/db/plate/assisted qualifier means a stack is attached and wins over every pattern. `loadable` is the four movements with a real weighted form. `unloaded` is the union with isTimedExercise — a timed hold is unloaded but never loadable.',
+      cases: names.map((name) => ({
+        name: name === null ? 'null' : name || 'empty',
+        input: { name },
+        expected: {
+          bodyweight: isBodyweightExercise(name),
+          loadable: isLoadableBodyweightExercise(name),
+          unloaded: isUnloadedExercise(name),
+        } as Out,
+      })),
+    })
+
+    const uni: Array<string | null> = [
+      null, '', '   ',
+      // One per UNILATERAL_PATTERN.
+      'Single Arm Lateral Raise (Cable)', 'Single-Arm Row', 'Single Armed Press',
+      'Single Leg Curl', 'Single-Legged Deadlift', 'Single Side Carry',
+      'One Arm Cable Crossover', 'One-Arm Row', '1-Arm Row', '1 Arm Row',
+      'Unilateral Leg Press', 'Leg Extension per side', 'Curl per arm', 'Lunge per leg',
+      'Row each side', 'Curl ea arm',
+      'Bulgarian Split Squat', 'Split Squat', 'Split Squats',
+      'Walking Lunge', 'Lunges', 'Reverse Lunge',
+      'Step-Up', 'Step Ups', 'Stepups',
+      'Pistol Squat', 'Skater Squats', 'Copenhagen Plank',
+      'Suitcase Carry', 'Suitcase Carries', 'Suitcase Deadlift',
+      'Side Plank', 'Side Planks',
+      // BILATERAL_OVERRIDES, checked first — an explicit "double" always wins.
+      'Double Arm Row', 'Two-Arm Cable Row', 'Both Sides Press', '2-Arm Row',
+      'Double Arm Bulgarian Split Squat', 'Two Legged Step-Up',
+      // "Alternating" is deliberately NOT unilateral: one arm moves at a time
+      // but the set is logged as one set of N total reps, which is the opposite
+      // of what an L/R pair records.
+      'Alternating DB Curl', 'Alternating Lunges',
+      // Near misses.
+      'Lateral Raise', 'Leg Press', 'Sideways Crunch', 'Onerous Press', 'Onearm Row',
+      // Padding and case.
+      '  single arm row  ', 'BULGARIAN SPLIT SQUAT', 'lunges',
+      // Every name in the live deck: the logger offers the split from here.
+      ...helix5DeckNames(),
+    ]
+    emit('unilateral-exercise.json', {
+      module: 'exercises/unilateral',
+      fn: 'isUnilateralExercise',
+      note: 'An explicit "double/two/both/2 arm|leg|side" is checked FIRST and always wins. Movements unilateral by definition (bulgarian, split squat, lunge, step-up, pistol, skater, copenhagen, suitcase, side plank) carry no qualifier and are listed by name. "Alternating" is NOT here — that set is one set of N total reps.',
+      cases: uni.map((name) => ({
+        name: name === null ? 'null' : name || 'empty',
+        input: { name },
+        expected: isUnilateralExercise(name),
+      })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PR truth — `src/lib/training/prTruth.ts`
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2802,6 +3043,195 @@ describe('golden vectors — program deck', () => {
       module: 'programs',
       fn: 'activeProgram(apex51, phase)',
       note: 'The deck as the phase trains it: cutSets resolved into sets and lifts at 0 dropped. Names, windows, rest and seed loads must equal the Swift Program.helix5.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plans, phases and phase goals — the PREFERENCE half of `programs.ts`
+//
+// The catalogue, the legacy-id migration, the maintenance→cut narrowing, the
+// per-phase goal numbers and the weekly set targets. Deliberately NOT the
+// localStorage half: `helix_active_plan`, the version counter and the
+// `helix-plan-change` bus are render-timing workarounds for a browser, and the
+// native app resolves the plan out of GRDB instead.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Live plans first, legacy (PPL) last — `planList()` in settings/plan/page.tsx. */
+function planList(): Program[] {
+  return Object.values(PROGRAMS).sort((a, b) => Number(a.legacy ?? false) - Number(b.legacy ?? false))
+}
+
+/**
+ * Every optional goal spelled out, so an ABSENT key crosses as an explicit
+ * null. `bodyFatCeilingPct` exists only on the bulk; leaving it undefined would
+ * let it vanish from the JSON, and "the field is missing" and "the field is
+ * null" must not be the same fact on the Swift side.
+ *
+ * `??` and not `||`: a goal of 0 is a goal.
+ */
+function goalsRow(g: NutritionPreset) {
+  return {
+    phase: g.mode,
+    label: g.label,
+    calorieGoal: g.calorieGoal,
+    proteinGoalG: g.proteinGoalG ?? null,
+    carbsGoalG: g.carbsGoalG ?? null,
+    fatGoalG: g.fatGoalG ?? null,
+    fiberGoalG: g.fiberGoalG ?? null,
+    fiberMin: g.fiberMin ?? null,
+    fiberMax: g.fiberMax ?? null,
+    stepsGoal: g.stepsGoal,
+    targetWeightKg: g.targetWeightKg,
+    targetBodyFatPct: g.targetBodyFatPct ?? null,
+    targetMuscleMassKg: g.targetMuscleMassKg ?? null,
+    rateMinKgWk: g.rateMinKgWk ?? null,
+    rateMaxKgWk: g.rateMaxKgWk ?? null,
+    bodyFatCeilingPct: g.bodyFatCeilingPct ?? null,
+  }
+}
+
+describe('golden vectors — plan catalogue', () => {
+  it('exports the three plans in picker order', () => {
+    const plans = planList()
+    // Every plan declares a blurb, so the Swift carries a plain String rather
+    // than an optional nobody would ever find nil.
+    expect(plans.every((p) => !!p.blurb)).toBe(true)
+
+    emit('plan-catalogue.json', {
+      module: 'programs',
+      fn: 'PROGRAMS / planList() / DEFAULT_PROGRAM_ID',
+      note: 'Live plans first, legacy last. The TS sort is STABLE (ES2019), so apex51 keeps its place ahead of axis4 — the Swift must partition, not sort. `apex51` is Helix-5: the id is a localStorage key a season of rows was written under and it does not get renamed.',
+      cases: [{
+        name: 'the three plans, live first and legacy last',
+        input: {},
+        expected: {
+          defaultPlanId: DEFAULT_PROGRAM_ID,
+          plans: plans.map((p) => ({
+            id: p.id,
+            label: p.label,
+            blurb: p.blurb!,
+            isLegacy: p.legacy ?? false,
+          })),
+        },
+      }],
+    })
+  })
+
+  it('exports normalizePlanId over the legacy aliases and the junk', () => {
+    const raws: (string | null)[] = [
+      'apex51', 'axis4', 'ppl',
+      // The two Helix-4 variants consolidated into one plan; a device that
+      // never synced since still holds these strings.
+      'axis4_builder', 'axis4_defender',
+      // Falsy, mis-cased, padded and simply wrong. All of these are null, and
+      // the CALLER picks the fallback — the function does not pick it for them.
+      null, '', ' ', 'APEX51', 'Axis4', ' axis4', 'axis4_builder ', 'helix5', 'apex', 'bogus',
+      // JS looks up the alias table through Object.prototype, so these two find
+      // a function rather than undefined. The answer is still null; the vector
+      // is here so a Swift Dictionary (which has no prototype) is provably the
+      // same function and not accidentally so.
+      'constructor', 'toString',
+    ]
+
+    emit('plan-normalize.json', {
+      module: 'programs',
+      fn: 'normalizePlanId',
+      note: 'Legacy ids migrate to the plan that absorbed them; anything unknown is null, never the default. Exact string match — no trimming, no case folding.',
+      cases: raws.map((raw) => ({
+        name: raw === null ? 'null' : JSON.stringify(raw),
+        input: { raw },
+        expected: normalizePlanId(raw),
+      })),
+    })
+  })
+})
+
+describe('golden vectors — phase narrowing and phase goals', () => {
+  it('exports the stored-phase narrowing', () => {
+    const stored: (string | null)[] = [
+      'cut', 'bulk',
+      // `maintenance` was deleted on 2026-08-30. A row written before that
+      // still holds the string, and it reads back as the CUT it is being run
+      // inside — not as the bulk deck it used to resolve to by accident.
+      'maintenance',
+      null, '', 'Bulk', 'BULK', ' bulk', 'lean bulk', 'peak', 'deload', 'cut ',
+    ]
+
+    // ── THE SAME RULE, WRITTEN TWICE ─────────────────────────────────────────
+    // `activePhase()` reads localStorage and `asNutritionMode` reads a DB
+    // column, and both narrow with `=== 'bulk' ? bulk : cut`. This asserts they
+    // agree, which is the licence for the Swift port to carry ONE of them.
+    for (const raw of stored) {
+      if (raw === null) window.localStorage.removeItem('helix_active_phase')
+      else window.localStorage.setItem('helix_active_phase', raw)
+      expect(activePhase(), `activePhase disagrees with asNutritionMode on ${JSON.stringify(raw)}`)
+        .toBe(asNutritionMode(raw))
+    }
+    window.localStorage.removeItem('helix_active_phase')
+
+    emit('plan-phase-narrow.json', {
+      module: 'types/workout',
+      fn: 'asNutritionMode === activePhase',
+      note: 'Exactly the string "bulk" is a bulk. Everything else — including the deleted "maintenance", null and any casing — is a cut. Two TS functions, one Swift.',
+      cases: stored.map((raw) => ({
+        name: raw === null ? 'null' : JSON.stringify(raw),
+        input: { raw },
+        expected: asNutritionMode(raw),
+      })),
+    })
+  })
+
+  it('exports the per-plan phase goals', () => {
+    // If a second overlay is ever added, this fails and the vectors get
+    // regenerated — which is the only way the Swift hears about it.
+    expect(Object.keys(PLAN_PHASES)).toEqual(['ppl'])
+    expect(Object.keys(PLAN_PHASES.ppl!)).toEqual(['cut'])
+    expect(Object.keys(NUTRITION_PRESETS)).toEqual(['cut', 'bulk'])
+
+    const cases: Case<{ planId: string; phase: NutritionMode }, ReturnType<typeof goalsRow>>[] = []
+    // `axis4_builder` is deliberate: `phaseGoalsFor` does NOT normalize, so a
+    // legacy id misses the override table and lands on the Helix defaults.
+    for (const planId of ['apex51', 'axis4', 'ppl', 'axis4_builder', 'bogus']) {
+      for (const phase of ['cut', 'bulk'] as NutritionMode[]) {
+        cases.push({
+          name: `${planId} · ${phase}`,
+          input: { planId, phase },
+          expected: goalsRow(phaseGoalsFor(planId, phase)),
+        })
+      }
+    }
+
+    emit('plan-phase-goals.json', {
+      module: 'types/workout',
+      fn: 'phaseGoalsFor (NUTRITION_PRESETS + PLAN_PHASES)',
+      note: 'The plan overlay is spread OVER the Helix default: PPL runs a leaner cut (1935 kcal / 180P·180C·55F) and inherits every other field, including the cut’s body targets. PPL’s BULK has no overlay at all.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — program targets', () => {
+  it('exports the weekly set target for every muscle in every phase', () => {
+    const cases: Case<{ phase: string; muscle: LandmarkMuscle }, number>[] = []
+    // 'maintenance' is the deleted phase; 'bogus' is garbage. Both land on the
+    // CUT row, and for the same documented reason: cut is the safe floor.
+    for (const phase of ['cut', 'bulk', 'maintenance', 'bogus']) {
+      for (const muscle of LANDMARK_MUSCLES) {
+        cases.push({
+          name: `${phase} · ${muscle}`,
+          input: { phase, muscle },
+          expected: programTargets(phase as ProgramPhase)[muscle],
+        })
+      }
+    }
+    expect(cases).toHaveLength(4 * 16)
+
+    emit('program-targets.json', {
+      module: 'training/landmarks',
+      fn: 'PROGRAM_TARGETS / programTargets',
+      note: 'Cut = MEV+ (defend muscle in a deficit), bulk = MAV (the productive ceiling). Adductors are 0 on the cut — the hip-adduction lift is dropped there, and 0 is a real target, not a missing one. An unrecognised phase falls back to cut.',
       cases,
     })
   })
@@ -4355,6 +4785,128 @@ describe('golden vectors — coach insights', () => {
       module: 'coach/insights',
       fn: 'daysSinceLastSession / trainingGap / fuelVsForce / stallProtocol / computeInsights',
       note: 'Deterministic. `insights` is computeInsights at the given limit and `all` at 99 — ranked by confidence, stable on ties in builder order. Numbers in the prose use toLocaleString (en-US thousands separators).',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// reports/fmtV2.parseTargets + reports/targetMatch
+//
+// The half of the FMT v2 reader that CROSSES into Swift. The renderer stays in
+// a WKWebView (decision 7), but the prescription a report carries — the load
+// ladder, the hydration line, the step target, the macro triple — feeds the
+// logger, and the logger is native.
+//
+// Every case here is a shape a real report has actually used, plus the traps
+// the TypeScript's own comments name: a table whose load column is column zero,
+// a sentence containing "24 kg" that is not a prescription, a "3.2 L" that is
+// really millilitres, a shouted line that is a heading rather than an
+// instruction.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('report targets', () => {
+  it('parseTargets and the matcher', () => {
+    interface In { name: string; lines: string[]; lookup?: string }
+    interface Out { targets: ReportTargets; has: boolean; matched: unknown; formatted: string | null }
+
+    const cases: Array<Case<In, Out>> = []
+    const push = (name: string, lines: string[], lookup?: string) => {
+      const targets = parseTargets(lines)
+      const matched = lookup ? targetForExercise(targets, lookup) : null
+      cases.push({
+        name,
+        input: { name, lines, lookup },
+        expected: {
+          targets,
+          has: hasTargets(targets),
+          matched,
+          formatted: matched ? formatTarget(matched) : null,
+        },
+      })
+    }
+
+    // ── the inline ladder, the shape most reports use ──
+    push('inline ladder with arrows and rep windows', [
+      'Incline DB Press → 22.5 kg × 8-10',
+      'Seated Cable Row (Wide Grip) → 49.5 kg × 10-12',
+      'Rope Triceps Pushdown at 27 kg x12',
+    ], 'incline db press')
+
+    push('a separator, not an arrow', ['Hack Squat — 95 kg × 6-8'], 'hack squat')
+    push('a colon separator', ['Pec Deck: 45 kg'], 'pec deck')
+    push('the word "to"', ['Face Pull to 18 kg × 15'], 'face pull')
+
+    // ── the trap the separator requirement exists for ──
+    push('prose containing a load is not a prescription', [
+      'Volume dropped to 24 kg per set on Tuesday and it showed in the last two sets.',
+    ])
+    push('a zero load is not a prescription', ['Bodyweight Dip → 0 kg × 10'])
+
+    // ── the table form ──
+    push('a pipe table with a load and a reps column', [
+      'Exercise | Target kg | Reps',
+      'Incline DB Press | 22.5 | 8-10',
+      'Hack Squat | 95 | 6-8',
+    ], 'Incline DB Press')
+    push('a table whose separator row the author wrote', [
+      'Exercise | Load | Reps',
+      '--- | --- | ---',
+      'Pec Deck | 45 | 12-15',
+    ], 'Pec Deck')
+    push('a table with no load column is not a ladder', [
+      'Muscle | Sets | Δ',
+      'Chest | 11 | +1',
+    ])
+
+    // ── hydration, steps, macros ──
+    push('a hydration range', ['Water: 3.0-3.5 L a day, front-loaded before training.'])
+    push('a single hydration figure', ['Hold hydration at 3.2 L.'])
+    push('millilitres written as litres are out of bounds', ['Water 3200 L'])
+    push('a step target in thousands', ['Steps: 12k minimum, 15k on rest days.'])
+    push('a plain step target', ['Steps 12,000 daily.'])
+    push('a step figure below the floor is not a target', ['Steps dropped 400 on Thursday.'])
+    push('a macro triple', ['Hold 1,885 kcal · 170 P / 182 C / 53 F.'])
+    push('kcal alone', ['Target 1,885 kcal this week.'])
+
+    // ── notes ──
+    push('instructions become notes, capped at four', [
+      'Keep the top set inside the rep window before adding load.',
+      'Push the hip thrust to the ceiling of its window this week.',
+      'Do not chase the lateral raise past 12 kg until the left side catches up.',
+      'Hold the calf press pause for a full second at the bottom.',
+      'This fifth sentence should not appear in the notes at all.',
+    ])
+    push('a shouted line is a heading, not an instruction', [
+      '⚑ DB LADDER VALIDATOR',
+      'Keep the top set inside the rep window before adding load.',
+    ])
+    push('decoration and short lines are not instructions', [
+      '─────────────────',
+      'Too short.',
+      '**Push the hip thrust to the ceiling of its window this week.**',
+    ])
+    push('a consumed line is not also a note', [
+      'Water: 3.0-3.5 L a day, front-loaded before training.',
+      'Keep the top set inside the rep window before adding load.',
+    ])
+
+    // ── the matcher, and the split it must not undo ──
+    push('the matcher folds punctuation and case', [
+      'Incline DB Press → 22.5 kg × 8-10',
+    ], 'incline db press.')
+    push('the matcher does NOT merge the two row grips', [
+      'Seated Cable Row (Wide Grip) → 49.5 kg × 10-12',
+    ], 'Seated Cable Row (V-Grip)')
+    push('an unnamed exercise matches nothing', ['Pec Deck: 45 kg'], 'Leg Press')
+
+    // ── an empty document ──
+    push('nothing at all', [])
+    push('blank lines only', ['', '   ', ''])
+
+    emit('report-targets.json', {
+      module: 'reports/fmtV2 + reports/targetMatch',
+      fn: 'parseTargets / hasTargets / targetForExercise / formatTarget',
+      note: 'Every field is independently optional; nil is never zero. `matched` is targetForExercise for the given lookup name, `formatted` its display string. The matcher is exact after alias canonicalisation — it must never merge two catalogue rows that were split on purpose.',
       cases,
     })
   })

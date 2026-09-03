@@ -1,0 +1,766 @@
+{
+  "module": "exercises/bodyweight",
+  "fn": "isBodyweightExercise + isLoadableBodyweightExercise + isUnloadedExercise",
+  "note": "A machine/cable/smith/barbell/dumbbell/db/plate/assisted qualifier means a stack is attached and wins over every pattern. `loadable` is the four movements with a real weighted form. `unloaded` is the union with isTimedExercise — a timed hold is unloaded but never loadable.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "name": null
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "name": ""
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "   ",
+      "input": {
+        "name": "   "
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Hanging Leg Raise",
+      "input": {
+        "name": "Hanging Leg Raise"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Knee Raise",
+      "input": {
+        "name": "Knee Raise"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Leg Raises",
+      "input": {
+        "name": "Leg Raises"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Reverse Crunch",
+      "input": {
+        "name": "Reverse Crunch"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Reverse Crunches",
+      "input": {
+        "name": "Reverse Crunches"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Crunch",
+      "input": {
+        "name": "Crunch"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Crunches",
+      "input": {
+        "name": "Crunches"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Sit-Up",
+      "input": {
+        "name": "Sit-Up"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Sit Ups",
+      "input": {
+        "name": "Sit Ups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Situps",
+      "input": {
+        "name": "Situps"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Push-Up",
+      "input": {
+        "name": "Push-Up"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Push Ups",
+      "input": {
+        "name": "Push Ups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Pushups",
+      "input": {
+        "name": "Pushups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Push-Ups",
+      "input": {
+        "name": "Push-Ups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Pull-Up",
+      "input": {
+        "name": "Pull-Up"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Pull Ups",
+      "input": {
+        "name": "Pull Ups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Chin-Ups",
+      "input": {
+        "name": "Chin-Ups"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Chinup",
+      "input": {
+        "name": "Chinup"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Dip",
+      "input": {
+        "name": "Dip"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Dips",
+      "input": {
+        "name": "Dips"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Back Extension",
+      "input": {
+        "name": "Back Extension"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Back Extensions",
+      "input": {
+        "name": "Back Extensions"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Glute Bridge",
+      "input": {
+        "name": "Glute Bridge"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Glute Bridges",
+      "input": {
+        "name": "Glute Bridges"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Mountain Climbers",
+      "input": {
+        "name": "Mountain Climbers"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Bicycle Crunch",
+      "input": {
+        "name": "Bicycle Crunch"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Bicycle Crunches",
+      "input": {
+        "name": "Bicycle Crunches"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Flutter Kicks",
+      "input": {
+        "name": "Flutter Kicks"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Air Squat",
+      "input": {
+        "name": "Air Squat"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Air Squats",
+      "input": {
+        "name": "Air Squats"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Crunch Machine",
+      "input": {
+        "name": "Crunch Machine"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Crunch (Machine)",
+      "input": {
+        "name": "Crunch (Machine)"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Cable Crunch",
+      "input": {
+        "name": "Cable Crunch"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Weighted Crunch",
+      "input": {
+        "name": "Weighted Crunch"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Leg Raise Machine",
+      "input": {
+        "name": "Leg Raise Machine"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Reverse Crunch Machine",
+      "input": {
+        "name": "Reverse Crunch Machine"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Machine Dip",
+      "input": {
+        "name": "Machine Dip"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Cable Crunches",
+      "input": {
+        "name": "Cable Crunches"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Smith Push-Up",
+      "input": {
+        "name": "Smith Push-Up"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Barbell Glute Bridge",
+      "input": {
+        "name": "Barbell Glute Bridge"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Dumbbell Sit-Up",
+      "input": {
+        "name": "Dumbbell Sit-Up"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "DB Sit-Up",
+      "input": {
+        "name": "DB Sit-Up"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Plate Crunch",
+      "input": {
+        "name": "Plate Crunch"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Assisted Pull-Up",
+      "input": {
+        "name": "Assisted Pull-Up"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Assisted Pull-Up (Machine)",
+      "input": {
+        "name": "Assisted Pull-Up (Machine)"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Assisted Dip",
+      "input": {
+        "name": "Assisted Dip"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Weighted Dips",
+      "input": {
+        "name": "Weighted Dips"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Pull-Up",
+      "input": {
+        "name": "Pull-Up"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Back Extension",
+      "input": {
+        "name": "Back Extension"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Glute Bridge",
+      "input": {
+        "name": "Glute Bridge"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Plank",
+      "input": {
+        "name": "Plank"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Hollow Hold",
+      "input": {
+        "name": "Hollow Hold"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Dead Hang",
+      "input": {
+        "name": "Dead Hang"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Farmer Carry",
+      "input": {
+        "name": "Farmer Carry"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Wall Sit",
+      "input": {
+        "name": "Wall Sit"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "  push-up  ",
+      "input": {
+        "name": "  push-up  "
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "PULL-UPS",
+      "input": {
+        "name": "PULL-UPS"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "dips",
+      "input": {
+        "name": "dips"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": " Dips\t",
+      "input": {
+        "name": " Dips\t"
+      },
+      "expected": {
+        "bodyweight": true,
+        "loadable": true,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine)",
+      "input": {
+        "name": "Hip Thrust (Machine)"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Lat Pulldown",
+      "input": {
+        "name": "Lat Pulldown"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "Pec Deck",
+      "input": {
+        "name": "Pec Deck"
+      },
+      "expected": {
+        "bodyweight": false,
+        "loadable": false,
+        "unloaded": false
+      }
+    }
+  ]
+}

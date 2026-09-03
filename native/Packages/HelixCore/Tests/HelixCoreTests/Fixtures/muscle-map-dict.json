@@ -1,0 +1,717 @@
+{
+  "module": "exercises/muscleMap",
+  "fn": "MUSCLE_DICT",
+  "note": "Data, not arithmetic — and ORDER IS DATA: of two entries with the same token count the FIRST wins, because lookupMuscles only replaces on a strictly longer match. The Swift table must equal this one, entry for entry, in this order.",
+  "cases": [
+    {
+      "name": "the dictionary",
+      "input": {},
+      "expected": [
+        {
+          "tokens": [
+            "leg",
+            "press",
+            "horizontal"
+          ],
+          "muscles": {
+            "primary": [
+              "quadriceps"
+            ],
+            "secondary": [
+              "glutes",
+              "hamstrings"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "leg",
+            "press"
+          ],
+          "muscles": {
+            "primary": [
+              "quadriceps"
+            ],
+            "secondary": [
+              "glutes",
+              "hamstrings"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "hack",
+            "squat"
+          ],
+          "muscles": {
+            "primary": [
+              "quadriceps"
+            ],
+            "secondary": [
+              "glutes",
+              "hamstrings"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "leg",
+            "extension"
+          ],
+          "muscles": {
+            "primary": [
+              "quadriceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "seated",
+            "leg",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "hamstrings"
+            ],
+            "secondary": [
+              "calves"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "leg",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "hamstrings"
+            ],
+            "secondary": [
+              "calves"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "romanian",
+            "deadlift"
+          ],
+          "muscles": {
+            "primary": [
+              "hamstrings"
+            ],
+            "secondary": [
+              "glutes",
+              "lower back",
+              "upper back",
+              "lats",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "rdl"
+          ],
+          "muscles": {
+            "primary": [
+              "hamstrings"
+            ],
+            "secondary": [
+              "glutes",
+              "lower back",
+              "upper back",
+              "lats",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "hip",
+            "thrust"
+          ],
+          "muscles": {
+            "primary": [
+              "glutes"
+            ],
+            "secondary": [
+              "hamstrings",
+              "quadriceps",
+              "adductors"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "hip",
+            "adduction"
+          ],
+          "muscles": {
+            "primary": [
+              "adductors"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "adductor"
+          ],
+          "muscles": {
+            "primary": [
+              "adductors"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "calf",
+            "press"
+          ],
+          "muscles": {
+            "primary": [
+              "calves"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "calf",
+            "raise"
+          ],
+          "muscles": {
+            "primary": [
+              "calves"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "crunch"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "reverse",
+            "crunch"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "bicycle",
+            "crunch"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": [
+              "obliques"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "hanging",
+            "knee",
+            "raise"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "leg",
+            "raise"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "hollow",
+            "rock"
+          ],
+          "muscles": {
+            "primary": [
+              "abdominals"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "russian",
+            "twist"
+          ],
+          "muscles": {
+            "primary": [
+              "obliques"
+            ],
+            "secondary": [
+              "abdominals"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "side",
+            "plank"
+          ],
+          "muscles": {
+            "primary": [
+              "obliques"
+            ],
+            "secondary": [
+              "abdominals"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "incline",
+            "bench",
+            "press",
+            "dumbbell"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": [
+              "triceps",
+              "front_delts"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "incline",
+            "db",
+            "press"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": [
+              "triceps",
+              "front_delts"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "chest",
+            "press"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": [
+              "triceps",
+              "front_delts"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "pec",
+            "deck"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "butterfly"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "cable",
+            "crossover"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "cable",
+            "fly"
+          ],
+          "muscles": {
+            "primary": [
+              "chest"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "lat",
+            "pulldown"
+          ],
+          "muscles": {
+            "primary": [
+              "lats"
+            ],
+            "secondary": [
+              "upper back",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "lat",
+            "pulldown",
+            "neutral"
+          ],
+          "muscles": {
+            "primary": [
+              "lats"
+            ],
+            "secondary": [
+              "upper back",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "lat",
+            "pulldown",
+            "close"
+          ],
+          "muscles": {
+            "primary": [
+              "lats"
+            ],
+            "secondary": [
+              "upper back",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "cable",
+            "row"
+          ],
+          "muscles": {
+            "primary": [
+              "upper back"
+            ],
+            "secondary": [
+              "lats",
+              "traps",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "seated",
+            "cable",
+            "row",
+            "wide"
+          ],
+          "muscles": {
+            "primary": [
+              "upper back"
+            ],
+            "secondary": [
+              "lats",
+              "traps",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "seated",
+            "cable",
+            "row",
+            "v"
+          ],
+          "muscles": {
+            "primary": [
+              "upper back"
+            ],
+            "secondary": [
+              "lats",
+              "biceps",
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "straight",
+            "arm",
+            "pulldown"
+          ],
+          "muscles": {
+            "primary": [
+              "lats"
+            ],
+            "secondary": [
+              "triceps"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "face",
+            "pull"
+          ],
+          "muscles": {
+            "primary": [
+              "rear_delts"
+            ],
+            "secondary": [
+              "biceps"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "shoulder",
+            "press"
+          ],
+          "muscles": {
+            "primary": [
+              "front_delts"
+            ],
+            "secondary": [
+              "triceps"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "lateral",
+            "raise"
+          ],
+          "muscles": {
+            "primary": [
+              "side_delts"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "triceps",
+            "pushdown"
+          ],
+          "muscles": {
+            "primary": [
+              "triceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "triceps",
+            "extension"
+          ],
+          "muscles": {
+            "primary": [
+              "triceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "overhead",
+            "extension"
+          ],
+          "muscles": {
+            "primary": [
+              "triceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "overhead",
+            "triceps"
+          ],
+          "muscles": {
+            "primary": [
+              "triceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "cable",
+            "extension"
+          ],
+          "muscles": {
+            "primary": [
+              "triceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "hammer",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": [
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "neutral",
+            "grip",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": [
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "reverse",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": [
+              "forearms"
+            ]
+          }
+        },
+        {
+          "tokens": [
+            "wrist",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "forearms"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "preacher",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "incline",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "bicep",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": []
+          }
+        },
+        {
+          "tokens": [
+            "biceps",
+            "curl"
+          ],
+          "muscles": {
+            "primary": [
+              "biceps"
+            ],
+            "secondary": []
+          }
+        }
+      ]
+    }
+  ]
+}

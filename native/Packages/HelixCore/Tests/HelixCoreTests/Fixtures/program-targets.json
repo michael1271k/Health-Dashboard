@@ -1,0 +1,519 @@
+{
+  "module": "training/landmarks",
+  "fn": "PROGRAM_TARGETS / programTargets",
+  "note": "Cut = MEV+ (defend muscle in a deficit), bulk = MAV (the productive ceiling). Adductors are 0 on the cut — the hip-adduction lift is dropped there, and 0 is a real target, not a missing one. An unrecognised phase falls back to cut.",
+  "cases": [
+    {
+      "name": "cut · Chest",
+      "input": {
+        "phase": "cut",
+        "muscle": "Chest"
+      },
+      "expected": 11
+    },
+    {
+      "name": "cut · Lats",
+      "input": {
+        "phase": "cut",
+        "muscle": "Lats"
+      },
+      "expected": 6
+    },
+    {
+      "name": "cut · Upper back",
+      "input": {
+        "phase": "cut",
+        "muscle": "Upper back"
+      },
+      "expected": 4
+    },
+    {
+      "name": "cut · Lower back",
+      "input": {
+        "phase": "cut",
+        "muscle": "Lower back"
+      },
+      "expected": 1
+    },
+    {
+      "name": "cut · Front delts",
+      "input": {
+        "phase": "cut",
+        "muscle": "Front delts"
+      },
+      "expected": 4
+    },
+    {
+      "name": "cut · Side delts",
+      "input": {
+        "phase": "cut",
+        "muscle": "Side delts"
+      },
+      "expected": 7
+    },
+    {
+      "name": "cut · Rear delts",
+      "input": {
+        "phase": "cut",
+        "muscle": "Rear delts"
+      },
+      "expected": 2
+    },
+    {
+      "name": "cut · Biceps",
+      "input": {
+        "phase": "cut",
+        "muscle": "Biceps"
+      },
+      "expected": 8
+    },
+    {
+      "name": "cut · Triceps",
+      "input": {
+        "phase": "cut",
+        "muscle": "Triceps"
+      },
+      "expected": 6
+    },
+    {
+      "name": "cut · Forearms",
+      "input": {
+        "phase": "cut",
+        "muscle": "Forearms"
+      },
+      "expected": 4
+    },
+    {
+      "name": "cut · Quads",
+      "input": {
+        "phase": "cut",
+        "muscle": "Quads"
+      },
+      "expected": 10
+    },
+    {
+      "name": "cut · Hamstrings",
+      "input": {
+        "phase": "cut",
+        "muscle": "Hamstrings"
+      },
+      "expected": 8
+    },
+    {
+      "name": "cut · Glutes",
+      "input": {
+        "phase": "cut",
+        "muscle": "Glutes"
+      },
+      "expected": 6
+    },
+    {
+      "name": "cut · Adductors",
+      "input": {
+        "phase": "cut",
+        "muscle": "Adductors"
+      },
+      "expected": 0
+    },
+    {
+      "name": "cut · Calves",
+      "input": {
+        "phase": "cut",
+        "muscle": "Calves"
+      },
+      "expected": 6
+    },
+    {
+      "name": "cut · Abs/core",
+      "input": {
+        "phase": "cut",
+        "muscle": "Abs/core"
+      },
+      "expected": 10
+    },
+    {
+      "name": "bulk · Chest",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Chest"
+      },
+      "expected": 13
+    },
+    {
+      "name": "bulk · Lats",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Lats"
+      },
+      "expected": 8
+    },
+    {
+      "name": "bulk · Upper back",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Upper back"
+      },
+      "expected": 5
+    },
+    {
+      "name": "bulk · Lower back",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Lower back"
+      },
+      "expected": 1
+    },
+    {
+      "name": "bulk · Front delts",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Front delts"
+      },
+      "expected": 6
+    },
+    {
+      "name": "bulk · Side delts",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Side delts"
+      },
+      "expected": 9
+    },
+    {
+      "name": "bulk · Rear delts",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Rear delts"
+      },
+      "expected": 3
+    },
+    {
+      "name": "bulk · Biceps",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Biceps"
+      },
+      "expected": 9
+    },
+    {
+      "name": "bulk · Triceps",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Triceps"
+      },
+      "expected": 7
+    },
+    {
+      "name": "bulk · Forearms",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Forearms"
+      },
+      "expected": 7
+    },
+    {
+      "name": "bulk · Quads",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Quads"
+      },
+      "expected": 12
+    },
+    {
+      "name": "bulk · Hamstrings",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Hamstrings"
+      },
+      "expected": 9
+    },
+    {
+      "name": "bulk · Glutes",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Glutes"
+      },
+      "expected": 7
+    },
+    {
+      "name": "bulk · Adductors",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Adductors"
+      },
+      "expected": 2
+    },
+    {
+      "name": "bulk · Calves",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Calves"
+      },
+      "expected": 8
+    },
+    {
+      "name": "bulk · Abs/core",
+      "input": {
+        "phase": "bulk",
+        "muscle": "Abs/core"
+      },
+      "expected": 11
+    },
+    {
+      "name": "maintenance · Chest",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Chest"
+      },
+      "expected": 11
+    },
+    {
+      "name": "maintenance · Lats",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Lats"
+      },
+      "expected": 6
+    },
+    {
+      "name": "maintenance · Upper back",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Upper back"
+      },
+      "expected": 4
+    },
+    {
+      "name": "maintenance · Lower back",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Lower back"
+      },
+      "expected": 1
+    },
+    {
+      "name": "maintenance · Front delts",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Front delts"
+      },
+      "expected": 4
+    },
+    {
+      "name": "maintenance · Side delts",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Side delts"
+      },
+      "expected": 7
+    },
+    {
+      "name": "maintenance · Rear delts",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Rear delts"
+      },
+      "expected": 2
+    },
+    {
+      "name": "maintenance · Biceps",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Biceps"
+      },
+      "expected": 8
+    },
+    {
+      "name": "maintenance · Triceps",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Triceps"
+      },
+      "expected": 6
+    },
+    {
+      "name": "maintenance · Forearms",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Forearms"
+      },
+      "expected": 4
+    },
+    {
+      "name": "maintenance · Quads",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Quads"
+      },
+      "expected": 10
+    },
+    {
+      "name": "maintenance · Hamstrings",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Hamstrings"
+      },
+      "expected": 8
+    },
+    {
+      "name": "maintenance · Glutes",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Glutes"
+      },
+      "expected": 6
+    },
+    {
+      "name": "maintenance · Adductors",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Adductors"
+      },
+      "expected": 0
+    },
+    {
+      "name": "maintenance · Calves",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Calves"
+      },
+      "expected": 6
+    },
+    {
+      "name": "maintenance · Abs/core",
+      "input": {
+        "phase": "maintenance",
+        "muscle": "Abs/core"
+      },
+      "expected": 10
+    },
+    {
+      "name": "bogus · Chest",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Chest"
+      },
+      "expected": 11
+    },
+    {
+      "name": "bogus · Lats",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Lats"
+      },
+      "expected": 6
+    },
+    {
+      "name": "bogus · Upper back",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Upper back"
+      },
+      "expected": 4
+    },
+    {
+      "name": "bogus · Lower back",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Lower back"
+      },
+      "expected": 1
+    },
+    {
+      "name": "bogus · Front delts",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Front delts"
+      },
+      "expected": 4
+    },
+    {
+      "name": "bogus · Side delts",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Side delts"
+      },
+      "expected": 7
+    },
+    {
+      "name": "bogus · Rear delts",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Rear delts"
+      },
+      "expected": 2
+    },
+    {
+      "name": "bogus · Biceps",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Biceps"
+      },
+      "expected": 8
+    },
+    {
+      "name": "bogus · Triceps",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Triceps"
+      },
+      "expected": 6
+    },
+    {
+      "name": "bogus · Forearms",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Forearms"
+      },
+      "expected": 4
+    },
+    {
+      "name": "bogus · Quads",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Quads"
+      },
+      "expected": 10
+    },
+    {
+      "name": "bogus · Hamstrings",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Hamstrings"
+      },
+      "expected": 8
+    },
+    {
+      "name": "bogus · Glutes",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Glutes"
+      },
+      "expected": 6
+    },
+    {
+      "name": "bogus · Adductors",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Adductors"
+      },
+      "expected": 0
+    },
+    {
+      "name": "bogus · Calves",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Calves"
+      },
+      "expected": 6
+    },
+    {
+      "name": "bogus · Abs/core",
+      "input": {
+        "phase": "bogus",
+        "muscle": "Abs/core"
+      },
+      "expected": 10
+    }
+  ]
+}

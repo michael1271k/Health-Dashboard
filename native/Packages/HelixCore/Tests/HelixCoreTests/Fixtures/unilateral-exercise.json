@@ -1,0 +1,595 @@
+{
+  "module": "exercises/unilateral",
+  "fn": "isUnilateralExercise",
+  "note": "An explicit \"double/two/both/2 arm|leg|side\" is checked FIRST and always wins. Movements unilateral by definition (bulgarian, split squat, lunge, step-up, pistol, skater, copenhagen, suitcase, side plank) carry no qualifier and are listed by name. \"Alternating\" is NOT here — that set is one set of N total reps.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "name": null
+      },
+      "expected": false
+    },
+    {
+      "name": "empty",
+      "input": {
+        "name": ""
+      },
+      "expected": false
+    },
+    {
+      "name": "   ",
+      "input": {
+        "name": "   "
+      },
+      "expected": false
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable)",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": true
+    },
+    {
+      "name": "Single-Arm Row",
+      "input": {
+        "name": "Single-Arm Row"
+      },
+      "expected": true
+    },
+    {
+      "name": "Single Armed Press",
+      "input": {
+        "name": "Single Armed Press"
+      },
+      "expected": true
+    },
+    {
+      "name": "Single Leg Curl",
+      "input": {
+        "name": "Single Leg Curl"
+      },
+      "expected": true
+    },
+    {
+      "name": "Single-Legged Deadlift",
+      "input": {
+        "name": "Single-Legged Deadlift"
+      },
+      "expected": true
+    },
+    {
+      "name": "Single Side Carry",
+      "input": {
+        "name": "Single Side Carry"
+      },
+      "expected": true
+    },
+    {
+      "name": "One Arm Cable Crossover",
+      "input": {
+        "name": "One Arm Cable Crossover"
+      },
+      "expected": true
+    },
+    {
+      "name": "One-Arm Row",
+      "input": {
+        "name": "One-Arm Row"
+      },
+      "expected": true
+    },
+    {
+      "name": "1-Arm Row",
+      "input": {
+        "name": "1-Arm Row"
+      },
+      "expected": true
+    },
+    {
+      "name": "1 Arm Row",
+      "input": {
+        "name": "1 Arm Row"
+      },
+      "expected": true
+    },
+    {
+      "name": "Unilateral Leg Press",
+      "input": {
+        "name": "Unilateral Leg Press"
+      },
+      "expected": true
+    },
+    {
+      "name": "Leg Extension per side",
+      "input": {
+        "name": "Leg Extension per side"
+      },
+      "expected": true
+    },
+    {
+      "name": "Curl per arm",
+      "input": {
+        "name": "Curl per arm"
+      },
+      "expected": true
+    },
+    {
+      "name": "Lunge per leg",
+      "input": {
+        "name": "Lunge per leg"
+      },
+      "expected": true
+    },
+    {
+      "name": "Row each side",
+      "input": {
+        "name": "Row each side"
+      },
+      "expected": true
+    },
+    {
+      "name": "Curl ea arm",
+      "input": {
+        "name": "Curl ea arm"
+      },
+      "expected": true
+    },
+    {
+      "name": "Bulgarian Split Squat",
+      "input": {
+        "name": "Bulgarian Split Squat"
+      },
+      "expected": true
+    },
+    {
+      "name": "Split Squat",
+      "input": {
+        "name": "Split Squat"
+      },
+      "expected": true
+    },
+    {
+      "name": "Split Squats",
+      "input": {
+        "name": "Split Squats"
+      },
+      "expected": true
+    },
+    {
+      "name": "Walking Lunge",
+      "input": {
+        "name": "Walking Lunge"
+      },
+      "expected": true
+    },
+    {
+      "name": "Lunges",
+      "input": {
+        "name": "Lunges"
+      },
+      "expected": true
+    },
+    {
+      "name": "Reverse Lunge",
+      "input": {
+        "name": "Reverse Lunge"
+      },
+      "expected": true
+    },
+    {
+      "name": "Step-Up",
+      "input": {
+        "name": "Step-Up"
+      },
+      "expected": true
+    },
+    {
+      "name": "Step Ups",
+      "input": {
+        "name": "Step Ups"
+      },
+      "expected": true
+    },
+    {
+      "name": "Stepups",
+      "input": {
+        "name": "Stepups"
+      },
+      "expected": true
+    },
+    {
+      "name": "Pistol Squat",
+      "input": {
+        "name": "Pistol Squat"
+      },
+      "expected": true
+    },
+    {
+      "name": "Skater Squats",
+      "input": {
+        "name": "Skater Squats"
+      },
+      "expected": true
+    },
+    {
+      "name": "Copenhagen Plank",
+      "input": {
+        "name": "Copenhagen Plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "Suitcase Carry",
+      "input": {
+        "name": "Suitcase Carry"
+      },
+      "expected": true
+    },
+    {
+      "name": "Suitcase Carries",
+      "input": {
+        "name": "Suitcase Carries"
+      },
+      "expected": true
+    },
+    {
+      "name": "Suitcase Deadlift",
+      "input": {
+        "name": "Suitcase Deadlift"
+      },
+      "expected": true
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "Side Planks",
+      "input": {
+        "name": "Side Planks"
+      },
+      "expected": true
+    },
+    {
+      "name": "Double Arm Row",
+      "input": {
+        "name": "Double Arm Row"
+      },
+      "expected": false
+    },
+    {
+      "name": "Two-Arm Cable Row",
+      "input": {
+        "name": "Two-Arm Cable Row"
+      },
+      "expected": false
+    },
+    {
+      "name": "Both Sides Press",
+      "input": {
+        "name": "Both Sides Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "2-Arm Row",
+      "input": {
+        "name": "2-Arm Row"
+      },
+      "expected": false
+    },
+    {
+      "name": "Double Arm Bulgarian Split Squat",
+      "input": {
+        "name": "Double Arm Bulgarian Split Squat"
+      },
+      "expected": false
+    },
+    {
+      "name": "Two Legged Step-Up",
+      "input": {
+        "name": "Two Legged Step-Up"
+      },
+      "expected": false
+    },
+    {
+      "name": "Alternating DB Curl",
+      "input": {
+        "name": "Alternating DB Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Alternating Lunges",
+      "input": {
+        "name": "Alternating Lunges"
+      },
+      "expected": true
+    },
+    {
+      "name": "Lateral Raise",
+      "input": {
+        "name": "Lateral Raise"
+      },
+      "expected": false
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Sideways Crunch",
+      "input": {
+        "name": "Sideways Crunch"
+      },
+      "expected": false
+    },
+    {
+      "name": "Onerous Press",
+      "input": {
+        "name": "Onerous Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Onearm Row",
+      "input": {
+        "name": "Onearm Row"
+      },
+      "expected": true
+    },
+    {
+      "name": "  single arm row  ",
+      "input": {
+        "name": "  single arm row  "
+      },
+      "expected": true
+    },
+    {
+      "name": "BULGARIAN SPLIT SQUAT",
+      "input": {
+        "name": "BULGARIAN SPLIT SQUAT"
+      },
+      "expected": true
+    },
+    {
+      "name": "lunges",
+      "input": {
+        "name": "lunges"
+      },
+      "expected": true
+    },
+    {
+      "name": "Incline DB Press",
+      "input": {
+        "name": "Incline DB Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Lat Pulldown",
+      "input": {
+        "name": "Lat Pulldown"
+      },
+      "expected": false
+    },
+    {
+      "name": "Chest Press (Machine)",
+      "input": {
+        "name": "Chest Press (Machine)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Seated Cable Row (V-Grip)",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Pec Deck",
+      "input": {
+        "name": "Pec Deck"
+      },
+      "expected": false
+    },
+    {
+      "name": "Straight-Arm Pulldown",
+      "input": {
+        "name": "Straight-Arm Pulldown"
+      },
+      "expected": false
+    },
+    {
+      "name": "Face Pull",
+      "input": {
+        "name": "Face Pull"
+      },
+      "expected": false
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hack Squat",
+      "input": {
+        "name": "Hack Squat"
+      },
+      "expected": false
+    },
+    {
+      "name": "Leg Extension",
+      "input": {
+        "name": "Leg Extension"
+      },
+      "expected": false
+    },
+    {
+      "name": "Seated Leg Curl",
+      "input": {
+        "name": "Seated Leg Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Calf Press",
+      "input": {
+        "name": "Calf Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Crunch Machine",
+      "input": {
+        "name": "Crunch Machine"
+      },
+      "expected": false
+    },
+    {
+      "name": "Reverse Crunch",
+      "input": {
+        "name": "Reverse Crunch"
+      },
+      "expected": false
+    },
+    {
+      "name": "DB Shoulder Press",
+      "input": {
+        "name": "DB Shoulder Press"
+      },
+      "expected": false
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable)",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": true
+    },
+    {
+      "name": "Seated Incline DB Curl",
+      "input": {
+        "name": "Seated Incline DB Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Cable Overhead Extension",
+      "input": {
+        "name": "Cable Overhead Extension"
+      },
+      "expected": false
+    },
+    {
+      "name": "DB Hammer Curl",
+      "input": {
+        "name": "DB Hammer Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Rope Triceps Pushdown",
+      "input": {
+        "name": "Rope Triceps Pushdown"
+      },
+      "expected": false
+    },
+    {
+      "name": "Reverse EZ-Bar Curl",
+      "input": {
+        "name": "Reverse EZ-Bar Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": false
+    },
+    {
+      "name": "Single Arm Cable Crossover",
+      "input": {
+        "name": "Single Arm Cable Crossover"
+      },
+      "expected": true
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip)",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Preacher Curl (Machine)",
+      "input": {
+        "name": "Preacher Curl (Machine)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable)",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)"
+      },
+      "expected": true
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell)",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hip Thrust (Machine)",
+      "input": {
+        "name": "Hip Thrust (Machine)"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": false
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": true
+    },
+    {
+      "name": "Seated DB Wrist Curl",
+      "input": {
+        "name": "Seated DB Wrist Curl"
+      },
+      "expected": false
+    },
+    {
+      "name": "Hip Adduction",
+      "input": {
+        "name": "Hip Adduction"
+      },
+      "expected": false
+    }
+  ]
+}

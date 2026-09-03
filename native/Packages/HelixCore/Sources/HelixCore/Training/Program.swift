@@ -8,14 +8,24 @@ import Foundation
 /// reading one value — the same argument `programs.ts` makes for living beside
 /// `setsForPhase` rather than inside a component.
 ///
-/// ── AND WHY THE MOVERS ARE SPELLED OUT HERE ─────────────────────────────────
-/// The web resolves movers by NAME through `src/lib/exercises/muscleMap.ts`, a
-/// dictionary whose every line was bought by reconciling a real week against
-/// Hevy — the fly that is not a triceps movement, the row that is not rear-delt
-/// work, the press that pays the triceps and not the side delt. Porting that
-/// dictionary is a Wave 4 item (it has to serve the exercise library too).
-/// Until then each lift carries its own resolved answer, copied from that file
-/// rather than re-derived, so the two cannot quietly disagree about anatomy.
+/// ── AND WHY THE MOVERS ARE NO LONGER SPELLED OUT HERE ───────────────────────
+/// Every lift used to carry its own resolved `primary:` / `secondary:` answer,
+/// hand-copied out of `src/lib/exercises/muscleMap.ts` because that dictionary
+/// had not been ported yet. Two hand-maintained copies of the same anatomy both
+/// look right, so the copies are gone: `ProgramExercise.init` now asks
+/// `MuscleMap` for the movers, keyed on the lift's own name, and there is one
+/// answer to the question "what does a face pull train".
+///
+/// All 37 movements were checked against their copied literals before the
+/// literals were deleted, and all 37 agreed — see the parity test in
+/// `TrainingTests`, which now asserts the weaker but permanent version of that
+/// claim: every lift in this deck RESOLVES in the map. A lift that does not is
+/// a lift with no anatomy, and it would otherwise vanish from the muscle sheet
+/// in silence.
+///
+/// `movers:` stays as an override for a lift the map genuinely cannot answer —
+/// and if one ever disagrees with the map, spell it out here with the conflict
+/// named rather than quietly adopting either side.
 ///
 /// See `exercise-catalog-merges`: `Seated Cable Row` is TWO exercises split by
 /// grip, and they must never be re-merged.
@@ -68,6 +78,7 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
     /// gap between two set ticks, which is a different question with a
     /// different answer.
     public var restSec: Int?
+    /// Resolved from `MuscleMap` by name at construction — see the type header.
     public var movers: MoverTokens
     public var isCompound: Bool
     public var note: String?
@@ -84,8 +95,7 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
         wk1Kg: Double?,
         reps: String,
         restSec: Int? = nil,
-        primary: [String],
-        secondary: [String] = [],
+        movers: MoverTokens? = nil,
         compound: Bool = false,
         note: String? = nil
     ) {
@@ -95,7 +105,11 @@ public struct ProgramExercise: Identifiable, Sendable, Equatable {
         self.wk1Kg = wk1Kg
         self.reps = reps
         self.restSec = restSec
-        self.movers = MoverTokens(primary: primary, secondary: secondary)
+        // The map answers for every lift in this deck, and the parity test
+        // holds it to that. The empty fallback exists so a typo in a NEW lift's
+        // name is a failing test rather than a compile error nobody can fix
+        // without inventing anatomy.
+        self.movers = movers ?? MuscleMap.movers(name) ?? MoverTokens(primary: [])
         self.isCompound = compound
         self.note = note
     }
@@ -187,104 +201,67 @@ public extension Program {
                 key: "cb_a", label: "Upper A", sub: "Chest + Back",
                 accent: 0xE0703C, weekday: 0,
                 exercises: [
-                    ProgramExercise("Incline DB Press", sets: 3, cutSets: 3, wk1Kg: 32, reps: "8–12", restSec: 120,
-                                    primary: ["chest"], secondary: ["triceps", "front_delts"], compound: true),
-                    ProgramExercise("Lat Pulldown", sets: 3, cutSets: 3, wk1Kg: 45, reps: "8–12", restSec: 135,
-                                    primary: ["lats"], secondary: ["upper back", "biceps", "forearms"], compound: true),
-                    ProgramExercise("Chest Press (Machine)", sets: 3, cutSets: 2, wk1Kg: 34, reps: "10–12", restSec: 135,
-                                    primary: ["chest"], secondary: ["triceps", "front_delts"], compound: true),
-                    ProgramExercise("Seated Cable Row (V-Grip)", sets: 3, cutSets: 2, wk1Kg: 38.5, reps: "10–12", restSec: 120,
-                                    primary: ["upper back"], secondary: ["lats", "biceps", "forearms"], compound: true, note: "V-grip"),
-                    ProgramExercise("Pec Deck", sets: 2, cutSets: 2, wk1Kg: 47.5, reps: "12–15", restSec: 120,
-                                    primary: ["chest"]),
-                    ProgramExercise("Straight-Arm Pulldown", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 105,
-                                    primary: ["lats"], secondary: ["triceps"]),
-                    ProgramExercise("Face Pull", sets: 3, cutSets: 2, wk1Kg: 13.75, reps: "12–15", restSec: 105,
-                                    primary: ["rear_delts"], secondary: ["biceps"]),
+                    ProgramExercise("Incline DB Press", sets: 3, cutSets: 3, wk1Kg: 32, reps: "8–12", restSec: 120, compound: true),
+                    ProgramExercise("Lat Pulldown", sets: 3, cutSets: 3, wk1Kg: 45, reps: "8–12", restSec: 135, compound: true),
+                    ProgramExercise("Chest Press (Machine)", sets: 3, cutSets: 2, wk1Kg: 34, reps: "10–12", restSec: 135, compound: true),
+                    ProgramExercise("Seated Cable Row (V-Grip)", sets: 3, cutSets: 2, wk1Kg: 38.5, reps: "10–12", restSec: 120, compound: true, note: "V-grip"),
+                    ProgramExercise("Pec Deck", sets: 2, cutSets: 2, wk1Kg: 47.5, reps: "12–15", restSec: 120),
+                    ProgramExercise("Straight-Arm Pulldown", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 105),
+                    ProgramExercise("Face Pull", sets: 3, cutSets: 2, wk1Kg: 13.75, reps: "12–15", restSec: 105),
                 ]
             ),
             ProgramDay(
                 key: "legs_a", label: "Legs & Core A", sub: "Quad Focus",
                 accent: 0x3D7AB8, weekday: 1,
                 exercises: [
-                    ProgramExercise("Leg Press", sets: 4, cutSets: 3, wk1Kg: 70, reps: "8–12", restSec: 135,
-                                    primary: ["quadriceps"], secondary: ["glutes", "hamstrings"], compound: true, note: "1 warm-up @40kg"),
-                    ProgramExercise("Hack Squat", sets: 3, cutSets: 2, wk1Kg: nil, reps: "10–12", restSec: 135,
-                                    primary: ["quadriceps"], secondary: ["glutes", "hamstrings"], compound: true),
-                    ProgramExercise("Leg Extension", sets: 3, cutSets: 3, wk1Kg: 37.5, reps: "12–15", restSec: 120,
-                                    primary: ["quadriceps"]),
-                    ProgramExercise("Seated Leg Curl", sets: 3, cutSets: 3, wk1Kg: 40, reps: "10–15", restSec: 105,
-                                    primary: ["hamstrings"], secondary: ["calves"]),
-                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 65, reps: "10–15", restSec: 90,
-                                    primary: ["calves"]),
-                    ProgramExercise("Crunch Machine", sets: 3, cutSets: 3, wk1Kg: 52.5, reps: "10–12", restSec: 90,
-                                    primary: ["abdominals"]),
-                    ProgramExercise("Reverse Crunch", sets: 3, cutSets: 2, wk1Kg: nil, reps: "12–15", restSec: 75,
-                                    primary: ["abdominals"]),
+                    ProgramExercise("Leg Press", sets: 4, cutSets: 3, wk1Kg: 70, reps: "8–12", restSec: 135, compound: true, note: "1 warm-up @40kg"),
+                    ProgramExercise("Hack Squat", sets: 3, cutSets: 2, wk1Kg: nil, reps: "10–12", restSec: 135, compound: true),
+                    ProgramExercise("Leg Extension", sets: 3, cutSets: 3, wk1Kg: 37.5, reps: "12–15", restSec: 120),
+                    ProgramExercise("Seated Leg Curl", sets: 3, cutSets: 3, wk1Kg: 40, reps: "10–15", restSec: 105),
+                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 65, reps: "10–15", restSec: 90),
+                    ProgramExercise("Crunch Machine", sets: 3, cutSets: 3, wk1Kg: 52.5, reps: "10–12", restSec: 90),
+                    ProgramExercise("Reverse Crunch", sets: 3, cutSets: 2, wk1Kg: nil, reps: "12–15", restSec: 75),
                 ]
             ),
             ProgramDay(
                 key: "arms", label: "Delts & Arms", sub: nil,
                 accent: 0x8A6FA8, weekday: 2,
                 exercises: [
-                    ProgramExercise("DB Shoulder Press", sets: 3, cutSets: 3, wk1Kg: 28, reps: "8–10", restSec: 105,
-                                    primary: ["front_delts"], secondary: ["triceps"], compound: true),
-                    ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 5, cutSets: 4, wk1Kg: 5, reps: "12–20", restSec: 105,
-                                    primary: ["side_delts"], note: "per side"),
-                    ProgramExercise("Seated Incline DB Curl", sets: 3, cutSets: 3, wk1Kg: 14, reps: "8–12", restSec: 105,
-                                    primary: ["biceps"]),
-                    ProgramExercise("Cable Overhead Extension", sets: 3, cutSets: 2, wk1Kg: 9, reps: "10–15", restSec: 90,
-                                    primary: ["triceps"]),
-                    ProgramExercise("DB Hammer Curl", sets: 3, cutSets: 2, wk1Kg: 16, reps: "10–12", restSec: 105,
-                                    primary: ["biceps"], secondary: ["forearms"]),
-                    ProgramExercise("Rope Triceps Pushdown", sets: 2, cutSets: 2, wk1Kg: 13.5, reps: "12–15", restSec: 90,
-                                    primary: ["triceps"]),
-                    ProgramExercise("Reverse EZ-Bar Curl", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 90,
-                                    primary: ["biceps"], secondary: ["forearms"]),
-                    ProgramExercise("Seated DB Wrist Curl", sets: 2, cutSets: 0, wk1Kg: 16, reps: "15–20", restSec: 90,
-                                    primary: ["forearms"]),
+                    ProgramExercise("DB Shoulder Press", sets: 3, cutSets: 3, wk1Kg: 28, reps: "8–10", restSec: 105, compound: true),
+                    ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 5, cutSets: 4, wk1Kg: 5, reps: "12–20", restSec: 105, note: "per side"),
+                    ProgramExercise("Seated Incline DB Curl", sets: 3, cutSets: 3, wk1Kg: 14, reps: "8–12", restSec: 105),
+                    ProgramExercise("Cable Overhead Extension", sets: 3, cutSets: 2, wk1Kg: 9, reps: "10–15", restSec: 90),
+                    ProgramExercise("DB Hammer Curl", sets: 3, cutSets: 2, wk1Kg: 16, reps: "10–12", restSec: 105),
+                    ProgramExercise("Rope Triceps Pushdown", sets: 2, cutSets: 2, wk1Kg: 13.5, reps: "12–15", restSec: 90),
+                    ProgramExercise("Reverse EZ-Bar Curl", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 90),
+                    ProgramExercise("Seated DB Wrist Curl", sets: 2, cutSets: 0, wk1Kg: 16, reps: "15–20", restSec: 90),
                 ]
             ),
             ProgramDay(
                 key: "cb_b", label: "Upper B", sub: "Chest + Back",
                 accent: 0xB4522A, weekday: 4,
                 exercises: [
-                    ProgramExercise("Chest Press (Machine)", sets: 3, cutSets: 3, wk1Kg: 35, reps: "10–12", restSec: 120,
-                                    primary: ["chest"], secondary: ["triceps", "front_delts"], compound: true),
-                    ProgramExercise("Neutral-Grip Lat Pulldown", sets: 3, cutSets: 2, wk1Kg: 45, reps: "10–12", restSec: 120,
-                                    primary: ["lats"], secondary: ["upper back", "biceps", "forearms"], compound: true),
-                    ProgramExercise("Single Arm Cable Crossover", sets: 2, cutSets: 2, wk1Kg: 7.5, reps: "12–15", restSec: 105,
-                                    primary: ["chest"], note: "per arm"),
-                    ProgramExercise("Seated Cable Row (Wide Grip)", sets: 3, cutSets: 2, wk1Kg: 35, reps: "10–12", restSec: 120,
-                                    primary: ["upper back"], secondary: ["lats", "traps", "biceps", "forearms"], compound: true, note: "wide bar"),
-                    ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 4, cutSets: 3, wk1Kg: 3.75, reps: "15–20", restSec: 90,
-                                    primary: ["side_delts"], note: "per side"),
-                    ProgramExercise("Preacher Curl (Machine)", sets: 3, cutSets: 3, wk1Kg: 15, reps: "8–12", restSec: 105,
-                                    primary: ["biceps"]),
-                    ProgramExercise("Single Arm Triceps Pushdown (Cable)", sets: 2, cutSets: 2, wk1Kg: 5, reps: "12–15", restSec: 90,
-                                    primary: ["triceps"], note: "per arm"),
+                    ProgramExercise("Chest Press (Machine)", sets: 3, cutSets: 3, wk1Kg: 35, reps: "10–12", restSec: 120, compound: true),
+                    ProgramExercise("Neutral-Grip Lat Pulldown", sets: 3, cutSets: 2, wk1Kg: 45, reps: "10–12", restSec: 120, compound: true),
+                    ProgramExercise("Single Arm Cable Crossover", sets: 2, cutSets: 2, wk1Kg: 7.5, reps: "12–15", restSec: 105, note: "per arm"),
+                    ProgramExercise("Seated Cable Row (Wide Grip)", sets: 3, cutSets: 2, wk1Kg: 35, reps: "10–12", restSec: 120, compound: true, note: "wide bar"),
+                    ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 4, cutSets: 3, wk1Kg: 3.75, reps: "15–20", restSec: 90, note: "per side"),
+                    ProgramExercise("Preacher Curl (Machine)", sets: 3, cutSets: 3, wk1Kg: 15, reps: "8–12", restSec: 105),
+                    ProgramExercise("Single Arm Triceps Pushdown (Cable)", sets: 2, cutSets: 2, wk1Kg: 5, reps: "12–15", restSec: 90, note: "per arm"),
                 ]
             ),
             ProgramDay(
                 key: "legs_b", label: "Legs & Core B", sub: "Posterior Focus",
                 accent: 0x2E5C8A, weekday: 5,
                 exercises: [
-                    ProgramExercise("Romanian Deadlift (Dumbbell)", sets: 4, cutSets: 3, wk1Kg: 30, reps: "8–12", restSec: 120,
-                                    primary: ["hamstrings"], secondary: ["glutes", "lower back", "upper back", "lats", "forearms"], compound: true),
-                    ProgramExercise("Hip Thrust (Machine)", sets: 3, cutSets: 3, wk1Kg: 25, reps: "8–15", restSec: 135,
-                                    primary: ["glutes"], secondary: ["hamstrings", "quadriceps", "adductors"], compound: true),
-                    ProgramExercise("Leg Press", sets: 2, cutSets: 2, wk1Kg: 70, reps: "12–15", restSec: 135,
-                                    primary: ["quadriceps"], secondary: ["glutes", "hamstrings"], compound: true, note: "horizontal sled"),
-                    ProgramExercise("Hip Adduction", sets: 2, cutSets: 0, wk1Kg: 50, reps: "12–15", restSec: 90,
-                                    primary: ["adductors"]),
-                    ProgramExercise("Seated Leg Curl", sets: 2, cutSets: 2, wk1Kg: 45, reps: "10–15", restSec: 105,
-                                    primary: ["hamstrings"], secondary: ["calves"]),
-                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 67.5, reps: "10–15", restSec: 105,
-                                    primary: ["calves"]),
-                    ProgramExercise("Hanging Knee Raise", sets: 3, cutSets: 3, wk1Kg: nil, reps: "10–15", restSec: 90,
-                                    primary: ["abdominals"]),
-                    ProgramExercise("Side Plank", sets: 2, cutSets: 2, wk1Kg: nil, reps: "55s", restSec: 90,
-                                    primary: ["obliques"], secondary: ["abdominals"], note: "per side"),
+                    ProgramExercise("Romanian Deadlift (Dumbbell)", sets: 4, cutSets: 3, wk1Kg: 30, reps: "8–12", restSec: 120, compound: true),
+                    ProgramExercise("Hip Thrust (Machine)", sets: 3, cutSets: 3, wk1Kg: 25, reps: "8–15", restSec: 135, compound: true),
+                    ProgramExercise("Leg Press", sets: 2, cutSets: 2, wk1Kg: 70, reps: "12–15", restSec: 135, compound: true, note: "horizontal sled"),
+                    ProgramExercise("Hip Adduction", sets: 2, cutSets: 0, wk1Kg: 50, reps: "12–15", restSec: 90),
+                    ProgramExercise("Seated Leg Curl", sets: 2, cutSets: 2, wk1Kg: 45, reps: "10–15", restSec: 105),
+                    ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 67.5, reps: "10–15", restSec: 105),
+                    ProgramExercise("Hanging Knee Raise", sets: 3, cutSets: 3, wk1Kg: nil, reps: "10–15", restSec: 90),
+                    ProgramExercise("Side Plank", sets: 2, cutSets: 2, wk1Kg: nil, reps: "55s", restSec: 90, note: "per side"),
                 ]
             ),
         ]

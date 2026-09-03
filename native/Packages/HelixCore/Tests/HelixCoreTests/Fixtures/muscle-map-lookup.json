@@ -1,0 +1,4705 @@
+{
+  "module": "exercises/muscleMap",
+  "fn": "lookupMuscles + muscleGroupsFor + the landmark fold",
+  "note": "ALL tokens must be present and the longest matching phrase wins; ties go to the first entry written. null is \"this map has never seen the movement\", never an empty entry. Landmarks are the mover tokens folded through toLandmarkMuscle, deduped, nulls dropped.",
+  "cases": [
+    {
+      "name": "\"leg press horizontal\"",
+      "input": {
+        "name": "leg press horizontal"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"leg press\"",
+      "input": {
+        "name": "leg press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"hack squat\"",
+      "input": {
+        "name": "hack squat"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"leg extension\"",
+      "input": {
+        "name": "leg extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "quadriceps"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"seated leg curl\"",
+      "input": {
+        "name": "seated leg curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Calves"
+        ]
+      }
+    },
+    {
+      "name": "\"leg curl\"",
+      "input": {
+        "name": "leg curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Calves"
+        ]
+      }
+    },
+    {
+      "name": "\"romanian deadlift\"",
+      "input": {
+        "name": "romanian deadlift"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Lower back",
+          "Upper back",
+          "Lats",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"rdl\"",
+      "input": {
+        "name": "rdl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Lower back",
+          "Upper back",
+          "Lats",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"hip thrust\"",
+      "input": {
+        "name": "hip thrust"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Glutes"
+        ],
+        "secondaryLandmarks": [
+          "Hamstrings",
+          "Quads",
+          "Adductors"
+        ]
+      }
+    },
+    {
+      "name": "\"hip adduction\"",
+      "input": {
+        "name": "hip adduction"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Adductors"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"adductor\"",
+      "input": {
+        "name": "adductor"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Adductors"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"calf press\"",
+      "input": {
+        "name": "calf press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Calves"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"calf raise\"",
+      "input": {
+        "name": "calf raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Calves"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"crunch\"",
+      "input": {
+        "name": "crunch"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"reverse crunch\"",
+      "input": {
+        "name": "reverse crunch"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"bicycle crunch\"",
+      "input": {
+        "name": "bicycle crunch"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": [
+            "obliques"
+          ]
+        },
+        "groups": [
+          "abdominals",
+          "obliques"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"hanging knee raise\"",
+      "input": {
+        "name": "hanging knee raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"leg raise\"",
+      "input": {
+        "name": "leg raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"hollow rock\"",
+      "input": {
+        "name": "hollow rock"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"russian twist\"",
+      "input": {
+        "name": "russian twist"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"side plank\"",
+      "input": {
+        "name": "side plank"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"incline bench press dumbbell\"",
+      "input": {
+        "name": "incline bench press dumbbell"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"incline db press\"",
+      "input": {
+        "name": "incline db press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"chest press\"",
+      "input": {
+        "name": "chest press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"pec deck\"",
+      "input": {
+        "name": "pec deck"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"butterfly\"",
+      "input": {
+        "name": "butterfly"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"cable crossover\"",
+      "input": {
+        "name": "cable crossover"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"cable fly\"",
+      "input": {
+        "name": "cable fly"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"lat pulldown\"",
+      "input": {
+        "name": "lat pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"lat pulldown neutral\"",
+      "input": {
+        "name": "lat pulldown neutral"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"lat pulldown close\"",
+      "input": {
+        "name": "lat pulldown close"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"cable row\"",
+      "input": {
+        "name": "cable row"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row wide\"",
+      "input": {
+        "name": "seated cable row wide"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row v\"",
+      "input": {
+        "name": "seated cable row v"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"straight arm pulldown\"",
+      "input": {
+        "name": "straight arm pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "lats",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"face pull\"",
+      "input": {
+        "name": "face pull"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "groups": [
+          "rear_delts",
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Rear delts"
+        ],
+        "secondaryLandmarks": [
+          "Biceps"
+        ]
+      }
+    },
+    {
+      "name": "\"shoulder press\"",
+      "input": {
+        "name": "shoulder press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Front delts"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"lateral raise\"",
+      "input": {
+        "name": "lateral raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"triceps pushdown\"",
+      "input": {
+        "name": "triceps pushdown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"triceps extension\"",
+      "input": {
+        "name": "triceps extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"overhead extension\"",
+      "input": {
+        "name": "overhead extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"overhead triceps\"",
+      "input": {
+        "name": "overhead triceps"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"cable extension\"",
+      "input": {
+        "name": "cable extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"hammer curl\"",
+      "input": {
+        "name": "hammer curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"neutral grip curl\"",
+      "input": {
+        "name": "neutral grip curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"reverse curl\"",
+      "input": {
+        "name": "reverse curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"wrist curl\"",
+      "input": {
+        "name": "wrist curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Forearms"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"preacher curl\"",
+      "input": {
+        "name": "preacher curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"incline curl\"",
+      "input": {
+        "name": "incline curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"bicep curl\"",
+      "input": {
+        "name": "bicep curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"biceps curl\"",
+      "input": {
+        "name": "biceps curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"HORIZONTAL PRESS LEG\"",
+      "input": {
+        "name": "HORIZONTAL PRESS LEG"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"PRESS LEG\"",
+      "input": {
+        "name": "PRESS LEG"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"SQUAT HACK\"",
+      "input": {
+        "name": "SQUAT HACK"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"EXTENSION LEG\"",
+      "input": {
+        "name": "EXTENSION LEG"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "quadriceps"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL LEG SEATED\"",
+      "input": {
+        "name": "CURL LEG SEATED"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Calves"
+        ]
+      }
+    },
+    {
+      "name": "\"CURL LEG\"",
+      "input": {
+        "name": "CURL LEG"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Calves"
+        ]
+      }
+    },
+    {
+      "name": "\"DEADLIFT ROMANIAN\"",
+      "input": {
+        "name": "DEADLIFT ROMANIAN"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Lower back",
+          "Upper back",
+          "Lats",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"RDL\"",
+      "input": {
+        "name": "RDL"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Lower back",
+          "Upper back",
+          "Lats",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"THRUST HIP\"",
+      "input": {
+        "name": "THRUST HIP"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Glutes"
+        ],
+        "secondaryLandmarks": [
+          "Hamstrings",
+          "Quads",
+          "Adductors"
+        ]
+      }
+    },
+    {
+      "name": "\"ADDUCTION HIP\"",
+      "input": {
+        "name": "ADDUCTION HIP"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Adductors"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"ADDUCTOR\"",
+      "input": {
+        "name": "ADDUCTOR"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Adductors"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"PRESS CALF\"",
+      "input": {
+        "name": "PRESS CALF"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Calves"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"RAISE CALF\"",
+      "input": {
+        "name": "RAISE CALF"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Calves"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CRUNCH\"",
+      "input": {
+        "name": "CRUNCH"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CRUNCH REVERSE\"",
+      "input": {
+        "name": "CRUNCH REVERSE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CRUNCH BICYCLE\"",
+      "input": {
+        "name": "CRUNCH BICYCLE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": [
+            "obliques"
+          ]
+        },
+        "groups": [
+          "abdominals",
+          "obliques"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"RAISE KNEE HANGING\"",
+      "input": {
+        "name": "RAISE KNEE HANGING"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"RAISE LEG\"",
+      "input": {
+        "name": "RAISE LEG"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"ROCK HOLLOW\"",
+      "input": {
+        "name": "ROCK HOLLOW"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"TWIST RUSSIAN\"",
+      "input": {
+        "name": "TWIST RUSSIAN"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"PLANK SIDE\"",
+      "input": {
+        "name": "PLANK SIDE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"DUMBBELL PRESS BENCH INCLINE\"",
+      "input": {
+        "name": "DUMBBELL PRESS BENCH INCLINE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"PRESS DB INCLINE\"",
+      "input": {
+        "name": "PRESS DB INCLINE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"PRESS CHEST\"",
+      "input": {
+        "name": "PRESS CHEST"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"DECK PEC\"",
+      "input": {
+        "name": "DECK PEC"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"BUTTERFLY\"",
+      "input": {
+        "name": "BUTTERFLY"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CROSSOVER CABLE\"",
+      "input": {
+        "name": "CROSSOVER CABLE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"FLY CABLE\"",
+      "input": {
+        "name": "FLY CABLE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"PULLDOWN LAT\"",
+      "input": {
+        "name": "PULLDOWN LAT"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"NEUTRAL PULLDOWN LAT\"",
+      "input": {
+        "name": "NEUTRAL PULLDOWN LAT"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"CLOSE PULLDOWN LAT\"",
+      "input": {
+        "name": "CLOSE PULLDOWN LAT"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"ROW CABLE\"",
+      "input": {
+        "name": "ROW CABLE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"WIDE ROW CABLE SEATED\"",
+      "input": {
+        "name": "WIDE ROW CABLE SEATED"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"V ROW CABLE SEATED\"",
+      "input": {
+        "name": "V ROW CABLE SEATED"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"PULLDOWN ARM STRAIGHT\"",
+      "input": {
+        "name": "PULLDOWN ARM STRAIGHT"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "lats",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"PULL FACE\"",
+      "input": {
+        "name": "PULL FACE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "groups": [
+          "rear_delts",
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Rear delts"
+        ],
+        "secondaryLandmarks": [
+          "Biceps"
+        ]
+      }
+    },
+    {
+      "name": "\"PRESS SHOULDER\"",
+      "input": {
+        "name": "PRESS SHOULDER"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Front delts"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"RAISE LATERAL\"",
+      "input": {
+        "name": "RAISE LATERAL"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"PUSHDOWN TRICEPS\"",
+      "input": {
+        "name": "PUSHDOWN TRICEPS"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"EXTENSION TRICEPS\"",
+      "input": {
+        "name": "EXTENSION TRICEPS"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"EXTENSION OVERHEAD\"",
+      "input": {
+        "name": "EXTENSION OVERHEAD"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"TRICEPS OVERHEAD\"",
+      "input": {
+        "name": "TRICEPS OVERHEAD"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"EXTENSION CABLE\"",
+      "input": {
+        "name": "EXTENSION CABLE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL HAMMER\"",
+      "input": {
+        "name": "CURL HAMMER"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"CURL GRIP NEUTRAL\"",
+      "input": {
+        "name": "CURL GRIP NEUTRAL"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"CURL REVERSE\"",
+      "input": {
+        "name": "CURL REVERSE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"CURL WRIST\"",
+      "input": {
+        "name": "CURL WRIST"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Forearms"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL PREACHER\"",
+      "input": {
+        "name": "CURL PREACHER"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL INCLINE\"",
+      "input": {
+        "name": "CURL INCLINE"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL BICEP\"",
+      "input": {
+        "name": "CURL BICEP"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"CURL BICEPS\"",
+      "input": {
+        "name": "CURL BICEPS"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Incline DB Press\"",
+      "input": {
+        "name": "Incline DB Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"Lat Pulldown\"",
+      "input": {
+        "name": "Lat Pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Chest Press (Machine)\"",
+      "input": {
+        "name": "Chest Press (Machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (V-Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Pec Deck\"",
+      "input": {
+        "name": "Pec Deck"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Straight-Arm Pulldown\"",
+      "input": {
+        "name": "Straight-Arm Pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "lats",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"Face Pull\"",
+      "input": {
+        "name": "Face Pull"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "groups": [
+          "rear_delts",
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Rear delts"
+        ],
+        "secondaryLandmarks": [
+          "Biceps"
+        ]
+      }
+    },
+    {
+      "name": "\"Leg Press\"",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"Hack Squat\"",
+      "input": {
+        "name": "Hack Squat"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"Leg Extension\"",
+      "input": {
+        "name": "Leg Extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "quadriceps"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Seated Leg Curl\"",
+      "input": {
+        "name": "Seated Leg Curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Calves"
+        ]
+      }
+    },
+    {
+      "name": "\"Calf Press\"",
+      "input": {
+        "name": "Calf Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "primaryLandmarks": [
+          "Calves"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Crunch Machine\"",
+      "input": {
+        "name": "Crunch Machine"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Reverse Crunch\"",
+      "input": {
+        "name": "Reverse Crunch"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"DB Shoulder Press\"",
+      "input": {
+        "name": "DB Shoulder Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Front delts"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Seated Incline DB Curl\"",
+      "input": {
+        "name": "Seated Incline DB Curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Cable Overhead Extension\"",
+      "input": {
+        "name": "Cable Overhead Extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"DB Hammer Curl\"",
+      "input": {
+        "name": "DB Hammer Curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Rope Triceps Pushdown\"",
+      "input": {
+        "name": "Rope Triceps Pushdown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Reverse EZ-Bar Curl\"",
+      "input": {
+        "name": "Reverse EZ-Bar Curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": [
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Neutral-Grip Lat Pulldown\"",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Single Arm Cable Crossover\"",
+      "input": {
+        "name": "Single Arm Cable Crossover"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (Wide Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Preacher Curl (Machine)\"",
+      "input": {
+        "name": "Preacher Curl (Machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "primaryLandmarks": [
+          "Biceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Single Arm Triceps Pushdown (Cable)\"",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Romanian Deadlift (Dumbbell)\"",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Hamstrings"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Lower back",
+          "Upper back",
+          "Lats",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Hip Thrust (Machine)\"",
+      "input": {
+        "name": "Hip Thrust (Machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Glutes"
+        ],
+        "secondaryLandmarks": [
+          "Hamstrings",
+          "Quads",
+          "Adductors"
+        ]
+      }
+    },
+    {
+      "name": "\"Hanging Knee Raise\"",
+      "input": {
+        "name": "Hanging Knee Raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Side Plank\"",
+      "input": {
+        "name": "Side Plank"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": [
+          "Abs/core"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated DB Wrist Curl\"",
+      "input": {
+        "name": "Seated DB Wrist Curl"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Forearms"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Hip Adduction\"",
+      "input": {
+        "name": "Hip Adduction"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "primaryLandmarks": [
+          "Adductors"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"lat pulldown - close grip (cable)\"",
+      "input": {
+        "name": "lat pulldown - close grip (cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"lat pulldown close grip (cable)\"",
+      "input": {
+        "name": "lat pulldown close grip (cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"close grip lat pulldown (cable)\"",
+      "input": {
+        "name": "close grip lat pulldown (cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"hack/smith squat\"",
+      "input": {
+        "name": "hack/smith squat"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"smith squat\"",
+      "input": {
+        "name": "smith squat"
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"chest press machine\"",
+      "input": {
+        "name": "chest press machine"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"machine chest press\"",
+      "input": {
+        "name": "machine chest press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"leg press horizontal\"",
+      "input": {
+        "name": "leg press horizontal"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"leg press horizontal (machine)\"",
+      "input": {
+        "name": "leg press horizontal (machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row (v grip)\"",
+      "input": {
+        "name": "seated cable row (v grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row v-grip\"",
+      "input": {
+        "name": "seated cable row v-grip"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row - v-bar\"",
+      "input": {
+        "name": "seated cable row - v-bar"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row - bar wide grip\"",
+      "input": {
+        "name": "seated cable row - bar wide grip"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"seated cable row (wide bar)\"",
+      "input": {
+        "name": "seated cable row (wide bar)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"wide-grip cable row\"",
+      "input": {
+        "name": "wide-grip cable row"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"cable lateral raise\"",
+      "input": {
+        "name": "cable lateral raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"single arm cable lateral raise\"",
+      "input": {
+        "name": "single arm cable lateral raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"sa lateral raise (cable)\"",
+      "input": {
+        "name": "sa lateral raise (cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"sa lateral raise\"",
+      "input": {
+        "name": "sa lateral raise"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"incline db bench press\"",
+      "input": {
+        "name": "incline db bench press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"incline dumbbell bench press\"",
+      "input": {
+        "name": "incline dumbbell bench press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"incline dumbbell press\"",
+      "input": {
+        "name": "incline dumbbell press"
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Neutral-Grip Lat Pulldown\"",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Hack Squat\"",
+      "input": {
+        "name": "Hack Squat"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"Chest Press (Machine)\"",
+      "input": {
+        "name": "Chest Press (Machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"Leg Press\"",
+      "input": {
+        "name": "Leg Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "primaryLandmarks": [
+          "Quads"
+        ],
+        "secondaryLandmarks": [
+          "Glutes",
+          "Hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (V-Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (Wide Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "primaryLandmarks": [
+          "Side delts"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Incline DB Press\"",
+      "input": {
+        "name": "Incline DB Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": [
+          "Triceps",
+          "Front delts"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (V-Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row (Wide Grip)\"",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Seated Cable Row\"",
+      "input": {
+        "name": "Seated Cable Row"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Upper back"
+        ],
+        "secondaryLandmarks": [
+          "Lats",
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"Shoulder Press (DB)\"",
+      "input": {
+        "name": "Shoulder Press (DB)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Front delts"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"DB Shoulder Press\"",
+      "input": {
+        "name": "DB Shoulder Press"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Front delts"
+        ],
+        "secondaryLandmarks": [
+          "Triceps"
+        ]
+      }
+    },
+    {
+      "name": "\"Crunch (Machine)\"",
+      "input": {
+        "name": "Crunch (Machine)"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Crunch Machine\"",
+      "input": {
+        "name": "Crunch Machine"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "primaryLandmarks": [
+          "Abs/core"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Neutral-Grip Lat Pulldown\"",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"lat pulldown neutral grip\"",
+      "input": {
+        "name": "lat pulldown neutral grip"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "primaryLandmarks": [
+          "Lats"
+        ],
+        "secondaryLandmarks": [
+          "Upper back",
+          "Biceps",
+          "Forearms"
+        ]
+      }
+    },
+    {
+      "name": "\"PEC DECK\"",
+      "input": {
+        "name": "PEC DECK"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"  pec   deck  \"",
+      "input": {
+        "name": "  pec   deck  "
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"pec-deck\"",
+      "input": {
+        "name": "pec-deck"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Pec\\tDeck\"",
+      "input": {
+        "name": "Pec\tDeck"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "primaryLandmarks": [
+          "Chest"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Cable Overhead Extension\"",
+      "input": {
+        "name": "Cable Overhead Extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Cable Triceps Extension\"",
+      "input": {
+        "name": "Cable Triceps Extension"
+      },
+      "expected": {
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "primaryLandmarks": [
+          "Triceps"
+        ],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Zercher Good Morning\"",
+      "input": {
+        "name": "Zercher Good Morning"
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Zercher Squat\"",
+      "input": {
+        "name": "Zercher Squat"
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"Sled Push\"",
+      "input": {
+        "name": "Sled Push"
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "name": ""
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"   \"",
+      "input": {
+        "name": "   "
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    },
+    {
+      "name": "\"(((\"",
+      "input": {
+        "name": "((("
+      },
+      "expected": {
+        "movers": null,
+        "groups": null,
+        "primaryLandmarks": [],
+        "secondaryLandmarks": []
+      }
+    }
+  ]
+}
