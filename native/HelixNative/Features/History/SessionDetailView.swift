@@ -696,11 +696,14 @@ struct SetRow: View {
 
 // MARK: - Cards inside a List
 
-private extension View {
+extension View {
     /// A card that happens to live in a `List`: no inset, no row material, no
     /// separator. The `List` is here for the LEDGER — a real list of sets with
     /// real section headers — and these four panels ride above it rather than
     /// forcing the whole page into a `ScrollView` of hand-drawn rows.
+    ///
+    /// Internal rather than private since Wave 2.9: Pulse is the same shape —
+    /// a real `List` of vitals with tiles riding above and below it.
     func plainRow() -> some View {
         Section {
             self

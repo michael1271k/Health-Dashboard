@@ -162,49 +162,26 @@ final class NutritionModel {
     // MARK: - The target
 
     /// The day's override as the domain sees it, or `nil`.
-    var dayTarget: DailyTarget? {
-        guard let r = dailyTarget else { return nil }
-        return DailyTarget(
-            date: r.date, kcal: r.kcal.map(Double.init), proteinG: r.proteinG.map(Double.init),
-            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init),
-            stepsGoal: r.stepsGoal.map(Double.init), note: r.note, profileKey: r.profileKey,
-            trackCarbs: r.trackCarbs, trackFat: r.trackFat
-        )
-    }
+    var dayTarget: DailyTarget? { TargetChain.dayTarget(dailyTarget) }
 
     var hasOverride: Bool { DailyTargets.hasTarget(dayTarget) }
     var tracksCarbs: Bool { DailyTargets.tracksCarbs(dayTarget) }
     var tracksFat: Bool { DailyTargets.tracksFat(dayTarget) }
 
     /// The user's own five numbers, before any rung. Same shape as the You tab.
-    var ownGoals: LeverGoals {
-        LeverGoals(
-            calorie: Double(goals?.calorieGoal ?? 0),
-            protein: goals?.proteinGoalG.map(Double.init),
-            carbs: goals?.carbsGoalG.map(Double.init),
-            fat: goals?.fatGoalG.map(Double.init),
-            steps: goals?.stepsGoal.map(Double.init)
-        )
-    }
+    var ownGoals: LeverGoals { TargetChain.own(goals) }
 
     /// The rung in force on the SELECTED date.
-    var leverInForce: LeverId? {
-        Levers.leverForDate(date, stored: goals?.activeLever, today: today, releaseEndsOn: goals?.maintenanceUntil)
-    }
+    var leverInForce: LeverId? { TargetChain.lever(on: date, today: today, goals: goals) }
 
     /// Non-nil when a rung holds the numbers; `custom` and no selection are nil.
     var heldBy: NutritionLever? { Levers.lever(byId: leverInForce?.rawValue) }
 
     /// The rung's (or pinned history's) numbers for the date, before the override.
-    var rungGoals: LeverGoals {
-        Levers.goalsForDate(
-            date, stored: goals?.activeLever, today: today,
-            fallback: ownGoals, releaseEndsOn: goals?.maintenanceUntil
-        )
-    }
+    var rungGoals: LeverGoals { TargetChain.rung(on: date, today: today, goals: goals) }
 
     /// What the day is graded against. Untracked macros resolve to `nil`.
-    var target: LeverGoals { DailyTargets.apply(rungGoals, dayTarget) }
+    var target: LeverGoals { TargetChain.resolve(date: date, today: today, goals: goals, dayTarget: dayTarget) }
 
     /// A zero calorie goal is an unset row, not a fast.
     var targetKcal: Double? { target.calorie > 0 ? target.calorie : nil }

@@ -9,7 +9,28 @@ import HelixCore
 /// exceptions. So no row is a checkbox: tapping one asks whether to record a
 /// skip (or undo one) and nothing else, because the exception is the deliberate
 /// gesture and the routine costs no taps at all.
-struct StackTile: View {
+struct StackRow: View {
+    let model: DayModel
+    let onOpen: () -> Void
+
+    var body: some View {
+        let stack = model.stack
+        let skipped = model.skippedKeys
+        let total = stack.reduce(0) { $0 + $1.items.count }
+        let taken = total - stack.flatMap(\.items).filter { skipped.contains($0.key) }.count
+        PulseRow(
+            symbol: "pills",
+            title: "Stack",
+            detail: total == 0 ? "Nothing scheduled" : "\(taken)/\(total) taken · \(stack.count) slots",
+            tint: Color.helix.accent(.fuel),
+            spoken: total == 0 ? "nothing scheduled" : "\(taken) of \(total) taken",
+            action: onOpen
+        )
+    }
+}
+
+/// The protocol in full, and the one gesture that changes it.
+struct StackSheet: View {
     let model: DayModel
 
     @State private var pending: PendingDose?
@@ -29,19 +50,17 @@ struct StackTile: View {
         let total = stack.reduce(0) { $0 + $1.items.count }
         let taken = total - stack.flatMap(\.items).filter { skipped.contains($0.key) }.count
 
-        DayTile("Stack", .fuel) {
-            if stack.isEmpty {
-                Text("No supplements scheduled")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.helix.textSecondary)
+        DaySheet("Stack · \(taken) of \(total)", domain: .fuel) {
+            VStack(alignment: .leading, spacing: HelixSpace.l) {
+                if stack.isEmpty {
+                    Text("No supplements scheduled")
+                        .helixType(.secondary)
+                        .foregroundStyle(Color.helix.textSecondary)
+                }
+                ForEach(stack, id: \.key) { slot in
+                    slotSection(slot, skipped: skipped)
+                }
             }
-            ForEach(stack, id: \.key) { slot in
-                slotSection(slot, skipped: skipped)
-            }
-        } trailing: {
-            Text("\(taken) of \(total) taken")
-                .helixCaption()
-                .helixNumeral()
         }
         .confirmationDialog(
             pending?.item.name ?? "",
@@ -62,15 +81,15 @@ struct StackTile: View {
     @ViewBuilder
     private func slotSection(_ slot: SupplementSlot, skipped: Set<String>) -> some View {
         let passed = model.isToday && Supplements.slotTimePassed(slot.time, nowMinutes: DayFormat.nowMinutes)
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text(slot.label).font(.subheadline.weight(.medium))
-                Text(slot.time).helixCaption().helixNumeral()
+        VStack(alignment: .leading, spacing: HelixSpace.xs) {
+            HStack(spacing: HelixSpace.s) {
+                Text(slot.label).helixType(.body).fontWeight(.medium)
+                Text(slot.time).helixType(.caption).helixNumeral()
                 Spacer(minLength: 0)
                 // Today only: a past day has no "due", and a future one is not offered.
                 if model.isToday {
                     Label(passed ? "Passed" : "Due", systemImage: passed ? "checkmark" : "clock")
-                        .font(.caption2.weight(.semibold))
+                        .helixType(.micro).fontWeight(.semibold)
                         .foregroundStyle(passed ? Color.helix.textTertiary : accent)
                 }
             }
@@ -86,37 +105,37 @@ struct StackTile: View {
         Button {
             pending = PendingDose(item: item, slot: slot, skipped: skipped)
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: HelixSpace.grid) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
-                        .font(.body)
+                        .helixType(.body)
                         .strikethrough(skipped)
                         .lineLimit(2)
                     if skipped {
                         Text("Skipped")
-                            .font(.caption)
+                            .helixType(.caption)
                             .foregroundStyle(Color.helix.textSecondary)
                     } else if let notes = item.notes {
                         Text(notes)
-                            .font(.caption)
+                            .helixType(.caption)
                             .foregroundStyle(Color.helix.textSecondary)
                             .lineLimit(1)
                     }
                 }
-                Spacer(minLength: 8)
+                Spacer(minLength: HelixSpace.s)
                 if item.trainingOnly == true && model.isTraining {
                     Image(systemName: "bolt.fill")
-                        .font(.caption)
+                        .helixType(.caption)
                         .foregroundStyle(accent)
                         .accessibilityLabel("Training days only")
                 }
                 Text(item.dose)
-                    .font(.subheadline)
+                    .helixType(.secondary)
                     .foregroundStyle(Color.helix.textSecondary)
                     .helixNumeral()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, HelixSpace.m)
+            .padding(.vertical, HelixSpace.s)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }

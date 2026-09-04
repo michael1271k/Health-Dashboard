@@ -25,6 +25,14 @@ struct AtlasFigure: View {
     /// Draw every muscle in the day's accent instead of its own family hue.
     /// Used at thumbnail size, where sixteen hues turn to mud.
     var monochromeTint: Color?
+    /// An explicit colour per muscle, overriding both the family hue and the
+    /// monochrome tint. The DOMS body needs this: soreness is a SEVERITY ramp
+    /// (§3.2 — none tertiary · mild Good · moderate Record · severe Danger) and
+    /// a quadricep that hurts is not "more Tide" than one that does not.
+    var colors: [LandmarkMuscle: Color] = [:]
+    /// Called with the muscle under a tap, when there is one. Nil leaves the
+    /// figure inert, which is what every figure outside the DOMS tile is.
+    var onPick: ((LandmarkMuscle) -> Void)?
 
     var body: some View {
         switch side {
@@ -47,7 +55,7 @@ struct AtlasFigure: View {
     private var tints: [String: (Color, Double)] {
         var out: [String: (Color, Double)] = [:]
         for (muscle, intensity) in worked {
-            out[muscle.rawValue] = (monochromeTint ?? Color.helix.muscle(muscle), intensity)
+            out[muscle.rawValue] = (colors[muscle] ?? monochromeTint ?? Color.helix.muscle(muscle), intensity)
         }
         return out
     }
@@ -104,8 +112,44 @@ struct AtlasFigure: View {
             }
         }
         .aspectRatio(HelixAtlas.viewBox.width / HelixAtlas.viewBox.height, contentMode: .fit)
+        // The hit test is the DRAWING — `HelixAtlas.muscle(at:in:side:)` asks
+        // the same closures, built into the same rect, `Path.contains`. A tap
+        // on the silhouette or in the letter-boxed margin answers nil and the
+        // gesture does nothing, which is the correct behaviour for a tap on a
+        // shin.
+        .contentShape(.rect)
+        // The drawn size, tracked as it lays out: the gesture reports a point
+        // and carries no bounds, and the hit test needs the rect the paths were
+        // built into. Zero until first layout, where every tap answers nil.
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { measured = $0 }
+        .gesture(pick(view))
+        // A figure with no `onPick` is DECORATION and must not eat a tap: the
+        // 44 pt thumb on the Workout tab sits inside a tile with a context menu,
+        // and swallowing the long-press there would cost the swap gesture.
+        .allowsHitTesting(onPick != nil)
         .accessibilityHidden(true)
     }
+
+    /// `SpatialTapGesture` rather than `onTapGesture(coordinateSpace:)`: the
+    /// location has to be in the FIGURE's own space, and the figure is the
+    /// aspect-fitted frame rather than the row it sits in.
+    private func pick(_ view: HelixAtlasView) -> some Gesture {
+        SpatialTapGesture()
+            .onEnded { tap in
+                guard let onPick else { return }
+                // The gesture reports in the modified view's local space, which
+                // after `aspectRatio` is exactly the rect the Canvas drew into.
+                if let muscle = HelixAtlas.muscle(
+                    at: tap.location,
+                    in: CGRect(origin: .zero, size: measured),
+                    side: view
+                ) {
+                    onPick(muscle)
+                }
+            }
+    }
+
+    @State private var measured: CGSize = .zero
 }
 
 #if DEBUG

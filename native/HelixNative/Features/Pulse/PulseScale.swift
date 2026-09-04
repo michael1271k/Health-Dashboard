@@ -10,86 +10,60 @@ import HelixData
 /// labelled so; skeletal muscle (~27 kg) is the scale's own separate reading.
 /// They have shared a label before and it cost the app a season of wrong
 /// deltas. No tape measurements: the W:H ratio is one float the scale reports.
-struct ScaleTile: View {
+///
+/// ── AND WHY THIS IS NOW A ROW ───────────────────────────────────────────────
+/// The tile drew seven metrics in a grid, a gap sentence, a skip-reason row and
+/// a full-width button — a quarter of the screen for a reading taken once a
+/// week, most days showing seven em dashes. §5.7 asks for a row: what the last
+/// weigh-in said, why there is not one, and the `+` that opens the form. The
+/// seven metrics live in the form itself and in Body trends, which is the
+/// screen about how they MOVE.
+struct ScaleRow: View {
     let model: DayModel
-    @State private var entering = false
+    let onEnter: () -> Void
+
     @State private var choosingReason = false
 
-    var body: some View {
-        let log = model.log
-        let fields = BodyCompFields(
-            weightKg: log?.weightKg, bodyFatPct: log?.bodyFatPct,
-            muscleMassKg: log?.muscleMassKg, skeletalMuscleMassKg: log?.skeletalMuscleMassKg
-        )
-        DayTile("Scale", .body) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), alignment: .topLeading)], alignment: .leading, spacing: HelixSpace.m) {
-                DayMetric(label: "Weight", value: DayFormat.number(log?.weightKg, unit: "kg"))
-                DayMetric(label: "Body fat", value: DayFormat.number(log?.bodyFatPct, unit: "%"))
-                DayMetric(label: "Lean soft tissue", value: DayFormat.number(log?.muscleMassKg, unit: "kg"))
-                DayMetric(label: "Skeletal muscle", value: DayFormat.number(log?.skeletalMuscleMassKg, unit: "kg"))
-                DayMetric(label: "Fat mass", value: DayFormat.number(log?.fatMassKg, unit: "kg"))
-                DayMetric(
-                    label: "W:H ratio", value: DayFormat.number(log?.estimatedWaistToHipRatio, fraction: 2),
-                    detail: log?.estimatedWaistToHipRatio.map { BodyComposition.whrBand($0).rawValue.capitalized }
-                )
-                DayMetric(
-                    label: "Visceral", value: DayFormat.number(log?.visceralFat, fraction: 0),
-                    detail: log?.visceralFat.map { BodyComposition.visceralBand($0).rawValue.capitalized }
-                )
-            }
+    private var log: DailyLogRow? { model.log }
 
-            if let gap = CompGap.gapLabel(fields) ?? CompGap.gapShort(fields).map({ "Partial reading — \($0)" }) {
-                Label(gap, systemImage: "scalemass")
-                    .font(.footnote)
-                    .foregroundStyle(Color.helix.textSecondary)
-            }
-
-            if log?.weightKg == nil {
-                skipRow(current: WeighIn.skipReason(log?.weighinSkipReason))
-            }
-
-            Button { entering = true } label: {
-                Label("Enter InBody reading", systemImage: "square.and.pencil")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.helix.accent(.body))
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .helixPress(scale: 0.98)
-            .helixGlass(.row)
+    /// "64.8 kg · 15.2 % fat", or the skip reason, or the invitation.
+    private var detail: String {
+        if let weight = log?.weightKg {
+            var parts = ["\(DayFormat.number(weight)) kg"]
+            if let fat = log?.bodyFatPct { parts.append("\(DayFormat.number(fat)) % fat") }
+            if let skeletal = log?.skeletalMuscleMassKg { parts.append("\(DayFormat.number(skeletal)) kg SMM") }
+            return parts.joined(separator: " · ")
         }
-        .sheet(isPresented: $entering) {
-            InBodyEntryView(model: model)
-        }
+        return "No weigh-in · \(WeighIn.skipReason(log?.weighinSkipReason))"
     }
 
-    /// Why there is no weight. "As Planned" is the default and is never stored.
-    private func skipRow(current: String) -> some View {
-        Button { choosingReason = true } label: {
-            HStack(spacing: 8) {
-                Text("No weigh-in")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.helix.textSecondary)
-                Text(current)
-                    .font(.subheadline.weight(.semibold))
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(Color.helix.textTertiary)
-            }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
+    var body: some View {
+        PulseRow(
+            symbol: "scalemass",
+            title: "Scale",
+            detail: detail,
+            spoken: log?.weightKg == nil
+                ? "no weigh-in, \(WeighIn.skipReason(log?.weighinSkipReason))"
+                : detail,
+            action: onEnter
+        ) {
+            // The reason is only ever offered on a day with no reading, and it
+            // is a SECOND control on the row — long-press rather than a second
+            // chevron, which would make one row look like two.
+            EmptyView()
         }
-        .helixPress(scale: 0.98)
-        .helixGlass(.row)
-        .accessibilityLabel("Weigh-in skipped, \(current)")
-        .accessibilityHint("Change the reason")
+        .contextMenu {
+            Button("Enter InBody reading", systemImage: "square.and.pencil", action: onEnter)
+            if log?.weightKg == nil {
+                Button("Why no weigh-in…", systemImage: "questionmark.circle") { choosingReason = true }
+            }
+        }
         .confirmationDialog("Why no weigh-in?", isPresented: $choosingReason, titleVisibility: .visible) {
             ForEach(WeighIn.skipReasons, id: \.self) { reason in
                 Button(reason) { model.setWeighInSkipReason(reason) }
             }
         } message: {
-            Text("Currently \(current). \"\(WeighIn.skipReason(nil))\" is the protocol and is not stored.")
+            Text("Currently \(WeighIn.skipReason(log?.weighinSkipReason)). \"\(WeighIn.skipReason(nil))\" is the protocol and is not stored.")
         }
     }
 }

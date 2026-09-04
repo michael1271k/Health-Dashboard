@@ -11,7 +11,7 @@ import HelixData
 /// so the gap rule is in the photograph.
 enum BodyTrendsPreviews {
 
-    static let userId = DayPreviews.userId
+    static let userId = PulsePreviews.userId
 
     @MainActor
     static func seeded() -> BodyVitalsSlice {

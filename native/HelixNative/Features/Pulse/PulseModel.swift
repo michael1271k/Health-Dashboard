@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import GRDB
 import HelixCore
 import HelixData
 
@@ -42,6 +43,12 @@ final class DayModel {
     private(set) var cardio: [CardioLogRow] = []
     private(set) var night: SleepSessionRow?
     private(set) var nights: [NightMinutes] = []
+    private(set) var entries: [NutritionEntryRow] = []
+    private(set) var dailyTarget: DailyTargetRow?
+
+    /// The fortnight behind the selected date, folded once. Read rather than
+    /// observed — see `loadWindow()`.
+    private(set) var window = Window()
 
     /// The last write that failed, for the banner.
     private(set) var failure: String?
@@ -140,14 +147,122 @@ final class DayModel {
         let d = date
         let from = ISODate.addDays(d, -(SleepDebt.windowDays - 1)) ?? d
         dateTasks = [
-            watch(database.dailyLogStream(userId: userId, date: d), into: \.log),
+            // The day's own row is the one stream that also invalidates the
+            // fortnight: a HealthKit sync writes today's HRV and steps, and the
+            // baseline behind them moves with it.
+            Task { [weak self] in
+                guard let self else { return }
+                do {
+                    for try await row in database.dailyLogStream(userId: userId, date: d) {
+                        log = row
+                        loadWindow()
+                    }
+                } catch {
+                    report(error)
+                }
+            },
             watch(database.fatigueStream(userId: userId, date: d), into: \.fatigueRows),
             watch(database.domsStream(userId: userId, date: d), into: \.doms),
             watch(database.supplementLogStream(userId: userId, date: d), into: \.supplementLog),
             watch(database.cardioStream(userId: userId, date: d), into: \.cardio),
             watch(database.sleepNightStream(userId: userId, date: d), into: \.night),
             watch(database.nightMinutesStream(userId: userId, from: from, to: d), into: \.nights),
+            watch(database.nutritionEntriesStream(userId: userId, date: d), into: \.entries),
+            watch(database.dailyTargetStream(userId: userId, date: d), into: \.dailyTarget),
         ]
+        loadWindow()
+    }
+
+    // MARK: - The fortnight
+
+    /// Everything Pulse needs that is a WINDOW rather than a day: the vitals
+    /// against their own fortnight baseline, the activity trends behind them,
+    /// and the day's stored score.
+    struct Window: Sendable, Equatable {
+        var vitals = HelixSnapshot.Vitals()
+        var steps: VitalBlock?
+        var standHours: VitalBlock?
+        var activeKcal: VitalBlock?
+        var score: DailyScoreRow?
+        /// False until the first read lands, so the rows can say "—" honestly
+        /// rather than draw a zero they have not read yet.
+        var loaded = false
+    }
+
+    /// One detached read of `daily_logs` over the fortnight, plus the day's
+    /// `daily_scores` row.
+    ///
+    /// ── WHY A READ AND NOT A NINTH STREAM ───────────────────────────────────
+    /// Every vital on this screen is a reading against ITS OWN fortnight
+    /// baseline, which is a window query — and `HelixData` (Track E, plan §10)
+    /// exposes streams per DATE, not per range. Rather than reach across the
+    /// track boundary for a `dailyLogsStream(from:to:)`, this goes through the
+    /// public `read` door on the same schedule the streams fire on: once per
+    /// date change, and again whenever the day's own row yields, which is what
+    /// a HealthKit sync or a manual edit produces. Fourteen indexed rows.
+    // ponytail: a `ValueObservation` over the range would repaint without the
+    // nudge below; it belongs in HelixData, which this wave may not edit.
+    func loadWindow() {
+        let to = date
+        let from = ISODate.addDays(to, -(Self.baselineDays - 1)) ?? to
+        let database = database
+        Task { [weak self] in
+            let window = await Task.detached(priority: .userInitiated) {
+                Self.readWindow(database: database, from: from, to: to)
+            }.value
+            guard let self, self.date == to else { return }
+            self.window = window
+        }
+    }
+
+    /// Apple's own baseline window, and the one `WidgetSnapshotBuilder` uses —
+    /// the delta chips on this screen and on the Home Screen have to be the
+    /// same number or one of them is lying.
+    private nonisolated static let baselineDays = 14
+    private nonisolated static let trendDays = 7
+
+    private nonisolated static func readWindow(database: AppDatabase, from: String, to: String) -> Window {
+        // Unfiltered on `user_id`, like every other read in the app: the local
+        // store is one user's mirror and the id is `""` until auth resolves.
+        // See the long note in `WorkoutWeek.build`.
+        let logs: [DailyLogRow] = (try? database.read { db in
+            try DailyLogRow
+                .filter(Column("date") >= from && Column("date") <= to)
+                .order(Column("date"))
+                .fetchAll(db)
+        }) ?? []
+        let score: DailyScoreRow? = (try? database.read { db in
+            try DailyScoreRow.filter(Column("date") == to).fetchOne(db)
+        }) ?? nil
+
+        func block(_ pick: (DailyLogRow) -> Double?) -> VitalBlock {
+            WidgetDerive.vitalBlock(
+                logs.map { DatedValue(date: $0.date, value: pick($0)) },
+                todayISO: to, trendLimit: trendDays
+            )
+        }
+        func vital(_ pick: (DailyLogRow) -> Double?) -> HelixSnapshot.Vital {
+            let b = block(pick)
+            return HelixSnapshot.Vital(
+                value: b.value, baseline: b.baseline,
+                trend: b.trend.map { HelixSnapshot.Point(d: $0.d, v: $0.v) }
+            )
+        }
+
+        return Window(
+            vitals: HelixSnapshot.Vitals(
+                hrvMs: vital { $0.hrvMs },
+                restingBpm: vital { $0.avgRestHeartRate.map(Double.init) },
+                wristTempDeltaC: vital { $0.wristTempDelta },
+                bloodOxygenPct: vital { $0.bloodOxygen },
+                respiratoryRate: vital { $0.respiratoryRate }
+            ),
+            steps: block { $0.steps.map(Double.init) },
+            standHours: block { $0.standHours.map(Double.init) },
+            activeKcal: block { $0.activeEnergy },
+            score: score,
+            loaded: true
+        )
     }
 
     private func watch<T: Sendable>(
@@ -238,6 +353,37 @@ final class DayModel {
     }
 
     var sleepGoalHours: Double { goals?.sleepGoalHours ?? 8 }
+
+    // MARK: - The now strip
+
+    /// The day's stored composite, or nil while the read is in flight or the
+    /// day has not been scored. Never a zero — 0 is a real score.
+    var score: Int? { window.score?.score }
+    var battery: Int? { window.score?.batteryPct }
+
+    /// `1,420 / 1,955 kcal · P 128 · water 2.1 L` — the whole of nutrition on
+    /// this screen, because the gauges live in the Nutrition tab (§5.7).
+    ///
+    /// The kcal figure is what was RECORDED, never the Atwater sum of the
+    /// macros beside it: Apple Health owns the day's energy (memory
+    /// `no-tape-measurements`' sibling rule, and `MacroEditSheet`'s long note).
+    var fuelLine: String? {
+        guard !entries.isEmpty || log?.waterMl != nil else { return nil }
+        let target = TargetChain.resolve(date: date, today: today, goals: goals, dayTarget: TargetChain.dayTarget(dailyTarget))
+        var parts: [String] = []
+        if !entries.isEmpty {
+            let kcal = entries.reduce(0) { $0 + $1.calories }
+            parts.append(target.calorie > 0
+                ? "\(NutritionFormat.whole(kcal)) / \(NutritionFormat.whole(target.calorie)) kcal"
+                : "\(NutritionFormat.whole(kcal)) kcal")
+            let protein = entries.reduce(0) { $0 + $1.proteinG }
+            parts.append("P \(NutritionFormat.whole(protein))")
+        }
+        if let ml = log?.waterMl, ml > 0 {
+            parts.append("water \(DayFormat.number(ml / 1000)) L")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 
     // MARK: - The stack
 

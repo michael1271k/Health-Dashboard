@@ -254,7 +254,10 @@ private struct SleepSheetBody: View {
 /// in THIS column width, which is exactly the question the layout system is
 /// already answering. A hand-written breakpoint gets it wrong on the iPhone it
 /// was not written on. §3.1 allows a taller row for two lines of content.
-private struct StageCell: View {
+/// Internal since Wave 2.9: the Pulse tab's sleep tile is the same 2×2 grid of
+/// the same four stages, and two copies would drift the first time either is
+/// nudged.
+struct StageCell: View {
     let stage: HelixSleepStage
     let minutes: Int?
     let share: String
@@ -426,7 +429,8 @@ private struct VitalsSheetBody: View {
 ///
 /// The 44 pt row of §3.1, and the only row shape the sheets use — a metric is a
 /// metric whether it is measured in ms or in steps.
-private struct MetricRow: View {
+/// Internal since Wave 2.9 — the Pulse tab's vitals list is these rows.
+struct MetricRow: View {
     let name: String
     let value: String?
     let unit: String

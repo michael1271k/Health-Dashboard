@@ -79,6 +79,10 @@ final class WorkoutWeek {
         var progression: [ProgressionRow] = []
         var lastCardio: CardioLogRow?
         var todayCardio: [CardioLogRow] = []
+        /// Whether today carries a `schedule_overrides` row — the one fact the
+        /// swap menu needs that the plan alone cannot answer, since an override
+        /// resolves to a perfectly ordinary-looking day.
+        var isOverridden = false
     }
 
     // MARK: - Live state
@@ -189,6 +193,7 @@ final class WorkoutWeek {
         let context = ScheduleContext(programId: programId, phase: phase, overrides: overrides, layout: layout)
         out.sessionTarget = Schedule.sessionTargetIn(context)
         out.todayKey = seededDayKey ?? Schedule.scheduleDayIn(context, today)?.dayKey
+        out.isOverridden = overrides[today] != nil
 
         // ── The week ────────────────────────────────────────────────────────
         // `Week.startDay(fromEndDay:)` is the same conversion Settings writes

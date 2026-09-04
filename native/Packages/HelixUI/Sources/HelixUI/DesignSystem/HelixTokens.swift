@@ -270,6 +270,37 @@ extension Color {
             }
         }
 
+        /// How sore, in ink — §3.2's severity ramp, stored 0…3.
+        ///
+        /// Gold is the record colour and this is the one other job it is
+        /// allowed: pointing at a THRESHOLD. Moderate soreness is the rung at
+        /// which the plan is worth a second look, which is the same kind of
+        /// statement as "one more session and this load goes up".
+        public static func severity(_ level: Int) -> Color {
+            switch level {
+            case ..<1: textTertiary
+            case 1:    good
+            case 2:    record
+            default:   danger
+            }
+        }
+
+        /// How tired, in ink — the 1…5 scale `Fatigue.levels` defines.
+        ///
+        /// Same three-step ramp as `severity`, deliberately: soreness and
+        /// fatigue are the two subjective readings on the Pulse screen and a
+        /// reader should not have to learn two colour languages to compare
+        /// them. An unlogged slot is tertiary, not green — never having said is
+        /// not the same as having said "Fresh".
+        public static func fatigue(_ level: Int?) -> Color {
+            switch level {
+            case .some(1), .some(2): good
+            case .some(3):           record
+            case .some(4), .some(5): danger
+            default:                 textTertiary
+            }
+        }
+
         /// Cut or bulk, in ink.
         ///
         /// A phase is a NUTRITION direction that the training deck follows, so

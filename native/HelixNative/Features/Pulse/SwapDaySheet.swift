@@ -1,70 +1,46 @@
 import SwiftUI
 import HelixUI
 import HelixCore
+import HelixData
 
-/// What the plan says about this date, and the door to changing it.
-struct SwapDayTile: View {
-    let model: DayModel
-    @State private var changing = false
+/// The swap sheet, with a model of its own.
+///
+/// ── WHY THE DOOR OWNS THE MODEL ─────────────────────────────────────────────
+/// Wave 2.9 deletes the Schedule tile from Pulse: a swap is a change to the
+/// TRAINING WEEK and belongs beside the session it moves (§5.2 item 3 puts it
+/// on the Workout tab's session card, in a `contextMenu`). But the Workout tab
+/// has no `DayModel` — it reads a week through `WorkoutWeek` — and `SwapDaySheet`
+/// needs the whole schedule context: the plan, the overrides, the layout, and
+/// the logged days a placement could collide with.
+///
+/// So the door builds one and observes it only while the sheet is up. Eleven
+/// streams for the life of a sheet is the honest cost of a screen that plans
+/// two writes and refuses them when a committed session is in the way; keeping
+/// them open on a tab that shows none of it is not.
+struct SwapSheetDoor: View {
+    @Environment(AppEnvironment.self) private var environment
+    let date: String
+    /// Supplied by previews and the screenshot harness.
+    var seeded: DayModel?
+
+    @State private var model: DayModel?
 
     var body: some View {
-        DayTile("Schedule", .train) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.scheduled?.label ?? "Rest")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(Color.helix.accent(.train))
-                    if let sub = model.scheduled?.sub {
-                        Text(sub).font(.caption).foregroundStyle(Color.helix.textSecondary)
-                    }
-                }
-                Spacer(minLength: 0)
-                if model.isOverridden {
-                    Label("Swapped", systemImage: "arrow.triangle.swap")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.helix.textSecondary)
-                }
-            }
-            .accessibilityElement(children: .combine)
-
-            if let note = model.swapNote {
-                Text(note)
-                    .font(.footnote)
-                    .foregroundStyle(Color.helix.textSecondary)
-                    .accessibilityAddTraits(.updatesFrequently)
-            }
-
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { actions }
-                VStack(alignment: .leading, spacing: 10) { actions }
+        Group {
+            if let model {
+                SwapDaySheet(model: model)
+            } else {
+                ProgressView().controlSize(.large).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .sheet(isPresented: $changing) {
-            SwapDaySheet(model: model)
+        .task {
+            if model == nil {
+                model = seeded ?? DayModel(
+                    database: environment.database, userId: environment.userIdString, date: date
+                )
+            }
+            await model?.observe()
         }
-    }
-
-    @ViewBuilder
-    private var actions: some View {
-        Button("Change") { changing = true }
-            .modifier(SwapButton())
-        if model.isOverridden {
-            Button("Undo swap") { withAnimation(HelixMotion.move) { model.undoSwap() } }
-                .modifier(SwapButton())
-                .accessibilityHint("Clears both dates of the swap")
-        }
-    }
-}
-
-private struct SwapButton: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color.helix.accent(.train))
-            .padding(.horizontal, 14)
-            .frame(minHeight: 44)
-            .helixPress(scale: 0.98)
-            .helixGlass(.row)
     }
 }
 
@@ -88,6 +64,7 @@ struct SwapDaySheet: View {
     var body: some View {
         DaySheet("Change \(Swap.shortDayLabel(model.date))", domain: .train) {
             VStack(alignment: .leading, spacing: HelixSpace.l) {
+                if model.isOverridden { undoSection }
                 restSection
                 Divider().overlay(Color.helix.hairline)
                 placeSection
@@ -98,6 +75,33 @@ struct SwapDaySheet: View {
             // the 13-day horizon a displaced workout may be re-homed within.
             let ahead = (1...Swap.horizonDays).compactMap { ISODate.addDays(model.date, $0) }
             logged = model.loggedDays(Array(Set(Swap.weekDatesOf(model.date) + ahead)).sorted())
+        }
+    }
+
+    // MARK: Undo
+
+    /// Offered only on a date the plan did not choose. Undoing clears BOTH
+    /// dates of the swap — a swap is two rows and undoing one half leaves the
+    /// week rearranged in a way nothing on screen explains.
+    @ViewBuilder
+    private var undoSection: some View {
+        VStack(alignment: .leading, spacing: HelixSpace.s) {
+            Label("This day was swapped", systemImage: "arrow.triangle.swap")
+                .helixType(.body).fontWeight(.semibold)
+            if let note = model.swapNote {
+                Text(note).helixType(.caption).foregroundStyle(Color.helix.textSecondary)
+            }
+            Button {
+                withAnimation(HelixMotion.move) { model.undoSwap() }
+                dismiss()
+            } label: {
+                Text("Undo swap")
+                    .helixType(.secondary).fontWeight(.semibold)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .helixPress(scale: 0.98)
+            .helixGlass(.row)
+            .accessibilityHint("Clears both dates of the swap")
         }
     }
 

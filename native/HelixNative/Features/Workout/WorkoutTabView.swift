@@ -51,6 +51,10 @@ struct WorkoutTabView: View {
     @State private var activity = LiveActivityController()
     @State private var showPhase = false
     @State private var loggingCardio = false
+    /// The swap sheet. §5.2 item 3 puts rest and swap on the session card,
+    /// which is where the thing being moved actually is — the Pulse tab's
+    /// Schedule tile is deleted in the same wave.
+    @State private var swapping = false
     /// The session to push once the cover closes on a FINISHED workout.
     ///
     /// ── WHY THE TAB PUSHES IT AND NOT THE FINISH SHEET ──────────────────────
@@ -141,6 +145,16 @@ struct WorkoutTabView: View {
         .sheet(isPresented: $loggingCardio) {
             if let week {
                 CardioLogSheet(userId: week.userId, date: week.today, onSave: week.addCardio)
+            }
+        }
+        // Re-read on dismissal: a swap rewrites today's day key, which changes
+        // the card, the week panel and the progression queue at once.
+        .sheet(isPresented: $swapping, onDismiss: { Task { await week?.refresh() } }) {
+            if let week {
+                // The undo lives INSIDE the sheet: undoing a swap clears TWO
+                // dates (memory `swap-day-semantics`) and the sentence saying
+                // which is the whole reason it is safe to offer.
+                SwapSheetDoor(date: week.today)
             }
         }
         .task {
@@ -347,9 +361,18 @@ struct WorkoutTabView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
-        .contextMenu {
-            Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
-        }
+        .contextMenu { dayMenu }
+    }
+
+    /// Long-press the card: the three things you can do to a DAY, as against
+    /// the one thing the footer does (start the session). A `contextMenu`
+    /// rather than three buttons on the tile — these are rare, and a tile that
+    /// carries its rare actions on its face is the tile §5.2 shrank.
+    @ViewBuilder
+    private var dayMenu: some View {
+        Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
+        Button("Take a rest day…", systemImage: "moon.zzz") { swapping = true }
+        Button("Swap this day…", systemImage: "arrow.triangle.swap") { swapping = true }
     }
 
     private func doneSummary(sets: Int, volumeKg: Double, minutes: Double?, prCount: Int) -> String {
@@ -376,6 +399,12 @@ struct WorkoutTabView: View {
         .padding(HelixSpace.xl)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
+        // A rest day is exactly the day you want to PLACE a session on, so it
+        // carries the same menu rather than being the one card you cannot act
+        // on.
+        .contextMenu {
+            Button("Place a workout here…", systemImage: "arrow.triangle.swap") { swapping = true }
+        }
     }
 
     /// Landmark → 0…1 for the day's prescription, so the figure shows where the

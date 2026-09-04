@@ -51,3 +51,18 @@ enum DomsMap {
         return sore.isEmpty ? nil : sore.joined(separator: " · ")
     }
 }
+
+extension DomsMap {
+    /// The group a landmark belongs to — the reverse of `landmarks`, which is
+    /// what a tap on the body needs: the atlas answers in landmarks (sixteen)
+    /// and soreness is rated in groups (nine).
+    ///
+    /// Built once. Nine keys of at most three values is a linear scan either
+    /// way; the dictionary is here so the join lives in ONE direction's worth
+    /// of source and cannot fall out of step with `landmarks`.
+    static let groupOfLandmark: [LandmarkMuscle: String] = landmarks.reduce(into: [:]) { out, pair in
+        for landmark in pair.value { out[landmark] = pair.key }
+    }
+
+    static func group(of landmark: LandmarkMuscle) -> String? { groupOfLandmark[landmark] }
+}
