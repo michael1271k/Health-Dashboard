@@ -29,7 +29,9 @@ set -euo pipefail
 SCREEN="${1:-all}"
 DEVICE="${2:-iPhone 17 Pro}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT="$ROOT/native/__screenshots__"
+# `SHOT_OUT` sends the PNGs somewhere else — App Store shots go to a
+# per-size folder rather than over the committed visual-diff set.
+OUT="${SHOT_OUT:-$ROOT/native/__screenshots__}"
 BUNDLE_ID="app.helix.health.michael.native"
 DERIVED="$HOME/Library/Caches/helix-swift/shot-derived"
 
@@ -76,7 +78,9 @@ shoot() {
   echo "  $OUT/$screen$suffix.png"
 }
 
-SCREENS=("$SCREEN")
+# A space-separated list shoots several screens off ONE build, which is what
+# the store loop wants: `native-shot.sh "today train fuel" "iPhone 17 Pro Max"`.
+read -ra SCREENS <<< "$SCREEN"
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
@@ -97,6 +101,9 @@ for s in "${SCREENS[@]}"; do
   # Tiles set their type in points, as WidgetKit does; Dynamic Type never
   # reaches them, so the AX5 shot would be the same PNG twice.
   case "$s" in widgets*) continue ;; esac
+  # `SHOT_AX=0` for the App Store loop: Apple wants the shipping type size,
+  # and a second PNG per screen at AX5 is just something to delete by hand.
+  [ "${SHOT_AX:-1}" = "1" ] || continue
   shoot "$s" accessibility-extra-extra-extra-large "-ax5"
 done
 
