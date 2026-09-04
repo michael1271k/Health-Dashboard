@@ -40,6 +40,9 @@ public final class AppEnvironment {
     /// when it is deallocated). Untyped so the app target need not import GRDB.
     private var commitObserver: AnyObject?
     private var widgetReload: Task<Void, Never>?
+    /// The pull in flight, or `nil`. Non-nil is the re-entrancy guard — it is
+    /// cleared when the pull finishes, so the NEXT foreground runs another one.
+    private var healthTask: Task<Void, Never>?
 
     public init(database: AppDatabase, supabase: SupabaseClient) {
         self.database = database
@@ -79,7 +82,49 @@ public final class AppEnvironment {
                     continue
                 }
                 self.auth = session.map { .signedIn(userID: $0.user.id) } ?? .signedOut
+                if case .signedIn(let userID) = self.auth { self.startHealthSync(userID: userID) }
             }
+        }
+    }
+
+    /// Every foreground, and the first resolved sign-in. Cheap when there is
+    /// nothing new: HealthKit answers an already-granted authorization without
+    /// showing anything, and `ingest` rewrites the same two days' rows.
+    ///
+    /// ── WHY FOREGROUND AND NOT ONCE AT LAUNCH ───────────────────────────────
+    /// A phone does not relaunch this app for days. Steps and active energy
+    /// accrue all day, and `HealthSync` computes the day key when it is CALLED,
+    /// so a process alive past midnight that only ever synced once would never
+    /// create the new day's row at all — the tabs would keep re-reading a GRDB
+    /// nothing had written to, and pull-to-refresh would refresh nothing.
+    public func refreshHealth() {
+        guard case .signedIn(let userID) = auth else { return }
+        startHealthSync(userID: userID)
+    }
+
+    /// Ask Apple Health for read access, then pull today and yesterday.
+    ///
+    /// ── WHY IT HANGS OFF AUTH ───────────────────────────────────────────────
+    /// `HealthSync` writes rows keyed by `user_id`, so there is nothing to
+    /// write before a user is resolved. The auth stream also re-emits on every
+    /// token refresh; `healthTask` being non-nil is what absorbs that.
+    ///
+    /// Both failures are silent on purpose: a declined prompt and a device with
+    /// no Health data are the same thing to every screen downstream — absent
+    /// metrics render as "—" — and an error banner over the dashboard for a
+    /// permission the user deliberately withheld is noise.
+    private func startHealthSync(userID: UUID) {
+        guard healthTask == nil else { return }
+        healthTask = Task { [weak self, database] in
+            defer { self?.healthTask = nil }
+            let sync = HealthSync(
+                database: database, reader: HealthKitReader(), userId: userID.uuidString
+            )
+            guard (try? await sync.requestAuthorization()) == true else { return }
+            // The pull is what the permission is FOR. Requesting access and then
+            // reading nothing leaves every chart and widget empty until some
+            // later wave wires a pull, which reads as a broken grant.
+            _ = try? await sync.syncRecent()
         }
     }
 
@@ -91,6 +136,8 @@ public final class AppEnvironment {
         // A failed sign-out must still clear local state, or the user is stuck
         // on a screen with no way forward.
         try? await supabase.auth.signOut()
+        healthTask?.cancel()
+        healthTask = nil
         auth = .signedOut
     }
 

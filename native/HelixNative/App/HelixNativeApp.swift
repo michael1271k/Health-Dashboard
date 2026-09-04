@@ -3,6 +3,7 @@ import HelixData
 
 @main
 struct HelixNativeApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var environment: AppEnvironment?
     @State private var startupError: String?
 
@@ -47,6 +48,13 @@ struct HelixNativeApp: App {
                 } catch {
                     startupError = String(describing: error)
                 }
+            }
+            // Apple Health is read on every foreground, not once at launch —
+            // see `AppEnvironment.refreshHealth`. Signed out, or with a pull
+            // already running, this is a no-op.
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                environment?.refreshHealth()
             }
         }
     }

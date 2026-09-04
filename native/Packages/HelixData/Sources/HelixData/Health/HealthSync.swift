@@ -89,6 +89,12 @@ public actor HealthSync {
             payload.sleep = Sleep.aggregate(samples)
         }
 
+        // Nothing in HealthKit's continuations is cancellation-aware, so the
+        // 32-metric loop above runs to completion even after `signOut` cancels
+        // this task. Checking HERE is what stops the write landing — in the
+        // local store and then the outbox — under the id of the user who just
+        // signed out.
+        try Task.checkCancellation()
         return try database.ingest(payload, userId: userId, now: now)
     }
 

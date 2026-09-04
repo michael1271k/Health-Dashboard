@@ -349,7 +349,7 @@ Domain pulls: `charts/*`, `prEngine` trio (if Track D hasn't reached it, this wa
 
 ### Wave 8 — App Store 1.0 (3 days)
 
-Privacy manifest (HealthKit reasons, UserDefaults reason codes), `NSHealthShareUsageDescription` per type, no `.processing` background mode unless registered, encryption-exempt flag, screenshots from the shot loop at 6.9" and 6.3", App Store metadata, review notes (single-user app — demo credentials), TestFlight external build, submit.
+Privacy manifest (HealthKit reasons, UserDefaults reason codes) — `NSHealthShareUsageDescription`/`NSHealthUpdateUsageDescription` and the `com.apple.developer.healthkit` entitlement were pulled forward to Wave 7 prep (2026-09-04); HealthKit has no per-type usage strings, one covers every type. **Still open here: a privacy-policy URL, which App Review requires for any app carrying the HealthKit entitlement, and `ITSAppUsesNonExemptEncryption`.** No `.processing` background mode unless registered, encryption-exempt flag, screenshots from the shot loop at 6.9" and 6.3", App Store metadata, review notes (single-user app — demo credentials), TestFlight external build, submit.
 
 | Task | Skills | Agents | Gate |
 |---|---|---|---|

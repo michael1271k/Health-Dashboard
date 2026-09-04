@@ -83,6 +83,18 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.app.helix.health
+        # ── HealthKit ────────────────────────────────────────────────────────
+        # Read access to the quantity types in `HealthCatalogue` plus sleep
+        # analysis. This is the ONLY entitlement key standard read access needs:
+        # `.access` is clinical records (none are requested) and
+        # `.background-delivery` is for `enableBackgroundDelivery`, which is
+        # never called. The two usage strings below are the other half —
+        # `requestAuthorization` traps immediately without them.
+        #
+        # A personal team can provision HealthKit, but not the App Group above,
+        # and Xcode refuses the profile for the target as a whole — so on-device
+        # Health still waits on Gate 0 (buy the Developer Program).
+        com.apple.developer.healthkit: true
 
     info:
       path: HelixNative/Support/Info.plist
@@ -105,6 +117,29 @@ targets:
         # woken, so no background mode is needed for it. `workout-processing`
         # arrives with the Watch in Wave 5.
         NSSupportsLiveActivitiesFrequentUpdates: false
+        # ── Health permission copy ───────────────────────────────────────
+        # Shown in the system sheet the first time `HealthSync` asks. App Review
+        # rejects a generic string: it has to name the data and the purpose the
+        # user gets out of it, so these list the actual categories read and what
+        # the app computes from them.
+        NSHealthShareUsageDescription: >-
+          HELIX reads your activity, heart, sleep, body-measurement and
+          nutrition data from Apple Health to work out your daily readiness and
+          recovery scores, your training load and your energy balance, and to
+          fill in the charts and Home Screen widgets. Nothing is read that you
+          do not allow, and your data is stored only on this device and in your
+          own private HELIX account.
+        # Not written today — `HealthKitReader` requests `toShare: []`, and the
+        # sheet only ever shows the half being asked for, so this string is
+        # currently never displayed. It is declared ahead of the Watch client
+        # (1.1), which saves its strength sessions back. Declaring it early
+        # prevents no prompt (the WRITE prompt is triggered by a non-empty
+        # `toShare:`, not by this key) — it just means the plist is already
+        # right when that call lands.
+        NSHealthUpdateUsageDescription: >-
+          HELIX saves the strength workouts you log — their duration, active
+          energy and heart rate — back to Apple Health, so the training you do
+          here appears alongside the rest of your activity rings.
         # Substituted from Secrets.xcconfig at build time.
         HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
         HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
