@@ -270,6 +270,7 @@ struct WeekSoFarView: View {
                     Text(position)
                         .helixType(.secondary)
                         .foregroundStyle(Color.helix.textSecondary)
+                        .lineLimit(1)
                 }
                 change
             }

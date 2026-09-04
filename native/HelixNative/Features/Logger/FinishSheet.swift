@@ -18,7 +18,8 @@ import HelixCore
 /// interruptible grab every other sheet in the app has.
 struct FinishSheet: View {
     let model: LoggerModel
-    let onFinish: (Double?) -> Void
+    /// Returns false when there was nothing to finish; the sheet stays up.
+    let onFinish: (Double?) -> Bool
 
     @Environment(\.dismiss) private var dismiss
     @State private var rpe: Double = 8
@@ -26,8 +27,6 @@ struct FinishSheet: View {
     /// precisely so "I did not say" survives, and a dial that starts at 8 would
     /// otherwise write an 8 for everyone who never touched it.
     @State private var rated = false
-    /// The finish haptic fires on a CHANGE, so it needs something that changes.
-    @State private var finishTicks = 0
 
     private var accent: Color { Color.helix.day(model.day.key) }
     private var minutes: Int { max(0, Int(Date().timeIntervalSince(model.startedAt) / 60)) }
@@ -58,9 +57,19 @@ struct FinishSheet: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    finishButton
                 }
                 .padding(HelixSpace.l)
+            }
+            // ── WHY THE BUTTON IS PINNED ────────────────────────────────────
+            // It was the last view in the scroll view, and at the `.medium`
+            // detent the dial and the caption fill the sheet — so the screen
+            // called "Finish" had no visible way to finish, at both type
+            // sizes. A primary action never scrolls out of its own sheet.
+            .safeAreaInset(edge: .bottom) {
+                finishButton
+                    .padding(.horizontal, HelixSpace.l)
+                    .padding(.vertical, HelixSpace.m)
+                    .background(.ultraThinMaterial)
             }
             .helixScreen(.train)
             .navigationTitle("Session")
@@ -81,9 +90,17 @@ struct FinishSheet: View {
     private var dial: some View {
         VStack(spacing: HelixSpace.s) {
             RPEDial(value: $rpe, rated: $rated, accent: accent)
-            Text("How hard was the whole session?")
-                .helixType(.caption)
-                .foregroundStyle(Color.helix.textSecondary)
+            if rated {
+                Button("Clear rating") { rated = false }
+                    .helixType(.caption)
+                    .foregroundStyle(Color.helix.textSecondary)
+                    .frame(minHeight: 44)
+            } else {
+                Text("How hard was the whole session?")
+                    .helixType(.caption)
+                    .foregroundStyle(Color.helix.textSecondary)
+                    .frame(minHeight: 44)
+            }
         }
     }
 
@@ -137,8 +154,7 @@ struct FinishSheet: View {
 
     private var finishButton: some View {
         Button {
-            finishTicks += 1
-            onFinish(rated ? rpe : nil)
+            _ = onFinish(rated ? rpe : nil)
         } label: {
             Text("Finish session")
                 .helixType(.body).fontWeight(.semibold)
@@ -150,9 +166,6 @@ struct FinishSheet: View {
                 )
         }
         .helixPress(scale: 0.98)
-        // §3.4: `.success` on session finished. It is the last thing the app
-        // says about this workout and the only haptic on this sheet.
-        .sensoryFeedback(.success, trigger: finishTicks)
     }
 }
 
@@ -207,7 +220,6 @@ private struct RPEDial: View {
                 .onChanged { set(from: $0.location) }
         )
         .sensoryFeedback(.selection, trigger: value)
-        .animation(HelixMotion.move, value: value)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Session effort")
         .accessibilityValue(rated ? "RPE \(HelixFormat.rpe(value))" : "Not rated")
@@ -245,7 +257,9 @@ private struct RPEDial: View {
 
     private var fill: some View {
         Circle()
-            .trim(from: 0, to: Self.sweep / 360 * max(0, min(1, fraction)))
+            // A floor, not a fraction: RPE 6 is the bottom of the scale and
+            // `trim(0, 0)` draws nothing, which is what UNRATED looks like.
+            .trim(from: 0, to: Self.sweep / 360 * max(0.02, min(1, fraction)))
             .stroke(Color.helix.effort(value), style: stroke)
             .rotationEffect(.degrees(Self.start))
             .padding(6)
@@ -274,6 +288,10 @@ private struct RPEDial: View {
     private func set(from point: CGPoint) {
         let dx = point.x - side / 2
         let dy = point.y - side / 2
+        // A touch near the middle has no angle worth reading — `atan2` of two
+        // numbers close to zero swings wildly, so tapping the numeral itself
+        // would set a value at random. The hole is the reading's own space.
+        guard (dx * dx + dy * dy).squareRoot() > side * 0.28 else { return }
         let degrees = atan2(dy, dx) * 180 / .pi
         var swept = degrees - Self.start
         while swept < 0 { swept += 360 }
@@ -297,7 +315,7 @@ private struct RPEDial: View {
 
 #if DEBUG
 #Preview("Finish") {
-    FinishSheet(model: .previewUpperB(logged: true), onFinish: { _ in })
+    FinishSheet(model: .previewUpperB(logged: true), onFinish: { _ in true })
         .environment(AppEnvironment.preview)
 }
 #endif

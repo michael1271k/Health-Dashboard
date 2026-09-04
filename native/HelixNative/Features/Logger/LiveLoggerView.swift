@@ -35,6 +35,13 @@ struct LiveLoggerView: View {
     @State private var showFinish = false
     /// Which card the deck is on. Bound to `.scrollPosition`, so writing it
     /// scrolls and scrolling writes it.
+    ///
+    /// ── SEEDED IN `init`, NOT IN `onAppear` ─────────────────────────────────
+    /// Writing it after the first layout asks a `LazyHStack` to scroll to a
+    /// page it has not built yet, and what `viewAligned` then settles on is a
+    /// position part way between two cards — the deck opened with the current
+    /// movement hanging off the leading edge and the next one over the top of
+    /// it. Seeded here, the first layout already knows where it is going.
     @State private var focus: String?
 
     /// `@State`, emphatically not `let`.
@@ -61,6 +68,7 @@ struct LiveLoggerView: View {
     init(model: LoggerModel, activity: LiveActivityController? = nil) {
         _model = State(initialValue: model)
         _activity = State(initialValue: activity ?? LiveActivityController())
+        _focus = State(initialValue: model.currentSet?.exercise.id ?? model.exercises.first?.id)
     }
 
     private var accent: Color { Color.helix.day(model.day.key) }
@@ -94,13 +102,31 @@ struct LiveLoggerView: View {
         .onAppear {
             model.attach()
             activity.start(model: model)
-            if focus == nil { focus = model.currentSet?.exercise.id ?? model.exercises.first?.id }
         }
         .onChange(of: model.completedSets) { _, _ in
             activity.update(model: model)
             advanceIfFinished()
         }
+        // A warm-up changes neither `completedSets` nor the rest clock, and
+        // `commitEdit` — retyping a load on a logged set — changes none of the
+        // three. Both leave the Lock Screen showing a number that is no longer
+        // true.
+        .onChange(of: model.physicalSets) { _, _ in activity.update(model: model) }
+        .onChange(of: model.totalVolumeKg) { _, _ in activity.update(model: model) }
         .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model) }
+        // ── THE CLOCK HAS TO END ITSELF ─────────────────────────────────────
+        // `startRest` set a deadline and only a tap, an adjustment into the
+        // past or the next set ever cleared it. So the capsule sat at 0:00
+        // until you logged again, the nav title never came back, and the
+        // Dynamic Island showed a dead countdown instead of the load. `.task`
+        // is cancelled and restarted whenever the deadline moves, which is
+        // exactly the ±15 s case.
+        .task(id: model.restEndsAt) {
+            guard let endsAt = model.restEndsAt else { return }
+            try? await Task.sleep(for: .seconds(max(0, endsAt.timeIntervalSinceNow)))
+            guard !Task.isCancelled else { return }
+            withAnimation(HelixMotion.drawer) { model.stopRest() }
+        }
         .onChange(of: model.phase) { _, next in storedPhase = next.rawValue }
     }
 
@@ -178,9 +204,14 @@ struct LiveLoggerView: View {
                 HStack(spacing: HelixSpace.m) { volumeStat; setsStat; records }
                 elapsed
             }
-            // One per line. At AX5 three totals cannot share a row, and what
+            // Two by two. At AX5 three totals cannot share a row, and what
             // sharing it produced was "3," over "4" — a tonnage broken across
-            // two lines mid-number, which is worse than no tonnage at all.
+            // two lines mid-number. One per line was honest and 215 pt tall,
+            // which pushed the first set row off the screen; paired, it is two.
+            VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                HStack(spacing: HelixSpace.m) { volumeStat; setsStat }
+                HStack(spacing: HelixSpace.m) { records; elapsed }
+            }
             VStack(alignment: .leading, spacing: HelixSpace.xs) {
                 volumeStat; setsStat; records; elapsed
             }
@@ -246,7 +277,7 @@ struct LiveLoggerView: View {
 
     // MARK: - The deck
 
-    /// One movement at a time, with the next one peeking.
+    /// One movement at a time.
     ///
     /// `scrollTargetBehavior(.viewAligned)` is the whole paging mechanism: no
     /// `TabView`, no page index to keep in step with a model, no gesture code.
@@ -256,16 +287,28 @@ struct LiveLoggerView: View {
     /// which is the difference between a deck and a slideshow.
     private var deck: some View {
         ScrollView(.horizontal) {
-            LazyHStack(spacing: HelixSpace.m) {
+            LazyHStack(spacing: 0) {
                 ForEach(Array(model.exercises.enumerated()), id: \.element.id) { index, exercise in
                     ScrollView(.vertical) {
                         ExerciseCardView(
                             exercise: exercise, model: model,
                             position: (index, model.exercises.count)
                         )
+                        .frame(maxWidth: .infinity)
                     }
                     .scrollBounceBehavior(.basedOnSize)
                     .scrollIndicators(.hidden)
+                    // ── THE GUTTER IS THE PAGE'S, NOT THE CONTAINER'S ───────
+                    // Neither `safeAreaPadding` nor `contentMargins` works
+                    // here: both inset the container while `.scrollPosition`
+                    // aligns to the scroll view's own BOUNDS, so every card the
+                    // deck moved to landed 16 pt off its leading edge with the
+                    // next one over the top of it. Padding the PAGE and then
+                    // sizing the padded result to the container leaves nothing
+                    // that can disagree — and it has to be out here rather than
+                    // on the card, or the `fixedSize` chips inside push
+                    // straight back through it.
+                    .padding(.horizontal, HelixSpace.l)
                     .containerRelativeFrame(.horizontal)
                     .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                         content
@@ -279,7 +322,6 @@ struct LiveLoggerView: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .scrollPosition(id: $focus)
-        .safeAreaPadding(.horizontal, HelixSpace.l)
         .scrollIndicators(.hidden)
     }
 
@@ -290,10 +332,17 @@ struct LiveLoggerView: View {
     /// means a horizontal drag between every movement, which is the one gesture
     /// the set rows have taken over.
     private func advanceIfFinished() {
-        guard let current = model.exercises.first(where: { $0.id == focus }), current.isComplete,
-              let next = model.currentSet?.exercise.id, next != focus
+        guard let index = model.exercises.firstIndex(where: { $0.id == focus }),
+              model.exercises[index].isComplete
         else { return }
-        withAnimation(HelixMotion.move) { focus = next }
+        // FORWARD only. `model.currentSet` is the first unticked row in
+        // document order, so a session where the first movement was skipped and
+        // the third finished would send the deck backwards to card one.
+        guard let next = model.exercises[(index + 1)...].first(where: { !$0.isComplete })
+                ?? model.currentSet?.exercise,
+              next.id != focus
+        else { return }
+        withAnimation(HelixMotion.move) { focus = next.id }
     }
 
     // MARK: - Failures
@@ -326,11 +375,19 @@ struct LiveLoggerView: View {
     }
 
     /// Stamp the session finished and take the card off the Lock Screen.
-    private func finish(sessionRpe: Double?) {
-        model.finish(sessionRpe: sessionRpe)
+    /// Stamp the session finished — and only then leave.
+    ///
+    /// `finish` returns false when there is nothing to close: no store row, or
+    /// not one working set logged (a session of warm-ups). Ending the activity
+    /// and dismissing anyway left the session row open forever, the tab reading
+    /// it back as live, and the failure reported to a screen that no longer
+    /// existed. Now the sheet stays up and the banner has somewhere to appear.
+    private func finish(sessionRpe: Double?) -> Bool {
+        guard model.finish(sessionRpe: sessionRpe) else { return false }
         model.stopRest()
         activity.end()
         dismiss()
+        return true
     }
 }
 

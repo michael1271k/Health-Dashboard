@@ -40,6 +40,10 @@ struct WorkoutTabView: View {
     @State private var activity = LiveActivityController()
     @State private var showPhase = false
     @State private var status: Status = .idle
+    /// Bumped when a dismissal turns out to have finished the session. The
+    /// haptic lived on the finish button, which was torn down in the same
+    /// transaction that fired it, so it very likely never played.
+    @State private var finishes = 0
 
     private enum Status: Equatable {
         case idle
@@ -122,6 +126,8 @@ struct WorkoutTabView: View {
             }
         }
         .onAppear(perform: refresh)
+        // §3.4: `.success` on session finished.
+        .sensoryFeedback(.success, trigger: finishes)
     }
 
     // MARK: - The plan
@@ -319,6 +325,10 @@ struct WorkoutTabView: View {
 
     private func start(_ day: ProgramDay) {
         if session == nil || session?.day.key != day.key {
+            // A card carries its workout's name in `attributes`, which is fixed
+            // for the life of the activity — so a new session feeding the old
+            // activity would update a Lock Screen that still says yesterday.
+            if session != nil { activity.end() }
             session = LoggerModel(
                 day: day, phase: phase,
                 store: environment.database, userId: environment.userIdString
@@ -346,6 +356,7 @@ struct WorkoutTabView: View {
             } else if let closed = try database.sessions(on: date)
                         .first(where: { $0.dayKey == day.key && $0.endedAt != nil }) {
                 let sets = try database.sets(sessionId: closed.id).filter { $0.setType != "ghost" }
+                if case .done = status {} else { finishes += 1 }
                 status = .done(sets: sets.count, volumeKg: tonnage(sets), minutes: closed.durationMin)
                 session = nil
             } else {

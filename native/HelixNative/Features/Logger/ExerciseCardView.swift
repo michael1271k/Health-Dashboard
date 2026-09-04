@@ -16,8 +16,8 @@ import HelixCore
 /// expand chevron — so the screen you logged into was a list of eleven
 /// accordions and the set in front of you was wherever you last left the
 /// scroll. A workout is not a list you browse, it is ONE movement at a time, so
-/// the cards are a deck: the current one at full size, the next one peeking,
-/// and no chevrons because a page of a deck is never collapsed.
+/// the cards are a deck: one page per movement, its position printed in the
+/// header, and no chevrons because a page of a deck is never collapsed.
 ///
 /// The row is the other half. It is 44 pt — the platform's own minimum, not a
 /// number chosen here — and the tick button is gone: you log a set by pushing
@@ -86,6 +86,11 @@ struct ExerciseCardView: View {
                 Text(exercise.name)
                     .helixDisplay()
                     .foregroundStyle(Color.helix.textPrimary)
+                    // At AX5 "Single Arm Cable Cross-over" ran to five lines and
+                    // pushed every set off the card. Three lines and a little
+                    // optical shrink keeps the whole name AND the work it names.
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: HelixSpace.xs)
                 Text("\(position.index + 1) of \(position.total)")
@@ -247,6 +252,13 @@ private struct SetRowView: View {
     @State private var thresholdTicks = 0
     @State private var commitTicks = 0
     @State private var recordTicks = 0
+    /// Its own counter: a duplicate is not a set logged, and §3.4 gives
+    /// `.impact(.soft)` to the latter. A tile drop is the nearest thing this
+    /// gesture is, and it takes the same weight.
+    @State private var duplicateTicks = 0
+    /// Detents only. It used to trigger on the VALUE, which fired on every
+    /// keystroke into the field and on every programmatic rebuild.
+    @State private var stepTicks = 0
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -266,16 +278,24 @@ private struct SetRowView: View {
                 .clipShape(RoundedRectangle(cornerRadius: HelixCorner.row, style: .continuous))
                 .offset(x: dragX)
                 .gesture(swipe)
-                .simultaneousGesture(
-                    // Only when the row is standing still: a slow drag also
-                    // passes half a second, and duplicating a set because you
-                    // paused mid-swipe is a set you have to find and delete.
-                    LongPressGesture(minimumDuration: 0.45).onEnded { _ in
-                        guard abs(dragX) < 4 else { return }
-                        onDuplicate()
-                        commitTicks += 1
-                    }
-                )
+                // ── WHY THE LONG PRESS IS ON THE BACKGROUND ─────────────────
+                // It was a `simultaneousGesture` on the row itself, and the row
+                // CONTAINS the badge button, four steppers with
+                // `buttonRepeatBehavior` and the RPE menu. `simultaneous` does
+                // not wait for those to fail and `dragX` is 0 while a finger
+                // rests on a button, so holding "+" to ramp 20 kg to 42.5 —
+                // exactly what the repeat behaviour is for — inserted a
+                // duplicate set at 0.45 s. Behind the controls, the gesture
+                // only sees the parts of the row that are not a control.
+                .background {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onLongPressGesture(minimumDuration: 0.45) {
+                            guard abs(dragX) < 4 else { return }
+                            onDuplicate()
+                            duplicateTicks += 1
+                        }
+                }
         }
         .frame(minHeight: 44)
         .opacity(row.kind == .ghost ? 0.45 : 1)
@@ -284,8 +304,10 @@ private struct SetRowView: View {
         .sensoryFeedback(.impact(flexibility: .rigid), trigger: thresholdTicks)
         .sensoryFeedback(.impact(flexibility: .soft), trigger: commitTicks)
         .sensoryFeedback(.success, trigger: recordTicks)
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: duplicateTicks)
+        .sensoryFeedback(.selection, trigger: stepTicks)
         .confirmationDialog("Set \(ordinal)", isPresented: $showOptions, titleVisibility: .visible) {
-            Button("Add a note") { onNote() }
+            Button("Note this exercise") { onNote() }
             Button("Duplicate set") { onDuplicate() }
             Divider()
             ForEach(LoggerModel.SetKind.allCases, id: \.self) { kind in
@@ -295,11 +317,6 @@ private struct SetRowView: View {
             Button("Delete set", role: .destructive) { onDelete() }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityActions {
-            Button(row.isDone ? "Undo set" : "Log set") { log() }
-            Button("Duplicate set") { onDuplicate() }
-            Button("Set options") { showOptions = true }
-        }
     }
 
     // MARK: The row itself
@@ -325,7 +342,7 @@ private struct SetRowView: View {
                 repsField
             }
             Spacer(minLength: 0)
-            if row.isRecord && row.isDone { record }
+            if row.isRecord && row.isDone && !typeSize.isAccessibilitySize { record }
             rpe
         }
         .padding(.horizontal, HelixSpace.s)
@@ -354,37 +371,60 @@ private struct SetRowView: View {
                         .foregroundStyle(row.isDone ? Color.helix.base : Color.helix.textSecondary)
                 }
             }
-            .frame(width: 30, height: 30)
+            .frame(width: 32, height: 32)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
         }
         .helixPress(scale: 0.9)
         .disabled(!canLog && !row.isDone)
-        .accessibilityLabel(row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged")
+        .accessibilityLabel(
+            (row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged")
+            + (row.isRecord && row.isDone ? ". Personal record." : "")
+        )
+        // The actions hang off the BADGE, not off the row.
+        //
+        // `.accessibilityElement(children: .contain)` makes the row a
+        // container, and VoiceOver does not focus a container — so actions
+        // attached there have no host, and duplicate, delete, note and set-kind
+        // were reachable only by a long press and a swipe. Here they are on the
+        // element a VoiceOver user is already sitting on.
+        .accessibilityActions {
+            Button("Duplicate set") { onDuplicate() }
+            Button("Set options") { showOptions = true }
+        }
     }
 
     private var weightField: some View {
         stepper(
-            value: row.weightKg, unit: "kg",
-            decrement: { row.weightKg = max(0, (row.weightKg ?? 0) - 2.5); onCommit() },
-            increment: { row.weightKg = (row.weightKg ?? 0) + 2.5; onCommit() }
+            unit: "kg", showsUnit: true,
+            decrement: { row.weightKg = max(0, (row.weightKg ?? 0) - 2.5); step() },
+            increment: { row.weightKg = (row.weightKg ?? 0) + 2.5; step() }
         ) {
-            NumericField(value: $row.weightKg, decimals: true, width: 54, onCommit: onCommit)
+            NumericField(value: $row.weightKg, unit: "kilograms", decimals: true, width: 50, onCommit: onCommit)
         }
     }
 
+    /// Reps take no printed unit: the `×` between the two fields is the unit,
+    /// and "7.5 kg × 12 reps" says the same thing twice on a 44 pt row.
     private var repsField: some View {
         stepper(
-            value: row.reps.map(Double.init), unit: "reps",
-            decrement: { row.reps = max(0, (row.reps ?? 0) - 1); onCommit() },
-            increment: { row.reps = (row.reps ?? 0) + 1; onCommit() }
+            unit: "reps", showsUnit: false,
+            decrement: { row.reps = max(0, (row.reps ?? 0) - 1); step() },
+            increment: { row.reps = (row.reps ?? 0) + 1; step() }
         ) {
             NumericField(
                 value: Binding(
                     get: { row.reps.map(Double.init) },
                     set: { row.reps = $0.map { Int($0.rounded()) } }
                 ),
-                decimals: false, width: 34, onCommit: onCommit
+                unit: "reps", decimals: false, width: 32, onCommit: onCommit
             )
         }
+    }
+
+    private func step() {
+        stepTicks += 1
+        onCommit()
     }
 
     /// A number with a minus and a plus around it.
@@ -394,18 +434,22 @@ private struct SetRowView: View {
     /// 20 kg to 42.5 without nine taps. The number itself stays a field, because
     /// a cable stack really is 13.75 kg and no step size reaches it.
     private func stepper<Field: View>(
-        value: Double?, unit: String,
+        unit: String, showsUnit: Bool,
         decrement: @escaping () -> Void, increment: @escaping () -> Void,
         @ViewBuilder field: () -> Field
     ) -> some View {
         HStack(spacing: 0) {
             stepButton("minus", decrement)
             field()
+            if showsUnit, !typeSize.isAccessibilitySize {
+                Text(unit)
+                    .helixType(.micro)
+                    .foregroundStyle(Color.helix.textTertiary)
+                    .accessibilityHidden(true)
+            }
             stepButton("plus", increment)
         }
-        .sensoryFeedback(.selection, trigger: value)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(unit)
     }
 
     private func stepButton(_ symbol: String, _ action: @escaping () -> Void) -> some View {
@@ -413,7 +457,11 @@ private struct SetRowView: View {
             Image(systemName: symbol)
                 .helixType(.caption).fontWeight(.bold)
                 .foregroundStyle(Color.helix.textSecondary)
-                .frame(width: 28, height: 44)
+                // 34 rather than 44: four of these, a badge, two fields and an
+                // effort chip share 358 pt, and adjacent targets in a control
+                // GROUP are the one place the HIG lets a 44 pt square breathe
+                // sideways. The full 44 is kept vertically.
+                .frame(width: 34, height: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -426,15 +474,16 @@ private struct SetRowView: View {
     /// already interruptible, accessible and familiar.
     private var rpe: some View {
         Menu {
-            Button("Not rated") { row.rpe = nil; onCommit() }
+            Button("Not rated") { row.rpe = nil; stepTicks += 1; onCommit() }
             ForEach(Array(stride(from: 10.0, through: 6.0, by: -0.5)), id: \.self) { value in
-                Button(HelixFormat.rpe(value)) { row.rpe = value; onCommit() }
+                Button(HelixFormat.rpe(value)) { row.rpe = value; stepTicks += 1; onCommit() }
             }
         } label: {
             Text(row.rpe.map(HelixFormat.rpe) ?? "RPE")
                 .helixType(.caption).fontWeight(.bold).helixNumeral()
                 .foregroundStyle(row.rpe.map(Color.helix.effort) ?? Color.helix.textTertiary)
-                .frame(minWidth: 34, minHeight: 44)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
         .accessibilityLabel("Effort")
         .accessibilityValue(row.rpe.map { "RPE \(HelixFormat.rpe($0))" } ?? "Not rated")
@@ -508,7 +557,18 @@ private struct SetRowView: View {
         DragGesture(minimumDistance: 10)
             .onChanged { value in
                 // Vertical intent belongs to the scroll view under this row.
-                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                guard abs(value.translation.width) > abs(value.translation.height) else {
+                    // Turning the drag into a vertical one ABANDONS it. The
+                    // guard used to just return, which froze `armed` at
+                    // whatever the horizontal part had reached — so a swipe you
+                    // changed your mind about still logged the set on release,
+                    // and the row stayed offset under the finger the whole way.
+                    if armed || dragX != 0 {
+                        armed = false
+                        withAnimation(HelixMotion.flick) { dragX = 0 }
+                    }
+                    return
+                }
                 dragX = Self.track(value.translation.width)
                 let crossed = abs(dragX) >= Self.threshold
                 if crossed != armed {
@@ -579,6 +639,9 @@ private struct SetRowView: View {
 /// that silently discards decimals.
 private struct NumericField: View {
     @Binding var value: Double?
+    /// Spoken, not printed. The row prints "kg" once and nothing for reps; a
+    /// VoiceOver user gets both, because there is no `×` to hear.
+    let unit: String
     let decimals: Bool
     let width: CGFloat
     let onCommit: () -> Void
@@ -595,6 +658,7 @@ private struct NumericField: View {
             .frame(minWidth: width)
             .fixedSize(horizontal: true, vertical: false)
             .focused($focused)
+            .accessibilityLabel(unit)
             .onAppear { text = Self.render(value) }
             .onChange(of: text) { _, next in value = Self.parse(next) }
             .onChange(of: focused) { _, isFocused in

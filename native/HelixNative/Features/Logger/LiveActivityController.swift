@@ -37,6 +37,17 @@ final class LiveActivityController {
 
     func start(model: LoggerModel) {
         guard isEnabled, activity == nil else { return }
+        // ── ADOPT WHAT THE LAST LAUNCH LEFT BEHIND ──────────────────────────
+        // The handle lived only in memory, so a force-quit or a jetsam
+        // mid-workout — which this app has a crash log for — left a Lock Screen
+        // card nothing could feed or dismiss, and the next launch requested a
+        // SECOND one beside it. ActivityKit keeps the running activities; the
+        // one for this type is ours by definition.
+        if let existing = Activity<HelixWorkoutAttributes>.activities.first {
+            activity = existing
+            update(model: model)
+            return
+        }
         let attributes = HelixWorkoutAttributes(
             title: model.day.label,
             startedAt: model.startedAt

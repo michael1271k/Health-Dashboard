@@ -23,7 +23,7 @@ enum LoggerPreviews {
             NavigationStack {
                 LiveLoggerView(model: model)
                     .sheet(isPresented: .constant(true)) {
-                        FinishSheet(model: model, onFinish: { _ in })
+                        FinishSheet(model: model, onFinish: { _ in true })
                     }
             }
             .environment(AppEnvironment.preview)

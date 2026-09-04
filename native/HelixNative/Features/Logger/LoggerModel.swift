@@ -336,11 +336,27 @@ final class LoggerModel: Identifiable {
             ),
             at: index + 1
         )
+        // Everything below just moved down one, and `set_index` is derived from
+        // the live array position. `SetEventFold` tolerates a collision by
+        // ordering the pair on ARRIVAL, so leaving them stale reorders the
+        // ledger relative to the screen — and `restoreLoggedSets` rebuilds in
+        // that order on the next launch.
+        restampFrom(index + 1, in: exercise)
+    }
+
+    /// Re-write the stored `set_index` of every logged row from `index` down.
+    private func restampFrom(_ index: Int, in exercise: ExerciseState) {
+        guard store != nil, sessionId != nil else { return }
+        for row in exercise.rows[min(index, exercise.rows.count)...] where row.isDone {
+            amendInStore(row, in: exercise)
+        }
     }
 
     func removeSet(_ row: SetRow, from exercise: ExerciseState) {
+        guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return }
         if row.isDone { voidInStore(row) }
-        exercise.rows.removeAll { $0.id == row.id }
+        exercise.rows.remove(at: index)
+        restampFrom(index, in: exercise)
     }
 
     func setKind(_ kind: SetKind, on row: SetRow, in exercise: ExerciseState) {
@@ -420,7 +436,16 @@ final class LoggerModel: Identifiable {
     /// happened because a screen was opened.
     @discardableResult
     func finish(sessionRpe: Double? = nil) -> Bool {
-        guard let store, let sessionId, completedSets > 0 else { return false }
+        guard let store, let sessionId, completedSets > 0 else {
+            // Not an error when there is no store (previews) — but a session
+            // with nothing in it, or one whose row was never created, must not
+            // be reported as finished. The caller keeps the sheet up and this
+            // is what it shows.
+            if store != nil, completedSets == 0 {
+                storeError = "Nothing logged yet — tick a working set before finishing."
+            }
+            return false
+        }
         do {
             try store.closeSession(id: sessionId, sessionRpe: sessionRpe)
             storeError = nil
