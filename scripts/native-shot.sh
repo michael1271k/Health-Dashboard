@@ -80,7 +80,7 @@ SCREENS=("$SCREEN")
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin train day day-empty day-inbody day-swap fuel fuel-over fuel-empty you levers plan body volume library exercise reports report widgets)
+  SCREENS=(signin today today-edit today-sheet train day day-empty day-inbody day-swap fuel fuel-over fuel-empty you levers plan body volume library exercise reports report widgets)
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a

@@ -44,7 +44,9 @@ private struct SignedInTabs: View {
     var body: some View {
         TabView(selection: $selection) {
             SwiftUI.Tab("Today", systemImage: "square.grid.2x2", value: Tab.today) {
-                NavigationStack { PlaceholderScreen(name: "Dashboard", wave: 6) }
+                NavigationStack {
+                    TodayTabView(onOpenTrain: { selection = .train }, onOpenReports: { selection = .you })
+                }
             }
             // The plan's five: Today · Train · Fuel · Body · You. The logger is
             // NOT the Train root — see `TrainTabView` for why.
@@ -80,20 +82,5 @@ private struct SignedInTabs: View {
         // ponytail: Reports is a value-less NavigationLink inside YouTabView; landing on You is as deep as the shell can push today.
         case .you, .reports: return .you
         }
-    }
-}
-
-/// A screen that belongs to a later wave, saying so rather than pretending.
-private struct PlaceholderScreen: View {
-    let name: String
-    let wave: Int
-
-    var body: some View {
-        ContentUnavailableView {
-            Label(name, systemImage: "hammer")
-        } description: {
-            Text("Arrives in Wave \(wave). The web app is still the place for this.")
-        }
-        .navigationTitle(name)
     }
 }

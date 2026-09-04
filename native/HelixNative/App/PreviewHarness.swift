@@ -121,6 +121,8 @@ enum PreviewHarness {
             DayPreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty":
             FuelPreviews.view(screen)
+        case "today", "today-edit", "today-sheet":
+            TodayPreviews.view(screen)
         case let s where s.hasPrefix("widgets"):
             WidgetPreviews.view(s)
         default:

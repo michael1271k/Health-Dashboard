@@ -233,3 +233,4 @@ schemes:
         - HelixNativeTests
         - package: HelixCore/HelixCoreTests
         - package: HelixData/HelixDataTests
+        - package: HelixUI/HelixUITests
