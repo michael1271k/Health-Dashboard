@@ -76,6 +76,7 @@ private struct FuelScreen: View {
         .helixScreen(.fuel)
         .foregroundStyle(Color.helix.textPrimary)
         .navigationTitle(FuelFormat.dayTitle(model.date))
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 toolbarButton("chevron.left", "Previous day") { model.shift(-1) }

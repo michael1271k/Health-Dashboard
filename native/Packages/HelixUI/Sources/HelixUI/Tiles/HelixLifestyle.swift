@@ -479,7 +479,7 @@ struct WaterLedgerFace: View {
 /// The stages, as `DepthBar` and `DepthArc` both want them. A stage with no
 /// reading is ABSENT, not zero — the difference between "you had no deep sleep"
 /// and "the watch did not report deep sleep".
-func sleepSegments(_ s: HelixSnapshot?) -> [(HelixSleepStage, Int)] {
+public func sleepSegments(_ s: HelixSnapshot?) -> [(HelixSleepStage, Int)] {
   guard let sleep = s?.sleep else { return [] }
   return [
     (HelixSleepStage.deep, sleep.deepMin),
@@ -490,7 +490,7 @@ func sleepSegments(_ s: HelixSnapshot?) -> [(HelixSleepStage, Int)] {
 }
 
 /// "21:48 → 07:03". Both ends or neither — half a window is a riddle.
-func sleepWindowText(_ s: HelixSnapshot?) -> String? {
+public func sleepWindowText(_ s: HelixSnapshot?) -> String? {
   guard let from = HelixSnapshot.clockTime(s?.sleep.startTime),
         let to = HelixSnapshot.clockTime(s?.sleep.endTime) else { return nil }
   return "\(from) → \(to)"

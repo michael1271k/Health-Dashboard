@@ -277,6 +277,42 @@ struct WidgetGoldenTests {
         }
     }
 
+    /// Swift-only: no TS twin, because it is the window a SCREEN asks for and
+    /// nothing on the wire changes. Three facts — the window is always `limit`
+    /// long, a missing day is nil rather than absent or zero, and a reading
+    /// outside the window is dropped rather than folded onto the edge.
+    @Test("paddedWindow fills the calendar without inventing zeroes")
+    func padded() {
+        let series = [
+            TrendPoint(d: "2026-09-01", v: 420), TrendPoint(d: "2026-09-03", v: 465),
+            // One reading each side of the window. BOTH must be dropped — the
+            // later one is the case that actually happens (a clock ahead, a
+            // timezone-skewed HealthKit sample) and the one an "edge" bug would
+            // fold onto 2026-09-04.
+            TrendPoint(d: "2026-08-20", v: 999), TrendPoint(d: "2026-09-06", v: 111),
+        ]
+        let window = WidgetDerive.paddedWindow(series, endingOn: "2026-09-04", limit: 7)
+        #expect(window.count == 7)
+        #expect(window.map(\.date) == ["2026-08-29", "2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"])
+        #expect(window.map(\.value) == [nil, nil, nil, 420, nil, 465, nil])
+
+        // An empty series is a window of SEVEN nils, not an empty array — the
+        // count is the half of this that a `.allSatisfy` alone cannot see.
+        let empty = WidgetDerive.paddedWindow([], endingOn: "2026-09-04", limit: 7)
+        #expect(empty.count == 7)
+        #expect(empty.allSatisfy { $0.value == nil })
+
+        // Duplicate dates resolve last-wins rather than trapping the initialiser.
+        let duplicated = WidgetDerive.paddedWindow(
+            [TrendPoint(d: "2026-09-04", v: 1), TrendPoint(d: "2026-09-04", v: 2)],
+            endingOn: "2026-09-04", limit: 1)
+        #expect(duplicated.map(\.value) == [2])
+
+        // All or nothing: no window at all beats half a window.
+        #expect(WidgetDerive.paddedWindow(series, endingOn: "2026-09-04", limit: 0).isEmpty)
+        #expect(WidgetDerive.paddedWindow(series, endingOn: "not-a-day", limit: 7).isEmpty)
+    }
+
     struct CalIn: Decodable { let days: [String]; let sessions: [CalendarSession]; let schedule: [String: ScheduledDay]; let todayISO: String; let weekStartDay: Int; let limit: Int }
     struct CalOut: Decodable { let calendar: [CalendarDay]; let streak: StreakResult; let programDay: Int; let weekly: [TrendPoint] }
     @Test("calendar, streak, program day and weekly volume match")

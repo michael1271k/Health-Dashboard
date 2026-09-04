@@ -28,7 +28,10 @@ struct DashboardGrid: View {
     @State private var drops = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    static let gap: CGFloat = 12
+    /// §3.1: the grid gap is `s + 2`, tighter than the section gap around it —
+    /// tiles in one grid are one object, and spacing them like separate cards is
+    /// what made the web dashboard read as a page of boxes.
+    static let gap: CGFloat = HelixSpace.grid
     /// Hold over a same-size tile this long mid-drag before it offers to stack.
     static let mergeHold: Duration = .milliseconds(600)
 
@@ -166,13 +169,13 @@ struct WidgetGallery: View {
         if !model.gallery.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Not on the grid · \(model.gallery.count)")
-                    .font(.footnote.weight(.semibold))
+                    .helixType(.caption).fontWeight(.semibold)
                     .foregroundStyle(Color.helix.textSecondary)
                 FlowLayout(spacing: 8) {
                     ForEach(model.gallery, id: \.self) { id in
                         Button { model.add(id) } label: {
                             Label(id.title, systemImage: id.symbol)
-                                .font(.subheadline.weight(.semibold))
+                                .helixType(.secondary).fontWeight(.semibold)
                                 .foregroundStyle(Color.helix.textPrimary)
                                 .padding(.horizontal, 12).padding(.vertical, 8)
                                 .helixGlass(.row)

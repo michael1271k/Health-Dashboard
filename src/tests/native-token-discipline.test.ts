@@ -134,7 +134,7 @@ describe('native token discipline', () => {
       '0X4FB6E8', '0XE07A7A', '0X2E9AA6', '0XC9D3EE',  // domain ends
       '0XE5484D',                                       // danger
       '0X4CAF87',                                       // good
-      '0XD9B25F',                                       // record — the only fifth hue
+      '0XFFD35C',                                       // record — the only fifth hue
       '0X5AA9E6',                                       // water
       '0X5B62C9', '0XE07A9A', '0X6E6E78',               // sleep: deep, rem, awake
     ])

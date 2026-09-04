@@ -75,7 +75,7 @@ and every number competes with its own label. Desaturating is what lets the
 |---|---|---|
 | `danger` | `#E5484D` | Destructive actions, validation failure, a gauge's over-budget segment. Never a chart series. |
 | `good` | `#4CAF87` | A delta in the right direction, a session logged, a target met. A muted green rather than Tide's teal: "yes" and "this is the Body tab" are different statements. |
-| `record` | `#D9B25F` gold | A personal record and nothing else. **The only fifth hue in the system** — seeing it means one thing. |
+| `record` | `#FFD35C` gold | A personal record and nothing else. **The only fifth hue in the system** — seeing it means one thing. Raised from the plan's `#D9B25F`, which sat ΔE76 11.0 from `carbs` and met it on one widget face. |
 
 ### 1.5 Macros & water — fixed app-wide
 

@@ -67,7 +67,8 @@ struct TrainTabView: View {
             .padding(.bottom, 24)
         }
         .helixScreen(.train)
-        .navigationTitle("Train")
+        .navigationTitle("Workout")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // Analysis and the library are sub-screens of Training, not

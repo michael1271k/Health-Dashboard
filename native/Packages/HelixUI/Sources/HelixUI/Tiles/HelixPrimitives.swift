@@ -329,16 +329,28 @@ struct DepthBar: View {
 ///
 /// The baseline is what makes "compared to last week" a thing you SEE rather
 /// than a number you read and then have to hold in your head against a curve.
-struct Sparkline: View {
+public struct Sparkline: View {
   let points: [Double]
-  var baseline: Double?
-  var color: Color = HelixDomain.train.accent
+  let baseline: Double?
+  // No default here: the public init below supplies it, so a default on the
+  // property would be unreachable and the two could silently disagree.
+  let color: Color
   /// Read against zero. True for quantities that HAVE a meaningful zero —
   /// tonnage, water, calories — and false for bodyweight, where zero-basing an
   /// 78-to-80 kg fortnight flattens the only signal in it.
-  var zeroBased = false
+  let zeroBased: Bool
   /// Nil draws nothing at all rather than a flat line at zero.
   private var usable: [Double]? { points.count >= 2 ? points : nil }
+
+  /// Public because the app's sheets draw the same 40×16 micro-graph beside a
+  /// metric row (§3.5) and a second implementation of it would be a second
+  /// answer to "what does this fortnight look like".
+  public init(points: [Double], baseline: Double? = nil, color: Color = HelixDomain.train.accent, zeroBased: Bool = false) {
+    self.points = points
+    self.baseline = baseline
+    self.color = color
+    self.zeroBased = zeroBased
+  }
 
   /// ── WHY THE BAND IS NEVER EXACTLY min…max ──────────────────────────────────
   /// A band of exactly the series' own range pins the lowest reading to the
@@ -360,7 +372,7 @@ struct Sparkline: View {
     return (zeroBased ? floor : floor - pad, hi + pad)
   }
 
-  var body: some View {
+  public var body: some View {
     GeometryReader { geo in
       if let values = usable {
         // The band includes the baseline so the dotted line can never fall
@@ -417,13 +429,24 @@ struct Sparkline: View {
 ///
 /// Over-sleeping caps the sweep at full rather than wrapping. A gauge that laps
 /// itself reads as a short night.
-struct DepthArc: View {
+public struct DepthArc: View {
   /// `(stage, minutes)` — a stage with no reading is absent, not zero.
   let segments: [(HelixSleepStage, Int)]
   let minutes: Int?
   let goalMin: Int?
-  var lineWidth: CGFloat = 10
-  var monochrome = false
+  let lineWidth: CGFloat
+  let monochrome: Bool
+
+  /// Public because the Sleep SHEET draws this arc (§5.1) and the widget face
+  /// draws it too. One gauge, one implementation: the sheet and the Lock Screen
+  /// can never disagree about how long a night was.
+  public init(segments: [(HelixSleepStage, Int)], minutes: Int?, goalMin: Int?, lineWidth: CGFloat = 10, monochrome: Bool = false) {
+    self.segments = segments
+    self.minutes = minutes
+    self.goalMin = goalMin
+    self.lineWidth = lineWidth
+    self.monochrome = monochrome
+  }
 
   private var staged: Int { segments.reduce(0) { $0 + $1.1 } }
   /// How much of the semicircle is filled. Nil draws the empty track only —
@@ -435,7 +458,7 @@ struct DepthArc: View {
     return min(1, Double(minutes) / goal)
   }
 
-  var body: some View {
+  public var body: some View {
     GeometryReader { geo in
       // The drawn circle is a square whose TOP HALF is the arc; the label sits in
       // the bowl beneath it. Height is 0.72 of that square because nothing is

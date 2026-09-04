@@ -104,7 +104,7 @@ Supersedes Phase 1 §3. Skills: `apple-design` (§1, §3, §12–§16), `ui-ux-p
 | Body / Pulse | Tide | `#46B39D → #2E9AA6` | teal → deep teal |
 | Recover | Lunar | `#A79FD6 → #C9D3EE` | lavender → mist |
 
-- Text: primary 92 %, secondary 62 %, tertiary 40 %. Danger `#E5484D`. Good `#4CAF87`. Record (PR) `#D9B25F` gold — the **only** fifth hue, reserved for records.
+- Text: primary 92 %, secondary 62 %, tertiary 40 %. Danger `#E5484D`. Good `#4CAF87`. Record (PR) `#FFD35C` gold (raised from `#D9B25F` in U-2.2 — ΔE76 11.0 from `carbs` was indistinguishable on the same face) — the **only** fifth hue, reserved for records.
 - **Macros & water (new semantic tokens):** `protein #E07A7A` coral, `carbs #E3A650` honey, `fat #A79FD6` lavender, `water #5AA9E6` sapphire, `calories` = Solar ramp. Fixed app-wide; never re-mapped per screen.
 - **Sleep stages (four distinct tokens, not four alphas):** `deep #5B62C9`, `core #A79FD6`, `rem #E07A9A`, `awake #6E6E78`.
 - **Split colours for the This-Week panel** (`Color.helix.day(dayKey)` re-keyed): legs A/B = Tide at steps 0.35 / 0.65; upper A/B = Ion at 0.35 / 0.65; Delts & Arms = Ion end-stop (sky); Push/Pull/Legs mirror the same rule. Rest = tertiary grey ring.

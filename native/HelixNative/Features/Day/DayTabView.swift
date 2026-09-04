@@ -80,7 +80,7 @@ private struct DayScreen: View {
         }
         .helixScreen(.body)
         .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { model.step(-1) } label: {

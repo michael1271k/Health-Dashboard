@@ -170,7 +170,14 @@ extension Color {
         /// A personal record, and nothing else. §3.2 makes gold the ONLY fifth
         /// hue in the system precisely so that seeing it means one thing: the
         /// number under it has never been beaten.
-        public static let record = Color(hex: 0xD9B25F)
+        ///
+        /// ── WHY NOT THE PLAN'S #D9B25F ──────────────────────────────────────
+        /// That value sat ΔE76 11.0 from `carbs` #E3A650 — and the two meet on
+        /// one widget face, where a honey macro bar and a gold record chip read
+        /// as the same colour said twice. Records are the loudest thing the app
+        /// has to say, so gold moved UP rather than carbs moving down: L* 74.5 →
+        /// 86.3, ΔE76 to carbs 20.8, and no token nearer than that.
+        public static let record = Color(hex: 0xFFD35C)
 
         // ── Macros & water ───────────────────────────────────────────────────
         //
@@ -340,12 +347,24 @@ public enum HelixSleepStage: CaseIterable, Sendable {
         }
     }
 
+    /// The widget label: upper-case, 8 pt, no room for anything longer.
     public var label: String {
         switch self {
         case .deep:  "DEEP"
         case .core:  "CORE"
         case .rem:   "REM"
         case .awake: "AWAKE"
+        }
+    }
+
+    /// The same stage in a sentence, for the app's rows. `label.capitalized`
+    /// would turn REM — an acronym — into "Rem".
+    public var title: String {
+        switch self {
+        case .deep:  "Deep"
+        case .core:  "Core"
+        case .rem:   "REM"
+        case .awake: "Awake"
         }
     }
 }

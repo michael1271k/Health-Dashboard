@@ -18,13 +18,19 @@ import HelixData
 /// `#if DEBUG` so none of this is in the shipped binary.
 extension AppEnvironment {
     static var preview: AppEnvironment {
-        AppEnvironment(
+        let environment = AppEnvironment(
             database: try! AppDatabase.inMemory(deviceId: "preview"),
             supabase: HelixSupabase.makeClient(config: SupabaseConfig(
                 url: URL(string: "https://preview.invalid")!,
                 anonKey: "preview"
             ))
         )
+        // A sync that finished a moment ago, so the "Synced 2s ago" caption is
+        // IN the screenshot. A preview whose sync has never run photographs the
+        // one state where the caption is absent by design, which is the state
+        // least worth having a picture of.
+        environment.sync.seedForPreview(secondsAgo: 12)
+        return environment
     }
 }
 #endif

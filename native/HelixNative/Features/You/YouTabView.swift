@@ -153,7 +153,8 @@ private struct YouForm: View {
             }
         }
         .helixFormBackground(.train)
-        .navigationTitle("You")
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.refreshToday() }
         }

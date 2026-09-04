@@ -59,8 +59,13 @@ enum TodayPreviews {
         switch screen {
         case "today-edit":
             NavigationStack { TodayTabView(seeded: model(editing: true)) }.environment(AppEnvironment.preview)
+        // The two sheets §5.1 rewrote. Both are photographed because both were
+        // the same bug — a sheet repeating its own content — and a regression in
+        // either is invisible in a diff and obvious in a PNG.
         case "today-sheet":
-            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.recovery))) }.environment(AppEnvironment.preview)
+            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.sleep))) }.environment(AppEnvironment.preview)
+        case "today-sheet-vitals":
+            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.vitals))) }.environment(AppEnvironment.preview)
         default:
             NavigationStack { TodayTabView(seeded: model()) }.environment(AppEnvironment.preview)
         }

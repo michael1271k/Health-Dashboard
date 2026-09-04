@@ -45,21 +45,28 @@ private struct SignedInTabs: View {
         TabView(selection: $selection) {
             SwiftUI.Tab("Today", systemImage: "square.grid.2x2", value: Tab.today) {
                 NavigationStack {
-                    TodayTabView(onOpenTrain: { selection = .train }, onOpenReports: { selection = .you })
+                    TodayTabView(
+                        onOpenTrain: { selection = .train },
+                        onOpenReports: { selection = .you },
+                        onOpenPulse: { selection = .body }
+                    )
                 }
             }
-            // The plan's five: Today · Train · Fuel · Body · You. The logger is
-            // NOT the Train root — see `TrainTabView` for why.
-            SwiftUI.Tab("Train", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
+            // Onyx's five: Today · Workout · Nutrition · Pulse · Settings
+            // (§4). The names are the ones on the screens they open — "Train"
+            // and "Fuel" were the web app's, and neither is what the tab is
+            // called anywhere else on the device. The logger is NOT the Workout
+            // root — see `TrainTabView` for why.
+            SwiftUI.Tab("Workout", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
                 NavigationStack { TrainTabView() }
             }
-            SwiftUI.Tab("Fuel", systemImage: "fork.knife", value: Tab.fuel) {
+            SwiftUI.Tab("Nutrition", systemImage: "fork.knife", value: Tab.fuel) {
                 NavigationStack { FuelTabView() }
             }
-            SwiftUI.Tab("Body", systemImage: "figure.arms.open", value: Tab.body) {
+            SwiftUI.Tab("Pulse", systemImage: "waveform.path.ecg", value: Tab.body) {
                 NavigationStack { DayTabView() }
             }
-            SwiftUI.Tab("You", systemImage: "person.crop.circle", value: Tab.you) {
+            SwiftUI.Tab("Settings", systemImage: "gearshape", value: Tab.you) {
                 NavigationStack { YouTabView() }
             }
         }

@@ -5,26 +5,32 @@ import HelixUI
 
 /// The Today tab — the heart of the app.
 ///
-/// ── NOT THE WEB DASHBOARD IN A NEW FONT (§3.5) ───────────────────────────────
+/// ── NOT THE WEB DASHBOARD IN A NEW FONT (§3.6) ───────────────────────────────
 /// · The tiles ARE the widgets: WidgetKit families at their own proportions,
 ///   one drawing shared with the Home Screen.
-/// · Edit mode is the iOS jiggle, entered by long-press, left by Done; the
-///   drag is the system's.
+/// · Edit mode is the iOS jiggle, entered by long-press and left by Done. There
+///   is no Edit BUTTON: a permanent control for a mode you enter by touching the
+///   thing you want to edit is the web app's affordance, not the phone's.
 /// · Stacks are `TabView(.page)`, swiped vertically, with page dots.
 /// · No desktop layout, no trend strip, no sidebar: one column, one surface.
-/// · The orb is one number on one scale; the coach and the week sit under the
-///   grid as glass cards rather than bands.
+/// · The screen opens on one row — score, battery, today's session — and the
+///   verdict is said once, in the coach card, rather than twice.
 struct TodayTabView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.scenePhase) private var scenePhase
 
     /// A seeded model for the shot loop; the live one is built from the environment.
     var seeded: TodayModel?
-    /// The Train tab has the logger; the Workout tile hands off to it.
+    /// The Workout tab has the logger; the Workout tile hands off to it.
     var onOpenTrain: () -> Void = {}
     var onOpenReports: () -> Void = {}
+    /// The Now strip is a summary of Pulse, so tapping it goes there.
+    var onOpenPulse: () -> Void = {}
 
     @State private var resolved: TodayModel?
+    /// Bumped when a PULL finishes — the only sync §3.4 gives a haptic, because
+    /// it is the only one the user is waiting on.
+    @State private var pulls = 0
 
     var body: some View {
         Group {
@@ -47,9 +53,13 @@ struct TodayTabView: View {
         @Bindable var model = model
         return ScrollView {
             VStack(spacing: HelixSpace.m) {
-                ReadinessOrbView(battery: model.feed?.snapshot.battery, readiness: model.feed?.readiness) {
-                    model.sheet = .tile(.recovery)
-                }
+                NowStrip(
+                    score: model.feed?.snapshot.score,
+                    battery: model.feed?.snapshot.battery,
+                    workout: model.feed?.snapshot.workout,
+                    status: environment.sync,
+                    onOpen: onOpenPulse
+                )
                 if let feed = model.feed, feed.weeklySummaryReady {
                     WeeklySummaryCTA(weekStart: feed.lastWeekStart, onOpen: onOpenReports)
                 }
@@ -60,20 +70,51 @@ struct TodayTabView: View {
                     WeekSoFarView(week: feed.weekSoFar)
                 }
                 if let failure = model.failure {
-                    Text(failure).font(.footnote).foregroundStyle(Color.helix.danger)
+                    Text(failure).helixType(.caption).foregroundStyle(Color.helix.danger)
                 }
             }
             .padding(HelixSpace.l)
         }
         .scrollDisabled(false)
-        .refreshable { model.refresh() }
-        .navigationTitle("Today")
+        // §5.1: the hairline is the sync's whole visual budget. It sits at the
+        // top of the CONTENT, not in the nav bar, because a bar that changes
+        // height when a sync starts moves the screen under the reader's thumb.
+        .overlay(alignment: .top) { syncHairline }
+        .animation(HelixMotion.fade, value: environment.sync.phase)
+        .refreshable {
+            await environment.syncNow(reason: .pull)
+            model.refresh()
+            pulls += 1
+        }
+        // §3.4 gives sync TWO haptics, and a pull that failed must not feel like
+        // one that worked. The phase is read at the moment the pull lands.
+        .sensoryFeedback(trigger: pulls) { _, _ in
+            if case .failed = environment.sync.phase { return .error }
+            return .success
+        }
+        .navigationTitle("Onyx")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(model.editing ? "Done" : "Edit") {
-                    withAnimation(HelixMotion.flick) { model.editing.toggle() }
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink {
+                    SessionHistoryView()
+                } label: {
+                    Image(systemName: "calendar")
                 }
-                .fontWeight(model.editing ? .bold : .regular)
+                .accessibilityLabel("History")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                if model.editing {
+                    Button("Done") {
+                        withAnimation(HelixMotion.flick) { model.editing = false }
+                    }
+                    .fontWeight(.bold)
+                } else {
+                    // The mark, not a control: it is the wordmark's other half
+                    // and the one place the ring appears at app scale.
+                    OnyxMark(size: 18, opacity: 1)
+                        .accessibilityHidden(true)
+                }
             }
         }
         .sheet(item: $model.sheet) { which in
@@ -85,6 +126,19 @@ struct TodayTabView: View {
         .onChange(of: scenePhase) { _, phase in
             model.isActive = phase == .active
             if phase == .active { model.refresh() }
+        }
+    }
+
+    /// 1 pt of Lunar while a sync runs, and nothing at all when one is not.
+    /// A track that is always drawn is a progress bar claiming to be at zero.
+    @ViewBuilder
+    private var syncHairline: some View {
+        if environment.sync.phase == .running {
+            Rectangle()
+                .fill(HelixDomain.recover.ramp)
+                .frame(height: 1)
+                .transition(.opacity)
+                .accessibilityHidden(true)
         }
     }
 

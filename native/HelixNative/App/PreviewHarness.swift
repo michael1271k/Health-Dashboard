@@ -121,7 +121,7 @@ enum PreviewHarness {
             DayPreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty":
             FuelPreviews.view(screen)
-        case "today", "today-edit", "today-sheet":
+        case "today", "today-edit", "today-sheet", "today-sheet-vitals":
             TodayPreviews.view(screen)
         case "history", "session", "exercise-history":
             HistoryPreviews.view(screen)

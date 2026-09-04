@@ -159,6 +159,39 @@ public enum WidgetDerive {
         return trendPoints(order.map { DatedValue(date: $0, value: byDay[$0]) }, limit: limit)
     }
 
+    /// `dailySeries` laid back onto the calendar: exactly `limit` buckets ending
+    /// on `endingOn`, oldest first, `value` nil where no row landed.
+    ///
+    /// ── WHY THE COMPACT SERIES IS STILL RIGHT, AND STILL NOT ENOUGH ──────────
+    /// `dailySeries` omits empty days on purpose (see its own note, and the TS
+    /// twin's): a day you forgot to log and a day you drank nothing are not the
+    /// same day, and zeroing one into the other is the lie a bar chart is least
+    /// able to walk back. But omission drops the day's POSITION too, and that is
+    /// a second lie in any fixed window: four logged nights out of seven draw as
+    /// four bars filling the width, which reads as a full week.
+    ///
+    /// So the gap survives as a gap. A nil bucket is a slot the renderer can
+    /// draw as an empty track — present, dated, and visibly not a zero. Nothing
+    /// on the wire changes: `HelixSnapshot.Point.v` stays non-optional and every
+    /// widget payload is byte-identical. This is the window a SCREEN asks for.
+    ///
+    /// A reading on either side of the window is DROPPED, never folded onto the
+    /// nearest edge — a device clock a day ahead must not turn tomorrow's number
+    /// into tonight's. Duplicate dates in the input resolve last-wins.
+    ///
+    /// Either exactly `limit` buckets or none at all: an `endingOn` that is not
+    /// an ISO day has no window, and half a window is worse than no window.
+    public static func paddedWindow(_ series: [TrendPoint], endingOn: String, limit: Int) -> [DatedValue] {
+        // `limit < 0` would build a reversed Range and TRAP, so the guard is
+        // load-bearing rather than tidy.
+        guard limit > 0, let end = ISODate.dayNumber(endingOn) else { return [] }
+        let byDay = Dictionary(series.map { ($0.d, $0.v) }, uniquingKeysWith: { _, last in last })
+        return ((end - limit + 1)...end).map { day in
+            let iso = ISODate.iso(dayNumber: day)
+            return DatedValue(date: iso, value: byDay[iso])
+        }
+    }
+
     /// The newest reading and how far it moved from the newest one that DIFFERS (≥ 0.05).
     public static func latestDelta(_ series: [TrendPoint]) -> LatestDelta {
         guard let latest = series.last else { return LatestDelta(value: nil, delta: nil) }

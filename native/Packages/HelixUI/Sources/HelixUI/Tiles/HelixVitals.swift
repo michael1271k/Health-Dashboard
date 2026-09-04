@@ -86,40 +86,48 @@ public struct VitalsView: View {
 /// switches that must agree, which is five chances for the SpO₂ face to render
 /// a heart-rate colour. This is the shape `DeltaChip.upIsGood` already implies:
 /// the verdict belongs to the metric.
-struct VitalSpec: Sendable {
+public struct VitalSpec: Sendable {
+  /// The widget label: short, upper-case, drawn at 8 pt.
   let label: String
-  let unit: String
-  let color: Color
-  let decimals: Int
+  /// The same reading in a sentence, for the app's own rows — where 8 pt
+  /// upper-case is not an option (§3.3) and "Resting Hr" is what capitalising
+  /// the widget label would produce.
+  public let name: String
+  public let unit: String
+  public let color: Color
+  public let decimals: Int
   /// False where DOWN is the good direction — a resting heart rate below your
   /// own normal is a good night, and a respiratory rate above it is not.
-  let upIsGood: Bool
+  public let upIsGood: Bool
   /// The deviation, in the reading's own units, that fills the bar completely.
   /// Beyond it the bar simply saturates: a bar that keeps growing turns a bad
   /// night into a broken layout.
   let fullScale: Double
-  let read: @Sendable (HelixSnapshot.Vitals?) -> HelixSnapshot.Vital?
+  public let read: @Sendable (HelixSnapshot.Vitals?) -> HelixSnapshot.Vital?
 
-  static let hrv = VitalSpec(
-    label: "HRV", unit: "ms", color: HelixDomain.recover.at(0), decimals: 0,
+  public static let hrv = VitalSpec(
+    label: "HRV", name: "HRV", unit: "ms", color: HelixDomain.recover.at(0), decimals: 0,
     upIsGood: true, fullScale: 20, read: { $0?.hrvMs })
-  static let restingBpm = VitalSpec(
-    label: "RESTING HR", unit: "bpm", color: HelixDomain.recover.at(0.25), decimals: 0,
+  public static let restingBpm = VitalSpec(
+    label: "RESTING HR", name: "Resting HR", unit: "bpm", color: HelixDomain.recover.at(0.25), decimals: 0,
     upIsGood: false, fullScale: 8, read: { $0?.restingBpm })
-  static let wristTemp = VitalSpec(
+  public static let wristTemp = VitalSpec(
     // The stored value is ALREADY a deviation from Apple's own baseline, so this
     // bar is a deviation of a deviation — which is the useful one: "you have run
     // warm all fortnight" and "you are warm tonight" are different facts.
-    label: "WRIST TEMP", unit: "°C", color: HelixDomain.recover.at(0.5), decimals: 2,
+    label: "WRIST TEMP", name: "Wrist temp", unit: "°C", color: HelixDomain.recover.at(0.5), decimals: 2,
     upIsGood: false, fullScale: 0.5, read: { $0?.wristTempDeltaC })
-  static let bloodOxygen = VitalSpec(
-    label: "BLOOD O₂", unit: "%", color: HelixDomain.recover.at(0.75), decimals: 1,
+  public static let bloodOxygen = VitalSpec(
+    label: "BLOOD O₂", name: "Blood O₂", unit: "%", color: HelixDomain.recover.at(0.75), decimals: 1,
     upIsGood: true, fullScale: 2, read: { $0?.bloodOxygenPct })
-  static let respiratoryRate = VitalSpec(
-    label: "RESPIRATORY", unit: "br/min", color: HelixDomain.recover.at(1), decimals: 1,
+  public static let respiratoryRate = VitalSpec(
+    label: "RESPIRATORY", name: "Respiratory", unit: "br/min", color: HelixDomain.recover.at(1), decimals: 1,
     upIsGood: false, fullScale: 2, read: { $0?.respiratoryRate })
 
-  static let all: [VitalSpec] = [hrv, restingBpm, wristTemp, bloodOxygen, respiratoryRate]
+  /// The five overnight readings, in the order every face and the Vitals sheet
+  /// lists them. One order, defined once — a sheet that sorted them differently
+  /// from the widget would make the same five numbers look like ten.
+  public static let all: [VitalSpec] = [hrv, restingBpm, wristTemp, bloodOxygen, respiratoryRate]
 }
 
 /// A reading against its own normal: a centred tick, and a fill running out

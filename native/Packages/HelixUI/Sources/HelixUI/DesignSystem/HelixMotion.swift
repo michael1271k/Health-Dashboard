@@ -33,6 +33,12 @@ public enum HelixMotion {
     /// a spring's settle time is exactly what you would notice.
     public static let press = Animation.easeOut(duration: 0.1)
 
+    /// A state appearing or leaving with no gesture behind it — the sync
+    /// hairline, a chip swapping. §3.4 already names 200 ms cross-fade as what
+    /// Reduce Motion falls back to; a thing that only fades may as well use it
+    /// always, and then there is no motion value spelled outside this file.
+    public static let fade = Animation.easeInOut(duration: 0.2)
+
     /// A value counting up because a set was logged. Slower than `move` on
     /// purpose — the eye should be able to follow the number changing, which is
     /// the only reason to animate a number at all.
