@@ -220,6 +220,13 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
     /// `BEFORE UPDATE` trigger on UPDATE; both are the server's clock, which is
     /// the only clock a cursor can be compared against.
     public var updatedAt: Date?
+    /// Session metrics. `integer` server-side; the two flags are `NOT NULL
+    /// DEFAULT false` there, so a row from an older fixture or client decodes
+    /// them as false rather than failing.
+    public var avgBpm: Int?
+    public var caloriesBurned: Int?
+    public var avgBpmEstimated: Bool
+    public var caloriesEstimated: Bool
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -232,6 +239,50 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         case durationMin = "duration_min"
         case sessionRpe = "session_rpe"
         case updatedAt = "updated_at"
+        case avgBpm = "avg_bpm"
+        case caloriesBurned = "calories_burned"
+        case avgBpmEstimated = "avg_bpm_estimated"
+        case caloriesEstimated = "calories_estimated"
+    }
+
+    public init(
+        id: String, userId: String, startedAt: Date, splitDay: String, endedAt: Date? = nil,
+        dayKey: String? = nil, notes: String? = nil, durationMin: Int? = nil, sessionRpe: Double? = nil,
+        updatedAt: Date? = nil, avgBpm: Int? = nil, caloriesBurned: Int? = nil,
+        avgBpmEstimated: Bool = false, caloriesEstimated: Bool = false
+    ) {
+        self.id = id
+        self.userId = userId
+        self.startedAt = startedAt
+        self.splitDay = splitDay
+        self.endedAt = endedAt
+        self.dayKey = dayKey
+        self.notes = notes
+        self.durationMin = durationMin
+        self.sessionRpe = sessionRpe
+        self.updatedAt = updatedAt
+        self.avgBpm = avgBpm
+        self.caloriesBurned = caloriesBurned
+        self.avgBpmEstimated = avgBpmEstimated
+        self.caloriesEstimated = caloriesEstimated
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        userId = try c.decode(String.self, forKey: .userId)
+        startedAt = try c.decode(Date.self, forKey: .startedAt)
+        splitDay = try c.decode(String.self, forKey: .splitDay)
+        endedAt = try c.decodeIfPresent(Date.self, forKey: .endedAt)
+        dayKey = try c.decodeIfPresent(String.self, forKey: .dayKey)
+        notes = try c.decodeIfPresent(String.self, forKey: .notes)
+        durationMin = try c.decodeIfPresent(Int.self, forKey: .durationMin)
+        sessionRpe = try c.decodeIfPresent(Double.self, forKey: .sessionRpe)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt)
+        avgBpm = try c.decodeIfPresent(Int.self, forKey: .avgBpm)
+        caloriesBurned = try c.decodeIfPresent(Int.self, forKey: .caloriesBurned)
+        avgBpmEstimated = try c.decodeIfPresent(Bool.self, forKey: .avgBpmEstimated) ?? false
+        caloriesEstimated = try c.decodeIfPresent(Bool.self, forKey: .caloriesEstimated) ?? false
     }
 
     /// ── EVERY KEY, EVERY TIME, INCLUDING THE NULLS ──────────────────────────
@@ -256,6 +307,10 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         try c.encode(notes, forKey: .notes)
         try c.encode(durationMin, forKey: .durationMin)
         try c.encode(sessionRpe, forKey: .sessionRpe)
+        try c.encode(avgBpm, forKey: .avgBpm)
+        try c.encode(caloriesBurned, forKey: .caloriesBurned)
+        try c.encode(avgBpmEstimated, forKey: .avgBpmEstimated)
+        try c.encode(caloriesEstimated, forKey: .caloriesEstimated)
         // `updated_at` is NOT encoded — see the field. The server owns it.
     }
 }
@@ -375,7 +430,11 @@ public extension SyncTranslation {
             durationMin: session.durationMin.flatMap { Int(exactly: jsRound($0)) },
             sessionRpe: rpe(session.sessionRpe),
             // Never sent. Present only so a PULLED row can carry the cursor.
-            updatedAt: nil
+            updatedAt: nil,
+            avgBpm: session.avgBpm,
+            caloriesBurned: session.caloriesBurned,
+            avgBpmEstimated: session.avgBpmEstimated,
+            caloriesEstimated: session.caloriesEstimated
         )
     }
 

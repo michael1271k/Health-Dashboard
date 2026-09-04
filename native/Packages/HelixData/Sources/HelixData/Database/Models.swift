@@ -98,6 +98,14 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
     /// falls back to its own default rather than treating it as an easy session.
     public var sessionRpe: Double?
     public var notes: String?
+    /// Average heart rate and active energy for the session. Measured from an
+    /// `HKWorkout` that overlaps it, or estimated — and a derived number must
+    /// announce itself, so each carries its own `*Estimated` flag. A measured
+    /// value is never overwritten by an estimate.
+    public var avgBpm: Int?
+    public var caloriesBurned: Int?
+    public var avgBpmEstimated: Bool
+    public var caloriesEstimated: Bool
     /// Set locally the moment a session is committed; cleared when the outbox
     /// confirms the server accepted it.
     public var isPendingSync: Bool
@@ -112,13 +120,20 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
         case durationMin = "duration_min"
         case sessionRpe = "session_rpe"
         case notes
+        case avgBpm = "avg_bpm"
+        case caloriesBurned = "calories_burned"
+        case avgBpmEstimated = "avg_bpm_estimated"
+        case caloriesEstimated = "calories_estimated"
         case isPendingSync = "is_pending_sync"
     }
 
     public init(
         id: String, userId: String, dayKey: String? = nil, date: String,
         startedAt: Date? = nil, endedAt: Date? = nil, durationMin: Double? = nil,
-        sessionRpe: Double? = nil, notes: String? = nil, isPendingSync: Bool = false
+        sessionRpe: Double? = nil, notes: String? = nil,
+        avgBpm: Int? = nil, caloriesBurned: Int? = nil,
+        avgBpmEstimated: Bool = false, caloriesEstimated: Bool = false,
+        isPendingSync: Bool = false
     ) {
         self.id = id
         self.userId = userId
@@ -129,6 +144,10 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
         self.durationMin = durationMin
         self.sessionRpe = sessionRpe
         self.notes = notes
+        self.avgBpm = avgBpm
+        self.caloriesBurned = caloriesBurned
+        self.avgBpmEstimated = avgBpmEstimated
+        self.caloriesEstimated = caloriesEstimated
         self.isPendingSync = isPendingSync
     }
 }

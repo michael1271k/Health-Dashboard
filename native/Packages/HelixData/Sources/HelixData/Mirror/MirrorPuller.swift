@@ -162,11 +162,15 @@ public actor MirrorPuller {
     /// because a migration has not run must not stop the other twenty-five. The
     /// report says which, and the cursor of a table that failed is left where it
     /// was, so the next pull asks for the same range again.
+    ///
+    /// `onTable` fires as each table lands, with its row count — what the
+    /// backfill sheet ticks. A failed table fires nothing; the report says why.
     @discardableResult
     public func refresh(
         group: MirrorGroup? = nil,
         tables: [MirrorTable] = MirrorCatalogue.tables,
-        now: Date = Date()
+        now: Date = Date(),
+        onTable: (@Sendable (String, Int) -> Void)? = nil
     ) async -> MirrorReport {
         var report = MirrorReport()
         for table in tables where group == nil || table.group == group {
@@ -175,6 +179,7 @@ public actor MirrorPuller {
                 report.rows += rows
                 report.tables += 1
                 report.rowsByTable[table.name] = rows
+                onTable?(table.name, rows)
             } catch {
                 report.failures[table.name] = String(describing: error)
             }
@@ -243,6 +248,14 @@ public struct MirrorReport: Sendable, Equatable {
     public var failures: [String: String] = [:]
 
     public var isClean: Bool { failures.isEmpty }
+
+    /// Fold another report in. A later count for the same table wins.
+    public mutating func merge(_ other: MirrorReport) {
+        rows += other.rows
+        tables += other.tables
+        rowsByTable.merge(other.rowsByTable) { _, new in new }
+        failures.merge(other.failures) { _, new in new }
+    }
 }
 
 // MARK: - Formatting

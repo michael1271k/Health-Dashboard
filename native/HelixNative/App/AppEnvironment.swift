@@ -45,6 +45,12 @@ public final class AppEnvironment {
     /// user. It owns the HealthKit read, the outbox drain, the pulls, the
     /// score and the realtime socket, in that order. Nil while signed out.
     var coordinator: SyncCoordinator?
+    /// Non-nil while the first-launch backfill sheet is up (§7.2). The sheet
+    /// binds to this; `runBackfill` clears it when the history has landed.
+    var backfill: BackfillModel?
+    #if HELIX_ADP
+    private var observers: HealthObservers?
+    #endif
 
     private var authTask: Task<Void, Never>?
     /// The commit observer, held for the life of the app (GRDB stops observing
@@ -84,6 +90,34 @@ public final class AppEnvironment {
         }
         authTask = Task { [weak self] in
             guard let self else { return }
+            #if DEBUG
+            // `HELIX_SESSION_FILE=<path>` in the launch environment
+            // (`SIMCTL_CHILD_HELIX_SESSION_FILE` through simctl): a JSON file
+            // holding a `refresh_token`, so the backfill gate can sign a fresh
+            // simulator in without a password and without a token in argv. The
+            // token is single-use and rotates, so the file is dead once read.
+            if let path = ProcessInfo.processInfo.environment["HELIX_SESSION_FILE"] {
+                // After the stream below is subscribed, so the sign-in arrives
+                // as a live event rather than being missed by `initialSession`.
+                Task { [supabase] in
+                    try? await Task.sleep(for: .milliseconds(300))
+                    guard let data = FileManager.default.contents(atPath: path),
+                          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                          let access = json["access_token"] as? String,
+                          let refresh = json["refresh_token"] as? String
+                    else { NSLog("helix-session: could not read %@", path); return }
+                    do {
+                        _ = try await supabase.auth.setSession(accessToken: access, refreshToken: refresh)
+                        // `stored` is the tell: an UNSIGNED simulator build cannot
+                        // write the Keychain, the session never persists, and
+                        // every pull comes back `[]` under RLS with a 200.
+                        NSLog("helix-session: signed in from file; stored=%@", supabase.auth.currentSession == nil ? "nil" : "yes")
+                    } catch {
+                        NSLog("helix-session: refresh failed: %@", String(describing: error))
+                    }
+                }
+            }
+            #endif
             for await (event, session) in self.supabase.auth.authStateChanges {
                 guard event != .initialSession || session != nil else {
                     self.auth = .signedOut
@@ -156,11 +190,73 @@ public final class AppEnvironment {
         )
         self.coordinator = coordinator
         Task {
-            await self.syncNow(reason: .launch)
+            // A user this device has never synced gets the whole history
+            // behind the sheet; everyone else gets the ordinary launch sync.
+            if (try? await coordinator.needsBackfill()) == true {
+                await self.runBackfill(coordinator, model: BackfillModel())
+            } else {
+                await self.syncNow(reason: .launch)
+            }
             // A no-op if sign-out stopped this coordinator meanwhile.
             await coordinator.startRealtime(client: supabase)
+            #if HELIX_ADP
+            self.startObservers()
+            #endif
         }
     }
+
+    /// Settings' "Re-run backfill": the same run, the same sheet.
+    func rerunBackfill() {
+        guard let coordinator, backfill == nil else { return }
+        Task { await runBackfill(coordinator, model: BackfillModel()) }
+    }
+
+    /// The sheet's Retry, on the sheet's own model so the rows stay put.
+    func retryBackfill(_ model: BackfillModel) {
+        guard let coordinator else { return }
+        model.error = nil
+        Task { await runBackfill(coordinator, model: model) }
+    }
+
+    /// One backfill behind the sheet. Success shows the finished state for a
+    /// beat, then drops the sheet; failure keeps it up with Retry.
+    private func runBackfill(_ coordinator: SyncCoordinator, model: BackfillModel) async {
+        backfill = model
+        sync.begin()
+        var failure: String?
+        do {
+            try await coordinator.backfill { progress in
+                Task { @MainActor in model.progress = progress }
+            }
+        } catch {
+            failure = String(describing: error)
+        }
+        guard case .signedIn = auth, self.coordinator === coordinator else {
+            sync.finish(error: "Signed out before the sync finished.")
+            backfill = nil
+            return
+        }
+        sync.finish(error: failure)
+        if let failure {
+            model.error = failure
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(800))
+        if backfill === model { backfill = nil }
+    }
+
+    #if HELIX_ADP
+    /// Background delivery (Gate 0). A note from HealthKit is a `.healthKit`
+    /// sync through the coordinator's queue, like every other trigger.
+    private func startObservers() {
+        guard observers == nil else { return }
+        let observers = HealthObservers { [weak self] _ in
+            Task { @MainActor in await self?.syncNow(reason: .healthKit) }
+        }
+        observers.start()
+        self.observers = observers
+    }
+    #endif
 
     public func signIn(email: String, password: String) async throws {
         try await supabase.auth.signIn(email: email, password: password)
@@ -174,6 +270,11 @@ public final class AppEnvironment {
             self.coordinator = nil
             await coordinator.stop()
         }
+        #if HELIX_ADP
+        observers?.stop()
+        observers = nil
+        #endif
+        backfill = nil
         auth = .signedOut
     }
 

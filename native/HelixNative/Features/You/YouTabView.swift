@@ -149,6 +149,12 @@ private struct YouForm: View {
             }
 
             Section {
+                Button("Re-run backfill") { environment.rerunBackfill() }
+            } footer: {
+                Text("Downloads your whole history again. Nothing on this device is deleted; every row is re-checked against the server.")
+            }
+
+            Section {
                 Button("Sign out", role: .destructive) { isSigningOut = true }
             }
         }

@@ -534,6 +534,19 @@ public final class AppDatabase: Sendable {
             try db.create(index: "sync_status_user_table", on: "sync_status", columns: ["user_id", "table_name", "synced_at"])
         }
 
+        // The four server columns the session wire row never carried. Measured
+        // from an `HKWorkout` overlapping the session, or estimated (and
+        // stamped as such) when there is none — see `SessionMetrics`. Nullable
+        // like the server's; the two flags default false like the server's.
+        migrator.registerMigration("v11.sessionMetrics") { db in
+            try db.alter(table: "workout_sessions") { t in
+                t.add(column: "avg_bpm", .integer)
+                t.add(column: "calories_burned", .integer)
+                t.add(column: "avg_bpm_estimated", .boolean).notNull().defaults(to: false)
+                t.add(column: "calories_estimated", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         return migrator
     }
 }

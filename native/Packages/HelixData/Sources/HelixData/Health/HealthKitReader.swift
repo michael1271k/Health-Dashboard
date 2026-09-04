@@ -101,9 +101,45 @@ public struct HealthKitReader: HealthReading {
         }
     }
 
+    public func workouts(start: Date, end: Date) async throws -> [WorkoutSample] {
+        guard isAvailable else { return [] }
+        // No `.strictStartDate`: a workout that STARTED before the session and
+        // ran into it still overlaps it, and that is the one the watch made.
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: HKObjectType.workoutType(), predicate: predicate,
+                limit: HKObjectQueryNoLimit, sortDescriptors: nil
+            ) { _, samples, error in
+                if let error, (error as? HKError)?.code != .errorNoData {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                let out = (samples as? [HKWorkout] ?? []).map {
+                    WorkoutSample(
+                        start: $0.startDate, end: $0.endDate,
+                        isLifting: Self.liftingTypes.contains($0.workoutActivityType)
+                    )
+                }
+                continuation.resume(returning: out)
+            }
+            store.execute(query)
+        }
+    }
+
+    /// What counts as a lifting session on the watch. Strength training, both
+    /// flavours; not core training, not HIIT, which are logged as cardio here.
+    static let liftingTypes: Set<HKWorkoutActivityType> = [
+        .traditionalStrengthTraining, .functionalStrengthTraining,
+    ]
+
     // MARK: - Types and units
 
     static func objectType(_ identifier: String) -> HKObjectType? {
+        if identifier == HealthCatalogue.workoutTypeIdentifier {
+            return HKObjectType.workoutType()
+        }
         if identifier.hasPrefix("HKQuantityTypeIdentifier") {
             return HKObjectType.quantityType(forIdentifier: .init(rawValue: identifier))
         }

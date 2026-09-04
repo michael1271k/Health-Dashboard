@@ -32,4 +32,31 @@ public protocol HealthReading: Sendable {
     /// Raw sleep-category samples in a window. Not reduced: the stage union in
     /// `Sleep.aggregate` needs the individual intervals.
     func sleepSamples(start: Date, end: Date) async throws -> [SleepSample]
+
+    /// Workouts OVERLAPPING `[start, end]` — the watch's own record of a
+    /// session, whose interval is where a measured heart rate and energy come
+    /// from. Overlap, not containment: the watch is started a minute after the
+    /// first set and stopped a minute before the last.
+    func workouts(start: Date, end: Date) async throws -> [WorkoutSample]
+}
+
+public extension HealthReading {
+    /// A store that records no workouts — every test double, and any device
+    /// without a watch.
+    func workouts(start: Date, end: Date) async throws -> [WorkoutSample] { [] }
+}
+
+/// One `HKWorkout`, reduced to what `SessionMetrics` needs.
+public struct WorkoutSample: Sendable, Equatable {
+    public var start: Date
+    public var end: Date
+    /// Traditional or functional strength training. Decided by the reader,
+    /// which is the only place that can name an `HKWorkoutActivityType`.
+    public var isLifting: Bool
+
+    public init(start: Date, end: Date, isLifting: Bool) {
+        self.start = start
+        self.end = end
+        self.isLifting = isLifting
+    }
 }

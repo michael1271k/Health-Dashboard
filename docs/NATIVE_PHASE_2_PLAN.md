@@ -303,6 +303,8 @@ Every week/day number here uses `WeekWindow` (§6.4), so changing week start re-
 
 `BackfillRunner` inside the coordinator: when `sync_status` is empty for a user, present `BackfillSheet` (full-screen, non-dismissable, per-table rows with row counts, elapsed, Cancel = sign out). Pulls in dependency order (`user_goals`, `plans`, `exercises` first; sessions then sets; then everything else), **paginated 1000 rows** via `.range(from:to:)` until a short page, `windowDays: nil` (cap removed from `MirrorPuller`; the type keeps the parameter for tests). History start `2026-03-10`. On completion: score recompute for the last 14 days, `.success`, dismiss. Idempotent; "Re-run backfill" in Settings clears cursors and repeats.
 
+> **Shipped 2026-09-05 (Wave 2.3).** Two departures from the text above, both deliberate: (1) a backfill reads HealthKit **after** the pull, not before — a first launch has no local write for the pull to clobber, and `requestAuthorization` awaits the Health permission sheet, which the whole history must not sit behind; (2) the ledger is written only when every table landed, so a backfill that died halfway reads as "never synced" at the next launch and runs again from the top. The row-count gate lives in `BackfillLiveTests` (env-gated, `HELIX_LIVE_SESSION_FILE`) and a DEBUG `HELIX_SESSION_FILE` launch hook signs a fresh simulator in without a password.
+
 ### 7.3 Pagination & window removal
 
 `PostgRESTMirrorRemote.select/selectIn` gain `range`; `MirrorPuller.since` returns nil for `.window` when `windowDays == nil`; `.delta` behaviour unchanged. `selectIn` chunks session-id lists at 200.
@@ -312,6 +314,8 @@ Every week/day number here uses `WeekWindow` (§6.4), so changing week start re-
 - `HealthSync` runs inside the coordinator, not on its own `Task`.
 - Add `HKWorkout` reads for lifting sessions overlapping a `workout_sessions` window → `avg_bpm`, `calories_burned` with `*_estimated = false`; estimates (`LIFTING_MET 6.0`, median kcal/min over 90 days) ported to `Sessions/Estimates.swift` for the nil case.
 - `HKObserverQuery` + `enableBackgroundDelivery` for sleep, HRV, steps `ADP`; `BGAppRefreshTask` nightly `ADP`. Code lands behind `#if HELIX_ADP`, screenshots not gated on it.
+
+> **Shipped 2026-09-05 (Wave 2.3):** `HealthSync.syncSessionMetrics` (HelixData `Health/SessionMetrics.swift`) runs after every pull; `Estimates.swift` was already in HelixCore. `HealthObservers` compiles with `HELIX_ADP=1` in the build environment (`Package.swift` reads it); the app-side hook in `AppEnvironment` also needs `HELIX_ADP` in `SWIFT_ACTIVE_COMPILATION_CONDITIONS` and the `background-delivery` entitlement. `BGAppRefreshTask` is NOT done (app target + Info.plist, Track U at Gate 0).
 
 ### 7.5 Score persistence
 

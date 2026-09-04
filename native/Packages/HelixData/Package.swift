@@ -1,5 +1,12 @@
 // swift-tools-version: 6.0
+import Foundation
 import PackageDescription
+
+/// `HELIX_ADP=1 swift build` compiles the Gate 0 code — HealthKit background
+/// delivery (`HealthObservers`) — that a personal team cannot sign. Off by
+/// default so the package builds and tests everywhere; the flag, not the code,
+/// is what waits on the Developer Program.
+let adp: [SwiftSetting] = ProcessInfo.processInfo.environment["HELIX_ADP"] == nil ? [] : [.define("HELIX_ADP")]
 
 /// HelixData — the local store, the sync outbox, and the Supabase session.
 ///
@@ -38,7 +45,7 @@ let package = Package(
                 .product(name: "GRDB", package: "GRDB.swift"),
                 .product(name: "Supabase", package: "supabase-swift"),
             ],
-            swiftSettings: [.swiftLanguageMode(.v6)]
+            swiftSettings: [.swiftLanguageMode(.v6)] + adp
         ),
         .testTarget(
             name: "HelixDataTests",

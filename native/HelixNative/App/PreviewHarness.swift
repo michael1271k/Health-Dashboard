@@ -89,6 +89,8 @@ enum PreviewHarness {
         switch screen {
         case "signin":
             SignInView().environment(AppEnvironment.preview)
+        case "backfill":
+            BackfillSheet(model: .preview).environment(AppEnvironment.preview)
         case "you":
             NavigationStack { YouTabView(seeded: model) }.environment(AppEnvironment.preview)
         case "train":

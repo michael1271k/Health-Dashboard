@@ -135,8 +135,13 @@ public enum HealthCatalogue {
     /// Types authorised but not pulled into the daily row. Asking for them keeps
     /// the app's entry under Health → Apps complete, and several of them are
     /// read by other surfaces.
+    /// `HKObjectType.workoutType()` has no quantity or category identifier;
+    /// this is the one name the reader maps to it.
+    public static let workoutTypeIdentifier = "HKWorkoutTypeIdentifier"
+
     static let extraReadTypes = [
         "HKCategoryTypeIdentifierSleepAnalysis",
+        workoutTypeIdentifier,
         "HKQuantityTypeIdentifierFlightsClimbed",
         "HKQuantityTypeIdentifierBasalEnergyBurned",
         "HKQuantityTypeIdentifierAppleMoveTime",

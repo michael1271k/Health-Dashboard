@@ -39,11 +39,35 @@ public actor TrainingPuller {
         self.windowDays = windowDays
     }
 
-    /// Pull sessions changed since the cursor, then their sets, then the
-    /// exercise catalogue.
+    /// Pull the exercise catalogue, then sessions changed since the cursor,
+    /// then their sets.
+    ///
+    /// ── THE CATALOGUE GOES FIRST ────────────────────────────────────────────
+    /// `workout_sets.exercise_id` REFERENCES `exercises` and the local store
+    /// enforces its foreign keys. On a device that has never pulled — the
+    /// first-launch backfill — sets landing before the movements they name
+    /// fail on the constraint, every one of them. Sixty rows, read first, is
+    /// what makes the other 2,000 land.
+    ///
+    /// `onTable` fires as each of the three tables lands, with its row count,
+    /// so a progress sheet can tick rows in dependency order.
     @discardableResult
-    public func refresh(now: Date = Date()) async throws -> MirrorReport {
+    public func refresh(
+        now: Date = Date(), onTable: (@Sendable (String, Int) -> Void)? = nil
+    ) async throws -> MirrorReport {
         var report = MirrorReport()
+
+        // The catalogue is 60 rows and changes when a movement is added, which
+        // is a few times a year. A cursor for that is bookkeeping nobody reads.
+        let exercises: [RemoteExerciseRow] = try await remote.select(
+            RemoteExerciseRow.self,
+            request: MirrorRequest(table: "exercises", userId: userId, since: nil)
+        )
+        let catalogue = try database.applyPulledExercises(exercises)
+        report.rows += catalogue
+        report.tables += 1
+        report.rowsByTable["exercises"] = catalogue
+        onTable?("exercises", catalogue)
 
         let cursor = try database.mirrorCursor(table: "workout_sessions")
         let request = MirrorRequest(
@@ -56,6 +80,7 @@ public actor TrainingPuller {
         report.tables += 1
         report.rows += remoteSessions.count
         report.rowsByTable["workout_sessions"] = remoteSessions.count
+        onTable?("workout_sessions", remoteSessions.count)
 
         // Sets come with their parents. They carry neither an `updated_at` nor a
         // date of their own, so "the sets of the sessions that changed" is the
@@ -70,18 +95,8 @@ public actor TrainingPuller {
             report.rows += landed
             report.tables += 1
             report.rowsByTable["workout_sets"] = landed
+            onTable?("workout_sets", landed)
         }
-
-        // The catalogue is 60 rows and changes when a movement is added, which
-        // is a few times a year. A cursor for that is bookkeeping nobody reads.
-        let exercises: [RemoteExerciseRow] = try await remote.select(
-            RemoteExerciseRow.self,
-            request: MirrorRequest(table: "exercises", userId: userId, since: nil)
-        )
-        let catalogue = try database.applyPulledExercises(exercises)
-        report.rows += catalogue
-        report.tables += 1
-        report.rowsByTable["exercises"] = catalogue
 
         // Last, and only on success: a cursor moved before the sets landed
         // would skip them forever on the next pull.
@@ -129,6 +144,10 @@ extension AppDatabase {
                     durationMin: row.durationMin.map(Double.init),
                     sessionRpe: row.sessionRpe,
                     notes: row.notes,
+                    avgBpm: row.avgBpm,
+                    caloriesBurned: row.caloriesBurned,
+                    avgBpmEstimated: row.avgBpmEstimated,
+                    caloriesEstimated: row.caloriesEstimated,
                     // It came FROM the server, so by definition it is not
                     // waiting to go TO it — unless this device still has queued
                     // events for it, in which case the flag is not ours to

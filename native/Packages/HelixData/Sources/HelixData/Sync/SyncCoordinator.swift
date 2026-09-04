@@ -9,6 +9,9 @@ public enum SyncReason: Hashable, Sendable {
     case pull
     case realtime(table: String)
     case healthKit
+    /// The whole history, in dependency order, with the cursors cleared first.
+    /// A superset of every other reason — see `syncNow` for what that buys.
+    case backfill
 
     var isRealtime: Bool {
         if case .realtime = self { return true }
@@ -22,6 +25,7 @@ public enum SyncReason: Hashable, Sendable {
         case .pull: return "pull"
         case .realtime(let table): return "realtime:\(table)"
         case .healthKit: return "healthKit"
+        case .backfill: return "backfill"
         }
     }
 }
@@ -29,6 +33,39 @@ public enum SyncReason: Hashable, Sendable {
 /// Where a running sync is.
 public enum SyncStep: String, Sendable, Equatable {
     case push, health, pull, score
+}
+
+/// What the backfill sheet draws: one row per table, in the order they are
+/// pulled, with a count once each has landed.
+public struct BackfillProgress: Sendable, Equatable {
+    public struct Table: Sendable, Equatable, Identifiable {
+        public let name: String
+        /// Rows landed. `nil` until the table has been pulled.
+        public var rows: Int?
+        public var error: String?
+        public var id: String { name }
+        public init(name: String, rows: Int? = nil, error: String? = nil) {
+            self.name = name
+            self.rows = rows
+            self.error = error
+        }
+    }
+
+    public var tables: [Table]
+    public var startedAt: Date
+    /// Set once every step — pull, score, push — has run clean. The clock on
+    /// the sheet stops here.
+    public var finishedAt: Date?
+    public var isFinished: Bool { finishedAt != nil }
+
+    public init(tables: [Table], startedAt: Date, finishedAt: Date? = nil) {
+        self.tables = tables
+        self.startedAt = startedAt
+        self.finishedAt = finishedAt
+    }
+
+    public var rowsLanded: Int { tables.compactMap(\.rows).reduce(0, +) }
+    public var tablesLanded: Int { tables.filter { $0.rows != nil }.count }
 }
 
 public struct SyncProgress: Sendable, Equatable {
@@ -80,8 +117,31 @@ public enum SyncCoordinatorError: Error, Equatable, CustomStringConvertible {
 /// ── WHAT IT DOES NOT DO ─────────────────────────────────────────────────────
 /// It does not touch WidgetKit — this package compiles for macOS, and the app
 /// already reloads timelines from `AppDatabase.onCommit`. It does not present
-/// anything. It does not know about the backfill sheet; 2.3 puts that inside.
+/// anything: the backfill sheet is the app's, drawn from `BackfillProgress`.
+///
+/// ── THE BACKFILL (§7.2) ─────────────────────────────────────────────────────
+/// `syncNow(reason: .backfill)` is the same run with three differences: every
+/// cursor is cleared first, so the whole history comes down (idempotent — every
+/// landing is an upsert, so "Re-run backfill" is the same call); the pull goes
+/// in dependency order (`user_goals`, `plans`, `exercises`, sessions, sets,
+/// then the rest) and reports per table; and the score is recomputed for the
+/// last fourteen days rather than two. The ledger is written only when every
+/// table landed, so a backfill that died halfway is recognised as "never
+/// synced" at the next launch and runs again from the top.
 public actor SyncCoordinator: MirrorRefreshing {
+
+    /// The tables the backfill sheet lists, in the order they are pulled.
+    /// Parents before children: the three the training tables reference,
+    /// sessions before the sets that belong to them, everything else after.
+    public static let backfillOrder: [String] = {
+        let head = ["user_goals", "plans", "exercises", "workout_sessions", "workout_sets"]
+        return head + MirrorCatalogue.tables.map(\.name).filter { !head.contains($0) }
+    }()
+    /// The catalogue tables pulled BEFORE the training three.
+    private static let backfillHead: Set<String> = ["user_goals", "plans"]
+    /// How many days the completion hook rescores.
+    public static let backfillScoreDays = 14
+
 
     private let database: AppDatabase
     private let engine: SyncEngine
@@ -96,11 +156,22 @@ public actor SyncCoordinator: MirrorRefreshing {
 
     private var current: Task<Void, any Error>?
     private var queued: Task<Void, any Error>?
+    /// The reason the WAITING run — `queued`, or an unstarted `current` — will
+    /// run with. Read by the task when it starts, not fixed when it is made, so
+    /// a later caller can upgrade it: a backfill request that joins a queued
+    /// foreground sync turns that sync into the backfill, because a backfill
+    /// does everything a sync does and more. Joining it the other way round
+    /// needs no upgrade.
+    private var queuedReason: SyncReason?
     /// Whether `current` has begun its steps. Between one run's handover and
     /// the next run's first line there is a hop back onto the actor; a caller
     /// arriving in that gap can still join the promoted task instead of
     /// queueing a third run behind it.
     private var started = false
+    /// Live during a backfill run; what `onBackfillProgress` is fed.
+    public private(set) var backfillProgress: BackfillProgress?
+    private var onBackfillProgress: (@Sendable (BackfillProgress) -> Void)?
+    private var progressToken: UUID?
     private var realtime: MirrorRealtime?
     private var coalescer: MirrorCoalescer?
     /// Set by `stop()`. A launch sync that finishes after sign-out must not
@@ -149,21 +220,59 @@ public actor SyncCoordinator: MirrorRefreshing {
         let task: Task<Void, any Error>
         if let running = current {
             if let waiting = queued ?? (started ? nil : running) {
+                // A backfill does more than any sync; a sync does more than a
+                // realtime note (which skips Apple). Joining never downgrades.
+                if reason == .backfill || queuedReason?.isRealtime == true { queuedReason = reason }
                 task = waiting
             } else {
+                queuedReason = reason
                 let t = Task {
                     _ = await running.result
-                    try await self.run(reason)
+                    try await self.runQueued()
                 }
                 queued = t
                 task = t
             }
         } else {
-            let t = Task { try await self.run(reason) }
+            queuedReason = reason
+            let t = Task { try await self.runQueued() }
             current = t
             task = t
         }
         try await task.value
+    }
+
+    /// The whole history, with per-table progress. `onProgress` is called on
+    /// an arbitrary executor; hop to the main actor before touching a view.
+    ///
+    /// Idempotent: the cursors are cleared inside the run, so "Re-run backfill"
+    /// in Settings is this same call.
+    public func backfill(onProgress: @escaping @Sendable (BackfillProgress) -> Void) async throws {
+        let token = UUID()
+        onBackfillProgress = onProgress
+        progressToken = token
+        // Only this caller's handler is dropped: a second backfill queued
+        // behind this run has already replaced it, and keeps it.
+        defer { if progressToken == token { onBackfillProgress = nil } }
+        try await syncNow(reason: .backfill)
+    }
+
+    /// Whether this user has ever completed a sync on this device. An empty
+    /// ledger is how the app recognises a first launch — and a backfill that
+    /// died halfway, which writes nothing to it.
+    public func needsBackfill() throws -> Bool {
+        // Not the `outbox` line: every run writes one, including the run that
+        // died before a single table landed.
+        try database.lastSync(userId: userId).keys.allSatisfy { $0 == "outbox" }
+    }
+
+    private func runQueued() async throws {
+        // Read at the last moment, so an upgrade to `.backfill` made while
+        // this task was waiting is honoured. No suspension between here and
+        // `started = true`, so a caller cannot slip in between.
+        let reason = queuedReason ?? .foreground
+        queuedReason = nil
+        try await run(reason)
     }
 
     private func run(_ reason: SyncReason) async throws {
@@ -186,43 +295,149 @@ public actor SyncCoordinator: MirrorRefreshing {
     }
 
     private func steps(_ reason: SyncReason) async throws {
+        // A queued run resumes after `stop()` regardless — `await
+        // running.result` is not cancellable — and must not reset cursors or
+        // read Apple for a user who has signed out.
+        try Task.checkCancellation()
+        guard !stopped else { throw CancellationError() }
         let now = now()
         state = .running(SyncProgress(reason: reason, step: .push))
         try database.resetInFlight()
 
+        let isBackfill = reason == .backfill
+        if isBackfill {
+            // Every cursor, so the delta tables come down whole; the window
+            // tables already do (`windowDays: nil`). The sets of a session this
+            // device has events for are still refused by `applyPulledSets`.
+            try database.resetMirrorCursor()
+            backfillProgress = BackfillProgress(
+                tables: Self.backfillOrder.map { BackfillProgress.Table(name: $0) }, startedAt: now
+            )
+            emitBackfill()
+        }
+
         // Not for a realtime note: the socket said a row moved on the server,
         // and reading Apple again for that is a HealthKit round trip per
         // notification. Foreground and pull still read it.
-        if let health, !reason.isRealtime {
-            state = .running(SyncProgress(reason: reason, step: .health))
-            // Silent, like the app's own read was: a withheld permission and a
-            // device without Health data both render as "—" downstream, and
-            // neither is a reason to fail the push that follows.
-            if (try? await health.requestAuthorization()) == true {
-                _ = try? await health.syncRecent(now: now, calendar: calendar)
-            }
+        //
+        // Not before a BACKFILL either. The read goes first to keep a local
+        // write ahead of the pull that would overwrite it, and a first launch
+        // has no local write to protect — but it does have the Health
+        // permission sheet, which `requestAuthorization` awaits, and the whole
+        // history must not sit behind it. A backfill reads Apple after the
+        // pull, where the closing drain still pushes what it wrote.
+        if !reason.isRealtime, !isBackfill {
+            try await readHealth(reason: reason, now: now)
         }
 
         state = .running(SyncProgress(reason: reason, step: .push))
         try await drainAll(now: now)
 
         state = .running(SyncProgress(reason: reason, step: .pull))
-        var report = await puller.refresh(now: now)
-        do {
-            let trained = try await training.refresh(now: now)
-            report.rows += trained.rows
-            report.tables += trained.tables
-            report.rowsByTable.merge(trained.rowsByTable) { _, new in new }
-        } catch {
-            report.failures["workout_sessions"] = String(describing: error)
+        let report = isBackfill ? try await backfillPull(now: now) : await pull(now: now)
+        // A backfill's ledger is all or nothing: a table that did not land
+        // must leave the user looking "never synced", so the next launch runs
+        // the whole thing again. A normal sync records what it got.
+        if !isBackfill || report.isClean { try record(report, reason: reason, at: now) }
+        if isBackfill { try await readHealth(reason: reason, now: now) }
+
+        // Session metrics AFTER the pull, on purpose. `applyPulledSessions`
+        // overwrites the local row with the server's, so a value written
+        // before the pull would vanish on the sync that pulled that session —
+        // and the closing drain below is what pushes what is written here.
+        if let health, !reason.isRealtime {
+            _ = try? await health.syncSessionMetrics(now: now, calendar: calendar)
         }
-        try record(report, reason: reason, at: now)
 
         state = .running(SyncProgress(reason: reason, step: .score))
-        try scoreRecentDays(now: now)
+        try scoreRecentDays(now: now, days: isBackfill ? Self.backfillScoreDays : 2)
         try await drainAll(now: now)
 
         if !report.failures.isEmpty { throw SyncCoordinatorError.tablesFailed(report.failures) }
+        if isBackfill {
+            backfillProgress?.finishedAt = self.now()
+            emitBackfill()
+        }
+    }
+
+    /// Today and yesterday out of HealthKit, into the store.
+    private func readHealth(reason: SyncReason, now: Date) async throws {
+        guard let health else { return }
+        state = .running(SyncProgress(reason: reason, step: .health))
+        // Silent, like the app's own read was: a withheld permission and a
+        // device without Health data both render as "—" downstream, and
+        // neither is a reason to fail the push that follows.
+        if (try? await health.requestAuthorization()) == true {
+            _ = try? await health.syncRecent(now: now, calendar: calendar)
+        }
+    }
+
+    /// Every table, catalogue order. The training three come after the
+    /// catalogue because their `applyPulled*` never touches a mirrored table.
+    private func pull(now: Date) async -> MirrorReport {
+        var report = await puller.refresh(now: now)
+        do {
+            let trained = try await training.refresh(now: now)
+            report.merge(trained)
+        } catch {
+            report.failures["workout_sessions"] = String(describing: error)
+        }
+        return report
+    }
+
+    /// Dependency order, ticking the sheet as each table lands.
+    ///
+    /// The tick hops back onto this actor from inside the puller, so the rows
+    /// it reports may arrive after the phase they belong to; `apply` writes
+    /// the phase's report synchronously afterwards, so the sheet is exact by
+    /// the time the next phase starts whatever the hop did.
+    private func backfillPull(now: Date) async throws -> MirrorReport {
+        let tick: @Sendable (String, Int) -> Void = { [weak self] name, rows in
+            guard let self else { return }
+            Task { await self.landed(name, rows: rows, run: now) }
+        }
+        let head = MirrorCatalogue.tables.filter { Self.backfillHead.contains($0.name) }
+        let rest = MirrorCatalogue.tables.filter { !Self.backfillHead.contains($0.name) }
+
+        var report = await puller.refresh(tables: head, now: now, onTable: tick)
+        apply(report)
+        try Task.checkCancellation()
+
+        do {
+            report.merge(try await training.refresh(now: now, onTable: tick))
+        } catch {
+            report.failures["workout_sessions"] = String(describing: error)
+        }
+        apply(report)
+        try Task.checkCancellation()
+
+        report.merge(await puller.refresh(tables: rest, now: now, onTable: tick))
+        apply(report)
+        return report
+    }
+
+    private func landed(_ table: String, rows: Int, run: Date) {
+        // A tick that hopped in after the next backfill began belongs to the
+        // run that made it, not to this one.
+        guard backfillProgress?.startedAt == run,
+              let index = backfillProgress?.tables.firstIndex(where: { $0.name == table }) else { return }
+        backfillProgress?.tables[index].rows = rows
+        emitBackfill()
+    }
+
+    private func apply(_ report: MirrorReport) {
+        guard var progress = backfillProgress else { return }
+        for index in progress.tables.indices {
+            let name = progress.tables[index].name
+            if let rows = report.rowsByTable[name] { progress.tables[index].rows = rows }
+            progress.tables[index].error = report.failures[name]
+        }
+        backfillProgress = progress
+        emitBackfill()
+    }
+
+    private func emitBackfill() {
+        if let backfillProgress { onBackfillProgress?(backfillProgress) }
     }
 
     /// Drain until the queue is empty or the backoff is holding the rest.
@@ -244,14 +459,16 @@ public actor SyncCoordinator: MirrorRefreshing {
         }
     }
 
-    /// Today live, yesterday sealed — the production caller `writeDailyScore`
-    /// was waiting for. A day the freeze refuses is a `nil`, not an error.
-    private func scoreRecentDays(now: Date) throws {
-        let today = LogicalDayISO.string(now, calendar: calendar)
-        _ = try database.refreshDailyScore(userId: userId, date: today, now: now, calendar: calendar)
-        _ = try database.refreshDailyScore(
-            userId: userId, date: NightWindow.previousDay(today), now: now, calendar: calendar
-        )
+    /// Today live, then each earlier day sealed — the production caller
+    /// `writeDailyScore` was waiting for. Two days on a sync; fourteen after a
+    /// backfill, which is how far the trailing inputs reach. A day the freeze
+    /// refuses is a `nil`, not an error.
+    private func scoreRecentDays(now: Date, days: Int) throws {
+        var day = LogicalDayISO.string(now, calendar: calendar)
+        for _ in 0..<days {
+            _ = try database.refreshDailyScore(userId: userId, date: day, now: now, calendar: calendar)
+            day = NightWindow.previousDay(day)
+        }
     }
 
     // MARK: - Realtime

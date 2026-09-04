@@ -39,6 +39,7 @@ struct RootView: View {
 private struct SignedInTabs: View {
     enum Tab: Hashable { case today, train, fuel, body, you }
 
+    @Environment(AppEnvironment.self) private var environment
     @State private var selection: Tab = .today
 
     var body: some View {
@@ -76,6 +77,12 @@ private struct SignedInTabs: View {
             guard let path = DeepLink.safePath(url.absoluteString),
                   let destination = DeepLink.destination(forPath: path) else { return }
             selection = tab(for: destination)
+        }
+        // The first-launch backfill (§7.2). A cover, not a replacement of the
+        // tabs: they mount underneath, observe the store, and are already
+        // showing March by the time the cover lifts.
+        .fullScreenCover(isPresented: Binding(get: { environment.backfill != nil }, set: { _ in })) {
+            if let model = environment.backfill { BackfillSheet(model: model) }
         }
     }
 

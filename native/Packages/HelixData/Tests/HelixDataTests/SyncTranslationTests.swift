@@ -211,7 +211,7 @@ struct SyncTranslationTests {
             return Set(object?.keys ?? [:].keys)
         }
         #expect(try sessionKeys(quiet) == sessionKeys(loud))
-        #expect(try sessionKeys(quiet).count == 9, "every encoded RemoteSessionRow key, and updated_at is not one")
+        #expect(try sessionKeys(quiet).count == 13, "every encoded RemoteSessionRow key, and updated_at is not one")
     }
 
     @Test("the columns Track D owns are absent, not zeroed")

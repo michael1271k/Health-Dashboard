@@ -14,9 +14,9 @@ import Foundation
 /// is local and instant, and the upload is the outbox's problem.
 public actor HealthSync {
 
-    private let database: AppDatabase
-    private let reader: any HealthReading
-    private let userId: String
+    let database: AppDatabase
+    let reader: any HealthReading
+    let userId: String
 
     public init(database: AppDatabase, reader: any HealthReading, userId: String) {
         self.database = database
