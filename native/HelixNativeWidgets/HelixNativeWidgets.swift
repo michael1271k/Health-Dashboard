@@ -126,7 +126,7 @@ struct HelixWorkoutActivityWidget: Widget {
                 // wallpaper; a tint makes the card the app's without claiming
                 // the whole surface.
                 .activityBackgroundTint(.black.opacity(0.55))
-                .activitySystemActionForegroundColor(HelixPalette.ember)
+                .activitySystemActionForegroundColor(Color.helix.accent(.train))
         } dynamicIsland: { context in
             // No `let accent = …` here, however much it would tidy the call
             // sites: a binding turns the trailing closure into a multi-statement
@@ -144,7 +144,7 @@ struct HelixWorkoutActivityWidget: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 5) {
                         Circle()
-                            .fill(Color(hex: context.state.accent))
+                            .fill(Color.helix.day(context.state.dayKey))
                             .frame(width: 7, height: 7)
                         Text("HELIX")
                             .font(.system(size: 10, weight: .black, design: .rounded))
@@ -162,7 +162,7 @@ struct HelixWorkoutActivityWidget: Widget {
                         HStack(alignment: .bottom, spacing: 10) {
                             CurrentSet(state: context.state)
                             Spacer(minLength: 6)
-                            Spark(values: context.state.spark, color: Color(hex: context.state.accent))
+                            Spark(values: context.state.spark, color: Color.helix.day(context.state.dayKey))
                                 .frame(width: 76, height: 30)
                         }
                         if !context.state.lastTime.isEmpty {
@@ -170,18 +170,18 @@ struct HelixWorkoutActivityWidget: Widget {
                                 Text("LAST TIME")
                                     .font(.system(size: 8, weight: .bold))
                                     .tracking(1.1)
-                                    .foregroundStyle(HelixPalette.dim)
+                                    .foregroundStyle(Color.helix.textTertiary)
                                 Text(context.state.lastTime)
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .monospacedDigit()
-                                    .foregroundStyle(HelixPalette.muted)
+                                    .foregroundStyle(Color.helix.textSecondary)
                             }
                         }
                     }
                 }
             } compactLeading: {
                 Circle()
-                    .fill(Color(hex: context.state.accent))
+                    .fill(Color.helix.day(context.state.dayKey))
                     .frame(width: 8, height: 8)
             } compactTrailing: {
                 // Whichever number is the answer RIGHT NOW: the rest clock while
@@ -197,14 +197,14 @@ struct HelixWorkoutActivityWidget: Widget {
                 }
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(Color(hex: context.state.accent))
+                .foregroundStyle(Color.helix.day(context.state.dayKey))
             } minimal: {
                 Image(systemName: context.state.restEndsAt == nil
                       ? "figure.strengthtraining.traditional" : "timer")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color(hex: context.state.accent))
+                    .foregroundStyle(Color.helix.day(context.state.dayKey))
             }
-            .keylineTint(Color(hex: context.state.accent))
+            .keylineTint(Color.helix.day(context.state.dayKey))
         }
         // watchOS 11 / iOS 18: a real Watch card, asked for through the same
         // content closure. This is the fix for the Smart Stack rendering the
@@ -220,7 +220,7 @@ private struct LockScreenWorkout: View {
 
     @Environment(\.activityFamily) private var family
 
-    private var accent: Color { Color(hex: context.state.accent) }
+    private var accent: Color { Color.helix.day(context.state.dayKey) }
 
     var body: some View {
         switch family {
@@ -252,9 +252,9 @@ private struct LockScreenWorkout: View {
                     .monospacedDigit()
                     .foregroundStyle(.white)
             }
-            Text("\(context.state.sets) sets · \(context.state.volume)")
+            Text("\(context.state.setsDone)/\(context.state.setsPlanned) sets · \(context.state.volume)")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(HelixPalette.muted)
+                .foregroundStyle(Color.helix.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
@@ -301,12 +301,12 @@ private struct Countdown: View {
                 } icon: {
                     Image(systemName: "timer")
                 }
-                .foregroundStyle(Color(hex: state.accent))
+                .foregroundStyle(Color.helix.day(state.dayKey))
             } else {
                 // A duration counted by the SYSTEM. ActivityKit budgets
                 // updates; a clock is not worth spending them on.
                 Text(startedAt, style: .timer)
-                    .foregroundStyle(HelixPalette.muted)
+                    .foregroundStyle(Color.helix.textSecondary)
             }
         }
         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -319,12 +319,12 @@ private struct SessionTotals: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            stat(state.volume, HelixPalette.ember)
-            stat("\(state.sets) sets", HelixPalette.platinum)
+            stat(state.volume, Color.helix.day(state.dayKey))
+            stat("\(state.setsDone)/\(state.setsPlanned) sets", Color.helix.textPrimary)
             // Zero renders as NOTHING. A permanent gold zero is how gold stops
             // meaning a personal record.
-            if state.records > 0 {
-                stat("\(state.records) PR", HelixPalette.gold)
+            if state.prsThisSession > 0 {
+                stat("\(state.prsThisSession) PR", Color.helix.record)
             }
         }
     }
@@ -351,7 +351,7 @@ private struct CurrentSet: View {
                     Text(state.setLabel)
                         .font(.system(size: 9, weight: .bold))
                         .tracking(0.6)
-                        .foregroundStyle(HelixPalette.dim)
+                        .foregroundStyle(Color.helix.textTertiary)
                 }
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -364,7 +364,7 @@ private struct CurrentSet: View {
                 if !state.rpe.isEmpty {
                     Text(state.rpe)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(HelixPalette.amber)
+                        .foregroundStyle(Color.helix.textSecondary)
                 }
             }
         }

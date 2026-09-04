@@ -24,20 +24,19 @@ struct PhaseSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: HelixSpace.m) {
                     ForEach(ProgramPhase.allCases, id: \.self) { option in
                         card(option)
                     }
 
                     Text("Nutrition targets follow the plan's own block. A maintenance week is a lever on top of this, not a third phase.")
-                        .helixText(.small)
-                        .foregroundStyle(HelixPalette.dim)
+                        .helixType(.caption)
+                        .foregroundStyle(Color.helix.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 4)
                 }
-                .padding(18)
+                .padding(HelixSpace.l)
             }
-            .background(HelixPalette.obsidian)
+            .helixScreen(.train)
             .navigationTitle("Phase")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -48,79 +47,77 @@ struct PhaseSheet: View {
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
-        .presentationBackground(HelixPalette.obsidian)
+        .presentationContentInteraction(.scrolls)
     }
 
     private func card(_ option: ProgramPhase) -> some View {
-        let tint = option == .cut ? HelixPalette.Phase.cut : HelixPalette.Phase.bulk
+        let tint = Color.helix.phase(option)
         let selected = phase == option
         let dropped = day.exercises.filter { $0.sets(for: option) == 0 }
 
         return Button {
             withAnimation(HelixMotion.move) { phase = option }
         } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: HelixSpace.s) {
+                HStack(spacing: HelixSpace.s) {
                     Image(systemName: option == .cut ? "flame.fill" : "leaf.fill")
-                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(tint)
                     Text(option.label)
-                        .helixText(.fluidLG, weight: .bold, leading: .none)
-                        .foregroundStyle(HelixPalette.text)
-                    Spacer()
+                        .helixDisplay()
+                        .foregroundStyle(Color.helix.textPrimary)
+                    Spacer(minLength: 0)
                     Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 19))
-                        .foregroundStyle(selected ? tint : HelixPalette.dim)
+                        .foregroundStyle(selected ? tint : Color.helix.textTertiary)
                 }
+                .helixType(.body)
 
                 Text(option.blurb)
-                    .helixText(.compact)
-                    .foregroundStyle(HelixPalette.muted)
+                    .helixType(.secondary)
+                    .foregroundStyle(Color.helix.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack(spacing: 6) {
-                    stat("\(day.plannedSets(for: option))", "SETS", tint)
-                    stat("\(day.exercises(for: option).count)", "LIFTS", HelixPalette.platinum)
+                HStack(spacing: HelixSpace.s) {
+                    stat("\(day.plannedSets(for: option))", "sets", tint)
+                    stat("\(day.exercises(for: option).count)", "lifts", Color.helix.textPrimary)
                     if !dropped.isEmpty {
-                        stat("\(dropped.count)", "DROPPED", HelixPalette.dim)
+                        stat("\(dropped.count)", "dropped", Color.helix.textTertiary)
                     }
                 }
 
                 if !dropped.isEmpty {
                     Text("Not trained: " + dropped.map(\.name).joined(separator: ", "))
-                        .helixText(.small)
-                        .foregroundStyle(HelixPalette.dim)
+                        .helixType(.caption)
+                        .foregroundStyle(Color.helix.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(14)
+            .padding(HelixSpace.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: HelixRadius.xxl, style: .continuous)
-                    .fill(selected ? tint.alphaByte(0x14) : HelixPalette.cardFill)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: HelixRadius.xxl, style: .continuous)
-                    .strokeBorder(selected ? tint.alphaByte(0x66) : HelixPalette.cardBorder, lineWidth: 1)
-            )
+            .helixGlass(.tile)
+            .overlay {
+                // The selected card is the only one that draws an outline: a
+                // ring on both is a border, not a selection.
+                if selected {
+                    RoundedRectangle(cornerRadius: HelixCorner.tile, style: .continuous)
+                        .strokeBorder(tint, lineWidth: 1)
+                }
+            }
         }
         .helixPress(scale: 0.985)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private func stat(_ value: String, _ label: String, _ color: Color) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: HelixSpace.xs) {
             Text(value)
-                .helixText(.compact, weight: .bold, leading: .none)
-                .helixNumber()
+                .helixType(.caption).fontWeight(.bold).helixNumeral()
                 .foregroundStyle(color)
             Text(label)
-                .helixText(.micro, weight: .semibold, leading: .none)
-                .tracking(0.7)
-                .foregroundStyle(HelixPalette.dim)
+                .helixMicro()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(Capsule().fill(Color.white.opacity(0.04)))
+        .padding(.horizontal, HelixSpace.s)
+        .padding(.vertical, HelixSpace.xs)
+        .helixGlass(.row)
     }
 }
 

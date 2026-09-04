@@ -47,7 +47,7 @@ struct AtlasFigure: View {
     private var tints: [String: (Color, Double)] {
         var out: [String: (Color, Double)] = [:]
         for (muscle, intensity) in worked {
-            out[muscle.rawValue] = (monochromeTint ?? HelixPalette.muscle(muscle), intensity)
+            out[muscle.rawValue] = (monochromeTint ?? Color.helix.muscle(muscle), intensity)
         }
         return out
     }
@@ -117,6 +117,6 @@ struct AtlasFigure: View {
     return AtlasFigure(worked: MuscleCredit.worked(from: sets))
         .frame(height: 260)
         .padding()
-        .background(HelixPalette.obsidian)
+        .helixScreen(.train)
 }
 #endif

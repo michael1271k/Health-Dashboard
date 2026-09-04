@@ -40,12 +40,11 @@ struct MuscleDistributionSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: HelixSpace.l) {
                     counts
 
                     AtlasFigure(worked: MuscleCredit.worked(from: sets))
                         .frame(maxHeight: 300)
-                        .padding(.vertical, 4)
 
                     if ranked.isEmpty {
                         ContentUnavailableView(
@@ -53,26 +52,27 @@ struct MuscleDistributionSheet: View {
                             systemImage: "figure.strengthtraining.traditional",
                             description: Text("Tick a set and the body fills in.")
                         )
-                        .padding(.top, 20)
                     } else {
                         legend
                     }
 
                     Text("Direct work counts 1.0, assistance 0.5. Warm-ups count; unticked sets do not.")
-                        .helixText(.small)
-                        .foregroundStyle(HelixPalette.dim)
+                        .helixType(.caption)
+                        .foregroundStyle(Color.helix.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(18)
+                .padding(HelixSpace.l)
             }
-            .background(HelixPalette.obsidian)
+            .helixScreen(.train)
             .navigationTitle("Muscle distribution")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(HelixPalette.obsidian)
+        // Without this a drag on the list at the `.medium` detent grows the
+        // sheet instead of scrolling it.
+        .presentationContentInteraction(.scrolls)
     }
 
     /// Two totals, side by side, and the second one is why.
@@ -81,63 +81,74 @@ struct MuscleDistributionSheet: View {
     /// compound pays two or three muscles. Without the physical figure beside
     /// it, this panel reads as a second, disagreeing tally of the same thing.
     private var counts: some View {
-        HStack(spacing: 10) {
-            countTile(HelixFormat.sets(Double(model.physicalSets)), "PHYSICAL SETS", HelixPalette.platinum)
-            countTile(HelixFormat.sets(weightedTotal), "WEIGHTED SETS", HelixPalette.ember)
+        HStack(spacing: HelixSpace.grid) {
+            countTile(HelixFormat.sets(Double(model.physicalSets)), "Physical sets", Color.helix.textPrimary)
+            countTile(HelixFormat.sets(weightedTotal), "Weighted sets", Color.helix.accent(.train))
         }
     }
 
     private func countTile(_ value: String, _ label: String, _ color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: HelixSpace.xs) {
             Text(value)
-                .helixText(.fluid2XL, weight: .bold, leading: .none)
-                .helixNumber()
+                .helixHero()
                 .foregroundStyle(color)
             Text(label)
-                .helixText(.label, weight: .semibold, leading: .none)
-                .foregroundStyle(HelixPalette.muted)
+                .helixMicro()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .helixCard()
+        .padding(HelixSpace.m)
+        .helixGlass(.tile)
+        .accessibilityElement(children: .combine)
     }
 
     private var legend: some View {
         VStack(spacing: 0) {
             ForEach(ranked, id: \.muscle) { entry in
-                HStack(spacing: 10) {
-                    Circle()
-                        .fill(HelixPalette.muscle(entry.muscle))
-                        .frame(width: 8, height: 8)
-                    Text(entry.muscle.displayName)
-                        .helixText(.fluidBase, leading: .none)
-                        .foregroundStyle(HelixPalette.text)
-                    Spacer(minLength: 8)
-                    // The bar is the ranking, drawn. A column of numbers makes
-                    // you compare digits; a column of bars makes you compare
-                    // lengths, which is the comparison being asked for.
-                    HelixBar(
-                        value: entry.sets,
-                        goal: ranked.first?.sets,
-                        color: HelixPalette.muscle(entry.muscle),
-                        height: 4
-                    )
-                    .frame(width: 72)
-                    Text(HelixFormat.sets(entry.sets))
-                        .helixText(.fluidBase, weight: .semibold, leading: .none)
-                        .helixNumber()
-                        .foregroundStyle(HelixPalette.text)
-                        .frame(width: 30, alignment: .trailing)
-                }
-                .padding(.vertical, 9)
+                row(entry)
                 if entry.muscle != ranked.last?.muscle {
-                    Divider().overlay(HelixPalette.cardBorder)
+                    Divider().overlay(Color.helix.hairline)
                 }
             }
         }
-        .padding(.horizontal, 14)
-        .helixCard()
+        .padding(.horizontal, HelixSpace.m)
+        .helixGlass(.tile)
+    }
+
+    private func row(_ entry: (muscle: LandmarkMuscle, sets: Double)) -> some View {
+        let tint = Color.helix.muscle(entry.muscle)
+        return HStack(spacing: HelixSpace.grid) {
+            Circle().fill(tint).frame(width: 8, height: 8)
+            Text(entry.muscle.displayName)
+                .helixType(.body)
+                .foregroundStyle(Color.helix.textPrimary)
+            Spacer(minLength: HelixSpace.s)
+            // The bar is the ranking, drawn. A column of numbers makes you
+            // compare digits; a column of bars makes you compare lengths, which
+            // is the comparison being asked for. It is decorative — the number
+            // beside it is the reading — so it is hidden from VoiceOver and the
+            // row speaks as one element.
+            share(entry.sets, tint: tint)
+            Text(HelixFormat.sets(entry.sets))
+                .helixType(.body).fontWeight(.semibold).helixNumeral()
+                .foregroundStyle(Color.helix.textPrimary)
+                .frame(width: 30, alignment: .trailing)
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func share(_ value: Double, tint: Color) -> some View {
+        let peak = ranked.first?.sets ?? value
+        return GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.helix.hairline)
+                Capsule()
+                    .fill(tint)
+                    .frame(width: proxy.size.width * (peak > 0 ? value / peak : 0))
+            }
+        }
+        .frame(width: 72, height: 4)
+        .accessibilityHidden(true)
     }
 }
 

@@ -23,7 +23,23 @@ import HelixData
 /// with one real implementation) is an abstraction bought for nothing.
 @MainActor
 @Observable
-final class LoggerModel {
+final class LoggerModel: Identifiable {
+
+    /// Identity, for `fullScreenCover(item:)`.
+    ///
+    /// ── WHY THE COVER IS PRESENTED BY ITEM AND NOT BY A BOOLEAN ─────────────
+    /// `fullScreenCover(isPresented:)` evaluates its content builder against
+    /// whatever state exists at that instant, and the tab's builder read
+    /// `if let session` — so a flag flipped in the same runloop turn as the
+    /// model being assigned presented a cover with nothing in it. That is the
+    /// black screen. Presenting by item makes the model's existence the
+    /// PRECONDITION of the cover rather than a second fact that has to agree
+    /// with a flag, and the empty case stops being representable.
+    ///
+    /// `nonisolated let` of a `Sendable` type: `Identifiable` is not isolated,
+    /// so a main-actor-isolated `id` would make the conformance itself a data
+    /// race the compiler refuses.
+    nonisolated let id = UUID().uuidString
 
     // MARK: - Rows
 
@@ -107,7 +123,6 @@ final class LoggerModel {
         let plan: ProgramExercise
         var rows: [SetRow]
         var note: String
-        var isExpanded: Bool
 
         /// `nonisolated` because `Identifiable` is not: `ForEach` reads `id`
         /// while diffing, outside any actor, and a main-actor-isolated `id`
@@ -117,11 +132,10 @@ final class LoggerModel {
         nonisolated var id: String { plan.id }
         nonisolated var name: String { plan.name }
 
-        init(plan: ProgramExercise, rows: [SetRow], note: String = "", isExpanded: Bool = true) {
+        init(plan: ProgramExercise, rows: [SetRow], note: String = "") {
             self.plan = plan
             self.rows = rows
             self.note = note
-            self.isExpanded = isExpanded
         }
 
         /// PHYSICAL sets performed — warm-ups INCLUDED, ghosts excluded.
@@ -161,7 +175,11 @@ final class LoggerModel {
     private(set) var restingExercise: String?
 
     private let store: AppDatabase?
-    private var sessionId: String?
+    /// The `workout_sessions` row this device is writing into, once one exists.
+    /// Readable because the finish sheet's "View summary" pushes
+    /// `SessionDetailView(sessionId:)` at it — and `nil` is the honest answer
+    /// while nothing has been logged, which is what hides that button.
+    private(set) var sessionId: String?
     private let userId: String
 
     // MARK: - Derived
@@ -301,6 +319,23 @@ final class LoggerModel {
             kind: last?.kind == .warmup ? .normal : (last?.kind ?? .normal),
             previous: Self.previousLabel(exercise.plan)
         ))
+    }
+
+    /// Copy a set, immediately below itself.
+    ///
+    /// Load, reps, effort and KIND all carry over; `isDone` and `isRecord` do
+    /// not. A duplicate that arrived already ticked would be a set the store
+    /// has an event for that nobody performed — and the whole point of the
+    /// gesture is the next set, which has not happened yet.
+    func duplicate(_ row: SetRow, in exercise: ExerciseState) {
+        guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return }
+        exercise.rows.insert(
+            SetRow(
+                weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
+                kind: row.kind, isDone: false, previous: row.previous
+            ),
+            at: index + 1
+        )
     }
 
     func removeSet(_ row: SetRow, from exercise: ExerciseState) {

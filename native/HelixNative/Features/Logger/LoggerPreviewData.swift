@@ -15,8 +15,11 @@ import HelixCore
 #if DEBUG
 extension LoggerModel {
 
-    /// Upper B, cut phase. `logged: true` reproduces a real mid-session state.
-    static func previewUpperB(logged: Bool = false) -> LoggerModel {
+    /// Upper B, cut phase. `logged: true` reproduces a real mid-session state;
+    /// `resting: true` leaves the rest clock running, which is the only state
+    /// the nav-bar capsule exists in and therefore the only one that can be
+    /// photographed.
+    static func previewUpperB(logged: Bool = false, resting: Bool = false) -> LoggerModel {
         let model = LoggerModel(
             day: Program.helix5.day(key: "cb_b")!,
             phase: .cut,
@@ -31,6 +34,7 @@ extension LoggerModel {
         model.fill("Neutral-Grip Lat Pulldown", [(47, 12, 8.5), (49.5, 11, 9.5)])
         model.fill("Seated Cable Row (Wide Grip)", [(42.5, 12, 9), (42.5, 10, 9)])
         model.fill("Single Arm Cable Crossover", [(7.5, 15, 8)])
+        if resting, let next = model.currentSet?.exercise { model.startRest(for: next) }
         return model
     }
 

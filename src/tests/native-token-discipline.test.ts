@@ -26,10 +26,7 @@ const FEATURES = 'native/HelixNative/Features'
 const TILES = 'native/Packages/HelixUI/Sources/HelixUI/Tiles'
 
 /** Where colour is ALLOWED to be spelled out, because it is defined there. */
-const TOKEN_FILES = [
-  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixTokens.swift',
-  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixPalette.swift',
-]
+const TOKEN_FILES = ['native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixTokens.swift']
 
 /** Where the widget scale is DEFINED, and so may spell a point size. */
 const WIDGET_TYPE_FILE = 'HelixPrimitives.swift'
@@ -41,26 +38,27 @@ const WIDGET_TYPE_FILE = 'HelixPrimitives.swift'
  * second depth primitive (`helixCard`/`helixRow`) sitting beside `HelixCorner`
  * and `helixGlass`. Two scales for one decision is how a design system stops
  * being one, and the way that happens is somebody re-adding the file.
+ *
+ * `HelixPalette.swift` was the forty-hex Tailwind transliteration the whole app
+ * used to read, and latterly the parking space for that second scale. Wave 2.4
+ * re-skinned its last reader — the Live Logger — and deleted it. Every meaning
+ * it carried now has exactly one definition, in `HelixTokens.swift`.
  */
-const DELETED = ['native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixSurface.swift']
+const DELETED = [
+  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixSurface.swift',
+  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixPalette.swift',
+]
 
 /**
  * Screens written before the tokens existed.
  *
- * A ratchet, not a ban — exactly like the TypeScript twin. The Live Logger is
- * Wave 1's unfinished re-skin: it reads `HelixPalette`, and rewriting it inside
- * a tab wave would be a diff nobody could review. New files may not join this
- * list, and the list may only ever shrink.
+ * A ratchet, not a ban — exactly like the TypeScript twin, and as of Wave 2.4 it
+ * is EMPTY: the Live Logger was the last holdout and it is on the tokens. It
+ * stays here as the mechanism rather than the list, because the rule the empty
+ * set states — no view may name a colour — is the one worth keeping enforceable.
+ * New files may not join it and it may only ever shrink.
  */
-const LEGACY = new Set([
-  'Logger/AtlasFigure.swift',
-  'Logger/ExerciseCardView.swift',
-  'Logger/LiveLoggerView.swift',
-  'Logger/LoggerPreviewData.swift',
-  'Logger/MuscleDistributionSheet.swift',
-  'Logger/PhaseSheet.swift',
-  'Logger/RestTimerBar.swift',
-])
+const LEGACY = new Set<string>([])
 
 function swiftFiles(dir: string, base = dir, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -117,7 +115,7 @@ describe('native token discipline', () => {
     for (const file of LEGACY) {
       expect(existsSync(join(FEATURES, file)), `${file} is exempt but gone`).toBe(true)
     }
-    expect(LEGACY.size).toBeLessThanOrEqual(7)
+    expect(LEGACY.size).toBe(0)
   })
 
   it('the tokens themselves are defined in one place', () => {
