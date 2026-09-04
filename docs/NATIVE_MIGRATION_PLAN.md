@@ -130,6 +130,8 @@ Rule unchanged: **any domain module without golden vectors does not ship.** `jsR
 
 ## 3. The Design Mandate — Obsidian Glass
 
+> **Superseded 2026-09-04:** the values in this section (accent hexes, 12 % mesh, 20 pt tiles, 56 pt hero) are replaced by `docs/NATIVE_PHASE_2_PLAN.md` §3 (Obsidian Glass v2, desaturated + compact). The app is being renamed Onyx in Phase 2. Waves 9 and 10 below are postponed behind Phase 2.
+
 **The native app is not a port of the web app's look.** It is inspired by HELIX's identity (dark, data-dense, one accent per domain, the body atlas) and is otherwise new. `HelixPalette.swift` / `HelixType.swift` / `HelixSurface.swift` as they exist today are a Tailwind transliteration (hex constants, `white/[0.03]` fills, CSS `clamp()` frozen at 390 px). **They are replaced in Wave 1, not extended.**
 
 ### 3.1 Material, not paint
