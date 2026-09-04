@@ -6,14 +6,21 @@ import HelixData
 /// One movement: what it trains, how it is logged, and how much of it you have
 /// done.
 ///
-/// ── WHAT IS DELIBERATELY NOT HERE YET ───────────────────────────────────────
-/// The records, the estimated-1RM trend and the ledger are Wave 7 — they are
-/// Swift Charts work sitting on the PR engine, and drawing an empty chart now
-/// would be a promise the screen cannot keep. This wave is the HEADER: the facts
-/// about the movement itself, which come entirely from the domain and need no
-/// history at all.
+/// ── TWO HALVES ──────────────────────────────────────────────────────────────
+/// The header is the movement itself — what it trains, how it is logged — and
+/// comes entirely from the domain. Below it is the history: the record book
+/// (`personal_records`, keyed by canonical name), the session-best estimated
+/// 1RM as a Swift Chart, and the ledger of recent sets. An unloaded movement
+/// has no 1RM to estimate and no trend; its record is the rep count, and the
+/// chart says so rather than drawing a flat zero.
 struct ExerciseDetailView: View {
     let entry: ExerciseCatalogEntry
+
+    @Environment(AppEnvironment.self) private var environment
+    @State private var records: [PersonalRecordRow] = []
+    @State private var trend: [SessionAnalysis.TrailSeries] = []
+    @State private var ledger: [HistorySetRow] = []
+    @State private var loaded = false
 
     private var canonical: String { ExerciseAliases.canonicalName(entry.name) }
     private var group: MuscleGroup { MuscleGroup.forExercise(entry.name) }
@@ -93,8 +100,69 @@ struct ExerciseDetailView: View {
                 }
             } header: {
                 HelixSectionHeader("History", group.domain)
-            } footer: {
-                Text("Records, the estimated-1RM trend and the full ledger arrive with the charts.")
+            }
+
+            if !records.isEmpty {
+                Section {
+                    ForEach(records, id: \.axis) { r in
+                        LabeledContent {
+                            Text(recordValue(r)).helixNumeral().foregroundStyle(Color.helix.textPrimary)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(PrAxis(rawValue: r.axis).map { PrEngine.axisLabel($0, timed: timed) } ?? r.axis)
+                                Text(Self.longDate(r.achievedOn))
+                                    .font(.caption)
+                                    .foregroundStyle(Color.helix.textSecondary)
+                            }
+                        }
+                    }
+                } header: {
+                    HelixSectionHeader("Records", group.domain)
+                }
+            }
+
+            if loaded, !ledger.isEmpty {
+                Section {
+                    HelixChartCard("Estimated 1RM", domain: group.domain, headline: trend.first?.points.last.map { "\(jsIntegerString(jsRound1($0.kg))) kg" }) {
+                        if trend.isEmpty {
+                            HelixChartEmpty(timed ? "Held for time — the record is the duration." : "Unloaded — the record is the rep count.")
+                        } else {
+                            E1rmTrendChart(series: trend, scrollDays: spanDays > 90 ? 90 : nil)
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    ForEach(ledger) { set in
+                        HStack(spacing: 10) {
+                            Text(Self.shortDate(set.date))
+                                .font(.caption).helixNumeral()
+                                .foregroundStyle(Color.helix.textSecondary)
+                                .frame(minWidth: 52, alignment: .leading)
+                            Text(SetFormat.format(weightKg: set.weightKg, reps: Double(set.reps), timed: timed))
+                                .helixNumeral()
+                                .foregroundStyle(SetTags.isWorkingSet(set.setType) ? Color.helix.textPrimary : Color.helix.textTertiary)
+                            if let tag = SetTags.tag(for: set.setType) {
+                                Text(tag.label)
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(Color.helix.textTertiary)
+                            }
+                            Spacer(minLength: 4)
+                            if let rpe = set.rpe {
+                                Text("RPE \(jsIntegerString(rpe))")
+                                    .font(.caption).helixNumeral()
+                                    .foregroundStyle(Color.helix.textSecondary)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                } header: {
+                    HelixSectionHeader("Ledger", group.domain)
+                } footer: {
+                    Text("The last \(ledger.count) sets, newest first.")
+                }
             }
         }
         .listRowBackground(Rectangle().fill(.ultraThinMaterial))
@@ -102,6 +170,42 @@ struct ExerciseDetailView: View {
         .helixScreen(group.domain)
         .navigationTitle(canonical)
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            let database = environment.database, id = entry.id, key = canonical
+            let (sets, book) = await Task.detached(priority: .userInitiated) {
+                ((try? database.historySets(exerciseIds: [id])) ?? [], (try? database.personalRecords(exerciseKey: key)) ?? [])
+            }.value
+            records = book
+            let points = SessionAnalysis.sessionBestE1rm(sets)
+            trend = points.count >= 2 ? [SessionAnalysis.TrailSeries(id: key, points: points)] : []
+            ledger = Array(sets.reversed().prefix(40))
+            loaded = true
+        }
+    }
+
+    private var timed: Bool { TimedExercise.isTimed(canonical) }
+
+    /// Days between the first and last plotted point; past 90 the chart pans.
+    private var spanDays: Int {
+        guard let pts = trend.first?.points, let first = pts.first, let last = pts.last,
+              let a = ISODate.dayNumber(first.date), let b = ISODate.dayNumber(last.date) else { return 0 }
+        return b - a
+    }
+
+    /// A record as the axis means it: a load, a rep count or a hold, a set's
+    /// tonnage with the set that made it, an estimate.
+    private func recordValue(_ r: PersonalRecordRow) -> String {
+        switch PrAxis(rawValue: r.axis) {
+        case .reps: return timed ? "\(jsIntegerString(r.value)) sec" : "\(jsIntegerString(r.value)) reps"
+        case .volume:
+            let set = SetFormat.format(weightKg: r.weightKg, reps: r.reps.map(Double.init), timed: timed)
+            return r.weightKg == nil ? "\(jsIntegerString(r.value)) kg" : "\(jsIntegerString(r.value)) kg (\(set))"
+        default: return "\(jsIntegerString(jsRound1(r.value))) kg"
+        }
+    }
+
+    private static func shortDate(_ iso: String) -> String {
+        LogicalDay.date(fromISO: iso).map(HelixChart.shortDate) ?? iso
     }
 
     /// How the movement is LOGGED — the three facts that change which controls
@@ -180,11 +284,7 @@ private struct FlowRow: Layout {
 
 #if DEBUG
 #Preview("Exercise") {
-    NavigationStack {
-        ExerciseDetailView(entry: .init(
-            id: "1", name: "Seated Cable Row (Wide Grip)", setCount: 22, lastTrained: "2026-08-28"
-        ))
-    }
+    HistoryPreviews.view("exercise-history")
 }
 #endif
 

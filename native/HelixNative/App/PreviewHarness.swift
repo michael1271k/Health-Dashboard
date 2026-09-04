@@ -123,6 +123,14 @@ enum PreviewHarness {
             FuelPreviews.view(screen)
         case "today", "today-edit", "today-sheet":
             TodayPreviews.view(screen)
+        case "history", "session", "exercise-history":
+            HistoryPreviews.view(screen)
+        case "trends", "trends-empty":
+            TrendsPreviews.view(screen)
+        case "body-trends", "body-trends-empty":
+            BodyTrendsPreviews.view(screen)
+        case "pathfinder", "pathfinder-empty":
+            PathfinderPreviews.view(screen)
         case let s where s.hasPrefix("widgets"):
             WidgetPreviews.view(s)
         default:

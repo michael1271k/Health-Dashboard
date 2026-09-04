@@ -70,6 +70,10 @@ public struct HelixChartStyle: ViewModifier {
 public extension View {
     /// The one chart modifier. Colour, type, axis weight — everything a chart
     /// should not decide for itself.
+    ///
+    /// A chart that must shape its own axis (thin the labels, hide one) sets
+    /// `chartXAxis`/`chartYAxis` BEFORE this modifier: the axis closest to the
+    /// `Chart` wins, so an override placed after it is silently ignored.
     func helixChart(_ domain: HelixDomain) -> some View {
         modifier(HelixChartStyle(domain: domain))
     }
@@ -207,6 +211,12 @@ public struct HelixChartCard<Content: View>: View {
     let caption: String?
     let content: Content
 
+    /// The plot scales with the type, not the other way round: at AX5 the axis
+    /// labels are three times taller and a fixed 180 pt plot would be all
+    /// labels and no data.
+    @ScaledMetric(relativeTo: .body) private var plotHeight = HelixChart.plotHeight
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     public init(
         _ title: String,
         domain: HelixDomain,
@@ -222,8 +232,12 @@ public struct HelixChartCard<Content: View>: View {
     }
 
     public var body: some View {
+        // Title beside the headline, until the headline alone is a line wide.
+        let header = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline))
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            header {
                 Text(title.uppercased())
                     .font(.caption.weight(.semibold))
                     .tracking(0.6)
@@ -243,7 +257,7 @@ public struct HelixChartCard<Content: View>: View {
                     .foregroundStyle(Color.helix.textSecondary)
             }
             content
-                .frame(height: HelixChart.plotHeight)
+                .frame(height: plotHeight)
         }
         .padding(14)
         .helixGlass(.tile)
