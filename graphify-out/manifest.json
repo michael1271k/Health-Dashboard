@@ -3225,8 +3225,8 @@
     "semantic_hash": ""
   },
   "docs/NATIVE_MIGRATION_PLAN.md": {
-    "mtime": 1788520475.3870683,
-    "ast_hash": "5d80fe6abcc5f45707a53d1654122dca",
+    "mtime": 1788524739.9881144,
+    "ast_hash": "b19d1c635e5d93a2cb334e4de9001d67",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/AtlasFigure.swift": {
@@ -4575,8 +4575,8 @@
     "semantic_hash": ""
   },
   "scripts/native-shot.sh": {
-    "mtime": 1788520055.992036,
-    "ast_hash": "095faf6cf7739d0da4f8d079b0e9f42a",
+    "mtime": 1788524294.4813995,
+    "ast_hash": "7f816593f32043f9f0c32e4771ee4b88",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Training/Programs.swift": {
@@ -4595,8 +4595,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/App/PreviewHarness.swift": {
-    "mtime": 1788510747.9301617,
-    "ast_hash": "f0abf14d3b68758269db5ed5c186dfc0",
+    "mtime": 1788524294.4812508,
+    "ast_hash": "9bb7fa1e31055ce11d43eb68c2670e5a",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/You/BodyTargetsView.swift": {
@@ -4625,8 +4625,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/You/YouTabView.swift": {
-    "mtime": 1788519910.0812192,
-    "ast_hash": "8e0aa0bc66a2955aa30df883060554f2",
+    "mtime": 1788522016.8052692,
+    "ast_hash": "2f45f69fdee4f7482a08067abbb96e09",
     "semantic_hash": ""
   },
   "src/tests/native-token-discipline.test.ts": {
@@ -4715,8 +4715,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Exercises/ExerciseDetailView.swift": {
-    "mtime": 1788519910.077487,
-    "ast_hash": "619d8d0d27797220e0945104c2206c48",
+    "mtime": 1788524614.8437033,
+    "ast_hash": "8a1e43d9135e32ed39bcb6130aa6773a",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/bodyweight-exercise.json": {
@@ -4905,13 +4905,13 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Train/TrainTabView.swift": {
-    "mtime": 1788519910.0803018,
-    "ast_hash": "92389e64ca2c9fcdb946ec0ceab7ca8e",
+    "mtime": 1788522016.8050344,
+    "ast_hash": "3df5d2cba8bd440967686efe4eb5d673",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Day/DayTabView.swift": {
-    "mtime": 1788519910.077206,
-    "ast_hash": "07a77ac0bdb49f001b34d94250bf9d54",
+    "mtime": 1788522016.8051717,
+    "ast_hash": "ec5395d97a0dd1511409dd4500cf1c84",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures/fatigue-slots.json": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixUI/Tests/HelixUITests/HelixUITests.swift": {
-    "mtime": 1788510857.7984402,
-    "ast_hash": "9fed8df7e4d8b9a84559d9018cc61b29",
+    "mtime": 1788521903.3674853,
+    "ast_hash": "59f59fe4e28de6d719036b50d6998b7f",
     "semantic_hash": ""
   },
   "native/Packages/HelixUI/Sources/HelixUI/Tiles/HelixAtlasFigure.swift": {
@@ -5857,6 +5857,211 @@
   "native/HelixNative/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png": {
     "mtime": 1788520342.1824274,
     "ast_hash": "f8f76a9f863c6f62c8ee88d7e30edd46",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixUI/Sources/HelixUI/Charts/HelixChart.swift": {
+    "mtime": 1788524927.2924733,
+    "ast_hash": "7f32c609de715e5661cdc4d85e2be03a",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Body/BodyTrendsView.swift": {
+    "mtime": 1788524614.8432472,
+    "ast_hash": "9435073685e37d275375c16328f194ca",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/SessionHistoryView.swift": {
+    "mtime": 1788522839.947039,
+    "ast_hash": "36b77e18e7ab94e02fba3a36d8fd7571",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Pathfinder/PathfinderView.swift": {
+    "mtime": 1788524851.6258156,
+    "ast_hash": "e5204d3c26ecc8d342b7dbf257c49086",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Trends/TrainingTrendsView.swift": {
+    "mtime": 1788524980.0246317,
+    "ast_hash": "e5f79bb52593b039742da31618f411a9",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/History/HistoryAccess.swift": {
+    "mtime": 1788522084.4647822,
+    "ast_hash": "b9004698756fc07eb80779d9b807709f",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/History/TrainingTrendsStore.swift": {
+    "mtime": 1788522456.7442653,
+    "ast_hash": "c324144aec2e42eafc5221c3f749ee35",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/History/SessionHistoryStore.swift": {
+    "mtime": 1788523299.3362465,
+    "ast_hash": "dcbbf564bb7711f401b1fd61e567f4a0",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/SessionAnalysis.swift": {
+    "mtime": 1788523603.0855808,
+    "ast_hash": "37a7892c5ee7676ff807d4cc2b333969",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/CoreBridge.swift": {
+    "mtime": 1788522680.831894,
+    "ast_hash": "2f8ae895baa0bbaef87b91dd398f7de7",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Trends/TrendsPreviews.swift": {
+    "mtime": 1788522693.5328078,
+    "ast_hash": "242e126b3270faf591e30442a3479991",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/History/VitalsStore.swift": {
+    "mtime": 1788522693.7147655,
+    "ast_hash": "9d57ea2fbc42173f8667065c0287b502",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/E1rmTrendChart.swift": {
+    "mtime": 1788522697.9450665,
+    "ast_hash": "7284d7b0ccb5ec7a3b9ebdc7c9175d5e",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Tests/HelixDataTests/VitalsStoreTests.swift": {
+    "mtime": 1788522762.17208,
+    "ast_hash": "6bdc6c0c7e03fabdc4be2cdeba166818",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Body/VitalMetrics.swift": {
+    "mtime": 1788523913.085293,
+    "ast_hash": "acd0d6636c9e0994b66de454a0bc0086",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Tests/HelixDataTests/TrainingTrendsStoreTests.swift": {
+    "mtime": 1788522936.8595526,
+    "ast_hash": "ac742a7d7ea23b870a4cfaa47244c84f",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/History/WeeklyExportBuilder.swift": {
+    "mtime": 1788524614.843987,
+    "ast_hash": "001d1880a016e3eb05e9fe7b648319c4",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/SessionDetailView.swift": {
+    "mtime": 1788522994.6555057,
+    "ast_hash": "d00257b8ea0a7fc3ee8a04c47483eb6b",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Body/BodyTrendsPreviews.swift": {
+    "mtime": 1788523913.085228,
+    "ast_hash": "e723c609fd56bdf76f5511512ed0daef",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/History/HistoryPreviews.swift": {
+    "mtime": 1788523197.8784294,
+    "ast_hash": "9e3e783b7681e205c0c673c65b79aad6",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Tests/HelixDataTests/WeeklyExportBuilderTests.swift": {
+    "mtime": 1788523852.6698952,
+    "ast_hash": "4fd03f47e9aed856f7f4d6a3e8fc5ccf",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Tests/HelixDataTests/SessionHistoryStoreTests.swift": {
+    "mtime": 1788523882.6635675,
+    "ast_hash": "a3d45cfe1df2ed4db6b7d5316989e39a",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Pathfinder/PathfinderPreviews.swift": {
+    "mtime": 1788523987.565084,
+    "ast_hash": "53d5a9d4dd526c1c8021034c6fd318c3",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends-ax5.png": {
+    "mtime": 1788524717.3814433,
+    "ast_hash": "3fc8ead03c63bd7e8f63279cde7a5843",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends-empty-ax5.png": {
+    "mtime": 1788524450.3114543,
+    "ast_hash": "b86adbe696b1df80f53eb8b7f66bfdc5",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends-empty.png": {
+    "mtime": 1788524445.9871066,
+    "ast_hash": "6e746bad184eeb53ec723412b9a0e367",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends.png": {
+    "mtime": 1788524712.5307581,
+    "ast_hash": "46fad3faf44b7ffda2d6ff6b687a9eb5",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/exercise-history-ax5.png": {
+    "mtime": 1788524736.427969,
+    "ast_hash": "81b926c54943c7cbd99241fd047b7844",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/exercise-history.png": {
+    "mtime": 1788524732.2072728,
+    "ast_hash": "7abc92a53f20c3cff1e301ad1281de31",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/history-ax5.png": {
+    "mtime": 1788524384.1352222,
+    "ast_hash": "13b2284e5d361d4e861e07f611c70548",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/history.png": {
+    "mtime": 1788524379.7108161,
+    "ast_hash": "bcdd54ab732996f287d09d689c7bdc6a",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/pathfinder-ax5.png": {
+    "mtime": 1788525026.873085,
+    "ast_hash": "2b48f5354e2206fcbc3bd77436324e12",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/pathfinder-empty-ax5.png": {
+    "mtime": 1788524467.5024412,
+    "ast_hash": "d51fcbf1cad68f67b98f106d95caf3ee",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/pathfinder-empty.png": {
+    "mtime": 1788524463.4037712,
+    "ast_hash": "1a080265a1087a2073b42357c8fd71a8",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/pathfinder.png": {
+    "mtime": 1788525022.3881075,
+    "ast_hash": "4b1a096f292a91cc7797fb7b9d778959",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/session-ax5.png": {
+    "mtime": 1788524392.5499666,
+    "ast_hash": "40ff89b56b5ab2d41bab77f886f4fa3a",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/session.png": {
+    "mtime": 1788524388.4216957,
+    "ast_hash": "731a11e59e3b82bc5743258149a1db53",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/trends-ax5.png": {
+    "mtime": 1788525016.8544438,
+    "ast_hash": "431c7f762f20f5940c4de83bd7d52102",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/trends-empty-ax5.png": {
+    "mtime": 1788524432.6777442,
+    "ast_hash": "d7b419ca37ebf3f4565566f07e39b189",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/trends-empty.png": {
+    "mtime": 1788524427.7764785,
+    "ast_hash": "a08677dd6f3852b1d3c07dac8a06c565",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/trends.png": {
+    "mtime": 1788525011.4443972,
+    "ast_hash": "b8befc990510329c61b148a28d1a3e2d",
     "semantic_hash": ""
   }
 }
