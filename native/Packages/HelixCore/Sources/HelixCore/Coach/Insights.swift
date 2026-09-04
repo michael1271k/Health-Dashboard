@@ -21,11 +21,19 @@ public struct DayPoint: Codable, Equatable, Sendable {
     public var waterMl: Double?
     /// A declared nutrition exception — read by the adherence builder alone.
     public var exception: String?
+
+    public init(date: String, sleepMin: Double? = nil, restHr: Double? = nil, respiratory: Double? = nil, weightKg: Double? = nil, calories: Double? = nil, calorieGoal: Double? = nil, carbsG: Double? = nil, steps: Double? = nil, waterMl: Double? = nil, exception: String? = nil) {
+        self.date = date; self.sleepMin = sleepMin; self.restHr = restHr; self.respiratory = respiratory
+        self.weightKg = weightKg; self.calories = calories; self.calorieGoal = calorieGoal; self.carbsG = carbsG
+        self.steps = steps; self.waterMl = waterMl; self.exception = exception
+    }
 }
 
 public struct SessionPoint: Codable, Equatable, Sendable {
     public var date: String
     public var volumeKg: Double
+
+    public init(date: String, volumeKg: Double) { self.date = date; self.volumeKg = volumeKg }
 }
 
 public enum InsightTone: String, Codable, Sendable { case positive, caution, neutral }
@@ -37,6 +45,10 @@ public struct Insight: Codable, Equatable, Sendable {
     public var tone: InsightTone
     /// 0–1, used to rank which insights surface.
     public var confidence: Double
+
+    public init(id: String, headline: String, detail: String, tone: InsightTone, confidence: Double) {
+        self.id = id; self.headline = headline; self.detail = detail; self.tone = tone; self.confidence = confidence
+    }
 }
 
 /// `Number.prototype.toLocaleString()` in the en-US default: thousands grouped

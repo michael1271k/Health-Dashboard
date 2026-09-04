@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { biggestChange, type WeekTotals } from '@/components/dashboard/WeekSoFarCard'
+import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
 
 /**
  * "The Week So Far" replaced a card that listed four weekly means — every one

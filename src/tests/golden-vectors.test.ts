@@ -169,6 +169,8 @@ import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
 import { TABLE_KEYS, REALTIME_TABLES } from '@/lib/query/realtimeKeys'
 import { scopeToDay } from '@/lib/training/scopeToDay'
 import { debtBand, type SleepDebt } from '@/lib/sleep/debt'
+import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
+import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coach/scheduleReadiness'
 
 /**
  * THE GOLDEN VECTORS — the acceptance spec for the Swift port.
@@ -4842,6 +4844,82 @@ describe('golden vectors — coach insights', () => {
       module: 'coach/insights',
       fn: 'daysSinceLastSession / trainingGap / fuelVsForce / stallProtocol / computeInsights',
       note: 'Deterministic. `insights` is computeInsights at the given limit and `all` at 99 — ranked by confidence, stable on ties in builder order. Numbers in the prose use toLocaleString (en-US thousands separators).',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Week so far — the one change worth naming
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — week so far', () => {
+  it('exports the biggestChange vectors', () => {
+    const cases: Case<{ cur: WeekTotals; prev: WeekTotals }, ReturnType<typeof biggestChange>>[] = []
+    const add = (name: string, cur: WeekTotals, prev: WeekTotals) =>
+      cases.push({ name, input: { cur, prev }, expected: biggestChange(cur, prev) })
+
+    const base: WeekTotals = { volumeKg: 12000, sessions: 4, sleepMin: 430, score: 72 }
+    add('identical weeks say nothing', base, base)
+    add('tonnage up wins by percent', { ...base, volumeKg: 13800 }, base)
+    add('tonnage down is bad', { ...base, volumeKg: 9000 }, base)
+    add('a week from zero has no tonnage percentage', { ...base, volumeKg: 5000 }, { ...base, volumeKg: 0 })
+    add('sleep under ten minutes is noise', { ...base, sleepMin: 438 }, base)
+    add('sleep exactly ten minutes counts', { ...base, sleepMin: 440 }, base)
+    add('sleep down formats as h m', { ...base, sleepMin: 355 }, base)
+    add('sleep null on either side is skipped', { ...base, sleepMin: null }, base)
+    add('score moves by one', { ...base, score: 73 }, base)
+    add('score null on either side is skipped', base, { ...base, score: null })
+    add('sessions only wins an otherwise flat week', { ...base, sessions: 5 }, base)
+    add('sessions down', { ...base, sessions: 2 }, base)
+    add('sessions lose to a real percentage move', { ...base, sessions: 6, volumeKg: 12240 }, base)
+    add('sleep outranks tonnage when its percentage is larger', { ...base, volumeKg: 12240, sleepMin: 300 }, base)
+    add('tie on rank keeps builder order (tonnage first)', { ...base, volumeKg: 13200, score: 79.2 }, base)
+    add('rounding: 0.4% tonnage is zero and dropped', { ...base, volumeKg: 12048 }, base)
+    add('empty previous week', { volumeKg: 8000, sessions: 3, sleepMin: 410, score: 60 }, { volumeKg: 0, sessions: 0, sleepMin: null, score: null })
+    add('empty current week', { volumeKg: 0, sessions: 0, sleepMin: null, score: null }, base)
+
+    emit('week-so-far.json', {
+      module: 'dashboard/weekSoFar',
+      fn: 'biggestChange',
+      note: 'Ranked by |%|; sessions rank flat at 1 so a count only wins a week where nothing else moved. Sleep needs |Δ| >= 10 min. Text uses the typographic minus for a fall.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Schedule-aware readiness — the coach headline
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — schedule-aware readiness', () => {
+  it('exports the scheduleAwareReadiness vectors', () => {
+    const cases: Case<
+      { base: ReturnType<typeof computeReadiness> | null; ctx: ScheduleReadinessContext },
+      ReturnType<typeof scheduleAwareReadiness>
+    >[] = []
+    const bases = [null, computeReadiness({ sleepScore: 90, recoveryScore: 90 }, 90), computeReadiness({ sleepScore: 50, recoveryScore: 50 }, 50), computeReadiness({ sleepScore: 10, recoveryScore: 10 }, 10)]
+    const labels = [null, 'Upper A']
+    for (const [bi, base] of bases.entries()) {
+      for (const dayLabel of labels) {
+        for (const workoutToday of [false, true]) {
+          for (const contextMode of ['normal', 'travel']) {
+            for (const reentry of [false, true]) {
+              const ctx = { dayLabel, workoutToday, contextMode, reentry }
+              cases.push({
+                name: `base=${bi} day=${dayLabel} logged=${workoutToday} mode=${contextMode} reentry=${reentry}`,
+                input: { base, ctx },
+                expected: scheduleAwareReadiness(base, ctx),
+              })
+            }
+          }
+        }
+      }
+    }
+    emit('readiness-schedule.json', {
+      module: 'coach/scheduleReadiness',
+      fn: 'scheduleAwareReadiness',
+      note: 'Travel first; a scheduled rest day with no session says so; a scheduled day never reads Rest — it goes light instead.',
       cases,
     })
   })
