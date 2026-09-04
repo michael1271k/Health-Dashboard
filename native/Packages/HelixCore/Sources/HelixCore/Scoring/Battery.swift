@@ -109,6 +109,14 @@ public enum Battery {
         return clamp(0.7 * ratio + 0.15 * deepQ + 0.15 * rhrQ, 0, 1)
     }
 
+    /// How far through the waking day the user is — `hoursAwakeInTZ` from the
+    /// old snapshot route. The battery drains against this, so it is the one
+    /// input that changes every hour with no new data; a 07:00 wake convention,
+    /// clamped to `[0, maxAwake]`.
+    public static func hoursAwake(at now: Date = Date(), calendar: Calendar = .current, wakeHour: Int = 7) -> Double {
+        clamp(Double(calendar.component(.hour, from: now) - wakeHour), 0, defaults.maxAwake)
+    }
+
     /// Chronological drain, as a raised cosine over the waking day rather than a
     /// line: little before hour 6, most between 8 and 14, flattening late.
     /// `awake = 0` gives 0; `awake = maxAwake` gives `timeMax`. Monotonic.

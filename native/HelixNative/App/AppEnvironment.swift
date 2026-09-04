@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Supabase
+import WidgetKit
 import HelixCore
 import HelixData
 
@@ -35,6 +36,10 @@ public final class AppEnvironment {
     public let supabase: SupabaseClient
 
     private var authTask: Task<Void, Never>?
+    /// The commit observer, held for the life of the app (GRDB stops observing
+    /// when it is deallocated). Untyped so the app target need not import GRDB.
+    private var commitObserver: AnyObject?
+    private var widgetReload: Task<Void, Never>?
 
     public init(database: AppDatabase, supabase: SupabaseClient) {
         self.database = database
@@ -45,9 +50,8 @@ public final class AppEnvironment {
     /// user can fix.
     public static func live() throws -> AppEnvironment {
         let config = try SupabaseConfig.fromBundle()
-        let folder = URL.applicationSupportDirectory.appending(path: "Helix", directoryHint: .isDirectory)
         return AppEnvironment(
-            database: try AppDatabase.onDisk(folderURL: folder),
+            database: try AppDatabase.onDisk(folderURL: AppDatabase.sharedFolder()),
             supabase: HelixSupabase.makeClient(config: config)
         )
     }
@@ -61,6 +65,12 @@ public final class AppEnvironment {
     /// disagrees with.
     public func start() {
         guard authTask == nil else { return }
+        // Every local write — a set, a day edit, a mirror pull — reloads the
+        // widgets, debounced: a pull commits per table and a session logs a
+        // set every minute, and each reload is a full snapshot build.
+        commitObserver = database.onCommit { [weak self] in
+            Task { @MainActor in self?.scheduleWidgetReload() }
+        }
         authTask = Task { [weak self] in
             guard let self else { return }
             for await (event, session) in self.supabase.auth.authStateChanges {
@@ -94,6 +104,15 @@ public final class AppEnvironment {
     public var userIdString: String {
         if case .signedIn(let userID) = auth { return userID.uuidString }
         return ""
+    }
+
+    private func scheduleWidgetReload() {
+        widgetReload?.cancel()
+        widgetReload = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     public func reportStartupError(_ message: String) {

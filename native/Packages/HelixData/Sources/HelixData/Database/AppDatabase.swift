@@ -31,16 +31,61 @@ public final class AppDatabase: Sendable {
         try Self.migrator.migrate(writer)
     }
 
-    /// The on-disk store, in Application Support.
+    /// A connection that must not migrate — the widget extension's read-only
+    /// pool. Only the app owns the schema; an extension that ran the migrator
+    /// against a file the app has open would race it on the one thing neither
+    /// can recover from.
+    init(unmigrated writer: any DatabaseWriter) {
+        self.writer = writer
+    }
+
+    /// The App Group the app and the widget extension share the file through.
+    public static let appGroupID = "group.app.helix.health"
+    static let fileName = "helix.sqlite"
+
+    public enum OpenError: Error, Equatable {
+        /// `readOnly(folderURL:)` found no database — the app has not run yet.
+        case missingDatabase(String)
+    }
+
+    /// Where the store lives: the App Group container, so the widget extension
+    /// can read it, with the app's own Application Support folder as the
+    /// fallback when there is no container (a free-team build has no App
+    /// Groups). A store that predates the container is moved across ONCE,
+    /// with its WAL and SHM — a pool opened on the sqlite alone would replay a
+    /// stale checkpoint and the last unsynced sets would be gone.
+    public static func sharedFolder() -> URL {
+        let appSupport = URL.applicationSupportDirectory.appending(path: "Helix", directoryHint: .isDirectory)
+        guard let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
+        else { return appSupport }
+        let shared = container.appending(path: "Helix", directoryHint: .isDirectory)
+        moveStoreIfNeeded(from: appSupport, to: shared)
+        return shared
+    }
+
+    static func moveStoreIfNeeded(from old: URL, to new: URL) {
+        let fm = FileManager.default
+        let oldStore = old.appendingPathComponent(fileName).path
+        let newStore = new.appendingPathComponent(fileName).path
+        guard fm.fileExists(atPath: oldStore), !fm.fileExists(atPath: newStore) else { return }
+        try? fm.createDirectory(at: new, withIntermediateDirectories: true)
+        for suffix in ["", "-wal", "-shm"] where fm.fileExists(atPath: oldStore + suffix) {
+            try? fm.moveItem(atPath: oldStore + suffix, toPath: newStore + suffix)
+        }
+    }
+
+    /// The on-disk store.
     ///
-    /// `.completeFileProtection` would make the file unreadable while the device
-    /// is locked, which breaks background work; `.completeUnlessOpen` keeps an
-    /// already-open handle usable after lock, which is what a background sync
-    /// needs. The database holds training logs, not credentials — the session
-    /// token lives in the Keychain and nowhere near this file.
+    /// `.completeUntilFirstUserAuthentication`, not `.completeUnlessOpen`: a
+    /// widget timeline is computed while the phone is locked, by a process that
+    /// did not have the file open beforehand, so "unless open" would hand the
+    /// extension a file it cannot read at exactly the moment it runs. The
+    /// database holds training logs, not credentials — the session token lives
+    /// in the Keychain and nowhere near this file — so the first unlock after
+    /// boot is protection enough.
     public static func onDisk(folderURL: URL) throws -> AppDatabase {
         try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-        let url = folderURL.appendingPathComponent("helix.sqlite")
+        let url = folderURL.appendingPathComponent(fileName)
 
         var config = Configuration()
         config.foreignKeysEnabled = true
@@ -53,11 +98,48 @@ public final class AppDatabase: Sendable {
         #endif
 
         let pool = try DatabasePool(path: url.path, configuration: config)
+        #if !os(macOS)
         try FileManager.default.setAttributes(
-            [.protectionKey: FileProtectionType.completeUnlessOpen],
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
             ofItemAtPath: url.path
         )
+        #endif
         return try AppDatabase(pool)
+    }
+
+    /// The widget extension's view of the store: read-only, never migrated,
+    /// and absent until the app has run once. Throws `OpenError` for that last
+    /// case so the extension can show "open HELIX" rather than an empty tile.
+    public static func readOnly(folderURL: URL) throws -> AppDatabase {
+        let url = folderURL.appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw OpenError.missingDatabase(url.path)
+        }
+        var config = Configuration()
+        config.readonly = true
+        config.foreignKeysEnabled = true
+        return AppDatabase(unmigrated: try DatabasePool(path: url.path, configuration: config))
+    }
+
+    /// Fires after every committed write — an event append, a day edit, a
+    /// mirror pull — so the app can ask WidgetKit to reload. Whole database,
+    /// not a region: the widgets read nearly every table and the cost of a
+    /// spurious reload is one snapshot build. Cancel the return value to stop.
+    public func onCommit(_ handler: @escaping @Sendable () -> Void) -> AnyDatabaseCancellable {
+        DatabaseRegionObservation(tracking: .fullDatabase)
+            .start(in: writer, onError: { _ in }, onChange: { _ in handler() })
+    }
+
+    /// The one user this mirror holds. The widget extension has no auth
+    /// session, so it asks the store whose data it is — `profiles` first, then
+    /// any row that carries a `user_id`.
+    public func knownUserId() throws -> String? {
+        try writer.read { db in
+            for table in ["profiles", "user_goals", "daily_logs"] {
+                if let id = try String.fetchOne(db, sql: "SELECT user_id FROM \(table) LIMIT 1") { return id }
+            }
+            return nil
+        }
     }
 
     /// An in-memory store, for tests.

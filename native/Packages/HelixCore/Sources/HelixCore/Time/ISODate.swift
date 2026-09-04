@@ -48,6 +48,17 @@ public enum ISODate {
         dayNumber(iso).map { self.iso(dayNumber: $0 + n) }
     }
 
+    /// `monthStartOf` — the first of the month containing `iso`.
+    public static func monthStart(_ iso: String) -> String { String(iso.prefix(7)) + "-01" }
+
+    /// `lastDayOfMonth` — echoes an unparseable date, like the web.
+    public static func lastDayOfMonth(_ iso: String) -> String {
+        let parts = iso.split(separator: "-")
+        guard parts.count >= 2, let y = Int(parts[0]), let m = Int(parts[1]) else { return iso }
+        let (ny, nm) = m == 12 ? (y + 1, 1) : (y, m + 1)
+        return addDays(String(format: "%04d-%02d-01", ny, nm), -1) ?? iso
+    }
+
     /// `new Date(`${iso}T12:00:00Z`).getUTCDay()` — 0 = Sunday … 6 = Saturday,
     /// nil where the web reads NaN. 1970-01-01 was a Thursday (4).
     public static func weekday(_ iso: String) -> Int? {

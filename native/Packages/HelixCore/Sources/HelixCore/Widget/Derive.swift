@@ -70,6 +70,9 @@ public struct LedgerRow: Codable, Sendable, Equatable {
     public var reps: Double?
     public var achievedOn: String?
     enum CodingKeys: String, CodingKey { case axis, value, reps, exerciseKey = "exercise_key", achievedOn = "achieved_on" }
+    public init(exerciseKey: String, axis: String, value: Double?, reps: Double?, achievedOn: String?) {
+        self.exerciseKey = exerciseKey; self.axis = axis; self.value = value; self.reps = reps; self.achievedOn = achievedOn
+    }
 }
 
 public struct WidgetRecord: Codable, Sendable, Equatable {
@@ -356,5 +359,15 @@ public enum WidgetCadence {
             total += Double((to - from) * 60) / Double(minutes)
         }
         return total
+    }
+
+    /// When the next timeline entry is due — `HelixRefresh.nextRefresh` from the
+    /// old extension. A failed build asks again in `failureMinutes` regardless
+    /// of the hour, because a cadence that depends on data it failed to read
+    /// has a mode where it never refreshes again.
+    public static func nextRefresh(after now: Date = Date(), ok: Bool, calendar: Calendar = .current) -> Date {
+        let minutes = ok ? minutes(forHour: calendar.component(.hour, from: now)) : failureMinutes
+        return calendar.date(byAdding: .minute, value: minutes, to: now)
+            ?? now.addingTimeInterval(TimeInterval(minutes * 60))
     }
 }

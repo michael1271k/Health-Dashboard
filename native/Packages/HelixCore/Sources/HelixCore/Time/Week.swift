@@ -8,6 +8,14 @@ import Foundation
 public enum Week {
     public static let week0Start = "2026-07-12"
 
+    /// `weekStartDayFromEndDay` — `user_goals.week_end_day` → the start day
+    /// `start(of:startDay:)` wants. A week ending Sunday starts Monday; nil is
+    /// the Sunday-start default.
+    public static func startDay(fromEndDay endDay: Int?) -> Int {
+        guard let endDay else { return 0 }
+        return endDay == 0 ? 1 : 0
+    }
+
     /// The first day of the week containing `dateISO`, for a week starting on
     /// `startDay` (0 = Sunday, 1 = Monday). Echoes an unparseable date.
     public static func start(of dateISO: String, startDay: Int = 0) -> String {
