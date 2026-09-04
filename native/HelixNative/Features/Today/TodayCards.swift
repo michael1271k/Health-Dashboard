@@ -243,57 +243,90 @@ struct InsightCoachView: View {
 struct WeekSoFarView: View {
     let week: WeekSoFarSummary
 
+    /// ── WHY THIS IS A ROW AND NOT A CARD ────────────────────────────────────
+    /// It was a tile: a 52 pt ring beside three stacked lines — the week and the
+    /// day, the change against last week, and a tonnage-and-sleep line that the
+    /// Trends door already draws properly. Three lines to say "you are on
+    /// schedule", above the grid that is what Today is actually for.
+    ///
+    /// §3.1 gives the rule and §5.1 applied it here: rows are 44 pt and never
+    /// taller unless there are genuinely two lines of content. The week's shape
+    /// is one line — where you are, and whether it is up or down — and the
+    /// numbers behind it live one tap away.
     var body: some View {
-        HStack(spacing: HelixSpace.m) {
-            ring
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Week \(week.weekNumber) · day \(week.dayOfWeek) of 7")
-                    .helixType(.micro)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: HelixSpace.m) {
+                ring
+                Text(position)
+                    .helixType(.secondary)
                     .foregroundStyle(Color.helix.textSecondary)
-                    .textCase(.uppercase)
-                if let change = week.change {
-                    HStack(spacing: 6) {
-                        Image(systemName: change.direction == .up ? "arrow.up.right" : "arrow.down.right")
-                            .helixType(.caption).fontWeight(.bold)
-                            .foregroundStyle(change.good ? Color.helix.good : Color.helix.danger)
-                        Text(change.label).foregroundStyle(Color.helix.textPrimary)
-                        Text(change.text)
-                            .fontDesign(.rounded).monospacedDigit()
-                            .foregroundStyle(change.good ? Color.helix.good : Color.helix.danger)
-                        Text("vs last week").foregroundStyle(Color.helix.textTertiary)
-                    }
-                    .helixType(.secondary).fontWeight(.semibold)
-                } else {
-                    Text("Level with last week so far.").helixType(.secondary).foregroundStyle(Color.helix.textSecondary)
-                }
-                Text("\(Format.volume(week.current.volumeKg)) lifted · \(Format.sleep(week.current.sleepMin)) sleep")
-                    .helixType(.caption).foregroundStyle(Color.helix.textSecondary)
+                    .lineLimit(1)
+                Spacer(minLength: HelixSpace.s)
+                change
             }
-            Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                HStack(spacing: HelixSpace.s) {
+                    ring
+                    Text(position)
+                        .helixType(.secondary)
+                        .foregroundStyle(Color.helix.textSecondary)
+                }
+                change
+            }
+            .padding(.vertical, HelixSpace.s)
         }
-        .padding(HelixSpace.l)
-        .helixGlass(.tile)
+        .padding(.horizontal, HelixSpace.m)
+        .frame(minHeight: 44)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .helixGlass(.row)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(position). \(spokenChange)")
     }
 
+    private var position: String {
+        "Week \(week.weekNumber) · \(week.current.sessions) of \(max(1, week.sessionTarget)) sessions"
+    }
+
+    private var spokenChange: String {
+        guard let change = week.change else { return "Level with last week so far." }
+        return "\(change.label) \(change.text) versus last week."
+    }
+
+    /// The change, or the absence of one — never a blank space where a verdict
+    /// would go. A row that shows nothing when nothing moved reads as a row
+    /// that failed to load.
+    @ViewBuilder
+    private var change: some View {
+        if let change = week.change {
+            HStack(spacing: HelixSpace.xs) {
+                Image(systemName: change.direction == .up ? "arrow.up.right" : "arrow.down.right")
+                Text(change.label)
+                    .foregroundStyle(Color.helix.textSecondary)
+                Text(change.text).helixNumeral()
+            }
+            .helixType(.caption).fontWeight(.semibold)
+            .foregroundStyle(change.good ? Color.helix.good : Color.helix.danger)
+            .lineLimit(1)
+        } else {
+            Text("Level")
+                .helixType(.caption)
+                .foregroundStyle(Color.helix.textTertiary)
+        }
+    }
+
+    /// Decorative: the reading is spoken by the row's own label. Small enough
+    /// that type inside it would be unreadable, so there is none — the count is
+    /// in the line beside it, where it can grow with Dynamic Type.
     private var ring: some View {
         let target = max(1, week.sessionTarget)
-        let done = week.current.sessions
         return ZStack {
-            Circle().stroke(Color.helix.hairline, lineWidth: 6)
+            Circle().stroke(Color.helix.hairline, lineWidth: 3)
             Circle()
-                .trim(from: 0, to: min(1, Double(done) / Double(target)))
-                .stroke(HelixDomain.train.accent, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .trim(from: 0, to: min(1, Double(week.current.sessions) / Double(target)))
+                .stroke(HelixDomain.train.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            Text("\(done)/\(target)")
-                .helixType(.caption).fontWeight(.bold).helixNumeral()
-                .foregroundStyle(Color.helix.textPrimary)
         }
-        .frame(width: 52, height: 52)
-        // A fixed-diameter ring around type that scales: at AX5 the numeral
-        // alone is taller than the ring. The whole thing is decorative — the
-        // reading is spoken by the label on the row beside it — so the type is
-        // clamped rather than the ring being grown into a screen of its own.
-        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        .accessibilityLabel("\(done) of \(target) sessions")
+        .frame(width: 22, height: 22)
+        .accessibilityHidden(true)
     }
 }

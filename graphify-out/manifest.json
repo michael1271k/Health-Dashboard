@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "resources/icon.png": {
-    "mtime": 1788426985.9419231,
-    "ast_hash": "c634353d937b06a2348d5a52eb606dfb",
+    "mtime": 1788552423.3712978,
+    "ast_hash": "16a2ca1f207f99da41196fe94bb44ed4",
     "semantic_hash": ""
   },
   "scripts/backfill-prs.mjs": {
@@ -3190,8 +3190,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Shell/RootView.swift": {
-    "mtime": 1788551020.2165372,
-    "ast_hash": "f87aa94e6797dc7816f08e1b3924d08e",
+    "mtime": 1788552423.3043764,
+    "ast_hash": "f094e713d38324bb16b86e4bc2258df5",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Auth/HelixSupabase.swift": {
@@ -3230,48 +3230,43 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/AtlasFigure.swift": {
-    "mtime": 1788551020.2127821,
-    "ast_hash": "5aa8bb770b2411b133d2cf56c99d1b46",
+    "mtime": 1788552423.3017707,
+    "ast_hash": "dbbee117f5c8f086e7e04a7add14cab0",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/ExerciseCardView.swift": {
-    "mtime": 1788551020.2131588,
-    "ast_hash": "ada6e4b0150a2e6e458c6e022afe2acc",
+    "mtime": 1788552423.3019502,
+    "ast_hash": "219c0a0f425915b0f873ead4a0ed560c",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/LiveActivityController.swift": {
-    "mtime": 1788426985.927419,
-    "ast_hash": "a21cf053945ad55264208f1ed8683e3a",
+    "mtime": 1788552423.3028843,
+    "ast_hash": "ac61f99599f5957213d5fc506ed81a86",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/LiveLoggerView.swift": {
-    "mtime": 1788551020.2134933,
-    "ast_hash": "2e9c08917bcb6312a0df49f62fa57547",
+    "mtime": 1788552423.3030407,
+    "ast_hash": "43d1f9910e56909c89c58ae99dd9b584",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/LoggerModel.swift": {
-    "mtime": 1788426985.9276805,
-    "ast_hash": "a034823e9648c00de373b878534723c2",
+    "mtime": 1788552423.3034956,
+    "ast_hash": "2f7614fc2a3fcaa3ab9c45dad8ce88d2",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/LoggerPreviewData.swift": {
-    "mtime": 1788426985.9277914,
-    "ast_hash": "adb405b6c36abe7f4e884de66cc191d4",
+    "mtime": 1788552423.3038566,
+    "ast_hash": "b7f3c853c0eea739d431cd14955617de",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/MuscleDistributionSheet.swift": {
-    "mtime": 1788551020.2137616,
-    "ast_hash": "67b30d9e7019642141f7a103616c9340",
+    "mtime": 1788552423.304098,
+    "ast_hash": "5f6e9674529a7889b193685f8e17716a",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Logger/PhaseSheet.swift": {
-    "mtime": 1788551020.2139697,
-    "ast_hash": "71ab09c73a5bb66d6e199abf07498ef2",
-    "semantic_hash": ""
-  },
-  "native/HelixNative/Features/Logger/RestTimerBar.swift": {
-    "mtime": 1788551020.2146075,
-    "ast_hash": "98310db52eb6564880c545fe8a36be65",
+    "mtime": 1788552423.3042295,
+    "ast_hash": "02f5e63202fdd66f0c98ae25b01a308d",
     "semantic_hash": ""
   },
   "native/HelixNativeTests/LoggerModelTests.swift": {
@@ -3280,8 +3275,8 @@
     "semantic_hash": ""
   },
   "native/HelixNativeWidgets/HelixNativeWidgets.swift": {
-    "mtime": 1788551020.2302911,
-    "ast_hash": "1940de859ad07139d8066349fbccccd2",
+    "mtime": 1788552423.3092918,
+    "ast_hash": "b8a6d94542380032efacee7c0a3a1b3b",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Nutrition/ExceptionDay.swift": {
@@ -3390,8 +3385,8 @@
     "semantic_hash": ""
   },
   "native/Shared/HelixWorkoutAttributes.swift": {
-    "mtime": 1788426985.9384162,
-    "ast_hash": "c6c3d9645b6ba922a9a8de3b95153120",
+    "mtime": 1788552423.3096838,
+    "ast_hash": "24fb148f7f064bb42165f018655f7d8d",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/SyncTranslation.swift": {
@@ -3410,8 +3405,8 @@
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/PostgRESTRemote.swift": {
-    "mtime": 1788551548.041204,
-    "ast_hash": "58e8d4aa0148b7e13b2f2982e0235802",
+    "mtime": 1788552422.5107696,
+    "ast_hash": "7e3174e45ce9f83a0caca3e6d384e594",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Tests/HelixDataTests/SyncTranslationTests.swift": {
@@ -4430,8 +4425,8 @@
     "semantic_hash": ""
   },
   "scripts/native-shot.sh": {
-    "mtime": 1788551020.540651,
-    "ast_hash": "e8c0d65430350b7afa915f40c7a944ae",
+    "mtime": 1788552423.3716185,
+    "ast_hash": "c6159881da7c514267576b64bf4f8b94",
     "semantic_hash": ""
   },
   "native/Packages/HelixCore/Sources/HelixCore/Training/Programs.swift": {
@@ -4450,8 +4445,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/App/PreviewHarness.swift": {
-    "mtime": 1788551020.2034235,
-    "ast_hash": "63a9c28080eface696d0410c06f54ef1",
+    "mtime": 1788552423.3016245,
+    "ast_hash": "2eaa31b545f8d551ef07ef4fbed8e2c7",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/You/BodyTargetsView.swift": {
@@ -4485,8 +4480,8 @@
     "semantic_hash": ""
   },
   "src/tests/native-token-discipline.test.ts": {
-    "mtime": 1788551020.559473,
-    "ast_hash": "b450245b89abb733a39971b882766852",
+    "mtime": 1788552423.3718,
+    "ast_hash": "699b40ab6fd5e25cf22a8e5d1c9985c6",
     "semantic_hash": ""
   },
   "native/__screenshots__/body-ax5.png": {
@@ -4759,11 +4754,6 @@
     "ast_hash": "a50e1a11de1109622f5a056dc21a1bc1",
     "semantic_hash": ""
   },
-  "native/HelixNative/Features/Train/TrainTabView.swift": {
-    "mtime": 1788551020.2186053,
-    "ast_hash": "dba056f0f044c29cf233af9d41a71320",
-    "semantic_hash": ""
-  },
   "native/HelixNative/Features/Day/DayTabView.swift": {
     "mtime": 1788551020.2077687,
     "ast_hash": "ff6bb5618af515d335a1194f5d86d82e",
@@ -4820,13 +4810,13 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/train-ax5.png": {
-    "mtime": 1788551020.4704437,
-    "ast_hash": "4e14a80f7c2a3d4934e239cbaecbc24a",
+    "mtime": 1788552423.3494177,
+    "ast_hash": "f0aef2ce07bf2f5a2c733423ecf1a075",
     "semantic_hash": ""
   },
   "native/__screenshots__/train.png": {
-    "mtime": 1788551020.4750497,
-    "ast_hash": "e30e62b29a2a906dd1f8896d9c360360",
+    "mtime": 1788552423.3536484,
+    "ast_hash": "742c702e9067f61558ae1210ca613d2a",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Day/DomsMap.swift": {
@@ -5344,14 +5334,9 @@
     "ast_hash": "bd661f3805bbfd3bdcbe85640c1aa333",
     "semantic_hash": ""
   },
-  "native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixPalette.swift": {
-    "mtime": 1788551020.3321853,
-    "ast_hash": "fa339385d3856faba4218f4dae8b9bc1",
-    "semantic_hash": ""
-  },
   "native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixTokens.swift": {
-    "mtime": 1788551020.3323982,
-    "ast_hash": "3d790bb3b8c854298865154657d94994",
+    "mtime": 1788552423.309498,
+    "ast_hash": "f4d191ff087ec2a562b3f1b783861719",
     "semantic_hash": ""
   },
   "native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixType.swift": {
@@ -5570,8 +5555,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Today/TodayCards.swift": {
-    "mtime": 1788551020.2176511,
-    "ast_hash": "e0dd1ffd09eb8fd8caf546ad9493c0fc",
+    "mtime": 1788552423.3046093,
+    "ast_hash": "14c8c3b2ccf10c55f9dc947550ee8f24",
     "semantic_hash": ""
   },
   "native/HelixNative/Features/Today/TodayModel.swift": {
@@ -5655,33 +5640,33 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/today-ax5.png": {
-    "mtime": 1788551020.4421813,
-    "ast_hash": "7b7afbb2f596cd5c5a60e4aae2421b31",
+    "mtime": 1788552423.3210495,
+    "ast_hash": "d54c17edf67be1c1e5497fc3fcbd281f",
     "semantic_hash": ""
   },
   "native/__screenshots__/today-edit-ax5.png": {
-    "mtime": 1788551020.4454124,
-    "ast_hash": "84b5b90ef6155727d56db07c43e8a13f",
+    "mtime": 1788552423.324057,
+    "ast_hash": "70f495c52f8b1672c99cae0449de3ee5",
     "semantic_hash": ""
   },
   "native/__screenshots__/today-edit.png": {
-    "mtime": 1788551020.4490902,
-    "ast_hash": "16e6c8b0fdf0dcef3ca354bff9939828",
+    "mtime": 1788552423.3281987,
+    "ast_hash": "1b6e72b9b5826e673db52db188a2d903",
     "semantic_hash": ""
   },
   "native/__screenshots__/today-sheet-ax5.png": {
-    "mtime": 1788551020.4524462,
-    "ast_hash": "b6c8403c930eadb8b57ee2396834a30c",
+    "mtime": 1788552423.3318603,
+    "ast_hash": "72c81a7c2cad5c4d2c67493a26683d4c",
     "semantic_hash": ""
   },
   "native/__screenshots__/today-sheet.png": {
-    "mtime": 1788551020.4619234,
-    "ast_hash": "6e7869d1c2775e5187518bcd94999a37",
+    "mtime": 1788552423.3407576,
+    "ast_hash": "bf54647e2ec7a6796dcda9bae55fb688",
     "semantic_hash": ""
   },
   "native/__screenshots__/today.png": {
-    "mtime": 1788551020.464964,
-    "ast_hash": "dea5de5b1917deeeb56784ff6192952e",
+    "mtime": 1788552423.3441749,
+    "ast_hash": "545b664f39f6447156d350f25b79a554",
     "semantic_hash": ""
   },
   "native/HelixNative/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json": {
@@ -5705,8 +5690,8 @@
     "semantic_hash": ""
   },
   "native/HelixNative/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png": {
-    "mtime": 1788551020.2247057,
-    "ast_hash": "f8f76a9f863c6f62c8ee88d7e30edd46",
+    "mtime": 1788552423.3090599,
+    "ast_hash": "f16df8a1943116abb925b69a2a916ca8",
     "semantic_hash": ""
   },
   "native/Packages/HelixUI/Sources/HelixUI/Charts/HelixChart.swift": {
@@ -5924,9 +5909,64 @@
     "ast_hash": "511e92c506fa7094b62ca9e964dd87e6",
     "semantic_hash": ""
   },
+  "native/Packages/HelixUI/Sources/HelixUI/Brand/OnyxMark.swift": {
+    "mtime": 1788551020.3307278,
+    "ast_hash": "fa3c12f8fc868a735446677855c544ed",
+    "semantic_hash": ""
+  },
   "native/HelixNative/App/SyncCoordinating.swift": {
     "mtime": 1788551760.544674,
     "ast_hash": "26e5963e2191ba2611be49d8095cf48f",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/today-sheet-vitals-ax5.png": {
+    "mtime": 1788552423.3341374,
+    "ast_hash": "b3abd9ff9806a061b908aecdb9151fe6",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/today-sheet-vitals.png": {
+    "mtime": 1788552423.3377032,
+    "ast_hash": "beb0dada99f093d9e96b72937685f5ee",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Logger/FinishSheet.swift": {
+    "mtime": 1788552423.302183,
+    "ast_hash": "6b76dec65e3fa3dc44039a3717ccd59e",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Logger/LoggerPreviews.swift": {
+    "mtime": 1788552423.303961,
+    "ast_hash": "253961fd705674779bf8e8a46d858b4e",
+    "semantic_hash": ""
+  },
+  "native/HelixNative/Features/Workout/WorkoutTabView.swift": {
+    "mtime": 1788552423.3048275,
+    "ast_hash": "5517c7329c329e6c100c23e3c5bb7fd3",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-ax5.png": {
+    "mtime": 1788552423.3123214,
+    "ast_hash": "fa7a2af864b293ff616c2ad4835f1179",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-finish-ax5.png": {
+    "mtime": 1788552423.313817,
+    "ast_hash": "263fb4a1aaf868255bd5f6ac2c3af99b",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-finish.png": {
+    "mtime": 1788552423.315542,
+    "ast_hash": "b01965b1b6a41cace22350b9c5897dac",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger.png": {
+    "mtime": 1788552423.3169212,
+    "ast_hash": "5acfafc91638a44b550bf81268bb3f32",
+    "semantic_hash": ""
+  },
+  "native/Packages/HelixData/Sources/HelixData/Scoring/DailyScoreWriter.swift": {
+    "mtime": 1788551704.641165,
+    "ast_hash": "a7d658f98ad4e70f2d7e921b19879733",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Sources/HelixData/Sync/SyncCoordinator.swift": {
@@ -5939,34 +5979,14 @@
     "ast_hash": "e0e333a9246d55cbf58fd4d24ac8d1fa",
     "semantic_hash": ""
   },
-  "native/Packages/HelixUI/Sources/HelixUI/Brand/OnyxMark.swift": {
-    "mtime": 1788551020.3307278,
-    "ast_hash": "fa3c12f8fc868a735446677855c544ed",
-    "semantic_hash": ""
-  },
-  "native/__screenshots__/today-sheet-vitals-ax5.png": {
-    "mtime": 1788551020.4549441,
-    "ast_hash": "4c7f53f141a9803a6e806156e113ebed",
-    "semantic_hash": ""
-  },
-  "native/__screenshots__/today-sheet-vitals.png": {
-    "mtime": 1788551020.4578846,
-    "ast_hash": "f63597924e9d1358e2dc0f523759a671",
-    "semantic_hash": ""
-  },
-  "native/Packages/HelixData/Sources/HelixData/Scoring/DailyScoreWriter.swift": {
-    "mtime": 1788551704.641165,
-    "ast_hash": "a7d658f98ad4e70f2d7e921b19879733",
+  "native/Packages/HelixData/Tests/HelixDataTests/ScoringHolesTests.swift": {
+    "mtime": 1788552048.370905,
+    "ast_hash": "7dba9795ea54191bda90d63e251e4c6b",
     "semantic_hash": ""
   },
   "native/Packages/HelixData/Tests/HelixDataTests/SyncCoordinatorTests.swift": {
     "mtime": 1788552138.3115263,
     "ast_hash": "bdebe1f8eaa0a80591811f4b3268722a",
-    "semantic_hash": ""
-  },
-  "native/Packages/HelixData/Tests/HelixDataTests/ScoringHolesTests.swift": {
-    "mtime": 1788552048.370905,
-    "ast_hash": "7dba9795ea54191bda90d63e251e4c6b",
     "semantic_hash": ""
   }
 }

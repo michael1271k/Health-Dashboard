@@ -99,11 +99,12 @@ final class LiveActivityController {
             rpe: current?.row.rpe.map { "RPE \(HelixFormat.rpe($0))" } ?? "",
             lastTime: current?.row.previous ?? "",
             volume: "\(HelixFormat.volume(model.totalVolumeKg)) kg",
-            sets: "\(model.completedSets)",
-            records: model.recordCount,
+            setsDone: model.completedSets,
+            setsPlanned: model.plannedSets,
+            prsThisSession: model.recordCount,
             restEndsAt: model.restEndsAt,
             spark: model.volumeCurve,
-            accent: model.day.accent
+            dayKey: model.day.key
         )
     }
 }

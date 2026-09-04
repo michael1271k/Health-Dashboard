@@ -49,12 +49,21 @@ struct HelixWorkoutAttributes: ActivityAttributes {
         /// the movement is new — a Lock Screen has no room to say "no data"
         /// politely.
         var lastTime: String
-        /// Live session totals, formatted. "1 074 kg", "12".
+        /// Live session tonnage, formatted. "1 074 kg".
         var volume: String
-        var sets: String
-        /// Records claimed so far. Zero renders as NOTHING: a permanent gold
-        /// zero is how gold stops meaning a personal record.
-        var records: Int
+        /// Working sets ticked, and what the deck prescribes.
+        ///
+        /// ── WHY TWO INTEGERS AND NOT ONE STRING ─────────────────────────────
+        /// Every other field here is pre-formatted because the card only ever
+        /// draws it. These two are the exception on purpose: the card draws a
+        /// PROGRESS — "9 of 22", a ring, a bar — and a progress needs the two
+        /// numbers apart to divide them. "12" arriving as text was why the Lock
+        /// Screen could say how much you had done and never how much was left.
+        var setsDone: Int
+        var setsPlanned: Int
+        /// Records claimed in THIS session. Zero renders as NOTHING: a permanent
+        /// gold zero is how gold stops meaning a personal record.
+        var prsThisSession: Int
         /// When the current rest period ends, so the card can count it down
         /// itself with a `Text(_:style:)` timer. `nil` means not resting, which
         /// is not the same as a timer at zero.
@@ -68,10 +77,17 @@ struct HelixWorkoutAttributes: ActivityAttributes {
         /// and a chart that grew without bound would cost more the longer the
         /// session ran, which is exactly backwards.
         var spark: [Double]
-        /// The workout's own colour, as `0xRRGGBB`. Sent rather than derived so
-        /// the activity and the deck header cannot drift: `ProgramDay.accent`
-        /// is the single source.
-        var accent: UInt32
+        /// The workout's own day key — "cb_b", "legs_a".
+        ///
+        /// ── WHY A KEY AND NOT A COLOUR ──────────────────────────────────────
+        /// It used to be `ProgramDay.accent`, a raw `0xRRGGBB` from the Phase-1
+        /// palette, sent so the card and the deck header could not drift. They
+        /// drifted anyway the moment Onyx re-keyed the day colours (§3.2): the
+        /// deck read `Color.helix.day(key)` and the Lock Screen still carried
+        /// last year's orange. Sending the KEY and letting both sides resolve it
+        /// through the one token function is what actually makes drift
+        /// impossible — the colour has exactly one definition again.
+        var dayKey: String
     }
 
     /// The workout's name — fixed for the life of the activity, which is

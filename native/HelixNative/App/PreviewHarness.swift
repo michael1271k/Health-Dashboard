@@ -94,7 +94,7 @@ enum PreviewHarness {
         case "train":
             // A fixed day, so the shot does not become a rest-day card on
             // Wednesdays and Saturdays.
-            NavigationStack { TrainTabView(seededDay: Program.helix5.day(key: "cb_b")) }
+            NavigationStack { WorkoutTabView(seededDay: Program.helix5.day(key: "cb_b")) }
                 .environment(AppEnvironment.preview)
         case "levers":
             NavigationStack { LeversView(model: model) }
@@ -121,6 +121,8 @@ enum PreviewHarness {
             DayPreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty":
             FuelPreviews.view(screen)
+        case "logger", "logger-finish":
+            LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals":
             TodayPreviews.view(screen)
         case "history", "session", "exercise-history":

@@ -14,19 +14,28 @@ import HelixData
 /// What is gone: a sticky header re-implemented in JavaScript, a hand-rolled
 /// bottom sheet, a scroll-position memory, an edge-swipe gesture, a
 /// pull-to-refresh. All five exist in the web app to imitate behaviour a
-/// `NavigationStack`, a `.sheet` and a `.safeAreaInset` simply have.
+/// `NavigationStack`, a `.sheet` and a toolbar simply have.
 ///
-/// What is new: the header is a MATERIAL that content scrolls under rather than
-/// a strip that content is pushed below; the numbers you type are the largest
-/// thing on a row; the rest clock is a floating object with its own depth
-/// instead of a figure in the toolbar; and every card is striped by the muscle
-/// it trains rather than by the workout it belongs to.
+/// ── AND WHAT WAVE 2.4 CHANGED ───────────────────────────────────────────────
+/// Wave 1 hid the navigation bar and drew its own: a hero header that collapsed
+/// into a compact one, three stat tiles, a floating rest bar with its own ring
+/// and its own ± buttons. That is 180 pt of chrome above a set row, all of it
+/// re-implementing something the system ships — and re-implementing it worse,
+/// because the collapse animated a frame behind the scroll.
+///
+/// So the bar is the system's bar. The rest clock lives in it, as a capsule in
+/// the principal slot, which is exactly where iOS puts a running timer in Phone
+/// and in Voice Memos. Everything the header used to hold that is not a number
+/// you are reading right now moved into the trailing menu, and what is left on
+/// screen is one 44 pt strip of totals and the movement in front of you.
 struct LiveLoggerView: View {
     @State private var model: LoggerModel
     @State private var showDistribution = false
     @State private var showPhase = false
-    @State private var showFinishConfirm = false
-    @State private var isCollapsed = false
+    @State private var showFinish = false
+    /// Which card the deck is on. Bound to `.scrollPosition`, so writing it
+    /// scrolls and scrolling writes it.
+    @State private var focus: String?
 
     /// `@State`, emphatically not `let`.
     ///
@@ -42,49 +51,36 @@ struct LiveLoggerView: View {
     /// not know that a phase outlives the workout it was chosen for.
     @AppStorage("helix.phase") private var storedPhase = ProgramPhase.cut.rawValue
 
-    /// Presented as a full-screen cover by `TrainTabView`; this is how it leaves.
+    /// Presented as a full-screen cover by `WorkoutTabView`; this is how it leaves.
     @Environment(\.dismiss) private var dismiss
 
-    /// `activity` is BORROWED from the Train tab when the logger is presented as
-    /// a cover, so dismissing the cover mid-session keeps the Lock Screen card
-    /// alive and updatable. Previews and the harness pass nothing and get their
-    /// own.
+    /// `activity` is BORROWED from the Workout tab when the logger is presented
+    /// as a cover, so dismissing the cover mid-session keeps the Lock Screen
+    /// card alive and updatable. Previews and the harness pass nothing and get
+    /// their own.
     init(model: LoggerModel, activity: LiveActivityController? = nil) {
         _model = State(initialValue: model)
         _activity = State(initialValue: activity ?? LiveActivityController())
     }
 
-    private var accent: Color { Color(hex: model.day.accent) }
+    private var accent: Color { Color.helix.day(model.day.key) }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                if let storeError = model.storeError { storeBanner(storeError) }
-                ForEach(model.exercises) { exercise in
-                    ExerciseCardView(exercise: exercise, model: model, accent: accent)
-                }
-                Color.clear.frame(height: 96)   // room for the floating rest bar
-            }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
+        VStack(spacing: HelixSpace.m) {
+            if let storeError = model.storeError { banner(storeError) }
+            totals
+            deck
         }
-        .scrollDismissesKeyboard(.interactively)
-        .background(background)
-        // iOS 18's scroll geometry, rather than a `GeometryReader` sentinel view
-        // inside the content. The sentinel approach reports a frame that is one
-        // layout pass stale, which is exactly the lag that makes a collapsing
-        // header feel like it is chasing the scroll.
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.contentOffset.y + geometry.contentInsets.top
-        } action: { _, offset in
-            let collapsed = offset > 52
-            if collapsed != isCollapsed {
-                withAnimation(HelixMotion.move) { isCollapsed = collapsed }
-            }
+        .padding(.top, HelixSpace.s)
+        .helixScreen(.train)
+        .foregroundStyle(Color.helix.textPrimary)
+        .navigationTitle(model.day.label)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            leaveItem
+            clockItem
+            trailingItems
         }
-        .safeAreaInset(edge: .top, spacing: 0) { header }
-        .safeAreaInset(edge: .bottom, spacing: 0) { restBar }
-        .toolbarVisibility(.hidden, for: .navigationBar)
         .sheet(isPresented: $showDistribution) { MuscleDistributionSheet(model: model) }
         .sheet(isPresented: $showPhase) {
             PhaseSheet(day: model.day, phase: Binding(
@@ -92,205 +88,143 @@ struct LiveLoggerView: View {
                 set: { model.phase = $0 }
             ))
         }
-        .confirmationDialog("Finish this session?", isPresented: $showFinishConfirm, titleVisibility: .visible) {
-            Button("Finish", role: .destructive) { finish() }
-            Button("Keep logging", role: .cancel) {}
-        } message: {
-            Text("\(model.completedSets) sets · \(HelixFormat.volume(model.totalVolumeKg)) kg. Saved on this device; the upload to Supabase arrives with the sync.")
+        .sheet(isPresented: $showFinish) {
+            FinishSheet(model: model, onFinish: finish)
         }
         .onAppear {
             model.attach()
             activity.start(model: model)
+            if focus == nil { focus = model.currentSet?.exercise.id ?? model.exercises.first?.id }
         }
-        .onChange(of: model.completedSets) { _, _ in activity.update(model: model) }
+        .onChange(of: model.completedSets) { _, _ in
+            activity.update(model: model)
+            advanceIfFinished()
+        }
         .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model) }
         .onChange(of: model.phase) { _, next in storedPhase = next.rawValue }
     }
 
-    /// A store write that failed, stated rather than swallowed.
-    ///
-    /// It is a banner and not an alert on purpose: the set is still on screen
-    /// and still correct, the outbox will retry, and a modal between you and the
-    /// next set would cost more than the failure does. What must never happen is
-    /// the failure being invisible — a set that looks logged and is not is the
-    /// one outcome this whole data layer exists to prevent.
-    private func storeBanner(_ message: String) -> some View {
-        Label {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Not saved locally")
-                    .helixText(.compact, weight: .bold, leading: .none)
-                Text(message)
-                    .helixText(.small)
-                    .foregroundStyle(HelixPalette.muted)
-                    .lineLimit(3)
-            }
-        } icon: {
-            Image(systemName: "exclamationmark.triangle.fill")
+    // MARK: - Toolbar
+
+    /// Leave the logger with the session still live — the rest timer keeps
+    /// counting and the Lock Screen card stays, because the workout is not over.
+    private var leaveItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button { dismiss() } label: { Image(systemName: "chevron.down") }
+                .accessibilityLabel("Leave workout")
+                .accessibilityHint("The session keeps running. Resume it from the Workout tab.")
         }
-        .foregroundStyle(HelixPalette.oxide)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: HelixRadius.xl, style: .continuous)
-                .fill(HelixPalette.oxide.alphaByte(0x1a))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: HelixRadius.xl, style: .continuous)
-                .strokeBorder(HelixPalette.oxide.alphaByte(0x55), lineWidth: 1)
-        )
-        .textSelection(.enabled)
     }
 
-    // MARK: - Background
-
-    /// A wash of the day's colour, from the top, over obsidian.
+    /// The rest clock, where iOS puts a running timer: the principal slot.
     ///
-    /// Flat black behind a dark card set makes every card read as the same
-    /// distance away. A single low-frequency gradient gives the stack somewhere
-    /// to be — and putting the day's hue in it is the cheapest possible way to
-    /// answer "which workout is this" from the corner of an eye.
-    private var background: some View {
-        ZStack {
-            HelixPalette.obsidian
-            LinearGradient(
-                colors: [accent.opacity(0.13), accent.opacity(0.02), .clear],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: 380)
-            .frame(maxHeight: .infinity, alignment: .top)
-        }
-        .ignoresSafeArea()
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        VStack(spacing: 0) {
-            if isCollapsed {
-                compactHeader
-                    .transition(.move(edge: .top).combined(with: .opacity))
+    /// It replaces the title rather than sitting beside it, because while you
+    /// are resting the remaining seconds ARE what this screen is about — and
+    /// the title comes back the moment the clock stops, which is a state change
+    /// worth showing rather than a layout to keep stable.
+    private var clockItem: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            if let endsAt = model.restEndsAt {
+                RestCapsule(
+                    endsAt: endsAt,
+                    accent: accent,
+                    onSkip: { withAnimation(HelixMotion.drawer) { model.stopRest() } },
+                    onAdjust: { model.adjustRest(by: $0) }
+                )
+                .transition(.scale(scale: 0.8).combined(with: .opacity))
             } else {
-                heroHeader
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                Text(model.day.label)
+                    .helixType(.body).fontWeight(.semibold)
+                    .foregroundStyle(Color.helix.textPrimary)
             }
         }
-        .frame(maxWidth: .infinity)
-        .helixChrome(accent: accent)
     }
 
-    private var heroHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                leaveButton
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(model.day.label)
-                        .helixText(.fluid2XL, weight: .bold, leading: .none)
-                        .foregroundStyle(accent)
-                    if let sub = model.day.sub {
-                        Text(sub.uppercased())
-                            .helixText(.micro, weight: .bold, leading: .none)
-                            .tracking(1.3)
-                            .foregroundStyle(HelixPalette.muted)
-                    }
+    private var trailingItems: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Menu {
+                Button("Muscle distribution", systemImage: "figure.stand") { showDistribution = true }
+                Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
+                if model.restEndsAt != nil {
+                    Button("Skip rest", systemImage: "forward.end") { model.stopRest() }
                 }
-                Spacer(minLength: 8)
-                finishButton
+            } label: {
+                Image(systemName: "ellipsis")
             }
+            .accessibilityLabel("More")
 
-            HStack(spacing: 8) {
-                phaseChip
-                elapsed
+            Button("Finish") { showFinish = true }
+                .fontWeight(.semibold)
+        }
+    }
+
+    // MARK: - Totals
+
+    /// One 44 pt strip where three tiles used to be.
+    ///
+    /// The tiles said VOLUME, SETS and RECORDS in three boxes with three
+    /// borders, stacked over a coach line that repeated the same verdict — a
+    /// §3.6 defect in the same file as the sets it was pushing off screen.
+    /// Three numbers on one line is the same information at a fifth of the
+    /// height, and the height is what the logger is short of.
+    private var totals: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: HelixSpace.m) {
+                volumeStat; setsStat; records
                 Spacer(minLength: 0)
-                distributionButton
-                overflowMenu
+                elapsed
             }
-
-            statRail
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 12)
-    }
-
-    private var compactHeader: some View {
-        HStack(spacing: 10) {
-            leaveButton
-            Text(model.day.label)
-                .helixText(.fluidLG, weight: .bold, leading: .none)
-                .foregroundStyle(accent)
-                .lineLimit(1)
-
-            Spacer(minLength: 4)
-
-            compactStat(HelixFormat.volume(model.totalVolumeKg) + " kg", HelixPalette.ember)
-            compactStat("\(model.completedSets) sets", HelixPalette.platinum)
-            if model.recordCount > 0 {
-                compactStat("\(model.recordCount) PR", HelixPalette.gold)
+            VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                HStack(spacing: HelixSpace.m) { volumeStat; setsStat; records }
+                elapsed
             }
-
-            finishButton
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-    }
-
-    private func compactStat(_ text: String, _ color: Color) -> some View {
-        Text(text)
-            .helixText(.small, weight: .semibold, leading: .none)
-            .helixNumber()
-            .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(color.alphaByte(0x14)))
-    }
-
-    // MARK: - Header parts
-
-    private var finishButton: some View {
-        Button { showFinishConfirm = true } label: {
-            Label("Finish", systemImage: "checkmark")
-                .helixText(.compact, weight: .bold, leading: .none)
-                .foregroundStyle(HelixPalette.text)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [HelixPalette.emerald, HelixPalette.emeraldDeep],
-                            startPoint: .top, endPoint: .bottom
-                        ))
-                )
-                .shadow(color: HelixPalette.emerald.opacity(0.35), radius: 10, y: 4)
-        }
-        .helixPress()
-    }
-
-    private var phaseChip: some View {
-        Button { showPhase = true } label: {
-            HStack(spacing: 5) {
-                Image(systemName: model.phase == .cut ? "flame.fill" : "leaf.fill")
-                    .font(.system(size: 9, weight: .bold))
-                Text(model.phase.label.uppercased())
-                    .helixText(.micro, weight: .black, leading: .none)
-                    .tracking(1.1)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 7, weight: .black))
+            // One per line. At AX5 three totals cannot share a row, and what
+            // sharing it produced was "3," over "4" — a tonnage broken across
+            // two lines mid-number, which is worse than no tonnage at all.
+            VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                volumeStat; setsStat; records; elapsed
             }
-            .foregroundStyle(model.phase == .cut ? HelixPalette.Phase.cut : HelixPalette.Phase.bulk)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 6)
-            .background(
-                Capsule().fill((model.phase == .cut ? HelixPalette.Phase.cut : HelixPalette.Phase.bulk).alphaByte(0x1f))
-            )
-            .overlay(
-                Capsule().strokeBorder(
-                    (model.phase == .cut ? HelixPalette.Phase.cut : HelixPalette.Phase.bulk).alphaByte(0x55),
-                    lineWidth: 0.75
-                )
-            )
         }
-        .helixPress()
-        .accessibilityLabel("Training phase, \(model.phase.label). Tap to change.")
+        .padding(.horizontal, HelixSpace.m)
+        .frame(minHeight: 44)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .helixGlass(.row)
+        .padding(.horizontal, HelixSpace.l)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var volumeStat: some View {
+        stat(HelixFormat.volume(model.totalVolumeKg), "kg", Color.helix.textPrimary)
+    }
+
+    private var setsStat: some View {
+        stat("\(model.completedSets)/\(model.plannedSets)", "sets", accent)
+    }
+
+    private func stat(_ value: String, _ unit: String, _ color: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(value)
+                .helixType(.body).fontWeight(.semibold).helixNumeral()
+                .foregroundStyle(color)
+            Text(unit).helixType(.caption).foregroundStyle(Color.helix.textTertiary)
+        }
+        // A total that wraps is a total that lies: "3,436" broken after the
+        // comma reads as 3 on one line and 4 on the next.
+        .lineLimit(1)
+        .fixedSize()
+        .animation(HelixMotion.counter, value: value)
+    }
+
+    /// A permanent gold zero is how gold stops meaning a personal record, so an
+    /// empty count is a dash in tertiary ink and the gold arrives only when
+    /// there is something to be gold about.
+    @ViewBuilder
+    private var records: some View {
+        if model.recordCount > 0 {
+            stat("\(model.recordCount)", "PR", Color.helix.record)
+        } else {
+            stat("—", "PR", Color.helix.textTertiary)
+        }
     }
 
     /// Session duration, counted by the SYSTEM.
@@ -300,166 +234,154 @@ struct LiveLoggerView: View {
     /// makes it affordable to leave running while you type into a field two
     /// rows below it.
     private var elapsed: some View {
-        HStack(spacing: 5) {
+        Label {
+            Text(model.startedAt, style: .timer).helixNumeral()
+        } icon: {
             Image(systemName: "hourglass")
-                .font(.system(size: 10, weight: .bold))
-            Text(model.startedAt, style: .timer)
-                .helixText(.compact, weight: .semibold, leading: .none)
-                .helixNumber()
         }
-        .foregroundStyle(HelixPalette.muted)
+        .helixType(.caption)
+        .foregroundStyle(Color.helix.textSecondary)
         .fixedSize()
     }
 
-    /// The body, in miniature. Monochrome at this size on purpose — sixteen
-    /// family hues in a 26 pt figure is mud, and the question a thumbnail can
-    /// answer is "is this all on one side of me", which shape alone answers.
-    private var distributionButton: some View {
-        Button { showDistribution = true } label: {
-            HStack(spacing: 6) {
-                AtlasFigure(
-                    side: .front,
-                    worked: MuscleCredit.worked(from: model.muscleSets),
-                    monochromeTint: accent
-                )
-                .frame(height: 26)
-                Text(HelixFormat.sets(model.muscleSets.values.reduce(0, +)))
-                    .helixText(.small, weight: .bold, leading: .none)
-                    .helixNumber()
-                    .foregroundStyle(HelixPalette.muted)
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .helixRow(radius: HelixRadius.lg)
-        }
-        .helixPress()
-        .accessibilityLabel("Muscle distribution")
-    }
+    // MARK: - The deck
 
-    private var overflowMenu: some View {
-        Menu {
-            Button("Muscle distribution", systemImage: "figure.stand") { showDistribution = true }
-            Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
-            if model.restEndsAt != nil {
-                Button("Skip rest", systemImage: "forward.end") { model.stopRest() }
-            }
-            Divider()
-            Button("Finish session", systemImage: "checkmark.circle", role: .destructive) {
-                showFinishConfirm = true
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(HelixPalette.muted)
-                .frame(width: 32, height: 30)
-                .helixRow(radius: HelixRadius.lg)
-        }
-    }
-
-    // MARK: - Stat rail
-
-    private var statRail: some View {
-        HStack(spacing: 8) {
-            statTile(
-                value: HelixFormat.volume(model.totalVolumeKg), unit: "kg",
-                label: "VOLUME", color: HelixPalette.ember
-            )
-            statTile(
-                value: "\(model.completedSets)", unit: "/\(model.plannedSets)",
-                label: "SETS", color: accent
-            )
-            // A permanent gold zero is how gold stops meaning a personal record,
-            // so an empty record count is a dash in the muted tone and the gold
-            // arrives only when there is something to be gold about.
-            statTile(
-                value: model.recordCount > 0 ? "\(model.recordCount)" : "—", unit: nil,
-                label: "RECORDS",
-                color: model.recordCount > 0 ? HelixPalette.gold : HelixPalette.dim
-            )
-        }
-    }
-
-    private func statTile(value: String, unit: String?, label: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(label)
-                .helixText(.label, weight: .semibold, leading: .none)
-                .foregroundStyle(HelixPalette.muted)
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value)
-                    .helixText(.fluidXL, weight: .bold, leading: .none)
-                    .helixNumber()
-                    .foregroundStyle(color)
-                    .contentTransition(.numericText())
-                if let unit {
-                    Text(unit)
-                        .helixText(.small, weight: .semibold, leading: .none)
-                        .foregroundStyle(HelixPalette.dim)
+    /// One movement at a time, with the next one peeking.
+    ///
+    /// `scrollTargetBehavior(.viewAligned)` is the whole paging mechanism: no
+    /// `TabView`, no page index to keep in step with a model, no gesture code.
+    /// The 0.96 on the neighbours is `scrollTransition`, which reads the card's
+    /// live position during the drag rather than snapping between two states —
+    /// so the card you are pulling in grows under your thumb the whole way,
+    /// which is the difference between a deck and a slideshow.
+    private var deck: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: HelixSpace.m) {
+                ForEach(Array(model.exercises.enumerated()), id: \.element.id) { index, exercise in
+                    ScrollView(.vertical) {
+                        ExerciseCardView(
+                            exercise: exercise, model: model,
+                            position: (index, model.exercises.count)
+                        )
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollIndicators(.hidden)
+                    .containerRelativeFrame(.horizontal)
+                    .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                        content
+                            .scaleEffect(phase.isIdentity ? 1 : 0.96)
+                            .opacity(phase.isIdentity ? 1 : 0.8)
+                    }
+                    .id(exercise.id)
                 }
             }
+            .scrollTargetLayout()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 11)
-        .padding(.vertical, 9)
-        .background(
-            RoundedRectangle(cornerRadius: HelixRadius.xl, style: .continuous)
-                .fill(color.alphaByte(0x0f))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: HelixRadius.xl, style: .continuous)
-                .strokeBorder(color.alphaByte(0x33), lineWidth: 1)
-        )
-        .animation(HelixMotion.counter, value: value)
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $focus)
+        .safeAreaPadding(.horizontal, HelixSpace.l)
+        .scrollIndicators(.hidden)
     }
 
-    // MARK: - Rest
+    /// Move to the next unfinished movement once this one is done.
+    ///
+    /// The deck is ordered and the session is ordered, so the card you want
+    /// after the last set of an exercise is never ambiguous. Doing it by hand
+    /// means a horizontal drag between every movement, which is the one gesture
+    /// the set rows have taken over.
+    private func advanceIfFinished() {
+        guard let current = model.exercises.first(where: { $0.id == focus }), current.isComplete,
+              let next = model.currentSet?.exercise.id, next != focus
+        else { return }
+        withAnimation(HelixMotion.move) { focus = next }
+    }
 
-    @ViewBuilder
-    private var restBar: some View {
-        if let endsAt = model.restEndsAt {
-            RestTimerBar(
-                endsAt: endsAt,
-                duration: model.restDuration,
-                exerciseName: model.restingExercise,
-                accent: accent,
-                onAdjust: { model.adjustRest(by: $0) },
-                onStop: { withAnimation(HelixMotion.drawer) { model.stopRest() } }
-            )
-            .padding(.bottom, 8)
-            // In from the bottom, out to the bottom. A panel that arrives one
-            // way and leaves another breaks the spatial contract and reads as
-            // two unrelated events.
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-            .animation(HelixMotion.drawer, value: model.restEndsAt)
+    // MARK: - Failures
+
+    /// A store write that failed, stated rather than swallowed.
+    ///
+    /// It is a banner and not an alert on purpose: the set is still on screen
+    /// and still correct, the outbox will retry, and a modal between you and the
+    /// next set would cost more than the failure does. What must never happen is
+    /// the failure being invisible — a set that looks logged and is not is the
+    /// one outcome this whole data layer exists to prevent.
+    private func banner(_ message: String) -> some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Not saved locally").helixType(.secondary).fontWeight(.semibold)
+                Text(message)
+                    .helixType(.caption)
+                    .foregroundStyle(Color.helix.textSecondary)
+                    .lineLimit(3)
+            }
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
         }
+        .foregroundStyle(Color.helix.danger)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(HelixSpace.m)
+        .helixGlass(.row)
+        .padding(.horizontal, HelixSpace.l)
+        .textSelection(.enabled)
     }
 
     /// Stamp the session finished and take the card off the Lock Screen.
-    ///
-    /// The upload is deliberately absent: `workout_sets.set_index` is
-    /// `set_number` server-side and `workout_sessions.date` has no counterpart
-    /// at all, so a PostgREST write today would be a translation layer written
-    /// in a view. The row is marked pending and the outbox already holds every
-    /// set event, which is the state the sync work picks up from.
-    private func finish() {
-        model.finish()
+    private func finish(sessionRpe: Double?) {
+        model.finish(sessionRpe: sessionRpe)
         model.stopRest()
         activity.end()
         dismiss()
     }
+}
 
-    /// Leave the logger with the session still live — the rest timer keeps
-    /// counting and the Lock Screen card stays, because the workout is not over.
-    private var leaveButton: some View {
-        Button { dismiss() } label: {
-            Image(systemName: "chevron.down")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(HelixPalette.muted)
-                .frame(width: 32, height: 30)
-                .helixRow(radius: HelixRadius.lg)
+// MARK: - The rest clock
+
+/// The rest clock, as a capsule in the navigation bar.
+///
+/// ── WHY `Text(timerInterval:)` AND NOT A `TimelineView` ─────────────────────
+/// The Wave 1 bar drove a `TimelineView(.periodic(by: 0.5))` so it could animate
+/// a ring. A ring in a 44 pt bar is 20 pt across and says nothing the digits do
+/// not, and the schedule woke the view twice a second to say so. `Text` with a
+/// timer interval is counted by the SYSTEM — the same mechanism the Live
+/// Activity uses, so the bar and the Lock Screen cannot disagree — and it costs
+/// this view exactly nothing.
+///
+/// ── AND WHY THE END INSTANT, NOT A COUNTER ──────────────────────────────────
+/// The end is stored and the remaining time derived. A decrementing counter
+/// drifts, and worse, it is wrong after a backgrounding — iOS suspends the app
+/// between sets routinely, and a counter resumes where it stopped while a
+/// deadline is simply late.
+private struct RestCapsule: View {
+    let endsAt: Date
+    let accent: Color
+    let onSkip: () -> Void
+    let onAdjust: (TimeInterval) -> Void
+
+    var body: some View {
+        Button(action: onSkip) {
+            HStack(spacing: HelixSpace.xs) {
+                Image(systemName: "timer")
+                Text(timerInterval: Date()...endsAt, countsDown: true)
+                    .helixNumeral()
+                    // Reserved, so the capsule does not resize as the digits
+                    // fall from 1:00 to 59.
+                    .frame(minWidth: 42)
+            }
+            .helixType(.caption).fontWeight(.semibold)
+            .foregroundStyle(accent)
+            .padding(.horizontal, HelixSpace.s)
+            .padding(.vertical, HelixSpace.xs)
+            .background(Capsule().fill(accent.opacity(0.18)))
+            .overlay(Capsule().strokeBorder(accent.opacity(0.45), lineWidth: 0.5))
         }
-        .helixPress()
-        .accessibilityLabel("Leave workout")
-        .accessibilityHint("The session keeps running. Resume it from the Train tab.")
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button("Add 15 seconds", systemImage: "plus") { onAdjust(15) }
+            Button("Take 15 seconds off", systemImage: "minus") { onAdjust(-15) }
+            Button("Skip rest", systemImage: "forward.end") { onSkip() }
+        }
+        .accessibilityLabel("Resting")
+        .accessibilityHint("Tap to skip. Long press to add or remove fifteen seconds.")
     }
 }
 

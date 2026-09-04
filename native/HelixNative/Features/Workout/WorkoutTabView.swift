@@ -19,7 +19,7 @@ import HelixData
 /// drop the rest timer and orphan the Lock Screen card — a card nothing can
 /// update or end, and a second one on re-open. So both are `@State` on the tab
 /// that outlives the cover, and the logger borrows them.
-struct TrainTabView: View {
+struct WorkoutTabView: View {
     @Environment(AppEnvironment.self) private var environment
 
     /// Cut is the live block. `@AppStorage` so the toggle survives a relaunch.
@@ -29,9 +29,15 @@ struct TrainTabView: View {
     /// weekday the shot happens to run on. The app never passes one.
     var seededDay: ProgramDay?
 
+    /// The session this tab is keeping, live or not. Survives the cover being
+    /// dismissed — that is the whole reason it lives here (below).
     @State private var session: LoggerModel?
+    /// The session the cover is PRESENTING, which is a different fact: leaving
+    /// the logger mid-workout clears this and keeps `session`, so the rest timer
+    /// and the Lock Screen card carry on and "Resume workout" has something to
+    /// resume.
+    @State private var presented: LoggerModel?
     @State private var activity = LiveActivityController()
-    @State private var isLogging = false
     @State private var showPhase = false
     @State private var status: Status = .idle
 
@@ -93,13 +99,19 @@ struct TrainTabView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let day = today { footer(day) }
         }
-        .fullScreenCover(isPresented: $isLogging, onDismiss: refresh) {
-            if let session {
-                NavigationStack {
-                    LiveLoggerView(model: session, activity: activity)
-                }
-                .preferredColorScheme(.dark)
+        // ── WHY `item:` AND NOT `isPresented:` ──────────────────────────────
+        // The boolean form evaluated `if let session` inside its own content
+        // builder, so a cover presented in the same runloop turn as the model
+        // being assigned came up with NOTHING in it — a full-screen black
+        // rectangle with no way back except the gesture, which is the bug this
+        // wave was asked to fix. Presenting by item makes the model's existence
+        // the precondition of the cover instead of a second fact that has to
+        // agree with a flag, and the empty case stops being representable.
+        .fullScreenCover(item: $presented, onDismiss: refresh) { model in
+            NavigationStack {
+                LiveLoggerView(model: model, activity: activity)
             }
+            .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $showPhase) {
             if let day = today {
@@ -312,7 +324,7 @@ struct TrainTabView: View {
                 store: environment.database, userId: environment.userIdString
             )
         }
-        isLogging = true
+        presented = session
     }
 
     /// Where today stands, read from the store. Synchronous on purpose: two
@@ -355,7 +367,7 @@ struct TrainTabView: View {
 #if DEBUG
 #Preview("Train — Upper B") {
     NavigationStack {
-        TrainTabView(seededDay: Program.helix5.day(key: "cb_b"))
+        WorkoutTabView(seededDay: Program.helix5.day(key: "cb_b"))
     }
     .environment(AppEnvironment.preview)
     .preferredColorScheme(.dark)

@@ -4,15 +4,15 @@ import HelixCore
 /// Onyx — the semantic token layer. Colour and geometry; type lives in
 /// `HelixType.swift`.
 ///
-/// ── WHY THIS FILE EXISTS BESIDE `HelixPalette` AND NOT INSTEAD OF IT ────────
-/// `HelixPalette` is a Tailwind transliteration: forty flat hexes carried over
+/// ── WHAT THIS REPLACED ──────────────────────────────────────────────────────
+/// `HelixPalette` was a Tailwind transliteration: forty flat hexes carried over
 /// from `src/lib/theme/palette.ts` so the web app and the first native screens
-/// could be diffed by eye. It did its job and it is not the design. This file is
-/// the design — four domain accents, text at three weights, and a short list of
-/// fixed semantic hues — and every screen reads it.
+/// could be diffed by eye. It did its job and it was not the design. This file
+/// is the design — four domain accents, text at three weights, and a short list
+/// of fixed semantic hues — and every screen reads it.
 ///
-/// The logger is the last reader of `HelixPalette`; re-skinning it touches every
-/// set row, so it is Wave 2.4's diff and `HelixPalette` dies with it.
+/// The Live Logger was its last reader and Wave 2.4 re-skinned it, so the file
+/// is gone. `src/tests/native-token-discipline.test.ts` keeps it gone.
 ///
 /// ── WHAT CHANGED IN TOKENS v2 (Phase 2 §3.2) ────────────────────────────────
 /// Every accent came down two steps. The v1 palette was Ion `#7C5CFF` and Tide
@@ -253,6 +253,37 @@ extension Color {
             return pct >= 60 ? good : pct >= 30 ? HelixDomain.fuel.accent : danger
         }
 
+        /// Effort on the CR-10 ladder, in ink.
+        ///
+        /// NOT gold. `record` means a personal record app-wide, and the old
+        /// palette's `amber` sat one hue away from it, which is how an RPE 8
+        /// chip and a PR badge came to read as the same announcement. Effort is
+        /// a READING, not a verdict, so it stays in secondary ink until the set
+        /// is genuinely hard, takes Solar through the working range, and only
+        /// turns to danger at 9.5 — at or past failure, which is the one number
+        /// on the ladder worth interrupting someone for.
+        public static func effort(_ rpe: Double) -> Color {
+            switch rpe {
+            case ..<8:   textSecondary
+            case ..<9.5: HelixDomain.fuel.accent
+            default:     danger
+            }
+        }
+
+        /// Cut or bulk, in ink.
+        ///
+        /// A phase is a NUTRITION direction that the training deck follows, so
+        /// it takes Solar (the food domain) for a deficit and the app's `good`
+        /// for a surplus — not a hue of its own. There is no maintenance case:
+        /// maintenance is a nutrition LEVER pulled on top of whichever direction
+        /// the block runs, and `ProgramPhase` has never had a third value.
+        public static func phase(_ phase: ProgramPhase) -> Color {
+            switch phase {
+            case .cut:  HelixDomain.fuel.accent
+            case .bulk: good
+            }
+        }
+
         /// A muscle's colour: its family's accent, stepped so the ORDER inside
         /// the family still carries meaning.
         ///
@@ -366,5 +397,30 @@ public enum HelixSleepStage: CaseIterable, Sendable {
         case .rem:   "REM"
         case .awake: "Awake"
         }
+    }
+}
+
+
+// MARK: - Hex
+
+public extension Color {
+    /// `Color(hex: 0xRRGGBB)` — how every token above is spelled.
+    ///
+    /// Takes an integer rather than a string on purpose: a string initialiser
+    /// has to decide what to do with a typo at runtime, and every such API in
+    /// the wild answers "silently return black". An `Int` literal that is not a
+    /// colour does not compile.
+    ///
+    /// It is `public` because the widget extension resolves a day's colour the
+    /// same way the app does; it is not an invitation to spell a colour in a
+    /// view, which the token-discipline test forbids outright.
+    init(hex: UInt32, opacity: Double = 1) {
+        self.init(
+            .sRGB,
+            red:   Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >>  8) & 0xFF) / 255,
+            blue:  Double( hex        & 0xFF) / 255,
+            opacity: opacity
+        )
     }
 }

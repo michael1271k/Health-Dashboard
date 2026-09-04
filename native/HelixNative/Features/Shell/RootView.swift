@@ -56,9 +56,9 @@ private struct SignedInTabs: View {
             // (§4). The names are the ones on the screens they open — "Train"
             // and "Fuel" were the web app's, and neither is what the tab is
             // called anywhere else on the device. The logger is NOT the Workout
-            // root — see `TrainTabView` for why.
+            // root — see `WorkoutTabView` for why.
             SwiftUI.Tab("Workout", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
-                NavigationStack { TrainTabView() }
+                NavigationStack { WorkoutTabView() }
             }
             SwiftUI.Tab("Nutrition", systemImage: "fork.knife", value: Tab.fuel) {
                 NavigationStack { FuelTabView() }
