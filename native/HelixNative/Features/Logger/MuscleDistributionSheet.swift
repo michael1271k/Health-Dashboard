@@ -16,9 +16,22 @@ import HelixCore
 /// interruptible grab, the velocity handoff and the detent snapping for free,
 /// because they are the system's.
 struct MuscleDistributionSheet: View {
-    let model: LoggerModel
+    /// Weighted credit per landmark, and the count of sets that produced it.
+    ///
+    /// Two plain values rather than a `LoggerModel`, because the same picture is
+    /// what a FINISHED session's muscle-focus card opens onto (§5.4). A sheet
+    /// bound to the live logger could only ever be shown while one was running.
+    let sets: [LandmarkMuscle: Double]
+    let physicalSets: Int
 
-    private var sets: [LandmarkMuscle: Double] { model.muscleSets }
+    init(sets: [LandmarkMuscle: Double], physicalSets: Int) {
+        self.sets = sets
+        self.physicalSets = physicalSets
+    }
+
+    init(model: LoggerModel) {
+        self.init(sets: model.muscleSets, physicalSets: model.physicalSets)
+    }
 
     /// Ranked, heaviest first. Ties break on the landmark's own order so the
     /// list cannot reshuffle under the reader between two redraws.
@@ -82,7 +95,7 @@ struct MuscleDistributionSheet: View {
     /// it, this panel reads as a second, disagreeing tally of the same thing.
     private var counts: some View {
         HStack(spacing: HelixSpace.grid) {
-            countTile(HelixFormat.sets(Double(model.physicalSets)), "Physical sets", Color.helix.textPrimary)
+            countTile(HelixFormat.sets(Double(physicalSets)), "Physical sets", Color.helix.textPrimary)
             countTile(HelixFormat.sets(weightedTotal), "Weighted sets", Color.helix.accent(.train))
         }
     }

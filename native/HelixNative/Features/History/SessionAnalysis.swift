@@ -45,6 +45,14 @@ enum SessionAnalysis {
         let stats: ExerciseStats
         /// "10–12" / "55s", or nil when the program does not prescribe it.
         let window: String?
+        /// Working sets that reached the programmed ceiling, and how many there
+        /// were. `2/3 @ ceiling` on the ledger header — the reading the
+        /// double-progression rule is actually about.
+        let atCeiling: Int
+        /// Session-best estimated 1RM across every session of this movement,
+        /// oldest first — the 40×16 sparkline in the header. Values only: a
+        /// sparkline has no axis, so carrying the dates would invite a label.
+        let spark: [Double]
     }
 
     struct TrailSeries: Identifiable {
@@ -55,12 +63,15 @@ enum SessionAnalysis {
     struct Report {
         let session: WorkoutSession
         let exercises: [ExerciseReport]
-        let highlights: [Highlight]
         /// Weighted sets per landmark, descending, untrained muscles absent.
         let muscles: [(muscle: LandmarkMuscle, sets: Double)]
         let cardio: [CardioLogRow]
-        let trail: [TrailSeries]
         let prCount: Int
+        /// Every set that was performed, ghosts excluded, a unilateral pair
+        /// counted once — the denominator the muscle sheet's weighted total is
+        /// read against. NOT `sets`, which is working sets only: warm-ups earn
+        /// muscle credit and would otherwise make the two figures disagree.
+        let physicalSets: Int
         var tonnageKg: Double { jsRound(exercises.reduce(0) { $0 + $1.detail.volumeKg }) }
         var sets: Int { exercises.reduce(0) { $0 + Int($1.detail.workingSets) } }
     }
@@ -157,11 +168,21 @@ enum SessionAnalysis {
                 timed: timed, unit: "kg", toDisplay: { $0 }
             )
 
+            // The ceiling this session's sets were judged against — the same
+            // number `verdict` used, so the header and the cue cannot disagree.
+            let ceiling: Double? = timed
+                ? Ceilings.holdTarget(for: canonical, dayKey: session.dayKey)
+                : Ceilings.repWindow(for: canonical, dayKey: session.dayKey)?.ceiling
+            let workingRows = g.sets.filter { SetTags.isWorkingSet($0.setType) }
+            let atCeiling = ceiling.map { c in workingRows.filter { Double($0.reps) >= c }.count } ?? 0
+
             exercises.append(ExerciseReport(
                 detail: detail, canonical: canonical, timed: timed,
                 rows: SessionDetail.rowsWithPrev(SessionDetail.toRows(sets), prev: prev),
                 prevDate: prevRows.first?.date,
-                cue: cue, stats: SessionDetail.exerciseStats(detail), window: window
+                cue: cue, stats: SessionDetail.exerciseStats(detail), window: window,
+                atCeiling: atCeiling,
+                spark: sessionBestE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg)
             ))
         }
 
@@ -176,18 +197,18 @@ enum SessionAnalysis {
         }
         muscles.sort { a, b in a.sets != b.sets ? a.sets > b.sets : a.muscle.rawValue < b.muscle.rawValue }
 
-        // Progression trail: session-best est-1RM per exercise, this session
-        // and the last seven before it. Six series is the kit's ceiling.
-        let trail: [TrailSeries] = exercises.prefix(6).compactMap { ex in
-            let all = (priorByEx[ex.id] ?? []) + (groups.first { $0.exerciseId == ex.id }?.sets ?? [])
-            let points = sessionBestE1rm(all).suffix(8)
-            return points.count >= 2 ? TrailSeries(id: ex.canonical, points: Array(points)) : nil
-        }
-
+        // ── NO MULTI-SERIES TRAIL, AND NO HIGHLIGHTS LIST ───────────────────
+        // Wave 7 drew a six-series est-1RM chart at the bottom of this report
+        // and a "Records" list above it. §5.4 deletes both: the per-exercise
+        // trail is now a 40×16 sparkline in each ledger header (`spark`, above),
+        // where it sits beside the sets it describes instead of asking the
+        // reader to match six colours to six names; and a record is a gold row
+        // in the ledger with the previous set printed under it, which answers
+        // "what did it beat" in place rather than in a second list.
         return Report(
             session: session, exercises: exercises,
-            highlights: SessionDetail.highlights(exercises.map(\.detail), toDisplay: { $0 }, unit: "kg"),
-            muscles: muscles, cardio: cardio, trail: trail, prCount: pr.prCount
+            muscles: muscles, cardio: cardio, prCount: pr.prCount,
+            physicalSets: groups.reduce(0) { $0 + physicalSets($1.sets) }
         )
     }
 

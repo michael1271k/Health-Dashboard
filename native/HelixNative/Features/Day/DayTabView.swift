@@ -70,7 +70,6 @@ private struct DayScreen: View {
                 FatigueTile(model: model)
                 DomsTile(model: model)
                 StackTile(model: model)
-                CardioTile(model: model)
                 ScaleTile(model: model)
                 SwapDayTile(model: model)
             }

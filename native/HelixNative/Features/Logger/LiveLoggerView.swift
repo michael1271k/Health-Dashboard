@@ -33,6 +33,12 @@ struct LiveLoggerView: View {
     @State private var showDistribution = false
     @State private var showPhase = false
     @State private var showFinish = false
+    /// Bumped when the rest clock reaches zero of its own accord — never when
+    /// it is skipped or dragged into the past, both of which cancel the task
+    /// below before it fires. §3.4 gives `.success` to "session finished"; a
+    /// rest period that has run out is the same kind of event and it is the one
+    /// the phone is in your pocket for.
+    @State private var restExpiries = 0
     /// Which card the deck is on. Bound to `.scrollPosition`, so writing it
     /// scrolls and scrolling writes it.
     ///
@@ -125,8 +131,13 @@ struct LiveLoggerView: View {
             guard let endsAt = model.restEndsAt else { return }
             try? await Task.sleep(for: .seconds(max(0, endsAt.timeIntervalSinceNow)))
             guard !Task.isCancelled else { return }
+            restExpiries += 1
             withAnimation(HelixMotion.drawer) { model.stopRest() }
         }
+        // §3.4: `.success` on the rest clock running out. The capsule vanishing
+        // from the navigation bar is the only visual notice, and the phone is
+        // face-down on a bench when it happens.
+        .sensoryFeedback(.success, trigger: restExpiries)
         .onChange(of: model.phase) { _, next in storedPhase = next.rawValue }
     }
 

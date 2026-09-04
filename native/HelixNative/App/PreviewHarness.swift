@@ -68,19 +68,24 @@ enum PreviewHarness {
     /// A week of real movements, one per display group, so the library shot
     /// exercises every heading and the detail shot lands on a lift with both a
     /// primary and an assisting muscle.
+    ///
+    /// Six of them carry the ids of the movements the history seed actually holds sets for
+    /// (`HistoryPreviews`), so the library shot draws REAL sparklines on those
+    /// rows and honest blanks on the rest — which is what the screen looks like
+    /// for anyone who has trained a movement once.
     static let sampleExercises: [ExerciseCatalogEntry] = [
-        .init(id: "1", name: "Incline DB Press", setCount: 48, lastTrained: "2026-09-01"),
+        .init(id: "ex-incline", name: "Incline DB Press", setCount: 48, lastTrained: "2026-09-02"),
         .init(id: "2", name: "Pec Deck", setCount: 30, lastTrained: "2026-09-01"),
-        .init(id: "3", name: "Neutral-Grip Lat Pulldown", setCount: 36, lastTrained: "2026-08-31"),
-        .init(id: "4", name: "Seated Cable Row (Wide Grip)", setCount: 22, lastTrained: "2026-08-28"),
+        .init(id: "ex-pulldown", name: "Lat Pulldown", setCount: 36, lastTrained: "2026-09-02"),
+        .init(id: "ex-row", name: "Seated Cable Row (Wide Grip)", setCount: 22, lastTrained: "2026-09-02"),
         .init(id: "5", name: "DB Shoulder Press", setCount: 27, lastTrained: "2026-09-02"),
-        .init(id: "6", name: "Face Pull", setCount: 41, lastTrained: "2026-09-02"),
+        .init(id: "ex-raise", name: "Single Arm Lateral Raise (Cable)", setCount: 41, lastTrained: "2026-09-02"),
         .init(id: "7", name: "Rope Triceps Pushdown", setCount: 33, lastTrained: "2026-08-30"),
         .init(id: "8", name: "Seated Incline DB Curl", setCount: 26, lastTrained: "2026-08-30"),
-        .init(id: "9", name: "Hack Squat", setCount: 24, lastTrained: "2026-08-29"),
+        .init(id: "ex-hack", name: "Hack Squat", setCount: 24, lastTrained: "2026-08-30"),
         .init(id: "10", name: "Seated Leg Curl", setCount: 21, lastTrained: "2026-08-29"),
         .init(id: "11", name: "Calf Press", setCount: 30, lastTrained: "2026-08-29"),
-        .init(id: "12", name: "Hanging Knee Raise", setCount: 18, lastTrained: "2026-08-30"),
+        .init(id: "ex-hkr", name: "Hanging Knee Raise", setCount: 18, lastTrained: "2026-09-02"),
     ]
 
     @MainActor @ViewBuilder
@@ -94,10 +99,10 @@ enum PreviewHarness {
         case "you":
             NavigationStack { YouTabView(seeded: model) }.environment(AppEnvironment.preview)
         case "train":
-            // A fixed day, so the shot does not become a rest-day card on
-            // Wednesdays and Saturdays.
-            NavigationStack { WorkoutTabView(seededDay: Program.helix5.day(key: "cb_b")) }
-                .environment(AppEnvironment.preview)
+            // Seeded from the history store: the This-week panel and the
+            // Ready-to-progress box are both reads over the ledger, so an empty
+            // database photographs the empty states rather than the screen.
+            HistoryPreviews.view("train")
         case "levers":
             NavigationStack { LeversView(model: model) }
         case "plan":
@@ -107,10 +112,12 @@ enum PreviewHarness {
         case "volume":
             NavigationStack { VolumeTargetsView(model: model) }
         case "library":
-            NavigationStack { ExerciseLibraryView(seeded: sampleExercises) }
-                .environment(AppEnvironment.preview)
+            HistoryPreviews.view("library")
         case "exercise":
-            NavigationStack { ExerciseDetailView(entry: sampleExercises[3]) }
+            NavigationStack {
+                ExerciseDetailView(entry: sampleExercises[3], siblings: sampleExercises)
+            }
+            .environment(HistoryPreviews.environment())
         case "reports":
             NavigationStack { ReportsListView(seeded: PreviewReport.rows) }
                 .environment(AppEnvironment.preview)
@@ -127,7 +134,7 @@ enum PreviewHarness {
             LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals":
             TodayPreviews.view(screen)
-        case "history", "session", "exercise-history":
+        case "history", "session", "session-ledger", "exercise-history":
             HistoryPreviews.view(screen)
         case "trends", "trends-empty":
             TrendsPreviews.view(screen)

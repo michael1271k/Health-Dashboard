@@ -16,6 +16,13 @@ import HelixData
 /// live by an observation. A query per keystroke would be slower than not having
 /// a search at all, and would be the only screen in the app that can fail to
 /// filter because the network did.
+///
+/// ── WHY EVERY ROW CARRIES A SPARKLINE ───────────────────────────────────────
+/// `48 sets · last 1 Sep` says how much and how recently, and neither says the
+/// thing you open a library for: is this movement going anywhere. A 40×16 trail
+/// of session-best estimated 1RM answers that in the width of a word, and the
+/// whole ledger is one read — the same read the session page makes — so it costs
+/// a grouping pass rather than thirty queries.
 struct ExerciseLibraryView: View {
     @Environment(AppEnvironment.self) private var environment
 
@@ -23,6 +30,8 @@ struct ExerciseLibraryView: View {
     var seeded: [ExerciseCatalogEntry]?
 
     @State private var entries: [ExerciseCatalogEntry] = []
+    /// Exercise id → session-best estimated 1RM, oldest first.
+    @State private var sparks: [String: [Double]] = [:]
     @State private var query = ""
 
     var body: some View {
@@ -31,7 +40,7 @@ struct ExerciseLibraryView: View {
                 Section {
                     ForEach(section.entries) { entry in
                         NavigationLink {
-                            ExerciseDetailView(entry: entry)
+                            ExerciseDetailView(entry: entry, siblings: flat)
                         } label: {
                             row(entry, in: section.group)
                         }
@@ -67,12 +76,20 @@ struct ExerciseLibraryView: View {
             }
         }
         .task {
+            let database = environment.database
+            // The trails first, so a row never appears without its sparkline
+            // and then grows one under the reader's finger.
+            sparks = await Task.detached(priority: .userInitiated) {
+                let ledger = (try? database.historySets()) ?? []
+                return Dictionary(grouping: ledger, by: \.exerciseId)
+                    .mapValues { SessionAnalysis.sparkline($0) }
+            }.value
             if let seeded {
                 entries = seeded
                 return
             }
             do {
-                for try await rows in environment.database.exerciseCatalogStream() {
+                for try await rows in database.exerciseCatalogStream() {
                     entries = rows
                 }
             } catch {
@@ -85,7 +102,7 @@ struct ExerciseLibraryView: View {
     // MARK: - Rows
 
     private func row(_ entry: ExerciseCatalogEntry, in group: MuscleGroup) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: HelixSpace.grid) {
             // The rule carries the group's colour, so a scan down the list reads
             // as bands rather than as thirty identical rows.
             Capsule()
@@ -96,13 +113,23 @@ struct ExerciseLibraryView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
+                    .helixType(.body)
                     .foregroundStyle(Color.helix.textPrimary)
                 Text(subtitle(entry))
-                    .font(.caption)
+                    .helixType(.caption).helixNumeral()
                     .foregroundStyle(Color.helix.textSecondary)
             }
+            Spacer(minLength: HelixSpace.s)
+            // Nothing at all rather than `Sparkline`'s own "not enough
+            // readings" caption, which is written for a widget face with room
+            // for a sentence. Here the absence IS the message: one session so
+            // far, and a trail starts at two.
+            if let trail = sparks[entry.id], trail.count >= 2 {
+                Sparkline(points: trail, color: group.domain.accent)
+                    .frame(width: 40, height: 16)
+                    .accessibilityHidden(true)
+            }
         }
-        .padding(.vertical, 4)
         .frame(minHeight: 44)
         // One element, one announcement. Without this VoiceOver reads the name
         // and the subtitle as two separate stops inside a row that is one link.
@@ -145,18 +172,16 @@ struct ExerciseLibraryView: View {
             return (group, rows.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
         }
     }
+
+    /// The list as the detail page's chevrons walk it: exactly the order on
+    /// screen, so "next" means the row under your finger and not the next id.
+    private var flat: [ExerciseCatalogEntry] { groups.flatMap(\.entries) }
 }
 
 #if DEBUG
 #Preview("Library") {
     NavigationStack {
-        ExerciseLibraryView(seeded: [
-            .init(id: "1", name: "Barbell Bench Press", setCount: 48, lastTrained: "2026-09-01"),
-            .init(id: "2", name: "Neutral-Grip Lat Pulldown", setCount: 36, lastTrained: "2026-08-31"),
-            .init(id: "3", name: "Seated Cable Row (Wide Grip)", setCount: 22, lastTrained: "2026-08-28"),
-            .init(id: "4", name: "Dumbbell Lateral Raise", setCount: 60, lastTrained: "2026-09-02"),
-            .init(id: "5", name: "Hanging Knee Raise", setCount: 18, lastTrained: "2026-08-30"),
-        ])
+        ExerciseLibraryView(seeded: PreviewHarness.sampleExercises)
     }
     .environment(AppEnvironment.preview)
 }

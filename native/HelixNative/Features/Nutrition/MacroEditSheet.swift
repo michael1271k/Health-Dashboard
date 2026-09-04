@@ -61,7 +61,7 @@ struct MacroEditSheet: View {
                     .padding(.horizontal, HelixSpace.m)
                     .helixGlass(.tile)
 
-                    Text("Calories always equal the macros — 4 · protein, 4 · carbohydrate, 9 · fat. Change the calories and carbohydrate and fat move to match, in the proportion they already sit at; protein stays where you put it. Saving replaces the day's figures by hand, and Apple Health stops filling this date in — including its fibre and micronutrients.")
+                    Text("Apple Health owns the day's calories, so the figure above is its own even when the macros come to something else. Move a macro and the calories become the macro sum — 4 · protein, 4 · carbohydrate, 9 · fat; move the calories and carbohydrate and fat follow, in the proportion they already sit at, with protein staying put. Saving replaces the day's figures by hand, and Apple Health stops filling this date in — including its fibre and micronutrients.")
                         .helixType(.caption)
                         .foregroundStyle(Color.helix.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -127,8 +127,11 @@ struct MacroEditSheet: View {
                 .helixType(.caption)
                 .helixNumeral()
                 .foregroundStyle(Color.helix.textSecondary)
-            if let recorded {
-                Text("Health recorded \(NutritionFormat.whole(recorded)) kcal; these macros come to \(NutritionFormat.whole(macros.atwater)).")
+            // Only while the figure on screen still IS Health's. The first
+            // stepper tick makes the reading the macros' own sum, and a caption
+            // calling that "Health's figure" would be a lie one tap old.
+            if recorded != nil, !touched {
+                Text("Health's figure. The macros below come to \(NutritionFormat.whole(macros.atwater)) kcal.")
                     .helixType(.caption)
                     .foregroundStyle(Color.helix.textTertiary)
                     .multilineTextAlignment(.center)
@@ -146,19 +149,25 @@ struct MacroEditSheet: View {
         return "of \(NutritionFormat.whole(target)) kcal · \(NutritionFormat.remaining(target - macros.kcal, unit: "kcal"))"
     }
 
-    /// Take the day, and make its four numbers agree.
+    /// Take the day as it is recorded.
     ///
-    /// ── WHY THE FIGURE ON SCREEN IS NOT ALWAYS THE ONE IN THE STORE ─────────
-    /// HealthKit records calories and macros separately, and they disagree
+    /// ── APPLE HEALTH IS THE TRUTH FOR TOTAL CALORIES ────────────────────────
+    /// HealthKit records calories and macros separately and they disagree
     /// routinely — the seeded day is 1,420 kcal against macros that come to
-    /// 1,450. This sheet's whole contract is that the four numbers add up, so
-    /// it opens on the Atwater sum and SAYS SO underneath rather than starting
-    /// from a figure its own first tap would silently correct.
+    /// 1,450, because MyFitnessPal's entries carry a rounded energy figure per
+    /// food and the gram columns are rounded independently.
+    ///
+    /// This sheet used to open on the Atwater sum, so 1,420 became 1,450 the
+    /// moment you looked at it and Save wrote the corrected figure back over the
+    /// day HealthKit had — silently, and every downstream deficit with it. A
+    /// 30 kcal disagreement between two independent measurements is not an
+    /// error to fix; the app's job is to REPORT the day, and Health owns the
+    /// day's energy. So the recorded figure stands, the caveat line names the
+    /// difference, and nothing moves unless a stepper is touched.
     private func seed() {
-        var day = model.macrosForEditing
+        let day = model.macrosForEditing
         let sum = day.atwater
         recorded = abs(sum - day.kcal) >= 1 && day.kcal > 0 ? day.kcal : nil
-        day.kcal = sum
         macros = day
     }
 

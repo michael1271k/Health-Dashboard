@@ -3,22 +3,31 @@ import HelixUI
 import HelixCore
 import HelixData
 
-/// The Train tab — today's plan, and the door into the logger.
+/// The Workout tab — the week behind you, the session in front of you, and the
+/// door into the logger.
 ///
 /// ── THE LOGGER IS A COVER, NOT THE TAB ──────────────────────────────────────
-/// Wave 1 put `LiveLoggerView` at the tab root, which made opening the Train
-/// tab the same thing as starting a workout: the Live Activity appeared on the
-/// Lock Screen because you glanced at Thursday's plan. A workout is something
-/// you START. This screen shows what the day asks, and one deliberate tap
-/// presents the logger as a full-screen cover — and only then does the logger's
-/// `onAppear` request the Live Activity.
+/// Wave 1 put `LiveLoggerView` at the tab root, which made opening the tab the
+/// same thing as starting a workout: the Live Activity appeared on the Lock
+/// Screen because you glanced at Thursday's plan. A workout is something you
+/// START. This screen shows what the week has been and what the day asks, and
+/// one deliberate tap presents the logger as a full-screen cover.
 ///
 /// ── WHY THE MODEL AND THE ACTIVITY LIVE HERE ────────────────────────────────
-/// The cover can be dismissed mid-session to check the Body tab. If the logger
+/// The cover can be dismissed mid-session to check the Pulse tab. If the logger
 /// owned its `LoggerModel` and `LiveActivityController`, dismissing it would
 /// drop the rest timer and orphan the Lock Screen card — a card nothing can
 /// update or end, and a second one on re-open. So both are `@State` on the tab
 /// that outlives the cover, and the logger borrows them.
+///
+/// ── WHAT WAVE 2.8 CHANGED ───────────────────────────────────────────────────
+/// The tab used to be ONE tile: a 400 pt plan card with a 88 pt atlas, a phase
+/// chip, and seven exercise rows at 44 pt each — a screen that answered "what is
+/// today" three times and never answered "how is the week going" or "what should
+/// go up". §5.2 re-cuts it into four things of different sizes, in the order you
+/// actually ask them: the week, then today, then the lifts that have earned a
+/// heavier load, then cardio. The plan rows shrink to 36 pt because they are a
+/// reminder, not a document — the logger is where you read a set.
 struct WorkoutTabView: View {
     @Environment(AppEnvironment.self) private var environment
 
@@ -28,9 +37,11 @@ struct WorkoutTabView: View {
     /// Supplied only by the screenshot harness, which cannot depend on which
     /// weekday the shot happens to run on. The app never passes one.
     var seededDay: ProgramDay?
+    var seededToday: String?
 
+    @State private var week: WorkoutWeek?
     /// The session this tab is keeping, live or not. Survives the cover being
-    /// dismissed — that is the whole reason it lives here (below).
+    /// dismissed — that is the whole reason it lives here.
     @State private var session: LoggerModel?
     /// The session the cover is PRESENTING, which is a different fact: leaving
     /// the logger mid-workout clears this and keeps `session`, so the rest timer
@@ -39,79 +50,81 @@ struct WorkoutTabView: View {
     @State private var presented: LoggerModel?
     @State private var activity = LiveActivityController()
     @State private var showPhase = false
-    @State private var status: Status = .idle
+    @State private var loggingCardio = false
+    /// The session to push once the cover closes on a FINISHED workout.
+    ///
+    /// ── WHY THE TAB PUSHES IT AND NOT THE FINISH SHEET ──────────────────────
+    /// The sheet is inside a full-screen cover that is being torn down in the
+    /// same transaction — a push from there lands on a stack that is about to
+    /// stop existing. The tab outlives both, so it is the only place that can
+    /// put the summary on screen and leave it there.
+    @State private var summary: String?
     /// Bumped when a dismissal turns out to have finished the session. The
     /// haptic lived on the finish button, which was torn down in the same
     /// transaction that fired it, so it very likely never played.
     @State private var finishes = 0
 
-    private enum Status: Equatable {
-        case idle
-        case live(sets: Int, volumeKg: Double)
-        case done(sets: Int, volumeKg: Double, minutes: Double?)
-    }
-
     private var phase: ProgramPhase { ProgramPhase(rawValue: storedPhase) ?? .cut }
     private var accent: Color { Color.helix.accent(.train) }
 
-    /// The PLAN's layout, by weekday — the one correct use of a weekday here.
-    /// Never infer a LOGGED session's split from its weekday: a swap moves a
-    /// workout to another date. The swap/override layer lands with the Body tab.
-    private var today: ProgramDay? {
-        if let seededDay { return seededDay }
-        let weekday = Calendar.current.component(.weekday, from: Date()) - 1
-        return Program.helix5.day(weekday: weekday)
-    }
+    /// Today's deck. The harness pins it; the app resolves it through the
+    /// schedule rule (plan · per-date swaps · weekday layout), never off the
+    /// raw weekday.
+    private var today: ProgramDay? { seededDay ?? week?.todayDay }
+
+    /// Where today stands. `.none` until the first read lands, which is the
+    /// honest answer — the footer says "Start" and means it.
+    private var state: WorkoutWeek.State { week?.snapshot.state ?? .none }
 
     var body: some View {
         ScrollView {
             VStack(spacing: HelixSpace.l) {
-                if let day = today {
-                    planTile(day)
-                } else {
-                    restTile
-                }
+                weekPanel
+                if let day = today { sessionCard(day) } else { restCard }
+                progressionCard
+                cardioRow
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
+            .padding(.horizontal, HelixSpace.l)
+            .padding(.top, HelixSpace.s)
+            .padding(.bottom, HelixSpace.xl)
         }
         .helixScreen(.train)
         .navigationTitle("Workout")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                // Analysis and the library are sub-screens of Training, not
-                // extra tabs. History = past sessions; Trends = the charts.
+                // The library, the ledger and the charts are sub-screens of
+                // training, not extra tabs. Five is where iOS stops giving you
+                // a tab bar and starts giving you a "More" list.
+                NavigationLink {
+                    ExerciseLibraryView()
+                } label: {
+                    Label("Exercises", systemImage: "books.vertical")
+                }
                 NavigationLink {
                     SessionHistoryView()
                 } label: {
-                    Label("History", systemImage: "clock.arrow.circlepath")
+                    Label("History", systemImage: "clock")
                 }
                 NavigationLink {
                     TrainingTrendsView()
                 } label: {
                     Label("Trends", systemImage: "chart.xyaxis.line")
                 }
-                NavigationLink {
-                    ExerciseLibraryView()
-                } label: {
-                    Label("Exercises", systemImage: "list.bullet.rectangle")
-                }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if let day = today { footer(day) }
+        .safeAreaInset(edge: .bottom, spacing: 0) { footer }
+        .navigationDestination(item: $summary) { id in
+            SessionDetailView(sessionId: id)
         }
         // ── WHY `item:` AND NOT `isPresented:` ──────────────────────────────
         // The boolean form evaluated `if let session` inside its own content
         // builder, so a cover presented in the same runloop turn as the model
         // being assigned came up with NOTHING in it — a full-screen black
-        // rectangle with no way back except the gesture, which is the bug this
-        // wave was asked to fix. Presenting by item makes the model's existence
-        // the precondition of the cover instead of a second fact that has to
-        // agree with a flag, and the empty case stops being representable.
-        .fullScreenCover(item: $presented, onDismiss: refresh) { model in
+        // rectangle with no way back except the gesture. Presenting by item
+        // makes the model's existence the precondition of the cover, and the
+        // empty case stops being representable.
+        .fullScreenCover(item: $presented, onDismiss: reload) { model in
             NavigationStack {
                 LiveLoggerView(model: model, activity: activity)
             }
@@ -125,100 +138,237 @@ struct WorkoutTabView: View {
                 ))
             }
         }
-        .onAppear(perform: refresh)
+        .sheet(isPresented: $loggingCardio) {
+            if let week {
+                CardioLogSheet(userId: week.userId, date: week.today, onSave: week.addCardio)
+            }
+        }
+        .task {
+            if week == nil {
+                week = WorkoutWeek(
+                    database: environment.database, userId: environment.userIdString,
+                    phase: phase, seededToday: seededToday, seededDayKey: seededDay?.key
+                )
+            }
+            await week?.refresh()
+        }
+        .onChange(of: storedPhase) { _, next in
+            week?.setPhase(ProgramPhase(rawValue: next) ?? .cut)
+        }
         // §3.4: `.success` on session finished.
         .sensoryFeedback(.success, trigger: finishes)
     }
 
-    // MARK: - The plan
+    // MARK: - This week
 
-    private func planTile(_ day: ProgramDay) -> some View {
+    /// Seven days, at a glance, in the colour of what they train.
+    ///
+    /// ── WHY A ROW OF DAYS AND NOT A BAR CHART OF TONNAGE ────────────────────
+    /// The question this panel answers is "am I on the plan", and the plan is
+    /// stated in SESSIONS, not kilograms. A filled cell is a session that
+    /// happened, a hollow ring is one the plan is still expecting, and a grey
+    /// dot is a rest day — three states you can count without reading a number.
+    /// The tonnage is trailing in the header, where a supporting figure belongs.
+    private var weekPanel: some View {
+        VStack(alignment: .leading, spacing: HelixSpace.s) {
+            // Label beside the tally until the tally alone is a line wide. At
+            // AX5 an `HStack` broke "THIS WEEK" and "12,510 kg" across four
+            // lines between them.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: HelixSpace.s) {
+                    Text("This week").helixMicro()
+                    Spacer(minLength: HelixSpace.s)
+                    tally
+                }
+                VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                    Text("This week").helixMicro()
+                    tally
+                }
+            }
+            HStack(spacing: HelixSpace.xs) {
+                ForEach(week?.snapshot.cells ?? []) { cell in
+                    dayCell(cell)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(HelixSpace.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .helixGlass(.tile)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("This week")
+    }
+
+    @ViewBuilder
+    private var tally: some View {
+        if let snapshot = week?.snapshot, week?.loaded == true {
+            HStack(alignment: .firstTextBaseline, spacing: HelixSpace.xs) {
+                Text("\(snapshot.sessionsLogged)/\(snapshot.sessionTarget)")
+                    .helixType(.caption).helixNumeral()
+                    .foregroundStyle(Color.helix.textPrimary)
+                Text("· \(HelixFormat.volume(snapshot.weekTonnageKg)) kg")
+                    .helixType(.caption).helixNumeral()
+                    .foregroundStyle(Color.helix.textSecondary)
+            }
+            .lineLimit(1)
+        }
+    }
+
+    @ViewBuilder
+    private func dayCell(_ cell: WorkoutWeek.DayCell) -> some View {
+        let mark = dayMark(cell)
+        if let id = cell.sessionId {
+            NavigationLink { SessionDetailView(sessionId: id) } label: { mark }
+                .buttonStyle(.plain)
+                .helixPress()
+        } else {
+            mark
+        }
+    }
+
+    private func dayMark(_ cell: WorkoutWeek.DayCell) -> some View {
+        let tint = Color.helix.day(cell.dayKey)
+        return VStack(spacing: HelixSpace.xs) {
+            Text(cell.initial)
+                .helixType(.micro)
+                .textCase(.uppercase)
+                // Today's letter is the one thing in the row that is not
+                // tertiary, so the eye lands on it before it counts anything.
+                .foregroundStyle(cell.isToday ? Color.helix.textPrimary : Color.helix.textTertiary)
+            ZStack {
+                if cell.isToday {
+                    Circle().strokeBorder(Color.helix.hairline, lineWidth: 1).frame(width: 32, height: 32)
+                }
+                if cell.isRest {
+                    Circle().fill(Color.helix.textTertiary).frame(width: 6, height: 6)
+                } else if cell.isLogged {
+                    Circle().fill(tint).frame(width: 22, height: 22)
+                } else {
+                    Circle().strokeBorder(tint.opacity(cell.isFuture ? 0.55 : 0.9), lineWidth: 2)
+                        .frame(width: 22, height: 22)
+                }
+            }
+            .frame(height: 32)
+            // A bout draws under the day rather than beside it: cardio is a
+            // second thing that happened on the date, not a second kind of day.
+            Circle()
+                .fill(cell.hasCardio ? HelixDomain.body.accent : .clear)
+                .frame(width: 4, height: 4)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 36)
+        .contentShape(.rect)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(cellLabel(cell))
+    }
+
+    private func cellLabel(_ cell: WorkoutWeek.DayCell) -> String {
+        let day = LogicalDay.date(fromISO: cell.date)?.formatted(.dateTime.weekday(.wide).day().month()) ?? cell.date
+        let state = cell.isRest ? "rest" : cell.isLogged ? "logged, \(cell.label ?? "session")" : "planned, \(cell.label ?? "session")"
+        return "\(day), \(state)\(cell.hasCardio ? ", cardio" : "")"
+    }
+
+    // MARK: - Today's session
+
+    @ViewBuilder
+    private func sessionCard(_ day: ProgramDay) -> some View {
+        if case let .done(id, sets, volumeKg, minutes, prCount) = state {
+            // ── LOGGED: THE TILE COLLAPSES ──────────────────────────────────
+            // A finished day does not need its prescription read back to it.
+            // What it needs is the four numbers it produced and a way into the
+            // page that explains them.
+            NavigationLink { SessionDetailView(sessionId: id) } label: {
+                VStack(alignment: .leading, spacing: HelixSpace.xs) {
+                    HStack(spacing: HelixSpace.s) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Color.helix.good)
+                        Text(day.label)
+                            .helixDisplay()
+                            .foregroundStyle(Color.helix.dayLabel(day.key))
+                        Spacer(minLength: HelixSpace.s)
+                        Image(systemName: "chevron.right")
+                            .helixType(.caption)
+                            .foregroundStyle(Color.helix.textTertiary)
+                    }
+                    Text(doneSummary(sets: sets, volumeKg: volumeKg, minutes: minutes, prCount: prCount))
+                        .helixType(.secondary).helixNumeral()
+                        .foregroundStyle(Color.helix.textSecondary)
+                }
+                .padding(HelixSpace.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .helixGlass(.tile)
+            }
+            .buttonStyle(.plain)
+            .helixPress(scale: 0.98)
+            .accessibilityHint("Opens the session summary")
+        } else {
+            planCard(day)
+        }
+    }
+
+    private func planCard(_ day: ProgramDay) -> some View {
         let exercises = day.exercises(for: phase)
-        return VStack(alignment: .leading, spacing: HelixSpace.l) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(Date(), format: .dateTime.weekday(.wide).day().month())
-                        .helixCaption()
+        return VStack(alignment: .leading, spacing: HelixSpace.m) {
+            HStack(alignment: .top, spacing: HelixSpace.m) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(day.label)
                         .helixDisplay()
-                        .foregroundStyle(accent)
-                    if let sub = day.sub {
-                        Text(sub)
-                            .font(.subheadline)
-                            .foregroundStyle(Color.helix.textSecondary)
-                    }
+                        .foregroundStyle(Color.helix.dayLabel(day.key))
+                    Text("\(exercises.count) exercises · \(day.plannedSets(for: phase)) sets")
+                        .helixType(.caption).helixNumeral()
+                        .foregroundStyle(Color.helix.textSecondary)
                 }
-                Spacer(minLength: 8)
+                Spacer(minLength: HelixSpace.s)
+                // 44 pt, not 88: the figure on this card says WHERE, and where
+                // is legible at a thumbnail. The 96 pt hit-tested one lives on
+                // the session page, which is the screen about the landing.
                 AtlasFigure(side: .front, worked: worked(day), monochromeTint: accent)
-                    .frame(height: 88)
+                    .frame(height: 44)
                     .accessibilityHidden(true)
             }
 
-            // Side by side until the type size says otherwise, then stacked —
-            // at AX5 the count wrapped to a lone "7" under the chip.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { phaseChip; planCount(day, exercises.count) }
-                VStack(alignment: .leading, spacing: 8) { phaseChip; planCount(day, exercises.count) }
-            }
-
-            VStack(spacing: 6) {
+            VStack(spacing: 2) {
                 ForEach(exercises) { exercise in
-                    HStack(spacing: 10) {
+                    HStack(spacing: HelixSpace.s) {
                         Text(exercise.name)
-                            .font(.body)
+                            .helixType(.secondary)
                             .lineLimit(1)
-                        Spacer(minLength: 8)
+                        Spacer(minLength: HelixSpace.s)
                         Text("\(exercise.sets(for: phase)) × \(exercise.reps)")
-                            .font(.body)
+                            .helixType(.secondary).helixNumeral()
                             .foregroundStyle(Color.helix.textSecondary)
-                            .helixNumeral()
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .helixGlass(.row)
+                    .frame(minHeight: 36)
                     .accessibilityElement(children: .combine)
                 }
             }
         }
-        .padding(HelixSpace.l)
+        .padding(HelixSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
-    }
-
-    private func planCount(_ day: ProgramDay, _ exercises: Int) -> some View {
-        Text("\(exercises) exercises · \(day.plannedSets(for: phase)) sets")
-            .font(.footnote)
-            .foregroundStyle(Color.helix.textSecondary)
-            .helixNumeral()
-    }
-
-    private var phaseChip: some View {
-        Button { showPhase = true } label: {
-            Label(phase.label, systemImage: phase == .cut ? "flame.fill" : "leaf.fill")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(accent)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .helixGlass(.row)
+        .contextMenu {
+            Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
         }
-        .helixPress()
-        .accessibilityLabel("Training phase, \(phase.label). Tap to change.")
     }
 
-    private var restTile: some View {
-        VStack(spacing: 12) {
+    private func doneSummary(sets: Int, volumeKg: Double, minutes: Double?, prCount: Int) -> String {
+        var parts = ["\(HelixFormat.volume(volumeKg)) kg", "\(sets) sets"]
+        if prCount > 0 { parts.append("\(prCount) PR") }
+        if let minutes, minutes > 0 { parts.append("\(jsIntegerString(jsRound(minutes))) min") }
+        return parts.joined(separator: " · ")
+    }
+
+    private var restCard: some View {
+        VStack(spacing: HelixSpace.s) {
             Image(systemName: "figure.walk")
-                // `.large` on the hero role: an empty-state glyph wants to be
-                // bigger than the hero numeral, and `imageScale` is how a symbol
-                // says that without a point size of its own.
                 .helixType(.hero)
                 .imageScale(.large)
                 .foregroundStyle(accent)
             Text("Zone-2 rest")
                 .helixDisplay()
-            Text("HELIX-5 trains Sun, Mon, Tue, Thu and Fri. Today is a walk.")
-                .font(.subheadline)
+            Text("Nothing is scheduled today. A walk, and back tomorrow.")
+                .helixType(.secondary)
                 .foregroundStyle(Color.helix.textSecondary)
                 .multilineTextAlignment(.center)
         }
@@ -236,76 +386,172 @@ struct WorkoutTabView: View {
         ))
     }
 
-    // MARK: - The door
+    // MARK: - Ready to progress
 
+    /// Double progression, stated as an instruction.
+    ///
+    /// ── WHY IT IS ABSENT MOST DAYS, AND THAT IS THE POINT ───────────────────
+    /// The rule is the program's own: every working set at the ceiling, at ONE
+    /// load, at RPE ≤ 8.5, in TWO consecutive sessions. That fires rarely — which
+    /// is what makes the box worth reading when it appears. A panel that is
+    /// always there, always saying "keep going", is a panel nobody looks at.
     @ViewBuilder
-    private func footer(_ day: ProgramDay) -> some View {
-        Group {
-            switch status {
-            case .done(let sets, let volumeKg, let minutes):
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(accent)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Session complete")
-                            .font(.headline)
-                        Text(summary(sets: sets, volumeKg: volumeKg, minutes: minutes))
-                            .font(.subheadline)
-                            .foregroundStyle(Color.helix.textSecondary)
-                            .helixNumeral()
+    private var progressionCard: some View {
+        let rows = week?.snapshot.progression ?? []
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: HelixSpace.s) {
+                Text("Ready to progress").helixMicro()
+                VStack(spacing: 0) {
+                    ForEach(rows) { row in
+                        HStack(spacing: HelixSpace.s) {
+                            Text(row.name)
+                                .helixType(.body)
+                                .lineLimit(1)
+                                .foregroundStyle(Color.helix.textPrimary)
+                            Spacer(minLength: HelixSpace.s)
+                            Text(row.detail)
+                                .helixType(.secondary).helixNumeral()
+                                // Green is the verdict "go"; gold is "nearly",
+                                // which is the record colour doing the one other
+                                // job it is allowed — pointing at a threshold.
+                                .foregroundStyle(row.ready ? Color.helix.good : Color.helix.record)
+                        }
+                        .frame(minHeight: 44)
+                        .accessibilityElement(children: .combine)
+                        if row.id != rows.last?.id {
+                            Divider().overlay(Color.helix.hairline)
+                        }
                     }
-                    Spacer(minLength: 0)
                 }
-                .padding(HelixSpace.l)
-                .helixGlass(.tile)
-                .accessibilityElement(children: .combine)
-
-            case .live(let sets, let volumeKg):
-                startButton(
-                    title: "Resume workout",
-                    detail: summary(sets: sets, volumeKg: volumeKg, minutes: nil),
-                    icon: "play.fill", day: day
-                )
-
-            case .idle:
-                startButton(title: "Start workout", detail: nil, icon: "figure.strengthtraining.traditional", day: day)
             }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity)
-        .background(alignment: .top) {
-            Rectangle().fill(.regularMaterial).ignoresSafeArea()
-        }
-        .overlay(alignment: .top) {
-            Color.helix.hairline.frame(height: 0.5)
+            .padding(HelixSpace.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .helixGlass(.tile)
         }
     }
 
-    private func startButton(title: String, detail: String?, icon: String, day: ProgramDay) -> some View {
-        Button { start(day) } label: {
-            HStack(spacing: 12) {
+    // MARK: - Cardio
+
+    /// One row, because cardio is one fact on a training day.
+    ///
+    /// It moved here from the Pulse tab (§5.7 deletes it there): a bout is
+    /// training, and it belongs beside the session it was done around rather
+    /// than beside your sleep.
+    private var cardioRow: some View {
+        HStack(spacing: HelixSpace.m) {
+            Image(systemName: cardioSymbol)
+                .foregroundStyle(HelixDomain.body.accent)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Cardio")
+                    .helixType(.body)
+                    .foregroundStyle(Color.helix.textPrimary)
+                Text(cardioDetail)
+                    .helixType(.caption).helixNumeral()
+                    .foregroundStyle(Color.helix.textSecondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: HelixSpace.s)
+            Button { loggingCardio = true } label: {
+                Image(systemName: "plus")
+                    .helixType(.body).fontWeight(.semibold)
+                    .foregroundStyle(HelixDomain.body.accent)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
+            }
+            .helixPress()
+            .accessibilityLabel("Log cardio")
+        }
+        .padding(.leading, HelixSpace.m)
+        .frame(minHeight: 44)
+        .helixGlass(.tile)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var cardioSymbol: String {
+        CardioKind(week?.snapshot.lastCardio?.kind ?? "walk").symbol
+    }
+
+    private var cardioDetail: String {
+        guard let bout = week?.snapshot.lastCardio else { return "No bouts logged" }
+        var parts: [String] = [CardioKind(bout.kind).label]
+        if let m = bout.distanceM { parts.append("\(jsToFixed1(m / 1000)) km") }
+        if let min = bout.durationMin { parts.append("\(jsIntegerString(jsRound(min))) min") }
+        if let pace = CardioMetrics.paceMinPerKm(distanceM: bout.distanceM, durationMin: bout.durationMin) {
+            parts.append(CardioMetrics.formatPace(pace))
+        }
+        if bout.date != week?.today, let date = LogicalDay.date(fromISO: bout.date) {
+            parts.append(HelixChart.shortDate(date))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    // MARK: - The door
+
+    @ViewBuilder
+    private var footer: some View {
+        if today != nil {
+            Group {
+                switch state {
+                case .done:
+                    // The card above already links to the summary; a second CTA
+                    // for the same destination is a box repeating the box above.
+                    doneStrip
+                case let .live(sets, volumeKg):
+                    startButton(title: "Resume workout", detail: liveSummary(sets: sets, volumeKg: volumeKg), icon: "play.fill")
+                case .none:
+                    startButton(title: "Start workout", detail: nil, icon: "figure.strengthtraining.traditional")
+                }
+            }
+            .padding(.horizontal, HelixSpace.l)
+            .padding(.vertical, HelixSpace.s)
+            .frame(maxWidth: .infinity)
+            .background(alignment: .top) {
+                Rectangle().fill(.regularMaterial).ignoresSafeArea()
+            }
+            .overlay(alignment: .top) {
+                Color.helix.hairline.frame(height: 0.5)
+            }
+        }
+    }
+
+    private var doneStrip: some View {
+        HStack(spacing: HelixSpace.s) {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(Color.helix.good)
+            Text("Session complete")
+                .helixType(.body)
+                .foregroundStyle(Color.helix.textPrimary)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, minHeight: 44)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func startButton(title: String, detail: String?, icon: String) -> some View {
+        Button(action: start) {
+            HStack(spacing: HelixSpace.m) {
                 Image(systemName: icon)
-                    .font(.title3.weight(.bold))
+                    .helixType(.display)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(.headline)
+                        .helixType(.body).fontWeight(.semibold)
+                        .minimumScaleFactor(0.8)
                     if let detail {
                         Text(detail)
-                            .font(.footnote)
-                            .helixNumeral()
+                            .helixType(.caption).helixNumeral()
                             .opacity(0.85)
                     }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.bold))
+                    .helixType(.caption).fontWeight(.bold)
                     .opacity(0.7)
             }
             .foregroundStyle(Color.helix.textPrimary)
-            .padding(.horizontal, 18)
-            .frame(maxWidth: .infinity, minHeight: 60)
+            .padding(.horizontal, HelixSpace.l)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .background(
                 HelixDomain.train.ramp,
                 in: RoundedRectangle(cornerRadius: HelixCorner.tile, style: .continuous)
@@ -315,15 +561,14 @@ struct WorkoutTabView: View {
         .accessibilityHint("Opens the logger and starts the Live Activity")
     }
 
-    private func summary(sets: Int, volumeKg: Double, minutes: Double?) -> String {
-        var parts = ["\(sets) sets", "\(HelixFormat.volume(volumeKg)) kg"]
-        if let minutes, minutes > 0 { parts.append("\(Int(minutes.rounded())) min") }
-        return parts.joined(separator: " · ")
+    private func liveSummary(sets: Int, volumeKg: Double) -> String {
+        "\(sets) sets · \(HelixFormat.volume(volumeKg)) kg"
     }
 
     // MARK: - Actions
 
-    private func start(_ day: ProgramDay) {
+    private func start() {
+        guard let day = today else { return }
         if session == nil || session?.day.key != day.key {
             // A card carries its workout's name in `attributes`, which is fixed
             // for the life of the activity — so a new session feeding the old
@@ -337,46 +582,34 @@ struct WorkoutTabView: View {
         presented = session
     }
 
-    /// Where today stands, read from the store. Synchronous on purpose: two
-    /// indexed lookups on appear and on dismiss, and no observation to reap.
-    private func refresh() {
-        guard let day = today else { status = .idle; return }
-        let database = environment.database
-        let date = LogicalDay.today()
-        do {
-            if let live = try database.liveSession(dayKey: day.key, date: date) {
-                // The kept model knows the session better than the store does
-                // — it counts working sets, the store counts rows.
-                if let session, session.day.key == day.key {
-                    status = .live(sets: session.completedSets, volumeKg: session.totalVolumeKg)
-                } else {
-                    let sets = try database.sets(sessionId: live.id).filter { $0.setType != "ghost" }
-                    status = .live(sets: sets.count, volumeKg: tonnage(sets))
-                }
-            } else if let closed = try database.sessions(on: date)
-                        .first(where: { $0.dayKey == day.key && $0.endedAt != nil }) {
-                let sets = try database.sets(sessionId: closed.id).filter { $0.setType != "ghost" }
-                if case .done = status {} else { finishes += 1 }
-                status = .done(sets: sets.count, volumeKg: tonnage(sets), minutes: closed.durationMin)
+    /// Re-read on every dismissal. Finishing a session changes the week panel,
+    /// the card, the progression box and the Library's stats at once, and they
+    /// all come from the same read — so there is one place that can be stale
+    /// and one call that fixes it.
+    private func reload() {
+        let wasDone = isDone
+        Task {
+            await week?.refresh()
+            // The workout ENDED during this cover. Close the kept model, play
+            // the one `.success` §3.4 gives a finished session, and put the
+            // summary on screen — the page is built synchronously from GRDB, so
+            // it is complete the moment it appears.
+            if !wasDone, case let .done(id, _, _, _, _) = state {
                 session = nil
-            } else {
-                status = .idle
+                finishes += 1
+                summary = id
             }
-        } catch {
-            // A store that cannot be read still shows the plan; the button
-            // reads "Start", and the logger surfaces the same failure in its
-            // own banner with the detail.
-            status = .idle
         }
     }
 
-    private func tonnage(_ sets: [WorkoutSet]) -> Double {
-        sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }
+    private var isDone: Bool {
+        if case .done = state { return true }
+        return false
     }
 }
 
 #if DEBUG
-#Preview("Train — Upper B") {
+#Preview("Workout") {
     NavigationStack {
         WorkoutTabView(seededDay: Program.helix5.day(key: "cb_b"))
     }

@@ -30,8 +30,28 @@ enum HistoryPreviews {
         switch screen {
         case "session":
             NavigationStack { SessionDetailView(sessionId: lastSession) }.environment(environment())
+        case "session-ledger":
+            // The same page, parked at the bottom. Half of §5.4 is the ledger,
+            // and a shot of the top half reviews only the half that fits.
+            NavigationStack { SessionDetailView(sessionId: lastSession, startAtLedger: true) }
+                .environment(environment())
         case "exercise-history":
-            NavigationStack { ExerciseDetailView(entry: incline) }.environment(environment())
+            NavigationStack { ExerciseDetailView(entry: incline, siblings: PreviewHarness.sampleExercises) }
+                .environment(environment())
+        case "train":
+            // ── WHY THE DATE IS PINNED ──────────────────────────────────────
+            // The This-week panel is a picture of a WEEK, so a shot taken on a
+            // Monday and a shot taken on a Friday differ in six cells and the
+            // visual diff becomes a diff of the calendar. `2026-09-03` is the
+            // Thursday of the seeded week: three sessions behind it, Upper B
+            // ahead, and a cardio bout on the Tuesday.
+            NavigationStack {
+                WorkoutTabView(seededDay: Program.helix5.day(key: "cb_b"), seededToday: "2026-09-03")
+            }
+            .environment(environment())
+        case "library":
+            NavigationStack { ExerciseLibraryView(seeded: PreviewHarness.sampleExercises) }
+                .environment(environment())
         default:
             NavigationStack { SessionHistoryView() }.environment(environment())
         }
@@ -56,6 +76,11 @@ enum HistoryPreviews {
         ("2026-08-18", [(38, 12), (38, 11), (38, 10)], [(60, 12), (60, 11), (60, 10)], [(47.5, 13), (47.5, 12), (47.5, 12)], [(5, 15), (5, 14)]),
         ("2026-08-25", [(40, 10), (40, 10), (40, 9)],  [(60, 12), (60, 12), (60, 12)], [(50, 12), (50, 11), (50, 10)], [(5, 15), (5, 15)]),
         ("2026-09-01", [(42, 10), (42, 9), (40, 12)],  [(65, 10), (65, 10), (65, 9)],  [(50, 13), (50, 12), (50, 12)], [(5, 16), (5, 15)]),
+        // Swapped onto the Wednesday rest slot — which is also what makes the
+        // Workout tab's Ready-to-progress box non-empty: the wide-grip row has
+        // now cleared its 10–12 window at 50 kg TWICE, and the lateral raise has
+        // cleared its 15–20 window once. One green row, one gold.
+        ("2026-09-02", [(42, 11), (42, 10), (42, 10)],  [(65, 11), (65, 10), (65, 10)], [(50, 12), (50, 13), (50, 12)], [(5, 21), (5, 22)]),
     ]
 
     @Sendable

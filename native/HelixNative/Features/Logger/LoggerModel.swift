@@ -394,13 +394,26 @@ final class LoggerModel: Identifiable {
     }
 
     /// The placeholder record rule — see `SetRow.isRecord`.
+    ///
+    /// ── SUPPRESSED, DELIBERATELY, UNTIL `PrEngine` IS WIRED TO HISTORY ──────
+    /// The rule below compares a set against the PROGRAM's week-1 seed load,
+    /// which is not a record and was never claimed to be: after six months of
+    /// training almost every working set clears a seed chosen in July, so the
+    /// gold sweep fired on most of the session and on warm-up loads that happen
+    /// to out-estimate a light programmed opener. Gold means "this has never
+    /// been beaten" everywhere else in the app (§3.2 makes it the only fifth
+    /// hue), and a badge that fires constantly does not mean that.
+    ///
+    /// `SessionAnalysis.detect` already runs the REAL engine — `PrEngine`
+    /// against baselines rebuilt from the ledger — so the post-workout page and
+    /// the session list show true records the moment the session closes. What
+    /// is missing is the live path: `LoggerModel` has no baselines in hand
+    /// mid-set. When it does, restore the body below with that call and delete
+    /// this note. Until then no set claims a record, which turns off the badge,
+    /// the sweep, the `.success` haptic, the session's `records` stat and the
+    /// Live Activity's `prsThisSession` in one place rather than five.
     private func beatsTheSeed(_ row: SetRow, plan: ProgramExercise) -> Bool {
-        guard row.kind == .normal || row.kind == .failure else { return false }
-        guard let estimate = row.estimated1RM else { return false }
-        guard let seedLoad = plan.wk1Kg, let window = plan.repWindow,
-              let seed = Epley.oneRepMax(weight: seedLoad, reps: Double(window.floor))
-        else { return false }
-        return estimate > seed
+        false
     }
 
     // MARK: - Rest
