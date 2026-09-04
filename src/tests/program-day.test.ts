@@ -80,14 +80,11 @@ describe('there is one streak', () => {
     expect(streakFromDerive).toBe(streakFrom)
   })
 
-  it('both surfaces read the same derivation for the flame', () => {
-    const ROUTE = readFileSync('src/app/api/widget/snapshot/route.ts', 'utf8')
+  it('the hook reads the same derivation for the flame', () => {
+    // The widget snapshot route was the second surface; it left with the
+    // Capacitor extension in Wave 5. The Swift port pins the window instead.
     const HOOK = readFileSync('src/lib/hooks/useStreak.ts', 'utf8')
-    expect(ROUTE).toMatch(/programDayCount\(/)
     expect(HOOK).toMatch(/programDayCount\(/)
-    // The calendar window is still the widget's, and still one constant — the
-    // month grid and `streakFrom` are both built from it.
-    expect(ROUTE).toMatch(/CALENDAR_DAYS = STREAK_WINDOW_DAYS/)
     expect(STREAK_WINDOW_DAYS).toBe(42)
   })
 })

@@ -2,20 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- ONE identifier, because there is one handler.
-	     `app.helix.health.processing` was declared here and NOTHING ever called
-	     `BGTaskScheduler.register` for it — see HelixBackgroundRefresh.swift,
-	     which registers the refresh task and only that one. A declared-but-
-	     unused background capability is a documented App Store rejection
-	     trigger ("the app declares support for X but does not include any
-	     features that require it"), and it is also a promise to the reader of
-	     this file that the code does not keep. If a genuine BGProcessingTask is
-	     ever added, this list and the UIBackgroundModes array below both grow
-	     again, in the same commit as its handler. -->
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>app.helix.health.refresh</string>
-	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<!-- EXPORT COMPLIANCE. Absent, every App Store Connect upload stops on the
@@ -27,10 +13,9 @@
 	     nothing proprietary, which is exactly the exemption this key claims. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- Widget deep links. Every widget face names a destination
-	     (helix://open?path=/nutrition) instead of opening the home screen —
-	     see ios/App/HelixWidgets/HelixPalette.swift and
-	     src/lib/native/deepLink.ts. -->
+	<!-- Deep links (helix://open?path=/nutrition). The widget extension that
+	     emitted them moved to native/ in Wave 5; the scheme stays registered —
+	     see src/lib/native/deepLink.ts. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -80,12 +65,6 @@
 	<string>HELIX reads Apple Health (steps, energy, heart rate, HRV, sleep, body composition) to compute your daily readiness and trends</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>HELIX does not write to Apple Health</string>
-	<!-- `fetch` alone. See the note on BGTaskSchedulerPermittedIdentifiers:
-	     `processing` was declared with no BGProcessingTask behind it. -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -6,7 +6,6 @@ import { authedFetch } from '@/lib/utils/authedFetch'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 import { todayBundleKey, type TodayBundle } from '@/lib/hooks/useToday'
 import { recomputeAndPaint } from '@/lib/scoring/applyComputedScore'
-import { DAY_KINDS } from '@/lib/native/widgetKinds'
 import { resolveDayPhase } from '@/lib/nutrition/phase'
 import { activePhase } from '@/lib/programs'
 
@@ -118,13 +117,10 @@ export function useSetNutritionException(date: string) {
       // component is weight 0.30 — without `force` the day's existing row would
       // stand and the banner would claim a forgiveness the score never applied.
       // Best-effort by contract — the flag itself is already saved.
-      // DAY_KINDS: a nutrition context changes how the day is GRADED, so the
-      // score, the battery and the Fuel face all move. It does not move a
-      // session, a streak or a calendar.
       await recomputeAndPaint(qc, date, {
         force: true, isToday: date === logicalTodayISO(),
         backfillDays: 0, hoursAwake: hoursAwakeToday(),
-      }, authedFetch, DAY_KINDS)
+      }, authedFetch)
     },
 
     // Optimistic: the chips are toggles, and a toggle that waits for a round trip

@@ -19,7 +19,7 @@
  * AFTER this, not instead of it.
  */
 import sharp from 'sharp'
-import { mkdirSync, existsSync, writeFileSync } from 'node:fs'
+import { mkdirSync, existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 
 const SOURCE = resolve(process.argv[2] ?? 'resources/icon.png')
@@ -31,8 +31,6 @@ const SOURCE = resolve(process.argv[2] ?? 'resources/icon.png')
  * composited away rather than carried. Sampled from the source corners.
  */
 const MATTE = '#000309'
-
-const WIDGET_ICONS = 'ios/App/HelixWidgets/Assets.xcassets/AppIcon.appiconset'
 
 const TARGETS = [
   // ── Web / PWA ──────────────────────────────────────────────────────────────
@@ -51,23 +49,6 @@ const TARGETS = [
   { file: 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', size: 1024 },
   { file: 'ios/App/HelixWatch Watch App/Assets.xcassets/AppIcon.appiconset/AppIcon-watch-1024.png', size: 1024 },
 
-  // ── Widget extension ───────────────────────────────────────────────────────
-  // The widget's appiconset declared three 1024 entries — universal, dark and
-  // tinted — and gave a filename for NONE of them, so the extension shipped
-  // with no icon and rendered as a grey placeholder in the widget gallery. The
-  // three appearances are iOS 18's icon set: light, dark, and a tinted variant
-  // the OS recolours itself.
-  //
-  // Light and dark are the same bytes here on purpose. The artwork is already
-  // a dark tile on near-black, which is what the dark appearance wants; a
-  // separate light rendering would mean artwork that does not exist.
-  { file: `${WIDGET_ICONS}/AppIcon-widget-1024.png`, size: 1024 },
-  { file: `${WIDGET_ICONS}/AppIcon-widget-dark-1024.png`, size: 1024 },
-  // Tinted must be GREYSCALE. iOS maps the luminance of this image through the
-  // user's chosen tint, so shipping the colour version makes it muddy — the
-  // ember ribbon and the silver one collapse to nearly the same value once a
-  // hue is forced over both.
-  { file: `${WIDGET_ICONS}/AppIcon-widget-tinted-1024.png`, size: 1024, greyscale: true },
 ]
 
 /**
@@ -100,26 +81,6 @@ async function render({ file, size, crop, sharpen, greyscale }) {
   return out
 }
 
-/**
- * The widget appiconset's three entries, each pointing at the file this script
- * now writes. Regenerated rather than hand-edited so the manifest and the
- * filenames can never drift — that drift is exactly what left it empty.
- */
-const WIDGET_CONTENTS = {
-  images: [
-    { filename: 'AppIcon-widget-1024.png', idiom: 'universal', platform: 'ios', size: '1024x1024' },
-    {
-      appearances: [{ appearance: 'luminosity', value: 'dark' }],
-      filename: 'AppIcon-widget-dark-1024.png', idiom: 'universal', platform: 'ios', size: '1024x1024',
-    },
-    {
-      appearances: [{ appearance: 'luminosity', value: 'tinted' }],
-      filename: 'AppIcon-widget-tinted-1024.png', idiom: 'universal', platform: 'ios', size: '1024x1024',
-    },
-  ],
-  info: { author: 'xcode', version: 1 },
-}
-
 async function main() {
   if (!existsSync(SOURCE)) {
     console.error(`✗ no source image at ${SOURCE}`)
@@ -148,9 +109,6 @@ async function main() {
     const tag = t.greyscale ? ' (greyscale — iOS applies the tint)' : ''
     console.log(`  ${String(t.size).padStart(4)}px  ${out.replace(`${process.cwd()}/`, '')}${tag}`)
   }
-
-  writeFileSync(resolve(WIDGET_ICONS, 'Contents.json'), `${JSON.stringify(WIDGET_CONTENTS, null, 2)}\n`)
-  console.log(`        ${WIDGET_ICONS}/Contents.json`)
 
   console.log('\n✓ icons written. Now run: npx cap sync ios')
 }

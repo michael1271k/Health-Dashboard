@@ -2,7 +2,8 @@ import Foundation
 
 ///  HELIX snapshot client — shared by the Widget extension and the Watch app.
 ///
-///  TARGET MEMBERSHIP: add this file to **HelixWidgets** and **HelixWatch**.
+///  Watch-only since Wave 5 (the HelixWidgets extension was removed; the phone
+///  widgets live in native/). Picked up by the watch's synchronized folder.
 ///  Do NOT add it to the main **App** target — the app talks to Supabase through
 ///  the web layer and has no use for it.
 ///

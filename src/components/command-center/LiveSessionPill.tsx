@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AnimatePresence, m } from 'framer-motion'
 import { ChevronUp } from 'lucide-react'
@@ -10,7 +10,6 @@ import { useWakeLock } from '@/lib/hooks/useWakeLock'
 import { useExerciseBaselines } from '@/lib/hooks/useExerciseBaselines'
 import { computeLivePrs, livePrDigest } from '@/lib/sessions/livePrs'
 import { tapLight } from '@/lib/native/haptics'
-import { endWorkoutActivity } from '@/lib/native/liveActivity'
 import { cleanSessionTitle, draftTotals } from '@/lib/sessions/draft'
 import { getDraftServerSnapshot, getDraftSnapshot, subscribeDraft } from '@/lib/sessions/draftStore'
 import { dayColor, EMBER, GOLD, MUTED, STEEL } from '@/lib/theme/palette'
@@ -109,31 +108,6 @@ export function LiveSessionPill() {
   // field the answer can depend on, and including it defeats the memo.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const recordCount = useMemo(() => computeLivePrs(draft, baselines).count, [prKey, baselines])
-
-  /**
-   * ── THE LOCK SCREEN CARD DIES WITH THE DRAFT, NOT WITH THE DECK ────────────
-   *
-   * `SessionDeck` starts the Live Activity and pushes its updates, and it used
-   * to end it in its own unmount cleanup. That is wrong for the same reason the
-   * wake lock was wrong in `/session/page.tsx`: the deck unmounts on MINIMISE,
-   * which is precisely when the card becomes the only visible trace of the
-   * workout. The activity was therefore torn down every time the phone went in
-   * a pocket, and re-requested when you came back — so the one surface that
-   * exists for the between-sets glance was never up during it.
-   *
-   * This component outlives every navigation and watches the draft itself, so
-   * the card ends when the workout does — committed or discarded — and at no
-   * other time. Dismissed immediately rather than under the default policy,
-   * which lingers for up to four hours and would leave a card offering the next
-   * set of a session that no longer exists.
-   */
-  const hadDraft = useRef(false)
-  useEffect(() => {
-    if (draft) { hadDraft.current = true; return }
-    if (!hadDraft.current) return
-    hadDraft.current = false
-    void endWorkoutActivity()
-  }, [draft])
 
   // Tell the shell to reserve room, the same way `BottomNav` does. Without it
   // the last element on every page hides behind the pill.

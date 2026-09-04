@@ -17,16 +17,14 @@ import { useProgressionQueue } from '@/lib/hooks/useProgressionQueue'
 import { useDeleteSession } from '@/lib/hooks/useDayVault'
 import { eraForDate } from '@/lib/programs'
 import { dayColor, EMBER, STEEL, GOLD, MUTED } from '@/lib/theme/palette'
-import { cleanSessionTitle, draftTotals, draftVolumeSeries } from '@/lib/sessions/draft'
+import { draftTotals } from '@/lib/sessions/draft'
 import { fmtVolume } from '@/lib/utils/units'
 import { tapSuccess } from '@/lib/native/haptics'
 import type { useSessionDraft, CommitResult } from '@/lib/hooks/useSessionDraft'
 import { prAxisLabel } from '@/lib/training/prEngine'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { useReportTargets } from '@/lib/hooks/useReportTargets'
-import { findNextSet, formatLastRpe, formatLastTime, formatLoad, formatRpe } from '@/lib/sessions/nextSet'
 import { elapsedDurationMin, sessionActiveSec } from '@/lib/sessions/sessionElapsed'
-import { hexToInt, startWorkoutActivity, updateWorkoutActivity } from '@/lib/native/liveActivity'
 
 /**
  * The Command Center deck — the ONE logging surface. Hosted fullscreen on
@@ -150,79 +148,6 @@ export function SessionDeck({ store, onClose, onViewDay, onViewSession }: {
     setFinishOpen(true)
   }, [readClockMin])
   const openDuration = useCallback(() => setDurationOpen(true), [])
-
-  /**
-   * ── THE RUNNING WORKOUT, ON THE LOCK SCREEN ────────────────────────────────
-   * The phone is face-down on the bench. What you need when you pick it up is
-   * not a number you just entered — you entered it — it is the number you are
-   * about to have to beat, for the set you are walking towards. So the card
-   * leads with the NEXT set's history and carries the live totals behind it.
-   *
-   * Keyed on the STRING the card would draw, not on the draft. `draft` is a new
-   * object on every keystroke and ActivityKit budgets updates hard; pushing one
-   * per character would spend the allowance on nothing and then have none left
-   * at the moment a set is ticked. The digest changes exactly when the card's
-   * contents do — the same argument, and the same shape, as `livePrDigest`.
-   */
-  const nextSet = useMemo(() => findNextSet(draft, globalHistory), [draft, globalHistory])
-  // Its own memo, keyed on the draft: the series only changes when a set is
-  // ticked, whereas `activityState` is rebuilt on every keystroke to be digested.
-  const spark = useMemo(() => (draft ? draftVolumeSeries(draft) : []), [draft])
-  const activityState = useMemo(() => ({
-    exercise: nextSet?.exercise ?? '',
-    setLabel: nextSet ? `Set ${nextSet.setNumber} of ${nextSet.setTotal}` : 'Every set logged',
-    lastTime: formatLastTime(nextSet),
-    lastRpe: formatLastRpe(nextSet),
-    load: formatLoad(nextSet),
-    rpe: formatRpe(nextSet),
-    volume: fmtVolume(totals.volumeKg),
-    sets: String(totals.sets),
-    records: livePrs.count,
-    spark,
-    accent: hexToInt(dayColor(draft?.dayKey, draft?.splitDay ?? 'upper')),
-  }), [nextSet, totals.volumeKg, totals.sets, livePrs.count, spark, draft?.dayKey, draft?.splitDay])
-  const activityKey = JSON.stringify(activityState)
-
-  const liveTitle = draft ? cleanSessionTitle(draft) : null
-  const startedAt = draft?.startedAt ?? null
-  useEffect(() => {
-    if (!liveTitle || !startedAt) return
-    // Started fresh on every mount rather than resumed. Mount happens again
-    // after each jetsam-and-reload (`black-screen-and-reloads`), and the Swift
-    // side ends whatever is running before requesting — so a reload replaces
-    // the card instead of stacking a second one on the Lock Screen.
-    void startWorkoutActivity({
-      title: liveTitle,
-      startedAt: Date.parse(startedAt) || Date.now(),
-      ...JSON.parse(activityKey) as typeof activityState,
-    })
-    // Deliberately NOT keyed on `activityKey` — that would restart the activity
-    // on every tick. The effect below is the one that pushes changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveTitle, startedAt])
-
-  useEffect(() => {
-    if (!liveTitle) return
-    void updateWorkoutActivity(JSON.parse(activityKey) as typeof activityState)
-  }, [activityKey, liveTitle])
-
-  /**
-   * ── THE ACTIVITY IS NOT ENDED HERE, AND THAT IS THE BUG THAT WAS ───────────
-   *
-   * This file used to carry `useEffect(() => () => endWorkoutActivity(), [])` —
-   * take the card down when the deck unmounts. Which sounds like the commit and
-   * the discard, and is neither: the deck ALSO unmounts every time you minimise
-   * the session to the pill, which is the exact moment a Lock Screen card starts
-   * being the only place the workout is visible. Put the phone in your pocket
-   * between sets and you had already destroyed the activity by leaving the deck
-   * — and `/session` unmounts on any navigation, so glancing at yesterday's
-   * numbers killed it too.
-   *
-   * A Live Activity's lifetime is the DRAFT's, not this screen's — the same
-   * argument, for the same reason, as the wake lock that moved to
-   * `LiveSessionPill` (see that file's header). So the end lives there, driven
-   * by the draft disappearing, and the deck only ever starts and updates.
-   */
 
   /**
    * ── THE STICKY BOTTOM BAR IS GONE ──────────────────────────────────────────

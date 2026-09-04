@@ -3,7 +3,7 @@
 //  HelixWatch Watch App
 //
 //  The standalone HELIX watch face: five swipeable screens fed by the
-//  token-authenticated /api/widget/snapshot endpoint (see Shared/HelixSnapshot.swift).
+//  token-authenticated /api/widget/snapshot endpoint (see Legacy/HelixSnapshot.swift; the phone widgets moved to native/ in Wave 5).
 //  No App Group, no phone dependency — it fetches for itself over Wi-Fi/LTE.
 //
 

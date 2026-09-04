@@ -193,11 +193,6 @@ function afterCommit(qc: QueryClient, result: CommitResult, vars: CommitVars): v
     // battery moves the moment the POST returns rather than after a refetch that
     // used to race it and lose. The invalidations below still run, for
     // everything derived from the score — but nothing visible waits on them.
-    //
-    // EVERY widget kind. A commit is the one write that reaches all of them:
-    // today's session, the calendar ring, the streak, the week's tonnage, the
-    // score and the battery. This is the moment Training's reload budget is FOR
-    // — which is why the day-to-day writes spend DAY_KINDS and leave it alone.
     void recomputeAndPaint(qc, vars.date, {
       force: true, isToday: vars.date === logicalTodayISO(),
       backfillDays: 0, hoursAwake: hoursAwakeToday(),

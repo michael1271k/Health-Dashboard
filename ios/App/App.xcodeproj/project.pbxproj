@@ -9,23 +9,14 @@
 /* Begin PBXBuildFile section */
 		4CD1A0023100000000000011 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4CD1A0013100000000000010 /* PrivacyInfo.xcprivacy */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-		4C8EA4153014D04D007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
-		4C8EA4163014D04D007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
 		4C8EA41D3014D149007CEF26 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41C3014D149007CEF26 /* WidgetKit.framework */; };
 		4C8EA41F3014D149007CEF26 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C8EA41E3014D149007CEF26 /* SwiftUI.framework */; };
-		4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */; };
-		4C9B492D303EF33400FB72AB /* HelixWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4C9B4933303EF5E800FB72AB /* HelixWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA0FA693018E01F00141641 /* SecureStore.swift */; };
-		4CB1A0113100000000000001 /* HelixBackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */; };
-		4CB1A0123100000000000002 /* HelixWidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0023100000000000002 /* HelixWidgetBridge.swift */; };
-		4CB1A0133100000000000003 /* HelixLiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB1A0033100000000000003 /* HelixLiveActivityPlugin.swift */; };
 		4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */; };
 		4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */; };
 		4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */; };
-		4CFE00023100000000000002 /* HelixLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFE00013100000000000001 /* HelixLiveActivity.swift */; };
-		4CFE00033100000000000003 /* HelixLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFE00013100000000000001 /* HelixLiveActivity.swift */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
@@ -42,13 +33,6 @@
 			remoteGlobalIDString = 4C90F0403013EFF50096E03F;
 			remoteInfo = "HelixWatch Watch App";
 		};
-		4CFE00053100000000000005 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4C8EA41A3014D149007CEF26;
-			remoteInfo = HelixWidgetsExtension;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -63,38 +47,21 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		4C9B4930303EF33400FB72AB /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				4C9B492D303EF33400FB72AB /* HelixWidgetsExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		4CD1A0013100000000000010 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
-		4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixSnapshot.swift; sourceTree = "<group>"; };
-		4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HelixWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C8EA41C3014D149007CEF26 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		4C8EA41E3014D149007CEF26 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HelixWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CA0FA693018E01F00141641 /* SecureStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStore.swift; sourceTree = "<group>"; };
-		4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixBackgroundRefresh.swift; sourceTree = "<group>"; };
-		4CB1A0023100000000000002 /* HelixWidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixWidgetBridge.swift; sourceTree = "<group>"; };
-		4CB1A0033100000000000003 /* HelixLiveActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixLiveActivityPlugin.swift; sourceTree = "<group>"; };
 		4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixHealth.swift; sourceTree = "<group>"; };
 		4CC46EC3300C031D00DFDFCE /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HelixHealthRegistration.m; sourceTree = "<group>"; };
 		4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixViewController.swift; sourceTree = "<group>"; };
 		4CDD20C0300B802400E3AA88 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
-		4CFE00013100000000000001 /* HelixLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelixLiveActivity.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -109,13 +76,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		4C8EA42B3014D14A007CEF26 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */;
-		};
 		4C90F0533013EFF60096E03F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -123,30 +83,13 @@
 			);
 			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
 		};
-		4CCBBDA4303CB12900B18312 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				HelixPalette.swift,
-			);
-			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4C8EA4203014D149007CEF26 /* HelixWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4CCBBDA4303CB12900B18312 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 4C8EA42B3014D14A007CEF26 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = HelixWidgets; sourceTree = "<group>"; };
 		4C90F0423013EFF50096E03F /* HelixWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4C90F0533013EFF60096E03F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "HelixWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		4C8EA4183014D149007CEF26 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4C8EA41F3014D149007CEF26 /* SwiftUI.framework in Frameworks */,
-				4C8EA41D3014D149007CEF26 /* WidgetKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		4C90F03E3013EFF50096E03F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -175,25 +118,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		4C8EA4143014D04D007CEF26 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				4CFE00013100000000000001 /* HelixLiveActivity.swift */,
-				4C8EA4133014D04D007CEF26 /* HelixSnapshot.swift */,
-			);
-			path = Shared;
-			sourceTree = "<group>";
-		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
 				504EC3061FED79650016851F /* App */,
 				4C90F0423013EFF50096E03F /* HelixWatch Watch App */,
-				4C8EA4203014D149007CEF26 /* HelixWidgets */,
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
-				4C8EA4143014D04D007CEF26 /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -202,7 +134,6 @@
 			children = (
 				504EC3041FED79650016851F /* App.app */,
 				4C90F0413013EFF50096E03F /* HelixWatch Watch App.app */,
-				4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -211,9 +142,6 @@
 			isa = PBXGroup;
 			children = (
 				4CC46EC4300C034300DFDFCE /* HelixHealthRegistration.m */,
-				4CB1A0013100000000000001 /* HelixBackgroundRefresh.swift */,
-				4CB1A0023100000000000002 /* HelixWidgetBridge.swift */,
-				4CB1A0033100000000000003 /* HelixLiveActivityPlugin.swift */,
 				4CC46EC1300C030D00DFDFCE /* HelixHealth.swift */,
 				4CC46ED1300C030D00DFDFCE /* HelixViewController.swift */,
 				4CDD20C0300B802400E3AA88 /* App.entitlements */,
@@ -245,28 +173,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 4C8EA42C3014D14A007CEF26 /* Build configuration list for PBXNativeTarget "HelixWidgetsExtension" */;
-			buildPhases = (
-				4C8EA4173014D149007CEF26 /* Sources */,
-				4C8EA4183014D149007CEF26 /* Frameworks */,
-				4C8EA4193014D149007CEF26 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				4C8EA4203014D149007CEF26 /* HelixWidgets */,
-			);
-			name = HelixWidgetsExtension;
-			packageProductDependencies = (
-			);
-			productName = HelixWidgetsExtension;
-			productReference = 4C8EA41B3014D149007CEF26 /* HelixWidgetsExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		4C90F0403013EFF50096E03F /* HelixWatch Watch App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4C90F04F3013EFF60096E03F /* Build configuration list for PBXNativeTarget "HelixWatch Watch App" */;
@@ -297,7 +203,6 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
-				4C9B4930303EF33400FB72AB /* Embed Foundation Extensions */,
 				4C90F04C3013EFF60096E03F /* Embed Watch Content */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 			);
@@ -305,7 +210,6 @@
 			);
 			dependencies = (
 				4C90F04A3013EFF60096E03F /* PBXTargetDependency */,
-				4CFE00043100000000000004 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
@@ -321,9 +225,6 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 0920;
 				TargetAttributes = {
-					4C8EA41A3014D149007CEF26 = {
-						CreatedOnToolsVersion = 26.6;
-					};
 					4C90F0403013EFF50096E03F = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -351,19 +252,11 @@
 			targets = (
 				504EC3031FED79650016851F /* App */,
 				4C90F0403013EFF50096E03F /* HelixWatch Watch App */,
-				4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4C8EA4193014D149007CEF26 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		4C90F03F3013EFF50096E03F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -424,20 +317,10 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		4C8EA4173014D149007CEF26 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4C8EA4303014D24C007CEF26 /* HelixSnapshot.swift in Sources */,
-				4CFE00033100000000000003 /* HelixLiveActivity.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		4C90F03D3013EFF50096E03F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C8EA4153014D04D007CEF26 /* HelixSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,12 +329,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4CC46EC7300C03F600DFDFCE /* AppDelegate.swift in Sources */,
-				4C8EA4163014D04D007CEF26 /* HelixSnapshot.swift in Sources */,
-				4CFE00023100000000000002 /* HelixLiveActivity.swift in Sources */,
 				4CA0FA6A3018E01F00141641 /* SecureStore.swift in Sources */,
-				4CB1A0113100000000000001 /* HelixBackgroundRefresh.swift in Sources */,
-				4CB1A0123100000000000002 /* HelixWidgetBridge.swift in Sources */,
-				4CB1A0133100000000000003 /* HelixLiveActivityPlugin.swift in Sources */,
 				4CC46EC2300C030F00DFDFCE /* HelixHealth.swift in Sources */,
 				4CC46ED0300C030F00DFDFCE /* HelixViewController.swift in Sources */,
 				4CC46EC5300C034500DFDFCE /* HelixHealthRegistration.m in Sources */,
@@ -465,11 +343,6 @@
 			isa = PBXTargetDependency;
 			target = 4C90F0403013EFF50096E03F /* HelixWatch Watch App */;
 			targetProxy = 4C90F0493013EFF60096E03F /* PBXContainerItemProxy */;
-		};
-		4CFE00043100000000000004 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4C8EA41A3014D149007CEF26 /* HelixWidgetsExtension */;
-			targetProxy = 4CFE00053100000000000005 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -493,94 +366,6 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		4C8EA42D3014D14A007CEF26 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = W9UMPV973P;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = HelixWidgets/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = HelixWidgets;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.helixwidgets;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		4C8EA42E3014D14A007CEF26 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = W9UMPV973P;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = HelixWidgets/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = HelixWidgets;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = app.helix.health.michael.helixwidgets;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 		4C90F04D3013EFF60096E03F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4C8EA4313014DDD1007CEF26 /* Secrets.xcconfig */;
@@ -848,15 +633,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4C8EA42C3014D14A007CEF26 /* Build configuration list for PBXNativeTarget "HelixWidgetsExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				4C8EA42D3014D14A007CEF26 /* Debug */,
-				4C8EA42E3014D14A007CEF26 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		4C90F04F3013EFF60096E03F /* Build configuration list for PBXNativeTarget "HelixWatch Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
