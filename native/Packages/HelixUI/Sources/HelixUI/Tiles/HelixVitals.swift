@@ -177,15 +177,15 @@ struct VitalRow: View {
     VStack(alignment: .leading, spacing: 3) {
       HStack(spacing: 4) {
         Text(spec.label)
-          .font(.system(size: 8, weight: .bold))
+          .font(HelixWidgetType.face(8, weight: .bold))
           .foregroundStyle(mono ? .white : spec.color)
           .lineLimit(1)
         Spacer(minLength: 0)
         Text(HelixSnapshot.fixed(vital?.value, decimals: spec.decimals) ?? "—")
-          .font(.system(size: 12, weight: .bold, design: .monospaced))
+          .font(HelixWidgetType.face(12, weight: .bold, design: .monospaced))
           .foregroundStyle(.white)
         Text(spec.unit)
-          .font(.system(size: 8))
+          .font(HelixWidgetType.face(8))
           .foregroundStyle(Color.helix.textSecondary)
         DeltaChip(delta: vital?.delta, decimals: spec.decimals,
                   upIsGood: spec.upIsGood, monochrome: mono)
@@ -221,7 +221,7 @@ struct VitalLeadFace: View {
         DeltaChip(delta: vital?.delta, decimals: spec.decimals,
                   upIsGood: spec.upIsGood, monochrome: mono)
         Text(baselineLine)
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -302,7 +302,7 @@ struct VitalsPanelFace: View {
         // with nothing on the wrist. Both are absence, and absence gets a
         // sentence rather than five rows of em dashes.
         Text("no overnight readings yet")
-          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
         ForEach(Array(specs.enumerated()), id: \.offset) { _, spec in
@@ -361,10 +361,10 @@ struct GoalStat: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
       HStack(spacing: 4) {
-        Text(label).font(.system(size: 7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
+        Text(label).font(HelixWidgetType.face(7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         Text(value ?? "—")
-          .font(.system(size: 11, weight: .bold, design: .monospaced))
+          .font(HelixWidgetType.face(11, weight: .bold, design: .monospaced))
           .foregroundStyle(.white)
           .lineLimit(1)
       }

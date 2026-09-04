@@ -1,18 +1,26 @@
 import SwiftUI
 import HelixCore
 
-/// Obsidian Glass — the semantic token layer.
+/// Onyx — the semantic token layer. Colour and geometry; type lives in
+/// `HelixType.swift`.
 ///
 /// ── WHY THIS FILE EXISTS BESIDE `HelixPalette` AND NOT INSTEAD OF IT ────────
 /// `HelixPalette` is a Tailwind transliteration: forty flat hexes carried over
 /// from `src/lib/theme/palette.ts` so the web app and the first native screens
 /// could be diffed by eye. It did its job and it is not the design. This file is
-/// the design — four domain accents, text at three weights, and nothing else
-/// painted a colour — and every screen written from Wave 3 onward reads it.
+/// the design — four domain accents, text at three weights, and a short list of
+/// fixed semantic hues — and every screen reads it.
 ///
-/// The logger still reads `HelixPalette`. Re-skinning it is Wave 1's unfinished
-/// half and touches every set row, so it is not smuggled into a tab wave. Two
-/// token files is the visible cost of that; one of them has a deletion date.
+/// The logger is the last reader of `HelixPalette`; re-skinning it touches every
+/// set row, so it is Wave 2.4's diff and `HelixPalette` dies with it.
+///
+/// ── WHAT CHANGED IN TOKENS v2 (Phase 2 §3.2) ────────────────────────────────
+/// Every accent came down two steps. The v1 palette was Ion `#7C5CFF` and Tide
+/// `#3DFFB0` — full-saturation hues on true black, which is the exact recipe
+/// for a screen that reads as a web app in a new font: the accent shouts, the
+/// glass under it tints, and every number has to compete with its own label's
+/// colour. Desaturating is not a taste change, it is what lets the material
+/// carry the hierarchy instead of the hue.
 ///
 /// ── THE RULE THIS FILE MAKES ENFORCEABLE ────────────────────────────────────
 /// No raw hex in any view. Hexes live here, views name meanings, and
@@ -32,47 +40,47 @@ import HelixCore
 /// accents keyed to DOMAINS means the hue tells you where you are before you
 /// read a word, and the one tinted thing on a screen is the one that matters.
 public enum HelixDomain: String, CaseIterable, Sendable {
-    /// Ion — logger, PRs, volume, muscle.
+    /// Ion — logger, PRs, volume, muscle. Indigo → sky.
     case train
-    /// Solar — nutrition, levers, water.
+    /// Solar — nutrition, levers, water. Honey → coral.
     case fuel
-    /// Tide — composition, atlas intensity, cardio.
+    /// Tide — composition, atlas intensity, cardio. Teal → deep teal.
     case body
-    /// Lunar — sleep, readiness, fatigue, DOMS.
+    /// Lunar — sleep, readiness, fatigue, DOMS. Lavender → mist.
     case recover
 
     /// The mesh's first stop. Also the accent when only one colour will do.
     public var start: Color {
         switch self {
-        case .train:   Color(hex: 0x7C5CFF)
-        case .fuel:    Color(hex: 0xFFB13D)
-        case .body:    Color(hex: 0x3DFFB0)
-        case .recover: Color(hex: 0xB9A7FF)
+        case .train:   Color(hex: 0x6B78F0)
+        case .fuel:    Color(hex: 0xE3A650)
+        case .body:    Color(hex: 0x46B39D)
+        case .recover: Color(hex: 0xA79FD6)
         }
     }
 
     /// The mesh's second stop.
     public var end: Color {
         switch self {
-        case .train:   Color(hex: 0x38E1FF)
-        case .fuel:    Color(hex: 0xFF5E7A)
-        case .body:    Color(hex: 0x12C2B0)
-        case .recover: Color(hex: 0xDCEBFF)
+        case .train:   Color(hex: 0x4FB6E8)
+        case .fuel:    Color(hex: 0xE07A7A)
+        case .body:    Color(hex: 0x2E9AA6)
+        case .recover: Color(hex: 0xC9D3EE)
         }
     }
 
     /// What a `Section` header, a `Gauge` tint or a selected row is coloured.
     ///
     /// The START stop rather than a computed midpoint: a midpoint of Solar
-    /// (`#FFB13D` → `#FF5E7A`) is a muddy salmon that reads as neither warning
+    /// (`#E3A650` → `#E07A7A`) is a muddy salmon that reads as neither warning
     /// nor warmth, and the two-stop ramp exists for gradients, not for solids.
     public var accent: Color { start }
 
     /// A fixed offset along the mesh, 0 = `start` … 1 = `end`.
     ///
-    /// §3.2: set states, macro rails and sleep stages "derive from the domain
-    /// accent's mesh at fixed offsets, never from a fifth hue". This is the one
-    /// function that derives them, so a tile never mixes a colour of its own.
+    /// §3.2: split colours, macro rails and set states "derive from the domain
+    /// accent's mesh at fixed offsets". This is the one function that derives
+    /// them, so a tile never mixes a colour of its own.
     public func at(_ t: Double) -> Color {
         start.mix(with: end, by: min(max(t, 0), 1))
     }
@@ -139,64 +147,99 @@ extension Color {
 
         public static let textPrimary = Color.white.opacity(0.92)
         public static let textSecondary = Color.white.opacity(0.62)
-        /// Fails 4.5:1 BY DESIGN, so it is only ever correct for a label whose
-        /// absence would cost the reader nothing — a unit suffix, a row count, a
-        /// timestamp already spoken by VoiceOver. Never a value, never a control
-        /// label, never the only copy of a fact.
-        public static let textTertiary = Color.white.opacity(0.38)
+        /// 40 %, and it fails 4.5:1 BY DESIGN — so it is only ever correct for a
+        /// label whose absence would cost the reader nothing: a unit suffix, a
+        /// row count, a timestamp already spoken by VoiceOver. Never a value,
+        /// never a control label, never the only copy of a fact.
+        public static let textTertiary = Color.white.opacity(0.40)
 
-        /// System red's dark-appearance variant. Destructive actions and
-        /// validation failures; never a chart series, never an accent.
-        public static let danger = Color(hex: 0xFF453A)
+        /// Destructive actions, validation failures, and the over-budget segment
+        /// of a gauge. Never a chart series, never an accent.
+        public static let danger = Color(hex: 0xE5484D)
 
         // ── Accents ──────────────────────────────────────────────────────────
 
         public static func accent(_ domain: HelixDomain) -> Color { domain.accent }
 
         /// Anything that went the right way: a delta in the good direction, a
-        /// session logged, a target met. Tide's green stop — the one accent that
-        /// reads as "yes" without borrowing a traffic light.
-        public static let good = HelixDomain.body.start
+        /// session logged, a target met. A muted green rather than Tide's teal —
+        /// "yes" and "this is the Body tab" are different statements and the v1
+        /// palette said them in the same colour.
+        public static let good = Color(hex: 0x4CAF87)
 
-        /// A personal record. Ion's far stop: PRs belong to Train (§3.2) and a
-        /// record is the brightest thing that domain produces, so it sits at the
-        /// end of Train's mesh rather than on a fifth hue. The old palette spent
-        /// gold on this; gold is gone.
-        public static let record = HelixDomain.train.end
+        /// A personal record, and nothing else. §3.2 makes gold the ONLY fifth
+        /// hue in the system precisely so that seeing it means one thing: the
+        /// number under it has never been beaten.
+        public static let record = Color(hex: 0xD9B25F)
+
+        // ── Macros & water ───────────────────────────────────────────────────
+        //
+        // Fixed app-wide and never re-mapped per screen: a bar that is coral in
+        // Nutrition and teal in a widget is two facts the reader has to hold.
+        // Three of the four are domain stops rather than new hues, so the macro
+        // rails still read as Solar and Lunar rather than as a fifth palette.
+
+        /// Coral — Solar's far stop.
+        public static let protein = HelixDomain.fuel.end
+        /// Honey — Solar's near stop.
+        public static let carbs = HelixDomain.fuel.start
+        /// Lavender — Lunar's near stop.
+        public static let fat = HelixDomain.recover.start
+        /// Sapphire. The one macro-adjacent hue that is not on a domain mesh,
+        /// because water is not a macro and must not be mistaken for one.
+        public static let water = Color(hex: 0x5AA9E6)
+        /// Calories are the Atwater SUM of the three macros, so they take the
+        /// domain the three sit on rather than a colour of their own. Use
+        /// `HelixDomain.fuel.ramp` where the fill is a gradient.
+        public static let calories = HelixDomain.fuel.accent
 
         /// The colour of a ROUTINE DAY — what tints a calendar ring, a session
-        /// chip and the Today face — keyed onto the domains by what the day
+        /// chip and the This-week panel — keyed onto the domains by what the day
         /// TRAINS, the same way `HelixDomain.forMuscle` keys a muscle.
         ///
-        /// Upper-body sessions (chest/back, arms, push, pull) are Ion; leg
-        /// sessions are Tide. The A/B variant is a fixed offset along the
-        /// family's own mesh, so Upper A and Upper B are visibly the same family
-        /// and visibly not the same day. A rest day is the ABSENCE of a session
-        /// and wears no accent at all.
+        /// §3.2: upper A/B are Ion at 0.35 / 0.65, legs A/B are Tide at the same
+        /// two steps, and Delts & Arms takes Ion's end stop. Two steps in from
+        /// each end rather than 0 and 1 — a split colour sits next to the domain
+        /// accent on the same screen, and a day drawn in the accent itself reads
+        /// as "selected" rather than as "leg day". Push/Pull/Legs mirror the rule
+        /// so a Helix week and a PPL week are the same picture.
+        ///
+        /// A rest day is the ABSENCE of a session and wears no accent at all.
         public static func day(_ dayKey: String?) -> Color {
             switch dayKey {
             // Helix-5 (active)
-            case "cb_a":    return HelixDomain.train.at(0)
-            case "cb_b":    return HelixDomain.train.at(0.35)
-            case "arms":    return HelixDomain.train.at(0.7)
-            case "legs_a":  return HelixDomain.body.at(0)
-            case "legs_b":  return HelixDomain.body.at(0.5)
+            case "cb_a":    return HelixDomain.train.at(0.35)
+            case "cb_b":    return HelixDomain.train.at(0.65)
+            case "arms":    return HelixDomain.train.end
+            case "legs_a":  return HelixDomain.body.at(0.35)
+            case "legs_b":  return HelixDomain.body.at(0.65)
             // Helix-4 (drawer) — mirrors its Helix-5 counterpart
-            case "upper_a": return HelixDomain.train.at(0)
-            case "upper_b": return HelixDomain.train.at(0.35)
-            case "lower_a": return HelixDomain.body.at(0)
-            case "lower_b": return HelixDomain.body.at(0.5)
-            // PPL legacy — the split colours, since the day IS the split
-            case "ppl_push_sun", "ppl_push_thu": return HelixDomain.train.at(0)
-            case "ppl_pull_mon", "ppl_pull_fri": return HelixDomain.train.at(0.7)
-            case "ppl_legs_tue":                 return HelixDomain.body.at(0)
-            default:        return textSecondary
+            case "upper_a": return HelixDomain.train.at(0.35)
+            case "upper_b": return HelixDomain.train.at(0.65)
+            case "lower_a": return HelixDomain.body.at(0.35)
+            case "lower_b": return HelixDomain.body.at(0.65)
+            // PPL legacy — the same rule; push and pull are both upper work.
+            case "ppl_push_sun", "ppl_push_thu": return HelixDomain.train.at(0.35)
+            case "ppl_pull_mon", "ppl_pull_fri": return HelixDomain.train.at(0.65)
+            case "ppl_legs_tue":                 return HelixDomain.body.at(0.35)
+            default:        return textTertiary
             }
+        }
+
+        /// `day()` for a WORD rather than a ring.
+        ///
+        /// Identical except on a rest day, where `day()` answers `textTertiary`
+        /// — a RING colour (§3.2: "Rest = tertiary grey ring"), and 3.7:1 on
+        /// black. A ring may sit at 3.7:1; a label naming the day may not, and
+        /// `textTertiary`'s own rule says never the only copy of a fact.
+        public static func dayLabel(_ dayKey: String?) -> Color {
+            let colour = day(dayKey)
+            return colour == textTertiary ? textSecondary : colour
         }
 
         /// Battery banding — the one place a traffic light is the right
         /// metaphor, because the number genuinely is a fuel gauge. Good above
-        /// 60, Solar's amber through the middle, danger below 30, and a reading
+        /// 60, Solar's honey through the middle, danger below 30, and a reading
         /// that does not exist is text-grey rather than any verdict.
         public static func battery(_ pct: Int?) -> Color {
             guard let pct else { return textSecondary }
@@ -223,15 +266,49 @@ extension Color {
 
 // MARK: - Geometry
 
+/// The spacing scale. Five steps, and `Features/` may not spell a number.
+///
+/// ── WHY A SCALE AT ALL WHEN EVERY VALUE IS ALREADY A NUMBER ─────────────────
+/// The screens this replaces used 14 and 16 and 18 interchangeably — not as
+/// decisions but as whatever the file next door happened to say. Three values
+/// that differ by 2 pt do not read as three levels of relationship; they read as
+/// a grid that is slightly off, which is the single loudest "this was not made
+/// by a designer" signal an iOS screen can send. Five steps that are visibly
+/// different is a hierarchy. Fifteen that are not is noise.
+public enum HelixSpace {
+    /// 4 — inside a chip, between a glyph and its label.
+    public static let xs: CGFloat = 4
+    /// 8 — between the lines of one thought.
+    public static let s: CGFloat = 8
+    /// 12 — a tile's own padding, and the gap between rows inside it.
+    public static let m: CGFloat = 12
+    /// 16 — the gap between sections, and the screen's side gutter.
+    public static let l: CGFloat = 16
+    /// 24 — the gap above a footer CTA, and a sheet's top inset.
+    public static let xl: CGFloat = 24
+
+    /// The dashboard grid's gap: `s + 2`.
+    ///
+    /// The one value that is not a step of the scale, and it is deliberate. The
+    /// grid's cells already carry `m` of padding inside their own edge, so a
+    /// full `m` between them reads as a 24 pt trench; `s` alone lets two tiles
+    /// touch. 10 is the value where a 2-up grid reads as a grid.
+    public static let grid: CGFloat = 10
+}
+
 /// Concentric squircles: an inner radius is its outer radius minus the padding
 /// between them. Corners that are merely "all rounded" read as stickers.
+///
+/// v2 brought all three down (12/20/32 → 10/16/28). A 20 pt corner on a 160 pt
+/// tile is a lozenge; iOS's own widgets, cards and grouped rows sit near 16, and
+/// the tiles were reading as web cards partly because of it.
 public enum HelixCorner {
     /// A row inside a tile.
-    public static let row: CGFloat = 12
+    public static let row: CGFloat = 10
     /// A tile on a screen.
-    public static let tile: CGFloat = 20
+    public static let tile: CGFloat = 16
     /// A presented sheet.
-    public static let sheet: CGFloat = 32
+    public static let sheet: CGFloat = 28
 
     /// The inner radius for content inset by `padding` inside `outer`.
     public static func inner(_ outer: CGFloat, padding: CGFloat) -> CGFloat {
@@ -239,67 +316,27 @@ public enum HelixCorner {
     }
 }
 
-// MARK: - Type roles
-
-public extension View {
-
-    /// Every number in the app.
-    ///
-    /// ── THREE THINGS THAT ONLY WORK TOGETHER ────────────────────────────────
-    /// `.monospacedDigit()` stops neighbours shuffling as a value changes;
-    /// `.rounded` matches the numerals to the shape language of the tiles;
-    /// `.contentTransition(.numericText())` animates a digit rolling rather than
-    /// cross-fading, which is the difference between a number that CHANGED and
-    /// a number that was replaced. Numbers are the product here — they get the
-    /// same care the copy does.
-    func helixNumeral() -> some View {
-        self.fontDesign(.rounded)
-            .monospacedDigit()
-            .contentTransition(.numericText())
-    }
-
-    /// A hero figure: readiness, load, kcal. One per screen at most.
-    func helixHero() -> some View {
-        self.font(.system(size: 56, weight: .bold, design: .rounded))
-            .tracking(-56 * 0.03)
-            .monospacedDigit()
-            .contentTransition(.numericText())
-    }
-
-    /// A screen or sheet title. Tracking is size-specific — a display size that
-    /// keeps body tracking reads loose, and one fixed value is wrong at both
-    /// ends of a scale.
-    func helixDisplay() -> some View {
-        self.font(.largeTitle.weight(.semibold))
-            .tracking(-34 * 0.02)
-    }
-
-    /// A section caption or a unit suffix.
-    func helixCaption() -> some View {
-        self.font(.caption)
-            .tracking(12 * 0.01)
-            .foregroundStyle(Color.helix.textSecondary)
-    }
-}
-
 // MARK: - Sleep
 
-/// The sleep-stage ramp, deep → awake, derived from Lunar.
+/// The four sleep stages, each its own token.
 ///
-/// Deep is the saturated end of the mesh and each lighter stage sits a fixed
-/// step further along it, so the stacked bar still ramps light-to-dark by depth
-/// — which is what made the old indigo/sapphire/cyan ramp legible — without a
-/// hue that is not one of the four. Awake is not sleep at all and takes no
-/// accent: it is the gap in the night, drawn as text-grey.
+/// ── WHY NOT FOUR ALPHAS OF ONE HUE ──────────────────────────────────────────
+/// v1 derived all four from Lunar at fixed offsets, and the Sleep sheet came out
+/// as four lavender bars a reader had to decode from a legend. The stages are
+/// not a ramp of one quantity — deep and REM are different KINDS of sleep, and
+/// awake is not sleep at all — so they get four hues that stay distinct at a
+/// widget's 9 pt legend and in the stacked arc. Deep is the indigo end of night,
+/// core keeps Lunar, REM is warm because it is the active stage, and awake is
+/// the neutral gap in the night.
 public enum HelixSleepStage: CaseIterable, Sendable {
     case deep, core, rem, awake
 
     public var color: Color {
         switch self {
-        case .deep:  HelixDomain.recover.at(0)
-        case .core:  HelixDomain.recover.at(0.45)
-        case .rem:   HelixDomain.recover.at(0.9)
-        case .awake: Color.helix.textTertiary
+        case .deep:  Color(hex: 0x5B62C9)
+        case .core:  HelixDomain.recover.start
+        case .rem:   Color(hex: 0xE07A9A)
+        case .awake: Color(hex: 0x6E6E78)
         }
     }
 

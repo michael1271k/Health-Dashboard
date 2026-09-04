@@ -11,8 +11,39 @@ import HelixCore
     }
 
     @Test("a rest day wears no domain accent") func restDay() {
-        #expect(Color.helix.day(nil) == Color.helix.textSecondary)
+        #expect(Color.helix.day(nil) == Color.helix.textTertiary)
         #expect(Color.helix.day("cb_a") != Color.helix.day("legs_a"))
+        // §3.2: a split and its A/B twin are the same family two steps apart,
+        // and Helix-4's drawer keys mirror their Helix-5 counterparts exactly.
+        #expect(Color.helix.day("cb_a") != Color.helix.day("cb_b"))
+        #expect(Color.helix.day("cb_a") == Color.helix.day("upper_a"))
+        #expect(Color.helix.day("legs_b") == Color.helix.day("lower_b"))
+        // A ring may sit at tertiary; a WORD may not. `dayLabel` is the only
+        // difference, and only on a rest day.
+        #expect(Color.helix.dayLabel(nil) == Color.helix.textSecondary)
+        #expect(Color.helix.dayLabel("legs_a") == Color.helix.day("legs_a"))
+    }
+
+    @Test("the four sleep stages are four colours, not four alphas") func sleepStages() {
+        // The v1 ramp derived all four from Lunar and the Sleep sheet came out
+        // as four lavender bars nobody could tell apart (Phase 2 §2.2).
+        let stages = HelixSleepStage.allCases.map { $0.color.description }
+        #expect(Set(stages).count == stages.count)
+    }
+
+    @Test("the scales are ordered and the corners are concentric") func scales() {
+        #expect(HelixSpace.xs < HelixSpace.s)
+        #expect(HelixSpace.s < HelixSpace.m)
+        #expect(HelixSpace.m < HelixSpace.l)
+        #expect(HelixSpace.l < HelixSpace.xl)
+        #expect(HelixCorner.row < HelixCorner.tile)
+        #expect(HelixCorner.tile < HelixCorner.sheet)
+        // A row inset by a tile's padding keeps the same shoulder as the tile.
+        #expect(HelixCorner.inner(HelixCorner.tile, padding: HelixSpace.m) == HelixCorner.tile - HelixSpace.m)
+        // §3.3: nothing in the app is smaller than 11 pt, and the roles descend.
+        let points = HelixType.allCases.map(\.points)
+        #expect(points == points.sorted(by: >))
+        #expect(points.min() == 11)
     }
 
     @Test("the sample snapshot is full-scope") func sample() {

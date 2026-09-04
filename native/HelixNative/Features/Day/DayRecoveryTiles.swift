@@ -207,7 +207,7 @@ struct DomsTile: View {
     var body: some View {
         DayTile("Soreness", .recover) {
             Button { rating = true } label: {
-                HStack(spacing: 16) {
+                HStack(spacing: HelixSpace.l) {
                     AtlasFigure(side: .both, worked: DomsMap.worked(model.domsSeverity), monochromeTint: Color.helix.accent(.recover))
                         .frame(height: 120)
                     VStack(alignment: .leading, spacing: 4) {

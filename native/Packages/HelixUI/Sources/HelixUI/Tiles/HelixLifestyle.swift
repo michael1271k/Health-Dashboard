@@ -63,7 +63,7 @@ struct FocusSpec {
       // excellent against 2.5 and poor against 4.
       sub: s?.water.goalMl.map { String(format: "of %.1f L", $0 / 1000) } ?? "litres",
       progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl),
-      accent: HelixDomain.fuel.end)
+      accent: Color.helix.water)
   }
 
   static func steps(_ s: HelixSnapshot?) -> FocusSpec {
@@ -293,7 +293,7 @@ struct FocusFace: View {
       }
       BigValue(value: spec.hero, size: 30, color: .white)
       if let sub = spec.sub {
-        Text(sub).font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+        Text(sub).font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
       Spacer(minLength: 0)
       Rail(progress: spec.progress, color: accent)
@@ -346,11 +346,11 @@ struct CalorieLedgerFace: View {
       // principle: they are a decomposition of the bar above them, not four
       // unrelated meters that happen to share a column.
       MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                color: tint(HelixDomain.fuel.at(0)))
+                color: tint(Color.helix.protein))
       MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                color: tint(HelixDomain.fuel.at(0.35)))
+                color: tint(Color.helix.carbs))
       MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                color: tint(HelixDomain.fuel.at(0.65)))
+                color: tint(Color.helix.fat))
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
@@ -360,7 +360,7 @@ struct CalorieLedgerFace: View {
       LedgerRow(label: "SLEEP", value: sleepDuration(s), color: tint(HelixDomain.recover.accent))
       Hairline().padding(.vertical, 4)
       LedgerRow(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) },
-                color: tint(HelixDomain.fuel.end), trailing: "L")
+                color: tint(Color.helix.water), trailing: "L")
       Hairline().padding(.vertical, 4)
       LedgerRow(label: "BATTERY", value: s?.battery.map { "\($0)" },
                 color: mono ? .white : Color.helix.battery(s?.battery), trailing: "%")
@@ -369,12 +369,12 @@ struct CalorieLedgerFace: View {
       // then the one thing that is not a number.
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         Text("TODAY")
-          .font(.system(size: 10, weight: .semibold)).tracking(0.6)
+          .font(HelixWidgetType.face(10, weight: .semibold)).tracking(0.6)
           .foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 4)
         Text(nextSessionText(s) ?? "—")
-          .font(.system(size: 12, weight: .bold))
-          .foregroundStyle(mono ? .white : Color.helix.day(s?.workout.dayKey))
+          .font(HelixWidgetType.face(12, weight: .bold))
+          .foregroundStyle(mono ? .white : Color.helix.dayLabel(s?.workout.dayKey))
           .lineLimit(1)
           .minimumScaleFactor(0.7)
       }
@@ -406,23 +406,23 @@ struct WaterLedgerFace: View {
   private var heroColumn: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
-        Caption("WATER", color: tint(HelixDomain.fuel.end))
+        Caption("WATER", color: tint(Color.helix.water))
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
       }
       Spacer(minLength: 0)
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) }, size: 32, color: .white)
-        Text("L").font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+        Text("L").font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
       }
       if let goal = s?.water.goalMl {
         Text(String(format: "of %.1f L", goal / 1000))
-          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
       }
       Rail(progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl),
-           color: tint(HelixDomain.fuel.end), height: 5)
+           color: tint(Color.helix.water), height: 5)
       if let left = litresLeft {
-        Text(left).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
+        Text(left).font(HelixWidgetType.face(9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
       }
       Spacer(minLength: 0)
     }
@@ -436,11 +436,11 @@ struct WaterLedgerFace: View {
         Spacer(minLength: 0)
         if let mean = weeklyMean {
           Text(String(format: "avg %.1f L", mean / 1000))
-            .font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
+            .font(HelixWidgetType.face(8)).foregroundStyle(Color.helix.textSecondary)
         }
       }
       BarChart(points: s?.water.trend ?? [], goal: s?.water.goalMl,
-               color: tint(HelixDomain.fuel.end),
+               color: tint(Color.helix.water),
                label: { HelixSnapshot.weekdayInitial($0.d) })
         .frame(maxHeight: .infinity)
       Hairline()
@@ -521,11 +521,11 @@ struct SleepArcFace: View {
 
       HStack(spacing: 4) {
         if let score = s?.sleep.score {
-          Text("score \(score)").font(.system(size: 10, weight: .semibold)).foregroundStyle(.white)
+          Text("score \(score)").font(HelixWidgetType.face(10, weight: .semibold)).foregroundStyle(.white)
         }
         Spacer(minLength: 0)
         if let window = sleepWindowText(s) {
-          Text(window).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+          Text(window).font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
         }
       }
     }
@@ -552,10 +552,10 @@ struct SleepDepthFace: View {
         Caption("SLEEP", color: mono ? .white : HelixDomain.recover.accent)
         Spacer(minLength: 0)
         if let window = sleepWindowText(s) {
-          Text(window).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          Text(window).font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         }
         if let score = s?.sleep.score {
-          Text("score \(score)").font(.system(size: 9, weight: .semibold)).foregroundStyle(.white)
+          Text("score \(score)").font(HelixWidgetType.face(9, weight: .semibold)).foregroundStyle(.white)
         }
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
@@ -593,16 +593,16 @@ private struct StageRow: View {
         .fill(mono ? Color.white : stage.color)
         .frame(width: 6, height: 6)
       Text(stage.label)
-        .font(.system(size: 9, weight: .bold))
+        .font(HelixWidgetType.face(9, weight: .bold))
         .foregroundStyle(Color.helix.textSecondary)
         .frame(width: 40, alignment: .leading)
       Rail(progress: share, color: mono ? .white : stage.color, height: 4)
       Text(minutes.map { "\($0)m" } ?? "—")
-        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+        .font(HelixWidgetType.face(10, weight: .semibold, design: .monospaced))
         .foregroundStyle(.white)
         .frame(width: 34, alignment: .trailing)
       Text(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "")
-        .font(.system(size: 9))
+        .font(HelixWidgetType.face(9))
         .foregroundStyle(Color.helix.textSecondary)
         .frame(width: 26, alignment: .trailing)
     }
@@ -640,14 +640,14 @@ struct SleepLargeFace: View {
             if let score = s?.sleep.score {
               HStack(alignment: .firstTextBaseline, spacing: 5) {
                 BigValue(value: "\(score)", size: 24, color: .white)
-                Text("sleep score").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+                Text("sleep score").font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
               }
             }
             if let window = sleepWindowText(s) {
-              Text(window).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+              Text(window).font(HelixWidgetType.face(11, weight: .semibold)).foregroundStyle(.white)
             }
             if let debt = debtText {
-              Text(debt).font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+              Text(debt).font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
             }
             Spacer(minLength: 0)
             if entry.isStale { StaleTag(age: entry.age) }
@@ -723,13 +723,13 @@ struct CompositionRow: View {
   var body: some View {
     HStack(alignment: .firstTextBaseline, spacing: 6) {
       Text(label)
-        .font(.system(size: compact ? 8 : 9, weight: .bold))
+        .font(HelixWidgetType.face(compact ? 8 : 9, weight: .bold))
         .foregroundStyle(Color.helix.textSecondary)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
       Spacer(minLength: 4)
       BigValue(value: value.map { String(format: "%.1f", $0) }, size: compact ? 12 : 14, color: color)
-      Text(unit).font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
+      Text(unit).font(HelixWidgetType.face(8)).foregroundStyle(Color.helix.textSecondary)
       DeltaChip(delta: delta, decimals: 1, upIsGood: upIsGood, monochrome: mono)
     }
   }
@@ -755,7 +755,7 @@ struct WeightFocusFace: View {
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 27, color: .white)
-        Text("kg").font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+        Text("kg").font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
       }
 
@@ -796,7 +796,7 @@ struct WeightTrendFace: View {
         Caption("WEIGHT", color: mono ? .white : HelixDomain.body.accent)
         Spacer(minLength: 0)
         if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
-          Text(measured).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          Text(measured).font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         }
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
@@ -804,7 +804,7 @@ struct WeightTrendFace: View {
 
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 28, color: .white)
-        Text("kg").font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+        Text("kg").font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
         // Down is the good direction here, and only here. `deltaVerdict.ts`
         // makes the same point on the web: the sign does not decide the verdict,
         // the phase does.
@@ -821,14 +821,14 @@ struct WeightTrendFace: View {
         if let baseline = s?.weight.prevWeekMeanKg {
           Label {
             Text(String(format: "last wk %.1f", baseline))
-              .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+              .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
           } icon: {
             Rectangle().fill(Color.helix.textSecondary).frame(width: 8, height: 1)
           }
         }
         Spacer(minLength: 0)
         if let togo {
-          Text(togo).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
+          Text(togo).font(HelixWidgetType.face(9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
             .lineLimit(1)
         }
       }
@@ -874,13 +874,13 @@ struct WeightLargeFace: View {
       Register(title: "THE SCALE", accent: tint(HelixDomain.body.accent)) {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 36, color: .white)
-          Text("kg").font(.system(size: 12)).foregroundStyle(Color.helix.textSecondary)
+          Text("kg").font(HelixWidgetType.face(12)).foregroundStyle(Color.helix.textSecondary)
           DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
           HelixBrand(monochrome: mono)
           if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
-            Text(measured).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+            Text(measured).font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
           }
         }
         if let target = s?.weight.targetKg, let now = s?.weight.kg {
@@ -888,7 +888,7 @@ struct WeightLargeFace: View {
           Text(gap < 0.05
                ? String(format: "at target %.1f kg", target)
                : String(format: "%.1f kg to target %.1f", gap, target))
-            .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+            .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         }
       }
 
@@ -942,9 +942,9 @@ private struct TraceRow: View {
   var body: some View {
     HStack(spacing: 8) {
       VStack(alignment: .leading, spacing: 1) {
-        Text(title).font(.system(size: 8, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
+        Text(title).font(HelixWidgetType.face(8, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
         Text(points.last.map { String(format: "%.1f \(unit)", $0) } ?? "—")
-          .font(.system(size: 12, weight: .bold, design: .rounded))
+          .font(HelixWidgetType.face(12, weight: .bold, design: .rounded))
           .monospacedDigit()
           .foregroundStyle(color)
       }
@@ -982,10 +982,10 @@ struct CalorieDayFace: View {
       Register(title: "LEFT TO EAT", accent: tint(HelixDomain.fuel.accent)) {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 34, color: .white)
-          Text("kcal").font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+          Text("kcal").font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
           if let goal = s?.macros.kcalGoal {
             Text("of \(Int(goal.rounded()))")
-              .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+              .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           }
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
@@ -996,11 +996,11 @@ struct CalorieDayFace: View {
              color: tint(HelixDomain.fuel.accent), height: 5)
         HStack(spacing: 5) {
           MacroChip(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                    color: tint(HelixDomain.fuel.at(0)))
+                    color: tint(Color.helix.protein))
           MacroChip(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                    color: tint(HelixDomain.fuel.at(0.35)))
+                    color: tint(Color.helix.carbs))
           MacroChip(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                    color: tint(HelixDomain.fuel.at(0.65)))
+                    color: tint(Color.helix.fat))
         }
       }
 
@@ -1009,7 +1009,7 @@ struct CalorieDayFace: View {
       Register(title: "THE REST OF THE DAY", accent: tint(HelixDomain.body.accent)) {
         VStack(spacing: 7) {
           Gauge(label: "WATER", value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) }, unit: "L",
-                progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl), color: tint(HelixDomain.fuel.end))
+                progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl), color: tint(Color.helix.water))
           Gauge(label: "STEPS", value: s?.steps.count.map { "\($0)" }, unit: "",
                 progress: HelixSnapshot.progress(
                   s?.steps.count.map(Double.init), s?.steps.goal.map(Double.init)), color: tint(HelixDomain.body.accent))
@@ -1055,10 +1055,10 @@ private struct MacroChip: View {
   var body: some View {
     HStack(spacing: 3) {
       Text(label)
-        .font(.system(size: 8, weight: .bold, design: .rounded))
+        .font(HelixWidgetType.face(8, weight: .bold, design: .rounded))
         .foregroundStyle(color)
       Text(figures)
-        .font(.system(size: 9, weight: .medium, design: .monospaced))
+        .font(HelixWidgetType.face(9, weight: .medium, design: .monospaced))
         .foregroundStyle(Color.helix.textSecondary)
         .lineLimit(1)
     }
@@ -1082,11 +1082,11 @@ private struct Gauge: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
       HStack(alignment: .firstTextBaseline, spacing: 4) {
-        Text(label).font(.system(size: 9, weight: .heavy)).tracking(0.8).foregroundStyle(Color.helix.textSecondary)
+        Text(label).font(HelixWidgetType.face(9, weight: .heavy)).tracking(0.8).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 4)
         BigValue(value: value, size: 15, color: color)
         if !unit.isEmpty {
-          Text(unit).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          Text(unit).font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         }
       }
       Rail(progress: progress, color: color, height: 3)
@@ -1100,7 +1100,7 @@ private struct Foot: View {
   let color: Color
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(label).font(.system(size: 8, weight: .heavy)).tracking(0.8).foregroundStyle(Color.helix.textSecondary)
+      Text(label).font(HelixWidgetType.face(8, weight: .heavy)).tracking(0.8).foregroundStyle(Color.helix.textSecondary)
       BigValue(value: value, size: 14, color: color)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1125,7 +1125,7 @@ private struct WeekColumns: View {
         Caption("7 DAYS", color: Color.helix.textSecondary)
         Spacer(minLength: 0)
         if let goal = entry.snapshot?.steps.goal {
-          Text("goal \(goal / 1000)k").font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
+          Text("goal \(goal / 1000)k").font(HelixWidgetType.face(8)).foregroundStyle(Color.helix.textSecondary)
         }
       }
       if trend.count >= 2 {
@@ -1138,14 +1138,14 @@ private struct WeekColumns: View {
                 highlighted: point.d == entry.snapshot?.date
               )
               Text(HelixSnapshot.weekdayInitial(point.d))
-                .font(.system(size: 7, weight: .bold))
+                .font(HelixWidgetType.face(7, weight: .bold))
                 .foregroundStyle(Color.helix.textSecondary)
             }
           }
         }
       } else {
         Text("a week of steps appears here\nonce there are two days of them")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       }
     }
@@ -1183,15 +1183,15 @@ struct MacroFocusFace: View {
       }
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 22, color: .white)
-        Text("kcal left").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        Text("kcal left").font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
       }
       Spacer(minLength: 0)
       MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                color: tint(HelixDomain.fuel.at(0)))
+                color: tint(Color.helix.protein))
       MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                color: tint(HelixDomain.fuel.at(0.35)))
+                color: tint(Color.helix.carbs))
       MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                color: tint(HelixDomain.fuel.at(0.65)))
+                color: tint(Color.helix.fat))
     }
   }
 }
@@ -1218,7 +1218,7 @@ struct MacroFace: View {
         Caption("MACROS", color: tint(HelixDomain.fuel.accent))
         Spacer(minLength: 0)
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 20, color: .white)
-        Text("kcal left").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        Text("kcal left").font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
       }
@@ -1228,11 +1228,11 @@ struct MacroFace: View {
 
       VStack(spacing: 6) {
         MacroLine(name: "PROTEIN", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                  color: tint(HelixDomain.fuel.at(0)))
+                  color: tint(Color.helix.protein))
         MacroLine(name: "CARBS", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                  color: tint(HelixDomain.fuel.at(0.35)))
+                  color: tint(Color.helix.carbs))
         MacroLine(name: "FAT", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                  color: tint(HelixDomain.fuel.at(0.65)))
+                  color: tint(Color.helix.fat))
       }
       .frame(maxHeight: .infinity)
     }
@@ -1257,20 +1257,20 @@ private struct MacroLine: View {
   var body: some View {
     HStack(spacing: 8) {
       Text(name)
-        .font(.system(size: 9, weight: .bold))
+        .font(HelixWidgetType.face(9, weight: .bold))
         .foregroundStyle(color)
         .frame(width: 52, alignment: .leading)
 
       Rail(progress: HelixSnapshot.progress(value, goal), color: color, height: 5)
 
       Text(figures)
-        .font(.system(size: 9, weight: .medium, design: .monospaced))
+        .font(HelixWidgetType.face(9, weight: .medium, design: .monospaced))
         .foregroundStyle(Color.helix.textSecondary)
         .frame(width: 62, alignment: .trailing)
         .lineLimit(1)
 
       Text(remainder)
-        .font(.system(size: 10, weight: .bold, design: .rounded))
+        .font(HelixWidgetType.face(10, weight: .bold, design: .rounded))
         .monospacedDigit()
         .foregroundStyle(remainderColor)
         .frame(width: 46, alignment: .trailing)
@@ -1317,7 +1317,7 @@ struct MacroLargeFace: View {
       Register(title: "TODAY'S FUEL", accent: tint(HelixDomain.fuel.accent)) {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 32, color: .white)
-          Text("kcal left").font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+          Text("kcal left").font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
           HelixBrand(monochrome: mono)
@@ -1332,11 +1332,11 @@ struct MacroLargeFace: View {
       Register(title: "MACRONUTRIENTS", accent: tint(HelixDomain.fuel.accent)) {
         VStack(spacing: 6) {
           MacroRail(label: "P", value: s?.macros.proteinG, goal: s?.macros.proteinGoalG,
-                    color: tint(HelixDomain.fuel.at(0)))
+                    color: tint(Color.helix.protein))
           MacroRail(label: "C", value: s?.macros.carbsG, goal: s?.macros.carbsGoalG,
-                    color: tint(HelixDomain.fuel.at(0.35)))
+                    color: tint(Color.helix.carbs))
           MacroRail(label: "F", value: s?.macros.fatG, goal: s?.macros.fatGoalG,
-                    color: tint(HelixDomain.fuel.at(0.65)))
+                    color: tint(Color.helix.fat))
         }
       }
 
@@ -1358,7 +1358,7 @@ struct MacroLargeFace: View {
 
       HStack(spacing: 0) {
         Foot(label: "WATER", value: s?.water.ml.map { String(format: "%.1f L", $0 / 1000) },
-             color: tint(HelixDomain.fuel.end))
+             color: tint(Color.helix.water))
         Foot(label: "STEPS", value: s?.steps.count.map { "\($0)" }, color: tint(HelixDomain.body.accent))
         Foot(label: "SLEEP", value: sleepText, color: .white)
       }
@@ -1388,9 +1388,9 @@ private struct EnergySplit: View {
     let kcal = [p * 4, c * 4, f * 9]
     guard kcal.reduce(0, +) > 0 else { return nil }
     return [
-      ("PROTEIN", kcal[0], mono ? .white : HelixDomain.fuel.at(0)),
-      ("CARBS", kcal[1], mono ? .white : HelixDomain.fuel.at(0.35)),
-      ("FAT", kcal[2], mono ? .white : HelixDomain.fuel.at(0.65)),
+      ("PROTEIN", kcal[0], mono ? .white : Color.helix.protein),
+      ("CARBS", kcal[1], mono ? .white : Color.helix.carbs),
+      ("FAT", kcal[2], mono ? .white : Color.helix.fat),
     ]
   }
 
@@ -1414,7 +1414,7 @@ private struct EnergySplit: View {
             HStack(spacing: 3) {
               Circle().fill(color).frame(width: 5, height: 5)
               Text("\(name) \(Int((kcal / total * 100).rounded()))%")
-                .font(.system(size: 8, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
+                .font(HelixWidgetType.face(8, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
                 .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1423,7 +1423,7 @@ private struct EnergySplit: View {
       }
     } else {
       Text("logged protein, carbs and fat all three\nand the split appears here")
-        .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
     }
   }
 }
@@ -1442,11 +1442,11 @@ private struct MacroRail: View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 4) {
         Text(label)
-          .font(.system(size: 8, weight: .bold, design: .rounded))
+          .font(HelixWidgetType.face(8, weight: .bold, design: .rounded))
           .foregroundStyle(color)
         Spacer(minLength: 0)
         Text(figures)
-          .font(.system(size: 9, weight: .medium, design: .monospaced))
+          .font(HelixWidgetType.face(9, weight: .medium, design: .monospaced))
           .foregroundStyle(Color.helix.textSecondary)
           .lineLimit(1)
       }
@@ -1478,13 +1478,13 @@ struct WaterLargeFace: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Register(title: "HYDRATION", accent: tint(HelixDomain.fuel.end)) {
+      Register(title: "HYDRATION", accent: tint(Color.helix.water)) {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           BigValue(value: s?.water.ml.map { String(format: "%.1f", $0 / 1000) }, size: 34, color: .white)
-          Text("L").font(.system(size: 12)).foregroundStyle(Color.helix.textSecondary)
+          Text("L").font(HelixWidgetType.face(12)).foregroundStyle(Color.helix.textSecondary)
           if let goal = s?.water.goalMl {
             Text(String(format: "of %.1f L", goal / 1000))
-              .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+              .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           }
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
@@ -1492,9 +1492,9 @@ struct WaterLargeFace: View {
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: HelixSnapshot.progress(s?.water.ml, s?.water.goalMl),
-             color: tint(HelixDomain.fuel.end), height: 6)
+             color: tint(Color.helix.water), height: 6)
         if let left = litresLeft {
-          Text(left).font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+          Text(left).font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         }
       }
 
@@ -1593,19 +1593,19 @@ struct WellbeingLedgerFace: View {
         ForEach(wellbeingParts(s, mono: mono), id: \.0) { name, value, color in
           HStack(spacing: 6) {
             Text(name.prefix(4))
-              .font(.system(size: 8, weight: .bold))
+              .font(HelixWidgetType.face(8, weight: .bold))
               .foregroundStyle(Color.helix.textSecondary)
               .frame(width: 30, alignment: .leading)
             Rail(progress: value.map { min(1, max(0, $0 / 100)) }, color: color, height: 4)
             Text(value.map { "\(Int($0.rounded()))" } ?? "—")
-              .font(.system(size: 9, weight: .semibold, design: .monospaced))
+              .font(HelixWidgetType.face(9, weight: .semibold, design: .monospaced))
               .foregroundStyle(.white)
               .frame(width: 20, alignment: .trailing)
           }
         }
         if let readiness = s?.readiness {
           Text(readiness.label)
-            .font(.system(size: 10, weight: .bold))
+            .font(HelixWidgetType.face(10, weight: .bold))
             .foregroundStyle(mono ? .white : HelixDomain.recover.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(1)
@@ -1635,7 +1635,7 @@ struct WellbeingFace: View {
 
       HStack(alignment: .bottom, spacing: 8) {
         BigValue(value: s?.score.map { "\($0)" }, size: 40, color: .white)
-        Text("daily score").font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+        Text("daily score").font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
       }
 
@@ -1648,12 +1648,12 @@ struct WellbeingFace: View {
         ForEach(wellbeingParts(s, mono: mono), id: \.0) { name, value, color in
           HStack(spacing: 8) {
             Text(name)
-              .font(.system(size: 8, weight: .bold))
+              .font(HelixWidgetType.face(8, weight: .bold))
               .foregroundStyle(Color.helix.textSecondary)
               .frame(width: 62, alignment: .leading)
             Rail(progress: value.map { min(1, max(0, $0 / 100)) }, color: color, height: 4)
             Text(value.map { "\(Int($0.rounded()))" } ?? "—")
-              .font(.system(size: 10, weight: .semibold, design: .monospaced))
+              .font(HelixWidgetType.face(10, weight: .semibold, design: .monospaced))
               .foregroundStyle(.white)
               .frame(width: 22, alignment: .trailing)
           }
@@ -1667,13 +1667,13 @@ struct WellbeingFace: View {
       if let readiness = s?.readiness {
         VStack(alignment: .leading, spacing: 2) {
           Text(readiness.label)
-            .font(.system(size: 11, weight: .bold))
+            .font(HelixWidgetType.face(11, weight: .bold))
             // The verdict's own colour, parsed from the payload — the same hex
             // the app paints it with, so the two surfaces cannot disagree about
             // what "compromised" looks like.
             .foregroundStyle(mono ? .white : HelixDomain.recover.accent)
           Text(readiness.reason)
-            .font(.system(size: 9))
+            .font(HelixWidgetType.face(9))
             .foregroundStyle(Color.helix.textSecondary)
             .lineLimit(2)
         }
@@ -1682,7 +1682,7 @@ struct WellbeingFace: View {
         // state rather than an error — and saying so is better than a gap where
         // a sentence was yesterday.
         Text("today's verdict appears once the battery has a reading")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
       }
     }
   }

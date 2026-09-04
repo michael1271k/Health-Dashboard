@@ -159,11 +159,11 @@ public struct StepsView: View {
                 HStack(alignment: .lastTextBaseline, spacing: 8) {
                     BigValue(value: spec.hero, size: size == .large ? 44 : 30, color: .white)
                     if let goal = s?.steps.goal {
-                        Text("of \(goal)").font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+                        Text("of \(goal)").font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
                     }
                     Spacer(minLength: 0)
                     if let sub = spec.sub {
-                        Text(sub).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
+                        Text(sub).font(HelixWidgetType.face(11, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
                     }
                 }
                 Rail(progress: spec.progress, color: mono ? .white : spec.accent)
@@ -222,7 +222,7 @@ public struct MuscleView: View {
                 HelixBrand(monochrome: mono, size: 12)
             }
             if families.isEmpty {
-                Text("No sets logged this week.").font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+                Text("No sets logged this week.").font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
                 Spacer(minLength: 0)
             } else {
                 HStack(alignment: .top, spacing: 10) {
@@ -232,10 +232,10 @@ public struct MuscleView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(families.prefix(size == .large ? 6 : 3)) { f in
                                 HStack {
-                                    Text(f.family).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.helix.textPrimary)
+                                    Text(f.family).font(HelixWidgetType.face(11, weight: .semibold)).foregroundStyle(Color.helix.textPrimary)
                                     Spacer(minLength: 4)
                                     Text("\(Int(f.sets.rounded()))")
-                                        .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
+                                        .font(HelixWidgetType.face(11, weight: .bold, design: .rounded).monospacedDigit())
                                         .foregroundStyle(mono ? .white : HelixDomain.forFamily(f.family).accent)
                                 }
                             }
@@ -256,7 +256,7 @@ struct TileNote: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Caption(caption, color: Color.helix.textTertiary)
-            Text(text).font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
+            Text(text).font(HelixWidgetType.face(11)).foregroundStyle(Color.helix.textSecondary)
             Spacer(minLength: 0)
         }
     }

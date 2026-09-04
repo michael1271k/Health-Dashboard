@@ -166,3 +166,314 @@ extension Color {
         opacity(Double(byte) / 255)
     }
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MARK: - Legacy: the Live Logger's chrome and type
+//
+// Everything below was `HelixSurface.swift` and `HelixType.swift`'s v1 scale.
+// Both were deleted from the design system in Wave 2.0 — `HelixRadius` was a
+// SECOND corner scale (6/8/12/16) sitting beside `HelixCorner`, and
+// `helixCard`/`helixRow` were a second depth primitive sitting beside
+// `helixGlass`. Two scales for one decision is how a design system stops being
+// one.
+//
+// They are here rather than gone because the Live Logger — the last six files
+// still on `HelixPalette` — reads them, and re-skinning it is Wave 2.4's diff,
+// not a token wave's. Parking them in the file that already has a deletion date
+// means 2.4 deletes ONE file and the whole legacy layer goes with it. Nothing
+// new may call any of it; the token-discipline test enforces that by pinning
+// the legacy list.
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// The card chrome, and the one progress bar the whole app draws.
+///
+/// Both are ported from `src/components/nutrition/MacroCards.tsx` and the card
+/// classes repeated across every panel in `src/components`.
+
+// MARK: - Card
+
+/// Tailwind's corner scale, in points. `rounded-md` … `rounded-2xl`.
+public enum HelixRadius {
+    public static let md: CGFloat  = 6
+    public static let lg: CGFloat  = 8
+    public static let xl: CGFloat  = 12
+    public static let xxl: CGFloat = 16
+}
+
+private struct HelixCardModifier: ViewModifier {
+    let radius: CGFloat
+    let fill: Color
+    let border: Color
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                // `.continuous` rather than `.circular`. This is the one place
+                // the translation deliberately does not match the CSS: Tailwind's
+                // `rounded-2xl` is a circular arc, and every card on iOS —
+                // including the ones this app sits next to in the App Switcher —
+                // is a squircle. Matching the platform is what "native redesign"
+                // means, and at 16 pt the difference is a few pixels of shoulder.
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(fill)
+            )
+            .overlay(
+                // `strokeBorder`, not `stroke`: `stroke` centres the line on the
+                // path and spills half a point outside the shape, so a hairline
+                // card drawn this way is 1 pt wider than its background and the
+                // edge reads soft.
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(border, lineWidth: 1)
+            )
+    }
+}
+
+public extension View {
+    /// `rounded-2xl border border-white/[0.07] bg-white/[0.03]` — the standard
+    /// panel. Apply padding yourself; the two nutrition cards use `px-4 py-3.5`
+    /// and the history rows use `px-3 py-2.5`, so it is not baked in here.
+    func helixCard(radius: CGFloat = HelixRadius.xxl) -> some View {
+        modifier(HelixCardModifier(
+            radius: radius, fill: HelixPalette.cardFill, border: HelixPalette.cardBorder
+        ))
+    }
+
+    /// `rounded-xl border border-white/[0.08] bg-white/[0.04]` — the slightly
+    /// stronger pair used wherever the surface is tappable.
+    func helixRow(radius: CGFloat = HelixRadius.xl) -> some View {
+        modifier(HelixCardModifier(
+            radius: radius, fill: HelixPalette.rowFill, border: HelixPalette.rowBorder
+        ))
+    }
+}
+
+// MARK: - Bar
+
+/// One horizontal fill, with the target marked and the overshoot shown.
+///
+/// ── THE FILL USED TO CLAMP AT THE GOAL ──────────────────────────────────────
+/// `min(1, value / goal)` meant 2,100 kcal against a 1,950 goal and 3,400 kcal
+/// against the same goal drew the IDENTICAL full bar. The one reading the bar
+/// exists to give — how far past you went — was the one it could not draw.
+///
+/// So the track rescales to `max(value, goal)`: the fill runs to the goal, a
+/// tick marks where the goal sits, and the excess continues past it in oxide.
+/// The tick is what keeps the bar readable while it rescales — without it, a bar
+/// that shortens as you eat more is just confusing.
+///
+/// The track alpha is `rgba(255,255,255,0.07)` unchanged, so the empty part of
+/// the goal reads at exactly the weight it always did.
+public struct HelixBar: View {
+    public let value: Double?
+    public let goal: Double?
+    public let color: Color
+    public var height: CGFloat = 6
+
+    public init(value: Double?, goal: Double?, color: Color, height: CGFloat = 6) {
+        self.value = value
+        self.goal = goal
+        self.color = color
+        self.height = height
+    }
+
+    /// `transition: width 0.9s cubic-bezier(0.4,0,0.2,1)`, verbatim.
+    ///
+    /// A spring would be the house style for anything a finger drives, and this
+    /// is not that: nothing here is grabbable, the value changes because a
+    /// number arrived from the database, and the web app's curve is a decelerating
+    /// ease that already reads correctly for it. Ported rather than reinterpreted.
+    private static let fillCurve = Animation.timingCurve(0.4, 0, 0.2, 1, duration: 0.9)
+
+    private var v: Double { value ?? 0 }
+    private var g: Double { goal ?? 0 }
+    private var scale: Double { max(v, g) }
+    private var isOver: Bool { g > 0 && v > g }
+
+    private func fraction(_ n: Double) -> Double {
+        scale > 0 ? n / scale : 0
+    }
+
+    public var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(HelixPalette.trackFill)
+
+                Capsule()
+                    .fill(color)
+                    .frame(width: width * fraction(min(v, g > 0 ? g : v)))
+
+                if isOver {
+                    // The excess, past the goal. `rounded-r-full` in the web
+                    // version — only the trailing end is round, because the
+                    // leading end butts against the fill.
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 0, bottomLeadingRadius: 0,
+                        bottomTrailingRadius: height / 2, topTrailingRadius: height / 2,
+                        style: .continuous
+                    )
+                    .fill(HelixPalette.oxide)
+                    .frame(width: width * fraction(v - g))
+                    .offset(x: width * fraction(g))
+
+                    // The target tick. Only drawn once there is something past
+                    // it to separate — on an under-budget day the end of the
+                    // fill IS the answer.
+                    Rectangle()
+                        .fill(Color.white.opacity(0.55))
+                        .frame(width: 1)
+                        .offset(x: width * fraction(g))
+                }
+            }
+            .animation(Self.fillCurve, value: v)
+            .animation(Self.fillCurve, value: g)
+        }
+        .frame(height: height)
+        .clipShape(Capsule())
+        .accessibilityHidden(true)
+    }
+}
+
+#Preview("Bars") {
+    VStack(spacing: 20) {
+        HelixBar(value: 1200, goal: 1950, color: HelixPalette.Macro.calories)
+        HelixBar(value: 1950, goal: 1950, color: HelixPalette.Macro.calories)
+        HelixBar(value: 2600, goal: 1950, color: HelixPalette.oxide)
+        HelixBar(value: nil, goal: 1950, color: HelixPalette.Macro.calories)
+        HelixBar(value: 140, goal: 190, color: HelixPalette.Macro.protein, height: 4)
+    }
+    .padding()
+    .background(HelixPalette.obsidian)
+}
+
+/// The HELIX type scale, ported from the `@theme` block in `src/app/globals.css`.
+///
+/// ── HOW A `clamp()` BECOMES A NUMBER ────────────────────────────────────────
+/// Every web size is `clamp(floor, base + N vw, ceiling)` — one expression that
+/// covers a 390 px phone and a 27" monitor. Decision 5 removed the second half
+/// of that range: iPhone and Watch only, no iPad, no desktop. So each token is
+/// evaluated ONCE, at the 390 px viewport the app actually renders in, and the
+/// result is the constant below. `--text-fluid-2xl` is
+/// `clamp(1.65rem, 1.30rem + 1.9vw, 2.55rem)`; at 390 px that is
+/// `1.30rem + 7.41px` = 28.2 px, which is what `fluid2XL` says.
+///
+/// ── AND WHY IT STILL SCALES ─────────────────────────────────────────────────
+/// A frozen px value would ignore the user's text-size setting, which the web
+/// app got for free from `rem`. `@ScaledMetric(relativeTo:)` puts it back: the
+/// constant is the size at the default Dynamic Type setting, and it scales from
+/// there against a matched system text style. Spacing that surrounds text is in
+/// points and does not scale — the cards here are built from `VStack` spacing
+/// rather than fixed heights, so they grow with their content.
+///
+/// ── TRACKING IS SIZE-SPECIFIC, WHICH IS THE WHOLE POINT ─────────────────────
+/// Letterforms read further apart as they grow, so display text takes NEGATIVE
+/// tracking and small text takes a little positive. One fixed value across a
+/// scale is wrong at both ends. Stored in `em` exactly as the CSS declares it,
+/// and multiplied by the *scaled* size so it stays proportional under Dynamic
+/// Type.
+public struct HelixTextStyle: Sendable {
+    /// Points at the default Dynamic Type setting.
+    public let size: CGFloat
+    /// CSS `line-height`, unitless.
+    public let lineHeight: CGFloat
+    /// CSS `letter-spacing`, in `em`.
+    public let trackingEm: CGFloat
+    /// The system style this scales against.
+    public let relativeTo: Font.TextStyle
+
+    public init(size: CGFloat, lineHeight: CGFloat, trackingEm: CGFloat, relativeTo: Font.TextStyle) {
+        self.size = size
+        self.lineHeight = lineHeight
+        self.trackingEm = trackingEm
+        self.relativeTo = relativeTo
+    }
+
+    // ── The fluid scale ──────────────────────────────────────────────────────
+    public static let fluidXS   = HelixTextStyle(size: 11.6, lineHeight: 1.45, trackingEm:  0.010, relativeTo: .footnote)
+    public static let fluidSM   = HelixTextStyle(size: 13.3, lineHeight: 1.45, trackingEm:  0.005, relativeTo: .subheadline)
+    /// Body sits at zero tracking.
+    public static let fluidBase = HelixTextStyle(size: 15.1, lineHeight: 1.55, trackingEm:  0,     relativeTo: .body)
+    public static let fluidLG   = HelixTextStyle(size: 17.5, lineHeight: 1.35, trackingEm: -0.006, relativeTo: .title3)
+    public static let fluidXL   = HelixTextStyle(size: 20.7, lineHeight: 1.22, trackingEm: -0.011, relativeTo: .title2)
+    public static let fluid2XL  = HelixTextStyle(size: 28.2, lineHeight: 1.12, trackingEm: -0.016, relativeTo: .title)
+    public static let fluid3XL  = HelixTextStyle(size: 36.5, lineHeight: 1.04, trackingEm: -0.022, relativeTo: .largeTitle)
+
+    // ── The literal sizes the components spell out ───────────────────────────
+    // `text-[9px]`, `text-[10px]`, `text-[11px]`, `text-[13px]`, `text-sm`,
+    // `text-3xl`. These are Tailwind arbitrary values in the TSX rather than
+    // tokens, so they are reproduced as-is instead of being tidied into the
+    // scale — tidying them would be a redesign, and this is a translation.
+    public static let micro   = HelixTextStyle(size:  9, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
+    public static let tiny    = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
+    public static let small   = HelixTextStyle(size: 11, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption)
+    public static let compact = HelixTextStyle(size: 13, lineHeight: 1.35, trackingEm: 0, relativeTo: .footnote)
+    public static let base    = HelixTextStyle(size: 14, lineHeight: 1.45, trackingEm: 0, relativeTo: .subheadline)
+    public static let display = HelixTextStyle(size: 30, lineHeight: 1.10, trackingEm: 0, relativeTo: .title)
+
+    /// `uppercase tracking-wide` at 10 px — the macro column label.
+    public static let label = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0.025, relativeTo: .caption2)
+}
+
+/// How much room a line gets.
+public enum HelixLeading {
+    /// The style's own `line-height`.
+    case standard
+    /// Tailwind's `leading-none`. Almost every number in these cards uses it:
+    /// a figure that is baseline-aligned against a unit label must not carry
+    /// half a line of air, or the two stop sitting on the same line.
+    case none
+}
+
+private struct HelixTextModifier: ViewModifier {
+    let style: HelixTextStyle
+    let weight: Font.Weight
+    let leading: HelixLeading
+
+    @ScaledMetric private var size: CGFloat
+
+    init(style: HelixTextStyle, weight: Font.Weight, leading: HelixLeading) {
+        self.style = style
+        self.weight = weight
+        self.leading = leading
+        _size = ScaledMetric(wrappedValue: style.size, relativeTo: style.relativeTo)
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: size, weight: weight))
+            .tracking(size * style.trackingEm)
+            .lineSpacing(extraLeading)
+    }
+
+    /// `lineSpacing` is the gap ADDED between lines, not the line box. The
+    /// system font's own box is about 1.2× its size, so the CSS line-height has
+    /// to have that subtracted out of it — and clamped at zero, because SwiftUI
+    /// cannot make a line box smaller than the font's ascent plus descent and a
+    /// negative value here would silently do nothing on some faces and something
+    /// on others.
+    private var extraLeading: CGFloat {
+        guard leading == .standard else { return 0 }
+        return max(0, size * (style.lineHeight - 1.2))
+    }
+}
+
+public extension View {
+    /// Apply a HELIX type token.
+    func helixText(
+        _ style: HelixTextStyle,
+        weight: Font.Weight = .regular,
+        leading: HelixLeading = .standard
+    ) -> some View {
+        modifier(HelixTextModifier(style: style, weight: weight, leading: leading))
+    }
+
+    /// `.helix-num` — the class every figure in the app carries.
+    ///
+    /// It exists so digits keep the same advance width as they change, which is
+    /// what stops a counting number from shuffling its neighbours sideways. The
+    /// web app spells it `tabular-nums` in some places and `helix-num` in others;
+    /// both resolve to the same thing and so does this.
+    func helixNumber() -> some View {
+        monospacedDigit()
+    }
+}

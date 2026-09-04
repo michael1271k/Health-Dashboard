@@ -50,7 +50,7 @@ struct CompositionFocusFace: View {
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) }, size: 30, color: .white)
-        Text("%").font(.system(size: 12)).foregroundStyle(Color.helix.textSecondary)
+        Text("%").font(HelixWidgetType.face(12)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         // Down is good here, and only here on this face.
         DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
@@ -58,7 +58,7 @@ struct CompositionFocusFace: View {
 
       if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
         Text("measured \(measured)")
-          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+          .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -96,7 +96,7 @@ struct CompositionFace: View {
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) },
                  size: large ? 38 : 30, color: .white)
-        Text("% fat").font(.system(size: large ? 13 : 11)).foregroundStyle(Color.helix.textSecondary)
+        Text("% fat").font(HelixWidgetType.face(large ? 13 : 11)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
@@ -149,7 +149,7 @@ struct CompositionFace: View {
             // a dot, and a dot drawn as a trend is a claim about a shape that
             // does not exist.
             Text("not enough readings for a trend")
-              .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+              .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           }
         }
         .frame(maxHeight: .infinity)

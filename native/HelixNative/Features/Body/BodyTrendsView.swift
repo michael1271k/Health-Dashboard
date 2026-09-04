@@ -52,7 +52,7 @@ private struct BodyTrendsScreen: View {
         let recent = ISODate.addDays(LogicalDay.today(), -55) ?? LogicalDay.today()
         let logs = slice.logs.filter { $0.date >= recent }
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: HelixSpace.l) {
                 CompositionSection(readings: readings, goals: slice.goals)
                 LedgerSection(readings: readings, goals: slice.goals)
                 StepsSection(

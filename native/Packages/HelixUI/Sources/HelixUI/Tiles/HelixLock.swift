@@ -89,8 +89,8 @@ public struct LockView: View {
       // No goal to fill, so no gauge — a ring at an arbitrary fraction would be
       // decoration claiming to be a measurement.
       VStack(spacing: 1) {
-        Image(systemName: workoutGlyph).font(.system(size: 15, weight: .semibold))
-        Text(shortLabel).font(.system(size: 9, weight: .semibold)).lineLimit(1)
+        Image(systemName: workoutGlyph).font(HelixWidgetType.face(15, weight: .semibold))
+        Text(shortLabel).font(HelixWidgetType.face(9, weight: .semibold)).lineLimit(1)
       }
     }
   }
@@ -102,13 +102,13 @@ public struct LockView: View {
   private var rectangularFace: some View {
     HStack(spacing: 6) {
       Image(systemName: workoutGlyph)
-        .font(.system(size: 14, weight: .semibold))
+        .font(HelixWidgetType.face(14, weight: .semibold))
       VStack(alignment: .leading, spacing: 1) {
         Text(s?.workout.label ?? "—")
-          .font(.system(size: 13, weight: .semibold))
+          .font(HelixWidgetType.face(13, weight: .semibold))
           .lineLimit(1)
         Text(rectangularSub)
-          .font(.system(size: 11))
+          .font(HelixWidgetType.face(11))
           .foregroundStyle(.secondary)
           .lineLimit(1)
       }

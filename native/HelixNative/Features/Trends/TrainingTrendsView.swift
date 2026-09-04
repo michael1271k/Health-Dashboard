@@ -26,7 +26,7 @@ struct TrainingTrendsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: HelixSpace.l) {
                 Picker("Era", selection: $era) {
                     ForEach(EraFilter.allCases) { Text($0.label).tag($0) }
                 }

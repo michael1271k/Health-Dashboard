@@ -26,11 +26,11 @@ struct DomainSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 14) {
+                VStack(spacing: HelixSpace.m) {
                     face(id, focus: nil)
                     extras
                 }
-                .padding(16)
+                .padding(HelixSpace.l)
             }
             .helixScreen(id.domain)
             .navigationTitle(id.title)
@@ -73,7 +73,7 @@ struct DomainSheet: View {
             }
         }
         .environment(\.helixTileFamily, family)
-        .padding(14)
+        .padding(HelixSpace.m)
         .frame(maxWidth: .infinity)
         .aspectRatio(family == .systemLarge ? 338 / 354 : 338 / 158, contentMode: .fit)
         .helixGlass(.tile)

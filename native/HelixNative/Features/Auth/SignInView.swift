@@ -49,7 +49,7 @@ struct SignInView: View {
         GeometryReader { proxy in
             ScrollView {
                 content
-                    .padding(28)
+                    .padding(HelixSpace.xl)
                     // The two `Spacer`s centre the card only when the stack has
                     // a height to fill; inside a scroll view they would collapse
                     // to nothing and the form would sit under the status bar.
@@ -68,15 +68,14 @@ struct SignInView: View {
     }
 
     private var content: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: HelixSpace.xl) {
             Spacer()
 
             VStack(spacing: 8) {
-                Image(systemName: "helm")
-                    .font(.system(size: 44, weight: .light))
-                    .foregroundStyle(HelixDomain.train.ramp)
-                    // Decorative, beside a wordmark that says the same thing.
-                    .accessibilityHidden(true)
+                // The mark itself, not a stand-in symbol: this is the one
+                // screen with room for it at full size, and `OnyxMark` already
+                // carries the Lunar → Ion ramp the app icon is lit with.
+                OnyxMark(size: 44, opacity: 1)
                 Text("HELIX")
                     .font(.largeTitle.weight(.black))
                     .tracking(6)

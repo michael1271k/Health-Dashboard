@@ -56,13 +56,13 @@ private struct DayScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: HelixSpace.l) {
                 if let failure = model.failure {
                     Label(failure, systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote)
                         .foregroundStyle(Color.helix.danger)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
+                        .padding(HelixSpace.m)
                         .helixGlass(.tile)
                         .accessibilityAddTraits(.isStaticText)
                 }
@@ -163,7 +163,7 @@ struct DayTile<Content: View, Trailing: View>: View {
             }
             content()
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
@@ -200,10 +200,10 @@ struct DaySheet<Content: View>: View {
                 if glass {
                     ScrollView {
                         content()
-                            .padding(16)
+                            .padding(HelixSpace.l)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .helixGlass(.sheet)
-                            .padding(16)
+                            .padding(HelixSpace.l)
                     }
                     .helixScreen(domain)
                 } else {

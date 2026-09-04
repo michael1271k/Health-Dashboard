@@ -32,15 +32,19 @@ struct ReadinessOrbView: View {
                 .animation(reduceMotion ? nil : HelixMotion.counter, value: battery)
             VStack(spacing: 0) {
                 Text(battery.map { "\($0)" } ?? "—")
-                    .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
-                    .contentTransition(.numericText())
+                    .helixHero()
                     .foregroundStyle(Color.helix.textPrimary)
                 Text("BATTERY")
-                    .font(.system(size: 9, weight: .heavy)).tracking(1.2)
+                    .helixType(.micro)
                     .foregroundStyle(Color.helix.textSecondary)
             }
         }
         .frame(width: 104, height: 104)
+        // A fixed-diameter ring around type that scales: at AX5 the numeral
+        // alone is taller than the ring. The whole thing is decorative — the
+        // reading is spoken by the label on the row beside it — so the type is
+        // clamped rather than the ring being grown into a screen of its own.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityHidden(true)
     }
 
@@ -64,12 +68,12 @@ struct ReadinessOrbView: View {
             // wrap one per line beside the ring — then the ring sits above them.
             Group {
                 if typeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 14) { ring; words }
+                    VStack(alignment: .leading, spacing: HelixSpace.m) { ring; words }
                 } else {
-                    HStack(spacing: 18) { ring; words; Spacer(minLength: 0) }
+                    HStack(spacing: HelixSpace.l) { ring; words; Spacer(minLength: 0) }
                 }
             }
-            .padding(16)
+            .padding(HelixSpace.l)
             .frame(maxWidth: .infinity, alignment: .leading)
             .helixGlass(.tile)
         }
@@ -100,7 +104,10 @@ struct WeeklySummaryCTA: View {
         Button(action: onOpen) {
             HStack(spacing: 12) {
                 Image(systemName: "trophy.fill")
-                    .font(.system(size: 16, weight: .semibold))
+                    .helixType(.body)
+                    // A glyph in a fixed disc: the row's own copy scales, this
+                    // does not, or the disc stops being a disc.
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(Color.helix.record)
                     .frame(width: 36, height: 36)
                     .background(Circle().fill(Color.helix.record.opacity(0.14)))
@@ -115,7 +122,7 @@ struct WeeklySummaryCTA: View {
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Color.helix.textTertiary)
             }
-            .padding(14)
+            .padding(HelixSpace.m)
             .helixGlass(.tile)
         }
         .buttonStyle(HelixPressStyle())
@@ -159,7 +166,7 @@ struct InsightCoachView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }
@@ -187,7 +194,7 @@ struct WeekSoFarView: View {
     let week: WeekSoFarSummary
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: HelixSpace.m) {
             ring
             VStack(alignment: .leading, spacing: 3) {
                 Text("Week \(week.weekNumber) · day \(week.dayOfWeek) of 7")
@@ -214,7 +221,7 @@ struct WeekSoFarView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .helixGlass(.tile)
     }
 
@@ -228,10 +235,15 @@ struct WeekSoFarView: View {
                 .stroke(HelixDomain.train.accent, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Text("\(done)/\(target)")
-                .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
+                .helixType(.caption).fontWeight(.bold).helixNumeral()
                 .foregroundStyle(Color.helix.textPrimary)
         }
         .frame(width: 52, height: 52)
+        // A fixed-diameter ring around type that scales: at AX5 the numeral
+        // alone is taller than the ring. The whole thing is decorative — the
+        // reading is spoken by the label on the row beside it — so the type is
+        // clamped rather than the ring being grown into a screen of its own.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityLabel("\(done) of \(target) sessions")
     }
 }

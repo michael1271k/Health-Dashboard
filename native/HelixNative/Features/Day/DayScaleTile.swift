@@ -22,7 +22,7 @@ struct ScaleTile: View {
             muscleMassKg: log?.muscleMassKg, skeletalMuscleMassKg: log?.skeletalMuscleMassKg
         )
         DayTile("Scale", .body) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), alignment: .topLeading)], alignment: .leading, spacing: 14) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), alignment: .topLeading)], alignment: .leading, spacing: HelixSpace.m) {
                 DayMetric(label: "Weight", value: DayFormat.number(log?.weightKg, unit: "kg"))
                 DayMetric(label: "Body fat", value: DayFormat.number(log?.bodyFatPct, unit: "%"))
                 DayMetric(label: "Lean soft tissue", value: DayFormat.number(log?.muscleMassKg, unit: "kg"))

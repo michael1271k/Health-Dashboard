@@ -1,133 +1,174 @@
 import SwiftUI
 
-/// The HELIX type scale, ported from the `@theme` block in `src/app/globals.css`.
+/// Onyx — the type scale. Six roles, and `Features/` may not spell a size.
 ///
-/// ── HOW A `clamp()` BECOMES A NUMBER ────────────────────────────────────────
-/// Every web size is `clamp(floor, base + N vw, ceiling)` — one expression that
-/// covers a 390 px phone and a 27" monitor. Decision 5 removed the second half
-/// of that range: iPhone and Watch only, no iPad, no desktop. So each token is
-/// evaluated ONCE, at the 390 px viewport the app actually renders in, and the
-/// result is the constant below. `--text-fluid-2xl` is
-/// `clamp(1.65rem, 1.30rem + 1.9vw, 2.55rem)`; at 390 px that is
-/// `1.30rem + 7.41px` = 28.2 px, which is what `fluid2XL` says.
+/// ── WHY THE SIZES ARE APPLE'S AND NOT OURS ──────────────────────────────────
+/// v1 was a transliteration of the web app's `clamp()` scale: 11.6, 13.3, 15.1,
+/// 17.5, 20.7, 28.2, 36.5 — seven sizes evaluated at a 390 pt viewport and then
+/// frozen. Every one of them lands a fraction off a system text style, which is
+/// why the screens read as a web page in SF: the app's 15.1 pt secondary line
+/// sits beside a system `Section` header at 13 and a navigation title at 17, and
+/// nothing aligns to anything.
 ///
-/// ── AND WHY IT STILL SCALES ─────────────────────────────────────────────────
-/// A frozen px value would ignore the user's text-size setting, which the web
-/// app got for free from `rem`. `@ScaledMetric(relativeTo:)` puts it back: the
-/// constant is the size at the default Dynamic Type setting, and it scales from
-/// there against a matched system text style. Spacing that surrounds text is in
-/// points and does not scale — the cards here are built from `VStack` spacing
-/// rather than fixed heights, so they grow with their content.
+/// The six roles below ARE system text styles — `.title` is 28, `.title3` is 20,
+/// `.body` is 17, `.subheadline` is 15, `.footnote` is 13, `.caption2` is 11 —
+/// so the sizes in §3.3 are not a scale we invented that happens to look Apple,
+/// they are the scale, named for what each one is for. Naming them is what makes
+/// the rule enforceable; using the system styles is what makes Dynamic Type,
+/// optical sizing and the system's own tracking tables come for free. There is
+///
+/// The only frozen number left is the TRACKING, and `@ScaledMetric` scales that
+/// against the role's own style so an `em` stays an `em` at every text setting.
+///
+/// ── NOTHING BELOW 11 ────────────────────────────────────────────────────────
+/// `micro` is the floor, and it is for LABELS — a unit, a register caption, an
+/// axis tick. Never a value. A widget face may go to 9 pt because WidgetKit does
+/// not scale and a Lock Screen accessory is 40 pt tall; that is `HelixWidgetType`
+/// and it does not exist inside the app.
 ///
 /// ── TRACKING IS SIZE-SPECIFIC, WHICH IS THE WHOLE POINT ─────────────────────
 /// Letterforms read further apart as they grow, so display text takes NEGATIVE
 /// tracking and small text takes a little positive. One fixed value across a
-/// scale is wrong at both ends. Stored in `em` exactly as the CSS declares it,
-/// and multiplied by the *scaled* size so it stays proportional under Dynamic
-/// Type.
-public struct HelixTextStyle: Sendable {
-    /// Points at the default Dynamic Type setting.
-    public let size: CGFloat
-    /// CSS `line-height`, unitless.
-    public let lineHeight: CGFloat
-    /// CSS `letter-spacing`, in `em`.
-    public let trackingEm: CGFloat
-    /// The system style this scales against.
-    public let relativeTo: Font.TextStyle
+/// scale is wrong at both ends. Stored in `em` and multiplied by the SCALED
+/// size, so it stays proportional when the user turns text up.
+public enum HelixType: CaseIterable, Sendable {
+    /// The one figure a screen is about: a readiness score, the day's kcal.
+    /// At most one per screen — a second hero is two screens in a trench coat.
+    case hero
+    /// A card's own title, a sheet's heading, a split name.
+    case display
+    /// Prose, list rows, and every value that is not the hero.
+    case body
+    /// The line under a value: a target, a previous set, a meta line.
+    case secondary
+    /// A section caption, a unit suffix, a chart's axis label.
+    case caption
+    /// A register label — uppercase, tracked out, never carrying a number.
+    case micro
 
-    public init(size: CGFloat, lineHeight: CGFloat, trackingEm: CGFloat, relativeTo: Font.TextStyle) {
-        self.size = size
-        self.lineHeight = lineHeight
-        self.trackingEm = trackingEm
-        self.relativeTo = relativeTo
+    /// The system style this role IS. Not "scales against" — is.
+    public var textStyle: Font.TextStyle {
+        switch self {
+        case .hero:      .title       // 28
+        case .display:   .title3      // 20
+        case .body:      .body        // 17
+        case .secondary: .subheadline // 15
+        case .caption:   .footnote    // 13
+        case .micro:     .caption2    // 11
+        }
     }
 
-    // ── The fluid scale ──────────────────────────────────────────────────────
-    public static let fluidXS   = HelixTextStyle(size: 11.6, lineHeight: 1.45, trackingEm:  0.010, relativeTo: .footnote)
-    public static let fluidSM   = HelixTextStyle(size: 13.3, lineHeight: 1.45, trackingEm:  0.005, relativeTo: .subheadline)
-    /// Body sits at zero tracking.
-    public static let fluidBase = HelixTextStyle(size: 15.1, lineHeight: 1.55, trackingEm:  0,     relativeTo: .body)
-    public static let fluidLG   = HelixTextStyle(size: 17.5, lineHeight: 1.35, trackingEm: -0.006, relativeTo: .title3)
-    public static let fluidXL   = HelixTextStyle(size: 20.7, lineHeight: 1.22, trackingEm: -0.011, relativeTo: .title2)
-    public static let fluid2XL  = HelixTextStyle(size: 28.2, lineHeight: 1.12, trackingEm: -0.016, relativeTo: .title)
-    public static let fluid3XL  = HelixTextStyle(size: 36.5, lineHeight: 1.04, trackingEm: -0.022, relativeTo: .largeTitle)
+    /// Size at the default Dynamic Type setting. Documentation and the token
+    /// record; the rendering never reads it.
+    public var points: CGFloat {
+        switch self {
+        case .hero: 28
+        case .display: 20
+        case .body: 17
+        case .secondary: 15
+        case .caption: 13
+        case .micro: 11
+        }
+    }
 
-    // ── The literal sizes the components spell out ───────────────────────────
-    // `text-[9px]`, `text-[10px]`, `text-[11px]`, `text-[13px]`, `text-sm`,
-    // `text-3xl`. These are Tailwind arbitrary values in the TSX rather than
-    // tokens, so they are reproduced as-is instead of being tidied into the
-    // scale — tidying them would be a redesign, and this is a translation.
-    public static let micro   = HelixTextStyle(size:  9, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
-    public static let tiny    = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
-    public static let small   = HelixTextStyle(size: 11, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption)
-    public static let compact = HelixTextStyle(size: 13, lineHeight: 1.35, trackingEm: 0, relativeTo: .footnote)
-    public static let base    = HelixTextStyle(size: 14, lineHeight: 1.45, trackingEm: 0, relativeTo: .subheadline)
-    public static let display = HelixTextStyle(size: 30, lineHeight: 1.10, trackingEm: 0, relativeTo: .title)
+    public var weight: Font.Weight {
+        switch self {
+        case .hero:      .bold
+        case .display:   .semibold
+        case .micro:     .semibold
+        case .body, .secondary, .caption: .regular
+        }
+    }
 
-    /// `uppercase tracking-wide` at 10 px — the macro column label.
-    public static let label = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0.025, relativeTo: .caption2)
+    /// Rounded only for the hero, which is always a numeral and takes the same
+    /// shape language as `helixNumeral()`. Prose in a rounded face reads as a
+    /// children's app.
+    public var design: Font.Design {
+        self == .hero ? .rounded : .default
+    }
+
+    /// CSS `letter-spacing`, in `em`. Negative as the type grows, positive at
+    /// the floor — `micro` is set in caps, and caps at 11 pt close their counters
+    /// up into a block unless they are opened out. 0.10 em is 1.1 pt, which is
+    /// what the register captions it replaces were tracked to by hand.
+    public var trackingEm: CGFloat {
+        switch self {
+        case .hero:    -0.02
+        case .display: -0.01
+        case .micro:    0.10
+        case .body, .secondary, .caption: 0
+        }
+    }
+
+    public var font: Font {
+        Font.system(textStyle, design: design).weight(weight)
+    }
 }
 
-/// How much room a line gets.
-public enum HelixLeading {
-    /// The style's own `line-height`.
-    case standard
-    /// Tailwind's `leading-none`. Almost every number in these cards uses it:
-    /// a figure that is baseline-aligned against a unit label must not carry
-    /// half a line of air, or the two stop sitting on the same line.
-    case none
-}
+private struct HelixTypeModifier: ViewModifier {
+    let role: HelixType
+    /// An `em` that overrides the role's own. For the wordmark, which is a piece
+    /// of brand rather than a piece of the scale.
+    let trackingEm: CGFloat?
 
-private struct HelixTextModifier: ViewModifier {
-    let style: HelixTextStyle
-    let weight: Font.Weight
-    let leading: HelixLeading
-
+    /// The role's own point size, as the user's text setting renders it. Only
+    /// the TRACKING needs it — the font comes from the text style — but tracking
+    /// is an `em` and an `em` of a size nobody measured is a guess.
     @ScaledMetric private var size: CGFloat
 
-    init(style: HelixTextStyle, weight: Font.Weight, leading: HelixLeading) {
-        self.style = style
-        self.weight = weight
-        self.leading = leading
-        _size = ScaledMetric(wrappedValue: style.size, relativeTo: style.relativeTo)
+    init(role: HelixType, trackingEm: CGFloat?) {
+        self.role = role
+        self.trackingEm = trackingEm
+        _size = ScaledMetric(wrappedValue: role.points, relativeTo: role.textStyle)
     }
 
     func body(content: Content) -> some View {
         content
-            .font(.system(size: size, weight: weight))
-            .tracking(size * style.trackingEm)
-            .lineSpacing(extraLeading)
-    }
-
-    /// `lineSpacing` is the gap ADDED between lines, not the line box. The
-    /// system font's own box is about 1.2× its size, so the CSS line-height has
-    /// to have that subtracted out of it — and clamped at zero, because SwiftUI
-    /// cannot make a line box smaller than the font's ascent plus descent and a
-    /// negative value here would silently do nothing on some faces and something
-    /// on others.
-    private var extraLeading: CGFloat {
-        guard leading == .standard else { return 0 }
-        return max(0, size * (style.lineHeight - 1.2))
+            .font(role.font)
+            .tracking(size * (trackingEm ?? role.trackingEm))
     }
 }
 
 public extension View {
-    /// Apply a HELIX type token.
-    func helixText(
-        _ style: HelixTextStyle,
-        weight: Font.Weight = .regular,
-        leading: HelixLeading = .standard
-    ) -> some View {
-        modifier(HelixTextModifier(style: style, weight: weight, leading: leading))
+    /// Apply an Onyx type role.
+    func helixType(_ role: HelixType, tracking trackingEm: CGFloat? = nil) -> some View {
+        modifier(HelixTypeModifier(role: role, trackingEm: trackingEm))
     }
 
-    /// `.helix-num` — the class every figure in the app carries.
+    /// Every number in the app.
     ///
-    /// It exists so digits keep the same advance width as they change, which is
-    /// what stops a counting number from shuffling its neighbours sideways. The
-    /// web app spells it `tabular-nums` in some places and `helix-num` in others;
-    /// both resolve to the same thing and so does this.
-    func helixNumber() -> some View {
-        monospacedDigit()
+    /// ── THREE THINGS THAT ONLY WORK TOGETHER ────────────────────────────────
+    /// `.monospacedDigit()` stops neighbours shuffling as a value changes;
+    /// `.rounded` matches the numerals to the shape language of the tiles;
+    /// `.contentTransition(.numericText())` animates a digit rolling rather than
+    /// cross-fading, which is the difference between a number that CHANGED and
+    /// a number that was replaced. Numbers are the product here — they get the
+    /// same care the copy does.
+    func helixNumeral() -> some View {
+        self.fontDesign(.rounded)
+            .monospacedDigit()
+            .contentTransition(.numericText())
+    }
+
+    /// The hero figure. `helixType(.hero)` plus numeral treatment, because the
+    /// hero is always a number.
+    func helixHero() -> some View {
+        helixType(.hero).monospacedDigit().contentTransition(.numericText())
+    }
+
+    /// A card or sheet title.
+    func helixDisplay() -> some View { helixType(.display) }
+
+    /// A section caption or a unit suffix, in secondary ink.
+    func helixCaption() -> some View {
+        helixType(.caption).foregroundStyle(Color.helix.textSecondary)
+    }
+
+    /// A register label: uppercase, tracked out, tertiary ink. The case is part
+    /// of the role — a register caption in sentence case is just small body text.
+    func helixMicro() -> some View {
+        helixType(.micro)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.helix.textTertiary)
     }
 }

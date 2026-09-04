@@ -46,7 +46,7 @@ struct TodayTabView: View {
     private func content(_ model: TodayModel) -> some View {
         @Bindable var model = model
         return ScrollView {
-            VStack(spacing: 14) {
+            VStack(spacing: HelixSpace.m) {
                 ReadinessOrbView(battery: model.feed?.snapshot.battery, readiness: model.feed?.readiness) {
                     model.sheet = .tile(.recovery)
                 }
@@ -63,7 +63,7 @@ struct TodayTabView: View {
                     Text(failure).font(.footnote).foregroundStyle(Color.helix.danger)
                 }
             }
-            .padding(16)
+            .padding(HelixSpace.l)
         }
         .scrollDisabled(false)
         .refreshable { model.refresh() }

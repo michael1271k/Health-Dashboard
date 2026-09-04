@@ -55,7 +55,7 @@ struct TrainTabView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: HelixSpace.l) {
                 if let day = today {
                     planTile(day)
                 } else {
@@ -115,7 +115,7 @@ struct TrainTabView: View {
 
     private func planTile(_ day: ProgramDay) -> some View {
         let exercises = day.exercises(for: phase)
-        return VStack(alignment: .leading, spacing: 16) {
+        return VStack(alignment: .leading, spacing: HelixSpace.l) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(Date(), format: .dateTime.weekday(.wide).day().month())
@@ -161,7 +161,7 @@ struct TrainTabView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
@@ -190,7 +190,11 @@ struct TrainTabView: View {
     private var restTile: some View {
         VStack(spacing: 12) {
             Image(systemName: "figure.walk")
-                .font(.system(size: 40, weight: .medium))
+                // `.large` on the hero role: an empty-state glyph wants to be
+                // bigger than the hero numeral, and `imageScale` is how a symbol
+                // says that without a point size of its own.
+                .helixType(.hero)
+                .imageScale(.large)
                 .foregroundStyle(accent)
             Text("Zone-2 rest")
                 .helixDisplay()
@@ -200,7 +204,7 @@ struct TrainTabView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(HelixSpace.xl)
         .helixGlass(.tile)
         .foregroundStyle(Color.helix.textPrimary)
     }
@@ -234,7 +238,7 @@ struct TrainTabView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(16)
+                .padding(HelixSpace.l)
                 .helixGlass(.tile)
                 .accessibilityElement(children: .combine)
 

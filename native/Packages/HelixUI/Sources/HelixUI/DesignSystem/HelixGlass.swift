@@ -110,12 +110,18 @@ public extension View {
 
 /// True black, with one mesh bleed of the screen's domain behind the top of it.
 ///
-/// ── ONE BLEED, TWELVE PERCENT, TOP ONLY ─────────────────────────────────────
+/// ── ONE BLEED, EIGHT PERCENT, TOP ONLY ──────────────────────────────────────
 /// The accent's job is to say which domain you are in before you read a word.
-/// It does that from the corner of your eye at 12 %; at 30 % it becomes a
-/// background you have to read text against, and every material above it turns
-/// muddy because glass tints towards whatever is behind it. The bleed is behind
-/// the TOP because that is where the title is and where the eye lands.
+/// It does that from the corner of your eye; at 30 % it becomes a background you
+/// have to read text against, and every material above it turns muddy because
+/// glass tints towards whatever is behind it. The bleed is behind the TOP
+/// because that is where the title is and where the eye lands.
+///
+/// v2 took it from 12 % over 340 pt to 8 % over 240 (§3.1). At 12 % across a
+/// third of the screen it had stopped being a bleed and become a gradient
+/// header — the thing that made every screenshot read as a landing page — and
+/// the desaturated v2 accents carry further at lower alpha than the v1 neons
+/// did, so 8 % says the same thing more quietly.
 private struct HelixScreenBackground: ViewModifier {
     let domain: HelixDomain
 
@@ -137,11 +143,11 @@ private struct HelixScreenBackground: ViewModifier {
                         .black,       .black,       .black,
                     ]
                 )
-                .opacity(0.12)
+                .opacity(0.08)
                 // Tall enough to bleed under a large navigation title and no
                 // further. A full-height mesh is an ambient gradient, which is
                 // the look this design mandate exists to avoid.
-                .frame(height: 340)
+                .frame(height: 240)
                 .blur(radius: 40)
                 .ignoresSafeArea()
             }
@@ -159,9 +165,9 @@ public extension View {
 
 #Preview("Glass levels") {
     ScrollView {
-        VStack(spacing: 20) {
+        VStack(spacing: HelixSpace.l) {
             ForEach(HelixDomain.allCases, id: \.self) { domain in
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: HelixSpace.s) {
                     Text(domain.rawValue.capitalized)
                         .font(.headline)
                         .foregroundStyle(domain.accent)
@@ -173,10 +179,10 @@ public extension View {
                         Spacer()
                         Text("42").helixNumeral()
                     }
-                    .padding(12)
+                    .padding(HelixSpace.m)
                     .helixGlass(.row)
                 }
-                .padding(16)
+                .padding(HelixSpace.m)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .helixGlass(.tile)
             }

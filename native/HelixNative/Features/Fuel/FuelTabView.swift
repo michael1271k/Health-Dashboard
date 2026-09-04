@@ -54,7 +54,7 @@ private struct FuelScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: HelixSpace.l) {
                 if let failure = model.failure {
                     Label(failure, systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote)
@@ -140,7 +140,7 @@ private struct MacroTile: View {
     let model: FuelModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: HelixSpace.l) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.eaten.map { FuelFormat.whole($0.kcal) } ?? "—")
                     .helixHero()
@@ -175,7 +175,7 @@ private struct MacroTile: View {
                 }
             }
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }
@@ -323,7 +323,7 @@ private struct EntriesTile: View {
                 }
             }
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }
@@ -395,7 +395,7 @@ private struct DayTargetTile: View {
 
             TileAction(model.hasOverride ? "Edit override" : (model.isToday ? "Override today" : "Override this day"), action: onEdit)
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }
@@ -458,7 +458,7 @@ private struct FlagsTile: View {
                 .helixCaption()
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }
@@ -501,7 +501,7 @@ private struct WaterTile: View {
             .accessibilityLabel("Water")
             .accessibilityValue(spoken)
         }
-        .padding(16)
+        .padding(HelixSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .helixGlass(.tile)
     }

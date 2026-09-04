@@ -121,19 +121,31 @@ public enum HelixChart {
 }
 
 public extension Color.helix {
-    /// Categorical series colour, in FIXED order. Validated on black:
-    /// L 0.48–0.67 · chroma ≥ 0.1 · worst adjacent CVD ΔE 9.1 · ≥ 3:1.
+    /// Categorical series colour, in FIXED order: Ion, Tide, Solar, Lunar, then
+    /// the far stop of Ion and of Solar.
     ///
-    /// Ion, Tide, Solar, Lunar, then the far stop of Ion and Solar — the four
-    /// domains first so a two-series chart in the Body tab is still Tide and
-    /// something, not two strangers.
+    /// ── WHY THESE ARE THE DOMAIN TOKENS AND NOT SIX HEXES OF THEIR OWN ──────
+    /// They used to be six hand-darkened hexes, chosen because the v1 accents
+    /// were neons that blew out as a filled area on black. Tokens v2 is already
+    /// two steps down (§3.2), which is the same correction — so a separate chart
+    /// palette is now a second definition of the same four hues, drifting from
+    /// the first the moment either moves. A series that is literally
+    /// `HelixDomain.body.start` is the guarantee that the Body tab's chart and
+    /// the Body tab's accent are one colour.
+    ///
+    /// Four domains first so a two-series chart in the Body tab is still Tide
+    /// and something, not two strangers.
+    ///
+    /// Re-measured on black after the v2 re-key, because deriving from the
+    /// tokens is not on its own a guarantee: worst adjacent pair ΔE76 29.9, all
+    /// six ≥ 5.4:1. Re-measure if a domain stop moves.
     static let series: [Color] = [
-        Color(hex: 0x7C5CFF),
-        Color(hex: 0x10A08A),
-        Color(hex: 0xD9752A),
-        Color(hex: 0x8271E8),
-        Color(hex: 0x1E9DBD),
-        Color(hex: 0xDB4B66),
+        HelixDomain.train.start,
+        HelixDomain.body.start,
+        HelixDomain.fuel.start,
+        HelixDomain.recover.start,
+        HelixDomain.train.end,
+        HelixDomain.fuel.end,
     ]
 
     /// Series `index`, or the neutral past the sixth: a seventh series is a

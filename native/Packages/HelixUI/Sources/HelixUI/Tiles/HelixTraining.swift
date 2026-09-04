@@ -120,13 +120,13 @@ struct TodayFace: View {
       TodayHeader(entry: entry, mono: mono, branded: !compact)
 
       Text(s?.workout.label ?? "—")
-        .font(HelixType.label(compact ? 15 : 18, weight: .bold))
+        .font(HelixWidgetType.label(compact ? 15 : 18, weight: .bold))
         .foregroundStyle(.white)
         .lineLimit(2)
         .minimumScaleFactor(0.8)
 
       if let sub {
-        Text(sub).font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+        Text(sub).font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -158,7 +158,7 @@ struct TodayFace: View {
         Hairline()
         HStack(spacing: 5) {
           Text(weekText)
-            .font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
+            .font(HelixWidgetType.face(9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
             .lineLimit(1)
           Spacer(minLength: 4)
           SessionChips(entry: entry, mono: mono)
@@ -236,7 +236,7 @@ private struct SessionChips: View {
         ForEach(week) { day in
           let color = mono ? Color.white : Color.helix.day(day.dayKey)
           Text(shortLabel(day))
-            .font(.system(size: 8, weight: .bold))
+            .font(HelixWidgetType.face(8, weight: .bold))
             .lineLimit(1)
             .foregroundStyle(day.logged ? Color.helix.base : color)
             .padding(.horizontal, 4)
@@ -282,7 +282,7 @@ private struct TodayHeader: View {
   var body: some View {
     HStack(spacing: 5) {
       Image(systemName: glyph)
-        .font(.system(size: 10, weight: .semibold))
+        .font(HelixWidgetType.face(10, weight: .semibold))
         .foregroundStyle(isRest ? Color.helix.textSecondary : accent)
       Caption(caption, color: isRest ? Color.helix.textSecondary : accent)
       Spacer(minLength: 0)
@@ -373,7 +373,7 @@ struct TodayLargeFace: View {
       Register(title: "TODAY", accent: mono ? .white : accent) {
         TodayHeader(entry: entry, mono: mono, branded: true)
         Text(s?.workout.label ?? "—")
-          .font(.system(size: 24, weight: .bold))
+          .font(HelixWidgetType.face(24, weight: .bold))
           .foregroundStyle(.white)
           .lineLimit(1)
           .minimumScaleFactor(0.7)
@@ -381,7 +381,7 @@ struct TodayLargeFace: View {
           TodayStats(done: done, mono: mono)
         } else if s?.workout.isRestDay == true {
           Text("recovery is the session")
-            .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+            .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         } else if let s {
           // Was "not logged yet" — true, and nothing you could act on, on the
           // largest surface in the gallery.
@@ -394,7 +394,7 @@ struct TodayLargeFace: View {
       Register(title: "THE LAST SEVEN DAYS", accent: mono ? .white : HelixDomain.train.accent) {
         if recent.isEmpty {
           Text("no scheduled days on record yet")
-            .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+            .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
         } else {
           VStack(spacing: 0) {
             ForEach(Array(recent.enumerated()), id: \.element.id) { index, day in
@@ -436,7 +436,7 @@ private struct DayRow: View {
         .strokeBorder(day.scheduled ? color.opacity(0.6) : Color.helix.textSecondary.opacity(0.3), lineWidth: 1.5)
         .frame(width: 10, height: 10)
       Text(HelixSnapshot.weekdayInitial(day.d) + (HelixSnapshot.dayOfMonth(day.d).map { " \($0)" } ?? ""))
-        .font(.system(size: 11, weight: isToday ? .bold : .semibold))
+        .font(HelixWidgetType.face(11, weight: isToday ? .bold : .semibold))
         .foregroundStyle(isToday ? .white : Color.helix.textSecondary)
         .frame(width: 42, alignment: .leading)
       // The plan's own name for the session, which the payload now carries. A
@@ -444,17 +444,17 @@ private struct DayRow: View {
       // happened, never which ones — and which ones is the whole question a rest
       // day is asking.
       Text(day.label ?? state)
-        .font(.system(size: 11, weight: .medium))
+        .font(HelixWidgetType.face(11, weight: .medium))
         .foregroundStyle(day.logged ? .white : Color.helix.textSecondary)
         .lineLimit(1)
       Text(state)
-        .font(.system(size: 9))
+        .font(HelixWidgetType.face(9))
         .foregroundStyle(stateColor)
         .lineLimit(1)
       Spacer(minLength: 4)
       if let volume = HelixSnapshot.tonnes(day.volumeKg) {
         Text(volume)
-          .font(.system(size: 11, weight: .bold, design: .monospaced))
+          .font(HelixWidgetType.face(11, weight: .bold, design: .monospaced))
           .foregroundStyle(.white)
       }
     }
@@ -489,12 +489,12 @@ struct Stat: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       Text(value ?? "—")
-        .font(.system(size: 13, weight: .bold, design: .monospaced))
+        .font(HelixWidgetType.face(13, weight: .bold, design: .monospaced))
         .foregroundStyle(color)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       Text(label)
-        .font(.system(size: 7, weight: .bold))
+        .font(HelixWidgetType.face(7, weight: .bold))
         .foregroundStyle(Color.helix.textSecondary)
         .lineLimit(1)
     }
@@ -576,10 +576,10 @@ struct CalendarFace: View {
         if !compact, let streak = s?.streak, streak.current > 0 {
           HStack(spacing: 3) {
             Image(systemName: "flame.fill")
-              .font(.system(size: 9))
+              .font(HelixWidgetType.face(9))
               .foregroundStyle(mono ? .white : HelixDomain.train.accent)
             Text("\(streak.current)")
-              .font(.system(size: 10, weight: .bold, design: .monospaced))
+              .font(HelixWidgetType.face(10, weight: .bold, design: .monospaced))
               .foregroundStyle(.white)
           }
         }
@@ -587,7 +587,7 @@ struct CalendarFace: View {
 
       if days.isEmpty {
         Text("no scheduled days yet")
-          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
         MonthGrid(days: days, today: s?.date, mono: mono, showHeader: !compact)
@@ -649,7 +649,7 @@ struct MonthGrid: View {
             // True by construction: `rows` padded column zero to Sunday.
             ForEach(Array(["S", "M", "T", "W", "T", "F", "S"].enumerated()), id: \.offset) { _, letter in
               Text(letter)
-                .font(.system(size: 8, weight: .bold))
+                .font(HelixWidgetType.face(8, weight: .bold))
                 .foregroundStyle(Color.helix.textSecondary)
                 .frame(maxWidth: .infinity)
             }
@@ -707,8 +707,9 @@ private struct DayCell: View {
   /// has edges without the grid having holes.
   var outside = false
 
-  /// A rest day has no `dayKey`, and `Color.helix.day(nil)` answers steel — which is
-  /// pale enough to read as white. Rest days therefore never ask for it.
+  /// A rest day has no `dayKey`, and `Color.helix.day(nil)` answers tertiary
+  /// grey (§3.2). That is a RING colour and it is correct here — the calendar
+  /// cell is a fill, not a word. A rest day's LABEL takes `dayLabel` instead.
   private var color: Color { mono ? .white : Color.helix.day(day.dayKey) }
 
   /// ── A TRAINED DAY IS SOLID WHITE WITH A BLACK DATE ────────────────────────
@@ -740,7 +741,7 @@ private struct DayCell: View {
       }
 
       Text(HelixSnapshot.dayOfMonth(day.d).map { "\($0)" } ?? "")
-        .font(HelixType.figure(max(7, size * 0.42)))
+        .font(HelixWidgetType.figure(max(7, size * 0.42)))
         .fontWeight(day.logged ? .bold : .semibold)
         .foregroundStyle(textColor)
         // 0.6, not 0.7: a Small month is six rows, so the cell is smaller than
@@ -809,7 +810,7 @@ struct VolumeFocusFace: View {
       }
       BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 28, color: .white)
       HStack(spacing: 5) {
-        Text("this week").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        Text("this week").font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         DeltaChip(delta: deltaTonnes, decimals: 1, suffix: " t", monochrome: mono)
       }
       Spacer(minLength: 0)
@@ -849,7 +850,7 @@ struct VolumeFace: View {
         }
         Spacer(minLength: 0)
         BigValue(value: HelixSnapshot.tonnes(s?.week.volumeKg), size: 30, color: .white)
-        Text("this week").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        Text("this week").font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
         DeltaChip(delta: volumeDeltaTonnes(s), decimals: 1, suffix: " t", monochrome: mono)
         Spacer(minLength: 0)
         Hairline()
@@ -866,7 +867,7 @@ struct VolumeFace: View {
           Spacer(minLength: 0)
           if let mean = trailingMean(s) {
             Text("mean \(HelixSnapshot.tonnes(mean) ?? "—")")
-              .font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
+              .font(HelixWidgetType.face(8)).foregroundStyle(Color.helix.textSecondary)
           }
         }
         BarChart(points: s?.volumeTrend ?? [], goal: trailingMean(s), color: accent,
@@ -993,12 +994,12 @@ struct StreakFace: View {
 
       HStack(alignment: .center, spacing: 8) {
         Image(systemName: "flame.fill")
-          .font(.system(size: 26))
+          .font(HelixWidgetType.face(26))
           .foregroundStyle(mono ? .white : (current ?? 0) > 0 ? HelixDomain.train.accent : Color.helix.textSecondary)
         BigValue(value: current.map { "\($0)" }, size: 34, color: .white)
       }
 
-      Text(subtitle).font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+      Text(subtitle).font(HelixWidgetType.face(10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
 
       Spacer(minLength: 0)
     }
@@ -1060,7 +1061,7 @@ struct ConsistencyFace: View {
         Spacer(minLength: 0)
         HStack(alignment: .center, spacing: 6) {
           Image(systemName: "flame.fill")
-            .font(.system(size: large ? 30 : 22))
+            .font(HelixWidgetType.face(large ? 30 : 22))
             .foregroundStyle((s?.streak?.current ?? 0) > 0 ? accent : Color.helix.textSecondary)
           // `.map` on the STREAK, not on `current` — `streak` is the optional and
           // `current` is a plain Int, so `s?.streak?.current.map` asks an Int for
@@ -1068,7 +1069,7 @@ struct ConsistencyFace: View {
           BigValue(value: s?.streak.map { "\($0.current)" }, size: large ? 40 : 30, color: .white)
         }
         Text("day streak")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
         Spacer(minLength: 0)
       }
       .frame(width: large ? 130 : 104, alignment: .leading)
@@ -1108,7 +1109,7 @@ private struct AdherenceStrip: View {
   var body: some View {
     if days.isEmpty {
       Text("no scheduled days behind you yet")
-        .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+        .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
     } else {
       // Ten a row keeps the dots legible at both sizes; a single row of thirty
       // shrinks each one to a speck on a Medium.

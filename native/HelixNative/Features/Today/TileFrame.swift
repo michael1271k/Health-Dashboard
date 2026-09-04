@@ -28,7 +28,7 @@ struct TileFrame<Content: View>: View {
     var body: some View {
         content()
             .environment(\.helixTileFamily, slot.size.family)
-            .padding(14)
+            .padding(HelixSpace.m)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .helixGlass(.tile)
             .contentShape(RoundedRectangle(cornerRadius: HelixCorner.tile, style: .continuous))
@@ -53,7 +53,10 @@ struct TileFrame<Content: View>: View {
     private var removeBadge: some View {
         Button(action: onRemove) {
             Image(systemName: "minus")
-                .font(.system(size: 12, weight: .heavy))
+                .helixType(.caption).fontWeight(.heavy)
+                // 24 pt badges on the tile's corner; the label carries the
+                // meaning for VoiceOver, so the glyph does not scale with it.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(Color.helix.textPrimary)
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(.regularMaterial))
@@ -67,7 +70,8 @@ struct TileFrame<Content: View>: View {
     private var resizeBadge: some View {
         Button { resizes += 1; onResize() } label: {
             Text(slot.size.rawValue.uppercased())
-                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                .helixType(.micro).fontWeight(.heavy)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(Color.helix.textPrimary)
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(.regularMaterial))

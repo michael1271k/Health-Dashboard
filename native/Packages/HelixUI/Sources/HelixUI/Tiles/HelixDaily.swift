@@ -130,17 +130,17 @@ private struct FuelQuadrant: View {
       HStack(alignment: .firstTextBaseline, spacing: 3) {
         BigValue(value: snapshot?.macros.kcal.map { "\(Int($0.rounded()))" }, size: 20, color: .white)
         Text(snapshot?.macros.kcalGoal.map { "/ \(Int($0.rounded()))" } ?? "kcal")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
       }
       // Three micro-rails rather than three numbers: at this size the SHAPE of
       // the macro split is readable where the figures are not.
       HStack(spacing: 3) {
         MacroPip(value: snapshot?.macros.proteinG, goal: snapshot?.macros.proteinGoalG,
-                 letter: "P", color: mono ? .white : HelixDomain.fuel.at(0))
+                 letter: "P", color: mono ? .white : Color.helix.protein)
         MacroPip(value: snapshot?.macros.carbsG, goal: snapshot?.macros.carbsGoalG,
-                 letter: "C", color: mono ? .white : HelixDomain.fuel.at(0.35))
+                 letter: "C", color: mono ? .white : Color.helix.carbs)
         MacroPip(value: snapshot?.macros.fatG, goal: snapshot?.macros.fatGoalG,
-                 letter: "F", color: mono ? .white : HelixDomain.fuel.at(0.65))
+                 letter: "F", color: mono ? .white : Color.helix.fat)
       }
     }
   }
@@ -154,7 +154,7 @@ private struct MacroPip: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(letter).font(.system(size: 7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
+      Text(letter).font(HelixWidgetType.face(7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
       Rail(progress: HelixSnapshot.progress(value, goal), color: color, height: 3)
     }
   }
@@ -164,7 +164,7 @@ private struct WaterQuadrant: View {
   let snapshot: HelixSnapshot?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : HelixDomain.fuel.end }
+  private var accent: Color { mono ? .white : Color.helix.water }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -173,7 +173,7 @@ private struct WaterQuadrant: View {
         BigValue(value: snapshot?.water.ml.map { String(format: "%.1f", $0 / 1000) },
                  size: 20, color: .white)
         Text(snapshot?.water.goalMl.map { "/ \(String(format: "%.1f", $0 / 1000)) L" } ?? "L")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
       }
       Rail(progress: HelixSnapshot.progress(snapshot?.water.ml, snapshot?.water.goalMl),
            color: accent, height: 4)
@@ -195,7 +195,7 @@ private struct StepsQuadrant: View {
         BigValue(value: snapshot?.steps.count.map { $0.formatted(.number.grouping(.automatic)) },
                  size: 20, color: .white)
         Text(snapshot?.steps.goal.map { "/ \($0 / 1000)k" } ?? "")
-          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
+          .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary)
       }
       Rail(progress: HelixSnapshot.progress(snapshot?.steps.count.map(Double.init),
                                             snapshot?.steps.goal.map(Double.init)),
@@ -215,12 +215,12 @@ private struct TrainingQuadrant: View {
     VStack(alignment: .leading, spacing: 4) {
       Caption("TRAINING", color: accent)
       Text(snapshot?.workout.label ?? "—")
-        .font(HelixType.label(13, weight: .bold))
+        .font(HelixWidgetType.label(13, weight: .bold))
         .foregroundStyle(.white)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       Text(state)
-        .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
+        .font(HelixWidgetType.face(9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       Spacer(minLength: 0)
     }
   }

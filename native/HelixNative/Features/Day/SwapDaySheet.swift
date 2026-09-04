@@ -87,7 +87,7 @@ struct SwapDaySheet: View {
 
     var body: some View {
         DaySheet("Change \(Swap.shortDayLabel(model.date))", domain: .train) {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: HelixSpace.l) {
                 restSection
                 Divider().overlay(Color.helix.hairline)
                 placeSection
