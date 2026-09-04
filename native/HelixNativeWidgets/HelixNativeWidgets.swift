@@ -1,24 +1,105 @@
 import ActivityKit
 import SwiftUI
 import WidgetKit
+import HelixCore
+import HelixUI
 
 /// The native app's widget extension.
 ///
-/// Wave 1b ships exactly one face: the running workout. Every OTHER widget in
-/// HELIX (`ios/App/HelixWidgets/`, fifteen faces) reads its data over HTTP from
-/// `/api/widget/snapshot`, because App Groups are a paid capability and the
-/// extension can read nothing the app wrote. Those move here at **Wave 7**,
-/// when the Developer Program is bought and a shared container makes the 832-loc
-/// snapshot route deletable.
+/// Wave 5: the five Home Screen families, the Lock Screen accessory and the
+/// running-workout Live Activity. Every tile is a `HelixUI` view drawing a
+/// `HelixSnapshot` that `HelixProvider` builds from the App Group database —
+/// no network, no snapshot route, no token. The Capacitor extension that did
+/// all of this over HTTP is gone.
 ///
-/// A Live Activity is the one face exempt from that constraint, so it is the
-/// one face that can ship now — see `HelixWorkoutAttributes`.
+/// ⚠️ `kind:` strings are load-bearing: a kind that disappears takes every
+/// placed instance of it off the Home Screen. They are the same five strings
+/// the Capacitor extension used, so a re-install keeps what the user placed.
 @main
 struct HelixNativeWidgets: WidgetBundle {
     var body: some Widget {
+        // Gallery order: what to eat, what to train, how the body is doing,
+        // the whole day at once, the overnight readings, the running session,
+        // and then the accessory sizes.
+        HelixFuelWidget()
+        HelixTrainingWidget()
+        HelixBodyWidget()
+        HelixDailyWidget()
+        HelixVitalsWidget()
         HelixWorkoutActivityWidget()
+        HelixLockWidget()
     }
 }
+
+// MARK: - Home Screen families
+
+struct HelixFuelWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixFuelFamily", intent: FuelConfiguration.self, provider: HelixIntentProvider<FuelConfiguration>()) { entry in
+            FuelView(entry: entry.tile, focus: entry.tile.fuelFocus)
+        }
+        .configurationDisplayName("Fuel")
+        .description("Calories, macros and hydration. Tap through to Fuel.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+struct HelixTrainingWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixTrainingFamily", intent: TrainingConfiguration.self, provider: HelixIntentProvider<TrainingConfiguration>()) { entry in
+            TrainingView(entry: entry.tile, focus: entry.tile.trainingFocus)
+        }
+        .configurationDisplayName("Training")
+        .description("Today's session, the month, volume, streak and records.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+struct HelixBodyWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixBodyFamily", intent: BodyConfiguration.self, provider: HelixIntentProvider<BodyConfiguration>()) { entry in
+            BodyView(entry: entry.tile, focus: entry.tile.bodyFocus)
+        }
+        .configurationDisplayName("Body")
+        .description("Weight, sleep and the daily score. Tap through to Body.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+struct HelixDailyWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixDailyFamily", intent: DailyConfiguration.self, provider: HelixIntentProvider<DailyConfiguration>()) { entry in
+            DailyView(entry: entry.tile)
+        }
+        .configurationDisplayName("Helix Daily")
+        .description("Fuel, water, steps and training in one register.")
+        .supportedFamilies([.systemLarge])
+    }
+}
+
+struct HelixVitalsWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixVitalsFamily", intent: VitalsConfiguration.self, provider: HelixIntentProvider<VitalsConfiguration>()) { entry in
+            VitalsView(entry: entry.tile, focus: entry.tile.vitalsFocus)
+        }
+        .configurationDisplayName("Vitals")
+        .description("Overnight readings against your own normal — HRV, resting HR, temperature, blood oxygen, breathing.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+struct HelixLockWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "HelixLockFamily", intent: LockConfiguration.self, provider: HelixIntentProvider<LockConfiguration>()) { entry in
+            LockView(entry: entry.tile, focus: entry.tile.lockFocus)
+        }
+        .configurationDisplayName("Helix (Lock Screen)")
+        .description("One fact on the Lock Screen: battery, calories, steps or today's session.")
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
+    }
+}
+
+// MARK: - The running workout
 
 /// ── ONE STRUCT, BECAUSE THE FLOOR IS iOS 18 ─────────────────────────────────
 /// The Capacitor app needs TWO widget structs for this — `supplementalActivity-

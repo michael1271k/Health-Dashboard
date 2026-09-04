@@ -78,6 +78,7 @@ import {
 } from '@/lib/supplements'
 import { customSlotsForDate, customDoseFor, supplementKeyOf, type CustomSupplement, type CustomSchedule } from '@/lib/hooks/useCustomSupplements'
 import { SLEEP_DEBT_WINDOW_DAYS, SLEEP_DEBT_WEEKLY_DECAY, computeSleepDebt } from '@/lib/hooks/useSleepDebt'
+import { safePath } from '@/lib/native/deepLink'
 import {
   parseRepWindow, repWindowFor, holdTargetFor, clearedCeiling, loadLadder, workLoads, ladderVerdict,
   topLoadCleared, levelUpCue, progressionVerdict, timedProgressionVerdict,
@@ -6649,6 +6650,68 @@ describe('golden vectors — scoping the progression queue', () => {
       fn: 'scopeToDay',
       note: 'Extracted from ProgressionAlerts. A falsy day key (null, undefined, "") keeps EVERYTHING — the PPL era; a key keeps only alerts carrying exactly that key, in order. `kind` says which falsy value the null in `dayKey` stands for.',
       cases: keys.map((k) => ({ name: `key=${k === undefined ? 'undefined' : JSON.stringify(k)}`, input: { alerts, dayKey: k ?? null, kind: k === undefined ? 'undefined' : k === null ? 'null' : 'string' }, expected: scopeToDay(alerts, k).map((a) => a.id) })),
+    })
+  })
+})
+
+describe('golden vectors — deep links', () => {
+  it('exports safePath and where each path lands', () => {
+    /** The tab a safe path lands on in the native shell. Hand-authored: the web router has no equivalent. */
+    type Destination = { kind: 'today' | 'train' | 'fuel' | 'body' | 'you' | 'reports'; date: string | null }
+    const destination = (path: string | null): Destination | null => {
+      if (path == null) return null
+      const [root, second] = path.split(/[?#]/)[0].split('/').filter(Boolean)
+      switch (root) {
+        case undefined: return { kind: 'today', date: null }
+        case 'workout': case 'session': return { kind: 'train', date: null }
+        case 'nutrition': return { kind: 'fuel', date: null }
+        case 'pathfinder': return { kind: 'body', date: null }
+        case 'day': return { kind: 'body', date: second ?? null }
+        case 'settings': return { kind: 'you', date: null }
+        case 'reports': return { kind: 'reports', date: null }
+        default: return null
+      }
+    }
+    const raws: Array<[string, string | null]> = [
+      ['home', 'helix://open?path=/'],
+      ['nutrition', 'helix://open?path=/nutrition'],
+      ['nutrition micros — below an allowed root', 'helix://open?path=/nutrition/micros'],
+      ['nutrition nutrients', 'helix://open?path=/nutrition/nutrients'],
+      ['workout exercises', 'helix://open?path=/workout/exercises'],
+      ['session', 'helix://open?path=/session'],
+      ['pathfinder', 'helix://open?path=/pathfinder'],
+      ['reports', 'helix://open?path=/reports'],
+      ['settings', 'helix://open?path=/settings'],
+      ['a day', 'helix://open?path=/day/2026-08-14'],
+      ['a day with an unencoded query', 'helix://open?path=/day/2026-09-03?section=sleep'],
+      ['a day with an encoded query', 'helix://open?path=%2Fday%2F2026-08-14%3Ftab%3Dsleep'],
+      ['a fragment is stripped before the check', 'helix://open?path=/nutrition%23macros'],
+      ['upper-case scheme', 'HELIX://open?path=/nutrition'],
+      ['a trailing slash', 'helix://open?path=/nutrition/'],
+      ['dot-dot below an allowed root passes the allow-list (the TS does too)', 'helix://open?path=/nutrition/../admin'],
+      ['https scheme', 'https://evil.example/nutrition'],
+      ['javascript scheme', 'javascript:alert(1)'],
+      ['capacitor scheme', 'capacitor://localhost/nutrition'],
+      ['protocol-relative', 'helix://open?path=//evil.example'],
+      ['protocol-relative below an allowed root', 'helix://open?path=//evil.example/nutrition'],
+      ['absolute URL as the path', 'helix://open?path=https://evil.example/nutrition'],
+      ['a route the app does not have', 'helix://open?path=/admin'],
+      ['the old snapshot route', 'helix://open?path=/api/widget/snapshot'],
+      ['case-sensitive', 'helix://open?path=/Nutrition'],
+      ['relative path', 'helix://open?path=nutrition'],
+      ['no path', 'helix://open'],
+      ['empty string', ''],
+      ['null', null],
+      ['malformed', 'helix://%%%'],
+    ]
+    emit('deep-link.json', {
+      module: 'native/deepLink',
+      fn: 'safePath / destination',
+      note: 'The allow-list for helix://open?path=… URLs: helix scheme only, path must start with / and not //, query and fragment stripped before matching the clean path OR its first-segment root, the FULL path returned. `destination` is the native tab mapping (today · train · fuel · body(date) · you · reports); null path → null destination.',
+      cases: raws.map(([name, raw]) => {
+        const path = safePath(raw)
+        return { name, input: { raw }, expected: { path, destination: destination(path) } }
+      }),
     })
   })
 })
