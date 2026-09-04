@@ -1,50 +1,27 @@
 import Foundation
 import Observation
+import HelixData
 
-/// The seam Track E fills in Wave 2.1.
+/// The shape Today binds to; `HelixData`'s `SyncCoordinator` is the one
+/// conformance.
 ///
-/// ── WHY A PROTOCOL IN THE APP AND NOT AN ACTOR IN `HelixData` ────────────────
-/// §7.1 puts the real `SyncCoordinator` in `HelixData`, which Track E owns and
-/// is rewriting in the same wave as this screen. Two tracks editing one package
-/// is the one thing §10 forbids outright, so Today binds to the SHAPE of the
-/// coordinator here.
+/// ── WHY THE PROTOCOL LIVES IN THE APP ────────────────────────────────────────
+/// Track U wrote Today against this seam while Track E was writing the actor in
+/// the same wave, and §10 forbids two tracks in one package. `HelixData` cannot
+/// see this protocol — the app imports the package, never the other way round —
+/// so the conformance is declared HERE, where both are visible. Wave 2.1 filled
+/// it: the actor's own `syncNow(reason:)` matches, so no adapter.
 ///
-/// ── HOW THE HANDOVER ACTUALLY WORKS, BECAUSE IT IS NOT OBVIOUS ───────────────
-/// `HelixData` cannot see this protocol — the app imports the package, never the
-/// other way round — so the actor CANNOT declare the conformance where it is
-/// written. The conformance is written HERE, in the app target, which can see
-/// both. Two lines, once §7.1's actor exists:
-///
-///     extension SyncCoordinator: SyncCoordinating {}      // in this file
-///     environment.coordinator = SyncCoordinator(…)        // at sign-in
-///
-/// (`coordinator`, not `sync` — `sync` is the `SyncStatus` below and is a `let`.)
-/// If the actor's own method signature differs, this file keeps a four-line
-/// adapter instead; either way nothing in `Features/` changes.
-///
-/// ── WHAT THE UI ACTUALLY NEEDS, WHICH IS LESS THAN THE COORDINATOR IS ────────
-/// A hairline while it runs, a timestamp when it stops, and something to await
-/// on pull-to-refresh. Not the per-table cursors, not the backfill, not the
-/// drain order. So the protocol is one method, and the status the screen reads
-/// is a separate `@Observable` on the main actor — an `actor`'s own `state` is
-/// not readable from a `body`, and making the view `await` for it would put a
-/// suspension point in the render path.
+/// The UI needs less than the coordinator has: a hairline while it runs, a
+/// timestamp when it stops, something to await on pull-to-refresh. Not the
+/// per-table cursors, not the drain order. The status the screen reads is the
+/// separate `@Observable` below — an `actor`'s `state` is not readable from a
+/// `body` without a suspension point in the render path.
 protocol SyncCoordinating: Sendable {
     func syncNow(reason: SyncReason) async throws
 }
 
-/// Why a sync is running. The reason is not decoration: §7.1 coalesces on it,
-/// and `.pull` is the only one the user is watching.
-///
-/// `Hashable` because coalescing means keying a dictionary by this, and an
-/// `if case` chain is what a coordinator writes when the key is not hashable.
-enum SyncReason: Hashable, Sendable {
-    case launch
-    case foreground
-    case pull
-    case realtime(table: String)
-    case healthKit
-}
+extension SyncCoordinator: SyncCoordinating {}
 
 /// What Today draws about the sync — and the only sync state any view reads.
 @MainActor

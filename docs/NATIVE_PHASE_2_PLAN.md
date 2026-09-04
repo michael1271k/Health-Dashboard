@@ -296,6 +296,7 @@ Every week/day number here uses `WeekWindow` (§6.4), so changing week start re-
 - `state: .idle | .running(progress) | .failed(error)`; `lastSync: [table: Date]` persisted in a new `sync_status` GRDB table (migration `v10.syncStatus`, append-only).
 - `syncNow(reason: .launch | .foreground | .pull | .realtime(table) | .healthKit)`: **order** = `resetInFlight()` → `SyncEngine.drain()` (push first so pulls do not overwrite local edits) → `HealthSync.syncRecent()` → `MirrorPuller.refresh` + `TrainingPuller.pull` → `writeDailyScore(today)` + `writeDailyScore(yesterday)` → widget timeline reload. Coalesced: a second call while running is queued once.
 - Conforms to `MirrorRefreshing`; `MirrorRealtime` subscribed on sign-in, coalesced 400 ms.
+- **Shipped 2.1 (2026-09-04), one departure from the order above:** the HealthKit read runs BEFORE the first drain, not after. `saveMirrorRows` is a blind upsert, so a pull between a local write and its push overwrites the write with the server's older row and the outbox then pushes that back — today's steps would vanish on every sync. Apple first, push second keeps the rule the order exists for. A realtime note goes through the same queue (never a bare single-table pull, same reason) and skips the HealthKit step.
 - Hooks: sign-in resolved, `scenePhase == .active`, `.refreshable`, realtime, HealthKit write, `dayTick`.
 
 ### 7.2 First-launch backfill

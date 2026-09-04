@@ -137,25 +137,78 @@ public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
     public func select<T: Decodable & Sendable>(
         _ type: T.Type, request: MirrorRequest
     ) async throws -> [T] {
-        var query = client.from(request.table).select().eq("user_id", value: userId)
-        if let since = request.since {
-            // `gte`, not `gt`: the boundary row is re-read and upserted, which
-            // is a no-op, and two rows sharing a millisecond cannot lose one.
-            query = query.gte(since.column, value: since.value)
+        try await Pagination.all { from, to in
+            var query = client.from(request.table).select().eq("user_id", value: userId)
+            if let since = request.since {
+                // `gte`, not `gt`: the boundary row is re-read and upserted, which
+                // is a no-op, and two rows sharing a millisecond cannot lose one.
+                query = query.gte(since.column, value: since.value)
+            }
+            return try await Self.ordered(query, by: request.order).range(from: from, to: to).execute().value
         }
-        return try await query.execute().value
     }
 
     public func selectIn<T: Decodable & Sendable>(
         _ type: T.Type, table: String, column: String, values: [String]
     ) async throws -> [T] {
+        var out: [T] = []
+        // Ordered by `id`: the one caller is `workout_sets`, keyed on it. A
+        // composite-key table would need the order passed through.
+        // A URL has a length; 2,000 uuids in one `in.(…)` do not fit in it.
+        for chunk in Pagination.chunks(values, size: Pagination.inListLimit) {
+            out += try await Pagination.all { from, to in
+                let query = client.from(table).select().eq("user_id", value: userId).in(column, values: chunk)
+                return try await Self.ordered(query, by: ["id"]).range(from: from, to: to).execute().value
+            }
+        }
+        return out
+    }
+
+    private static func ordered(_ query: PostgrestFilterBuilder, by columns: [String]) -> PostgrestTransformBuilder {
+        var q: PostgrestTransformBuilder = query
+        for column in columns { q = q.order(column, ascending: true) }
+        return q
+    }
+}
+
+/// Offset paging over PostgREST, until a short page.
+///
+/// ── OFFSET, NOT KEYSET, AND WHY THAT IS FINE HERE ───────────────────────────
+/// Keyset pagination is the right answer for a feed; the Supabase guide says
+/// so and it is correct. It is not expressible for a composite primary key
+/// through PostgREST's filter grammar without an `or=(and(…),and(…))` per
+/// column, and this athlete's largest table is 2,277 rows — three pages. So:
+/// `range` over a total order (the primary key), and every page is asked for
+/// until one comes back short. `db-max-rows` truncates a page silently; asking
+/// for exactly the page size means a truncated page and a short page cannot be
+/// told apart, which is why the loop stops on `< pageSize` and not on empty.
+///
+/// ponytail: offset paging, O(pages²) server work; keyset on `id` when a table
+/// passes ~20 pages.
+enum Pagination {
+    /// PostgREST's default `db-max-rows`. Asking for more than the server will
+    /// give is how a page looks full when it was cut.
+    static let pageSize = 1000
+    /// How many values one `in.(…)` carries. Session ids are 36 bytes; 200 of
+    /// them is ~7 KB of URL, under every proxy's limit.
+    static let inListLimit = 200
+
+    /// Every row, page by page. `fetch(from, to)` asks for the inclusive range.
+    static func all<T>(
+        pageSize: Int = pageSize, fetch: (Int, Int) async throws -> [T]
+    ) async throws -> [T] {
+        var out: [T] = []
+        var from = 0
+        while true {
+            let page = try await fetch(from, from + pageSize - 1)
+            out += page
+            if page.count < pageSize { return out }
+            from += pageSize
+        }
+    }
+
+    static func chunks<T>(_ values: [T], size: Int) -> [[T]] {
         guard !values.isEmpty else { return [] }
-        return try await client
-            .from(table)
-            .select()
-            .eq("user_id", value: userId)
-            .in(column, values: values)
-            .execute()
-            .value
+        return stride(from: 0, to: values.count, by: size).map { Array(values[$0..<min($0 + size, values.count)]) }
     }
 }

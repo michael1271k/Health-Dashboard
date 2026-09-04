@@ -518,6 +518,22 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // When each table last synced, append-only. `sync_cursors` answers "how
+        // far", this answers "when" — and keeps every answer, so the Settings
+        // Sync Status section can show a history and a first-launch backfill
+        // can be recognised by the table being empty for a user.
+        migrator.registerMigration("v10.syncStatus") { db in
+            try db.create(table: "sync_status") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("user_id", .text).notNull()
+                t.column("table_name", .text).notNull()
+                t.column("synced_at", .datetime).notNull()
+                t.column("reason", .text).notNull()
+                t.column("rows", .integer).notNull()
+            }
+            try db.create(index: "sync_status_user_table", on: "sync_status", columns: ["user_id", "table_name", "synced_at"])
+        }
+
         return migrator
     }
 }

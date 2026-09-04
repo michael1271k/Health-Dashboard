@@ -48,6 +48,12 @@ public struct MirrorTable: Sendable {
     /// one, and the insert dies on `daily_logs_user_id_date_key` every time it
     /// is retried. Introspected from `pg_constraint`, not assumed.
     public let conflict: String
+    /// The primary key, in column order — the ORDER BY of every paged pull.
+    ///
+    /// Offset pagination is only deterministic over a total order; without one
+    /// Postgres may hand back a row on two pages and another on none. The
+    /// primary key is the one order every table is guaranteed to have.
+    public let order: [String]
     let pull: @Sendable (MirrorPuller, MirrorRequest) async throws -> Int
     /// Read one local row by id and upsert it. `false` when the row is gone.
     ///
@@ -61,6 +67,7 @@ public struct MirrorTable: Sendable {
         group: MirrorGroup,
         strategy: MirrorStrategy,
         conflict: String = "id",
+        order: [String] = ["id"],
         pull: @escaping @Sendable (MirrorPuller, MirrorRequest) async throws -> Int,
         push: @escaping @Sendable (AppDatabase, any MirrorPushRemote, RowRef) async throws -> Bool
     ) {
@@ -68,6 +75,7 @@ public struct MirrorTable: Sendable {
         self.group = group
         self.strategy = strategy
         self.conflict = conflict
+        self.order = order
         self.pull = pull
         self.push = push
     }
@@ -79,16 +87,22 @@ public struct MirrorRequest: Sendable, Equatable {
     public let userId: String
     /// `nil` for a full pull.
     public let since: (column: String, value: String)?
+    /// The total order the pages are read in. See `MirrorTable.order`.
+    public let order: [String]
 
-    public init(table: String, userId: String, since: (column: String, value: String)?) {
+    public init(
+        table: String, userId: String, since: (column: String, value: String)?, order: [String] = ["id"]
+    ) {
         self.table = table
         self.userId = userId
         self.since = since
+        self.order = order
     }
 
     public static func == (lhs: MirrorRequest, rhs: MirrorRequest) -> Bool {
         lhs.table == rhs.table && lhs.userId == rhs.userId
             && lhs.since?.column == rhs.since?.column && lhs.since?.value == rhs.since?.value
+            && lhs.order == rhs.order
     }
 }
 
@@ -127,9 +141,15 @@ public actor MirrorPuller {
     /// How far back a `.window` strategy reaches. Ninety days covers every
     /// trailing average the app computes (the longest is the 14-night sleep-debt
     /// decay and the 40-session calorie sample) with room to spare.
-    private let windowDays: Int
+    ///
+    /// `nil` removes the cap: a `.window` table is pulled WHOLE, every time.
+    /// That is what the app runs with since Phase 2 (decision 7 — full history,
+    /// no 90-day horizon); the parameter stays so the window tests keep their
+    /// subject. Every row that comes back is upserted, so the cost is bytes,
+    /// never correctness.
+    private let windowDays: Int?
 
-    public init(database: AppDatabase, remote: any MirrorRemote, userId: String, windowDays: Int = 90) {
+    public init(database: AppDatabase, remote: any MirrorRemote, userId: String, windowDays: Int? = 90) {
         self.database = database
         self.remote = remote
         self.userId = userId
@@ -151,8 +171,10 @@ public actor MirrorPuller {
         var report = MirrorReport()
         for table in tables where group == nil || table.group == group {
             do {
-                report.rows += try await refresh(table, now: now)
+                let rows = try await refresh(table, now: now)
+                report.rows += rows
                 report.tables += 1
+                report.rowsByTable[table.name] = rows
             } catch {
                 report.failures[table.name] = String(describing: error)
             }
@@ -164,7 +186,7 @@ public actor MirrorPuller {
     @discardableResult
     public func refresh(_ table: MirrorTable, now: Date = Date()) async throws -> Int {
         let request = MirrorRequest(
-            table: table.name, userId: userId, since: try since(table, now: now)
+            table: table.name, userId: userId, since: try since(table, now: now), order: table.order
         )
         let count = try await table.pull(self, request)
         // The cursor is read back out of the LOCAL table rather than tracked
@@ -192,6 +214,7 @@ public actor MirrorPuller {
         case .full:
             return nil
         case .window(let column):
+            guard let windowDays else { return nil }
             let from = Calendar.current.date(byAdding: .day, value: -windowDays, to: now) ?? now
             // A `date` column wants `yyyy-MM-dd`; a `timestamptz` wants an
             // instant. Asking for the day is correct for both — PostgREST widens
@@ -213,6 +236,9 @@ public actor MirrorPuller {
 public struct MirrorReport: Sendable, Equatable {
     public var tables = 0
     public var rows = 0
+    /// Table name → rows landed, for every table that succeeded. What the
+    /// `sync_status` ledger is written from.
+    public var rowsByTable: [String: Int] = [:]
     /// Table name → the error it reported. Empty is the happy path.
     public var failures: [String: String] = [:]
 

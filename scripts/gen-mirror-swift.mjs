@@ -187,7 +187,8 @@ function registryFor(tables) {
     const conflict = def.conflict ?? (def.pk ?? ['id']).join(',')
     const type = `${typeName(table)}Row`
     lines.push(`        MirrorTable(name: "${table}", group: .${def.group}, strategy: ${strategy},`)
-    lines.push(`                    conflict: "${conflict}",`)
+    const order = (def.pk ?? ['id']).map((c) => `"${c}"`).join(', ')
+    lines.push(`                    conflict: "${conflict}", order: [${order}],`)
     lines.push(`                    pull: { try await $0.pull(${type}.self, from: $1) },`)
     lines.push(`                    push: { try await $1.pushRow(${type}.self, from: $0, table: "${table}", conflict: "${conflict}", ref: $2) }),`)
   }

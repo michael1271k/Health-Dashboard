@@ -392,8 +392,6 @@ public struct WidgetSnapshotBuilder: Sendable {
         let dayKey = todaySessions.first { $0.session.dayKey != nil }?.session.dayKey
         let planned = prescribed(dayKey)
         let supplements = ScoringSupplements(
-            sessionVolumeKg: todaySessions.reduce(0) { $0 + $1.volumeKg },
-            newPRsToday: Double(todaySessions.reduce(0) { $0 + $1.prs }),
             goals: ResolvedGoals(
                 calorie: resolvedGoals.calorie, protein: resolvedGoals.protein ?? 0, carbs: resolvedGoals.carbs ?? 0,
                 fat: resolvedGoals.fat ?? 0, steps: resolvedGoals.steps ?? Double(goals?.stepsGoal ?? 0)
@@ -402,25 +400,10 @@ public struct WidgetSnapshotBuilder: Sendable {
             plannedExercises: planned.map { Double($0.exercises) },
             plannedSets: planned.map { Double($0.sets) }
         )
-        guard var inputs = try database.scoringInputs(
+        guard let inputs = try database.scoringInputs(
             userId: userId, date: date, hoursAwake: hoursAwake, isRestDay: isRestDay,
             todayISO: date, isToday: true, supplements: supplements
         ) else { return nil }
-
-        // Your own normal for this split: the last six, full-effort weeks
-        // preferred, exactly as `computeForDate` read them.
-        if !todaySessions.isEmpty {
-            let earlier = allSessions
-                .filter { $0.date < date && (dayKey == nil || $0.session.dayKey == dayKey) }
-                .sorted { $0.date > $1.date }
-                .prefix(6)
-                .filter { $0.volumeKg > 0 }
-            let fullEffort = earlier.filter {
-                !Maintenance.isMaintenanceDate($0.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: date)
-            }
-            let trailing = (fullEffort.isEmpty ? Array(earlier) : fullEffort).map(\.volumeKg)
-            inputs.trailingAvgVolumeKg = trailing.isEmpty ? 0 : trailing.reduce(0, +) / Double(trailing.count)
-        }
 
         let components = Score.daily(inputs)
         guard let total = components.totalScore else { return nil }
@@ -536,11 +519,7 @@ public struct WidgetSnapshotBuilder: Sendable {
     }
 
     /// `sessionVolumeKg` over the local rows — a unilateral pair is one set.
-    static func volume(_ sets: [WorkoutSet]) -> Double {
-        SessionVolume.sessionVolumeKg(sets.map {
-            VolumeSet(weightKg: $0.weightKg, reps: Double($0.reps), side: (try? SyncTranslation.side($0.side)) ?? nil, pairId: $0.pairId, setType: $0.setType)
-        })
-    }
+    static func volume(_ sets: [WorkoutSet]) -> Double { AppDatabase.volume(sets) }
 
     /// `countCommittedSets`: solo sets plus distinct pairs. A ghost is a pencil
     /// mark, not a set.

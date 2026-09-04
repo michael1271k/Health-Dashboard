@@ -70,6 +70,40 @@ struct MirrorTests {
         try #require(MirrorCatalogue.tables.first { $0.name == name })
     }
 
+    // MARK: The window
+
+    @Test("windowDays nil pulls a window table whole, and leaves delta alone")
+    func windowRemoved() async throws {
+        let db = try store()
+        let remote = FakeMirror()
+        let puller = MirrorPuller(database: db, remote: remote, userId: "u1", windowDays: nil)
+        try await puller.refresh(try table("doms_logs"))
+        try await puller.refresh(try table("daily_logs"))
+        let requests = await remote.requests
+        #expect(requests.count == 2)
+        #expect(requests[0].table == "doms_logs")
+        #expect(requests[0].since == nil, "no cap: the whole table, every time")
+        #expect(requests[0].order == ["id"])
+        // A delta table with no cursor yet is a full pull too; with one it is
+        // still a delta — the window setting has no say over it.
+        #expect(requests[1].since == nil)
+        try db.setMirrorCursor(table: "daily_logs", to: Date(timeIntervalSince1970: 1_788_000_000), at: Date())
+        try await puller.refresh(try table("daily_logs"))
+        #expect(await remote.requests.last?.since?.column == "updated_at")
+    }
+
+    @Test("the pull is ordered by the primary key, composite or not")
+    func orderIsThePrimaryKey() throws {
+        #expect(try table("personal_records").order == ["user_id", "exercise_key", "axis"])
+        #expect(try table("daily_logs").order == ["id"])
+        try store().writer.read { conn in
+            for table in MirrorCatalogue.tables {
+                let columns = try conn.primaryKey(table.name).columns
+                #expect(columns == table.order, "\(table.name)")
+            }
+        }
+    }
+
     // MARK: The catalogue
 
     @Test("the catalogue covers the schema fixture, minus the three the logger owns")

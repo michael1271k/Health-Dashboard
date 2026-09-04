@@ -2,34 +2,22 @@ import Foundation
 import GRDB
 import HelixCore
 
-/// The three numbers this store cannot work out for itself.
+/// What the caller resolves that this store cannot: the plan and the lever.
 ///
-/// ── WHY THEY ARE PARAMETERS AND NOT PROTOCOLS ───────────────────────────────
-/// Each is produced by a domain module that has not been ported yet, and each is
-/// arithmetic that has already split into two implementations once in this app's
-/// history. Rather than five protocol seams that will all be shaped wrong by the
-/// time the real functions arrive, they are three named holes with honest
-/// defaults, and the compiler shows every call site that has not filled them.
+/// ── WHAT USED TO BE HERE ────────────────────────────────────────────────────
+/// `sessionVolumeKg` and `newPRsToday` were holes too, back when `volume.ts`
+/// and `prEngine.ts` were unported. Both are read out of the store now —
+/// `SessionVolume` over the day's sets, `personal_records` for the date — so a
+/// caller can no longer hand in a tonnage that double-counts a unilateral pair.
 ///
-///   · `sessionVolumeKg` — `sessions/volume.ts` (Track D item 5). A unilateral
-///     pair is scored ONCE, at the WEAKER side; the local set rows carry
-///     `pair_id` and `side` precisely so that rule can be applied, and applying
-///     a naive Σ(weight × reps) here would produce a number that looks right and
-///     double-counts every L/R movement.
-///   · `newPRsToday` — `prEngine.ts` (item 2). The local `workout_sets` has no
-///     `is_pr` column at all: the logger flags a set that beats the programme's
-///     own seed and writes nothing. Zero is the honest reading of "nothing is
-///     known", and it is what the web wrote for every Notion-era session too.
-///   · `goals` — `levers.ts` + `dailyTargets.ts` + `context.ts` (item 3). The
-///     stored `user_goals` figures are the BASELINE, and a lever moves them:
-///     scoring against the baseline while the app displays Lever 1's 1,885 kcal
-///     is a 70-kcal difference between the goal shown and the goal graded, every
-///     day, invisibly. Left `nil`, the stored values are used and the day is
-///     graded against the baseline — which is exactly the pre-lever behaviour,
-///     wrong in a known direction rather than in an unknown one.
+///   · `goals` — `levers.ts` + `dailyTargets.ts`. The stored `user_goals`
+///     figures are the BASELINE, and a lever moves them: scoring against the
+///     baseline while the app displays Lever 1's 1,885 kcal is a 70-kcal
+///     difference between the goal shown and the goal graded, every day,
+///     invisibly. Left `nil`, the stored values are used and the day is graded
+///     against the baseline — the pre-lever behaviour, wrong in a known
+///     direction rather than in an unknown one. `DayPlan` resolves it.
 public struct ScoringSupplements: Sendable, Equatable {
-    public var sessionVolumeKg: Double
-    public var newPRsToday: Double
     public var goals: ResolvedGoals?
     /// Inside a planned maintenance / deload week (`maintenance.ts`). Lowers the
     /// workout-drain ceiling and the relative floor, and nothing else.
@@ -40,15 +28,11 @@ public struct ScoringSupplements: Sendable, Equatable {
     public var plannedSets: Double?
 
     public init(
-        sessionVolumeKg: Double = 0,
-        newPRsToday: Double = 0,
         goals: ResolvedGoals? = nil,
         isMaintenance: Bool = false,
         plannedExercises: Double? = nil,
         plannedSets: Double? = nil
     ) {
-        self.sessionVolumeKg = sessionVolumeKg
-        self.newPRsToday = newPRsToday
         self.goals = goals
         self.isMaintenance = isMaintenance
         self.plannedExercises = plannedExercises
@@ -166,7 +150,18 @@ public extension AppDatabase {
             // Scoped by the parent SESSION rather than by a set's own timestamp:
             // a back-dated session is written today, so filtering on the set
             // would miss it entirely.
-            let counted = try Self.countSets(db, sessionIds: sessions.map(\.id))
+            let daySets = try Self.sets(db, sessionIds: sessions.map(\.id))
+            let counted = Self.countSets(daySets)
+
+            // ── THE FORMER HOLES ────────────────────────────────────────────
+            // Tonnage through `SessionVolume`, which scores a unilateral pair
+            // ONCE at the weaker side. Records by the date they were achieved —
+            // the ledger is the record of a PR, and the local set rows carry no
+            // `is_pr` at all.
+            let sessionVolumeKg = Self.volume(daySets)
+            let prCount = try PersonalRecordRow
+                .filter(Column("user_id") == userId && Column("achieved_on") == date)
+                .fetchCount(db)
 
             // The day's principal session carries its character — the day key
             // feeds the workout score and the RPE feeds the battery, and on a
@@ -183,6 +178,45 @@ public extension AppDatabase {
             // holds rather than a tonnage guessed from it.
             let hardest = sessions.max { ($0.durationMin ?? 0) < ($1.durationMin ?? 0) }
             let dayKey = sessions.first(where: { $0.dayKey != nil })?.dayKey
+
+            // ── YOUR OWN NORMAL FOR THIS SPLIT ──────────────────────────────
+            // The last six sessions of the same day key before this date, at
+            // full effort — a maintenance week's lighter sessions would drag
+            // the baseline down and make the next real week look like an
+            // overreach. If EVERY candidate is a maintenance session the filter
+            // is dropped rather than answering zero, which `workoutDrain`
+            // reads as "no history, full charge". As `computeForDate` read it.
+            var trailingAvgVolumeKg = 0.0
+            if !sessions.isEmpty {
+                var priorQuery = WorkoutSession
+                    .filter(Column("user_id") == userId && Column("date") < date)
+                if let dayKey { priorQuery = priorQuery.filter(Column("day_key") == dayKey) }
+                let prior = try priorQuery.order(Column("date").desc).limit(6).fetchAll(db)
+                let priorSets = try Self.sets(db, sessionIds: prior.map(\.id))
+                var bySession: [String: [WorkoutSet]] = [:]
+                for set in priorSets { bySession[set.sessionId, default: []].append(set) }
+                let candidates = prior
+                    .map { (date: $0.date, volume: Self.volume(bySession[$0.id] ?? [])) }
+                    .filter { $0.volume > 0 }
+                let fullEffort = candidates.filter {
+                    !Maintenance.isMaintenanceDate($0.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: todayISO)
+                }
+                let trailing = (fullEffort.isEmpty ? candidates : fullEffort).map(\.volume)
+                trailingAvgVolumeKg = trailing.isEmpty ? 0 : trailing.reduce(0, +) / Double(trailing.count)
+            }
+
+            // ── THE DAY'S OWN CONTEXT ───────────────────────────────────────
+            // The day's stamp first; the current setting only for a date its
+            // range covers. Last Tuesday keeps the context it was lived in,
+            // so re-scoring it today does not grade it against how you feel
+            // now — which is what one global `context_mode` used to do.
+            let stamped = Context.fromDayLabel(todayLog?.nutritionException)
+            let setting = Context.fromSetting(goals?.contextMode)
+            let effectiveMode: ContextMode = stamped != .normal
+                ? stamped
+                : Context.rangeCovers(setting, since: goals?.contextSince, date: date, today: todayISO) ? setting : .normal
+            // ponytail: computeForDate also stamps the range's label onto the
+            // day's row; that write lands with the context editor (2.6).
 
             let g = goals
             let resolved = supplements.goals ?? ResolvedGoals(
@@ -213,7 +247,8 @@ public extension AppDatabase {
             // the DAY's own row, so back-filling the flag onto a past date and
             // recomputing gives that date the score it would have had if it had
             // been flagged at the time.
-            inputs.nutritionException = ExceptionDay.isException(todayLog?.nutritionException)
+            inputs.nutritionException = effectiveMode != .normal
+                || ExceptionDay.isException(todayLog?.nutritionException)
 
             inputs.steps = Double(metrics?.steps ?? 0)
             inputs.activeCal = Double(metrics?.activeCal ?? 0)
@@ -222,14 +257,9 @@ public extension AppDatabase {
 
             inputs.workoutLogged = !sessions.isEmpty
             inputs.isRestDay = isRestDay
-            inputs.newPRsToday = supplements.newPRsToday
-            inputs.sessionVolumeKg = supplements.sessionVolumeKg
-            // Zero is not a gap here, it is the documented signal: `workoutDrain`
-            // reads a zero trailing average as "no history yet, assume typical"
-            // and applies the full relative charge. Inventing a baseline out of
-            // sessions whose tonnage cannot be computed would be worse than
-            // saying nothing, which is what this says.
-            inputs.trailingAvgVolumeKg = 0
+            inputs.newPRsToday = Double(prCount)
+            inputs.sessionVolumeKg = sessionVolumeKg
+            inputs.trailingAvgVolumeKg = trailingAvgVolumeKg
             inputs.sessionRpe = hardest?.sessionRpe
             inputs.sessionDayKey = hardest?.dayKey ?? dayKey
             inputs.isMaintenance = supplements.isMaintenance
@@ -251,6 +281,7 @@ public extension AppDatabase {
             inputs.hrvMs = todayLog?.hrvMs
             inputs.hrvBaseline = hrvBaseline
 
+            inputs.contextMode = Context.scoringContext(for: effectiveMode).rawValue
             inputs.isCurrentDay = isToday || date == todayISO
             inputs.hoursAwake = hoursAwake
             // Derived from `hoursAwake` on a 07:00 wake convention rather than
@@ -264,7 +295,7 @@ public extension AppDatabase {
 
 // MARK: - Set arithmetic
 
-private extension AppDatabase {
+extension AppDatabase {
 
     struct SetCounts {
         var exercises = 0
@@ -273,10 +304,13 @@ private extension AppDatabase {
         var failureSets = 0
     }
 
-    static func countSets(_ db: Database, sessionIds: [String]) throws -> SetCounts {
+    static func sets(_ db: Database, sessionIds: [String]) throws -> [WorkoutSet] {
+        guard !sessionIds.isEmpty else { return [] }
+        return try WorkoutSet.filter(sessionIds.contains(Column("session_id"))).fetchAll(db)
+    }
+
+    static func countSets(_ rows: [WorkoutSet]) -> SetCounts {
         var counts = SetCounts()
-        guard !sessionIds.isEmpty else { return counts }
-        let rows = try WorkoutSet.filter(sessionIds.contains(Column("session_id"))).fetchAll(db)
 
         var exercises = Set<String>()
         var working = Set<String>()
@@ -312,6 +346,17 @@ private extension AppDatabase {
     /// counting.
     static func isWorkingSet(_ setType: String?) -> Bool {
         setType != "warmup" && setType != "ghost"
+    }
+
+    /// `sessionVolumeKg` over local set rows: a unilateral pair scored once,
+    /// at the weaker side. The widget builder reads through the same door.
+    static func volume(_ sets: [WorkoutSet]) -> Double {
+        SessionVolume.sessionVolumeKg(sets.map {
+            VolumeSet(
+                weightKg: $0.weightKg, reps: Double($0.reps),
+                side: (try? SyncTranslation.side($0.side)) ?? nil, pairId: $0.pairId, setType: $0.setType
+            )
+        })
     }
 
     static func mean(_ values: [Double]) -> Double? {

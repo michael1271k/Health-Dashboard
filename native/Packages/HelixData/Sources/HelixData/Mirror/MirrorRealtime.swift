@@ -78,6 +78,14 @@ public actor MirrorCoalescer {
         if wantsTraining { await refresher.refresh(table: nil) }
     }
 
+    /// Drop what is waiting and the timer that would flush it. Sign-out: a
+    /// debounced refresh must not fire into a coordinator that is gone.
+    public func stop() {
+        flush?.cancel()
+        flush = nil
+        pending.removeAll()
+    }
+
     /// Test seam: what is waiting.
     public var noted: Set<String> { pending }
 }
@@ -152,6 +160,7 @@ public actor MirrorRealtime {
     public func stop() async {
         for task in listeners { task.cancel() }
         listeners.removeAll()
+        await coalescer.stop()
         if let channel {
             await client.removeChannel(channel)
             self.channel = nil

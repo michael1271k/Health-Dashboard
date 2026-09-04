@@ -30,9 +30,9 @@ public actor TrainingPuller {
     private let database: AppDatabase
     private let remote: any MirrorRemote
     private let userId: String
-    private let windowDays: Int
+    private let windowDays: Int?
 
-    public init(database: AppDatabase, remote: any MirrorRemote, userId: String, windowDays: Int = 90) {
+    public init(database: AppDatabase, remote: any MirrorRemote, userId: String, windowDays: Int? = 90) {
         self.database = database
         self.remote = remote
         self.userId = userId
@@ -55,6 +55,7 @@ public actor TrainingPuller {
         let newest = try database.applyPulledSessions(remoteSessions)
         report.tables += 1
         report.rows += remoteSessions.count
+        report.rowsByTable["workout_sessions"] = remoteSessions.count
 
         // Sets come with their parents. They carry neither an `updated_at` nor a
         // date of their own, so "the sets of the sessions that changed" is the
@@ -65,8 +66,10 @@ public actor TrainingPuller {
             let sets: [RemoteSetRow] = try await remote.selectIn(
                 RemoteSetRow.self, table: "workout_sets", column: "session_id", values: sessionIds
             )
-            report.rows += try database.applyPulledSets(sets)
+            let landed = try database.applyPulledSets(sets)
+            report.rows += landed
             report.tables += 1
+            report.rowsByTable["workout_sets"] = landed
         }
 
         // The catalogue is 60 rows and changes when a movement is added, which
@@ -75,8 +78,10 @@ public actor TrainingPuller {
             RemoteExerciseRow.self,
             request: MirrorRequest(table: "exercises", userId: userId, since: nil)
         )
-        report.rows += try database.applyPulledExercises(exercises)
+        let catalogue = try database.applyPulledExercises(exercises)
+        report.rows += catalogue
         report.tables += 1
+        report.rowsByTable["exercises"] = catalogue
 
         // Last, and only on success: a cursor moved before the sets landed
         // would skip them forever on the next pull.
