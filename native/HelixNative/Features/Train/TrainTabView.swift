@@ -69,8 +69,19 @@ struct TrainTabView: View {
         .helixScreen(.train)
         .navigationTitle("Train")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                // The library is a sub-screen of Training, not a sixth tab.
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                // Analysis and the library are sub-screens of Training, not
+                // extra tabs. History = past sessions; Trends = the charts.
+                NavigationLink {
+                    SessionHistoryView()
+                } label: {
+                    Label("History", systemImage: "clock.arrow.circlepath")
+                }
+                NavigationLink {
+                    TrainingTrendsView()
+                } label: {
+                    Label("Trends", systemImage: "chart.xyaxis.line")
+                }
                 NavigationLink {
                     ExerciseLibraryView()
                 } label: {

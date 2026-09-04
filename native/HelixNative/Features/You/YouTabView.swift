@@ -71,6 +71,11 @@ private struct YouForm: View {
                 } label: {
                     LabeledContent("Training plan", value: "\(model.plan.label) · \(model.phase.label)")
                 }
+                NavigationLink {
+                    PathfinderView()
+                } label: {
+                    LabeledContent("Pathfinder", value: "Week by week")
+                }
             } header: {
                 HelixSectionHeader("Plan", .train)
             }

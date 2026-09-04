@@ -39,3 +39,20 @@ struct HelixTileTests {
         #expect(WidgetSize.xl.family == .systemLarge)
     }
 }
+
+@Suite("Chart kit")
+struct HelixChartTests {
+    @Test("categorical series is a fixed order of six, then the neutral") func series() {
+        #expect(Color.helix.series.count == 6)
+        #expect(Set(Color.helix.series.map(\.description)).count == 6)
+        #expect(Color.helix.series(6) == Color.helix.textTertiary)
+        #expect(Color.helix.series(-1) == Color.helix.textTertiary)
+    }
+
+    @Test("ISO dates land on local midnight") func isoDate() {
+        let d = HelixChart.date("2026-09-04")!
+        let c = Calendar.current.dateComponents([.year, .month, .day, .hour], from: d)
+        #expect(c.year == 2026 && c.month == 9 && c.day == 4 && c.hour == 0)
+        #expect(HelixChart.date("2026-9") == nil)
+    }
+}

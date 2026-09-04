@@ -98,6 +98,14 @@ private struct DayScreen: View {
                     Image(systemName: "calendar").frame(minWidth: 44, minHeight: 44)
                 }
                 .accessibilityLabel("Choose a day")
+
+                // Body composition, steps and the vitals over time — Wave 7.
+                NavigationLink {
+                    BodyTrendsView()
+                } label: {
+                    Image(systemName: "chart.xyaxis.line").frame(minWidth: 44, minHeight: 44)
+                }
+                .accessibilityLabel("Trends")
             }
         }
         .tint(Color.helix.accent(.body))
