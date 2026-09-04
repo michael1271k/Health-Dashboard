@@ -75,15 +75,21 @@ enum FuelPreviews {
     }
 }
 
+#if DEBUG
 #Preview("Fuel — under") {
     FuelPreviews.view("fuel")
 }
+#endif
 
+#if DEBUG
 #Preview("Fuel — over") {
     FuelPreviews.view("fuel-over")
 }
+#endif
 
+#if DEBUG
 #Preview("Fuel — empty") {
     FuelPreviews.view("fuel-empty")
 }
+#endif
 #endif

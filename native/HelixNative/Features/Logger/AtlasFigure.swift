@@ -108,6 +108,7 @@ struct AtlasFigure: View {
     }
 }
 
+#if DEBUG
 #Preview("Atlas — Upper B") {
     let day = Program.helix5.day(key: "cb_b")!
     let sets = MuscleCredit.weightedSets(
@@ -118,3 +119,4 @@ struct AtlasFigure: View {
         .padding()
         .background(HelixPalette.obsidian)
 }
+#endif

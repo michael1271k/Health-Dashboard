@@ -83,6 +83,7 @@ struct VolumeTargetsView: View {
     }
 }
 
+#if DEBUG
 #Preview("Volume targets") {
     NavigationStack {
         VolumeTargetsView(model: YouModel(
@@ -90,3 +91,4 @@ struct VolumeTargetsView: View {
         ))
     }
 }
+#endif

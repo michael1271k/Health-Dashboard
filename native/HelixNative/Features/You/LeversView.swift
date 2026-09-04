@@ -287,6 +287,7 @@ struct LeversView: View {
     }
 }
 
+#if DEBUG
 #Preview("Levers") {
     NavigationStack {
         LeversView(model: YouModel(
@@ -294,3 +295,4 @@ struct LeversView: View {
         ))
     }
 }
+#endif

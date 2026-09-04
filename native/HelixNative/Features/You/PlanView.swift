@@ -236,6 +236,7 @@ private struct RoutineDayView: View {
     }
 }
 
+#if DEBUG
 #Preview("Plan") {
     NavigationStack {
         PlanView(model: YouModel(
@@ -243,3 +244,4 @@ private struct RoutineDayView: View {
         ))
     }
 }
+#endif

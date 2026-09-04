@@ -336,6 +336,7 @@ struct TrainTabView: View {
     }
 }
 
+#if DEBUG
 #Preview("Train — Upper B") {
     NavigationStack {
         TrainTabView(seededDay: Program.helix5.day(key: "cb_b"))
@@ -343,3 +344,4 @@ struct TrainTabView: View {
     .environment(AppEnvironment.preview)
     .preferredColorScheme(.dark)
 }
+#endif

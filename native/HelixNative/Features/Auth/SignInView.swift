@@ -195,6 +195,8 @@ struct SignInView: View {
     }
 }
 
+#if DEBUG
 #Preview("Sign in") {
     SignInView().environment(AppEnvironment.preview)
 }
+#endif

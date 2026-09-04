@@ -141,6 +141,8 @@ struct MuscleDistributionSheet: View {
     }
 }
 
+#if DEBUG
 #Preview("Distribution") {
     MuscleDistributionSheet(model: .previewUpperB(logged: true))
 }
+#endif

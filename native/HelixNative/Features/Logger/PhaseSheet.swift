@@ -124,7 +124,9 @@ struct PhaseSheet: View {
     }
 }
 
+#if DEBUG
 #Preview("Phase") {
     @Previewable @State var phase: ProgramPhase = .cut
     return PhaseSheet(day: Program.helix5.day(key: "cb_b")!, phase: $phase)
 }
+#endif

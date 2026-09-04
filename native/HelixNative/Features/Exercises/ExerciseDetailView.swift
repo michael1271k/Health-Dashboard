@@ -178,6 +178,7 @@ private struct FlowRow: Layout {
     }
 }
 
+#if DEBUG
 #Preview("Exercise") {
     NavigationStack {
         ExerciseDetailView(entry: .init(
@@ -185,6 +186,7 @@ private struct FlowRow: Layout {
         ))
     }
 }
+#endif
 
 private extension Array where Element: Hashable {
     /// Order-preserving dedupe. Several map tokens fold onto one landmark.

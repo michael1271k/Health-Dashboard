@@ -465,13 +465,16 @@ struct LiveLoggerView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 #Preview("Live Logger — Upper B, cut, mid-session") {
     NavigationStack {
         LiveLoggerView(model: .previewUpperB(logged: true))
     }
     .preferredColorScheme(.dark)
 }
+#endif
 
+#if DEBUG
 #Preview("Live Logger — Legs & Core A, bulk, fresh") {
     NavigationStack {
         LiveLoggerView(model: LoggerModel(
@@ -480,3 +483,4 @@ struct LiveLoggerView: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

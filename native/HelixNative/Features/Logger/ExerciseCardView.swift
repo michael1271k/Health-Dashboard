@@ -460,6 +460,7 @@ private struct NumericField: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Exercise card") {
     let model = LoggerModel.previewUpperB()
     return ScrollView {
@@ -475,3 +476,4 @@ private struct NumericField: View {
     }
     .background(HelixPalette.obsidian)
 }
+#endif

@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1</string>
+	<string>1.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -37,6 +37,8 @@
 	<string>$(HELIX_SUPABASE_ANON_KEY)</string>
 	<key>HELIX_SUPABASE_URL</key>
 	<string>$(HELIX_SUPABASE_URL)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSHealthShareUsageDescription</key>
 	<string>HELIX reads your activity, heart, sleep, body-measurement and nutrition data from Apple Health to work out your daily readiness and recovery scores, your training load and your energy balance, and to fill in the charts and Home Screen widgets. Nothing is read that you do not allow, and your data is stored only on this device and in your own private HELIX account.</string>
 	<key>NSHealthUpdateUsageDescription</key>

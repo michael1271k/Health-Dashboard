@@ -147,6 +147,7 @@ struct ExerciseLibraryView: View {
     }
 }
 
+#if DEBUG
 #Preview("Library") {
     NavigationStack {
         ExerciseLibraryView(seeded: [
@@ -159,3 +160,4 @@ struct ExerciseLibraryView: View {
     }
     .environment(AppEnvironment.preview)
 }
+#endif

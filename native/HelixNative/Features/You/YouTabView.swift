@@ -134,6 +134,16 @@ private struct YouForm: View {
             }
 
             Section {
+                Link("Privacy Policy", destination: HelixLinks.privacyPolicy)
+                    .accessibilityHint("Opens in Safari")
+                LabeledContent("Version", value: HelixLinks.versionString)
+            } header: {
+                HelixSectionHeader("About", .recover)
+            } footer: {
+                Text("Health data stays on this device and in your own private HELIX account. It is never sold, and never shared with anyone else.")
+            }
+
+            Section {
                 Button("Sign out", role: .destructive) { isSigningOut = true }
             }
         }
@@ -184,7 +194,26 @@ private struct YouForm: View {
     }
 }
 
+#if DEBUG
 #Preview("You") {
     NavigationStack { YouTabView() }
         .environment(AppEnvironment.preview)
+}
+#endif
+
+// ── App Store surfaces ──────────────────────────────────────────────────────
+// App Review requires a reachable privacy-policy URL for any app carrying the
+// HealthKit entitlement, and the SAME url goes in the App Store Connect
+// metadata field (docs/APP_STORE.md). It is a placeholder on the web app's
+// domain until that page is written; Wave 9 moves the domain, not this key.
+enum HelixLinks {
+    static let privacyPolicy = URL(string: "https://helix-health-fitness.netlify.app/privacy")!
+
+    /// `1.0 (12)` — what a review note or a bug report needs to identify a build.
+    static var versionString: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "\(short) (\(build))"
+    }
 }

@@ -275,6 +275,8 @@ struct DayMetric: View {
     }
 }
 
+#if DEBUG
 #Preview("Day") {
     NavigationStack { DayPreviews.view("day") }
 }
+#endif

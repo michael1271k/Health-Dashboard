@@ -102,6 +102,7 @@ struct BodyTargetsView: View {
     }
 }
 
+#if DEBUG
 #Preview("Body targets") {
     NavigationStack {
         BodyTargetsView(model: YouModel(
@@ -109,3 +110,4 @@ struct BodyTargetsView: View {
         ))
     }
 }
+#endif

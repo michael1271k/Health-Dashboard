@@ -124,6 +124,7 @@ struct RestTimerBar: View {
     }
 }
 
+#if DEBUG
 #Preview("Rest bar") {
     VStack {
         Spacer()
@@ -144,3 +145,4 @@ struct RestTimerBar: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(HelixPalette.obsidian)
 }
+#endif

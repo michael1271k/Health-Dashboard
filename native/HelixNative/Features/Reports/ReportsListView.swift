@@ -81,7 +81,17 @@ struct ReportsListView: View {
         return size > 0 ? "\(kind) · \(size) k" : kind
     }
 
-    private var sampleBody: String { PreviewReport.body }
+    /// `PreviewReport` is `#if DEBUG`, and so is the only caller that can make
+    /// `seeded` non-nil — but the reference itself is not, which failed the
+    /// RELEASE build (the shot loop only ever builds Debug, so nothing caught
+    /// it until the first archive).
+    private var sampleBody: String? {
+        #if DEBUG
+        PreviewReport.body
+        #else
+        nil
+        #endif
+    }
 }
 
 /// The reader: a native bar over a bundled web document.
