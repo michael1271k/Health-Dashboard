@@ -1,4 +1,5 @@
 import Foundation
+import HelixUI
 import HelixCore
 
 /// The six headings a library is browsed by.

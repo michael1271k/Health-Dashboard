@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 import HelixData
 

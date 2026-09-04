@@ -37,25 +37,48 @@ struct RootView: View {
 }
 
 private struct SignedInTabs: View {
+    enum Tab: Hashable { case today, train, fuel, body, you }
+
+    @State private var selection: Tab = .today
+
     var body: some View {
-        TabView {
-            Tab("Today", systemImage: "square.grid.2x2") {
+        TabView(selection: $selection) {
+            SwiftUI.Tab("Today", systemImage: "square.grid.2x2", value: Tab.today) {
                 NavigationStack { PlaceholderScreen(name: "Dashboard", wave: 6) }
             }
             // The plan's five: Today · Train · Fuel · Body · You. The logger is
             // NOT the Train root — see `TrainTabView` for why.
-            Tab("Train", systemImage: "figure.strengthtraining.traditional") {
+            SwiftUI.Tab("Train", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
                 NavigationStack { TrainTabView() }
             }
-            Tab("Fuel", systemImage: "fork.knife") {
+            SwiftUI.Tab("Fuel", systemImage: "fork.knife", value: Tab.fuel) {
                 NavigationStack { FuelTabView() }
             }
-            Tab("Body", systemImage: "figure.arms.open") {
+            SwiftUI.Tab("Body", systemImage: "figure.arms.open", value: Tab.body) {
                 NavigationStack { DayTabView() }
             }
-            Tab("You", systemImage: "person.crop.circle") {
+            SwiftUI.Tab("You", systemImage: "person.crop.circle", value: Tab.you) {
                 NavigationStack { YouTabView() }
             }
+        }
+        // `helix://open?path=…` from a widget or the Lock Screen card. The
+        // allow-list runs first; an unknown path is ignored, not "home".
+        .onOpenURL { url in
+            guard let path = DeepLink.safePath(url.absoluteString),
+                  let destination = DeepLink.destination(forPath: path) else { return }
+            selection = tab(for: destination)
+        }
+    }
+
+    private func tab(for destination: DeepLink.Destination) -> Tab {
+        switch destination {
+        case .today: return .today
+        case .train: return .train
+        case .fuel: return .fuel
+        // ponytail: the date is dropped — DayTabView has no date initialiser yet; thread it through when Body grows a date route.
+        case .body: return .body
+        // ponytail: Reports is a value-less NavigationLink inside YouTabView; landing on You is as deep as the shell can push today.
+        case .you, .reports: return .you
         }
     }
 }

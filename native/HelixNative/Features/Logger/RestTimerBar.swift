@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 
 /// The rest clock — the one number on this screen you read from arm's length.
 ///

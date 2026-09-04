@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// The supplement protocol for the day — a statement, not a checklist.

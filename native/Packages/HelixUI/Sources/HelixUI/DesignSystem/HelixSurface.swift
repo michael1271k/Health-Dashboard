@@ -8,11 +8,11 @@ import SwiftUI
 // MARK: - Card
 
 /// Tailwind's corner scale, in points. `rounded-md` … `rounded-2xl`.
-enum HelixRadius {
-    static let md: CGFloat  = 6
-    static let lg: CGFloat  = 8
-    static let xl: CGFloat  = 12
-    static let xxl: CGFloat = 16
+public enum HelixRadius {
+    public static let md: CGFloat  = 6
+    public static let lg: CGFloat  = 8
+    public static let xl: CGFloat  = 12
+    public static let xxl: CGFloat = 16
 }
 
 private struct HelixCardModifier: ViewModifier {
@@ -43,7 +43,7 @@ private struct HelixCardModifier: ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     /// `rounded-2xl border border-white/[0.07] bg-white/[0.03]` — the standard
     /// panel. Apply padding yourself; the two nutrition cards use `px-4 py-3.5`
     /// and the history rows use `px-3 py-2.5`, so it is not baked in here.
@@ -78,11 +78,18 @@ extension View {
 ///
 /// The track alpha is `rgba(255,255,255,0.07)` unchanged, so the empty part of
 /// the goal reads at exactly the weight it always did.
-struct HelixBar: View {
-    let value: Double?
-    let goal: Double?
-    let color: Color
-    var height: CGFloat = 6
+public struct HelixBar: View {
+    public let value: Double?
+    public let goal: Double?
+    public let color: Color
+    public var height: CGFloat = 6
+
+    public init(value: Double?, goal: Double?, color: Color, height: CGFloat = 6) {
+        self.value = value
+        self.goal = goal
+        self.color = color
+        self.height = height
+    }
 
     /// `transition: width 0.9s cubic-bezier(0.4,0,0.2,1)`, verbatim.
     ///
@@ -101,7 +108,7 @@ struct HelixBar: View {
         scale > 0 ? n / scale : 0
     }
 
-    var body: some View {
+    public var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
             ZStack(alignment: .leading) {

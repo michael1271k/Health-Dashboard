@@ -18,25 +18,25 @@ import SwiftUI
 ///
 /// The values are Apple's shipped ones, from *Designing Fluid Interfaces*:
 /// reposition 1.0/0.4, rotation 0.8/0.4, drawer 0.8/0.3.
-enum HelixMotion {
+public enum HelixMotion {
 
     /// Anything that moves because state changed. No overshoot.
-    static let move = Animation.spring(response: 0.4, dampingFraction: 1.0)
+    public static let move = Animation.spring(response: 0.4, dampingFraction: 1.0)
 
     /// Anything a finger threw. A little overshoot, because the hand put it there.
-    static let flick = Animation.spring(response: 0.4, dampingFraction: 0.8)
+    public static let flick = Animation.spring(response: 0.4, dampingFraction: 0.8)
 
     /// Sheets and drawers — snappier and slightly springy.
-    static let drawer = Animation.spring(response: 0.3, dampingFraction: 0.8)
+    public static let drawer = Animation.spring(response: 0.3, dampingFraction: 0.8)
 
     /// Press feedback. Not a spring: it must be over before you notice it, and
     /// a spring's settle time is exactly what you would notice.
-    static let press = Animation.easeOut(duration: 0.1)
+    public static let press = Animation.easeOut(duration: 0.1)
 
     /// A value counting up because a set was logged. Slower than `move` on
     /// purpose — the eye should be able to follow the number changing, which is
     /// the only reason to animate a number at all.
-    static let counter = Animation.spring(response: 0.55, dampingFraction: 1.0)
+    public static let counter = Animation.spring(response: 0.55, dampingFraction: 1.0)
 }
 
 // MARK: - Press
@@ -46,10 +46,12 @@ enum HelixMotion {
 /// The rule from *Designing Fluid Interfaces*: respond on touch-DOWN, never on
 /// release. `ButtonStyle` gets `configuration.isPressed`, which is the down
 /// event — `.onTapGesture` does not, which is why nothing here uses one.
-struct HelixPressStyle: ButtonStyle {
-    var scale: CGFloat = 0.96
+public struct HelixPressStyle: ButtonStyle {
+    public var scale: CGFloat = 0.96
 
-    func makeBody(configuration: Configuration) -> some View {
+    public init(scale: CGFloat = 0.96) { self.scale = scale }
+
+    public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1)
             .animation(HelixMotion.press, value: configuration.isPressed)
@@ -60,7 +62,7 @@ struct HelixPressStyle: ButtonStyle {
     }
 }
 
-extension View {
+public extension View {
     /// A tappable surface that answers immediately.
     func helixPress(scale: CGFloat = 0.96) -> some View {
         buttonStyle(HelixPressStyle(scale: scale))
@@ -69,7 +71,7 @@ extension View {
 
 // MARK: - Depth
 
-extension View {
+public extension View {
     /// The floating-chrome treatment: a translucent material with a bright top
     /// edge, so the surface catches light like glass rather than sitting on the
     /// page as a painted rectangle.

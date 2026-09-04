@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Helix Lock
 //
@@ -15,15 +16,24 @@ import SwiftUI
 // gauge), one glyph, and one number — which is why each focus is a single fact
 // and none of them is a ledger.
 
-struct LockView: View {
-  let entry: HelixEntry
+public struct LockView: View {
+  let entry: HelixTileEntry
   let focus: LockFocus
-  @Environment(\.widgetFamily) private var family
+  @Environment(\.widgetFamily) private var hostFamily
+  @Environment(\.helixTileFamily) private var tileFamily
+  /// `widgetFamily` is get-only outside WidgetKit, so the app's grid says which
+  /// size it wants through `helixTileFamily`; on the Home Screen it is unset.
+  private var family: WidgetFamily { tileFamily ?? hostFamily }
+
+  public init(entry: HelixTileEntry, focus: LockFocus) {
+    self.entry = entry
+    self.focus = focus
+  }
   @Environment(\.widgetRenderingMode) private var mode
 
   private var s: HelixSnapshot? { entry.snapshot }
 
-  var body: some View {
+  public var body: some View {
     Group {
       switch family {
       case .accessoryInline: inlineFace
@@ -51,7 +61,7 @@ struct LockView: View {
         Text(s?.battery.map { "\($0)" } ?? "—")
       }
       .gaugeStyle(.accessoryCircular)
-      .tint(mode == .fullColor ? Helix.battery(s?.battery) : nil)
+      .tint(mode == .fullColor ? Color.helix.battery(s?.battery) : nil)
 
     case .calories:
       Gauge(value: HelixSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal) ?? 0, in: 0...1) {
@@ -61,7 +71,7 @@ struct LockView: View {
           .minimumScaleFactor(0.6)
       }
       .gaugeStyle(.accessoryCircular)
-      .tint(mode == .fullColor ? Helix.ember : nil)
+      .tint(mode == .fullColor ? HelixDomain.fuel.accent : nil)
 
     case .steps:
       Gauge(value: HelixSnapshot.progress(
@@ -73,7 +83,7 @@ struct LockView: View {
           .minimumScaleFactor(0.6)
       }
       .gaugeStyle(.accessoryCircular)
-      .tint(mode == .fullColor ? Helix.emerald : nil)
+      .tint(mode == .fullColor ? HelixDomain.body.accent : nil)
 
     case .workout:
       // No goal to fill, so no gauge — a ring at an arbitrary fraction would be

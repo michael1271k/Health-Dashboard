@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// Where the session you are logging is actually landing.

@@ -14,7 +14,7 @@ import SwiftUI
 /// BODY of this modifier and nothing else in the app moves. Every screen that
 /// spelled out its own `.background(.ultraThinMaterial)` would be a separate
 /// edit, and the ones that got missed would be the bug.
-enum GlassLevel: Sendable {
+public enum GlassLevel: Sendable {
     /// A row inside a tile. Thinnest, no border, no shadow — it is already
     /// inside something.
     case row
@@ -25,7 +25,7 @@ enum GlassLevel: Sendable {
     /// Navigation chrome: a bar, a toolbar, a floating control.
     case chrome
 
-    var material: Material {
+    public var material: Material {
         switch self {
         case .row, .tile: .ultraThinMaterial
         case .sheet:      .thinMaterial
@@ -33,7 +33,7 @@ enum GlassLevel: Sendable {
         }
     }
 
-    var radius: CGFloat {
+    public var radius: CGFloat {
         switch self {
         case .row:    HelixCorner.row
         case .tile:   HelixCorner.tile
@@ -44,7 +44,7 @@ enum GlassLevel: Sendable {
 
     /// A hairline only where content meets chrome — a tile's own edge is drawn
     /// by the material, and outlining it as well reads as a box around a box.
-    var drawsHairline: Bool {
+    public var drawsHairline: Bool {
         switch self {
         case .tile, .sheet, .chrome: true
         case .row: false
@@ -54,7 +54,7 @@ enum GlassLevel: Sendable {
     /// Large, soft and dark. Shadows separate a floating surface from busy
     /// content; a row that is flush with its container is not floating and gets
     /// none, because a shadow under something that has not lifted is just dirt.
-    var shadow: (radius: CGFloat, y: CGFloat)? {
+    public var shadow: (radius: CGFloat, y: CGFloat)? {
         switch self {
         case .sheet: (24, 12)
         case .row, .tile, .chrome: nil
@@ -95,7 +95,7 @@ private struct HelixGlassModifier: ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     /// The app's only depth primitive.
     ///
     /// Never stack two of these directly: `.tile` inside `.tile` puts one light
@@ -150,7 +150,7 @@ private struct HelixScreenBackground: ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     /// The ground every Wave 3 screen stands on.
     func helixScreen(_ domain: HelixDomain) -> some View {
         modifier(HelixScreenBackground(domain: domain))

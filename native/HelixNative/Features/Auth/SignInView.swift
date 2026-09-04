@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 
 /// Sign-in. One screen, seen once per install.
 ///

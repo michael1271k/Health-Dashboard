@@ -31,7 +31,7 @@ import HelixCore
 /// screen is a different rainbow, so nothing on any of them stands out. Four
 /// accents keyed to DOMAINS means the hue tells you where you are before you
 /// read a word, and the one tinted thing on a screen is the one that matters.
-enum HelixDomain: String, CaseIterable, Sendable {
+public enum HelixDomain: String, CaseIterable, Sendable {
     /// Ion — logger, PRs, volume, muscle.
     case train
     /// Solar — nutrition, levers, water.
@@ -42,7 +42,7 @@ enum HelixDomain: String, CaseIterable, Sendable {
     case recover
 
     /// The mesh's first stop. Also the accent when only one colour will do.
-    var start: Color {
+    public var start: Color {
         switch self {
         case .train:   Color(hex: 0x7C5CFF)
         case .fuel:    Color(hex: 0xFFB13D)
@@ -52,7 +52,7 @@ enum HelixDomain: String, CaseIterable, Sendable {
     }
 
     /// The mesh's second stop.
-    var end: Color {
+    public var end: Color {
         switch self {
         case .train:   Color(hex: 0x38E1FF)
         case .fuel:    Color(hex: 0xFF5E7A)
@@ -66,10 +66,31 @@ enum HelixDomain: String, CaseIterable, Sendable {
     /// The START stop rather than a computed midpoint: a midpoint of Solar
     /// (`#FFB13D` → `#FF5E7A`) is a muddy salmon that reads as neither warning
     /// nor warmth, and the two-stop ramp exists for gradients, not for solids.
-    var accent: Color { start }
+    public var accent: Color { start }
+
+    /// A fixed offset along the mesh, 0 = `start` … 1 = `end`.
+    ///
+    /// §3.2: set states, macro rails and sleep stages "derive from the domain
+    /// accent's mesh at fixed offsets, never from a fifth hue". This is the one
+    /// function that derives them, so a tile never mixes a colour of its own.
+    public func at(_ t: Double) -> Color {
+        start.mix(with: end, by: min(max(t, 0), 1))
+    }
+
+    /// Which domain owns a muscle FAMILY by its display name — "Chest", "Back",
+    /// "Shoulders", "Arms", "Legs", "Core" — as `volumeByFamily` reports them.
+    /// The same collapse as `forMuscle`, keyed on the string the payload carries.
+    public static func forFamily(_ name: String) -> HelixDomain {
+        switch name {
+        case "Chest", "Shoulders", "Arms": .train
+        case "Back", "Legs":               .body
+        case "Core":                       .recover
+        default:                           .train
+        }
+    }
 
     /// The gradient both the mesh bleed and any tinted fill are built from.
-    var ramp: LinearGradient {
+    public var ramp: LinearGradient {
         LinearGradient(colors: [start, end], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
@@ -80,7 +101,7 @@ enum HelixDomain: String, CaseIterable, Sendable {
     /// keyed to. Six families collapsing to three is the point — the old ramp
     /// separated cells that never needed separating and cost the palette its
     /// meaning everywhere else.
-    static func forMuscle(_ muscle: LandmarkMuscle) -> HelixDomain {
+    public static func forMuscle(_ muscle: LandmarkMuscle) -> HelixDomain {
         switch muscle {
         case .chest, .frontDelts, .sideDelts, .rearDelts, .biceps, .triceps, .forearms:
             .train
@@ -100,37 +121,87 @@ extension Color {
     ///
     /// Lowercase on purpose: it reads as a namespace at the call site, which is
     /// what it is, and `Color.Helix.textPrimary` would read as a type.
-    enum helix {
+    public enum helix {
 
         // ── Ground ───────────────────────────────────────────────────────────
 
         /// True black. OLED pixels that are off draw no power and have no edge,
         /// which is why every material above them reads as a real layer rather
         /// than a lighter rectangle on a dark grey one.
-        static let base = Color.black
+        public static let base = Color.black
 
         /// 0.5 pt at 8 % white, and only where content meets chrome. Hierarchy
         /// here is material weight; a border drawn between two things that are
         /// already separated by material is noise.
-        static let hairline = Color.white.opacity(0.08)
+        public static let hairline = Color.white.opacity(0.08)
 
         // ── Text ─────────────────────────────────────────────────────────────
 
-        static let textPrimary = Color.white.opacity(0.92)
-        static let textSecondary = Color.white.opacity(0.62)
+        public static let textPrimary = Color.white.opacity(0.92)
+        public static let textSecondary = Color.white.opacity(0.62)
         /// Fails 4.5:1 BY DESIGN, so it is only ever correct for a label whose
         /// absence would cost the reader nothing — a unit suffix, a row count, a
         /// timestamp already spoken by VoiceOver. Never a value, never a control
         /// label, never the only copy of a fact.
-        static let textTertiary = Color.white.opacity(0.38)
+        public static let textTertiary = Color.white.opacity(0.38)
 
         /// System red's dark-appearance variant. Destructive actions and
         /// validation failures; never a chart series, never an accent.
-        static let danger = Color(hex: 0xFF453A)
+        public static let danger = Color(hex: 0xFF453A)
 
         // ── Accents ──────────────────────────────────────────────────────────
 
-        static func accent(_ domain: HelixDomain) -> Color { domain.accent }
+        public static func accent(_ domain: HelixDomain) -> Color { domain.accent }
+
+        /// Anything that went the right way: a delta in the good direction, a
+        /// session logged, a target met. Tide's green stop — the one accent that
+        /// reads as "yes" without borrowing a traffic light.
+        public static let good = HelixDomain.body.start
+
+        /// A personal record. Ion's far stop: PRs belong to Train (§3.2) and a
+        /// record is the brightest thing that domain produces, so it sits at the
+        /// end of Train's mesh rather than on a fifth hue. The old palette spent
+        /// gold on this; gold is gone.
+        public static let record = HelixDomain.train.end
+
+        /// The colour of a ROUTINE DAY — what tints a calendar ring, a session
+        /// chip and the Today face — keyed onto the domains by what the day
+        /// TRAINS, the same way `HelixDomain.forMuscle` keys a muscle.
+        ///
+        /// Upper-body sessions (chest/back, arms, push, pull) are Ion; leg
+        /// sessions are Tide. The A/B variant is a fixed offset along the
+        /// family's own mesh, so Upper A and Upper B are visibly the same family
+        /// and visibly not the same day. A rest day is the ABSENCE of a session
+        /// and wears no accent at all.
+        public static func day(_ dayKey: String?) -> Color {
+            switch dayKey {
+            // Helix-5 (active)
+            case "cb_a":    return HelixDomain.train.at(0)
+            case "cb_b":    return HelixDomain.train.at(0.35)
+            case "arms":    return HelixDomain.train.at(0.7)
+            case "legs_a":  return HelixDomain.body.at(0)
+            case "legs_b":  return HelixDomain.body.at(0.5)
+            // Helix-4 (drawer) — mirrors its Helix-5 counterpart
+            case "upper_a": return HelixDomain.train.at(0)
+            case "upper_b": return HelixDomain.train.at(0.35)
+            case "lower_a": return HelixDomain.body.at(0)
+            case "lower_b": return HelixDomain.body.at(0.5)
+            // PPL legacy — the split colours, since the day IS the split
+            case "ppl_push_sun", "ppl_push_thu": return HelixDomain.train.at(0)
+            case "ppl_pull_mon", "ppl_pull_fri": return HelixDomain.train.at(0.7)
+            case "ppl_legs_tue":                 return HelixDomain.body.at(0)
+            default:        return textSecondary
+            }
+        }
+
+        /// Battery banding — the one place a traffic light is the right
+        /// metaphor, because the number genuinely is a fuel gauge. Good above
+        /// 60, Solar's amber through the middle, danger below 30, and a reading
+        /// that does not exist is text-grey rather than any verdict.
+        public static func battery(_ pct: Int?) -> Color {
+            guard let pct else { return textSecondary }
+            return pct >= 60 ? good : pct >= 30 ? HelixDomain.fuel.accent : danger
+        }
 
         /// A muscle's colour: its family's accent, stepped so the ORDER inside
         /// the family still carries meaning.
@@ -138,7 +209,7 @@ extension Color {
         /// Step is an index within the family, not an arbitrary shade — the
         /// caller passes where the muscle sits in the list it is drawing, so a
         /// list of eight back muscles ramps rather than repeating one teal.
-        static func muscle(_ muscle: LandmarkMuscle, step: Int = 0, of count: Int = 1) -> Color {
+        public static func muscle(_ muscle: LandmarkMuscle, step: Int = 0, of count: Int = 1) -> Color {
             let domain = HelixDomain.forMuscle(muscle)
             guard count > 1 else { return domain.accent }
             // 0 … 1 across the family, then a fixed 35 % of the ramp's distance.
@@ -154,23 +225,23 @@ extension Color {
 
 /// Concentric squircles: an inner radius is its outer radius minus the padding
 /// between them. Corners that are merely "all rounded" read as stickers.
-enum HelixCorner {
+public enum HelixCorner {
     /// A row inside a tile.
-    static let row: CGFloat = 12
+    public static let row: CGFloat = 12
     /// A tile on a screen.
-    static let tile: CGFloat = 20
+    public static let tile: CGFloat = 20
     /// A presented sheet.
-    static let sheet: CGFloat = 32
+    public static let sheet: CGFloat = 32
 
     /// The inner radius for content inset by `padding` inside `outer`.
-    static func inner(_ outer: CGFloat, padding: CGFloat) -> CGFloat {
+    public static func inner(_ outer: CGFloat, padding: CGFloat) -> CGFloat {
         max(0, outer - padding)
     }
 }
 
 // MARK: - Type roles
 
-extension View {
+public extension View {
 
     /// Every number in the app.
     ///
@@ -211,29 +282,33 @@ extension View {
     }
 }
 
-// MARK: - Colour mixing
+// MARK: - Sleep
 
-extension Color {
-    /// Linear interpolation towards another colour.
-    ///
-    /// iOS 18 ships `Color.mix(with:by:)`; this shim exists so the ramp above
-    /// reads the same on both, and so the deployment floor can move without a
-    /// call-site edit. It resolves through UIKit because SwiftUI's `Color` has
-    /// no component accessors of its own.
-    func mix(with other: Color, by amount: Double) -> Color {
-        let t = min(max(amount, 0), 1)
-        let a = UIColor(self)
-        let b = UIColor(other)
-        var (ar, ag, ab, aa): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
-        var (br, bg, bb, ba): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
-        a.getRed(&ar, green: &ag, blue: &ab, alpha: &aa)
-        b.getRed(&br, green: &bg, blue: &bb, alpha: &ba)
-        return Color(
-            .sRGB,
-            red: Double(ar + (br - ar) * t),
-            green: Double(ag + (bg - ag) * t),
-            blue: Double(ab + (bb - ab) * t),
-            opacity: Double(aa + (ba - aa) * t)
-        )
+/// The sleep-stage ramp, deep → awake, derived from Lunar.
+///
+/// Deep is the saturated end of the mesh and each lighter stage sits a fixed
+/// step further along it, so the stacked bar still ramps light-to-dark by depth
+/// — which is what made the old indigo/sapphire/cyan ramp legible — without a
+/// hue that is not one of the four. Awake is not sleep at all and takes no
+/// accent: it is the gap in the night, drawn as text-grey.
+public enum HelixSleepStage: CaseIterable, Sendable {
+    case deep, core, rem, awake
+
+    public var color: Color {
+        switch self {
+        case .deep:  HelixDomain.recover.at(0)
+        case .core:  HelixDomain.recover.at(0.45)
+        case .rem:   HelixDomain.recover.at(0.9)
+        case .awake: Color.helix.textTertiary
+        }
+    }
+
+    public var label: String {
+        switch self {
+        case .deep:  "DEEP"
+        case .core:  "CORE"
+        case .rem:   "REM"
+        case .awake: "AWAKE"
+        }
     }
 }

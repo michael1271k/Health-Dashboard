@@ -80,12 +80,23 @@ SCREENS=("$SCREEN")
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin train day day-empty day-inbody day-swap fuel fuel-over fuel-empty you levers plan body volume library exercise reports report)
+  SCREENS=(signin train day day-empty day-inbody day-swap fuel fuel-over fuel-empty you levers plan body volume library exercise reports report widgets)
+fi
+
+# `widgets` is a contact sheet of every tile; the harness pages it because a
+# scroll view screenshots its first screen only. Page count = WidgetPreviews.pages.
+if [ "$SCREEN" = "widgets" ] || [ "$SCREEN" = "all" ]; then
+  SCREENS=("${SCREENS[@]/widgets}")
+  for i in $(seq 0 17); do SCREENS+=("widgets-$i"); done
 fi
 
 for s in "${SCREENS[@]}"; do
+  [ -z "$s" ] && continue
   echo "$s"
   shoot "$s" medium ""
+  # Tiles set their type in points, as WidgetKit does; Dynamic Type never
+  # reaches them, so the AX5 shot would be the same PNG twice.
+  case "$s" in widgets*) continue ;; esac
   shoot "$s" accessibility-extra-extra-extra-large "-ax5"
 done
 

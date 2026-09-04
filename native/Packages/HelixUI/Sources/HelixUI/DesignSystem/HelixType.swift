@@ -25,44 +25,51 @@ import SwiftUI
 /// scale is wrong at both ends. Stored in `em` exactly as the CSS declares it,
 /// and multiplied by the *scaled* size so it stays proportional under Dynamic
 /// Type.
-struct HelixTextStyle: Sendable {
+public struct HelixTextStyle: Sendable {
     /// Points at the default Dynamic Type setting.
-    let size: CGFloat
+    public let size: CGFloat
     /// CSS `line-height`, unitless.
-    let lineHeight: CGFloat
+    public let lineHeight: CGFloat
     /// CSS `letter-spacing`, in `em`.
-    let trackingEm: CGFloat
+    public let trackingEm: CGFloat
     /// The system style this scales against.
-    let relativeTo: Font.TextStyle
+    public let relativeTo: Font.TextStyle
+
+    public init(size: CGFloat, lineHeight: CGFloat, trackingEm: CGFloat, relativeTo: Font.TextStyle) {
+        self.size = size
+        self.lineHeight = lineHeight
+        self.trackingEm = trackingEm
+        self.relativeTo = relativeTo
+    }
 
     // ── The fluid scale ──────────────────────────────────────────────────────
-    static let fluidXS   = HelixTextStyle(size: 11.6, lineHeight: 1.45, trackingEm:  0.010, relativeTo: .footnote)
-    static let fluidSM   = HelixTextStyle(size: 13.3, lineHeight: 1.45, trackingEm:  0.005, relativeTo: .subheadline)
+    public static let fluidXS   = HelixTextStyle(size: 11.6, lineHeight: 1.45, trackingEm:  0.010, relativeTo: .footnote)
+    public static let fluidSM   = HelixTextStyle(size: 13.3, lineHeight: 1.45, trackingEm:  0.005, relativeTo: .subheadline)
     /// Body sits at zero tracking.
-    static let fluidBase = HelixTextStyle(size: 15.1, lineHeight: 1.55, trackingEm:  0,     relativeTo: .body)
-    static let fluidLG   = HelixTextStyle(size: 17.5, lineHeight: 1.35, trackingEm: -0.006, relativeTo: .title3)
-    static let fluidXL   = HelixTextStyle(size: 20.7, lineHeight: 1.22, trackingEm: -0.011, relativeTo: .title2)
-    static let fluid2XL  = HelixTextStyle(size: 28.2, lineHeight: 1.12, trackingEm: -0.016, relativeTo: .title)
-    static let fluid3XL  = HelixTextStyle(size: 36.5, lineHeight: 1.04, trackingEm: -0.022, relativeTo: .largeTitle)
+    public static let fluidBase = HelixTextStyle(size: 15.1, lineHeight: 1.55, trackingEm:  0,     relativeTo: .body)
+    public static let fluidLG   = HelixTextStyle(size: 17.5, lineHeight: 1.35, trackingEm: -0.006, relativeTo: .title3)
+    public static let fluidXL   = HelixTextStyle(size: 20.7, lineHeight: 1.22, trackingEm: -0.011, relativeTo: .title2)
+    public static let fluid2XL  = HelixTextStyle(size: 28.2, lineHeight: 1.12, trackingEm: -0.016, relativeTo: .title)
+    public static let fluid3XL  = HelixTextStyle(size: 36.5, lineHeight: 1.04, trackingEm: -0.022, relativeTo: .largeTitle)
 
     // ── The literal sizes the components spell out ───────────────────────────
     // `text-[9px]`, `text-[10px]`, `text-[11px]`, `text-[13px]`, `text-sm`,
     // `text-3xl`. These are Tailwind arbitrary values in the TSX rather than
     // tokens, so they are reproduced as-is instead of being tidied into the
     // scale — tidying them would be a redesign, and this is a translation.
-    static let micro   = HelixTextStyle(size:  9, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
-    static let tiny    = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
-    static let small   = HelixTextStyle(size: 11, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption)
-    static let compact = HelixTextStyle(size: 13, lineHeight: 1.35, trackingEm: 0, relativeTo: .footnote)
-    static let base    = HelixTextStyle(size: 14, lineHeight: 1.45, trackingEm: 0, relativeTo: .subheadline)
-    static let display = HelixTextStyle(size: 30, lineHeight: 1.10, trackingEm: 0, relativeTo: .title)
+    public static let micro   = HelixTextStyle(size:  9, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
+    public static let tiny    = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption2)
+    public static let small   = HelixTextStyle(size: 11, lineHeight: 1.35, trackingEm: 0, relativeTo: .caption)
+    public static let compact = HelixTextStyle(size: 13, lineHeight: 1.35, trackingEm: 0, relativeTo: .footnote)
+    public static let base    = HelixTextStyle(size: 14, lineHeight: 1.45, trackingEm: 0, relativeTo: .subheadline)
+    public static let display = HelixTextStyle(size: 30, lineHeight: 1.10, trackingEm: 0, relativeTo: .title)
 
     /// `uppercase tracking-wide` at 10 px — the macro column label.
-    static let label = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0.025, relativeTo: .caption2)
+    public static let label = HelixTextStyle(size: 10, lineHeight: 1.35, trackingEm: 0.025, relativeTo: .caption2)
 }
 
 /// How much room a line gets.
-enum HelixLeading {
+public enum HelixLeading {
     /// The style's own `line-height`.
     case standard
     /// Tailwind's `leading-none`. Almost every number in these cards uses it:
@@ -104,7 +111,7 @@ private struct HelixTextModifier: ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     /// Apply a HELIX type token.
     func helixText(
         _ style: HelixTextStyle,

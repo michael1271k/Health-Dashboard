@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixCore
 import WidgetKit
 
 // MARK: - Primitives
@@ -15,6 +16,22 @@ import WidgetKit
 //
 // They were all `private`, which is why the whole extension was one 482-line
 // file: a second file could not use any of them. They are internal now.
+
+/// The size a tile is asked to draw at when it is NOT on the Home Screen.
+///
+/// `EnvironmentValues.widgetFamily` has no setter, so the app's Today grid
+/// cannot pretend to be a Medium slot the honest way. Every tile reads this
+/// first and falls back to `widgetFamily`, which is what WidgetKit sets.
+private struct HelixTileFamilyKey: EnvironmentKey {
+  static let defaultValue: WidgetFamily? = nil
+}
+
+public extension EnvironmentValues {
+  var helixTileFamily: WidgetFamily? {
+    get { self[HelixTileFamilyKey.self] }
+    set { self[HelixTileFamilyKey.self] = newValue }
+  }
+}
 
 /// The three Home Screen sizes, collapsed out of `WidgetFamily`.
 ///
@@ -42,7 +59,7 @@ struct Dash: View {
   var body: some View {
     Text("—")
       .font(.system(size: size, weight: .bold))
-      .foregroundStyle(Helix.muted)
+      .foregroundStyle(Color.helix.textSecondary)
   }
 }
 
@@ -73,7 +90,7 @@ struct Rail: View {
   var body: some View {
     GeometryReader { geo in
       ZStack(alignment: .leading) {
-        Capsule().fill(.white.opacity(0.08))
+        Capsule().fill(Color.helix.hairline)
         if let progress {
           Capsule().fill(color)
             .frame(width: max(0, CGFloat(progress) * geo.size.width))
@@ -94,11 +111,11 @@ struct BatteryRing: View {
   /// as a rendering bug rather than a status.
   var monochrome = false
 
-  private var color: Color { monochrome ? .white : Helix.battery(pct) }
+  private var color: Color { monochrome ? .white : Color.helix.battery(pct) }
 
   var body: some View {
     ZStack {
-      Circle().stroke(.white.opacity(0.08), lineWidth: lineWidth)
+      Circle().stroke(Color.helix.hairline, lineWidth: lineWidth)
       if let pct {
         Circle().trim(from: 0, to: Double(pct) / 100)
           .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
@@ -109,7 +126,7 @@ struct BatteryRing: View {
         BigValue(value: pct.map { "\($0)" }, size: size * 0.27, color: .white)
         Text("BATT")
           .font(.system(size: size * 0.11, weight: .bold))
-          .foregroundStyle(Helix.muted)
+          .foregroundStyle(Color.helix.textSecondary)
       }
     }
     .frame(width: size, height: size)
@@ -118,8 +135,8 @@ struct BatteryRing: View {
 
 struct Caption: View {
   let text: String
-  var color: Color = Helix.ember
-  init(_ text: String, color: Color = Helix.ember) {
+  var color: Color = HelixDomain.train.accent
+  init(_ text: String, color: Color = HelixDomain.train.accent) {
     self.text = text
     self.color = color
   }
@@ -137,7 +154,7 @@ struct Metric: View {
   var body: some View {
     HStack(alignment: .firstTextBaseline, spacing: 5) {
       BigValue(value: value, size: 19, color: color)
-      Text(label).font(.caption2).foregroundStyle(Helix.muted)
+      Text(label).font(.caption2).foregroundStyle(Color.helix.textSecondary)
     }
   }
 }
@@ -159,7 +176,7 @@ struct StaleTag: View {
   var body: some View {
     Text(HelixSnapshot.shortAge(age).map { "\($0) ago" } ?? "last known")
       .font(.system(size: 8, weight: .semibold))
-      .foregroundStyle(Helix.muted)
+      .foregroundStyle(Color.helix.textSecondary)
   }
 }
 
@@ -185,10 +202,10 @@ struct ContextChip: View {
         .tracking(0.4)
         .padding(.horizontal, 4)
         .padding(.vertical, 1.5)
-        .foregroundStyle(monochrome ? Color.white : Helix.amethyst)
+        .foregroundStyle(monochrome ? Color.white : HelixDomain.recover.accent)
         .background(
           RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill((monochrome ? Color.white : Helix.amethyst).opacity(0.16))
+            .fill((monochrome ? Color.white : HelixDomain.recover.accent).opacity(0.16))
         )
     } else {
       EmptyView()
@@ -197,40 +214,26 @@ struct ContextChip: View {
 }
 
 /// What to do about it, not just that something is wrong.
+///
+/// One state now. The old version diagnosed three network failures (no token,
+/// token rejected, unreachable); there is no network — the provider reads the
+/// App Group database — so the only way to have nothing is that the app has
+/// never written it.
 struct Unavailable: View {
-  let status: HelixSnapshotClient.Status
   var compact = false
 
-  private var symbol: String {
-    switch status {
-    case .notConfigured: return "key.slash"
-    case .unauthorized:  return "lock.trianglebadge.exclamationmark"
-    default:             return "wifi.exclamationmark"
-    }
-  }
-  private var title: String {
-    switch status {
-    case .notConfigured: return "Not configured"
-    case .unauthorized:  return "Token rejected"
-    default:             return "Can't reach HELIX"
-    }
-  }
-  private var detail: String {
-    switch status {
-    case .notConfigured: return "Add HELIX_SNAPSHOT_URL / TOKEN to Secrets.xcconfig and rebuild."
-    case .unauthorized:  return "Rotate the row in widget_tokens and rebuild."
-    default:             return "Retrying shortly."
-    }
-  }
+  private let symbol = "tray"
+  private let title = "Nothing to show yet"
+  private let detail = "Open HELIX once and the tiles fill from its database."
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(Helix.oxide)
+      Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(Color.helix.textSecondary)
       Text(title).font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
       if !compact {
         Text(detail)
           .font(.system(size: 9))
-          .foregroundStyle(Helix.muted)
+          .foregroundStyle(Color.helix.textSecondary)
           .fixedSize(horizontal: false, vertical: true)
       }
       Spacer(minLength: 0)
@@ -247,7 +250,7 @@ struct Hairline: View {
   var vertical = false
   var body: some View {
     Rectangle()
-      .fill(.white.opacity(0.08))
+      .fill(Color.helix.hairline)
       .frame(width: vertical ? 1 : nil, height: vertical ? nil : 1)
   }
 }
@@ -263,12 +266,12 @@ struct LedgerRow: View {
     HStack(alignment: .firstTextBaseline, spacing: 6) {
       Text(label)
         .font(.system(size: 10, weight: .semibold)).tracking(0.6)
-        .foregroundStyle(Helix.muted)
+        .foregroundStyle(Color.helix.textSecondary)
         .lineLimit(1)
       Spacer(minLength: 4)
       BigValue(value: value, size: 14, color: color)
       if let trailing {
-        Text(trailing).font(.system(size: 9)).foregroundStyle(Helix.muted)
+        Text(trailing).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
       }
     }
   }
@@ -282,7 +285,7 @@ struct LedgerRow: View {
 /// Segments are sorted deep → awake because the RAMP orders, not the night.
 struct DepthBar: View {
   /// `(stage, minutes)` — a stage with no reading is absent, not zero.
-  let segments: [(Helix.SleepStage, Int)]
+  let segments: [(HelixSleepStage, Int)]
   var height: CGFloat = 12
   var monochrome = false
 
@@ -292,7 +295,7 @@ struct DepthBar: View {
     GeometryReader { geo in
       if total > 0 {
         HStack(spacing: 1) {
-          ForEach(Helix.SleepStage.allCases, id: \.self) { stage in
+          ForEach(HelixSleepStage.allCases, id: \.self) { stage in
             if let minutes = segments.first(where: { $0.0 == stage })?.1, minutes > 0 {
               Rectangle()
                 .fill(monochrome ? Color.white.opacity(stageOpacity(stage)) : stage.color)
@@ -305,14 +308,14 @@ struct DepthBar: View {
         // No stage breakdown is a real state — a night synced as a duration with
         // no stages at all. An empty track says so; four zero-width bars do not.
         RoundedRectangle(cornerRadius: height / 2, style: .continuous)
-          .fill(.white.opacity(0.08))
+          .fill(Color.helix.hairline)
       }
     }
     .frame(height: height)
   }
 
   /// In tinted mode the ramp survives as opacity, so depth is still legible.
-  private func stageOpacity(_ stage: Helix.SleepStage) -> Double {
+  private func stageOpacity(_ stage: HelixSleepStage) -> Double {
     switch stage {
     case .deep: return 1.0
     case .core: return 0.75
@@ -329,7 +332,7 @@ struct DepthBar: View {
 struct Sparkline: View {
   let points: [Double]
   var baseline: Double?
-  var color: Color = Helix.ember
+  var color: Color = HelixDomain.train.accent
   /// Read against zero. True for quantities that HAVE a meaningful zero —
   /// tonnage, water, calories — and false for bodyweight, where zero-basing an
   /// 78-to-80 kg fortnight flattens the only signal in it.
@@ -375,7 +378,7 @@ struct Sparkline: View {
               p.move(to: CGPoint(x: 0, y: y(baseline)))
               p.addLine(to: CGPoint(x: geo.size.width, y: y(baseline)))
             }
-            .stroke(Helix.muted.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            .stroke(Color.helix.textSecondary.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
           }
           Path { p in
             p.move(to: CGPoint(x: x(0), y: y(values[0])))
@@ -392,7 +395,7 @@ struct Sparkline: View {
       } else {
         Text("not enough readings")
           .font(.system(size: 9))
-          .foregroundStyle(Helix.muted)
+          .foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
       }
     }
@@ -416,7 +419,7 @@ struct Sparkline: View {
 /// itself reads as a short night.
 struct DepthArc: View {
   /// `(stage, minutes)` — a stage with no reading is absent, not zero.
-  let segments: [(Helix.SleepStage, Int)]
+  let segments: [(HelixSleepStage, Int)]
   let minutes: Int?
   let goalMin: Int?
   var lineWidth: CGFloat = 10
@@ -442,7 +445,7 @@ struct DepthArc: View {
       ZStack {
         Circle()
           .trim(from: 0, to: 0.5)
-          .stroke(.white.opacity(0.08), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+          .stroke(Color.helix.hairline, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
           .rotationEffect(.degrees(180))
 
         if let fill {
@@ -463,7 +466,7 @@ struct DepthArc: View {
           if let goalMin {
             Text("goal \(HelixSnapshot.formatSleep(goalMin))")
               .font(.system(size: max(7, d * 0.075)))
-              .foregroundStyle(Helix.muted)
+              .foregroundStyle(Color.helix.textSecondary)
           }
         }
         .offset(y: d * 0.12)
@@ -480,11 +483,11 @@ struct DepthArc: View {
   /// duration is real even when the composition is not.
   private func arcSpans(fill: Double) -> [(from: Double, to: Double, color: Color)] {
     guard staged > 0 else {
-      return [(0, fill, monochrome ? .white : Helix.sapphire)]
+      return [(0, fill, monochrome ? .white : HelixDomain.recover.accent)]
     }
     var cursor = 0.0
     var out: [(Double, Double, Color)] = []
-    for stage in Helix.SleepStage.allCases {
+    for stage in HelixSleepStage.allCases {
       guard let m = segments.first(where: { $0.0 == stage })?.1, m > 0 else { continue }
       let width = fill * Double(m) / Double(staged)
       out.append((cursor, cursor + width, monochrome ? Color.white.opacity(stageOpacity(stage)) : stage.color))
@@ -493,7 +496,7 @@ struct DepthArc: View {
     return out
   }
 
-  private func stageOpacity(_ stage: Helix.SleepStage) -> Double {
+  private func stageOpacity(_ stage: HelixSleepStage) -> Double {
     switch stage {
     case .deep:  return 1.0
     case .core:  return 0.75
@@ -533,7 +536,7 @@ struct BarChart: View {
   var body: some View {
     if points.isEmpty {
       Text("no readings in this window")
-        .font(.system(size: 9)).foregroundStyle(Helix.muted)
+        .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     } else {
       VStack(spacing: 3) {
@@ -556,7 +559,7 @@ struct BarChart: View {
                 p.move(to: CGPoint(x: 0, y: y))
                 p.addLine(to: CGPoint(x: geo.size.width, y: y))
               }
-              .stroke(Helix.muted.opacity(0.8), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+              .stroke(Color.helix.textSecondary.opacity(0.8), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
             }
           }
         }
@@ -565,7 +568,7 @@ struct BarChart: View {
             ForEach(points) { point in
               Text(label(point))
                 .font(.system(size: 7, weight: .bold))
-                .foregroundStyle(Helix.muted)
+                .foregroundStyle(Color.helix.textSecondary)
                 .frame(maxWidth: .infinity)
             }
           }
@@ -589,7 +592,7 @@ struct DeltaChip: View {
     if let delta, let text = HelixSnapshot.signed(delta, decimals: decimals) {
       let moved = abs(delta) > 0.0001
       let good = upIsGood ? delta > 0 : delta < 0
-      let color: Color = monochrome ? .white : (!moved ? Helix.muted : good ? Helix.emerald : Helix.oxide)
+      let color: Color = monochrome ? .white : (!moved ? Color.helix.textSecondary : good ? Color.helix.good : Color.helix.danger)
       HStack(spacing: 2) {
         if moved {
           Image(systemName: delta > 0 ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
@@ -600,7 +603,7 @@ struct DeltaChip: View {
       .foregroundStyle(color)
     } else {
       // No comparison is not "no change". Saying so costs four characters.
-      Text("new").font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+      Text("new").font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
     }
   }
 }
@@ -610,7 +613,7 @@ struct DeltaChip: View {
 /// is three frames competing with the numbers inside them.
 struct Register<Content: View>: View {
   let title: String
-  var accent: Color = Helix.ember
+  var accent: Color = HelixDomain.train.accent
   @ViewBuilder var content: Content
 
   var body: some View {
@@ -776,8 +779,8 @@ struct HelixMark: View {
   /// logo it was there to be.
   var opacity: Double = 0.85
 
-  private var front: Color { monochrome ? .white : (tint ?? Helix.ember) }
-  private var back: Color { monochrome ? .white : (tint ?? Helix.steel) }
+  private var front: Color { monochrome ? .white : (tint ?? HelixDomain.train.accent) }
+  private var back: Color { monochrome ? .white : (tint ?? Color.helix.textSecondary) }
 
   var body: some View {
     ZStack {

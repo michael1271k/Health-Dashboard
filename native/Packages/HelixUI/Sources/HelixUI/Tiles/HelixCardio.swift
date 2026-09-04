@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Cardio
 //
@@ -18,12 +19,12 @@ import SwiftUI
 // to read 22 on one surface and 32 on the other.
 
 struct CardioFocusFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var c: HelixSnapshot.Cardio? { s?.cardio }
-  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -37,13 +38,13 @@ struct CardioFocusFace: View {
       if let last = c?.last {
         BigValue(value: CardioFormat.distance(last.distanceM), size: 28, color: .white)
         Text(CardioFormat.subtitle(last))
-          .font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(1)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       } else {
         // Nothing logged is a real state, not an error. It gets a sentence, not
         // a row of em dashes pretending to be a reading.
         BigValue(value: nil, size: 28)
         Text("no cardio logged yet")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(1)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -54,12 +55,12 @@ struct CardioFocusFace: View {
 
 /// Medium · the week against the target, with the last session under it.
 struct CardioLedgerFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var c: HelixSnapshot.Cardio? { s?.cardio }
-  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -76,7 +77,7 @@ struct CardioLedgerFace: View {
           size: 30,
           color: mono ? .white : zoneColor)
         Text(c.map { "/ \($0.weekTarget) zone 2" } ?? "zone 2")
-          .font(.system(size: 11)).foregroundStyle(Helix.muted)
+          .font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         ZonePips(cardio: c, mono: mono)
       }
@@ -89,7 +90,7 @@ struct CardioLedgerFace: View {
         Stat(value: c?.last.flatMap { CardioFormat.distance($0.distanceM) },
              label: "LAST DISTANCE", color: .white)
         Stat(value: c?.last.flatMap { CardioFormat.pace($0.paceMinPerKm) },
-             label: "LAST PACE", color: mono ? .white : Helix.steel)
+             label: "LAST PACE", color: mono ? .white : Color.helix.textSecondary)
       }
     }
   }
@@ -98,20 +99,20 @@ struct CardioLedgerFace: View {
   /// The same banding the battery uses, for the same reason: this genuinely is
   /// a "how far through" number.
   private var zoneColor: Color {
-    guard let c, c.weekTarget > 0 else { return Helix.muted }
-    if c.weekSessions >= c.weekTarget { return Helix.emerald }
-    return c.weekSessions > 0 ? Helix.gold : Helix.muted
+    guard let c, c.weekTarget > 0 else { return Color.helix.textSecondary }
+    if c.weekSessions >= c.weekTarget { return Color.helix.good }
+    return c.weekSessions > 0 ? HelixDomain.fuel.accent : Color.helix.textSecondary
   }
 }
 
 /// Large · the week, seven days of it as bars, and the last session named.
 struct CardioLargeFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var c: HelixSnapshot.Cardio? { s?.cardio }
-  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -126,7 +127,7 @@ struct CardioLargeFace: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           BigValue(value: c.map { "\($0.weekSessions)" }, size: 34, color: .white)
           Text(c.map { "/ \($0.weekTarget) zone 2 sessions" } ?? "zone 2 sessions")
-            .font(.system(size: 11)).foregroundStyle(Helix.muted)
+            .font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
           Spacer(minLength: 0)
           ZonePips(cardio: c, mono: mono)
         }
@@ -134,7 +135,7 @@ struct CardioLargeFace: View {
 
       Hairline()
 
-      Register(title: "SEVEN DAYS · MINUTES", accent: mono ? .white : Helix.steel) {
+      Register(title: "SEVEN DAYS · MINUTES", accent: mono ? .white : Color.helix.textSecondary) {
         if let trend = c?.trend, !trend.isEmpty {
           // Weekday initials read off the DATE, never assumed from position —
           // the series omits days with no cardio, so index N is not "N days ago".
@@ -143,7 +144,7 @@ struct CardioLargeFace: View {
             .frame(maxHeight: .infinity)
         } else {
           Text("no cardio in the last week")
-            .font(.system(size: 10)).foregroundStyle(Helix.muted)
+            .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
         }
       }
       .frame(maxHeight: .infinity)
@@ -156,11 +157,11 @@ struct CardioLargeFace: View {
           Stat(value: CardioFormat.distance(last.distanceM), label: "DISTANCE", color: .white)
           Stat(value: last.durationMin.map { "\(Int($0.rounded()))′" }, label: "TIME", color: .white)
           Stat(value: CardioFormat.pace(last.paceMinPerKm), label: "PACE",
-               color: mono ? .white : Helix.steel)
+               color: mono ? .white : Color.helix.textSecondary)
         }
       } else {
         Text("no cardio logged yet")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
       }
     }
   }
@@ -181,8 +182,8 @@ private struct ZonePips: View {
         ForEach(0..<max(0, min(cardio.weekTarget, 6)), id: \.self) { i in
           Circle()
             .fill(i < cardio.weekSessions
-                  ? (mono ? Color.white : Helix.emerald)
-                  : Color.white.opacity(0.12))
+                  ? (mono ? Color.white : Color.helix.good)
+                  : Color.helix.hairline)
             .frame(width: 7, height: 7)
         }
         // Sessions BEYOND the target still count as done work. Dropping them
@@ -190,7 +191,7 @@ private struct ZonePips: View {
         if cardio.weekSessions > cardio.weekTarget {
           Text("+\(cardio.weekSessions - cardio.weekTarget)")
             .font(HelixType.figure(9))
-            .foregroundStyle(mono ? .white : Helix.emerald)
+            .foregroundStyle(mono ? .white : Color.helix.good)
         }
       }
     } else {

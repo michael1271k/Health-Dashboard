@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Performance faces
 //
@@ -73,7 +74,7 @@ extension HelixSnapshot.Record {
 // MARK: - Records · Small
 
 struct RecordFocusFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -82,7 +83,7 @@ struct RecordFocusFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(spacing: 4) {
-        Caption("LATEST PR", color: mono ? .white : Helix.gold)
+        Caption("LATEST PR", color: mono ? .white : Color.helix.record)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono, size: 12)
@@ -92,7 +93,7 @@ struct RecordFocusFace: View {
         BigValue(value: top.display, size: 26, color: .white)
         Text(top.axisLabel)
           .font(.system(size: 9, weight: .semibold))
-          .foregroundStyle(mono ? .white : Helix.gold)
+          .foregroundStyle(mono ? .white : Color.helix.record)
         Text(top.exercise)
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(.white)
@@ -101,18 +102,18 @@ struct RecordFocusFace: View {
         Spacer(minLength: 0)
         HStack(spacing: 4) {
           if let when = HelixSnapshot.relativeDay(top.achievedOn) {
-            Text(when).font(.system(size: 9, weight: .semibold)).foregroundStyle(Helix.muted)
+            Text(when).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.helix.textSecondary)
           }
           Spacer(minLength: 0)
           if let prs = s?.week.prs, prs > 0 {
             Text("\(prs) this week")
-              .font(.system(size: 9)).foregroundStyle(Helix.muted)
+              .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
           }
         }
       } else {
         // A week without a record is an ordinary week, not a failure.
         Text("no records in the book yet")
-          .font(.system(size: 11)).foregroundStyle(Helix.muted)
+          .font(.system(size: 11)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
       }
     }
@@ -127,11 +128,11 @@ struct RecordFocusFace: View {
 // themselves — which is what the face is called.
 
 struct RecordLedgerFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
-  private var accent: Color { mono ? .white : Helix.gold }
+  private var accent: Color { mono ? .white : Color.helix.record }
   private var records: [HelixSnapshot.Record] { s?.records ?? [] }
 
   private var prDelta: Double? {
@@ -157,10 +158,10 @@ struct RecordLedgerFace: View {
       Spacer(minLength: 0)
       BigValue(value: s.map { "\($0.week.prs)" }, size: 32,
                color: (s?.week.prs ?? 0) > 0 ? accent : .white)
-      Text("this week").font(.system(size: 10)).foregroundStyle(Helix.muted)
+      Text("this week").font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
       HStack(spacing: 4) {
         DeltaChip(delta: prDelta, decimals: 0, monochrome: mono)
-        Text("vs last").font(.system(size: 9)).foregroundStyle(Helix.muted)
+        Text("vs last").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
       }
       Spacer(minLength: 0)
     }
@@ -171,7 +172,7 @@ struct RecordLedgerFace: View {
     VStack(alignment: .leading, spacing: 5) {
       if records.isEmpty {
         Text("no records in the book yet")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
       } else {
         ForEach(records.prefix(3)) { record in
@@ -190,7 +191,7 @@ struct RecordLedgerFace: View {
 // the week in figures, the records themselves, and where the tonnage went.
 
 struct RecordGridFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -208,7 +209,7 @@ struct RecordGridFace: View {
 
   // ── Register 1: the week, each figure against last week ───────────────────
   private var weekStrip: some View {
-    Register(title: "THIS WEEK", accent: tint(Helix.emerald)) {
+    Register(title: "THIS WEEK", accent: tint(HelixDomain.train.accent)) {
       HStack(spacing: 0) {
         WeekCell(label: "SESSIONS", value: sessions,
                  delta: delta(s?.week.sessions, s?.weekPrev?.sessions), decimals: 0, mono: mono)
@@ -221,14 +222,14 @@ struct RecordGridFace: View {
                  delta: delta(s?.week.sets, s?.weekPrev?.sets), decimals: 0, mono: mono)
         WeekCell(label: "RECORDS", value: s.map { "\($0.week.prs)" },
                  delta: delta(s?.week.prs, s?.weekPrev?.prs), decimals: 0, mono: mono,
-                 color: (s?.week.prs ?? 0) > 0 ? tint(Helix.gold) : nil)
+                 color: (s?.week.prs ?? 0) > 0 ? tint(Color.helix.record) : nil)
       }
     }
   }
 
   // ── Register 2: the records themselves. The only gold on the widget ───────
   @ViewBuilder private var recordRegister: some View {
-    Register(title: "RECENT RECORDS", accent: mono ? .white : Helix.gold) {
+    Register(title: "RECENT RECORDS", accent: mono ? .white : Color.helix.record) {
       let records = s?.records ?? []
       if records.isEmpty {
         // A week without a record is an ordinary week, not a failure — and
@@ -236,7 +237,7 @@ struct RecordGridFace: View {
         // height so the register keeps its share of the face instead of
         // collapsing and dumping its space on whatever sits below.
         Text("no new records in the book yet")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       } else {
         VStack(spacing: 5) {
@@ -254,7 +255,7 @@ struct RecordGridFace: View {
 
   // ── Register 3: where the tonnage actually went ───────────────────────────
   @ViewBuilder private var familyRegister: some View {
-    Register(title: "MUSCLE SPLIT", accent: tint(Helix.sapphire)) {
+    Register(title: "MUSCLE SPLIT", accent: tint(HelixDomain.train.accent)) {
       FamilySplit(families: s?.volumeByFamily ?? [], mono: mono, height: 26)
     }
   }
@@ -289,7 +290,7 @@ struct RecordGridFace: View {
 // indistinguishable.
 
 struct OneRepMaxFocusFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
@@ -298,7 +299,7 @@ struct OneRepMaxFocusFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 5) {
       HStack(spacing: 4) {
-        Caption("EST 1RM", color: mono ? .white : Helix.sapphire)
+        Caption("EST 1RM", color: mono ? .white : HelixDomain.train.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
@@ -306,7 +307,7 @@ struct OneRepMaxFocusFace: View {
 
       if let top {
         BigValue(value: String(format: "%.1f", top.kg), size: 28, color: .white)
-        Text("kg").font(.system(size: 10)).foregroundStyle(Helix.muted)
+        Text("kg").font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
         Text(top.exercise)
           .font(.system(size: 11, weight: .semibold))
           .foregroundStyle(.white)
@@ -316,7 +317,7 @@ struct OneRepMaxFocusFace: View {
         DeltaChip(delta: top.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
       } else {
         Text("log a few working sets and an\nestimate appears here")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
       }
     }
@@ -329,12 +330,12 @@ struct OneRepMaxFocusFace: View {
 /// is no target 1RM in the payload to grade against, and a bar drawn against an
 /// invented ceiling would be a verdict rather than a comparison.
 struct OneRepMaxLedgerFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
   let large: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
-  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var accent: Color { mono ? .white : HelixDomain.train.accent }
   private var lifts: [HelixSnapshot.E1rm] { s?.e1rm ?? [] }
 
   var body: some View {
@@ -344,12 +345,12 @@ struct OneRepMaxLedgerFace: View {
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono)
-        Text("since 28 days").font(.system(size: 8)).foregroundStyle(Helix.muted)
+        Text("since 28 days").font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
       }
 
       if lifts.isEmpty {
         Text("log a few working sets and the main lifts appear here")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       } else {
         let peak = lifts.map(\.kg).max() ?? 1
@@ -367,7 +368,7 @@ struct OneRepMaxLedgerFace: View {
           Stat(value: HelixSnapshot.tonnes(s?.week.volumeKg), label: "WEEK VOLUME", color: .white)
           Stat(value: s.map { "\($0.week.sets)" }, label: "SETS", color: .white)
           Stat(value: s.map { "\($0.week.prs)" }, label: "RECORDS",
-               color: (s?.week.prs ?? 0) > 0 ? (mono ? .white : Helix.gold) : Helix.muted)
+               color: (s?.week.prs ?? 0) > 0 ? (mono ? .white : Color.helix.record) : Color.helix.textSecondary)
         }
       }
     }
@@ -396,7 +397,7 @@ private struct LiftRow: View {
             .font(.system(size: large ? 14 : 12, weight: .bold, design: .rounded))
             .monospacedDigit()
             .foregroundStyle(color)
-          Text("kg").font(.system(size: 9)).foregroundStyle(Helix.muted)
+          Text("kg").font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
           DeltaChip(delta: lift.deltaKg, decimals: 1, suffix: " kg", monochrome: mono)
         }
         // Against the heaviest of the tracked lifts, because there is no target
@@ -436,7 +437,7 @@ struct FamilySplit: View {
   var body: some View {
     if families.isEmpty {
       Text("no sets logged this week")
-        .font(.system(size: 10)).foregroundStyle(Helix.muted)
+        .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
     } else {
       let peak = families.map(\.kg).max() ?? 1
       HStack(alignment: .bottom, spacing: 6) {
@@ -446,13 +447,13 @@ struct FamilySplit: View {
               VStack(spacing: 0) {
                 Spacer(minLength: 0)
                 RoundedRectangle(cornerRadius: 2)
-                  .fill(mono ? .white : Helix.family(family.family))
+                  .fill(mono ? .white : HelixDomain.forFamily(family.family).accent)
                   .frame(height: max(2, geo.size.height * CGFloat(peak > 0 ? family.kg / peak : 0)))
               }
             }
             .frame(height: height)
             Text(family.family.prefix(4).uppercased())
-              .font(.system(size: 7, weight: .bold)).foregroundStyle(Helix.muted)
+              .font(.system(size: 7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
             // Sets, not tonnage: the bar already carries the tonnage, and the
             // set count is the figure the programme is actually written in.
             // Fractional by design — a secondary mover earns half a set.
@@ -477,7 +478,7 @@ private struct WeekCell: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(label).font(.system(size: 8, weight: .heavy)).tracking(0.7).foregroundStyle(Helix.muted)
+      Text(label).font(.system(size: 8, weight: .heavy)).tracking(0.7).foregroundStyle(Color.helix.textSecondary)
       BigValue(value: value, size: 17, color: color ?? .white)
       DeltaChip(delta: delta, decimals: decimals, monochrome: mono)
     }
@@ -494,7 +495,7 @@ private struct RecordRow: View {
     HStack(spacing: 8) {
       Image(systemName: record.axisSymbol)
         .font(.system(size: 9))
-        .foregroundStyle(mono ? .white : Helix.gold)
+        .foregroundStyle(mono ? .white : Color.helix.record)
         .frame(width: 12)
       VStack(alignment: .leading, spacing: 0) {
         Text(record.exercise)
@@ -503,15 +504,15 @@ private struct RecordRow: View {
         // The axis, named. Without it a 440 kg per-set VOLUME record and a 105 kg
         // heaviest LOAD are the same sentence.
         Text(record.axisLabel)
-          .font(.system(size: 8)).foregroundStyle(Helix.muted)
+          .font(.system(size: 8)).foregroundStyle(Color.helix.textSecondary)
           .lineLimit(1)
       }
       Spacer(minLength: 4)
       Text(record.display)
         .font(.system(size: 12, weight: .bold, design: .rounded)).monospacedDigit()
-        .foregroundStyle(mono ? .white : Helix.gold)
+        .foregroundStyle(mono ? .white : Color.helix.record)
       if showDate, let when = HelixSnapshot.relativeDay(record.achievedOn) {
-        Text(when).font(.system(size: 9)).foregroundStyle(Helix.muted)
+        Text(when).font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
           .frame(width: 52, alignment: .trailing)
       }
     }

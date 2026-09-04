@@ -22,11 +22,13 @@ import { join } from 'node:path'
  */
 
 const FEATURES = 'native/HelixNative/Features'
+/** The tiles: the same rule, and no legacy list — they were re-skinned wholesale. */
+const TILES = 'native/Packages/HelixUI/Sources/HelixUI/Tiles'
 
 /** Where colour is ALLOWED to be spelled out, because it is defined there. */
 const TOKEN_FILES = [
-  'native/HelixNative/DesignSystem/HelixTokens.swift',
-  'native/HelixNative/DesignSystem/HelixPalette.swift',
+  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixTokens.swift',
+  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixPalette.swift',
 ]
 
 /**
@@ -40,7 +42,6 @@ const TOKEN_FILES = [
 const LEGACY = new Set([
   'Logger/AtlasFigure.swift',
   'Logger/ExerciseCardView.swift',
-  'Logger/HelixAtlas.swift',
   'Logger/LiveLoggerView.swift',
   'Logger/LoggerPreviewData.swift',
   'Logger/MuscleDistributionSheet.swift',
@@ -70,17 +71,24 @@ describe('native token discipline', () => {
     expect(existsSync(FEATURES), `${FEATURES} is missing`).toBe(true)
 
     const offenders: string[] = []
-    for (const file of swiftFiles(FEATURES)) {
-      if (LEGACY.has(file)) continue
-      const src = stripComments(readFileSync(join(FEATURES, file), 'utf8'))
-      // `Color(hex:)` and `Color(red:green:blue:)` are the two ways to say a
-      // colour without naming it. `0x` on its own is not enough — a bitmask or
-      // a byte count is not a colour.
-      for (const pattern of [/Color\(hex:/g, /Color\(\s*red:/g, /UIColor\(red:/g]) {
-        const hits = src.match(pattern)
-        if (hits) offenders.push(`${file} (${hits.length}× ${pattern.source})`)
+    const scan = (root: string, exempt: Set<string>, patterns: RegExp[]) => {
+      for (const file of swiftFiles(root)) {
+        if (exempt.has(file)) continue
+        const src = stripComments(readFileSync(join(root, file), 'utf8'))
+        for (const pattern of patterns) {
+          const hits = src.match(pattern)
+          if (hits) offenders.push(`${root}/${file} (${hits.length}× ${pattern.source})`)
+        }
       }
     }
+    // `Color(hex:)` and `Color(red:green:blue:)` are the two ways to say a
+    // colour without naming it. `0x` on its own is not enough — a bitmask or
+    // a byte count is not a colour.
+    scan(FEATURES, LEGACY, [/Color\(hex:/g, /Color\(\s*red:/g, /UIColor\(red:/g])
+    // The tiles get the stricter reading: no `0x` either (nothing there masks
+    // bits), and no `Color(white:)` — the old palette's grey was exactly that.
+    expect(existsSync(TILES), `${TILES} is missing`).toBe(true)
+    scan(TILES, new Set(), [/Color\(hex/g, /Color\(\s*red:/g, /Color\(\s*white:/g, /UIColor\(red:/g, /\b0x[0-9A-Fa-f]+/g])
 
     expect(
       offenders,
@@ -96,7 +104,7 @@ describe('native token discipline', () => {
     for (const file of LEGACY) {
       expect(existsSync(join(FEATURES, file)), `${file} is exempt but gone`).toBe(true)
     }
-    expect(LEGACY.size).toBeLessThanOrEqual(8)
+    expect(LEGACY.size).toBeLessThanOrEqual(7)
   })
 
   it('the tokens themselves are defined in one place', () => {

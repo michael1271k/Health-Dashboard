@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Composition
 //
@@ -31,12 +32,12 @@ import SwiftUI
 
 /// Small · body fat, its movement, and the fortnight behind it.
 struct CompositionFocusFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var b: HelixSnapshot.Body? { s?.body }
-  private var accent: Color { mono ? .white : Helix.gold }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -49,7 +50,7 @@ struct CompositionFocusFace: View {
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) }, size: 30, color: .white)
-        Text("%").font(.system(size: 12)).foregroundStyle(Helix.muted)
+        Text("%").font(.system(size: 12)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         // Down is good here, and only here on this face.
         DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
@@ -57,7 +58,7 @@ struct CompositionFocusFace: View {
 
       if let measured = HelixSnapshot.relativeDay(s?.weight.measuredOn) {
         Text("measured \(measured)")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted).lineLimit(1)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -75,13 +76,13 @@ struct CompositionFocusFace: View {
 /// Medium and Large · the fat percentage, then what the rest of the body is
 /// made of, each figure under its own name.
 struct CompositionFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
   let large: Bool
 
   private var s: HelixSnapshot? { entry.snapshot }
   private var b: HelixSnapshot.Body? { s?.body }
-  private var accent: Color { mono ? .white : Helix.gold }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: large ? 10 : 8) {
@@ -95,7 +96,7 @@ struct CompositionFace: View {
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) },
                  size: large ? 38 : 30, color: .white)
-        Text("% fat").font(.system(size: large ? 13 : 11)).foregroundStyle(Helix.muted)
+        Text("% fat").font(.system(size: large ? 13 : 11)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
@@ -114,7 +115,7 @@ struct CompositionFace: View {
           HelixAtlasFigure(
             side: .both,
             worked: HelixAtlasFigure.uniform(min(max(lean / weight, 0), 1)),
-            color: Helix.emerald,
+            color: HelixDomain.body.end,
             monochrome: mono)
             .frame(width: 78, height: 104)
         }
@@ -124,13 +125,13 @@ struct CompositionFace: View {
         // all three of these, and that is a statement about the metric, not
         // about the sign of the number.
         CompositionRow(label: "LEAN SOFT TISSUE", value: b?.muscleKg, delta: b?.muscleKgDelta,
-                       unit: "kg", color: mono ? .white : Helix.emerald, mono: mono,
+                       unit: "kg", color: mono ? .white : HelixDomain.body.end, mono: mono,
                        upIsGood: true, compact: !large)
         CompositionRow(label: "SKELETAL MUSCLE", value: b?.smmKg, delta: b?.smmKgDelta,
-                       unit: "kg", color: mono ? .white : Helix.sapphire, mono: mono,
+                       unit: "kg", color: mono ? .white : HelixDomain.body.at(0.25), mono: mono,
                        upIsGood: true, compact: !large)
         CompositionRow(label: "FAT-FREE MASS", value: b?.ffmKg, delta: b?.ffmKgDelta,
-                       unit: "kg", color: mono ? .white : Helix.steel, mono: mono,
+                       unit: "kg", color: mono ? .white : Color.helix.textSecondary, mono: mono,
                        upIsGood: true, compact: !large)
       }
       }
@@ -148,7 +149,7 @@ struct CompositionFace: View {
             // a dot, and a dot drawn as a trend is a claim about a shape that
             // does not exist.
             Text("not enough readings for a trend")
-              .font(.system(size: 10)).foregroundStyle(Helix.muted)
+              .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
           }
         }
         .frame(maxHeight: .infinity)
@@ -158,9 +159,9 @@ struct CompositionFace: View {
         HStack(spacing: 0) {
           Stat(value: s?.weight.kg.map { String(format: "%.1f", $0) }, label: "WEIGHT", color: .white)
           Stat(value: s?.weight.targetKg.map { String(format: "%.1f", $0) }, label: "TARGET",
-               color: mono ? .white : Helix.steel)
+               color: mono ? .white : Color.helix.textSecondary)
           Stat(value: HelixSnapshot.relativeDay(s?.weight.measuredOn), label: "MEASURED",
-               color: Helix.muted)
+               color: Color.helix.textSecondary)
         }
       } else {
         Spacer(minLength: 0)

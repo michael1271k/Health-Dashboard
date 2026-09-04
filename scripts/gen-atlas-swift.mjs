@@ -34,14 +34,14 @@ const SOURCE = join(ROOT, 'src/lib/body/atlas.ts')
  * Every Swift copy of the atlas. Byte-identical, all of them — the generator
  * emits one string and writes it to each.
  *
- * There are two because there are two apps: the Capacitor widget extension
- * (`ios/`) and the native SwiftUI app (`native/`), and they do not share a
- * module. A THIRD hand-drawn body is exactly what this generator exists to
- * prevent, so a new consumer belongs in this list rather than in a copy-paste.
+ * ONE copy now: `HelixUI` is a package the app AND the widget extension both
+ * import, so the atlas is public API there and neither host carries its own.
+ * The Capacitor extension's copy died with the Capacitor extension (Wave 5).
+ * A second hand-drawn body is exactly what this generator exists to prevent,
+ * so a new consumer imports HelixUI rather than joining this list.
  */
 export const TARGETS = [
-  join(ROOT, 'ios/App/HelixWidgets/HelixAtlas.swift'),
-  join(ROOT, 'native/HelixNative/Features/Logger/HelixAtlas.swift'),
+  join(ROOT, 'native/Packages/HelixUI/Sources/HelixUI/Atlas/HelixAtlas.swift'),
 ]
 
 /**
@@ -141,9 +141,13 @@ export function generate(ts) {
 //
 // Coordinates are on the atlas's 120 x 260 viewBox and are scaled into
 // whatever rect the shape is given, preserving aspect ratio and centring.
+//
+// Public: this lives in HelixUI and is drawn by the app's \`AtlasFigure\` and
+// the tiles' \`HelixAtlasFigure\` alike. Geometry only — how a body is TINTED
+// is each figure's own decision.
 import SwiftUI
 
-enum HelixAtlasView: String {
+public enum HelixAtlasView: String, Sendable {
   case front, back
 }
 
@@ -159,45 +163,45 @@ enum HelixAtlasView: String {
 /// Several of these are OPEN paths (a brow, the linea alba). SwiftUI closes an
 /// open path implicitly when it fills one, so filling this layer would turn
 /// every line into a wedge. \`HelixAtlasFigure\` strokes it and only strokes it.
-struct HelixAtlasDetail: Sendable {
-  let view: HelixAtlasView
-  let build: @Sendable (CGRect, inout Path) -> Void
+public struct HelixAtlasDetail: Sendable {
+  public let view: HelixAtlasView
+  public let build: @Sendable (CGRect, inout Path) -> Void
 
-  init(view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
+  public init(view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.view = view
     self.build = build
   }
 }
 
-struct HelixAtlasPath: Identifiable, Sendable {
-  let muscle: String
-  let view: HelixAtlasView
-  let build: @Sendable (CGRect, inout Path) -> Void
+public struct HelixAtlasPath: Identifiable, Sendable {
+  public let muscle: String
+  public let view: HelixAtlasView
+  public let build: @Sendable (CGRect, inout Path) -> Void
 
-  var id: String { "\\(muscle)-\\(view.rawValue)-\\(String(describing: build))" }
+  public var id: String { "\\(muscle)-\\(view.rawValue)-\\(String(describing: build))" }
 
-  init(muscle: String, view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
+  public init(muscle: String, view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.muscle = muscle
     self.view = view
     self.build = build
   }
 }
 
-enum HelixAtlas {
-  static let viewBox = CGSize(width: 120, height: 260)
+public enum HelixAtlas {
+  public static let viewBox = CGSize(width: 120, height: 260)
 
   /// The silhouette — head, hair, neck, torso, arms, fists, legs, feet.
   /// Anatomy, never data, never tinted.
-  static let base: [@Sendable (CGRect, inout Path) -> Void] = [
+  public static let base: [@Sendable (CGRect, inout Path) -> Void] = [
 ${base.map((d) => '  { rect, p in\n' + swiftPath(d).split('\n').map((l) => '  ' + l).join('\n') + '\n  },').join('\n')}
   ]
 
-  static let muscles: [HelixAtlasPath] = [
+  public static let muscles: [HelixAtlasPath] = [
 ${paths.map(entry).join('\n')}
   ]
 
   /// Definition: the face, the six-pack seams, the erector groove, the kneecaps.
-  static let detail: [HelixAtlasDetail] = [
+  public static let detail: [HelixAtlasDetail] = [
 ${detail.map(detailEntry).join('\n')}
   ]
 
@@ -206,7 +210,7 @@ ${detail.map(detailEntry).join('\n')}
   /// Fitting WITHOUT preserving it is what turns a body into a puddle in a wide
   /// widget cell — and every muscle would still be in the right place relative
   /// to the others, so it would look deliberate.
-  static func pt(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
+  public static func pt(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
     let scale = min(rect.width / viewBox.width, rect.height / viewBox.height)
     let dx = rect.minX + (rect.width - viewBox.width * scale) / 2
     let dy = rect.minY + (rect.height - viewBox.height * scale) / 2
@@ -231,7 +235,7 @@ if (process.argv[1] && process.argv[1].endsWith('gen-atlas-swift.mjs')) {
         process.exit(1)
       }
     }
-    console.log(`✔ ${TARGETS.length} HelixAtlas.swift copies match atlas.ts`)
+    console.log(`✔ HelixAtlas.swift matches atlas.ts`)
   } else {
     for (const target of TARGETS) {
       writeFileSync(target, out)

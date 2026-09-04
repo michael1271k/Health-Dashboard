@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// Where the plan is going: three numbers, and nothing else.

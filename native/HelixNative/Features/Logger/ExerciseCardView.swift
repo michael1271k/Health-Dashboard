@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// One movement, and the sets you are logging into it.

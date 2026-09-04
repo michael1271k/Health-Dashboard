@@ -14,8 +14,11 @@ native/
 ├── Packages/
 │   ├── HelixCore/               pure domain. Foundation only. No SwiftUI, no GRDB.
 │   │   └── Tests/.../Fixtures/  golden vectors, exported from the TypeScript
-│   └── HelixData/               GRDB store + outbox + Keychain + Supabase session
-└── HelixNative/                 the SwiftUI app target (views + entry point)
+│   ├── HelixData/               GRDB store + outbox + Keychain + Supabase session
+│   └── HelixUI/                 design system, the generated atlas, the widget tiles
+├── HelixNative/                 the SwiftUI app target (views + entry point)
+├── HelixNativeWidgets/          widget extension: five families + Lock + Live Activity
+└── Shared/                      HelixWorkoutAttributes — in both native targets
 ```
 
 The split is deliberate. `HelixCore` and `HelixData` **build and test for macOS
@@ -23,8 +26,11 @@ from the command line**, so almost all of the app stays verifiable without Xcode
 a device or a signing certificate — which matters on a free Apple team, where the
 app itself expires every seven days. What is left in the Xcode target is views.
 
-`HelixData` depends on `HelixCore`. Never the other way round: the domain does not
-know a database exists.
+`HelixData` and `HelixUI` depend on `HelixCore`. Never the other way round: the
+domain does not know a database or a view exists, and `HelixUI` never imports
+`HelixData` — a tile draws a `HelixSnapshot`, it does not fetch one. The widget
+extension reads the App Group database (`group.app.helix.health`) read-only and
+builds the snapshot itself; the app reloads the timelines after every commit.
 
 ## First run
 

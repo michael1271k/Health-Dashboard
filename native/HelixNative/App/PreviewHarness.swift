@@ -121,6 +121,8 @@ enum PreviewHarness {
             DayPreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty":
             FuelPreviews.view(screen)
+        case let s where s.hasPrefix("widgets"):
+            WidgetPreviews.view(s)
         default:
             // Visible rather than silent: a typo in the shot script should
             // produce a photograph of the mistake, not of the last screen.

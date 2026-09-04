@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// The training plan and its phase, plus what the plan actually asks of you.

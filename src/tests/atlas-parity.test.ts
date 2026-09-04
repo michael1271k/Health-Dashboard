@@ -15,18 +15,22 @@ import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
  */
 
 const SOURCE = readFileSync('src/lib/body/atlas.ts', 'utf8')
-const SWIFT = readFileSync('ios/App/HelixWidgets/HelixAtlas.swift', 'utf8')
+const SWIFT = readFileSync('native/Packages/HelixUI/Sources/HelixUI/Atlas/HelixAtlas.swift', 'utf8')
 
 describe('the generated Swift atlas', () => {
-  it('is the same body in every app that draws it', () => {
-    // Two apps ship a Swift atlas — the Capacitor widget extension and the
-    // native SwiftUI app — and neither can import the other's module. Checking
-    // only the first copy would let the second drift silently, which is the
-    // exact failure this generator exists to make impossible.
-    expect(TARGETS.length).toBeGreaterThan(1)
-    for (const target of TARGETS) {
-      expect(readFileSync(target, 'utf8'), target).toBe(SWIFT)
-    }
+  it('is written to exactly one place, and that place is HelixUI', () => {
+    // One package, imported by the app and the widget extension alike. A
+    // second copy would be a second body to keep in step; the generator's
+    // target list is the only list of bodies there is.
+    expect(TARGETS).toHaveLength(1)
+    expect(TARGETS[0]).toMatch(/native\/Packages\/HelixUI\/Sources\/HelixUI\/Atlas\/HelixAtlas\.swift$/)
+    expect(readFileSync(TARGETS[0], 'utf8')).toBe(SWIFT)
+  })
+
+  it('is public API — both hosts draw it from outside the module', () => {
+    expect(SWIFT).toContain('public enum HelixAtlas')
+    expect(SWIFT).toContain('public static let muscles')
+    expect(SWIFT).toContain('public struct HelixAtlasPath')
   })
 
   it('is exactly what the generator produces from the current atlas', () => {

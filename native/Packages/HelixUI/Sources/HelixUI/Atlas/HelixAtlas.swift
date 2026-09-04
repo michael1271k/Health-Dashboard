@@ -7,9 +7,13 @@
 //
 // Coordinates are on the atlas's 120 x 260 viewBox and are scaled into
 // whatever rect the shape is given, preserving aspect ratio and centring.
+//
+// Public: this lives in HelixUI and is drawn by the app's `AtlasFigure` and
+// the tiles' `HelixAtlasFigure` alike. Geometry only — how a body is TINTED
+// is each figure's own decision.
 import SwiftUI
 
-enum HelixAtlasView: String {
+public enum HelixAtlasView: String, Sendable {
   case front, back
 }
 
@@ -25,36 +29,36 @@ enum HelixAtlasView: String {
 /// Several of these are OPEN paths (a brow, the linea alba). SwiftUI closes an
 /// open path implicitly when it fills one, so filling this layer would turn
 /// every line into a wedge. `HelixAtlasFigure` strokes it and only strokes it.
-struct HelixAtlasDetail: Sendable {
-  let view: HelixAtlasView
-  let build: @Sendable (CGRect, inout Path) -> Void
+public struct HelixAtlasDetail: Sendable {
+  public let view: HelixAtlasView
+  public let build: @Sendable (CGRect, inout Path) -> Void
 
-  init(view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
+  public init(view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.view = view
     self.build = build
   }
 }
 
-struct HelixAtlasPath: Identifiable, Sendable {
-  let muscle: String
-  let view: HelixAtlasView
-  let build: @Sendable (CGRect, inout Path) -> Void
+public struct HelixAtlasPath: Identifiable, Sendable {
+  public let muscle: String
+  public let view: HelixAtlasView
+  public let build: @Sendable (CGRect, inout Path) -> Void
 
-  var id: String { "\(muscle)-\(view.rawValue)-\(String(describing: build))" }
+  public var id: String { "\(muscle)-\(view.rawValue)-\(String(describing: build))" }
 
-  init(muscle: String, view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
+  public init(muscle: String, view: HelixAtlasView, _ build: @escaping @Sendable (CGRect, inout Path) -> Void) {
     self.muscle = muscle
     self.view = view
     self.build = build
   }
 }
 
-enum HelixAtlas {
-  static let viewBox = CGSize(width: 120, height: 260)
+public enum HelixAtlas {
+  public static let viewBox = CGSize(width: 120, height: 260)
 
   /// The silhouette — head, hair, neck, torso, arms, fists, legs, feet.
   /// Anatomy, never data, never tinted.
-  static let base: [@Sendable (CGRect, inout Path) -> Void] = [
+  public static let base: [@Sendable (CGRect, inout Path) -> Void] = [
   { rect, p in
     p.move(to: pt(60, 10, in: rect))
     p.addCurve(to: pt(72, 24, in: rect), control1: pt(67, 10, in: rect), control2: pt(72, 16, in: rect))
@@ -174,7 +178,7 @@ enum HelixAtlas {
   },
   ]
 
-  static let muscles: [HelixAtlasPath] = [
+  public static let muscles: [HelixAtlasPath] = [
   HelixAtlasPath(muscle: "Front delts", view: .front) { rect, p in
     p.move(to: pt(43, 50, in: rect))
     p.addCurve(to: pt(39, 55, in: rect), control1: pt(41, 52, in: rect), control2: pt(40, 53, in: rect))
@@ -469,7 +473,7 @@ enum HelixAtlas {
   ]
 
   /// Definition: the face, the six-pack seams, the erector groove, the kneecaps.
-  static let detail: [HelixAtlasDetail] = [
+  public static let detail: [HelixAtlasDetail] = [
   HelixAtlasDetail(view: .front) { rect, p in
     p.move(to: pt(52, 21, in: rect))
     p.addCurve(to: pt(57, 21, in: rect), control1: pt(54, 20, in: rect), control2: pt(56, 20, in: rect))
@@ -702,7 +706,7 @@ enum HelixAtlas {
   /// Fitting WITHOUT preserving it is what turns a body into a puddle in a wide
   /// widget cell — and every muscle would still be in the right place relative
   /// to the others, so it would look deliberate.
-  static func pt(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
+  public static func pt(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
     let scale = min(rect.width / viewBox.width, rect.height / viewBox.height)
     let dx = rect.minX + (rect.width - viewBox.width * scale) / 2
     let dy = rect.minY + (rect.height - viewBox.height * scale) / 2

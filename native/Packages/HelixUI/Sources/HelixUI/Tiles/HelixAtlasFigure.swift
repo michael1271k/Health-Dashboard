@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixCore
 
 // MARK: - The atlas, drawn
 //
@@ -19,7 +20,7 @@ struct HelixAtlasFigure: View {
   var side: Side = .front
   /// Muscle name → 0…1. Names are the atlas's own (`"Side delts"`, `"Abs/core"`).
   var worked: [String: Double] = [:]
-  var color: Color = Helix.ember
+  var color: Color = HelixDomain.body.accent
   var monochrome = false
 
   var body: some View {

@@ -1,6 +1,6 @@
-import AppIntents
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Helix Daily
 //
@@ -24,53 +24,28 @@ import SwiftUI
 // widget that already exists for it. A composite that cannot hold its parts
 // legibly is not a composite, it is a cluttered Small.
 
-struct DailyConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Daily" }
-  static var description: IntentDescription {
-    IntentDescription("Fuel, water, steps and training — the whole day at once.")
-  }
+// `DailyConfiguration` (the no-picker intent, scope `.full`) and
+// `HelixDailyWidget` (kind "HelixDailyFamily", `.systemLarge` only) are declared
+// by the extension — this file is the view.
 
-  /// No focus picker: the point of this widget is that it does not make you
-  /// choose. `HelixScoped` still needs an answer, so it names the one it draws.
-  var scope: HelixScope { .full }
-  var helixFocus: HelixFocus { .training(.today) }
-
-  static var galleryOptions: [(intent: DailyConfiguration, title: LocalizedStringResource)] {
-    [(DailyConfiguration(), "Daily")]
-  }
-}
-
-struct HelixDailyWidget: Widget {
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: "HelixDailyFamily",
-      intent: DailyConfiguration.self,
-      provider: HelixIntentProvider<DailyConfiguration>()
-    ) { entry in
-      DailyView(entry: entry)
-    }
-    .configurationDisplayName("Helix Daily")
-    .description("Fuel, water, steps and training in one register.")
-    .supportedFamilies([.systemLarge])
-  }
-}
-
-struct DailyView: View {
-  let entry: HelixEntry
+public struct DailyView: View {
+  let entry: HelixTileEntry
   @Environment(\.widgetRenderingMode) private var mode
+
+  public init(entry: HelixTileEntry) { self.entry = entry }
 
   private var mono: Bool { mode == .accented }
   private var s: HelixSnapshot? { entry.snapshot }
 
-  var body: some View {
+  public var body: some View {
     Group {
       if entry.isEmpty {
-        Unavailable(status: entry.status)
+        Unavailable()
       } else {
         face
       }
     }
-    .containerBackground(Helix.background, for: .widget)
+    .containerBackground(Color.helix.base, for: .widget)
     // The whole-face URL is the home screen: this widget is about the day, and
     // the day's overview is the dashboard. Each quadrant then names its own
     // destination below, which is what makes the four taps worth having.
@@ -80,7 +55,7 @@ struct DailyView: View {
   private var face: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 5) {
-        Caption("TODAY", color: mono ? .white : Helix.ember)
+        Caption("TODAY", color: mono ? .white : HelixDomain.train.accent)
         // Before the spacer: a declared day is a fact ABOUT today, so it reads
         // as part of the title rather than as another badge on the right.
         ContextChip(context: s?.context, monochrome: mono)
@@ -118,9 +93,9 @@ struct DailyView: View {
       HStack(spacing: 0) {
         Stat(value: s?.score.map { "\($0)" }, label: "SCORE", color: .white)
         Stat(value: s?.battery.map { "\($0)%" }, label: "BATTERY",
-             color: mono ? .white : Helix.battery(s?.battery))
+             color: mono ? .white : Color.helix.battery(s?.battery))
         Stat(value: s?.streak.map { "\($0.current)" }, label: "PROGRAM DAY",
-             color: mono ? .white : Helix.ember)
+             color: mono ? .white : HelixDomain.train.accent)
       }
     }
   }
@@ -147,7 +122,7 @@ private struct FuelQuadrant: View {
   let snapshot: HelixSnapshot?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : Helix.ember }
+  private var accent: Color { mono ? .white : HelixDomain.fuel.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -155,17 +130,17 @@ private struct FuelQuadrant: View {
       HStack(alignment: .firstTextBaseline, spacing: 3) {
         BigValue(value: snapshot?.macros.kcal.map { "\(Int($0.rounded()))" }, size: 20, color: .white)
         Text(snapshot?.macros.kcalGoal.map { "/ \(Int($0.rounded()))" } ?? "kcal")
-          .font(.system(size: 9)).foregroundStyle(Helix.muted)
+          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
       }
       // Three micro-rails rather than three numbers: at this size the SHAPE of
       // the macro split is readable where the figures are not.
       HStack(spacing: 3) {
         MacroPip(value: snapshot?.macros.proteinG, goal: snapshot?.macros.proteinGoalG,
-                 letter: "P", color: mono ? .white : Helix.oxide)
+                 letter: "P", color: mono ? .white : HelixDomain.fuel.at(0))
         MacroPip(value: snapshot?.macros.carbsG, goal: snapshot?.macros.carbsGoalG,
-                 letter: "C", color: mono ? .white : Helix.gold)
+                 letter: "C", color: mono ? .white : HelixDomain.fuel.at(0.35))
         MacroPip(value: snapshot?.macros.fatG, goal: snapshot?.macros.fatGoalG,
-                 letter: "F", color: mono ? .white : Helix.amethyst)
+                 letter: "F", color: mono ? .white : HelixDomain.fuel.at(0.65))
       }
     }
   }
@@ -179,7 +154,7 @@ private struct MacroPip: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(letter).font(.system(size: 7, weight: .bold)).foregroundStyle(Helix.muted)
+      Text(letter).font(.system(size: 7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
       Rail(progress: HelixSnapshot.progress(value, goal), color: color, height: 3)
     }
   }
@@ -189,7 +164,7 @@ private struct WaterQuadrant: View {
   let snapshot: HelixSnapshot?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : Helix.sapphire }
+  private var accent: Color { mono ? .white : HelixDomain.fuel.end }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -198,7 +173,7 @@ private struct WaterQuadrant: View {
         BigValue(value: snapshot?.water.ml.map { String(format: "%.1f", $0 / 1000) },
                  size: 20, color: .white)
         Text(snapshot?.water.goalMl.map { "/ \(String(format: "%.1f", $0 / 1000)) L" } ?? "L")
-          .font(.system(size: 9)).foregroundStyle(Helix.muted)
+          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
       }
       Rail(progress: HelixSnapshot.progress(snapshot?.water.ml, snapshot?.water.goalMl),
            color: accent, height: 4)
@@ -211,7 +186,7 @@ private struct StepsQuadrant: View {
   let snapshot: HelixSnapshot?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : Helix.emerald }
+  private var accent: Color { mono ? .white : HelixDomain.body.accent }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -220,7 +195,7 @@ private struct StepsQuadrant: View {
         BigValue(value: snapshot?.steps.count.map { $0.formatted(.number.grouping(.automatic)) },
                  size: 20, color: .white)
         Text(snapshot?.steps.goal.map { "/ \($0 / 1000)k" } ?? "")
-          .font(.system(size: 9)).foregroundStyle(Helix.muted)
+          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary)
       }
       Rail(progress: HelixSnapshot.progress(snapshot?.steps.count.map(Double.init),
                                             snapshot?.steps.goal.map(Double.init)),
@@ -234,7 +209,7 @@ private struct TrainingQuadrant: View {
   let snapshot: HelixSnapshot?
   let mono: Bool
 
-  private var accent: Color { mono ? .white : Helix.day(snapshot?.workout.dayKey) }
+  private var accent: Color { mono ? .white : Color.helix.day(snapshot?.workout.dayKey) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -245,7 +220,7 @@ private struct TrainingQuadrant: View {
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       Text(state)
-        .font(.system(size: 9)).foregroundStyle(Helix.muted).lineLimit(1)
+        .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       Spacer(minLength: 0)
     }
   }

@@ -31,6 +31,8 @@ packages:
     path: Packages/HelixCore
   HelixData:
     path: Packages/HelixData
+  HelixUI:
+    path: Packages/HelixUI
 
 targets:
   HelixNative:
@@ -44,6 +46,7 @@ targets:
           # attached below as a config file, not compiled as a source.
           - "Support/Secrets.example.xcconfig"
           - "Support/Secrets.xcconfig"
+          - "Support/HelixNative.entitlements"
       # `Shared/` is in BOTH targets, and it has to be: ActivityKit matches the
       # app's `Activity.request` to the extension's `ActivityConfiguration` by
       # the ATTRIBUTES TYPE, and two identically-named structs compiled into two
@@ -56,6 +59,8 @@ targets:
         product: HelixCore
       - package: HelixData
         product: HelixData
+      - package: HelixUI
+        product: HelixUI
       # Embedding the extension is what puts its `ActivityConfiguration` in the
       # app bundle. Without this the app can request an activity and the system
       # has nothing to draw it with.
@@ -66,6 +71,18 @@ targets:
     configFiles:
       Debug: HelixNative/Support/Secrets.xcconfig
       Release: HelixNative/Support/Secrets.xcconfig
+
+    # ── The App Group ────────────────────────────────────────────────────────
+    # Gate 0 (§5.0): the shared container is where `helix.sqlite` lives, so the
+    # widget extension reads the SAME file the app writes — no snapshot route,
+    # no token, no HTTP. Needs the paid Developer Program; a free personal team
+    # cannot sign this entitlement, and `AppDatabase.sharedFolder()` falls back
+    # to Application Support so the app still runs (widgets then stay empty).
+    entitlements:
+      path: HelixNative/Support/HelixNative.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.helix.health
 
     info:
       path: HelixNative/Support/Info.plist
@@ -91,6 +108,14 @@ targets:
         # Substituted from Secrets.xcconfig at build time.
         HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
         HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
+        # `helix://open?path=/nutrition` — what every tile's `.widgetURL` opens.
+        # Received by `.onOpenURL` in RootView through `DeepLink.safePath`, the
+        # same allow-list the web app used (`src/lib/native/deepLink.ts`).
+        CFBundleURLTypes:
+          - CFBundleURLName: app.helix.health.michael.native
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - helix
         # Required-reason API declaration lives in the privacy manifest, not
         # here — see PrivacyInfo.xcprivacy. The Capacitor app was rejected-ready
         # without one for months; this target starts with it.
@@ -110,18 +135,14 @@ targets:
         SWIFT_STRICT_CONCURRENCY: complete
         ENABLE_USER_SCRIPT_SANDBOXING: YES
         GENERATE_INFOPLIST_FILE: NO
-        # No App Groups, no Keychain sharing group, no push. All three need the
-        # paid programme; the app is built to work without them and to gain them
-        # by adding an entitlement, not by being restructured.
 
   # ── The widget extension ─────────────────────────────────────────────────
   #
-  # ONE face in Wave 1b: the running workout. Every other HELIX widget lives in
-  # the Capacitor app and fetches its own data over HTTP, because App Groups are
-  # a PAID capability and an extension can read nothing the app wrote. A Live
-  # Activity is the one face exempt — its content arrives through ActivityKit
-  # from `Activity.update`, with no shared container in between — so it is the
-  # one face that can ship before the Developer Program is bought.
+  # Wave 5: the five Home Screen families (Fuel, Training, Body, Daily, Vitals),
+  # the Lock Screen accessory and the running-workout Live Activity. The tiles
+  # are `HelixUI` views; the provider reads the App Group GRDB file through
+  # HelixData and never touches the network. `HelixIntents` (the focus pickers)
+  # came across intact.
   HelixNativeWidgets:
     type: app-extension
     platform: iOS
@@ -130,17 +151,25 @@ targets:
       - path: HelixNativeWidgets
         excludes:
           - "Support/Info.plist"
+          - "Support/HelixNativeWidgets.entitlements"
       - path: Shared
-      # The palette, and only the palette. An extension that imported the whole
-      # design system would pull `HelixSurface` and `HelixType` — Dynamic-Type
-      # machinery for a surface that has no Dynamic Type — into a target with a
-      # hard memory budget.
-      - path: HelixNative/DesignSystem/HelixPalette.swift
 
     dependencies:
-      # For `LandmarkMuscle`, which `HelixPalette.muscle(_:)` switches over.
       - package: HelixCore
         product: HelixCore
+      # Read-only. `AppDatabase.readOnly(folderURL:)` opens the shared file
+      # without running migrations — an extension that migrated would race the
+      # app for the schema.
+      - package: HelixData
+        product: HelixData
+      - package: HelixUI
+        product: HelixUI
+
+    entitlements:
+      path: HelixNativeWidgets/Support/HelixNativeWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.helix.health
 
     info:
       path: HelixNativeWidgets/Support/Info.plist

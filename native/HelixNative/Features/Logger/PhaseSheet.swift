@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// Cut or bulk — the only two, and what each one actually changes.

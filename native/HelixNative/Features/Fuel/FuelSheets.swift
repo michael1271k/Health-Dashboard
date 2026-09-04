@@ -1,4 +1,5 @@
 import SwiftUI
+import HelixUI
 import HelixCore
 
 /// The three sheets the Fuel tab presents. Stock `Form`s on the Solar ground —

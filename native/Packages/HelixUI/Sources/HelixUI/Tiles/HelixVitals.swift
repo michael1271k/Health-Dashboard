@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import HelixCore
 
 // MARK: - Vitals
 //
@@ -26,23 +27,32 @@ import SwiftUI
 // Steps is the exception and keeps a real goal rail, because it genuinely has
 // one. Using the same shape for both would have made a goal out of a baseline.
 
-struct VitalsView: View {
-  let entry: HelixEntry
+public struct VitalsView: View {
+  let entry: HelixTileEntry
   let focus: VitalsFocus
-  @Environment(\.widgetFamily) private var family
+  @Environment(\.widgetFamily) private var hostFamily
+  @Environment(\.helixTileFamily) private var tileFamily
+  /// `widgetFamily` is get-only outside WidgetKit, so the app's grid says which
+  /// size it wants through `helixTileFamily`; on the Home Screen it is unset.
+  private var family: WidgetFamily { tileFamily ?? hostFamily }
+
+  public init(entry: HelixTileEntry, focus: VitalsFocus) {
+    self.entry = entry
+    self.focus = focus
+  }
   @Environment(\.widgetRenderingMode) private var mode
 
   private var mono: Bool { mode == .accented }
 
-  var body: some View {
+  public var body: some View {
     Group {
       if entry.isEmpty {
-        Unavailable(status: entry.status, compact: family == .systemSmall)
+        Unavailable(compact: family == .systemSmall)
       } else {
         face
       }
     }
-    .containerBackground(Helix.background, for: .widget)
+    .containerBackground(Color.helix.base, for: .widget)
     .widgetURL(focus.link(entry.snapshot?.date))
   }
 
@@ -76,7 +86,7 @@ struct VitalsView: View {
 /// switches that must agree, which is five chances for the SpO₂ face to render
 /// a heart-rate colour. This is the shape `DeltaChip.upIsGood` already implies:
 /// the verdict belongs to the metric.
-struct VitalSpec {
+struct VitalSpec: Sendable {
   let label: String
   let unit: String
   let color: Color
@@ -88,25 +98,25 @@ struct VitalSpec {
   /// Beyond it the bar simply saturates: a bar that keeps growing turns a bad
   /// night into a broken layout.
   let fullScale: Double
-  let read: (HelixSnapshot.Vitals?) -> HelixSnapshot.Vital?
+  let read: @Sendable (HelixSnapshot.Vitals?) -> HelixSnapshot.Vital?
 
   static let hrv = VitalSpec(
-    label: "HRV", unit: "ms", color: Helix.emerald, decimals: 0,
+    label: "HRV", unit: "ms", color: HelixDomain.recover.at(0), decimals: 0,
     upIsGood: true, fullScale: 20, read: { $0?.hrvMs })
   static let restingBpm = VitalSpec(
-    label: "RESTING HR", unit: "bpm", color: Helix.oxide, decimals: 0,
+    label: "RESTING HR", unit: "bpm", color: HelixDomain.recover.at(0.25), decimals: 0,
     upIsGood: false, fullScale: 8, read: { $0?.restingBpm })
   static let wristTemp = VitalSpec(
     // The stored value is ALREADY a deviation from Apple's own baseline, so this
     // bar is a deviation of a deviation — which is the useful one: "you have run
     // warm all fortnight" and "you are warm tonight" are different facts.
-    label: "WRIST TEMP", unit: "°C", color: Helix.copper, decimals: 2,
+    label: "WRIST TEMP", unit: "°C", color: HelixDomain.recover.at(0.5), decimals: 2,
     upIsGood: false, fullScale: 0.5, read: { $0?.wristTempDeltaC })
   static let bloodOxygen = VitalSpec(
-    label: "BLOOD O₂", unit: "%", color: Helix.sapphire, decimals: 1,
+    label: "BLOOD O₂", unit: "%", color: HelixDomain.recover.at(0.75), decimals: 1,
     upIsGood: true, fullScale: 2, read: { $0?.bloodOxygenPct })
   static let respiratoryRate = VitalSpec(
-    label: "RESPIRATORY", unit: "br/min", color: Helix.amethyst, decimals: 1,
+    label: "RESPIRATORY", unit: "br/min", color: HelixDomain.recover.at(1), decimals: 1,
     upIsGood: false, fullScale: 2, read: { $0?.respiratoryRate })
 
   static let all: [VitalSpec] = [hrv, restingBpm, wristTemp, bloodOxygen, respiratoryRate]
@@ -131,11 +141,11 @@ struct VitalBar: View {
       let frac = delta.map { min(1, abs($0) / spec.fullScale) } ?? 0
       let width = mid * CGFloat(frac)
       ZStack(alignment: .leading) {
-        Capsule().fill(.white.opacity(0.07))
+        Capsule().fill(Color.helix.hairline)
         if let delta, abs(delta) > 0.0001 {
           let good = spec.upIsGood ? delta > 0 : delta < 0
           Capsule()
-            .fill(mono ? Color.white : (good ? Helix.emerald : Helix.oxide))
+            .fill(mono ? Color.white : (good ? Color.helix.good : Color.helix.danger))
             .frame(width: max(2, width))
             // Rightward for a raised reading, leftward for a lowered one —
             // the direction is the reading's, not the verdict's, or a good
@@ -176,7 +186,7 @@ struct VitalRow: View {
           .foregroundStyle(.white)
         Text(spec.unit)
           .font(.system(size: 8))
-          .foregroundStyle(Helix.muted)
+          .foregroundStyle(Color.helix.textSecondary)
         DeltaChip(delta: vital?.delta, decimals: spec.decimals,
                   upIsGood: spec.upIsGood, monochrome: mono)
       }
@@ -189,7 +199,7 @@ struct VitalRow: View {
 
 /// Small · one reading, its deviation, and the week behind it.
 struct VitalLeadFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
   let spec: VitalSpec
 
@@ -211,7 +221,7 @@ struct VitalLeadFace: View {
         DeltaChip(delta: vital?.delta, decimals: spec.decimals,
                   upIsGood: spec.upIsGood, monochrome: mono)
         Text(baselineLine)
-          .font(.system(size: 9)).foregroundStyle(Helix.muted).lineLimit(1)
+          .font(.system(size: 9)).foregroundStyle(Color.helix.textSecondary).lineLimit(1)
       }
 
       Spacer(minLength: 0)
@@ -237,7 +247,7 @@ struct VitalLeadFace: View {
 
 /// Medium · two readings, each with its bar, plus the day's steps and sleep.
 struct VitalPairFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
   let specs: [VitalSpec]
 
@@ -246,7 +256,7 @@ struct VitalPairFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 5) {
-        Caption("VITALS", color: mono ? .white : Helix.sapphire)
+        Caption("VITALS", color: mono ? .white : HelixDomain.recover.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono, size: 15)
@@ -265,7 +275,7 @@ struct VitalPairFace: View {
 
 /// Medium/Large · the whole panel — every reading Helix records overnight.
 struct VitalsPanelFace: View {
-  let entry: HelixEntry
+  let entry: HelixTileEntry
   let mono: Bool
   let large: Bool
 
@@ -281,7 +291,7 @@ struct VitalsPanelFace: View {
   var body: some View {
     VStack(alignment: .leading, spacing: large ? 9 : 7) {
       HStack(spacing: 5) {
-        Caption("VITALS", color: mono ? .white : Helix.sapphire)
+        Caption("VITALS", color: mono ? .white : HelixDomain.recover.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
         HelixBrand(monochrome: mono, size: large ? 16 : 15)
@@ -292,7 +302,7 @@ struct VitalsPanelFace: View {
         // with nothing on the wrist. Both are absence, and absence gets a
         // sentence rather than five rows of em dashes.
         Text("no overnight readings yet")
-          .font(.system(size: 10)).foregroundStyle(Helix.muted)
+          .font(.system(size: 10)).foregroundStyle(Color.helix.textSecondary)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       } else {
         ForEach(Array(specs.enumerated()), id: \.offset) { _, spec in
@@ -323,13 +333,13 @@ struct DayFloorRow: View {
         value: snapshot?.steps.count.map { "\($0)" },
         progress: progress(snapshot?.steps.count.map(Double.init),
                            snapshot?.steps.goal.map(Double.init)),
-        color: mono ? .white : Helix.gold)
+        color: mono ? .white : HelixDomain.body.accent)
       GoalStat(
         label: "SLEEP",
         value: snapshot?.sleep.minutes.map { HelixSnapshot.formatSleep($0) },
         progress: progress(snapshot?.sleep.minutes.map(Double.init),
                            snapshot?.sleep.goalMin.map(Double.init)),
-        color: mono ? .white : Helix.amethyst)
+        color: mono ? .white : HelixDomain.recover.accent)
     }
   }
 
@@ -351,7 +361,7 @@ struct GoalStat: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
       HStack(spacing: 4) {
-        Text(label).font(.system(size: 7, weight: .bold)).foregroundStyle(Helix.muted)
+        Text(label).font(.system(size: 7, weight: .bold)).foregroundStyle(Color.helix.textSecondary)
         Spacer(minLength: 0)
         Text(value ?? "—")
           .font(.system(size: 11, weight: .bold, design: .monospaced))
