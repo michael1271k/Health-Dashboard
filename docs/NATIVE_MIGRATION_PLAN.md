@@ -347,7 +347,12 @@ Domain pulls: `charts/*`, `prEngine` trio (if Track D hasn't reached it, this wa
 | Workout Analysis | `ui-ux-pro-max:ui-ux-pro-max` | `ios-developer` | PR records match `personal_records`; `pr-engine.json` green |
 | review/ship | `code-reviewer`, `git-commit-helper` | `caveman:cavecrew-reviewer` | — |
 
-### Wave 8 — App Store 1.0 (3 days)
+### Wave 8 — App Store 1.0 (3 days) · **prep SHIPPED 2026-09-04**
+
+Everything the repo can own is done and verified against a **Release** build — see `docs/APP_STORE.md`, which carries the metadata template, the App Privacy answers, the review notes and the answered preflight checklist. Shipped: `ITSAppUsesNonExemptEncryption`; the privacy-policy URL (in-app under **You → About** and in the metadata, one constant, `HelixLinks`); a privacy manifest for the **widget extension** as well as the app (the required-reason check runs per Mach-O binary, so the app's does not cover the `.appex`); the app icon, which the native target did not have at all; version pinned to `1.0 (1)` on both targets; `scripts/store-shots.sh` for the 6.9″/6.3″ sets. And the wave's real find: **the app had never compiled in Release** — `#Preview` bodies are built in every configuration, and twenty of them referenced `#if DEBUG` helpers, so `xcodebuild -configuration Release` failed on twelve errors. An archive would never have built. Fixed by gating the previews.
+
+Still open, and none of it is code: **Gate 0** (the paid Developer Program — no App Group signing, no upload, no device Instruments without it), the privacy-policy page itself, the demo account for the review notes, and the App Store Connect record. The `< 1 s` cold-launch gate is deliberately **unmeasured**: the launch path was audited (nothing synchronous before the first frame) but a real number needs Instruments on a device, which waits on Gate 0.
+
 
 Privacy manifest (HealthKit reasons, UserDefaults reason codes) — `NSHealthShareUsageDescription`/`NSHealthUpdateUsageDescription` and the `com.apple.developer.healthkit` entitlement were pulled forward to Wave 7 prep (2026-09-04); HealthKit has no per-type usage strings, one covers every type. **Still open here: a privacy-policy URL, which App Review requires for any app carrying the HealthKit entitlement, and `ITSAppUsesNonExemptEncryption`.** No `.processing` background mode unless registered, encryption-exempt flag, screenshots from the shot loop at 6.9" and 6.3", App Store metadata, review notes (single-user app — demo credentials), TestFlight external build, submit.
 
