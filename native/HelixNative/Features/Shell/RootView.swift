@@ -62,7 +62,7 @@ private struct SignedInTabs: View {
                 NavigationStack { WorkoutTabView() }
             }
             SwiftUI.Tab("Nutrition", systemImage: "fork.knife", value: Tab.fuel) {
-                NavigationStack { FuelTabView() }
+                NavigationStack { NutritionTabView() }
             }
             SwiftUI.Tab("Pulse", systemImage: "waveform.path.ecg", value: Tab.body) {
                 NavigationStack { DayTabView() }

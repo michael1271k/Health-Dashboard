@@ -3,7 +3,7 @@ import Observation
 import HelixCore
 import HelixData
 
-/// Everything the Fuel tab reads and writes, for ONE selected day.
+/// Everything the Nutrition tab reads and writes, for ONE selected day.
 ///
 /// ── THE TARGET IS RESOLVED FOR THE SELECTED DATE, NOT TODAY ─────────────────
 /// A Tuesday opened on Friday is graded against the rung that was in force on
@@ -20,7 +20,7 @@ import HelixData
 /// so they are cleared rather than left standing across the gap.
 @MainActor
 @Observable
-final class FuelModel {
+final class NutritionModel {
 
     private let database: AppDatabase
     let userId: String
@@ -39,6 +39,10 @@ final class FuelModel {
     private(set) var entries: [NutritionEntryRow]?
     private(set) var water: [WaterIntakeRow] = []
     private(set) var dailyTarget: DailyTargetRow?
+    /// The selected day and the six before it, oldest first — the adherence dots
+    /// and the macros-vs-goal strip. Always seven entries once loaded; a day
+    /// with nothing logged is present and untracked.
+    private(set) var week: [NutritionDay] = []
 
     /// The last write that failed, for the one banner at the top.
     private(set) var failure: String?
@@ -53,6 +57,7 @@ final class FuelModel {
 
     private var isObserving = false
     private var profilesTask: Task<Void, Never>?
+    private var goalsTask: Task<Void, Never>?
     private var dateTasks: [Task<Void, Never>] = []
 
     /// Subscribe. Called from `.task`, cancelled with the view. Re-entrant
@@ -63,16 +68,24 @@ final class FuelModel {
         defer {
             profilesTask?.cancel()
             profilesTask = nil
+            goalsTask?.cancel()
+            goalsTask = nil
             cancelDateTasks()
             isObserving = false
         }
         today = LogicalDay.today()
         profilesTask = track(database.targetProfilesStream(userId: userId)) { [weak self] in self?.profileRows = $0 }
+        // ── WHY THE GOALS STREAM IS A CHILD LIKE THE REST ───────────────────
+        // It used to be consumed inline here, which made its failure the end of
+        // this function — and the `defer` above then cancelled the profiles
+        // stream and all five date streams with it. One read error and the tab
+        // went permanently stale, under a banner claiming a WRITE had failed.
+        goalsTask = track(database.userGoalsStream(userId: userId)) { [weak self] in self?.goals = $0 }
         restartDateStreams()
-        do {
-            for try await row in database.userGoalsStream(userId: userId) { goals = row }
-        } catch {
-            report(error)
+        // Park until the view goes away. `.task` cancels this, the `defer`
+        // runs, and every child is reaped with it.
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(300))
         }
     }
 
@@ -103,13 +116,16 @@ final class FuelModel {
         entries = nil
         water = []
         dailyTarget = nil
+        week = []
         guard isObserving else { return }
         let date = self.date
+        let weekStart = ISODate.addDays(date, -6) ?? date
         dateTasks = [
             track(database.dailyLogStream(userId: userId, date: date)) { [weak self] in self?.dailyLog = $0 },
             track(database.nutritionEntriesStream(userId: userId, date: date)) { [weak self] in self?.entries = $0 },
             track(database.waterIntakeStream(userId: userId, date: date)) { [weak self] in self?.water = $0 },
             track(database.dailyTargetStream(userId: userId, date: date)) { [weak self] in self?.dailyTarget = $0 },
+            track(database.nutritionWeekStream(userId: userId, from: weekStart, to: date)) { [weak self] in self?.week = $0 },
         ]
     }
 
@@ -126,15 +142,21 @@ final class FuelModel {
             do {
                 for try await value in stream { apply(value) }
             } catch {
-                self?.report(error)
+                self?.report(error, wrote: false)
             }
         }
     }
 
-    /// Cancellation is not a failure: every day change cancels four streams.
-    private func report(_ error: any Error) {
+    /// Cancellation is not a failure: every day change cancels five streams.
+    ///
+    /// A read and a write fail differently and the banner has to say which:
+    /// telling someone their change could not be saved when nothing was being
+    /// saved sends them looking for an edit to redo.
+    private func report(_ error: any Error, wrote: Bool = true) {
         if error is CancellationError { return }
-        failure = "That change could not be saved on this device."
+        failure = wrote
+            ? "That change could not be saved on this device."
+            : "This day stopped updating. Reopen the tab to try again."
     }
 
     // MARK: - The target
@@ -240,10 +262,61 @@ final class FuelModel {
         }
     }
 
+    /// What is still owed on the day, or `nil` when there is no target to owe
+    /// it against. Negative once the day is over.
+    func remaining(_ eaten: Double?, _ target: Double?) -> Double? {
+        guard let target, target > 0 else { return nil }
+        return target - (eaten ?? 0)
+    }
+
+    /// The four figures the edit sheet starts from. All four, whatever the day
+    /// grades: `nutrition_entries` has no nullable macro column, so correcting
+    /// the day means stating all of it — "not graded" is about the scoring, not
+    /// about whether the carbohydrate was eaten.
+    var macrosForEditing: MacroMath.Macros {
+        MacroMath.Macros(
+            kcal: eaten?.kcal ?? 0,
+            protein: eaten?.protein ?? 0,
+            carbs: eaten?.carbs ?? 0,
+            fat: eaten?.fat ?? 0
+        )
+    }
+
+    /// Everything the day's rows say about micronutrients, summed.
+    ///
+    /// Fibre and protein keep their own columns; the other nine arrive as the
+    /// `micros` JSON bundle the ingest writes. Keyed the way `NutrientTargets`
+    /// keys them, which is the way `HealthKey` spells them — one vocabulary from
+    /// HealthKit to the grid.
+    var nutrients: [String: Double] {
+        guard let entries else { return [:] }
+        var out: [String: Double] = [:]
+        for row in entries {
+            out["protein", default: 0] += row.proteinG
+            if let fiber = row.fiberG { out["fiber", default: 0] += fiber }
+            guard let micros = row.micros,
+                  let bundle = try? JSONDecoder().decode([String: Double].self, from: Data(micros.raw.utf8))
+            else { continue }
+            for (key, value) in bundle { out[key, default: 0] += value }
+        }
+        return out
+    }
+
     // MARK: - Flags
 
     var exceptionReason: String? { ExceptionDay.reason(dailyLog?.nutritionException) }
     var isEstimated: Bool { dailyLog?.nutritionEstimated ?? false }
+
+    /// The rung in force, as a chip reads it.
+    var leverLabel: String { heldBy?.label ?? "My own numbers" }
+
+    /// The day's SHAPE — a named profile, a hand-made override, or the rung's
+    /// ordinary day. The chip states which, so the gauges above it never have to.
+    var dayShapeLabel: String {
+        if let matched = matchedProfile { return matched.label }
+        if hasOverride { return "Custom day" }
+        return "Standard day"
+    }
 
     // MARK: - Water
 
@@ -255,6 +328,11 @@ final class FuelModel {
     }
     var waterGoalMl: Double? { goals?.waterGoalMl.map(Double.init) }
     var isWaterManual: Bool { water.contains { ManualEntry.isManualWater($0.hkUuid) } }
+
+    /// The day's macros were entered by hand, so HealthKit will not touch this
+    /// date again — including its fibre and micronutrients. A one-way door has
+    /// to be visible from the screen it was opened on.
+    var isMacrosManual: Bool { entries?.contains { ManualEntry.isManualMacro($0.hkUuid) } ?? false }
 
     // MARK: - Writing
 
@@ -361,6 +439,15 @@ final class FuelModel {
         write { try database.setWaterOverride(userId: userId, date: date, ml: amount) }
     }
 
+    /// One glass. The tap target on the water row, and the only write on this
+    /// tab that takes no sheet — which is the point: logging water is the most
+    /// repeated action here and it should cost one tap.
+    static let glassMl: Double = 250
+
+    func addWater(_ ml: Double = NutritionModel.glassMl) {
+        setWater(ml: (waterMl ?? 0) + ml)
+    }
+
     func clearWater() {
         dailyLog?.waterMl = nil
         write { try database.clearWaterOverride(userId: userId, date: date) }
@@ -369,7 +456,7 @@ final class FuelModel {
 
 // MARK: - Formatting
 
-enum FuelFormat {
+enum NutritionFormat {
     /// `1,420` — grouped, no decimals. Every kcal and gram figure on the tab.
     static func whole(_ value: Double) -> String {
         value.formatted(.number.precision(.fractionLength(0)))
@@ -384,5 +471,20 @@ enum FuelFormat {
     static func dayTitle(_ iso: String) -> String {
         guard let date = LogicalDay.date(fromISO: iso) else { return iso }
         return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+    }
+
+    /// `M`, `T`, `W` — the strip's axis. Narrow rather than abbreviated: seven
+    /// three-letter labels under seven 20 pt columns is a wall of text, and the
+    /// dots are read as a shape, not as a table.
+    static func weekdayNarrow(_ iso: String) -> String {
+        guard let date = LogicalDay.date(fromISO: iso) else { return "" }
+        return date.formatted(.dateTime.weekday(.narrow))
+    }
+
+    /// `535 left` or `195 over`. Which side of the target the day is on is the
+    /// fact; the sign is how it is spelled, and a bare "−195" makes the reader
+    /// do the work.
+    static func remaining(_ value: Double, unit: String) -> String {
+        value >= 0 ? "\(whole(value)) \(unit) left" : "\(whole(-value)) \(unit) over"
     }
 }

@@ -121,8 +121,8 @@ enum PreviewHarness {
             .environment(AppEnvironment.preview)
         case "day", "day-empty", "day-inbody", "day-swap":
             DayPreviews.view(screen)
-        case "fuel", "fuel-over", "fuel-empty":
-            FuelPreviews.view(screen)
+        case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
+            NutritionPreviews.view(screen)
         case "logger", "logger-finish":
             LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals":
