@@ -1,0 +1,175 @@
+{
+  "module": "programs",
+  "fn": "normalizePlanId",
+  "note": "Legacy ids migrate to the plan that absorbed them — the two Onyx-4 variants, and the pre-Onyx apex51/axis4/axis5_hybrid spellings. Anything unknown is null, never the default. Exact string match — no trimming, no case folding.",
+  "cases": [
+    {
+      "name": "\"onyx5\"",
+      "input": {
+        "raw": "onyx5"
+      },
+      "expected": "onyx5"
+    },
+    {
+      "name": "\"onyx4\"",
+      "input": {
+        "raw": "onyx4"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "\"ppl\"",
+      "input": {
+        "raw": "ppl"
+      },
+      "expected": "ppl"
+    },
+    {
+      "name": "\"onyx4_builder\"",
+      "input": {
+        "raw": "onyx4_builder"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "\"onyx4_defender\"",
+      "input": {
+        "raw": "onyx4_defender"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "\"apex51\"",
+      "input": {
+        "raw": "apex51"
+      },
+      "expected": "onyx5"
+    },
+    {
+      "name": "\"axis4\"",
+      "input": {
+        "raw": "axis4"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "\"axis5_hybrid\"",
+      "input": {
+        "raw": "axis5_hybrid"
+      },
+      "expected": "onyx5"
+    },
+    {
+      "name": "\"axis4_builder\"",
+      "input": {
+        "raw": "axis4_builder"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "\"axis4_defender\"",
+      "input": {
+        "raw": "axis4_defender"
+      },
+      "expected": "onyx4"
+    },
+    {
+      "name": "null",
+      "input": {
+        "raw": null
+      },
+      "expected": null
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "raw": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "\" \"",
+      "input": {
+        "raw": " "
+      },
+      "expected": null
+    },
+    {
+      "name": "\"ONYX5\"",
+      "input": {
+        "raw": "ONYX5"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"Onyx4\"",
+      "input": {
+        "raw": "Onyx4"
+      },
+      "expected": null
+    },
+    {
+      "name": "\" onyx4\"",
+      "input": {
+        "raw": " onyx4"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"onyx4_builder \"",
+      "input": {
+        "raw": "onyx4_builder "
+      },
+      "expected": null
+    },
+    {
+      "name": "\"APEX51\"",
+      "input": {
+        "raw": "APEX51"
+      },
+      "expected": null
+    },
+    {
+      "name": "\" apex51\"",
+      "input": {
+        "raw": " apex51"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"helix5\"",
+      "input": {
+        "raw": "helix5"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"apex\"",
+      "input": {
+        "raw": "apex"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"bogus\"",
+      "input": {
+        "raw": "bogus"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"constructor\"",
+      "input": {
+        "raw": "constructor"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"toString\"",
+      "input": {
+        "raw": "toString"
+      },
+      "expected": null
+    }
+  ]
+}

@@ -377,8 +377,8 @@ export const MUSCLE = {
  * behind.
  */
 export const PLAN_CHIP: Record<string, string> = {
-  apex51: '#8B7CF6', // Helix-5 — premium violet
-  axis4: '#5FB8E8',  // Helix-4 — aqua
+  onyx5: '#8B7CF6', // Helix-5 — premium violet
+  onyx4: '#5FB8E8',  // Helix-4 — aqua
   ppl: '#79808C',    // legacy — muted
 }
 

@@ -219,7 +219,7 @@ function renderTdee(anchors: Array<{ key: string; label: string; value: number; 
 /**
  * Render one report body into `#root`.
  *
- * Called by the native side through `window.helixRender(markdown)`. Never
+ * Called by the native side through `window.onyxRender(markdown)`. Never
  * throws: a report that cannot be parsed is printed verbatim, because a saved
  * report the reader can no longer read is the one unacceptable outcome.
  */
@@ -284,8 +284,8 @@ export function render(md: string): void {
 
 declare global {
   interface Window {
-    helixRender: (md: string) => void
+    onyxRender: (md: string) => void
   }
 }
 
-window.helixRender = render
+window.onyxRender = render

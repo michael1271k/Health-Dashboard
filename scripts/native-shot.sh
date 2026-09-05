@@ -17,7 +17,7 @@
 # The plan's Wave 0 sketch used `helix://open?path=`. A deep link has to travel
 # through the app's real navigation, which means a real session, which means
 # Supabase credentials in the loop and screenshots that differ by whatever is in
-# the database today. `--helix-screen` swaps the root view for one screen backed
+# the database today. `--onyx-screen` swaps the root view for one screen backed
 # by seeded in-memory data, so the shot is deterministic and needs no network.
 # It is `#if DEBUG` only and cannot ship.
 #
@@ -32,8 +32,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # `SHOT_OUT` sends the PNGs somewhere else — App Store shots go to a
 # per-size folder rather than over the committed visual-diff set.
 OUT="${SHOT_OUT:-$ROOT/native/__screenshots__}"
-BUNDLE_ID="app.helix.health.michael.native"
-DERIVED="$HOME/Library/Caches/helix-swift/shot-derived"
+BUNDLE_ID="app.onyx.health.michael.native"
+DERIVED="$HOME/Library/Caches/onyx-swift/shot-derived"
 
 mkdir -p "$OUT"
 
@@ -51,15 +51,15 @@ xcrun simctl bootstatus "$UDID" -b >/dev/null
 # project and fails on an asset that does not exist.
 echo "Building…"
 (cd "$ROOT/native" && xcodegen generate >/dev/null)
-xcodebuild -project "$ROOT/native/HelixNative.xcodeproj" \
-  -scheme HelixNative \
+xcodebuild -project "$ROOT/native/Onyx.xcodeproj" \
+  -scheme Onyx \
   -configuration Debug \
   -destination "id=$UDID" \
   -derivedDataPath "$DERIVED" \
   CODE_SIGNING_ALLOWED=NO \
   build >/dev/null
 
-APP="$DERIVED/Build/Products/Debug-iphonesimulator/HelixNative.app"
+APP="$DERIVED/Build/Products/Debug-iphonesimulator/Onyx.app"
 xcrun simctl install "$UDID" "$APP"
 
 # ── The shots ──────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ shoot() {
   local screen="$1" size="$2" suffix="$3"
   xcrun simctl ui "$UDID" content_size "$size" >/dev/null
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
-  xcrun simctl launch "$UDID" "$BUNDLE_ID" --helix-screen "$screen" >/dev/null
+  xcrun simctl launch "$UDID" "$BUNDLE_ID" --onyx-screen "$screen" >/dev/null
   # The launch returns as soon as the process exists; the first frame is a
   # few hundred ms later. Shooting too early photographs the launch screen.
   sleep 3.5

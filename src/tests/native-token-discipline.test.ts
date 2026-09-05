@@ -6,13 +6,13 @@ import { join } from 'node:path'
  * The Swift twin of `palette-discipline`.
  *
  * The native design mandate has one enforceable rule: **no raw colour in a
- * view**. Views name meanings (`Color.helix.textSecondary`, `HelixDomain.fuel`)
+ * view**. Views name meanings (`Color.onyx.textSecondary`, `OnyxDomain.fuel`)
  * and the meanings are defined in exactly one place. A hex in a screen is not a
  * style choice, it is a token that was never designed — and it is invisible in
  * review, because `Color(hex: 0x7C5CFF)` looks deliberate.
  *
  * ── WHY THIS RUNS IN VITEST AND NOT IN `swift test` ─────────────────────────
- * The rule is about `native/HelixNative/Features/`, which belongs to the app
+ * The rule is about `native/Onyx/Features/`, which belongs to the app
  * target — and the app target's tests need a simulator, so they do not run in
  * `npm run swift:core` or `swift:data`. A file-scanning check does not need to
  * compile Swift at all; it needs to read Swift. This suite already runs on every
@@ -21,32 +21,32 @@ import { join } from 'node:path'
  * It moves into a Swift test target at Wave 9, when `src/` is deleted.
  */
 
-const FEATURES = 'native/HelixNative/Features'
+const FEATURES = 'native/Onyx/Features'
 /** The tiles: the same rule, and no legacy list — they were re-skinned wholesale. */
-const TILES = 'native/Packages/HelixUI/Sources/HelixUI/Tiles'
+const TILES = 'native/Packages/OnyxUI/Sources/OnyxUI/Tiles'
 
 /** Where colour is ALLOWED to be spelled out, because it is defined there. */
-const TOKEN_FILES = ['native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixTokens.swift']
+const TOKEN_FILES = ['native/Packages/OnyxUI/Sources/OnyxUI/DesignSystem/OnyxTokens.swift']
 
 /** Where the widget scale is DEFINED, and so may spell a point size. */
-const WIDGET_TYPE_FILE = 'HelixPrimitives.swift'
+const WIDGET_TYPE_FILE = 'OnyxPrimitives.swift'
 
 /**
  * Files whose deletion is part of the design and must not come back.
  *
- * `HelixSurface.swift` was a SECOND corner scale (`HelixRadius` 6/8/12/16) and a
- * second depth primitive (`helixCard`/`helixRow`) sitting beside `HelixCorner`
+ * `OnyxSurface.swift` was a SECOND corner scale (`OnyxRadius` 6/8/12/16) and a
+ * second depth primitive (`onyxCard`/`onyxRow`) sitting beside `OnyxCorner`
  * and `helixGlass`. Two scales for one decision is how a design system stops
  * being one, and the way that happens is somebody re-adding the file.
  *
- * `HelixPalette.swift` was the forty-hex Tailwind transliteration the whole app
+ * `OnyxPalette.swift` was the forty-hex Tailwind transliteration the whole app
  * used to read, and latterly the parking space for that second scale. Wave 2.4
  * re-skinned its last reader — the Live Logger — and deleted it. Every meaning
- * it carried now has exactly one definition, in `HelixTokens.swift`.
+ * it carried now has exactly one definition, in `OnyxTokens.swift`.
  */
 const DELETED = [
-  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixSurface.swift',
-  'native/Packages/HelixUI/Sources/HelixUI/DesignSystem/HelixPalette.swift',
+  'native/Packages/OnyxUI/Sources/OnyxUI/DesignSystem/OnyxSurface.swift',
+  'native/Packages/OnyxUI/Sources/OnyxUI/DesignSystem/OnyxPalette.swift',
 ]
 
 /**
@@ -104,7 +104,7 @@ describe('native token discipline', () => {
     expect(
       offenders,
       'A view named a colour instead of a token. Add the token to ' +
-        'HelixTokens.swift and use it — a colour you cannot name is a token ' +
+        'OnyxTokens.swift and use it — a colour you cannot name is a token ' +
         'you have not designed yet.',
     ).toEqual([])
   })
@@ -139,9 +139,9 @@ describe('native token discipline', () => {
     // Protein, carbs, fat and the core sleep stage are DOMAIN STOPS, not hues of
     // their own — if one of them ever gains a hex here, the four-accent rule has
     // quietly become a five- or six-accent one.
-    expect(tokens).toContain('public static let protein = HelixDomain.fuel.end')
-    expect(tokens).toContain('public static let carbs = HelixDomain.fuel.start')
-    expect(tokens).toContain('public static let fat = HelixDomain.recover.start')
+    expect(tokens).toContain('public static let protein = OnyxDomain.fuel.end')
+    expect(tokens).toContain('public static let carbs = OnyxDomain.fuel.start')
+    expect(tokens).toContain('public static let fat = OnyxDomain.recover.start')
   })
 
   /**
@@ -171,13 +171,13 @@ describe('native token discipline', () => {
     }
     expect(
       offenders,
-      'A screen typed a number instead of naming a step. Spacing is HelixSpace ' +
-        '(xs 4 · s 8 · m 12 · l 16 · xl 24) and type is one of the six HelixType ' +
+      'A screen typed a number instead of naming a step. Spacing is OnyxSpace ' +
+        '(xs 4 · s 8 · m 12 · l 16 · xl 24) and type is one of the six OnyxType ' +
         'roles — nothing in the app is smaller than 11 pt.',
     ).toEqual([])
   })
 
-  it('the widget faces go through HelixWidgetType', () => {
+  it('the widget faces go through OnyxWidgetType', () => {
     // The faces ARE point-sized, deliberately: WidgetKit delivers no Dynamic
     // Type and a Lock Screen accessory is 40 pt tall. What the rule buys is that
     // every one of them is spelled the same way, so the widget scale can be swept
@@ -185,7 +185,7 @@ describe('native token discipline', () => {
     const offenders = swiftFiles(TILES)
       .filter((file) => file !== WIDGET_TYPE_FILE)
       .filter((file) => /\.font\(\.system\(size:/.test(readFileSync(join(TILES, file), 'utf8')))
-    expect(offenders, 'A tile face typed a bare font size; use HelixWidgetType.').toEqual([])
+    expect(offenders, 'A tile face typed a bare font size; use OnyxWidgetType.').toEqual([])
   })
 
   it('the deleted files stay deleted', () => {

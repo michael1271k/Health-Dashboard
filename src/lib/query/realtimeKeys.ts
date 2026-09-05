@@ -41,6 +41,37 @@ export const TABLE_KEYS: Record<string, string[][]> = {
   // Day swaps cascade into supplements and the day's plan, so the list matches
   // what useSwapDay itself invalidates after a write.
   schedule_overrides: [['schedule_overrides'], ['day_vault'], ['daily_logs'], ['workout_sessions'], ['supplement_log']],
+
+  // ── W4: the sixteen tables the socket was blind to ─────────────────────────
+  // The publication carried 13 of 29 mirrored tables, so a phone that logged
+  // cardio, a fatigue slot, DOMS, a supplement edit or a PR reached the server
+  // and the desktop sat there showing yesterday until something else forced a
+  // refetch. Each list below is the one the table's OWN mutation already
+  // cascades — copied, not invented, so the socket and the local write refresh
+  // the same surfaces and cannot drift apart.
+  cardio_logs: [['cardio_logs']],
+  fatigue_logs: [['fatigue_logs']],
+  doms_logs: [['doms_logs'], ['doms_sources'], ['weekly_export']],
+  // `useCustomSupplements.CASCADE_KEYS` minus `['micros']`, which matches no
+  // `useQuery` — see the note there.
+  custom_supplements: [['custom_supplements'], ['weekly_export'], ['supplement_log']],
+  daily_targets: [['daily_targets'], ['weekly_export'], ['today'], ['day_vault']],
+  target_profiles: [['target_profiles'], ['daily_targets']],
+  // A commit rewrites the day's template, so this is the same key the workout
+  // list carries — a template edited on one device must not leave the other
+  // prescribing the old one.
+  routine_templates: [['routine_template']],
+  program_day_layout: [['program_day_layout']],
+  // `useSettingsGoals.PLAN_PHASE_CASCADE_KEYS`: the goals row is what
+  // `useNutritionGoals` resolves AHEAD of `user_goals`, so every surface that
+  // grades against a target has to come with it.
+  plan_phase_goals: [['plan_phase_goals'], ['user_goals'], ['today'], ['readiness_today'], ['coach'], ['day_vault'], ['nutrition_entries']],
+  plan_phase_volume: [['plan_phase_goals'], ['weekly_volume'], ['muscle_analytics']],
+  personal_records: [['personal_records'], ['session_pr_records'], ['session_detail'], ['weekly_review']],
+  // The catalogue: the phone can CREATE a row here (Wave 4's exercise push),
+  // and a name it invents has to reach the desktop's pickers.
+  exercises: [['exercises'], ['exercise_history']],
+  profiles: [['my-profile']],
 }
 
 export const REALTIME_TABLES = Object.keys(TABLE_KEYS)

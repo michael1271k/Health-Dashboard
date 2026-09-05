@@ -1,0 +1,34 @@
+{
+  "module": "programs",
+  "fn": "PROGRAMS / planList() / DEFAULT_PROGRAM_ID",
+  "note": "Live plans first, legacy last. The TS sort is STABLE (ES2019), so onyx5 keeps its place ahead of onyx4 — the Swift must partition, not sort. `onyx5` is Onyx-5: the id is a localStorage key a season of rows was written under and it does not get renamed.",
+  "cases": [
+    {
+      "name": "the three plans, live first and legacy last",
+      "input": {},
+      "expected": {
+        "defaultPlanId": "onyx5",
+        "plans": [
+          {
+            "id": "onyx5",
+            "label": "Onyx-5",
+            "blurb": "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.",
+            "isLegacy": false
+          },
+          {
+            "id": "onyx4",
+            "label": "Onyx-4",
+            "blurb": "4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.",
+            "isLegacy": false
+          },
+          {
+            "id": "ppl",
+            "label": "Push/Pull/Legs",
+            "blurb": "Historical Push/Pull/Legs — Sun/Thu Push · Mon/Fri Pull · Tue Legs · Wed & Sat rest.",
+            "isLegacy": true
+          }
+        ]
+      }
+    }
+  ]
+}

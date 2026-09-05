@@ -1,0 +1,2445 @@
+{
+  "module": "schedule/layout + programs",
+  "fn": "parseLayout / effectiveWeekday / dayKeyForWeekday / fullLayout / moveDay / isAuthoredLayout / canonicalLayout / programDayIn",
+  "note": "parseLayout is TOTAL: malformed values drop, a duplicate weekday keeps the FIRST key in jsonb order (length, then bytewise — the only order the web ever reads). moveDay is an EXCHANGE: an occupied target trades slots, a free one just moves. canonicalLayout is the exact JSON.stringify of key-sorted [key, weekday] pairs. programDayIn: null = rest; `weekday` in the answer is the AUTHORED one.",
+  "cases": [
+    {
+      "name": "parseLayout · well-formed",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "arms": 3,
+          "cb_a": 0
+        }
+      },
+      "expected": {
+        "layout": {
+          "arms": 3,
+          "cb_a": 0
+        }
+      }
+    },
+    {
+      "name": "parseLayout · out-of-range, non-integer, string, null, bool, nested all dropped",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "a": 7,
+          "b": -1,
+          "c": 2.5,
+          "d": "3",
+          "e": null,
+          "f": true,
+          "g": false,
+          "h": [
+            3
+          ],
+          "i": {
+            "n": 3
+          },
+          "arms": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "arms": 3
+        }
+      }
+    },
+    {
+      "name": "parseLayout · null",
+      "input": {
+        "fn": "parseLayout",
+        "raw": null
+      },
+      "expected": {
+        "layout": {}
+      }
+    },
+    {
+      "name": "parseLayout · a string",
+      "input": {
+        "fn": "parseLayout",
+        "raw": "nope"
+      },
+      "expected": {
+        "layout": {}
+      }
+    },
+    {
+      "name": "parseLayout · an array",
+      "input": {
+        "fn": "parseLayout",
+        "raw": [
+          1,
+          2
+        ]
+      },
+      "expected": {
+        "layout": {}
+      }
+    },
+    {
+      "name": "parseLayout · a number",
+      "input": {
+        "fn": "parseLayout",
+        "raw": 3
+      },
+      "expected": {
+        "layout": {}
+      }
+    },
+    {
+      "name": "parseLayout · empty object",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {}
+      },
+      "expected": {
+        "layout": {}
+      }
+    },
+    {
+      "name": "parseLayout · an empty key is dropped",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "": 3,
+          "arms": 4
+        }
+      },
+      "expected": {
+        "layout": {
+          "arms": 4
+        }
+      }
+    },
+    {
+      "name": "parseLayout · duplicate weekday — the jsonb-first key wins (same length, bytewise)",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "arms": 3,
+          "cb_b": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "arms": 3
+        }
+      }
+    },
+    {
+      "name": "parseLayout · duplicate weekday — the shorter key is jsonb-first",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "cb_b": 5,
+          "legs_a": 5
+        }
+      },
+      "expected": {
+        "layout": {
+          "cb_b": 5
+        }
+      }
+    },
+    {
+      "name": "parseLayout · 6 and 0 are both weekdays",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "cb_a": 0,
+          "legs_b": 6
+        }
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_b": 6
+        }
+      }
+    },
+    {
+      "name": "parseLayout · a key of another plan is kept — the layout does not know the plan",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "upper_a": 3
+        }
+      }
+    },
+    {
+      "name": "parseLayout · the full five-day layout",
+      "input": {
+        "fn": "parseLayout",
+        "raw": {
+          "arms": 2,
+          "cb_a": 0,
+          "cb_b": 4,
+          "legs_a": 1,
+          "legs_b": 5
+        }
+      },
+      "expected": {
+        "layout": {
+          "arms": 2,
+          "cb_a": 0,
+          "cb_b": 4,
+          "legs_a": 1,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/cb_a · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "cb_a",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 0
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/cb_a · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "cb_a",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 3
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/legs_a · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "legs_a",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 1
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/legs_a · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "legs_a",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 1
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/arms · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "arms",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/arms · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "arms",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/cb_b · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "cb_b",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/cb_b · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "cb_b",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/legs_b · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "legs_b",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx5/legs_b · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "legs_b",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": "cb_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "day": {
+          "key": "cb_a",
+          "label": "Upper A",
+          "sub": "Chest + Back",
+          "weekday": 0
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": "legs_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "day": {
+          "key": "legs_a",
+          "label": "Legs & Core A",
+          "sub": "Quad Focus",
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "arms"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "arms",
+          "label": "Delts & Arms",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "cb_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "cb_b",
+          "label": "Upper B",
+          "sub": "Chest + Back",
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "legs_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "legs_b",
+          "label": "Legs & Core B",
+          "sub": "Posterior Focus",
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · authored · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · authored · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · onyx5 · authored",
+      "input": {
+        "fn": "fullLayout",
+        "program": "onyx5",
+        "layout": {}
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · onyx5 · authored",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx5",
+        "layout": {}
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": "legs_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "day": {
+          "key": "legs_a",
+          "label": "Legs & Core A",
+          "sub": "Quad Focus",
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "arms"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "arms",
+          "label": "Delts & Arms",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": "cb_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "day": {
+          "key": "cb_a",
+          "label": "Upper A",
+          "sub": "Chest + Back",
+          "weekday": 0
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "cb_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "cb_b",
+          "label": "Upper B",
+          "sub": "Chest + Back",
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "legs_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "legs_b",
+          "label": "Legs & Core B",
+          "sub": "Posterior Focus",
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx5 · remapped · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx5 · remapped · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · onyx5 · remapped",
+      "input": {
+        "fn": "fullLayout",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 3,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · onyx5 · remapped",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 3
+        }
+      },
+      "expected": {
+        "flag": false
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/upper_a · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "upper_a",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 1
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/upper_a · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "upper_a",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 3
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/lower_a · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "lower_a",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/lower_a · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "lower_a",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/upper_b · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "upper_b",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/upper_b · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "upper_b",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/lower_b · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "lower_b",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "effectiveWeekday · onyx4/lower_b · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx4",
+        "dayKey": "lower_b",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": "upper_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "day": {
+          "key": "upper_a",
+          "label": "Upper A",
+          "sub": null,
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "lower_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "lower_a",
+          "label": "Lower A",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "upper_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "upper_b",
+          "label": "Upper B",
+          "sub": null,
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "lower_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "lower_b",
+          "label": "Lower B",
+          "sub": null,
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · authored · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · authored · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · onyx4 · authored",
+      "input": {
+        "fn": "fullLayout",
+        "program": "onyx4",
+        "layout": {}
+      },
+      "expected": {
+        "layout": {
+          "upper_a": 1,
+          "lower_a": 2,
+          "upper_b": 4,
+          "lower_b": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · onyx4 · authored",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx4",
+        "layout": {}
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "lower_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "lower_a",
+          "label": "Lower A",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": "upper_a"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "day": {
+          "key": "upper_a",
+          "label": "Upper A",
+          "sub": null,
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "upper_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "upper_b",
+          "label": "Upper B",
+          "sub": null,
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "lower_b"
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "lower_b",
+          "label": "Lower B",
+          "sub": null,
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · onyx4 · remapped · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · onyx4 · remapped · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · onyx4 · remapped",
+      "input": {
+        "fn": "fullLayout",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "upper_a": 3,
+          "lower_a": 2,
+          "upper_b": 4,
+          "lower_b": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · onyx4 · remapped",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx4",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "flag": false
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_push_sun · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_push_sun",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 0
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_push_sun · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_push_sun",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "weekday": 3
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_pull_mon · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_pull_mon",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 1
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_pull_mon · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_pull_mon",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "weekday": 1
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_legs_tue · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_legs_tue",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_legs_tue · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_legs_tue",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_push_thu · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_push_thu",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_push_thu · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_push_thu",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "weekday": 4
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_pull_fri · silent",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_pull_fri",
+        "layout": {}
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "effectiveWeekday · ppl/ppl_pull_fri · first day remapped to 3",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "ppl",
+        "dayKey": "ppl_pull_fri",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "weekday": 5
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": "ppl_push_sun"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 0
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_push_sun",
+          "label": "Push",
+          "sub": null,
+          "weekday": 0
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": "ppl_pull_mon"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 1
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_pull_mon",
+          "label": "Pull",
+          "sub": null,
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "ppl_legs_tue"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_legs_tue",
+          "label": "Legs",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 3
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "ppl_push_thu"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_push_thu",
+          "label": "Push",
+          "sub": null,
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "ppl_pull_fri"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_pull_fri",
+          "label": "Pull",
+          "sub": null,
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · authored · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · ppl · authored · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {},
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · ppl · authored",
+      "input": {
+        "fn": "fullLayout",
+        "program": "ppl",
+        "layout": {}
+      },
+      "expected": {
+        "layout": {
+          "ppl_push_sun": 0,
+          "ppl_pull_mon": 1,
+          "ppl_legs_tue": 2,
+          "ppl_push_thu": 4,
+          "ppl_pull_fri": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · ppl · authored",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "ppl",
+        "layout": {}
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 0",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 0",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 0
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 1",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "dayKey": "ppl_pull_mon"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 1",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 1
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_pull_mon",
+          "label": "Pull",
+          "sub": null,
+          "weekday": 1
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 2",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "dayKey": "ppl_legs_tue"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 2",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 2
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_legs_tue",
+          "label": "Legs",
+          "sub": null,
+          "weekday": 2
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 3",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "dayKey": "ppl_push_sun"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 3",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 3
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_push_sun",
+          "label": "Push",
+          "sub": null,
+          "weekday": 0
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 4",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "dayKey": "ppl_push_thu"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 4",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 4
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_push_thu",
+          "label": "Push",
+          "sub": null,
+          "weekday": 4
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 5",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "dayKey": "ppl_pull_fri"
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 5",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 5
+      },
+      "expected": {
+        "day": {
+          "key": "ppl_pull_fri",
+          "label": "Pull",
+          "sub": null,
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · ppl · remapped · 6",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "programDayIn · ppl · remapped · 6",
+      "input": {
+        "fn": "programDayIn",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        },
+        "weekday": 6
+      },
+      "expected": {
+        "day": null
+      }
+    },
+    {
+      "name": "fullLayout · ppl · remapped",
+      "input": {
+        "fn": "fullLayout",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "layout": {
+          "ppl_push_sun": 3,
+          "ppl_pull_mon": 1,
+          "ppl_legs_tue": 2,
+          "ppl_push_thu": 4,
+          "ppl_pull_fri": 5
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · ppl · remapped",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "ppl",
+        "layout": {
+          "ppl_push_sun": 3
+        }
+      },
+      "expected": {
+        "flag": false
+      }
+    },
+    {
+      "name": "effectiveWeekday · an invalid mapped value falls back to the authored weekday",
+      "input": {
+        "fn": "effectiveWeekday",
+        "program": "onyx5",
+        "dayKey": "arms",
+        "layout": {
+          "arms": 9
+        }
+      },
+      "expected": {
+        "weekday": 2
+      }
+    },
+    {
+      "name": "dayKeyForWeekday · weekday 7 is nobody",
+      "input": {
+        "fn": "dayKeyForWeekday",
+        "program": "onyx5",
+        "layout": {},
+        "weekday": 7
+      },
+      "expected": {
+        "dayKey": null
+      }
+    },
+    {
+      "name": "moveDay · arms → Thu exchanges with cb_b",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 4
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · arms → Wed just moves; Tue becomes rest",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 3
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 3,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · arms → its own Tue is a no-op (full layout back)",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 2
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · a day of another plan is a no-op",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "upper_a",
+        "weekday": 3
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · weekday 7 is invalid — full layout back",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 7
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · weekday -1 is invalid — full layout back",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": -1
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · from a sparse layout {arms:3}, cb_b → Wed exchanges with arms (arms takes Thu)",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {
+          "arms": 3
+        },
+        "dayKey": "cb_b",
+        "weekday": 3
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 3,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · from a sparse layout {arms:3}, arms → Tue goes home (Wed rests again)",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {
+          "arms": 3
+        },
+        "dayKey": "arms",
+        "weekday": 2
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · onyx4 upper_a → Sun (free)",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx4",
+        "layout": {},
+        "dayKey": "upper_a",
+        "weekday": 0
+      },
+      "expected": {
+        "layout": {
+          "upper_a": 0,
+          "lower_a": 2,
+          "upper_b": 4,
+          "lower_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · onyx4 lower_b → Mon exchanges with upper_a",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx4",
+        "layout": {},
+        "dayKey": "lower_b",
+        "weekday": 1
+      },
+      "expected": {
+        "layout": {
+          "upper_a": 5,
+          "lower_a": 2,
+          "upper_b": 4,
+          "lower_b": 1
+        }
+      }
+    },
+    {
+      "name": "moveDay · ppl push_sun → Wed (free)",
+      "input": {
+        "fn": "moveDay",
+        "program": "ppl",
+        "layout": {},
+        "dayKey": "ppl_push_sun",
+        "weekday": 3
+      },
+      "expected": {
+        "layout": {
+          "ppl_push_sun": 3,
+          "ppl_pull_mon": 1,
+          "ppl_legs_tue": 2,
+          "ppl_push_thu": 4,
+          "ppl_pull_fri": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · ppl push_sun → Thu exchanges with push_thu",
+      "input": {
+        "fn": "moveDay",
+        "program": "ppl",
+        "layout": {},
+        "dayKey": "ppl_push_sun",
+        "weekday": 4
+      },
+      "expected": {
+        "layout": {
+          "ppl_push_sun": 4,
+          "ppl_pull_mon": 1,
+          "ppl_legs_tue": 2,
+          "ppl_push_thu": 0,
+          "ppl_pull_fri": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · chain · arms → 4",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {},
+        "dayKey": "arms",
+        "weekday": 4
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 5
+        }
+      }
+    },
+    {
+      "name": "moveDay · chain · cb_a → 5",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 5
+        },
+        "dayKey": "cb_a",
+        "weekday": 5
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 5,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 0
+        }
+      }
+    },
+    {
+      "name": "moveDay · chain · legs_b → 0",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 5,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 0
+        },
+        "dayKey": "legs_b",
+        "weekday": 0
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 5,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 0
+        }
+      }
+    },
+    {
+      "name": "moveDay · chain · arms → 3",
+      "input": {
+        "fn": "moveDay",
+        "program": "onyx5",
+        "layout": {
+          "cb_a": 5,
+          "legs_a": 1,
+          "arms": 4,
+          "cb_b": 2,
+          "legs_b": 0
+        },
+        "dayKey": "arms",
+        "weekday": 3
+      },
+      "expected": {
+        "layout": {
+          "cb_a": 5,
+          "legs_a": 1,
+          "arms": 3,
+          "cb_b": 2,
+          "legs_b": 0
+        }
+      }
+    },
+    {
+      "name": "isAuthoredLayout · a key of another plan says nothing",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx5",
+        "layout": {
+          "upper_a": 3
+        }
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "isAuthoredLayout · an authored value spelled out is still authored",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx5",
+        "layout": {
+          "arms": 2
+        }
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "isAuthoredLayout · an invalid value falls back and is authored",
+      "input": {
+        "fn": "isAuthoredLayout",
+        "program": "onyx5",
+        "layout": {
+          "arms": 9
+        }
+      },
+      "expected": {
+        "flag": true
+      }
+    },
+    {
+      "name": "canonicalLayout · one key order",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2
+        }
+      },
+      "expected": {
+        "text": "[[\"arms\",2],[\"cb_a\",0],[\"legs_a\",1]]"
+      }
+    },
+    {
+      "name": "canonicalLayout · the other key order — same string",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {
+          "arms": 2,
+          "cb_a": 0,
+          "legs_a": 1
+        }
+      },
+      "expected": {
+        "text": "[[\"arms\",2],[\"cb_a\",0],[\"legs_a\",1]]"
+      }
+    },
+    {
+      "name": "canonicalLayout · empty",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {}
+      },
+      "expected": {
+        "text": "[]"
+      }
+    },
+    {
+      "name": "canonicalLayout · the full five",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {
+          "cb_a": 0,
+          "legs_a": 1,
+          "arms": 2,
+          "cb_b": 4,
+          "legs_b": 5
+        }
+      },
+      "expected": {
+        "text": "[[\"arms\",2],[\"cb_a\",0],[\"cb_b\",4],[\"legs_a\",1],[\"legs_b\",5]]"
+      }
+    },
+    {
+      "name": "canonicalLayout · sort is code-unit order: uppercase before underscore before lowercase",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {
+          "b": 1,
+          "B": 2,
+          "_a": 3,
+          "a": 4
+        }
+      },
+      "expected": {
+        "text": "[[\"B\",2],[\"_a\",3],[\"a\",4],[\"b\",1]]"
+      }
+    },
+    {
+      "name": "canonicalLayout · a key with a quote is escaped",
+      "input": {
+        "fn": "canonicalLayout",
+        "layout": {
+          "we\"ird": 1,
+          "plain": 2
+        }
+      },
+      "expected": {
+        "text": "[[\"plain\",2],[\"we\\\"ird\",1]]"
+      }
+    }
+  ]
+}

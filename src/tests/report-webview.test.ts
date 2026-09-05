@@ -168,7 +168,7 @@ describe('the offline report renderer', () => {
 })
 
 describe('the built bundle', () => {
-  const BUNDLE = 'native/HelixNative/Resources/ReportRenderer.html'
+  const BUNDLE = 'native/Onyx/Resources/ReportRenderer.html'
 
   it('exists — run `npm run report:bundle` after changing the renderer', () => {
     expect(existsSync(BUNDLE)).toBe(true)
@@ -180,6 +180,6 @@ describe('the built bundle', () => {
     // URL in here is a request that will fail, silently, on that phone.
     const external = html.match(/(?:src|href)\s*=\s*["'](https?:|\/\/)[^"']*/gi) ?? []
     expect(external).toEqual([])
-    expect(html).toContain('window.helixRender')
+    expect(html).toContain('window.onyxRender')
   })
 })

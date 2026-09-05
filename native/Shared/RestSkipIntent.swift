@@ -6,11 +6,11 @@ import Foundation
 /// hangs off it.
 ///
 /// ── WHY THIS FILE SITS BESIDE THE ATTRIBUTES AND NOT IN THE APP ─────────────
-/// `HelixWorkoutAttributes` next door explains the rule that puts it here: the
+/// `OnyxWorkoutAttributes` next door explains the rule that puts it here: the
 /// widget extension DRAWS this button and the app PERFORMS it, so the intent
 /// type has to be the same type on both sides, which means one file compiled
 /// into both targets. The cost is that it may import nothing the extension does
-/// not have — no HelixCore, no HelixData, and above all no `LoggerModel`.
+/// not have — no OnyxCore, no OnyxData, and above all no `LoggerModel`.
 
 /// Where the running logger leaves its "stop the rest clock" closure.
 ///
@@ -59,7 +59,7 @@ struct RestSkipIntent: LiveActivityIntent {
         // doing: a skip button that is silently dead after the very crash that
         // makes people reach for it is the failure this whole feature exists to
         // prevent.
-        for activity in Activity<HelixWorkoutAttributes>.activities {
+        for activity in Activity<OnyxWorkoutAttributes>.activities {
             var state = activity.content.state
             // ActivityKit budgets updates, so never spend one on a card that
             // was not counting anything down.

@@ -5,7 +5,7 @@ import {
 } from '@/lib/schedule/layout'
 import { planPermanentMove, blockForPlacement, describeBlock, dateForWeekday, type LoggedDay } from '@/lib/schedule/swap'
 import { REST_OVERRIDE } from '@/lib/schedule/overrides'
-import { APEX51 } from '@/lib/programs'
+import { ONYX5 } from '@/lib/programs'
 import type { ScheduleDay } from '@/lib/programs'
 
 /**
@@ -44,7 +44,7 @@ describe('parseLayout — a corrupt row must degrade, never throw', () => {
 })
 
 describe('effectiveWeekday / dayKeyForWeekday', () => {
-  const arms = APEX51.days.find((d) => d.key === 'arms')!
+  const arms = ONYX5.days.find((d) => d.key === 'arms')!
 
   it('answers the authored weekday when the layout is silent', () => {
     expect(effectiveWeekday(arms, {})).toBe(2)
@@ -58,53 +58,53 @@ describe('effectiveWeekday / dayKeyForWeekday', () => {
     // The duplicated-session bug: matching on `d.weekday` would leave arms
     // scheduled on BOTH Tuesday and Wednesday.
     const layout: DayLayout = { arms: 3 }
-    expect(dayKeyForWeekday(APEX51, layout, 3)).toBe('arms')
-    expect(dayKeyForWeekday(APEX51, layout, 2)).toBeNull()
+    expect(dayKeyForWeekday(ONYX5, layout, 3)).toBe('arms')
+    expect(dayKeyForWeekday(ONYX5, layout, 2)).toBeNull()
   })
 })
 
 describe('moveDay is an EXCHANGE', () => {
   it('trades slots when the target weekday is occupied', () => {
     // arms Tue(2) → Thu(4), where cb_b lives. cb_b must take Tuesday, not vanish.
-    const next = moveDay(APEX51, {}, 'arms', 4)
+    const next = moveDay(ONYX5, {}, 'arms', 4)
     expect(next.arms).toBe(4)
     expect(next.cb_b).toBe(2)
   })
 
   it('just moves when the target weekday is a rest day', () => {
-    const next = moveDay(APEX51, {}, 'arms', 3)
+    const next = moveDay(ONYX5, {}, 'arms', 3)
     expect(next.arms).toBe(3)
     // Nothing else shifted; Tuesday simply becomes rest.
-    expect(dayKeyForWeekday(APEX51, next, 2)).toBeNull()
+    expect(dayKeyForWeekday(ONYX5, next, 2)).toBeNull()
     expect(next.cb_b).toBe(4)
   })
 
   it('stays a bijection — five days, five distinct weekdays, always', () => {
     let layout: DayLayout = {}
     for (const [key, wd] of [['arms', 4], ['cb_a', 5], ['legs_b', 0], ['arms', 3]] as const) {
-      layout = moveDay(APEX51, layout, key, wd)
+      layout = moveDay(ONYX5, layout, key, wd)
       const slots = Object.values(layout)
       expect(new Set(slots).size).toBe(slots.length)
-      expect(Object.keys(layout).sort()).toEqual(APEX51.days.map((d) => d.key).sort())
+      expect(Object.keys(layout).sort()).toEqual(ONYX5.days.map((d) => d.key).sort())
     }
   })
 
   it('is a no-op for a day of another plan, or for its current slot', () => {
-    expect(moveDay(APEX51, {}, 'not_a_day', 3)).toEqual(fullLayout(APEX51, {}))
-    expect(moveDay(APEX51, {}, 'arms', 2)).toEqual(fullLayout(APEX51, {}))
+    expect(moveDay(ONYX5, {}, 'not_a_day', 3)).toEqual(fullLayout(ONYX5, {}))
+    expect(moveDay(ONYX5, {}, 'arms', 2)).toEqual(fullLayout(ONYX5, {}))
   })
 
   it('stores the layout WHOLE, so the row describes the week on its own', () => {
-    const next = moveDay(APEX51, {}, 'arms', 3)
+    const next = moveDay(ONYX5, {}, 'arms', 3)
     expect(Object.keys(next).sort()).toEqual(['arms', 'cb_a', 'cb_b', 'legs_a', 'legs_b'])
   })
 })
 
 describe('isAuthoredLayout / canonicalLayout', () => {
   it('recognises a layout that says nothing new', () => {
-    expect(isAuthoredLayout(APEX51, {})).toBe(true)
-    expect(isAuthoredLayout(APEX51, fullLayout(APEX51, {}))).toBe(true)
-    expect(isAuthoredLayout(APEX51, { arms: 3 })).toBe(false)
+    expect(isAuthoredLayout(ONYX5, {})).toBe(true)
+    expect(isAuthoredLayout(ONYX5, fullLayout(ONYX5, {}))).toBe(true)
+    expect(isAuthoredLayout(ONYX5, { arms: 3 })).toBe(false)
   })
 
   it('compares independently of key order — Postgres reorders jsonb keys', () => {
@@ -154,7 +154,7 @@ describe('a logged session blocks the move that would misreport it', () => {
 function makeResolve() {
   return (dateISO: string, layout: DayLayout): ScheduleDay | 'rest' => {
     const weekday = new Date(`${dateISO}T12:00:00Z`).getUTCDay()
-    const day = APEX51.days.find((d) => effectiveWeekday(d, layout) === weekday)
+    const day = ONYX5.days.find((d) => effectiveWeekday(d, layout) === weekday)
     return day ? { label: day.label, sub: day.sub, dayKey: day.key } : 'rest'
   }
 }
@@ -162,7 +162,7 @@ function makeResolve() {
 describe('planPermanentMove protects the part of the week that already happened', () => {
   // Week of Sun 2026-08-09 … Sat 2026-08-15. "Today" is Thursday 2026-08-13.
   const today = '2026-08-13'
-  const base = { program: APEX51, layout: {} as DayLayout, todayISO: today, resolveWith: makeResolve() }
+  const base = { program: ONYX5, layout: {} as DayLayout, todayISO: today, resolveWith: makeResolve() }
 
   it('needs NO writes when the change only affects days still ahead', () => {
     // cb_b Thu(4) → Sat(6): Sunday–Wednesday keep their meaning exactly.

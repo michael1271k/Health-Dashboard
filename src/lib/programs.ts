@@ -130,8 +130,8 @@ export const setsForPhase = (e: ProgramExercise, phase: ProgramPhase): number =>
 const C = DAY_COLOR
 
 // ── HELIX-5 (ACTIVE) — Sun/Mon/Tue/Thu/Fri ─────────────────────────────────
-export const APEX51: Program = {
-  id: 'apex51', label: 'Onyx-5', era: 'axis', active: true,   // id kept for localStorage compat
+export const ONYX5: Program = {
+  id: 'onyx5', label: 'Onyx-5', era: 'axis', active: true,   // id kept for localStorage compat
   blurb: '5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.',
   days: [
     { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cb_a, weekday: 0, exercises: [
@@ -192,7 +192,7 @@ export const APEX51: Program = {
 // PHASE: same movements, per-exercise (bulk/cut) set counts. `sets` = bulk;
 // `cutSets` = cut (0 = a bulk-only lift dropped while cutting).
 export const HELIX4: Program = {
-  id: 'axis4', label: 'Onyx-4', era: 'axis', drawer: true,
+  id: 'onyx4', label: 'Onyx-4', era: 'axis', drawer: true,
   blurb: '4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.',
   days: [
     { key: 'upper_a', label: 'Upper A', color: C.cb_a, weekday: 1, exercises: [
@@ -284,9 +284,9 @@ export const PPL_LEGACY: Program = {
 }
 
 export const PROGRAMS: Record<string, Program> = {
-  [APEX51.id]: APEX51, [HELIX4.id]: HELIX4, [PPL_LEGACY.id]: PPL_LEGACY,
+  [ONYX5.id]: ONYX5, [HELIX4.id]: HELIX4, [PPL_LEGACY.id]: PPL_LEGACY,
 }
-export const DEFAULT_PROGRAM_ID = APEX51.id
+export const DEFAULT_PROGRAM_ID = ONYX5.id
 
 /**
  * Resolve a plan template to a specific PHASE: on a cut, each exercise's `sets`
@@ -348,7 +348,7 @@ export function programForDate(dateISO: string): Program {
  * function it always was.
  */
 export function programDayFor(programId: string, weekday: number): ProgramDay | 'rest' {
-  const p = PROGRAMS[programId] ?? APEX51
+  const p = PROGRAMS[programId] ?? ONYX5
   return programDayIn(p, getProgramLayout(p.id), weekday)
 }
 
@@ -432,8 +432,8 @@ export function isRestDayFor(dateISO: string): boolean {
  * plan you are RUNNING. Applying it to a finished block would move history.
  */
 function programForContext(ctx: ScheduleContext, dateISO: string): { program: Program; layout: DayLayout } {
-  if (eraForDate(dateISO) === 'ppl') return { program: PROGRAMS.ppl ?? APEX51, layout: {} }
-  return { program: PROGRAMS[ctx.programId] ?? APEX51, layout: ctx.layout }
+  if (eraForDate(dateISO) === 'ppl') return { program: PROGRAMS.ppl ?? ONYX5, layout: {} }
+  return { program: PROGRAMS[ctx.programId] ?? ONYX5, layout: ctx.layout }
 }
 
 export interface ScheduleDay { label: string; sub?: string; dayKey?: string }
@@ -556,7 +556,20 @@ const ACTIVE_KEY = 'helix_active_plan'
 const PHASE_KEY = 'helix_active_phase'
 // Legacy plan ids → the consolidated plan (the two Onyx-4 variants are one plan
 // now; the old key names are migrated on read so a device never dead-ends).
-const LEGACY_PLAN_ID: Record<string, string> = { axis4_builder: 'axis4', axis4_defender: 'axis4' }
+const LEGACY_PLAN_ID: Record<string, string> = {
+  // Onyx-4 shipped as two plans, "Builder" and "Defender". They are one plan
+  // with two PHASES now — same movements, different set counts.
+  onyx4_builder: 'onyx4', onyx4_defender: 'onyx4',
+  axis4_builder: 'onyx4', axis4_defender: 'onyx4',
+  // The 2026-09-05 rename. `apex51` and `axis4` were the ids a season of
+  // localStorage entries, Supabase rows and exported reports were written
+  // under; `axis5_hybrid` is older still and survives as the default of
+  // `user_goals.active_program`. The DB rows are migrated in the same wave,
+  // but a device that has not synced since, an archived report, or a row this
+  // migration did not know about must still land on a plan rather than
+  // dead-end a picker. Reading is where a stale id is cheapest to absorb.
+  apex51: 'onyx5', axis4: 'onyx4', axis5_hybrid: 'onyx5',
+}
 
 // ── Plan/phase preference store ──────────────────────────────────────────────
 // Same problem the schedule cache had: these are read SYNCHRONOUSLY during

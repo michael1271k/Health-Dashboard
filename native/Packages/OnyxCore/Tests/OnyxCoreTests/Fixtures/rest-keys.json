@@ -1,0 +1,98 @@
+{
+  "module": "training/restTargets",
+  "fn": "restTargetKey / sessionRestKey",
+  "note": "programId|day or -|canonical lower-cased trimmed name; the session key prefixes the ISO date. programId is always given here (the TS default reads the active plan).",
+  "cases": [
+    {
+      "name": "Leg Press · legs_a · onyx5",
+      "input": {
+        "name": "Leg Press",
+        "dayKey": "legs_a",
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|legs_a|leg press",
+        "session": "2026-09-03|onyx5|legs_a|leg press"
+      }
+    },
+    {
+      "name": "leg press · legs_a · onyx5",
+      "input": {
+        "name": "leg press",
+        "dayKey": "legs_a",
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|legs_a|leg press",
+        "session": "2026-09-03|onyx5|legs_a|leg press"
+      }
+    },
+    {
+      "name": "Leg Press Horizontal (Machine) · legs_a · onyx5",
+      "input": {
+        "name": "Leg Press Horizontal (Machine)",
+        "dayKey": "legs_a",
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|legs_a|leg press",
+        "session": "2026-09-03|onyx5|legs_a|leg press"
+      }
+    },
+    {
+      "name": "Calf Press · no day · onyx5",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": null,
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|-|calf press",
+        "session": "2026-09-03|onyx5|-|calf press"
+      }
+    },
+    {
+      "name": "Calf Press · legs_b · onyx4",
+      "input": {
+        "name": "Calf Press",
+        "dayKey": "legs_b",
+        "programId": "onyx4",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx4|legs_b|calf press",
+        "session": "2026-09-03|onyx4|legs_b|calf press"
+      }
+    },
+    {
+      "name": " Cable Lateral Raise  · arms · onyx5",
+      "input": {
+        "name": " Cable Lateral Raise ",
+        "dayKey": "arms",
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|arms|single arm lateral raise (cable)",
+        "session": "2026-09-03|onyx5|arms|single arm lateral raise (cable)"
+      }
+    },
+    {
+      "name": "HACK SQUAT · no day · onyx5",
+      "input": {
+        "name": "HACK SQUAT",
+        "dayKey": null,
+        "programId": "onyx5",
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "plan": "onyx5|-|hack squat",
+        "session": "2026-09-03|onyx5|-|hack squat"
+      }
+    }
+  ]
+}

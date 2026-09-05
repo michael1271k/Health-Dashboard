@@ -9,44 +9,44 @@
 # it, and never commit it.
 #
 #     brew install xcodegen
-#     cd native && xcodegen generate && open HelixNative.xcodeproj
+#     cd native && xcodegen generate && open Onyx.xcodeproj
 #
 # ── AND WHY IT IS A SECOND BUNDLE ID ─────────────────────────────────────────
-# `app.helix.health.michael.native` installs ALONGSIDE the Capacitor app rather
+# `app.onyx.health.michael.native` installs ALONGSIDE the Capacitor app rather
 # than over it. Both read the same Supabase, so the old app stays your daily
 # driver — and your reference implementation — for as long as this one takes.
 # Nothing about this migration requires a day where neither app works.
 
-name: HelixNative
+name: Onyx
 
 options:
-  bundleIdPrefix: app.helix.health.michael
+  bundleIdPrefix: app.onyx.health.michael
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
   groupSortPosition: top
 
 packages:
-  HelixCore:
-    path: Packages/HelixCore
-  HelixData:
-    path: Packages/HelixData
-  HelixUI:
-    path: Packages/HelixUI
+  OnyxCore:
+    path: Packages/OnyxCore
+  OnyxData:
+    path: Packages/OnyxData
+  OnyxUI:
+    path: Packages/OnyxUI
 
 targets:
-  HelixNative:
+  Onyx:
     type: application
     platform: iOS
 
     sources:
-      - path: HelixNative
+      - path: Onyx
         excludes:
           # The example is documentation. The real one is gitignored and is
           # attached below as a config file, not compiled as a source.
           - "Support/Secrets.example.xcconfig"
           - "Support/Secrets.xcconfig"
-          - "Support/HelixNative.entitlements"
+          - "Support/Onyx.entitlements"
       # `Shared/` is in BOTH targets, and it has to be: ActivityKit matches the
       # app's `Activity.request` to the extension's `ActivityConfiguration` by
       # the ATTRIBUTES TYPE, and two identically-named structs compiled into two
@@ -55,34 +55,34 @@ targets:
       - path: Shared
 
     dependencies:
-      - package: HelixCore
-        product: HelixCore
-      - package: HelixData
-        product: HelixData
-      - package: HelixUI
-        product: HelixUI
+      - package: OnyxCore
+        product: OnyxCore
+      - package: OnyxData
+        product: OnyxData
+      - package: OnyxUI
+        product: OnyxUI
       # Embedding the extension is what puts its `ActivityConfiguration` in the
       # app bundle. Without this the app can request an activity and the system
       # has nothing to draw it with.
-      - target: HelixNativeWidgets
+      - target: OnyxWidgets
 
     # Secrets arrive as build settings and are surfaced through Info.plist, the
-    # same convention the widget extension already uses for HELIX_SNAPSHOT_URL.
+    # same convention the widget extension already uses for ONYX_SNAPSHOT_URL.
     configFiles:
-      Debug: HelixNative/Support/Secrets.xcconfig
-      Release: HelixNative/Support/Secrets.xcconfig
+      Debug: Onyx/Support/Secrets.xcconfig
+      Release: Onyx/Support/Secrets.xcconfig
 
     # ── The App Group ────────────────────────────────────────────────────────
-    # Gate 0 (§5.0): the shared container is where `helix.sqlite` lives, so the
+    # Gate 0 (§5.0): the shared container is where `onyx.sqlite` lives, so the
     # widget extension reads the SAME file the app writes — no snapshot route,
     # no token, no HTTP. Needs the paid Developer Program; a free personal team
     # cannot sign this entitlement, and `AppDatabase.sharedFolder()` falls back
     # to Application Support so the app still runs (widgets then stay empty).
     entitlements:
-      path: HelixNative/Support/HelixNative.entitlements
+      path: Onyx/Support/Onyx.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.app.helix.health
+          - group.app.onyx.health
         # ── HealthKit ────────────────────────────────────────────────────────
         # Read access to the quantity types in `HealthCatalogue` plus sleep
         # analysis. This is the ONLY entitlement key standard read access needs:
@@ -97,7 +97,7 @@ targets:
         com.apple.developer.healthkit: true
 
     info:
-      path: HelixNative/Support/Info.plist
+      path: Onyx/Support/Info.plist
       properties:
         CFBundleDisplayName: Onyx
         CFBundleShortVersionString: "1.0"
@@ -150,23 +150,23 @@ targets:
           energy and heart rate — back to Apple Health, so the training you do
           here appears alongside the rest of your activity rings.
         # Substituted from Secrets.xcconfig at build time.
-        HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
-        HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
-        # `helix://open?path=/nutrition` — what every tile's `.widgetURL` opens.
+        ONYX_SUPABASE_URL: $(ONYX_SUPABASE_URL)
+        ONYX_SUPABASE_ANON_KEY: $(ONYX_SUPABASE_ANON_KEY)
+        # `onyx://open?path=/nutrition` — what every tile's `.widgetURL` opens.
         # Received by `.onOpenURL` in RootView through `DeepLink.safePath`, the
         # same allow-list the web app used (`src/lib/native/deepLink.ts`).
         CFBundleURLTypes:
-          - CFBundleURLName: app.helix.health.michael.native
+          - CFBundleURLName: app.onyx.health.michael.native
             CFBundleTypeRole: Editor
             CFBundleURLSchemes:
-              - helix
+              - onyx
         # Required-reason API declaration lives in the privacy manifest, not
         # here — see PrivacyInfo.xcprivacy. The Capacitor app was rejected-ready
         # without one for months; this target starts with it.
 
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native
+        PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native
         # The 1024×1024 mark from `Resources/Assets.xcassets`, carried over from
         # the Capacitor app so both icons are the same brand. Without this the
         # target has no icon at all: a blank Home Screen tile, and an upload the
@@ -189,39 +189,39 @@ targets:
   #
   # Wave 5: the five Home Screen families (Fuel, Training, Body, Daily, Vitals),
   # the Lock Screen accessory and the running-workout Live Activity. The tiles
-  # are `HelixUI` views; the provider reads the App Group GRDB file through
-  # HelixData and never touches the network. `HelixIntents` (the focus pickers)
+  # are `OnyxUI` views; the provider reads the App Group GRDB file through
+  # OnyxData and never touches the network. `OnyxIntents` (the focus pickers)
   # came across intact.
-  HelixNativeWidgets:
+  OnyxWidgets:
     type: app-extension
     platform: iOS
 
     sources:
-      - path: HelixNativeWidgets
+      - path: OnyxWidgets
         excludes:
           - "Support/Info.plist"
-          - "Support/HelixNativeWidgets.entitlements"
+          - "Support/OnyxWidgets.entitlements"
       - path: Shared
 
     dependencies:
-      - package: HelixCore
-        product: HelixCore
+      - package: OnyxCore
+        product: OnyxCore
       # Read-only. `AppDatabase.readOnly(folderURL:)` opens the shared file
       # without running migrations — an extension that migrated would race the
       # app for the schema.
-      - package: HelixData
-        product: HelixData
-      - package: HelixUI
-        product: HelixUI
+      - package: OnyxData
+        product: OnyxData
+      - package: OnyxUI
+        product: OnyxUI
 
     entitlements:
-      path: HelixNativeWidgets/Support/HelixNativeWidgets.entitlements
+      path: OnyxWidgets/Support/OnyxWidgets.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.app.helix.health
+          - group.app.onyx.health
 
     info:
-      path: HelixNativeWidgets/Support/Info.plist
+      path: OnyxWidgets/Support/Info.plist
       properties:
         CFBundleDisplayName: Onyx Activity
         CFBundleShortVersionString: "1.0"
@@ -231,7 +231,7 @@ targets:
 
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native.widgets
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
@@ -243,34 +243,34 @@ targets:
 
   # ── The app's own tests ──────────────────────────────────────────────────
   #
-  # Almost everything provable lives in HelixCore and HelixData, which test on
+  # Almost everything provable lives in OnyxCore and OnyxData, which test on
   # the command line in seconds with no simulator, no signing and no Xcode. This
   # target is for what genuinely cannot: `LoggerModel` is @MainActor, holds
   # @Observable view state, and enforces one rule with no home in the domain —
   # what happens to sets already logged when the prescription changes under them.
-  HelixNativeTests:
+  OnyxTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: HelixNativeTests
+      - path: OnyxTests
     dependencies:
-      - target: HelixNative
+      - target: Onyx
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.tests
+        PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native.tests
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         GENERATE_INFOPLIST_FILE: YES
-        # Hosted by the app, so `@testable import HelixNative` can see it.
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelixNative.app/HelixNative"
+        # Hosted by the app, so `@testable import Onyx` can see it.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Onyx.app/Onyx"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
 schemes:
-  HelixNative:
+  Onyx:
     build:
       targets:
-        HelixNative: all
-        HelixNativeWidgets: all
+        Onyx: all
+        OnyxWidgets: all
     run:
       config: Debug
     test:
@@ -279,7 +279,7 @@ schemes:
       # and do not need the app scheme. They are listed here so ⌘U in Xcode runs
       # everything, which is what a person actually expects it to do.
       targets:
-        - HelixNativeTests
-        - package: HelixCore/HelixCoreTests
-        - package: HelixData/HelixDataTests
-        - package: HelixUI/HelixUITests
+        - OnyxTests
+        - package: OnyxCore/OnyxCoreTests
+        - package: OnyxData/OnyxDataTests
+        - package: OnyxUI/OnyxUITests

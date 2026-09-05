@@ -16,7 +16,7 @@ import { phaseGoalsFor, NUTRITION_PRESETS } from '@/lib/types/workout'
  * fixed at its source instead of being enforced here. See `cut-baseline.test.ts`.
  */
 
-const CUT = phaseGoalsFor('apex51', 'cut')
+const CUT = phaseGoalsFor('onyx5', 'cut')
 
 const row = (over: Partial<{ calorie_goal: number; protein_goal_g: number | null; carbs_goal_g: number | null; fat_goal_g: number | null; goal_preset: string | null }> = {}) => ({
   calorie_goal: 2300,
@@ -81,7 +81,7 @@ describe('resolveNutritionGoals', () => {
   })
 
   it('reports the mode so the page can name the phase', () => {
-    expect(resolveNutritionGoals(null, phaseGoalsFor('apex51', 'bulk'), 'bulk').mode).toBe('bulk')
+    expect(resolveNutritionGoals(null, phaseGoalsFor('onyx5', 'bulk'), 'bulk').mode).toBe('bulk')
   })
 
   it('carries the fiber window, which only the micros page reads', () => {

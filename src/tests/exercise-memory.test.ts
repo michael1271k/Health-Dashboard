@@ -5,7 +5,7 @@ import { workingSets, type ExerciseHistory } from '@/lib/hooks/useExerciseSetHis
 import { routineMemoryMap } from '@/lib/hooks/useLogger'
 import { countCommittedSets } from '@/lib/sessions/schema'
 
-const legsB = PROGRAMS.apex51.days.find((d) => d.key === 'legs_b')!
+const legsB = PROGRAMS.onyx5.days.find((d) => d.key === 'legs_b')!
 
 /**
  * Routine-scoped memory. The bug: the logger keyed "previous" on the exercise

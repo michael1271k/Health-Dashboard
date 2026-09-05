@@ -15,22 +15,22 @@ import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
  */
 
 const SOURCE = readFileSync('src/lib/body/atlas.ts', 'utf8')
-const SWIFT = readFileSync('native/Packages/HelixUI/Sources/HelixUI/Atlas/HelixAtlas.swift', 'utf8')
+const SWIFT = readFileSync('native/Packages/OnyxUI/Sources/OnyxUI/Atlas/OnyxAtlas.swift', 'utf8')
 
 describe('the generated Swift atlas', () => {
-  it('is written to exactly one place, and that place is HelixUI', () => {
+  it('is written to exactly one place, and that place is OnyxUI', () => {
     // One package, imported by the app and the widget extension alike. A
     // second copy would be a second body to keep in step; the generator's
     // target list is the only list of bodies there is.
     expect(TARGETS).toHaveLength(1)
-    expect(TARGETS[0]).toMatch(/native\/Packages\/HelixUI\/Sources\/HelixUI\/Atlas\/HelixAtlas\.swift$/)
+    expect(TARGETS[0]).toMatch(/native\/Packages\/OnyxUI\/Sources\/OnyxUI\/Atlas\/OnyxAtlas\.swift$/)
     expect(readFileSync(TARGETS[0], 'utf8')).toBe(SWIFT)
   })
 
   it('is public API — both hosts draw it from outside the module', () => {
-    expect(SWIFT).toContain('public enum HelixAtlas')
+    expect(SWIFT).toContain('public enum OnyxAtlas')
     expect(SWIFT).toContain('public static let muscles')
-    expect(SWIFT).toContain('public struct HelixAtlasPath')
+    expect(SWIFT).toContain('public struct OnyxAtlasPath')
   })
 
   it('is exactly what the generator produces from the current atlas', () => {

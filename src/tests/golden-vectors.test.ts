@@ -54,7 +54,7 @@ import {
 import { BUILTIN_PROFILES, profileByKey, profileToDailyTarget, matchesProfile, type TargetProfile } from '@/lib/nutrition/profiles'
 import { tracksCarbs, tracksFat, hasDailyTarget, applyDailyTarget, type DailyTarget } from '@/lib/nutrition/dailyTargets'
 import {
-  activeProgram, activePhase, normalizePlanId, PROGRAMS, DEFAULT_PROGRAM_ID, APEX51, HELIX4, PPL_LEGACY,
+  activeProgram, activePhase, normalizePlanId, PROGRAMS, DEFAULT_PROGRAM_ID, ONYX5, HELIX4, PPL_LEGACY,
   programDayIn, scheduleDayIn, isTrainingDayIn, sessionTargetIn, eraForDate,
   type Program, type ProgramPhase, type ScheduleContext, type ScheduleDay,
 } from '@/lib/programs'
@@ -220,7 +220,7 @@ import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coa
 
 const FIXTURES = join(
   process.cwd(),
-  'native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures',
+  'native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures',
 )
 
 const WRITE = process.env.GOLDEN_WRITE === '1'
@@ -1992,7 +1992,7 @@ describe('golden vectors — exercise aliases', () => {
  * `const` because `HELIX5_ID` and `activeProgram` are declared further down the
  * file and this has to read them at TEST time, not at module-evaluation time.
  */
-function helix5DeckNames(): string[] {
+function onyx5DeckNames(): string[] {
   const out = new Set<string>()
   for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
     for (const d of activeProgram(HELIX5_ID, phase).days) for (const e of d.exercises) out.add(e.name)
@@ -2029,7 +2029,7 @@ describe('golden vectors — muscle map', () => {
       ...MUSCLE_DICT.map((e) => [...e.tokens].reverse().join(' ').toUpperCase()),
       // Every lift the program actually prescribes. The Swift deck resolves its
       // movers through this map, so a miss here is a lift with no anatomy.
-      ...helix5DeckNames(),
+      ...onyx5DeckNames(),
       // Alias keys and canonical values. NOTE: `lookupMuscles` does NOT
       // canonicalize — the web canonicalizes at the boundary (resolveExercises,
       // save, the catalog hook) and hands this module a name it already owns.
@@ -2184,7 +2184,7 @@ describe('golden vectors — bodyweight and unilateral', () => {
       // Padding and case.
       '  single arm row  ', 'BULGARIAN SPLIT SQUAT', 'lunges',
       // Every name in the live deck: the logger offers the split from here.
-      ...helix5DeckNames(),
+      ...onyx5DeckNames(),
     ]
     emit('unilateral-exercise.json', {
       module: 'exercises/unilateral',
@@ -2706,7 +2706,7 @@ describe('golden vectors — PR engine', () => {
 //
 // Exported ahead of its place in the list because `maintenance.ts` falls back
 // to `phaseSpanFor` for the deloads that predate levers. Colours stay out: a hex
-// is a HelixUI token, not domain arithmetic.
+// is a OnyxUI token, not domain arithmetic.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const daysFrom = (start: string, count: number, step = 1): string[] =>
@@ -3157,7 +3157,7 @@ describe('golden vectors — daily targets and profiles', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The Onyx-5 deck as each phase trains it — the ONLY program the Swift carries. */
-const HELIX5_ID = 'apex51'
+const HELIX5_ID = 'onyx5'
 
 /** Run `fn` with the active phase pinned, then restore the default. */
 function withPhase<T>(phase: ProgramPhase, fn: () => T): T {
@@ -3182,10 +3182,10 @@ describe('golden vectors — program deck', () => {
         },
       })
     }
-    emit('program-helix5.json', {
+    emit('program-onyx5.json', {
       module: 'programs',
-      fn: 'activeProgram(apex51, phase)',
-      note: 'The deck as the phase trains it: cutSets resolved into sets and lifts at 0 dropped. Names, windows, rest and seed loads must equal the Swift Program.helix5.',
+      fn: 'activeProgram(onyx5, phase)',
+      note: 'The deck as the phase trains it: cutSets resolved into sets and lifts at 0 dropped. Names, windows, rest and seed loads must equal the Swift Program.onyx5.',
       cases,
     })
   })
@@ -3245,7 +3245,7 @@ describe('golden vectors — plan catalogue', () => {
     emit('plan-catalogue.json', {
       module: 'programs',
       fn: 'PROGRAMS / planList() / DEFAULT_PROGRAM_ID',
-      note: 'Live plans first, legacy last. The TS sort is STABLE (ES2019), so apex51 keeps its place ahead of axis4 — the Swift must partition, not sort. `apex51` is Onyx-5: the id is a localStorage key a season of rows was written under and it does not get renamed.',
+      note: 'Live plans first, legacy last. The TS sort is STABLE (ES2019), so onyx5 keeps its place ahead of onyx4 — the Swift must partition, not sort. `onyx5` is Onyx-5: the id is a localStorage key a season of rows was written under and it does not get renamed.',
       cases: [{
         name: 'the three plans, live first and legacy last',
         input: {},
@@ -3264,13 +3264,20 @@ describe('golden vectors — plan catalogue', () => {
 
   it('exports normalizePlanId over the legacy aliases and the junk', () => {
     const raws: (string | null)[] = [
-      'apex51', 'axis4', 'ppl',
+      'onyx5', 'onyx4', 'ppl',
       // The two Onyx-4 variants consolidated into one plan; a device that
       // never synced since still holds these strings.
-      'axis4_builder', 'axis4_defender',
+      'onyx4_builder', 'onyx4_defender',
+      // The 2026-09-05 rename (W3). `apex51` and `axis4` were the ids every
+      // localStorage entry, Supabase row and exported report was written under
+      // for a season; `axis5_hybrid` is older still and is the default of
+      // `user_goals.active_program`. The DB rows moved in the same wave, but a
+      // device that has not synced since must still land on a plan.
+      'apex51', 'axis4', 'axis5_hybrid', 'axis4_builder', 'axis4_defender',
       // Falsy, mis-cased, padded and simply wrong. All of these are null, and
       // the CALLER picks the fallback — the function does not pick it for them.
-      null, '', ' ', 'APEX51', 'Axis4', ' axis4', 'axis4_builder ', 'helix5', 'apex', 'bogus',
+      null, '', ' ', 'ONYX5', 'Onyx4', ' onyx4', 'onyx4_builder ', 'APEX51', ' apex51',
+      'helix5', 'apex', 'bogus',
       // JS looks up the alias table through Object.prototype, so these two find
       // a function rather than undefined. The answer is still null; the vector
       // is here so a Swift Dictionary (which has no prototype) is provably the
@@ -3281,7 +3288,7 @@ describe('golden vectors — plan catalogue', () => {
     emit('plan-normalize.json', {
       module: 'programs',
       fn: 'normalizePlanId',
-      note: 'Legacy ids migrate to the plan that absorbed them; anything unknown is null, never the default. Exact string match — no trimming, no case folding.',
+      note: 'Legacy ids migrate to the plan that absorbed them — the two Onyx-4 variants, and the pre-Onyx apex51/axis4/axis5_hybrid spellings. Anything unknown is null, never the default. Exact string match — no trimming, no case folding.',
       cases: raws.map((raw) => ({
         name: raw === null ? 'null' : JSON.stringify(raw),
         input: { raw },
@@ -3334,9 +3341,9 @@ describe('golden vectors — phase narrowing and phase goals', () => {
     expect(Object.keys(NUTRITION_PRESETS)).toEqual(['cut', 'bulk'])
 
     const cases: Case<{ planId: string; phase: NutritionMode }, ReturnType<typeof goalsRow>>[] = []
-    // `axis4_builder` is deliberate: `phaseGoalsFor` does NOT normalize, so a
+    // `onyx4_builder` is deliberate: `phaseGoalsFor` does NOT normalize, so a
     // legacy id misses the override table and lands on the Helix defaults.
-    for (const planId of ['apex51', 'axis4', 'ppl', 'axis4_builder', 'bogus']) {
+    for (const planId of ['onyx5', 'onyx4', 'ppl', 'onyx4_builder', 'bogus']) {
       for (const phase of ['cut', 'bulk'] as NutritionMode[]) {
         cases.push({
           name: `${planId} · ${phase}`,
@@ -3561,7 +3568,7 @@ describe('golden vectors — effort', () => {
     emit('effort-tables.json', {
       module: 'training/effort',
       fn: 'CR10_ANCHORS / RPE_LADDER / EFFORT_WORDS / constants',
-      note: 'Data. Colours are not exported — a hex is a HelixUI token.',
+      note: 'Data. Colours are not exported — a hex is a OnyxUI token.',
       cases: [{
         name: 'the tables',
         input: {},
@@ -3632,7 +3639,7 @@ describe('golden vectors — set tags', () => {
     emit('set-tags-table.json', {
       module: 'training/setTags',
       fn: 'SET_TAGS / SET_QUALITY / SET_QUALITY_KEYS',
-      note: 'Data, colours stripped (HelixUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.',
+      note: 'Data, colours stripped (OnyxUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.',
       cases: [{
         name: 'the vocabularies',
         input: {},
@@ -3693,7 +3700,7 @@ describe('golden vectors — rest targets', () => {
     })
     const keyCases: Array<[string, string | null, string | null]> = [
       ['Leg Press', 'legs_a', HELIX5_ID], ['leg press', 'legs_a', HELIX5_ID], ['Leg Press Horizontal (Machine)', 'legs_a', HELIX5_ID],
-      ['Calf Press', null, HELIX5_ID], ['Calf Press', 'legs_b', 'axis4'], [' Cable Lateral Raise ', 'arms', HELIX5_ID], ['HACK SQUAT', undefined as unknown as null, HELIX5_ID],
+      ['Calf Press', null, HELIX5_ID], ['Calf Press', 'legs_b', 'onyx4'], [' Cable Lateral Raise ', 'arms', HELIX5_ID], ['HACK SQUAT', undefined as unknown as null, HELIX5_ID],
     ]
     emit('rest-keys.json', {
       module: 'training/restTargets',
@@ -5142,7 +5149,7 @@ describe('report targets', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The three decks by id — `PROGRAMS`, spelled out so a vector names its plan. */
-const DECKS: Record<string, Program> = { apex51: APEX51, axis4: HELIX4, ppl: PPL_LEGACY }
+const DECKS: Record<string, Program> = { onyx5: ONYX5, onyx4: HELIX4, ppl: PPL_LEGACY }
 
 /**
  * Re-key an object in jsonb order: shorter keys first, then bytewise. The ONLY
@@ -5192,7 +5199,7 @@ describe('golden vectors — schedule layout', () => {
     parse('duplicate weekday — the shorter key is jsonb-first', { legs_a: 5, cb_b: 5 })
     parse('6 and 0 are both weekdays', { legs_b: 6, cb_a: 0 })
     parse('a key of another plan is kept — the layout does not know the plan', { upper_a: 3 })
-    parse('the full five-day layout', fullLayout(APEX51, {}))
+    parse('the full five-day layout', fullLayout(ONYX5, {}))
 
     for (const [pid, p] of Object.entries(DECKS)) {
       const remap: DayLayout = { [p.days[0].key]: 3 }
@@ -5212,40 +5219,40 @@ describe('golden vectors — schedule layout', () => {
         push(`isAuthoredLayout · ${pid} · ${tag}`, { fn: 'isAuthoredLayout', program: pid, layout }, { flag: isAuthoredLayout(p, layout) })
       }
     }
-    const arms = APEX51.days.find((d) => d.key === 'arms')!
-    push('effectiveWeekday · an invalid mapped value falls back to the authored weekday', { fn: 'effectiveWeekday', program: 'apex51', dayKey: 'arms', layout: { arms: 9 } }, { weekday: effectiveWeekday(arms, { arms: 9 }) })
-    push('dayKeyForWeekday · weekday 7 is nobody', { fn: 'dayKeyForWeekday', program: 'apex51', layout: {}, weekday: 7 }, { dayKey: dayKeyForWeekday(APEX51, {}, 7) })
+    const arms = ONYX5.days.find((d) => d.key === 'arms')!
+    push('effectiveWeekday · an invalid mapped value falls back to the authored weekday', { fn: 'effectiveWeekday', program: 'onyx5', dayKey: 'arms', layout: { arms: 9 } }, { weekday: effectiveWeekday(arms, { arms: 9 }) })
+    push('dayKeyForWeekday · weekday 7 is nobody', { fn: 'dayKeyForWeekday', program: 'onyx5', layout: {}, weekday: 7 }, { dayKey: dayKeyForWeekday(ONYX5, {}, 7) })
 
     const move = (name: string, program: string, layout: DayLayout, dayKey: string, weekday: number) =>
       push(`moveDay · ${name}`, { fn: 'moveDay', program, layout, dayKey, weekday }, { layout: moveDay(DECKS[program], layout, dayKey, weekday) })
-    move('arms → Thu exchanges with cb_b', 'apex51', {}, 'arms', 4)
-    move('arms → Wed just moves; Tue becomes rest', 'apex51', {}, 'arms', 3)
-    move('arms → its own Tue is a no-op (full layout back)', 'apex51', {}, 'arms', 2)
-    move('a day of another plan is a no-op', 'apex51', {}, 'upper_a', 3)
-    move('weekday 7 is invalid — full layout back', 'apex51', {}, 'arms', 7)
-    move('weekday -1 is invalid — full layout back', 'apex51', {}, 'arms', -1)
-    move('from a sparse layout {arms:3}, cb_b → Wed exchanges with arms (arms takes Thu)', 'apex51', { arms: 3 }, 'cb_b', 3)
-    move('from a sparse layout {arms:3}, arms → Tue goes home (Wed rests again)', 'apex51', { arms: 3 }, 'arms', 2)
-    move('helix4 upper_a → Sun (free)', 'axis4', {}, 'upper_a', 0)
-    move('helix4 lower_b → Mon exchanges with upper_a', 'axis4', {}, 'lower_b', 1)
+    move('arms → Thu exchanges with cb_b', 'onyx5', {}, 'arms', 4)
+    move('arms → Wed just moves; Tue becomes rest', 'onyx5', {}, 'arms', 3)
+    move('arms → its own Tue is a no-op (full layout back)', 'onyx5', {}, 'arms', 2)
+    move('a day of another plan is a no-op', 'onyx5', {}, 'upper_a', 3)
+    move('weekday 7 is invalid — full layout back', 'onyx5', {}, 'arms', 7)
+    move('weekday -1 is invalid — full layout back', 'onyx5', {}, 'arms', -1)
+    move('from a sparse layout {arms:3}, cb_b → Wed exchanges with arms (arms takes Thu)', 'onyx5', { arms: 3 }, 'cb_b', 3)
+    move('from a sparse layout {arms:3}, arms → Tue goes home (Wed rests again)', 'onyx5', { arms: 3 }, 'arms', 2)
+    move('onyx4 upper_a → Sun (free)', 'onyx4', {}, 'upper_a', 0)
+    move('onyx4 lower_b → Mon exchanges with upper_a', 'onyx4', {}, 'lower_b', 1)
     move('ppl push_sun → Wed (free)', 'ppl', {}, 'ppl_push_sun', 3)
     move('ppl push_sun → Thu exchanges with push_thu', 'ppl', {}, 'ppl_push_sun', 4)
     let chain: DayLayout = {}
     for (const [key, wd] of [['arms', 4], ['cb_a', 5], ['legs_b', 0], ['arms', 3]] as const) {
       const before = chain
-      chain = moveDay(APEX51, chain, key, wd)
-      push(`moveDay · chain · ${key} → ${wd}`, { fn: 'moveDay', program: 'apex51', layout: before, dayKey: key, weekday: wd }, { layout: chain })
+      chain = moveDay(ONYX5, chain, key, wd)
+      push(`moveDay · chain · ${key} → ${wd}`, { fn: 'moveDay', program: 'onyx5', layout: before, dayKey: key, weekday: wd }, { layout: chain })
     }
 
-    push('isAuthoredLayout · a key of another plan says nothing', { fn: 'isAuthoredLayout', program: 'apex51', layout: { upper_a: 3 } }, { flag: isAuthoredLayout(APEX51, { upper_a: 3 }) })
-    push('isAuthoredLayout · an authored value spelled out is still authored', { fn: 'isAuthoredLayout', program: 'apex51', layout: { arms: 2 } }, { flag: isAuthoredLayout(APEX51, { arms: 2 }) })
-    push('isAuthoredLayout · an invalid value falls back and is authored', { fn: 'isAuthoredLayout', program: 'apex51', layout: { arms: 9 } }, { flag: isAuthoredLayout(APEX51, { arms: 9 }) })
+    push('isAuthoredLayout · a key of another plan says nothing', { fn: 'isAuthoredLayout', program: 'onyx5', layout: { upper_a: 3 } }, { flag: isAuthoredLayout(ONYX5, { upper_a: 3 }) })
+    push('isAuthoredLayout · an authored value spelled out is still authored', { fn: 'isAuthoredLayout', program: 'onyx5', layout: { arms: 2 } }, { flag: isAuthoredLayout(ONYX5, { arms: 2 }) })
+    push('isAuthoredLayout · an invalid value falls back and is authored', { fn: 'isAuthoredLayout', program: 'onyx5', layout: { arms: 9 } }, { flag: isAuthoredLayout(ONYX5, { arms: 9 }) })
 
     const canon = (name: string, layout: DayLayout) => push(`canonicalLayout · ${name}`, { fn: 'canonicalLayout', layout }, { text: canonicalLayout(layout) })
     canon('one key order', { cb_a: 0, legs_a: 1, arms: 2 })
     canon('the other key order — same string', { arms: 2, cb_a: 0, legs_a: 1 })
     canon('empty', {})
-    canon('the full five', fullLayout(APEX51, {}))
+    canon('the full five', fullLayout(ONYX5, {}))
     canon('sort is code-unit order: uppercase before underscore before lowercase', { b: 1, B: 2, _a: 3, a: 4 })
     canon('a key with a quote is escaped', { 'we"ird': 1, plain: 2 })
 
@@ -5267,17 +5274,17 @@ describe('golden vectors — schedule context', () => {
       name, input: { ctx, date },
       expected: { day: dayOut(scheduleDayIn(ctx, date)), training: isTrainingDayIn(ctx, date), sessionTarget: sessionTargetIn(ctx), era: eraForDate(date) },
     })
-    const ctx = (over: Partial<ScheduleContext> = {}): ScheduleContext => ({ programId: 'apex51', phase: 'cut', overrides: {}, layout: {}, ...over })
+    const ctx = (over: Partial<ScheduleContext> = {}): ScheduleContext => ({ programId: 'onyx5', phase: 'cut', overrides: {}, layout: {}, ...over })
 
     const week = weekDatesOf('2026-08-12')   // Sun 09 … Sat 15
-    for (const d of week) run(`helix5 · ${d}`, ctx(), d)
-    for (const d of week) run(`helix4 · ${d}`, ctx({ programId: 'axis4' }), d)
+    for (const d of week) run(`onyx5 · ${d}`, ctx(), d)
+    for (const d of week) run(`onyx4 · ${d}`, ctx({ programId: 'onyx4' }), d)
     for (const d of week) run(`ppl selected in the Helix era · ${d}`, ctx({ programId: 'ppl' }), d)
-    for (const d of weekDatesOf('2026-06-03')) run(`PPL era, helix4 selected + a layout, both ignored · ${d}`, ctx({ programId: 'axis4', layout: { upper_a: 0 } }), d)
+    for (const d of weekDatesOf('2026-06-03')) run(`PPL era, helix4 selected + a layout, both ignored · ${d}`, ctx({ programId: 'onyx4', layout: { upper_a: 0 } }), d)
 
     run('bulk phase changes nothing', ctx({ phase: 'bulk' }), '2026-08-09')
     run('unknown plan falls back to Onyx-5', ctx({ programId: 'bogus' }), '2026-08-10')
-    run('a legacy alias is NOT normalised here — Onyx-5', ctx({ programId: 'axis4_builder' }), '2026-08-10')
+    run('a legacy alias is NOT normalised here — Onyx-5', ctx({ programId: 'onyx4_builder' }), '2026-08-10')
     run('override places another day on Sunday', ctx({ overrides: { '2026-08-09': 'legs_b' } }), '2026-08-09')
     run('override places a session on a rest day', ctx({ overrides: { '2026-08-12': 'cb_a' } }), '2026-08-12')
     run("the literal 'rest' clears a training day", ctx({ overrides: { '2026-08-09': REST_OVERRIDE } }), '2026-08-09')
@@ -5288,7 +5295,7 @@ describe('golden vectors — schedule context', () => {
     run('layout arms→Wed — Tuesday rests', ctx({ layout: { arms: 3 } }), '2026-08-11')
     run('override beats layout', ctx({ layout: { arms: 3 }, overrides: { '2026-08-12': REST_OVERRIDE } }), '2026-08-12')
     run('a layout naming another plan\'s day is inert', ctx({ layout: { upper_a: 3 } }), '2026-08-12')
-    run('helix4 with a layout', ctx({ programId: 'axis4', layout: { upper_a: 0 } }), '2026-08-09')
+    run('helix4 with a layout', ctx({ programId: 'onyx4', layout: { upper_a: 0 } }), '2026-08-09')
     run('the PPL era ignores the layout even for the PPL plan', ctx({ programId: 'ppl', layout: { ppl_push_sun: 3 } }), '2026-06-03')
     run('a PPL-era override naming a PPL key applies', ctx({ overrides: { '2026-06-03': 'ppl_legs_tue' } }), '2026-06-03')
     run('a PPL-era override naming a Helix key is stale', ctx({ overrides: { '2026-06-03': 'arms' } }), '2026-06-03')
@@ -5318,7 +5325,7 @@ describe('golden vectors — swap', () => {
       return scheduleDayIn(r.ctx, d)
     }
     const resolveWithOf = (r: Resolver) => (d: string, layout: DayLayout) => scheduleDayIn({ ...r.ctx, layout }, d)
-    const helix = (overrides: Record<string, string> = {}, layout: DayLayout = {}, programId = 'apex51'): Resolver =>
+    const helix = (overrides: Record<string, string> = {}, layout: DayLayout = {}, programId = 'onyx5'): Resolver =>
       ({ ctx: { programId, phase: 'cut', overrides, layout } })
 
     interface In {
@@ -5361,8 +5368,8 @@ describe('golden vectors — swap', () => {
     rest('PPL era: Mon Pull → Wed', '2026-06-01')
     rest('layout arms→Wed: resting Tuesday is already rest', '2026-08-04', helix({}, { arms: 3 }))
     rest('layout arms→Wed: resting Wednesday sends arms to Sat', '2026-08-05', helix({}, { arms: 3 }))
-    rest('helix4 Mon upper_a → Wed', '2026-08-10', helix({}, {}, 'axis4'))
-    rest('helix4 Fri lower_b → Sat', '2026-08-14', helix({}, {}, 'axis4'))
+    rest('helix4 Mon upper_a → Wed', '2026-08-10', helix({}, {}, 'onyx4'))
+    rest('helix4 Fri lower_b → Sat', '2026-08-14', helix({}, {}, 'onyx4'))
     rest('across a month end — Mon 31 Aug → Wed 2 Sept', '2026-08-31')
     rest('across a year end — Thu 31 Dec → Sat 2 Jan, same week', '2026-12-31')
 
@@ -5406,7 +5413,7 @@ describe('golden vectors — swap', () => {
 
     // ── planPermanentMove ──
     const perm = (name: string, o: { program?: string; layout?: DayLayout; dayKey: string; weekday: number; today?: string; logged?: LoggedDay[] }) => {
-      const program = o.program ?? 'apex51'
+      const program = o.program ?? 'onyx5'
       const layout = o.layout ?? {}
       const today = o.today ?? '2026-08-13'
       const logged = o.logged ?? []
@@ -5426,8 +5433,8 @@ describe('golden vectors — swap', () => {
     perm('an unknown dayKey: the full layout back, nothing pinned', { dayKey: 'upper_a', weekday: 3 })
     perm('today is Sunday: nothing is spent', { dayKey: 'arms', weekday: 3, today: '2026-08-09' })
     perm('today is Saturday: cb_a → Sat pins only Sunday', { dayKey: 'cb_a', weekday: 6, today: '2026-08-15' })
-    perm('helix4 lower_b → Sun, today Wed: pins Sunday rest', { program: 'axis4', dayKey: 'lower_b', weekday: 0, today: '2026-08-12' })
-    perm('helix4 upper_a ↔ lower_b, today Sat: pins Mon and Fri', { program: 'axis4', dayKey: 'upper_a', weekday: 5, today: '2026-08-15' })
+    perm('onyx4 lower_b → Sun, today Wed: pins Sunday rest', { program: 'onyx4', dayKey: 'lower_b', weekday: 0, today: '2026-08-12' })
+    perm('onyx4 upper_a ↔ lower_b, today Sat: pins Mon and Fri', { program: 'onyx4', dayKey: 'upper_a', weekday: 5, today: '2026-08-15' })
     perm('ppl selected in the Helix era: push_sun → Wed pins Sun and Wed', { program: 'ppl', dayKey: 'ppl_push_sun', weekday: 3 })
     perm('a PPL-era today: the layout is inert there, so nothing is pinned', { program: 'ppl', dayKey: 'ppl_push_sun', weekday: 3, today: '2026-06-03' })
 
@@ -5477,7 +5484,7 @@ describe('golden vectors — fatigue slots', () => {
 
     push('tables', { fn: 'tables' }, { tables: {
       slots: [...FATIGUE_SLOTS], rest: [...REST_SLOTS], training: [...TRAINING_SLOTS], labels: SLOT_LABEL,
-      // The colour is HelixUI's; the Swift carries value/label/hint/detail.
+      // The colour is OnyxUI's; the Swift carries value/label/hint/detail.
       levels: FATIGUE_LEVELS.map(({ value, label, hint, detail }) => ({ value, label, hint, detail })),
       forTraining: [...slotsForDay(true)], forRest: [...slotsForDay(false)],
     } })
@@ -6325,7 +6332,7 @@ describe('golden vectors — exercise flags and the muscle dictionary', () => {
     emit('exercise-flags.json', {
       module: 'exercises/{bodyweight,unilateral,timed,icons,muscleMap}',
       fn: 'isBodyweightExercise / isUnloadedExercise / isLoadableBodyweightExercise / isUnilateralExercise / isTimedExercise / exerciseIconFor().label / lookupMuscles / muscleGroupsFor / resolveMovers',
-      note: 'Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is HelixUI\'s. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).',
+      note: 'Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is OnyxUI\'s. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).',
       cases,
     })
   })
@@ -6800,7 +6807,7 @@ describe('golden vectors — sleep debt and the realtime key map', () => {
     emit('realtime-keys.json', {
       module: 'query/realtimeKeys',
       fn: 'TABLE_KEYS / REALTIME_TABLES',
-      note: 'Extracted from RealtimeProvider. Which query keys a Supabase table change invalidates; workout_sessions and workout_sets share WORKOUT_QUERY_KEYS. HelixData owns the invalidation; this pins the fan-out.',
+      note: 'Extracted from RealtimeProvider. Which query keys a Supabase table change invalidates; workout_sessions and workout_sets share WORKOUT_QUERY_KEYS. OnyxData owns the invalidation; this pins the fan-out.',
       cases: [{ name: 'the map', input: null, expected: { tables: REALTIME_TABLES, keys: TABLE_KEYS } }],
     })
   })

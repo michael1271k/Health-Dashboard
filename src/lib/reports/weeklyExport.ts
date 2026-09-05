@@ -2082,7 +2082,7 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
      prints comes from a row already shown above. */
   {
     const d = derivedWeek(input)
-    L.push('## Derived (computed by HELIX — not measured)')
+    L.push('## Derived (computed by Onyx — not measured)')
     L.push('')
     L.push('_Everything above this heading is a measurement. Everything below it is'
       + ' arithmetic over those measurements — stated so it can be audited, or'

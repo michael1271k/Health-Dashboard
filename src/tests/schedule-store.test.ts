@@ -93,7 +93,7 @@ describe('schedule override store', () => {
  * The plan/phase preferences are the OTHER half of "what is today's workout",
  * and they had the same defect plus two of their own: the hydrator read a
  * pre-consolidation column (`active_program`, which still holds the dead id
- * "axis5_hybrid") and wrote a fallback localStorage key, so a device that had
+ * "onyx5") and wrote a fallback localStorage key, so a device that had
  * ever used the plan picker ignored the database entirely — and the phase was
  * never carried across devices at all.
  */
@@ -101,18 +101,27 @@ describe('plan preference store', () => {
   beforeEach(() => { window.localStorage.clear() })
 
   it('rejects a plan id that no longer exists', () => {
-    expect(normalizePlanId('axis5_hybrid')).toBeNull()
+    // `axis5_hybrid` used to be the dead id here. W3 gave it a home — it is the
+    // default of `user_goals.active_program` and now migrates to onyx5 — so
+    // this needs an id nothing has ever claimed to still be testing rejection.
+    expect(normalizePlanId('axis6')).toBeNull()
     expect(normalizePlanId(null)).toBeNull()
     expect(normalizePlanId('')).toBeNull()
   })
 
+  it('migrates the pre-Onyx ids, so an unsynced device still lands on a plan', () => {
+    expect(normalizePlanId('apex51')).toBe('onyx5')
+    expect(normalizePlanId('axis4')).toBe('onyx4')
+    expect(normalizePlanId('axis5_hybrid')).toBe('onyx5')
+  })
+
   it('migrates a legacy id to the plan that replaced it', () => {
-    expect(normalizePlanId('axis4_builder')).toBe('axis4')
-    expect(normalizePlanId('axis4_defender')).toBe('axis4')
+    expect(normalizePlanId('onyx4_builder')).toBe('onyx4')
+    expect(normalizePlanId('onyx4_defender')).toBe('onyx4')
   })
 
   it('accepts a live plan id unchanged', () => {
-    expect(normalizePlanId('apex51')).toBe('apex51')
+    expect(normalizePlanId('onyx5')).toBe('onyx5')
     expect(normalizePlanId('ppl')).toBe('ppl')
   })
 
@@ -142,7 +151,7 @@ describe('plan preference store', () => {
     setActiveProgramId('ppl')
     expect(window.localStorage.getItem('helix_active_plan')).toBe('ppl')
     // The old hydrator wrote this one instead, which is only a fallback.
-    window.localStorage.setItem('helix_active_program', 'apex51')
+    window.localStorage.setItem('helix_active_program', 'onyx5')
     expect(getActiveProgramId()).toBe('ppl')
   })
 })

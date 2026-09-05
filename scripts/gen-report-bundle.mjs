@@ -11,7 +11,7 @@
  * this reason and this follows it: the checked-in artefact is generated, and the
  * generator is the thing that is reviewed.
  *
- * Output: `native/HelixNative/Resources/report/index.html`, one self-contained
+ * Output: `native/Onyx/Resources/report/index.html`, one self-contained
  * file — inlined script, inlined CSS, no external request of any kind. A
  * `WKWebView` loads it from the app bundle with no network available.
  *
@@ -23,7 +23,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const OUT_DIR = join(ROOT, 'native/HelixNative/Resources')
+const OUT_DIR = join(ROOT, 'native/Onyx/Resources')
 const TMP = join(ROOT, '.report-bundle-tmp')
 
 /**
@@ -223,7 +223,7 @@ async function main() {
       lib: {
         entry: join(ROOT, 'src/lib/reports/webview/renderer.ts'),
         formats: ['iife'],
-        name: 'HelixReport',
+        name: 'OnyxReport',
         fileName: () => 'renderer.js',
       },
     },
@@ -261,7 +261,7 @@ async function main() {
   rmSync(TMP, { recursive: true, force: true })
 
   const kb = (Buffer.byteLength(html) / 1024).toFixed(0)
-  console.log(`native/HelixNative/Resources/ReportRenderer.html  (${kb} kB, self-contained)`)
+  console.log(`native/Onyx/Resources/ReportRenderer.html  (${kb} kB, self-contained)`)
 }
 
 main().catch((error) => {

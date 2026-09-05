@@ -97,13 +97,13 @@ public/sw.js
 # it would reintroduce exactly the hand-edited-pbxproj problem the generator
 # exists to remove (a .swift file missing from a target fails at link time
 # naming a symbol, not a file).
-native/HelixNative.xcodeproj/
+native/Onyx.xcodeproj/
 native/*.xcworkspace/
 .build/
 .swiftpm/
 DerivedData/
 # Supabase URL + anon key. See Secrets.example.xcconfig.
-native/HelixNative/Support/Secrets.xcconfig
+native/Onyx/Support/Secrets.xcconfig
 # The graphify hook indexes any directory it is run in, including the Swift
 # packages' checked-out dependencies. One graph, at the repo root.
 native/**/graphify-out/

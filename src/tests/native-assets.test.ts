@@ -12,7 +12,7 @@ import { PLATINUM } from '@/lib/theme/palette'
  * `{ "idiom": "universal" }` placeholders with no components at all, which
  * means the watch app was tinting with the system default rather than any
  * Helix colour. (The Capacitor widget extension this also guarded was removed
- * in Wave 5 — see native/HelixNativeWidgets.)
+ * in Wave 5 — see native/OnyxWidgets.)
  */
 
 const IOS = 'ios/App'
