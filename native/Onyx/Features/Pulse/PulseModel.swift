@@ -389,19 +389,21 @@ final class DayModel {
 
     // MARK: - The stack
 
-    private var decodedCustoms: [CustomSupplement] {
-        customs.map { row in
-            CustomSupplement(
-                id: row.id, name: row.name, dose: row.dose, color: row.color, form: row.form, time: row.time,
-                schedule: row.schedule.flatMap { try? JSONDecoder().decode(CustomSchedule.self, from: Data($0.raw.utf8)) }
-            )
-        }
-    }
+    /// The stack rows as the core reads them — micros and `archived_at`
+    /// included. Wave 2 decoded only the schedule, which is why the phone
+    /// credited zero micronutrients from a stack it drew perfectly.
+    private var decodedCustoms: [CustomSupplement] { customs.map(AppDatabase.custom) }
+
+    /// The rows still in the protocol on the selected day.
+    private var activeCustoms: [CustomSupplement] { Supplements.active(decodedCustoms, on: date) }
+
+    /// The rows that had left it — the Stack screen's last section.
+    var archivedCustoms: [CustomSupplement] { Supplements.archived(decodedCustoms, on: date) }
 
     private func stack(isTraining training: Bool) -> [SupplementSlot] {
         let weekday = ISODate.weekday(date) ?? 0
         return Supplements.stackForDate(
-            Supplements.customSlotsForDate(decodedCustoms, weekday: weekday, isTraining: training),
+            Supplements.customSlotsForDate(activeCustoms, weekday: weekday, isTraining: training),
             isTraining: training, weekday: weekday
         )
     }
@@ -409,8 +411,44 @@ final class DayModel {
     /// The day's slots, in time order.
     var stack: [SupplementSlot] { stack(isTraining: isTraining) }
 
-    /// Keys of the items skipped today. Absence means taken.
+    #if DEBUG
+    /// The shot loop pins the clock: without it Due and Later swap contents at
+    /// 22:00 and the committed PNG churns by the hour.
+    var previewNowMinutes: Int?
+    #endif
+
+    /// Where the selected day sits against the clock. A past day has had every
+    /// slot; a future one cannot be selected at all (`date` never runs ahead).
+    var clock: DayClock {
+        #if DEBUG
+        if let previewNowMinutes { return .today(minutes: previewNowMinutes) }
+        #endif
+        return isToday ? .today(minutes: DayFormat.nowMinutes) : .past
+    }
+
+    /// Every scheduled dose of the day, with where it stands.
+    var doses: [SupplementDose] {
+        Supplements.doses(slots: stack, log: logEntries, clock: clock)
+    }
+
+    /// What the day's micronutrients owe the stack.
+    var stackNutrients: [String: Double] {
+        SupplementNutrients.credit(doses.filter(\.credited), payloads: SupplementNutrients.payloads(activeCustoms))
+    }
+
+    private var logEntries: [DoseLogEntry] {
+        supplementLog.map { DoseLogEntry(itemKey: $0.itemKey, taken: $0.taken) }
+    }
+
+    /// Keys of the items skipped today. Absence means the protocol.
     var skippedKeys: Set<String> { Set(supplementLog.filter { !$0.taken }.map(\.itemKey)) }
+
+    /// The `custom_supplements` row behind a dose, when there is one — a seeded
+    /// protocol item has none, and cannot be edited or archived.
+    func custom(for dose: SupplementDose) -> CustomSupplement? {
+        guard let id = dose.customId else { return nil }
+        return decodedCustoms.first { $0.id == id }
+    }
 
     /// The keys a rest day drops — read off the TRAINING stack, because on a
     /// rest day they are already gone from the day's own.
@@ -461,14 +499,78 @@ final class DayModel {
         }
     }
 
-    func setSupplementSkipped(_ item: Supplement, in slot: SupplementSlot, skipped: Bool) {
-        supplementLog.removeAll { $0.itemKey == item.key }
-        if skipped {
-            supplementLog.append(SupplementLogRow(userId: userId, date: date, itemKey: item.key, taken: false, updatedAt: Date()))
+    /// Mark one dose taken, skipped, or back to the protocol.
+    ///
+    /// Optimistic, like every other writer here: the row moves section under
+    /// the thumb and the store write follows.
+    func mark(_ dose: SupplementDose, as mark: AppDatabase.SupplementMark) {
+        supplementLog.removeAll { $0.itemKey == dose.key }
+        if mark != .cleared {
+            supplementLog.append(SupplementLogRow(
+                userId: userId, date: date, itemKey: dose.key, taken: mark == .taken, updatedAt: Date()
+            ))
         }
-        let due = Self.localInstant(date, hhmm: slot.time)
+        let due = Self.localInstant(date, hhmm: dose.slotTime)
         write { [database, userId, date] in
-            try database.setSupplementSkipped(userId: userId, date: date, itemKey: item.key, skipped: skipped, dueAt: due)
+            try database.markSupplement(userId: userId, date: date, itemKey: dose.key, mark: mark, dueAt: due)
+        }
+    }
+
+    /// Skip the SAME dose tomorrow — "freeze for a day". Tomorrow's row is
+    /// written now; nothing about today moves.
+    @discardableResult
+    func freezeTomorrow(_ dose: SupplementDose) -> Bool {
+        guard let tomorrow = ISODate.addDays(date, 1) else { return false }
+        let due = Self.localInstant(tomorrow, hhmm: dose.slotTime)
+        return write { [database, userId] in
+            try database.markSupplement(userId: userId, date: tomorrow, itemKey: dose.key, mark: .skipped, dueAt: due)
+        }
+    }
+
+    /// Take an item out of the protocol, or put it back. Seeded items have no
+    /// row of their own and cannot be archived — the caller checks first.
+    func setArchived(_ custom: CustomSupplement, archived: Bool) {
+        write { [database, userId] in
+            try database.setCustomSupplementArchived(id: custom.id, userId: userId, archived: archived)
+        }
+    }
+
+    /// Remove a row outright — for something added by mistake. Everything else
+    /// archives, so the log keys it wrote keep resolving.
+    func delete(_ custom: CustomSupplement) {
+        write { [database, userId] in
+            try database.deleteCustomSupplement(id: custom.id, userId: userId)
+        }
+    }
+
+    /// Add a supplement to the stack.
+    func addSupplement(
+        name: String, dose: String, time: String?, days: [Int],
+        color: String?, form: String?, notes: String?, trainingOnly: Bool
+    ) {
+        let schedule = CustomSchedule(
+            days: days.isEmpty ? nil : days,
+            slot: nil,
+            notes: (notes ?? "").isEmpty ? nil : notes,
+            trainingOnly: trainingOnly ? true : nil
+        )
+        write { [database, userId] in
+            try database.addCustomSupplement(
+                userId: userId, name: name, dose: dose,
+                color: color, form: form, time: (time ?? "").isEmpty ? nil : time,
+                schedule: schedule
+            )
+        }
+    }
+
+    /// Edit one row's name, dose or time.
+    func editSupplement(_ custom: CustomSupplement, name: String, dose: String, time: String?) {
+        write { [database, userId] in
+            try database.editCustomSupplement(id: custom.id, userId: userId) { row in
+                row.name = name
+                row.dose = dose
+                row.time = (time ?? "").isEmpty ? nil : time
+            }
         }
     }
 

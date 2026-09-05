@@ -568,6 +568,7 @@ public struct CustomSupplementRow: Codable, FetchableRecord, PersistableRecord, 
     public var schedule: JSONText?
     public var micros: JSONText?
     public var createdAt: Date?
+    public var archivedAt: Date?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -580,6 +581,7 @@ public struct CustomSupplementRow: Codable, FetchableRecord, PersistableRecord, 
         case schedule
         case micros
         case createdAt = "created_at"
+        case archivedAt = "archived_at"
     }
 
     public init(
@@ -592,7 +594,8 @@ public struct CustomSupplementRow: Codable, FetchableRecord, PersistableRecord, 
         time: String? = nil,
         schedule: JSONText? = nil,
         micros: JSONText? = nil,
-        createdAt: Date? = nil
+        createdAt: Date? = nil,
+        archivedAt: Date? = nil
     ) {
         self.id = id
         self.userId = userId
@@ -604,6 +607,7 @@ public struct CustomSupplementRow: Codable, FetchableRecord, PersistableRecord, 
         self.schedule = schedule
         self.micros = micros
         self.createdAt = createdAt
+        self.archivedAt = archivedAt
     }
 }
 
@@ -1717,6 +1721,7 @@ extension AppDatabase {
                 t.column("schedule", .text)
                 t.column("micros", .text)
                 t.column("created_at", .datetime)
+                t.column("archived_at", .datetime)
             }
             try db.create(table: "fatigue_logs") { t in
                 t.primaryKey("id", .text)

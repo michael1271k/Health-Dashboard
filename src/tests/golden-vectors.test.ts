@@ -75,9 +75,14 @@ import {
 } from '@/lib/hooks/useFatigue'
 import {
   SUPPLEMENT_PROTOCOL, ALL_SUPPLEMENT_KEYS, protocolForDate, stackForDate, supplementCountForDate, slotTimePassed,
+  isArchived, activeOn,
   type SupplementSlot,
 } from '@/lib/supplements'
-import { customSlotsForDate, customDoseFor, supplementKeyOf, type CustomSupplement, type CustomSchedule } from '@/lib/hooks/useCustomSupplements'
+import { customSlotsForDate, customDoseFor, supplementKeyOf, nutrientPayloads, type CustomSupplement, type CustomSchedule } from '@/lib/hooks/useCustomSupplements'
+import {
+  doses as stackDoses, creditNutrients, SUPPLEMENT_NUTRIENTS,
+  type DayClock, type DoseLogEntry, type SupplementDose,
+} from '@/lib/nutrition/supplementNutrients'
 import { SLEEP_DEBT_WINDOW_DAYS, SLEEP_DEBT_WEEKLY_DECAY, computeSleepDebt } from '@/lib/hooks/useSleepDebt'
 import { safePath } from '@/lib/native/deepLink'
 import {
@@ -5617,6 +5622,131 @@ describe('golden vectors — supplement stack', () => {
       note: 'The seed drops trainingOnly items on rest days and removes empty slots; the multivitamin is 2 tabs on Mon/Fri. DB rows group by time (empty/null → "—"), sorted as localeCompare sorts them: "—" first, then bytewise ("9:00" after "22:00"). `||` fallbacks: an empty dose/key/colour/time is an absence. supplementCountForDate ignores the weekday — it only changes a dose string. slotTimePassed parses like Number(): trimmed, empty part = 0, junk = NaN = false.',
       cases,
     })
+  })
+})
+
+describe('golden vectors — the stack credit rule', () => {
+  it('exports archiving, the four dose states and the micro credit', () => {
+    interface In {
+      fn: string
+      row?: { archived_at?: string | null }
+      rows?: Array<{ id: string; archived_at?: string | null }>
+      date?: string
+      slots?: SupplementSlot[]
+      log?: DoseLogEntry[]
+      clock?: DayClock
+      resolved?: SupplementDose[]
+      payloads?: Record<string, Record<string, number>>
+      customs?: CustomSupplement[]
+    }
+    interface Out {
+      archived?: boolean
+      ids?: string[]
+      doses?: SupplementDose[]
+      micros?: Record<string, number>
+    }
+    const cases: Case<In, Out>[] = []
+    const push = (name: string, input: In, expected: Out) => cases.push({ name, input, expected })
+
+    // ── isArchived ──────────────────────────────────────────────────────────
+    const arch = (name: string, at: string | null | undefined, date: string) =>
+      push(`isArchived · ${name}`, { fn: 'isArchived', row: { archived_at: at }, date }, { archived: isArchived({ archived_at: at }, date) })
+    arch('never archived', null, '2026-09-05')
+    arch('undefined', undefined, '2026-09-05')
+    arch('empty string', '', '2026-09-05')
+    arch('archived the same day, in the evening', '2026-09-05T21:00:00Z', '2026-09-05')
+    arch('archived the same day, at midnight', '2026-09-05T00:00:00Z', '2026-09-05')
+    arch('archived yesterday', '2026-09-04T09:00:00Z', '2026-09-05')
+    arch('archived tomorrow — still in force today', '2026-09-06T09:00:00Z', '2026-09-05')
+    arch('a bare date', '2026-09-05', '2026-09-05')
+
+    const mix = [
+      { id: 'a' },
+      { id: 'b', archived_at: null },
+      { id: 'c', archived_at: '2026-09-01T10:00:00Z' },
+      { id: 'd', archived_at: '2026-09-09T10:00:00Z' },
+    ]
+    push('activeOn · mid-window', { fn: 'activeOn', rows: mix, date: '2026-09-05' },
+      { ids: activeOn(mix, '2026-09-05').map((r) => r.id) })
+
+    // ── The four states ─────────────────────────────────────────────────────
+    const slots: SupplementSlot[] = [
+      { key: 'morning', time: '10:30', label: 'Morning', accent: '#3E9E7A', items: [
+        { key: 'multivitamin', name: 'Two Per Day Multivitamin', dose: '2 tabs' },
+        { key: 'd3k2', name: 'Vitamin D3 + K2', dose: '125 mcg' },
+      ] },
+      { key: 'night', time: '22:00', label: 'Before Bed', accent: '#8A6FA8', items: [
+        { key: 'magnesium', name: 'Magnesium Glycinate', dose: '300 mg' },
+        { key: 'glycine', name: 'Glycine', dose: '1 scoop' },
+      ] },
+    ]
+    const clocks: Array<[string, DayClock]> = [
+      ['before the first slot', { nowMinutes: 8 * 60, dayIsOver: false }],
+      ['between the slots', { nowMinutes: 13 * 60, dayIsOver: false }],
+      ['after the last slot', { nowMinutes: 22 * 60 + 30, dayIsOver: false }],
+      ['exactly on the slot', { nowMinutes: 10 * 60 + 30, dayIsOver: false }],
+      ['a past day', { nowMinutes: null, dayIsOver: true }],
+      ['a future day', { nowMinutes: null, dayIsOver: false }],
+    ]
+    const logs: Array<[string, DoseLogEntry[]]> = [
+      ['empty log', []],
+      ['one skipped', [{ itemKey: 'magnesium', taken: false }]],
+      ['one taken early', [{ itemKey: 'magnesium', taken: true }]],
+      ['taken and skipped', [{ itemKey: 'multivitamin', taken: true }, { itemKey: 'd3k2', taken: false }]],
+      ['a key that is not scheduled', [{ itemKey: 'ghost', taken: false }]],
+    ]
+    for (const [cn, clock] of clocks) for (const [ln, log] of logs) {
+      push(`doses · ${cn} · ${ln}`, { fn: 'doses', slots, log, clock }, { doses: stackDoses(slots, log, clock) })
+    }
+    push('doses · no slots at all', { fn: 'doses', slots: [], log: [], clock: clocks[2][1] },
+      { doses: stackDoses([], [], clocks[2][1]) })
+
+    // ── The credit ──────────────────────────────────────────────────────────
+    const credit = (name: string, clock: DayClock, log: DoseLogEntry[], payloads: Record<string, Record<string, number>> = {}) => {
+      const resolved = stackDoses(slots, log, clock)
+      push(`creditNutrients · ${name}`, { fn: 'creditNutrients', resolved, payloads }, { micros: creditNutrients(resolved, payloads) })
+    }
+    credit('nothing due yet', clocks[0][1], [])
+    credit('morning is due', clocks[1][1], [])
+    credit('the whole day', clocks[2][1], [])
+    credit('the whole day, magnesium skipped at 21:00', clocks[2][1], [{ itemKey: 'magnesium', taken: false }])
+    credit('taken before the slot counts at once', clocks[0][1], [{ itemKey: 'magnesium', taken: true }])
+    credit('a row payload overrides the table', clocks[2][1], [], { magnesium: { magnesium: 400 } })
+    credit('a payload for an item that is not scheduled', clocks[2][1], [], { creatine: { creatine: 5000 } })
+    // The dose-unit rule, through the credit: "2 tabs" doubles, "300 mg" does not.
+    const unitSlots: SupplementSlot[] = [{
+      key: 'u', time: '00:00', label: 'Units', accent: '#fff', items: [
+        { key: 'multivitamin', name: 'Multi', dose: '2 tabs' },
+        { key: 'omega3', name: 'Fish oil', dose: '2 caps' },
+        { key: 'magnesium', name: 'Magnesium', dose: '300 mg' },
+        { key: 'creatine', name: 'Creatine', dose: '5 g' },
+        { key: 'glycine', name: 'Glycine', dose: '1.5 scoops' },
+        { key: 'theanine', name: 'Theanine', dose: '' },
+      ],
+    }]
+    const unitResolved = stackDoses(unitSlots, [], clocks[2][1])
+    push('creditNutrients · counted units vs mass doses', { fn: 'creditNutrients', resolved: unitResolved, payloads: {} },
+      { micros: creditNutrients(unitResolved, {}) })
+
+    // `nutrientPayloads` keys by the LOG key, not the row id.
+    const withMicros: CustomSupplement = {
+      id: 'r-mag', name: 'Magnesium Glycinate', dose: '300 mg', color: null, form: null, time: '22:00',
+      schedule: { key: 'magnesium' }, micros: { magnesium: 400 },
+    }
+    const withoutMicros: CustomSupplement = {
+      id: 'r-zinc', name: 'Zinc', dose: '15 mg', color: null, form: null, time: null, schedule: null, micros: null,
+    }
+    push('nutrientPayloads · keyed by the log key, and a null payload is not a key',
+      { fn: 'nutrientPayloads', customs: [withMicros, withoutMicros] },
+      { ids: Object.keys(nutrientPayloads([withMicros, withoutMicros])) })
+
+    emit('stack-credit.json', {
+      module: 'supplements + nutrition/supplementNutrients',
+      fn: 'isArchived / activeOn / doses / creditNutrients',
+      note: 'A dose with no log row counts once its slot time has passed (a past day: all of them; a future day: none). An explicit taken=true counts at once, whatever the clock. taken=false never counts, and an archived item is not scheduled at all. Payloads are per PHYSICAL UNIT, so a counted dose ("2 tabs") doubles and a mass dose ("300 mg") does not.',
+      cases,
+    })
+    expect(Object.keys(SUPPLEMENT_NUTRIENTS).length).toBe(9)
   })
 })
 

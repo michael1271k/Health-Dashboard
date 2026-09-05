@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react'
 import { useTodayNutrition } from '@/lib/hooks/useDashboard'
-import { useSupplements } from '@/lib/hooks/useSupplements'
-import { stackForDate } from '@/lib/supplements'
+import { useSupplementLog } from '@/lib/hooks/useSupplements'
+import { stackForDate, activeOn } from '@/lib/supplements'
 import { useCustomSupplements, customSlotsForDate, nutrientPayloads } from '@/lib/hooks/useCustomSupplements'
 import { isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import { logicalTodayISO } from '@/lib/utils/day'
-import { supplementNutrients, mergeNutrients } from '@/lib/nutrition/supplementNutrients'
+import { creditedDoses, creditNutrients, mergeNutrients } from '@/lib/nutrition/supplementNutrients'
 
 /**
  * Today's micronutrient intake — food plus whatever the stack has delivered.
@@ -57,32 +57,25 @@ export function useTodayNutrients(): Record<string, number | undefined> {
  * this into food; nothing else should recompute it.
  */
 export function useStackNutrients(): Record<string, number> {
-  // ── THIS IS THE SKIPPED SET, NOT THE TAKEN ONE ─────────────────────────────
-  // `useSupplements()` returns the keys you REFUSED: the protocol is what
-  // happens unless you say otherwise, so `supplement_log` only carries rows for
-  // days you opted out of an item. This was bound to `taken` and handed
-  // straight to `supplementNutrients`, which meant the stack contributed NOTHING
-  // on an ordinary day (no refusals ⇒ empty set ⇒ empty totals) and credited
-  // an item precisely when it had been skipped.
-  //
-  // The weekly export has always inverted it correctly (`useWeeklyLoop`), which
-  // is why the report and this screen disagreed every single day.
-  const { data: skipped } = useSupplements()
+  const { data: log } = useSupplementLog()
   const { data: customs } = useCustomSupplements()
   const scheduleVersion = useScheduleVersion()
   const date = logicalTodayISO()
-
   return useMemo(() => {
-    void scheduleVersion   // isTrainingDay reads the store; this is the read
+    void scheduleVersion
     const training = isTrainingDay(date)
     const weekday = new Date(`${date}T12:00:00`).getDay()
-    // The DOSES and the PAYLOADS both come from the user's own rows, so an edit
-    // in the app moves the micro totals with everything else. Falls back to the
-    // seed protocol when the table is empty.
-    const slots = stackForDate(customSlotsForDate(customs ?? [], weekday, training), training, weekday)
-    const scheduled = slots.flatMap((s) => s.items)
-    const taken = scheduled.filter((i) => !skipped?.has(i.key)).map((i) => i.key)
-    const doses = new Map(scheduled.map((i) => [i.key, i.dose] as const))
-    return supplementNutrients(taken, doses, nutrientPayloads(customs ?? []))
-  }, [skipped, date, scheduleVersion, customs])
+    // Archived items leave the protocol from their own date forward. They are
+    // dropped BEFORE the slots are built, so an archived row cannot even appear
+    // as a skipped dose.
+    const active = activeOn(customs ?? [], date)
+    const slots = stackForDate(customSlotsForDate(active, weekday, training), training, weekday)
+    const now = new Date()
+    const resolved = creditedDoses(
+      slots,
+      (log ?? []).map((r) => ({ itemKey: r.item_key, taken: r.taken })),
+      { nowMinutes: now.getHours() * 60 + now.getMinutes(), dayIsOver: false },
+    )
+    return creditNutrients(resolved, nutrientPayloads(active))
+  }, [log, date, scheduleVersion, customs])
 }

@@ -1,3 +1,5 @@
+import { slotMinutesPassed, type SupplementSlot } from '@/lib/supplements'
+
 /**
  * Supplement → micronutrient contributions.
  *
@@ -119,5 +121,128 @@ export function mergeNutrients(
     if (typeof v === 'number' && Number.isFinite(v)) out[k] = v
   }
   for (const [k, v] of Object.entries(supps)) out[k] = (out[k] ?? 0) + v
+  return out
+}
+
+// ── The day's doses ──────────────────────────────────────────────────────────
+
+/** Where a scheduled dose stands. Twin of `OnyxCore.DoseState`. */
+export type DoseState = 'taken' | 'due' | 'later' | 'skipped'
+
+/** One scheduled dose of one day, resolved. Twin of `OnyxCore.SupplementDose`. */
+export interface SupplementDose {
+  key: string
+  name: string
+  dose: string
+  slotKey: string
+  slotLabel: string
+  slotTime: string
+  trainingOnly?: boolean
+  notes?: string
+  customId?: string
+  state: DoseState
+}
+
+/** What the day's log says about one item. */
+export interface DoseLogEntry {
+  itemKey: string
+  taken: boolean
+}
+
+/**
+ * Where the day sits against the clock.
+ *
+ * A past day has had every slot and a future one has had none; only today needs
+ * a time of day. Two fields rather than a tagged union so the golden vector is
+ * one flat object on both sides.
+ */
+export interface DayClock {
+  /** Minutes since local midnight — null when the date is not today. */
+  nowMinutes: number | null
+  /** True when the date is in the PAST. Ignored when `nowMinutes` is set. */
+  dayIsOver: boolean
+}
+
+/** Whether a scheduled dose counts towards the day's micronutrients. */
+export function isCredited(dose: Pick<SupplementDose, 'state'>): boolean {
+  return dose.state === 'taken' || dose.state === 'due'
+}
+
+/**
+ * Every scheduled dose of the day, with where it stands.
+ *
+ * ── THE FOUR STATES, AND WHY `due` COUNTS ────────────────────────────────────
+ * `supplement_log` records EXCEPTIONS: a row exists to say a dose was refused
+ * (`taken = false`) or explicitly confirmed (`taken = true`). Absence is the
+ * protocol — you took it, because that is what the protocol is — and the only
+ * question absence leaves open is WHEN. Crediting an absent dose from 00:00
+ * credited the night's magnesium at breakfast; crediting only an explicit tick
+ * would have required ticking nine items a day to make the micro totals true.
+ * So absence counts from the slot's time, and an explicit tick counts at once.
+ */
+export function doses(
+  slots: readonly SupplementSlot[],
+  log: readonly DoseLogEntry[],
+  clock: DayClock,
+): SupplementDose[] {
+  const states = new Map(log.map((e) => [e.itemKey, e.taken] as const))
+  const out: SupplementDose[] = []
+  for (const slot of slots) {
+    const passed = clock.nowMinutes != null
+      ? slotMinutesPassed(slot.time, clock.nowMinutes)
+      : clock.dayIsOver
+    for (const item of slot.items) {
+      const logged = states.get(item.key)
+      const state: DoseState = logged === undefined
+        ? (passed ? 'due' : 'later')
+        : (logged ? 'taken' : 'skipped')
+      out.push({
+        key: item.key,
+        name: item.name,
+        dose: item.dose,
+        slotKey: slot.key,
+        slotLabel: slot.label,
+        slotTime: slot.time,
+        ...(item.trainingOnly === undefined ? {} : { trainingOnly: item.trainingOnly }),
+        ...(item.notes === undefined ? {} : { notes: item.notes }),
+        ...(item.customId === undefined ? {} : { customId: item.customId }),
+        state,
+      })
+    }
+  }
+  return out
+}
+
+/** The doses whose micronutrients count towards the day. */
+export function creditedDoses(
+  slots: readonly SupplementSlot[],
+  log: readonly DoseLogEntry[],
+  clock: DayClock,
+): SupplementDose[] {
+  return doses(slots, log, clock).filter(isCredited)
+}
+
+/**
+ * Sum what the CREDITED doses deliver.
+ *
+ * The argument is the day's resolved doses, not a set of keys: a key set cannot
+ * say whether a dose was taken, skipped or still ahead, and the bug that shape
+ * produced here once — passing the SKIPPED set to a parameter named `takenKeys`
+ * — credited exactly the items that had been refused.
+ */
+export function creditNutrients(
+  resolved: readonly SupplementDose[],
+  payloads: Readonly<Record<string, NutrientPayload>> = {},
+): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const dose of resolved) {
+    if (!isCredited(dose)) continue
+    const payload = payloads[dose.key] ?? SUPPLEMENT_NUTRIENTS[dose.key]
+    if (!payload) continue
+    const units = doseUnits(dose.key, dose.dose)
+    for (const [micro, amount] of Object.entries(payload)) {
+      out[micro] = (out[micro] ?? 0) + amount * units
+    }
+  }
   return out
 }

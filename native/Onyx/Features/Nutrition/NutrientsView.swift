@@ -18,10 +18,12 @@ import OnyxCore
 struct NutrientsView: View {
     let model: NutritionModel
 
-    /// The stack's nutrients are shown apart from the food's because nothing
-    /// measures them: HealthKit has no creatine, and a bar drawn at zero for a
-    /// dose that was taken would be a lie told in a chart. The target is worth
-    /// stating; the reading is the Stack row on Pulse.
+    /// The stack's own nutrients are still shown apart from the food's — they
+    /// are a different KIND of intake, and creatine belongs next to citrulline
+    /// rather than next to fibre. What changed in §W6 is that they now carry a
+    /// reading: the phone credits a dose the moment its slot has passed, the
+    /// same rule the web has always used, so "5 000 / 5 000 mg creatine" is a
+    /// measurement of the protocol rather than a blank with a target beside it.
     private var groups: [(String, [NutrientTarget])] {
         let food = NutrientTargets.all.filter { !$0.fromStack }
         var seen: [String] = []
@@ -47,11 +49,12 @@ struct NutrientsView: View {
         // over the micros bundle on every access, and reading it inside the
         // `ForEach` did that a dozen times per body pass, on every scroll.
         let day = model.nutrients
+        let fromStack = model.stack.nutrients
         List {
             ForEach(groups, id: \.0) { group, targets in
                 Section {
                     ForEach(targets, id: \.key) { target in
-                        NutrientRow(target: resolved(target), amount: day[target.key])
+                        NutrientRow(target: resolved(target), amount: day[target.key], stack: fromStack[target.key])
                     }
                 } header: {
                     OnyxSectionHeader(group, .fuel)
@@ -60,12 +63,12 @@ struct NutrientsView: View {
 
             Section {
                 ForEach(stack, id: \.key) { target in
-                    NutrientRow(target: target, amount: nil)
+                    NutrientRow(target: target, amount: nil, stack: fromStack[target.key])
                 }
             } header: {
                 OnyxSectionHeader("From the stack", .fuel)
             } footer: {
-                Text("Apple Health does not measure these, so there is no reading to draw. The targets are what the stack is dosed to deliver; whether a dose was taken is on the Pulse tab.")
+                Text("Apple Health measures none of these — the reading is the protocol: a dose counts once its slot has passed, unless it was skipped. Change that on the Stack screen.")
             }
         }
         .onyxFormBackground(.fuel)
@@ -78,21 +81,30 @@ struct NutrientsView: View {
 /// be going.
 private struct NutrientRow: View {
     let target: NutrientTarget
-    /// `nil` when nothing measured it — an em dash, never a zero.
+    /// What FOOD delivered. `nil` when nothing measured it — an em dash, never
+    /// a zero.
     let amount: Double?
+    /// What the STACK delivered, credited by `StackCredit`.
+    var stack: Double?
 
-    private var fraction: Double {
-        guard let amount, target.target > 0 else { return 0 }
-        return min(max(amount / target.target, 0), 1)
+    /// Food plus stack, or nil when neither has anything to say.
+    private var total: Double? {
+        guard amount != nil || stack != nil else { return nil }
+        return (amount ?? 0) + (stack ?? 0)
+    }
+
+    private func fraction(_ value: Double?) -> Double {
+        guard let value, target.target > 0 else { return 0 }
+        return min(max(value / target.target, 0), 1)
     }
 
     /// A floor fills toward good; a ceiling fills toward danger, and only turns
     /// once it is genuinely past.
     private var tint: Color {
-        guard let amount else { return Color.onyx.textTertiary }
+        guard let total else { return Color.onyx.textTertiary }
         switch target.kind {
-        case .floor:   return amount >= target.target ? Color.onyx.good : OnyxDomain.fuel.accent
-        case .ceiling: return amount > target.target ? Color.onyx.danger : Color.onyx.good
+        case .floor:   return total >= target.target ? Color.onyx.good : OnyxDomain.fuel.accent
+        case .ceiling: return total > target.target ? Color.onyx.danger : Color.onyx.good
         }
     }
 
@@ -113,16 +125,38 @@ private struct NutrientRow: View {
                     figure
                 }
             }
-            if amount != nil {
-                Gauge(value: fraction, in: 0...1) { EmptyView() }
-                    .gaugeStyle(.accessoryLinearCapacity)
-                    .tint(tint)
+            if total != nil { bar }
+            if let stackNote {
+                Text(stackNote)
+                    .onyxType(.caption)
+                    .foregroundStyle(Color.onyx.textTertiary)
             }
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(target.label)
         .accessibilityValue(spoken)
+    }
+
+    /// Two segments on one rail: what food delivered, and what the stack put on
+    /// top of it. A single total would hide the one fact worth knowing here —
+    /// that a target is being met by a tablet — and `Gauge` cannot draw two, so
+    /// the rail is drawn rather than styled.
+    private var bar: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.onyx.hairline)
+                Capsule()
+                    .fill(tint.opacity(0.45))
+                    .frame(width: width * fraction(total))
+                Capsule()
+                    .fill(tint)
+                    .frame(width: width * fraction(amount))
+            }
+        }
+        .frame(height: 4)
+        .accessibilityHidden(true)
     }
 
     private var name: some View {
@@ -143,15 +177,23 @@ private struct NutrientRow: View {
 
     private var figures: String {
         let goal = "\(NutritionFormat.whole(target.target)) \(target.unit)"
-        guard let amount else { return target.kind == .floor ? "aim \(goal)" : "under \(goal)" }
-        return "\(NutritionFormat.whole(amount)) / \(goal)"
+        guard let total else { return target.kind == .floor ? "aim \(goal)" : "under \(goal)" }
+        return "\(NutritionFormat.whole(total)) / \(goal)"
+    }
+
+    /// Only when the stack is actually carrying some of it — a caption that
+    /// says "0 from the stack" is a line of type spent saying nothing.
+    private var stackNote: String? {
+        guard let stack, stack > 0, amount != nil else { return nil }
+        return "\(NutritionFormat.whole(stack)) from the stack"
     }
 
     private var spoken: String {
         let direction = target.kind == .floor ? "at least" : "at most"
         let goal = "\(direction) \(NutritionFormat.whole(target.target)) \(target.unit)"
-        guard let amount else { return "not measured, \(goal)" }
-        return "\(NutritionFormat.whole(amount)) \(target.unit), \(goal)"
+        guard let total else { return "not measured, \(goal)" }
+        let note = stackNote.map { ", \($0)" } ?? ""
+        return "\(NutritionFormat.whole(total)) \(target.unit)\(note), \(goal)"
     }
 }
 

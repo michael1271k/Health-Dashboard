@@ -35,18 +35,44 @@ import { logicalTodayISO } from '@/lib/utils/day'
  * same-day act, which is a much smaller window, and the auto-log pass that used
  * to write rows unattended is gone entirely.
  */
-export function useSupplements() {
-  const date = logicalTodayISO()
-  return useQuery({
-    queryKey: ['supplement_log', date],
-    queryFn: async (): Promise<Set<string>> => {
+/** One `supplement_log` row: an EXCEPTION to the protocol, either way. */
+export interface SupplementLogRow {
+  item_key: string
+  taken: boolean
+}
+
+/**
+ * The day's rows. One cache entry, two views.
+ *
+ * `useSupplements` used to hold a `Set` of skipped keys in the cache, which was
+ * everything its callers needed until the credit rule grew a third state: an
+ * explicit `taken = true` counts a dose the moment it is ticked, and a Set of
+ * refusals cannot say that. The query now caches the ROWS and each hook selects
+ * the shape it wants, so nothing makes a second request.
+ */
+function supplementLogQuery(date: string) {
+  return {
+    queryKey: ['supplement_log', date] as const,
+    queryFn: async (): Promise<SupplementLogRow[]> => {
       const { data, error } = await supabase
         .from('supplement_log').select('item_key, taken').eq('date', date)
       if (error) throw error
-      const rows = (data ?? []) as Array<{ item_key: string; taken: boolean }>
-      return new Set(rows.filter((r) => r.taken === false).map((r) => r.item_key))
+      return (data ?? []) as SupplementLogRow[]
     },
     staleTime: 60_000,
+  }
+}
+
+/** Today's rows, as the credit rule wants them. */
+export function useSupplementLog() {
+  return useQuery(supplementLogQuery(logicalTodayISO()))
+}
+
+export function useSupplements() {
+  return useQuery({
+    ...supplementLogQuery(logicalTodayISO()),
+    select: (rows: SupplementLogRow[]) =>
+      new Set(rows.filter((r) => r.taken === false).map((r) => r.item_key)),
   })
 }
 
@@ -96,10 +122,9 @@ export function useSkipSupplement() {
     // Optimistic — the row dims instantly, reverts on error.
     onMutate: async ({ itemKey, skipped }) => {
       await qc.cancelQueries({ queryKey: key })
-      const prev = qc.getQueryData<Set<string>>(key)
-      const next = new Set(prev ?? [])
-      if (skipped) next.add(itemKey); else next.delete(itemKey)
-      qc.setQueryData(key, next)
+      const prev = qc.getQueryData<SupplementLogRow[]>(key)
+      const without = (prev ?? []).filter((r) => r.item_key !== itemKey)
+      qc.setQueryData(key, skipped ? [...without, { item_key: itemKey, taken: false }] : without)
       return { prev }
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(key, ctx.prev) },

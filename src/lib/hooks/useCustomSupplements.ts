@@ -50,6 +50,14 @@ export interface CustomSupplement {
   schedule: CustomSchedule | null
   /** Micronutrient payload per UNIT of the dose; null = contributes none. */
   micros: Record<string, number> | null
+  /**
+   * When the row left the stack. Null is an item still in the protocol.
+   *
+   * Archiving exists because DELETING takes the row's `schedule.key` with it,
+   * and that key is the join to every `supplement_log` row the item ever wrote
+   * — see `isArchived` in `lib/supplements`.
+   */
+  archived_at?: string | null
 }
 
 export interface NewCustomSupplement {
@@ -104,7 +112,7 @@ export function useCustomSupplements() {
     queryFn: async (): Promise<CustomSupplement[]> => {
       const { data, error } = await supabase
         .from('custom_supplements')
-        .select('id, name, dose, color, form, time, schedule, micros')
+        .select('id, name, dose, color, form, time, schedule, micros, archived_at')
         .order('time', { ascending: true })
       if (error) return [] // table not migrated yet
       return (data ?? []) as CustomSupplement[]
