@@ -1,0 +1,398 @@
+{
+  "module": "training/prEngine",
+  "fn": "volumeCredits",
+  "note": "Per-row tonnage with L/R pairs collapsed to ONE credit (min w × min reps) on the row that completes the pair; null on the other side. Anything but exactly one L and one R per pairId is scored as logged.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "rows": []
+      },
+      "expected": []
+    },
+    {
+      "name": "bilateral rows score as logged",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10
+          },
+          {
+            "weightKg": 7.5,
+            "reps": 8
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "null weight or reps read as 0",
+      "input": {
+        "rows": [
+          {
+            "weightKg": null,
+            "reps": 10
+          },
+          {
+            "weightKg": 5,
+            "reps": null
+          },
+          {
+            "weightKg": null,
+            "reps": null
+          }
+        ]
+      },
+      "expected": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "clean pair, L then R — weaker side once, on R",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        50
+      ]
+    },
+    {
+      "name": "clean pair, R then L — lands on L",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        50
+      ]
+    },
+    {
+      "name": "asymmetric loads — min weight × min reps",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 4,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        40
+      ]
+    },
+    {
+      "name": "lone L scores on its own",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "L",
+            "pairId": "solo"
+          }
+        ]
+      },
+      "expected": [
+        60
+      ]
+    },
+    {
+      "name": "two Ls in one pair are malformed — as logged",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "three rows in one pair are malformed",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 11,
+            "side": "L",
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60,
+        55
+      ]
+    },
+    {
+      "name": "a sideless row is not part of the pair",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": null,
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "sides without a pairId are bilateral",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": null
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": null
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "empty pairId is no pairId",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": ""
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": ""
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "lower-case l/r are not sides",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "l",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "r",
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        50,
+        60
+      ]
+    },
+    {
+      "name": "two pairs interleaved",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 6,
+            "reps": 9,
+            "side": "L",
+            "pairId": "p2"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 6,
+            "reps": 8,
+            "side": "R",
+            "pairId": "p2"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        null,
+        50,
+        48
+      ]
+    },
+    {
+      "name": "a pair split around a bilateral row",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 10,
+            "reps": 10
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        100,
+        50
+      ]
+    },
+    {
+      "name": "pair with null reps on one side",
+      "input": {
+        "rows": [
+          {
+            "weightKg": 5,
+            "reps": null,
+            "side": "L",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        0
+      ]
+    },
+    {
+      "name": "pair with null weight on one side",
+      "input": {
+        "rows": [
+          {
+            "weightKg": null,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p"
+          }
+        ]
+      },
+      "expected": [
+        null,
+        0
+      ]
+    }
+  ]
+}

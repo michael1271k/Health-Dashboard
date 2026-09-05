@@ -1,0 +1,355 @@
+{
+  "module": "native/deepLink",
+  "fn": "safePath / destination",
+  "note": "The allow-list for helix://open?path=… URLs: helix scheme only, path must start with / and not //, query and fragment stripped before matching the clean path OR its first-segment root, the FULL path returned. `destination` is the native tab mapping (today · train · fuel · body(date) · you · reports); null path → null destination.",
+  "cases": [
+    {
+      "name": "home",
+      "input": {
+        "raw": "helix://open?path=/"
+      },
+      "expected": {
+        "path": "/",
+        "destination": {
+          "kind": "today",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "nutrition",
+      "input": {
+        "raw": "helix://open?path=/nutrition"
+      },
+      "expected": {
+        "path": "/nutrition",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "nutrition micros — below an allowed root",
+      "input": {
+        "raw": "helix://open?path=/nutrition/micros"
+      },
+      "expected": {
+        "path": "/nutrition/micros",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "nutrition nutrients",
+      "input": {
+        "raw": "helix://open?path=/nutrition/nutrients"
+      },
+      "expected": {
+        "path": "/nutrition/nutrients",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "workout exercises",
+      "input": {
+        "raw": "helix://open?path=/workout/exercises"
+      },
+      "expected": {
+        "path": "/workout/exercises",
+        "destination": {
+          "kind": "train",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "session",
+      "input": {
+        "raw": "helix://open?path=/session"
+      },
+      "expected": {
+        "path": "/session",
+        "destination": {
+          "kind": "train",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "pathfinder",
+      "input": {
+        "raw": "helix://open?path=/pathfinder"
+      },
+      "expected": {
+        "path": "/pathfinder",
+        "destination": {
+          "kind": "body",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "reports",
+      "input": {
+        "raw": "helix://open?path=/reports"
+      },
+      "expected": {
+        "path": "/reports",
+        "destination": {
+          "kind": "reports",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "settings",
+      "input": {
+        "raw": "helix://open?path=/settings"
+      },
+      "expected": {
+        "path": "/settings",
+        "destination": {
+          "kind": "you",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "a day",
+      "input": {
+        "raw": "helix://open?path=/day/2026-08-14"
+      },
+      "expected": {
+        "path": "/day/2026-08-14",
+        "destination": {
+          "kind": "body",
+          "date": "2026-08-14"
+        }
+      }
+    },
+    {
+      "name": "a day with an unencoded query",
+      "input": {
+        "raw": "helix://open?path=/day/2026-09-03?section=sleep"
+      },
+      "expected": {
+        "path": "/day/2026-09-03?section=sleep",
+        "destination": {
+          "kind": "body",
+          "date": "2026-09-03"
+        }
+      }
+    },
+    {
+      "name": "a day with an encoded query",
+      "input": {
+        "raw": "helix://open?path=%2Fday%2F2026-08-14%3Ftab%3Dsleep"
+      },
+      "expected": {
+        "path": "/day/2026-08-14?tab=sleep",
+        "destination": {
+          "kind": "body",
+          "date": "2026-08-14"
+        }
+      }
+    },
+    {
+      "name": "a fragment is stripped before the check",
+      "input": {
+        "raw": "helix://open?path=/nutrition%23macros"
+      },
+      "expected": {
+        "path": "/nutrition#macros",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "upper-case scheme",
+      "input": {
+        "raw": "HELIX://open?path=/nutrition"
+      },
+      "expected": {
+        "path": "/nutrition",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "a trailing slash",
+      "input": {
+        "raw": "helix://open?path=/nutrition/"
+      },
+      "expected": {
+        "path": "/nutrition/",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "dot-dot below an allowed root passes the allow-list (the TS does too)",
+      "input": {
+        "raw": "helix://open?path=/nutrition/../admin"
+      },
+      "expected": {
+        "path": "/nutrition/../admin",
+        "destination": {
+          "kind": "fuel",
+          "date": null
+        }
+      }
+    },
+    {
+      "name": "https scheme",
+      "input": {
+        "raw": "https://evil.example/nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "javascript scheme",
+      "input": {
+        "raw": "javascript:alert(1)"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "capacitor scheme",
+      "input": {
+        "raw": "capacitor://localhost/nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "protocol-relative",
+      "input": {
+        "raw": "helix://open?path=//evil.example"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "protocol-relative below an allowed root",
+      "input": {
+        "raw": "helix://open?path=//evil.example/nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "absolute URL as the path",
+      "input": {
+        "raw": "helix://open?path=https://evil.example/nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "a route the app does not have",
+      "input": {
+        "raw": "helix://open?path=/admin"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "the old snapshot route",
+      "input": {
+        "raw": "helix://open?path=/api/widget/snapshot"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "case-sensitive",
+      "input": {
+        "raw": "helix://open?path=/Nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "relative path",
+      "input": {
+        "raw": "helix://open?path=nutrition"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "no path",
+      "input": {
+        "raw": "helix://open"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "empty string",
+      "input": {
+        "raw": ""
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "null",
+      "input": {
+        "raw": null
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    },
+    {
+      "name": "malformed",
+      "input": {
+        "raw": "helix://%%%"
+      },
+      "expected": {
+        "path": null,
+        "destination": null
+      }
+    }
+  ]
+}

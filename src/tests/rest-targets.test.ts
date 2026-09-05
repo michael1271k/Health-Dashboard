@@ -25,7 +25,7 @@ beforeEach(() => {
 })
 
 describe('the plan carries a target for every lift', () => {
-  it('every exercise on every Helix-5 day has one', () => {
+  it('every exercise on every Onyx-5 day has one', () => {
     const missing = APEX51.days.flatMap((d) =>
       d.exercises.filter((e) => e.restSec == null).map((e) => `${d.key}/${e.name}`))
     expect(missing).toEqual([])

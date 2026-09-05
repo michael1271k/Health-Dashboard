@@ -1,0 +1,681 @@
+{
+  "module": "training/effort",
+  "fn": "suggestEffortWord",
+  "note": "mean − baseline, baseline = median of history when ≥ 3 entries else 8.8. Bands: ≤ −0.75 Easy, ≤ −0.25 Solid, < 0.25 Hard, < 0.75 Brutal, else Everything. null mean → null.",
+  "cases": [
+    {
+      "name": "typical session against its own shape",
+      "input": {
+        "mean": 8.875,
+        "history": [
+          8.8,
+          8.9,
+          8.8,
+          9
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "cold baseline itself, no history",
+      "input": {
+        "mean": 8.8,
+        "history": []
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 7",
+      "input": {
+        "mean": 7,
+        "history": [
+          7,
+          7,
+          7
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 8",
+      "input": {
+        "mean": 8,
+        "history": [
+          8,
+          8,
+          8
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 8.5",
+      "input": {
+        "mean": 8.5,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 8.8",
+      "input": {
+        "mean": 8.8,
+        "history": [
+          8.8,
+          8.8,
+          8.8
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 9",
+      "input": {
+        "mean": 9,
+        "history": [
+          9,
+          9,
+          9
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "matches its own baseline 9.5",
+      "input": {
+        "mean": 9.5,
+        "history": [
+          9.5,
+          9.5,
+          9.5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "+0.5 is Brutal",
+      "input": {
+        "mean": 9,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "+1.1 is Everything",
+      "input": {
+        "mean": 9.6,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    },
+    {
+      "name": "−0.5 is Solid",
+      "input": {
+        "mean": 8.3,
+        "history": [
+          8.8,
+          8.8,
+          8.8
+        ]
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "−1.0 is Easy",
+      "input": {
+        "mean": 7.8,
+        "history": [
+          8.8,
+          8.8,
+          8.8
+        ]
+      },
+      "expected": {
+        "key": "easy",
+        "label": "Easy",
+        "cr10": 5,
+        "hint": "lighter than usual — plenty left"
+      }
+    },
+    {
+      "name": "median ignores one savage session",
+      "input": {
+        "mean": 8.8,
+        "history": [
+          8.8,
+          8.8,
+          8.8,
+          10
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "two sessions are not a baseline",
+      "input": {
+        "mean": 8.8,
+        "history": [
+          5,
+          5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "null mean",
+      "input": {
+        "mean": null,
+        "history": [
+          8.8,
+          8.8,
+          8.8
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "even-length history takes the midpoint",
+      "input": {
+        "mean": 8.5,
+        "history": [
+          8,
+          9,
+          8,
+          9
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "unsorted history",
+      "input": {
+        "mean": 9.25,
+        "history": [
+          9,
+          8,
+          10,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    },
+    {
+      "name": "delta -1 off an 8.5 baseline",
+      "input": {
+        "mean": 7.5,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "easy",
+        "label": "Easy",
+        "cr10": 5,
+        "hint": "lighter than usual — plenty left"
+      }
+    },
+    {
+      "name": "delta -1 off the cold baseline",
+      "input": {
+        "mean": 7.800000000000001,
+        "history": []
+      },
+      "expected": {
+        "key": "easy",
+        "label": "Easy",
+        "cr10": 5,
+        "hint": "lighter than usual — plenty left"
+      }
+    },
+    {
+      "name": "delta -0.75 off an 8.5 baseline",
+      "input": {
+        "mean": 7.75,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "easy",
+        "label": "Easy",
+        "cr10": 5,
+        "hint": "lighter than usual — plenty left"
+      }
+    },
+    {
+      "name": "delta -0.75 off the cold baseline",
+      "input": {
+        "mean": 8.05,
+        "history": []
+      },
+      "expected": {
+        "key": "easy",
+        "label": "Easy",
+        "cr10": 5,
+        "hint": "lighter than usual — plenty left"
+      }
+    },
+    {
+      "name": "delta -0.74 off an 8.5 baseline",
+      "input": {
+        "mean": 7.76,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.74 off the cold baseline",
+      "input": {
+        "mean": 8.06,
+        "history": []
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.5 off an 8.5 baseline",
+      "input": {
+        "mean": 8,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.5 off the cold baseline",
+      "input": {
+        "mean": 8.3,
+        "history": []
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.25 off an 8.5 baseline",
+      "input": {
+        "mean": 8.25,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.25 off the cold baseline",
+      "input": {
+        "mean": 8.55,
+        "history": []
+      },
+      "expected": {
+        "key": "solid",
+        "label": "Solid",
+        "cr10": 6.5,
+        "hint": "a normal working session"
+      }
+    },
+    {
+      "name": "delta -0.24 off an 8.5 baseline",
+      "input": {
+        "mean": 8.26,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta -0.24 off the cold baseline",
+      "input": {
+        "mean": 8.56,
+        "history": []
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta 0 off an 8.5 baseline",
+      "input": {
+        "mean": 8.5,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta 0 off the cold baseline",
+      "input": {
+        "mean": 8.8,
+        "history": []
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta 0.24 off an 8.5 baseline",
+      "input": {
+        "mean": 8.74,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta 0.24 off the cold baseline",
+      "input": {
+        "mean": 9.040000000000001,
+        "history": []
+      },
+      "expected": {
+        "key": "hard",
+        "label": "Hard",
+        "cr10": 8,
+        "hint": "the session you planned, in full"
+      }
+    },
+    {
+      "name": "delta 0.25 off an 8.5 baseline",
+      "input": {
+        "mean": 8.75,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.25 off the cold baseline",
+      "input": {
+        "mean": 9.05,
+        "history": []
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.5 off an 8.5 baseline",
+      "input": {
+        "mean": 9,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.5 off the cold baseline",
+      "input": {
+        "mean": 9.3,
+        "history": []
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.74 off an 8.5 baseline",
+      "input": {
+        "mean": 9.24,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.74 off the cold baseline",
+      "input": {
+        "mean": 9.540000000000001,
+        "history": []
+      },
+      "expected": {
+        "key": "brutal",
+        "label": "Brutal",
+        "cr10": 9,
+        "hint": "harder than this day usually is"
+      }
+    },
+    {
+      "name": "delta 0.75 off an 8.5 baseline",
+      "input": {
+        "mean": 9.25,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    },
+    {
+      "name": "delta 0.75 off the cold baseline",
+      "input": {
+        "mean": 9.55,
+        "history": []
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    },
+    {
+      "name": "delta 1 off an 8.5 baseline",
+      "input": {
+        "mean": 9.5,
+        "history": [
+          8.5,
+          8.5,
+          8.5
+        ]
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    },
+    {
+      "name": "delta 1 off the cold baseline",
+      "input": {
+        "mean": 9.8,
+        "history": []
+      },
+      "expected": {
+        "key": "everything",
+        "label": "Everything",
+        "cr10": 10,
+        "hint": "nothing left in the tank"
+      }
+    }
+  ]
+}

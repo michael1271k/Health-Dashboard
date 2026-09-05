@@ -24,8 +24,19 @@ export interface MuscleEntry { primary: string[]; secondary: string[] }
 /**
  * Keyed by a canonical keyword phrase; ALL tokens must appear in the name, and
  * the longest matching phrase wins. Order within the array does not matter.
+ *
+ * EXPORTED for the golden vectors only. This is a table, not a formula, so the
+ * only honest way to hold the Swift port to it is to ship the table itself and
+ * assert the two are equal entry for entry — a hand-transcribed copy in the
+ * test file would be the same "typed in twice" failure the vectors exist to
+ * catch. Nothing in the app reads it; go through `lookupMuscles`.
+ *
+ * ORDER IS PART OF THE DATA. `lookupMuscles` only replaces its best match on a
+ * STRICTLY longer token list, so of two entries with the same specificity the
+ * FIRST one here wins — `['overhead','extension']` beats `['cable','extension']`
+ * for "Cable Overhead Extension" because it is written above it.
  */
-const DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
+export const MUSCLE_DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // ── Quads ───────────────────────────────────────────────────────────────────
   // ── ADDUCTORS AND FOREARMS WERE MISSING, AND IT SHOWED ────────────────────
   // Reconciled against Hevy's own breakdown for a real session: a leg press
@@ -249,7 +260,7 @@ function tokenize(name: string): Set<string> {
 export function lookupMuscles(name: string): MuscleEntry | null {
   const nameTokens = tokenize(name)
   let best: { entry: MuscleEntry; specificity: number } | null = null
-  for (const { tokens, muscles } of DICT) {
+  for (const { tokens, muscles } of MUSCLE_DICT) {
     if (tokens.every((t) => nameTokens.has(t))) {
       if (!best || tokens.length > best.specificity) best = { entry: muscles, specificity: tokens.length }
     }

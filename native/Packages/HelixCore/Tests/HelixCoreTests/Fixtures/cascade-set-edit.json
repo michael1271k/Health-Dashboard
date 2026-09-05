@@ -1,0 +1,591 @@
+{
+  "module": "sessions/draft",
+  "fn": "cascadeSetEdit",
+  "note": "Apply the patch to setIdx, carry weight (only from a load > 0) and reps to the NEXT set if it still holds the previous value, then re-resolve every inherited rating (applyRpeMemory) over the whole list.",
+  "cases": [
+    {
+      "name": "set 1 weight carries to set 2 only",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 8
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 45
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 45,
+          "reps": 10
+        },
+        {
+          "weightKg": 45,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 8
+        }
+      ]
+    },
+    {
+      "name": "a diverged set 2 is left alone",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 50,
+            "reps": 10
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 45
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 45,
+          "reps": 10
+        },
+        {
+          "weightKg": 50,
+          "reps": 10
+        }
+      ]
+    },
+    {
+      "name": "middle edit carries to its successor only",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          }
+        ],
+        "setIdx": 1,
+        "patch": {
+          "weightKg": 60
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 60,
+          "reps": 10
+        },
+        {
+          "weightKg": 60,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 10
+        }
+      ]
+    },
+    {
+      "name": "setType never cascades",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "setType": "warmup"
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 10,
+          "setType": "warmup"
+        },
+        {
+          "weightKg": 40,
+          "reps": 10
+        }
+      ]
+    },
+    {
+      "name": "reps cascade one step",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 8
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "reps": 11
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 11
+        },
+        {
+          "weightKg": 40,
+          "reps": 11
+        },
+        {
+          "weightKg": 40,
+          "reps": 8
+        }
+      ]
+    },
+    {
+      "name": "reps only cascade to a matching heir",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 8
+          }
+        ],
+        "setIdx": 1,
+        "patch": {
+          "reps": 11
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 11
+        },
+        {
+          "weightKg": 40,
+          "reps": 8
+        }
+      ]
+    },
+    {
+      "name": "0 → n weight is a change of kind, not cascaded",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 15
+          },
+          {
+            "weightKg": 0,
+            "reps": 15
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 10
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 10,
+          "reps": 15
+        },
+        {
+          "weightKg": 0,
+          "reps": 15
+        }
+      ]
+    },
+    {
+      "name": "last set has no heir",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 8
+          }
+        ],
+        "setIdx": 2,
+        "patch": {
+          "weightKg": 45
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 45,
+          "reps": 8
+        }
+      ]
+    },
+    {
+      "name": "out-of-range index returns the input",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 10
+          },
+          {
+            "weightKg": 40,
+            "reps": 8
+          }
+        ],
+        "setIdx": 5,
+        "patch": {
+          "weightKg": 45
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 10
+        },
+        {
+          "weightKg": 40,
+          "reps": 8
+        }
+      ]
+    },
+    {
+      "name": "cascade re-resolves the inherited rating on the heir",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          },
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 62.5
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 62.5,
+          "reps": 10,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10,
+          "rpeStale": true
+        },
+        {
+          "weightKg": 62.5,
+          "reps": 10,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10,
+          "rpeStale": true
+        }
+      ]
+    },
+    {
+      "name": "a lighter cascade keeps the heir's remembered rating",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          },
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 57.5
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 57.5,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        },
+        {
+          "weightKg": 57.5,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        }
+      ]
+    },
+    {
+      "name": "rating the edited set drops its seed, the heir keeps its own",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          },
+          {
+            "weightKg": 60,
+            "reps": 10,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "rpe": 9
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 9
+        },
+        {
+          "weightKg": 60,
+          "reps": 10,
+          "rpe": 8,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10
+        }
+      ]
+    },
+    {
+      "name": "a bodyweight rep increase clears the inherited rating",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 15,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 0,
+            "rpeSeedReps": 15
+          },
+          {
+            "weightKg": 0,
+            "reps": 15,
+            "rpe": 8,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 0,
+            "rpeSeedReps": 15
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "reps": 16
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 0,
+          "reps": 16,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 0,
+          "rpeSeedReps": 15,
+          "rpeStale": true
+        },
+        {
+          "weightKg": 0,
+          "reps": 16,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 0,
+          "rpeSeedReps": 15,
+          "rpeStale": true
+        }
+      ]
+    },
+    {
+      "name": "restoring the numbers restores the rating",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 62.5,
+            "reps": 10,
+            "rpeSeed": 8,
+            "rpeSeedWeightKg": 60,
+            "rpeSeedReps": 10,
+            "rpeStale": true
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 60
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 60,
+          "reps": 10,
+          "rpeSeed": 8,
+          "rpeSeedWeightKg": 60,
+          "rpeSeedReps": 10,
+          "rpe": 8
+        }
+      ]
+    },
+    {
+      "name": "a partial seed is left untouched",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 62.5,
+            "reps": 10,
+            "rpeSeed": 8
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 65
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 65,
+          "reps": 10,
+          "rpeSeed": 8
+        }
+      ]
+    },
+    {
+      "name": "unilateral rows cascade like any other (the store bypasses this for pairs)",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 15,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 15,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ],
+        "setIdx": 0,
+        "patch": {
+          "weightKg": 17.5
+        }
+      },
+      "expected": [
+        {
+          "weightKg": 17.5,
+          "reps": 12,
+          "side": "L",
+          "pairId": "p1"
+        },
+        {
+          "weightKg": 17.5,
+          "reps": 12,
+          "side": "R",
+          "pairId": "p1"
+        }
+      ]
+    }
+  ]
+}

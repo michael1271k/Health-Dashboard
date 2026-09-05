@@ -1,0 +1,563 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "setDetail",
+  "note": "One line per set; warm-ups and ghosts carry no number; per-set rating and word, \"RPE not reported\" on unrated working sets only when some set was rated, else one closing note.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": [],
+        "exerciseName": "Leg Press"
+      },
+      "expected": [
+        "—"
+      ]
+    },
+    {
+      "name": "the rich Leg Press",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 15,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "warmup": true
+          },
+          {
+            "weightKg": 75,
+            "reps": 12,
+            "rpe": 8.5,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 75,
+            "reps": 12,
+            "rpe": 9.5,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "quality": "momentum"
+          },
+          {
+            "weightKg": 75,
+            "reps": 10,
+            "rpe": 10,
+            "side": null,
+            "failure": true,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Leg Press"
+      },
+      "expected": [
+        "Warm-up: 40 kg × 15 (warm-up)",
+        "Set 1: 75 kg × 12 (RPE 8.5 — Hard)",
+        "Set 2: 75 kg × 12 (RPE 9.5 — Max Effort, Set Quality: Momentum)",
+        "Set 3: 75 kg × 10 (RPE 10 — Failure)"
+      ]
+    },
+    {
+      "name": "the rich Hack Squat — a ghost, an unrated failure",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 55,
+            "reps": 12,
+            "rpe": 9,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 55,
+            "reps": 12,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "ghost": true
+          },
+          {
+            "weightKg": 55,
+            "reps": 11,
+            "rpe": null,
+            "side": null,
+            "failure": true,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Hack Squat"
+      },
+      "expected": [
+        "Set 1: 55 kg × 12 (RPE 9 — Very Hard)",
+        "Skipped: 55 kg × 12 (planned)",
+        "Set 2: 55 kg × 11 (RPE not reported, to failure)"
+      ]
+    },
+    {
+      "name": "unloaded reverse crunch",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 17,
+            "rpe": 8,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 0,
+            "reps": 15,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Reverse Crunch"
+      },
+      "expected": [
+        "Set 1: 17 reps (RPE 8 — Challenging)",
+        "Set 2: 15 reps (RPE not reported)"
+      ]
+    },
+    {
+      "name": "the mixed lateral raise",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 15,
+            "rpe": null,
+            "side": "L",
+            "failure": false,
+            "pairId": "w1",
+            "warmup": true
+          },
+          {
+            "weightKg": 2.5,
+            "reps": 15,
+            "rpe": null,
+            "side": "R",
+            "failure": false,
+            "pairId": "w1",
+            "warmup": true
+          },
+          {
+            "weightKg": 5,
+            "reps": 15,
+            "rpe": 8,
+            "side": "L",
+            "failure": false,
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 17,
+            "rpe": 9,
+            "side": "R",
+            "failure": false,
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "rpe": 9.5,
+            "side": "L",
+            "failure": true,
+            "pairId": "p2"
+          },
+          {
+            "weightKg": 5,
+            "reps": 16,
+            "rpe": null,
+            "side": "R",
+            "failure": false,
+            "pairId": "p2"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "rpe": null,
+            "side": "L",
+            "failure": false,
+            "pairId": "p3",
+            "ghost": true
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "rpe": null,
+            "side": "R",
+            "failure": false,
+            "pairId": "p3",
+            "ghost": true
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": 9,
+            "side": "L",
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": [
+        "Warm-up: L 2.5 kg × 15 (warm-up) · R 2.5 kg × 15 (warm-up)",
+        "Set 1: L 5 kg × 15 (RPE 8 — Challenging) · R 5 kg × 17 (RPE 9 — Very Hard)",
+        "Set 2: L 5 kg × 14 (RPE 9.5 — Max Effort, to failure) · R 5 kg × 16 (RPE not reported)",
+        "Skipped: L 5 kg × 14 · R 5 kg × 14 (planned)",
+        "Set 3: 5 kg × 12 (RPE 9 — Very Hard)"
+      ]
+    },
+    {
+      "name": "the timed plank pair",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 55,
+            "rpe": 9,
+            "side": "L",
+            "failure": false,
+            "pairId": "h1"
+          },
+          {
+            "weightKg": 0,
+            "reps": 60,
+            "rpe": 9.5,
+            "side": "R",
+            "failure": false,
+            "pairId": "h1"
+          }
+        ],
+        "exerciseName": "Side Plank"
+      },
+      "expected": [
+        "Set 1: L 55 sec (RPE 9 — Very Hard) · R 60 sec (RPE 9.5 — Max Effort)"
+      ]
+    },
+    {
+      "name": "hammer curl — failure by rating and a quality flag",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 20,
+            "reps": 12,
+            "rpe": 10,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 20,
+            "reps": 10,
+            "rpe": 9,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "quality": "form_breakdown"
+          }
+        ],
+        "exerciseName": "DB Hammer Curl"
+      },
+      "expected": [
+        "Set 1: 20 kg × 12 (RPE 10 — Failure)",
+        "Set 2: 20 kg × 10 (RPE 9 — Very Hard, Set Quality: Form broke)"
+      ]
+    },
+    {
+      "name": "a drop set",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 18.75,
+            "reps": 12,
+            "rpe": 9.5,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 12.5,
+            "reps": 8,
+            "rpe": 10,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "dropset": true
+          }
+        ],
+        "exerciseName": "Preacher Curl (Machine)"
+      },
+      "expected": [
+        "Set 1: 18.75 kg × 12 (RPE 9.5 — Max Effort)",
+        "Set 2: 12.5 kg × 8 (RPE 10 — Failure, drop set)"
+      ]
+    },
+    {
+      "name": "nothing rated at all",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 40,
+            "reps": 11,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Chest Press (Machine)"
+      },
+      "expected": [
+        "Set 1: 40 kg × 12",
+        "Set 2: 40 kg × 11",
+        "Set 3: 40 kg × 10",
+        "_(RPE not reported for any working set)_"
+      ]
+    },
+    {
+      "name": "no exercise name",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": 9,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": null
+      },
+      "expected": [
+        "Set 1: 40 kg × 12 (RPE 9 — Very Hard)"
+      ]
+    },
+    {
+      "name": "failure with rating 9 says to failure",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": 9,
+            "side": null,
+            "failure": true,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "X"
+      },
+      "expected": [
+        "Set 1: 40 kg × 12 (RPE 9 — Very Hard, to failure)"
+      ]
+    },
+    {
+      "name": "failure with rating 10 does not repeat itself",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": 10,
+            "side": null,
+            "failure": true,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "X"
+      },
+      "expected": [
+        "Set 1: 40 kg × 12 (RPE 10 — Failure)"
+      ]
+    },
+    {
+      "name": "pair with only a left half",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": 8,
+            "side": "L",
+            "failure": false,
+            "pairId": "p"
+          }
+        ],
+        "exerciseName": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": [
+        "Set 1: L 5 kg × 12 (RPE 8 — Challenging)"
+      ]
+    },
+    {
+      "name": "pair with a sideless half lands on the left",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": 8,
+            "side": null,
+            "failure": false,
+            "pairId": "p"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "rpe": 9,
+            "side": "R",
+            "failure": false,
+            "pairId": "p"
+          }
+        ],
+        "exerciseName": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": [
+        "Set 1: L 5 kg × 12 (RPE 8 — Challenging) · R 5 kg × 14 (RPE 9 — Very Hard)"
+      ]
+    },
+    {
+      "name": "a bare side without a pair is a plain set",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "rpe": 8,
+            "side": "R",
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": [
+        "Set 1: 5 kg × 12 (RPE 8 — Challenging)"
+      ]
+    },
+    {
+      "name": "warm-up pair with a rating",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2,
+            "reps": 15,
+            "rpe": 5,
+            "side": "L",
+            "failure": false,
+            "pairId": "w",
+            "warmup": true
+          },
+          {
+            "weightKg": 2,
+            "reps": 15,
+            "rpe": null,
+            "side": "R",
+            "failure": false,
+            "pairId": "w",
+            "warmup": true
+          }
+        ],
+        "exerciseName": "Single Arm Lateral Raise (Cable)"
+      },
+      "expected": [
+        "Warm-up: L 2 kg × 15 (RPE 5 — Very Easy, warm-up) · R 2 kg × 15 (warm-up)"
+      ]
+    },
+    {
+      "name": "quarter-kilo loads",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 16,
+            "rpe": 8.5,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          },
+          {
+            "weightKg": 5.25,
+            "reps": 12,
+            "rpe": null,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "X"
+      },
+      "expected": [
+        "Set 1: 3.75 kg × 16 (RPE 8.5 — Hard)",
+        "Set 2: 5.25 kg × 12 (RPE not reported)"
+      ]
+    },
+    {
+      "name": "unknown quality key is ignored",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12,
+            "rpe": 9,
+            "side": null,
+            "failure": false,
+            "pairId": null,
+            "quality": "wobbly"
+          }
+        ],
+        "exerciseName": "X"
+      },
+      "expected": [
+        "Set 1: 40 kg × 12 (RPE 9 — Very Hard)"
+      ]
+    },
+    {
+      "name": "one unloaded rep still says reps (as the export does)",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 1,
+            "rpe": 8,
+            "side": null,
+            "failure": false,
+            "pairId": null
+          }
+        ],
+        "exerciseName": "Hanging Knee Raise"
+      },
+      "expected": [
+        "Set 1: 1 reps (RPE 8 — Challenging)"
+      ]
+    }
+  ]
+}

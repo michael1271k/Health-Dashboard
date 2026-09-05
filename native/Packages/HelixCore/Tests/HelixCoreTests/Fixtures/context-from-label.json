@@ -1,0 +1,147 @@
+{
+  "module": "nutrition/context",
+  "fn": "contextFromDayLabel",
+  "note": "Trim + lower-case; a known mode folds in; anything else non-empty is an EXCEPTION day and maps to event, never to normal.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "stored": null
+      },
+      "expected": "normal"
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "stored": ""
+      },
+      "expected": "normal"
+    },
+    {
+      "name": "\"   \"",
+      "input": {
+        "stored": "   "
+      },
+      "expected": "normal"
+    },
+    {
+      "name": "\"Illness\"",
+      "input": {
+        "stored": "Illness"
+      },
+      "expected": "illness"
+    },
+    {
+      "name": "\" refeed \"",
+      "input": {
+        "stored": " refeed "
+      },
+      "expected": "refeed"
+    },
+    {
+      "name": "\"REFEED\"",
+      "input": {
+        "stored": "REFEED"
+      },
+      "expected": "refeed"
+    },
+    {
+      "name": "\"Wedding\"",
+      "input": {
+        "stored": "Wedding"
+      },
+      "expected": "event"
+    },
+    {
+      "name": "\"normal\"",
+      "input": {
+        "stored": "normal"
+      },
+      "expected": "normal"
+    },
+    {
+      "name": "\"Normal\"",
+      "input": {
+        "stored": "Normal"
+      },
+      "expected": "normal"
+    },
+    {
+      "name": "\"travel\"",
+      "input": {
+        "stored": "travel"
+      },
+      "expected": "travel"
+    },
+    {
+      "name": "\"Emergency\"",
+      "input": {
+        "stored": "Emergency"
+      },
+      "expected": "emergency"
+    },
+    {
+      "name": "\"event\"",
+      "input": {
+        "stored": "event"
+      },
+      "expected": "event"
+    },
+    {
+      "name": "\"social\"",
+      "input": {
+        "stored": "social"
+      },
+      "expected": "social"
+    },
+    {
+      "name": "\"nonsense\"",
+      "input": {
+        "stored": "nonsense"
+      },
+      "expected": "event"
+    },
+    {
+      "name": "\"illness \"",
+      "input": {
+        "stored": "illness "
+      },
+      "expected": "illness"
+    },
+    {
+      "name": "\"Travel\\t\"",
+      "input": {
+        "stored": "Travel\t"
+      },
+      "expected": "travel"
+    },
+    {
+      "name": "\"EVENT\"",
+      "input": {
+        "stored": "EVENT"
+      },
+      "expected": "event"
+    },
+    {
+      "name": "\"ILLNESS\"",
+      "input": {
+        "stored": "ILLNESS"
+      },
+      "expected": "illness"
+    },
+    {
+      "name": "\"Social \"",
+      "input": {
+        "stored": "Social "
+      },
+      "expected": "social"
+    },
+    {
+      "name": "\"x\"",
+      "input": {
+        "stored": "x"
+      },
+      "expected": "event"
+    }
+  ]
+}

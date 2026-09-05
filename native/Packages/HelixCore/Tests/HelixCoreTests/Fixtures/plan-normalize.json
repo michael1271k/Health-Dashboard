@@ -1,0 +1,126 @@
+{
+  "module": "programs",
+  "fn": "normalizePlanId",
+  "note": "Legacy ids migrate to the plan that absorbed them; anything unknown is null, never the default. Exact string match — no trimming, no case folding.",
+  "cases": [
+    {
+      "name": "\"apex51\"",
+      "input": {
+        "raw": "apex51"
+      },
+      "expected": "apex51"
+    },
+    {
+      "name": "\"axis4\"",
+      "input": {
+        "raw": "axis4"
+      },
+      "expected": "axis4"
+    },
+    {
+      "name": "\"ppl\"",
+      "input": {
+        "raw": "ppl"
+      },
+      "expected": "ppl"
+    },
+    {
+      "name": "\"axis4_builder\"",
+      "input": {
+        "raw": "axis4_builder"
+      },
+      "expected": "axis4"
+    },
+    {
+      "name": "\"axis4_defender\"",
+      "input": {
+        "raw": "axis4_defender"
+      },
+      "expected": "axis4"
+    },
+    {
+      "name": "null",
+      "input": {
+        "raw": null
+      },
+      "expected": null
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "raw": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "\" \"",
+      "input": {
+        "raw": " "
+      },
+      "expected": null
+    },
+    {
+      "name": "\"APEX51\"",
+      "input": {
+        "raw": "APEX51"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"Axis4\"",
+      "input": {
+        "raw": "Axis4"
+      },
+      "expected": null
+    },
+    {
+      "name": "\" axis4\"",
+      "input": {
+        "raw": " axis4"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"axis4_builder \"",
+      "input": {
+        "raw": "axis4_builder "
+      },
+      "expected": null
+    },
+    {
+      "name": "\"helix5\"",
+      "input": {
+        "raw": "helix5"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"apex\"",
+      "input": {
+        "raw": "apex"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"bogus\"",
+      "input": {
+        "raw": "bogus"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"constructor\"",
+      "input": {
+        "raw": "constructor"
+      },
+      "expected": null
+    },
+    {
+      "name": "\"toString\"",
+      "input": {
+        "raw": "toString"
+      },
+      "expected": null
+    }
+  ]
+}

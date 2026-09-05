@@ -131,7 +131,7 @@ const C = DAY_COLOR
 
 // ── HELIX-5 (ACTIVE) — Sun/Mon/Tue/Thu/Fri ─────────────────────────────────
 export const APEX51: Program = {
-  id: 'apex51', label: 'Helix-5', era: 'axis', active: true,   // id kept for localStorage compat
+  id: 'apex51', label: 'Onyx-5', era: 'axis', active: true,   // id kept for localStorage compat
   blurb: '5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.',
   days: [
     { key: 'cb_a', label: 'Upper A', sub: 'Chest + Back', color: C.cb_a, weekday: 0, exercises: [
@@ -188,11 +188,11 @@ export const APEX51: Program = {
   ],
 }
 
-// ── Helix-4 (drawer) — ONE 4-day plan. The former "Bulk"/"Cut" split is now a
+// ── Onyx-4 (drawer) — ONE 4-day plan. The former "Bulk"/"Cut" split is now a
 // PHASE: same movements, per-exercise (bulk/cut) set counts. `sets` = bulk;
 // `cutSets` = cut (0 = a bulk-only lift dropped while cutting).
 export const HELIX4: Program = {
-  id: 'axis4', label: 'Helix-4', era: 'axis', drawer: true,
+  id: 'axis4', label: 'Onyx-4', era: 'axis', drawer: true,
   blurb: '4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.',
   days: [
     { key: 'upper_a', label: 'Upper A', color: C.cb_a, weekday: 1, exercises: [
@@ -394,8 +394,8 @@ export function prescribedFor(dayKey: string, phase: ProgramPhase): { exercises:
  */
 export function isTrainingDay(dateISO: string): boolean {
   // The ACTIVE plan, not the default one. This read `DEFAULT_PROGRAM_ID`, which
-  // is a no-op while Helix-5 is active but would have answered against Helix-5's
-  // week for a user running Helix-4 — and this function gates the supplement
+  // is a no-op while Onyx-5 is active but would have answered against Onyx-5's
+  // week for a user running Onyx-4 — and this function gates the supplement
   // cascade, so it would have added pre-workout stimulants to rest days and
   // stripped them from training days. `scheduleDayFor` next door already reads
   // the active plan; the two disagreeing was the latent half of the bug.
@@ -554,7 +554,7 @@ export function daySplitEnum(dayKey: string): 'push' | 'pull' | 'legs' | 'upper'
 
 const ACTIVE_KEY = 'helix_active_plan'
 const PHASE_KEY = 'helix_active_phase'
-// Legacy plan ids → the consolidated plan (the two Helix-4 variants are one plan
+// Legacy plan ids → the consolidated plan (the two Onyx-4 variants are one plan
 // now; the old key names are migrated on read so a device never dead-ends).
 const LEGACY_PLAN_ID: Record<string, string> = { axis4_builder: 'axis4', axis4_defender: 'axis4' }
 

@@ -30,14 +30,7 @@ import { exerciseIconFor } from '@/lib/exercises/icons'
 import { usePreviousCardio, formatPreviousCardio } from '@/lib/hooks/usePreviousCardio'
 import { activeProgram } from '@/lib/programs'
 import { isWorkingSet } from '@/lib/training/setTags'
-
-const STATUS_META: Record<NonNullable<DraftExercise['status']>, { label: string; color: string }> = {
-  PR:       { label: 'PR',       color: '#D4AF37' },  // gold
-  PROGRESS: { label: 'PROG ▲',   color: '#3E9E7A' },
-  HOLD:     { label: 'HOLD',     color: '#79808C' },
-  REGRESS:  { label: 'REGR ▼',   color: '#C4514E' },
-  NEW:      { label: 'NEW',      color: '#8E9AAC' },
-}
+import { STATUS_META, groupSets, fmtKg, trimNum } from '@/lib/sessions/deck'
 
 export const CARDIO_VIOLET = '#B4522A'
 const READY_GOLD = '#D4AF37'
@@ -108,11 +101,6 @@ function CardioCell({ label, unit, step, value, digits = 2, readOnly = false, on
   )
 }
 
-/** `0.37`, `5`, `12.5` — a fixed-point value with its dead zeros taken off. */
-function trimNum(v: number, digits: number): string {
-  return v.toFixed(digits).replace(/\.?0+$/, '') || '0'
-}
-
 /** Smart-Coach cue for this lift. `ready` = earned the bump (two clean sessions
  *  at the top load); `one-more` = cleared once and needs it repeated. */
 export interface ReadyCue {
@@ -120,31 +108,6 @@ export interface ReadyCue {
   currentKg: number | null
   timed: boolean
   state: 'ready' | 'one-more'
-}
-
-// A unilateral L/R pair reads as ONE numbered set that expands into Left/Right
-// sub-rows — NOT two sibling rows. groupSets folds the flat draft list into that
-// display shape while preserving each side's original index (for edit/remove).
-type SetGroup =
-  | { kind: 'single'; idx: number; set: DraftSet; num: number }
-  | { kind: 'pair'; pairId: string; num: number; left?: { idx: number; set: DraftSet }; right?: { idx: number; set: DraftSet } }
-
-function groupSets(sets: DraftSet[]): SetGroup[] {
-  const groups: SetGroup[] = []
-  const byPair = new Map<string, Extract<SetGroup, { kind: 'pair' }>>()
-  let num = 0
-  sets.forEach((set, idx) => {
-    if (set.pairId) {
-      let g = byPair.get(set.pairId)
-      if (!g) { num += 1; g = { kind: 'pair', pairId: set.pairId, num }; byPair.set(set.pairId, g); groups.push(g) }
-      if (set.side === 'R') g.right = { idx, set }
-      else g.left = { idx, set }
-    } else {
-      num += 1
-      groups.push({ kind: 'single', idx, set, num })
-    }
-  })
-  return groups
 }
 
 /**
@@ -168,8 +131,6 @@ function SideRpe({ side, rpe, color }: { side: 'R' | 'L'; rpe: number | null | u
   )
 }
 
-// Show the real load: 3.75 must never display as "3.8" (quarter-step plates).
-const fmtKg = (w: number) => (w % 1 === 0 ? w.toFixed(0) : (w * 10) % 1 === 0 ? w.toFixed(1) : w.toFixed(2))
 /**
  * One exercise widget of the deck: dnd-kit sortable (drag from the grip only),
  * coach status chip, the era-scoped "PREV" reference chip beside today's

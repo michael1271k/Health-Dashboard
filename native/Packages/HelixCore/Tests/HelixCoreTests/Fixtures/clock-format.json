@@ -1,0 +1,237 @@
+{
+  "module": "sessions/sessionClock",
+  "fn": "formatClock + clampDuration",
+  "note": "m:ss always, h:mm:ss only past an hour, negatives and fractions floor to whole seconds; clampDuration rounds then clamps 15–3600.",
+  "cases": [
+    {
+      "name": "0",
+      "input": {
+        "sec": 0
+      },
+      "expected": {
+        "formatted": "0:00",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "0.4",
+      "input": {
+        "sec": 0.4
+      },
+      "expected": {
+        "formatted": "0:00",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "9",
+      "input": {
+        "sec": 9
+      },
+      "expected": {
+        "formatted": "0:09",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "9.9",
+      "input": {
+        "sec": 9.9
+      },
+      "expected": {
+        "formatted": "0:09",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "59",
+      "input": {
+        "sec": 59
+      },
+      "expected": {
+        "formatted": "0:59",
+        "clamped": 59
+      }
+    },
+    {
+      "name": "60",
+      "input": {
+        "sec": 60
+      },
+      "expected": {
+        "formatted": "1:00",
+        "clamped": 60
+      }
+    },
+    {
+      "name": "90",
+      "input": {
+        "sec": 90
+      },
+      "expected": {
+        "formatted": "1:30",
+        "clamped": 90
+      }
+    },
+    {
+      "name": "599",
+      "input": {
+        "sec": 599
+      },
+      "expected": {
+        "formatted": "9:59",
+        "clamped": 599
+      }
+    },
+    {
+      "name": "600",
+      "input": {
+        "sec": 600
+      },
+      "expected": {
+        "formatted": "10:00",
+        "clamped": 600
+      }
+    },
+    {
+      "name": "724",
+      "input": {
+        "sec": 724
+      },
+      "expected": {
+        "formatted": "12:04",
+        "clamped": 724
+      }
+    },
+    {
+      "name": "3599",
+      "input": {
+        "sec": 3599
+      },
+      "expected": {
+        "formatted": "59:59",
+        "clamped": 3599
+      }
+    },
+    {
+      "name": "3600",
+      "input": {
+        "sec": 3600
+      },
+      "expected": {
+        "formatted": "1:00:00",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "3661",
+      "input": {
+        "sec": 3661
+      },
+      "expected": {
+        "formatted": "1:01:01",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "3723",
+      "input": {
+        "sec": 3723
+      },
+      "expected": {
+        "formatted": "1:02:03",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "36000",
+      "input": {
+        "sec": 36000
+      },
+      "expected": {
+        "formatted": "10:00:00",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "-5",
+      "input": {
+        "sec": -5
+      },
+      "expected": {
+        "formatted": "0:00",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "14.5",
+      "input": {
+        "sec": 14.5
+      },
+      "expected": {
+        "formatted": "0:14",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "15",
+      "input": {
+        "sec": 15
+      },
+      "expected": {
+        "formatted": "0:15",
+        "clamped": 15
+      }
+    },
+    {
+      "name": "44.5",
+      "input": {
+        "sec": 44.5
+      },
+      "expected": {
+        "formatted": "0:44",
+        "clamped": 45
+      }
+    },
+    {
+      "name": "45.5",
+      "input": {
+        "sec": 45.5
+      },
+      "expected": {
+        "formatted": "0:45",
+        "clamped": 46
+      }
+    },
+    {
+      "name": "3600.4",
+      "input": {
+        "sec": 3600.4
+      },
+      "expected": {
+        "formatted": "1:00:00",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "3601",
+      "input": {
+        "sec": 3601
+      },
+      "expected": {
+        "formatted": "1:00:01",
+        "clamped": 3600
+      }
+    },
+    {
+      "name": "100000",
+      "input": {
+        "sec": 100000
+      },
+      "expected": {
+        "formatted": "27:46:40",
+        "clamped": 3600
+      }
+    }
+  ]
+}

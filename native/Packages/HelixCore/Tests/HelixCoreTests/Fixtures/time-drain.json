@@ -1,0 +1,112 @@
+{
+  "module": "scoring/battery",
+  "fn": "timeDrain",
+  "note": "A raised cosine, not a line: little before hour 6, most between 8 and 14, flat late. Monotonic.",
+  "cases": [
+    {
+      "name": "awake=0",
+      "input": {
+        "hoursAwake": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "awake=0.5",
+      "input": {
+        "hoursAwake": 0.5
+      },
+      "expected": 0.06659278339445296
+    },
+    {
+      "name": "awake=1",
+      "input": {
+        "hoursAwake": 1
+      },
+      "expected": 0.26586432228635964
+    },
+    {
+      "name": "awake=3",
+      "input": {
+        "hoursAwake": 3
+      },
+      "expected": 2.3445554337723227
+    },
+    {
+      "name": "awake=6",
+      "input": {
+        "hoursAwake": 6
+      },
+      "expected": 8.749999999999998
+    },
+    {
+      "name": "awake=8",
+      "input": {
+        "hoursAwake": 8
+      },
+      "expected": 14.461156890828718
+    },
+    {
+      "name": "awake=10",
+      "input": {
+        "hoursAwake": 10
+      },
+      "expected": 20.53884310917128
+    },
+    {
+      "name": "awake=12",
+      "input": {
+        "hoursAwake": 12
+      },
+      "expected": 26.249999999999996
+    },
+    {
+      "name": "awake=14",
+      "input": {
+        "hoursAwake": 14
+      },
+      "expected": 30.905777754582115
+    },
+    {
+      "name": "awake=16",
+      "input": {
+        "hoursAwake": 16
+      },
+      "expected": 33.9446208637534
+    },
+    {
+      "name": "awake=17.9",
+      "input": {
+        "hoursAwake": 17.9
+      },
+      "expected": 34.99733466523685
+    },
+    {
+      "name": "awake=18",
+      "input": {
+        "hoursAwake": 18
+      },
+      "expected": 35
+    },
+    {
+      "name": "awake=19",
+      "input": {
+        "hoursAwake": 19
+      },
+      "expected": 35
+    },
+    {
+      "name": "awake=24",
+      "input": {
+        "hoursAwake": 24
+      },
+      "expected": 35
+    },
+    {
+      "name": "awake=-3",
+      "input": {
+        "hoursAwake": -3
+      },
+      "expected": 0
+    }
+  ]
+}

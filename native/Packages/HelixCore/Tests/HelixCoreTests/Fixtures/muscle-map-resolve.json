@@ -1,0 +1,133 @@
+{
+  "module": "exercises/muscleMap",
+  "fn": "resolveMovers",
+  "note": "The name wins. The stored muscle_groups column is only ever read for a row this dictionary has never seen, and splits [0] = primary / rest = secondary — which is how muscleGroupsFor writes it.",
+  "cases": [
+    {
+      "name": "Face Pull · [shoulders,biceps]",
+      "input": {
+        "name": "Face Pull",
+        "stored": [
+          "shoulders",
+          "biceps"
+        ]
+      },
+      "expected": {
+        "primary": [
+          "rear_delts"
+        ],
+        "secondary": [
+          "biceps"
+        ]
+      }
+    },
+    {
+      "name": "Face Pull · null",
+      "input": {
+        "name": "Face Pull",
+        "stored": null
+      },
+      "expected": {
+        "primary": [
+          "rear_delts"
+        ],
+        "secondary": [
+          "biceps"
+        ]
+      }
+    },
+    {
+      "name": "Leg Press · [quads]",
+      "input": {
+        "name": "Leg Press",
+        "stored": [
+          "quads"
+        ]
+      },
+      "expected": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "glutes",
+          "hamstrings"
+        ]
+      }
+    },
+    {
+      "name": "Zercher Good Morning · [hamstrings,glutes]",
+      "input": {
+        "name": "Zercher Good Morning",
+        "stored": [
+          "hamstrings",
+          "glutes"
+        ]
+      },
+      "expected": {
+        "primary": [
+          "hamstrings"
+        ],
+        "secondary": [
+          "glutes"
+        ]
+      }
+    },
+    {
+      "name": "Zercher Good Morning · [hamstrings]",
+      "input": {
+        "name": "Zercher Good Morning",
+        "stored": [
+          "hamstrings"
+        ]
+      },
+      "expected": {
+        "primary": [
+          "hamstrings"
+        ],
+        "secondary": []
+      }
+    },
+    {
+      "name": "Zercher Good Morning · []",
+      "input": {
+        "name": "Zercher Good Morning",
+        "stored": []
+      },
+      "expected": {
+        "primary": [],
+        "secondary": []
+      }
+    },
+    {
+      "name": "Zercher Good Morning · null",
+      "input": {
+        "name": "Zercher Good Morning",
+        "stored": null
+      },
+      "expected": {
+        "primary": [],
+        "secondary": []
+      }
+    },
+    {
+      "name": "empty · [chest,triceps,front_delts]",
+      "input": {
+        "name": "",
+        "stored": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ]
+      },
+      "expected": {
+        "primary": [
+          "chest"
+        ],
+        "secondary": [
+          "triceps",
+          "front_delts"
+        ]
+      }
+    }
+  ]
+}

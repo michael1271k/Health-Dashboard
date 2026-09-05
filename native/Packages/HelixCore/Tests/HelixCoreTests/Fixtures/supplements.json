@@ -1,0 +1,1249 @@
+{
+  "module": "supplements",
+  "fn": "SUPPLEMENT_PROTOCOL / protocolForDate / stackForDate / supplementCountForDate",
+  "note": "The seed protocol WITHOUT accent colours (HelixUI tokens). Rest days drop trainingOnly items and empty slots; the multivitamin is 2 tabs on Monday (1) and Friday (5). Non-empty dbSlots win outright. `count` is the item total of the resolved stack.",
+  "cases": [
+    {
+      "name": "the seed",
+      "input": {
+        "isTraining": true,
+        "weekday": -1,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 0",
+      "input": {
+        "isTraining": true,
+        "weekday": 0,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 1",
+      "input": {
+        "isTraining": true,
+        "weekday": 1,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 2",
+      "input": {
+        "isTraining": true,
+        "weekday": 2,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 3",
+      "input": {
+        "isTraining": true,
+        "weekday": 3,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 4",
+      "input": {
+        "isTraining": true,
+        "weekday": 4,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 5",
+      "input": {
+        "isTraining": true,
+        "weekday": 5,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "training weekday 6",
+      "input": {
+        "isTraining": true,
+        "weekday": 6,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "name": "rest weekday 0",
+      "input": {
+        "isTraining": false,
+        "weekday": 0,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 1",
+      "input": {
+        "isTraining": false,
+        "weekday": 1,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 2",
+      "input": {
+        "isTraining": false,
+        "weekday": 2,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 3",
+      "input": {
+        "isTraining": false,
+        "weekday": 3,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 4",
+      "input": {
+        "isTraining": false,
+        "weekday": 4,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 5",
+      "input": {
+        "isTraining": false,
+        "weekday": 5,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "rest weekday 6",
+      "input": {
+        "isTraining": false,
+        "weekday": 6,
+        "dbSlots": []
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ],
+        "count": 7
+      }
+    },
+    {
+      "name": "the database wins when it has rows",
+      "input": {
+        "isTraining": true,
+        "weekday": 1,
+        "dbSlots": [
+          {
+            "key": "morning",
+            "time": "09:00",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "custom:1",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "stack": [
+          {
+            "key": "morning",
+            "time": "09:00",
+            "label": "Morning",
+            "items": [
+              {
+                "key": "custom:1",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "1"
+              }
+            ]
+          }
+        ],
+        "count": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "trendLedger",
+  "note": "One row per week, oldest first; Δ kg to two places against the row above; the arrow is direction only.",
+  "cases": [
+    {
+      "name": "the rich ledger",
+      "input": {
+        "weeks": [
+          {
+            "label": "Week 5",
+            "weekStart": "2026-08-16",
+            "totals": {
+              "avgKcal": 1885,
+              "totalVolumeKg": 26340,
+              "avgSteps": 10850,
+              "cardioMinutes": 120,
+              "avgWaterMl": 3050,
+              "avgWeightKg": 65.7
+            }
+          },
+          {
+            "label": "Week 6",
+            "weekStart": "2026-08-23",
+            "totals": {
+              "avgKcal": 1999,
+              "totalVolumeKg": 25102.25,
+              "avgSteps": 9800,
+              "cardioMinutes": null,
+              "avgWaterMl": 2900,
+              "avgWeightKg": 65.2
+            }
+          },
+          {
+            "label": "Week 7",
+            "weekStart": "2026-08-30",
+            "totals": {
+              "avgKcal": 2165,
+              "totalVolumeKg": 14939.75,
+              "avgSteps": 7641,
+              "cardioMinutes": 83.5,
+              "avgWaterMl": 2816.67,
+              "avgWeightKg": 64.525
+            }
+          },
+          {
+            "label": "Week 8",
+            "weekStart": "2026-09-06",
+            "totals": {
+              "avgKcal": null,
+              "totalVolumeKg": null,
+              "avgSteps": null,
+              "cardioMinutes": null,
+              "avgWaterMl": null,
+              "avgWeightKg": null
+            }
+          }
+        ]
+      },
+      "expected": [
+        "| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg |  Δ kg |   |",
+        "|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|------:|:-:|",
+        "| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |     — | — |",
+        "| Week 6 |     1999 |  25102.25 |      9800 |          — |        2.90 |      65.2 | −0.50 | ↓ |",
+        "| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 | −0.67 | ↓ |",
+        "| Week 8 |        — |         — |         — |          — |           — |         — |     — | — |"
+      ]
+    },
+    {
+      "name": "one week",
+      "input": {
+        "weeks": [
+          {
+            "label": "Week 5",
+            "weekStart": "2026-08-16",
+            "totals": {
+              "avgKcal": 1885,
+              "totalVolumeKg": 26340,
+              "avgSteps": 10850,
+              "cardioMinutes": 120,
+              "avgWaterMl": 3050,
+              "avgWeightKg": 65.7
+            }
+          }
+        ]
+      },
+      "expected": [
+        "| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg | Δ kg |   |",
+        "|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|-----:|:-:|",
+        "| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |    — | — |"
+      ]
+    },
+    {
+      "name": "empty",
+      "input": {
+        "weeks": []
+      },
+      "expected": [
+        "| Week | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg | Δ kg |  |",
+        "|:-----|---------:|----------:|----------:|-----------:|------------:|----------:|-----:|::|"
+      ]
+    },
+    {
+      "name": "a tie and a fractional volume",
+      "input": {
+        "weeks": [
+          {
+            "label": "Week 5",
+            "weekStart": "2026-08-16",
+            "totals": {
+              "avgKcal": 1885,
+              "totalVolumeKg": 26340,
+              "avgSteps": 10850,
+              "cardioMinutes": 120,
+              "avgWaterMl": 3050,
+              "avgWeightKg": 65.7
+            }
+          },
+          {
+            "label": "W",
+            "weekStart": "2026-08-16",
+            "totals": {
+              "avgKcal": 1885,
+              "totalVolumeKg": 8329.249999999,
+              "avgSteps": 10850,
+              "cardioMinutes": 120,
+              "avgWaterMl": 3050,
+              "avgWeightKg": 65.7
+            }
+          }
+        ]
+      },
+      "expected": [
+        "| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg | Δ kg |   |",
+        "|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|-----:|:-:|",
+        "| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |    — | — |",
+        "| W      |     1885 |   8329.25 |     10850 |        120 |        3.05 |      65.7 | 0.00 | → |"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3687 @@
+{
+  "module": "body/deltaVerdict",
+  "fn": "deltaVerdict",
+  "note": "Under 0.01 is noise; water is never a verdict; muscle is good up / bad down in every phase; maintenance has a dead band (0.5 weight, 0.3 fat) and judges like a cut outside it; fat loss is good everywhere and fat gain is neutral on a bulk; weight flips with the phase.",
+  "cases": [
+    {
+      "name": "weight -2 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.6 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.5 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.4 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.3 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.29 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.2 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.1 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.05 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.01 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.009 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.009 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.01 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.05 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.1 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.2 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.29 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.3 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.4 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.5 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.6 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 2 on a cut",
+      "input": {
+        "metric": "weight",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -2 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 2 on a cut (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -2 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.6 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.5 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.4 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.3 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.29 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.2 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.1 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.05 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.01 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight -0.009 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.009 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.01 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.05 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.1 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.2 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.29 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.3 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.4 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.5 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 0.6 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight 2 on a bulk",
+      "input": {
+        "metric": "weight",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -2 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "weight -0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight -0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "weight 0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "weight 2 on a bulk (maintenance)",
+      "input": {
+        "metric": "weight",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat -2 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.6 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.5 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.4 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.3 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.29 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.2 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.1 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.05 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.01 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.009 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.009 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.01 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.05 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.1 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.2 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.29 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.3 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.4 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.5 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.6 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 2 on a cut",
+      "input": {
+        "metric": "fat",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat -2 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 2 on a cut (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat -2 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.6 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.5 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.4 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.3 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.29 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.2 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.1 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.05 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.01 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.009 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.009 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.01 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.05 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.1 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.2 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.29 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.3 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.4 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.5 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.6 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 2 on a bulk",
+      "input": {
+        "metric": "fat",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -2 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "fat -0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat -0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "fat 0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "fat 2 on a bulk (maintenance)",
+      "input": {
+        "metric": "fat",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -2 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.6 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.5 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.4 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.3 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.29 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.2 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.1 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.05 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.01 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.009 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.009 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.01 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.05 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.1 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.2 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.29 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.3 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.4 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.5 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.6 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 2 on a cut",
+      "input": {
+        "metric": "muscle",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle -2 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 2 on a cut (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle -2 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.6 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.5 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.4 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.3 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.29 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.2 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.1 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.05 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.01 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.009 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.009 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.01 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.05 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.1 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.2 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.29 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.3 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.4 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.5 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.6 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 2 on a bulk",
+      "input": {
+        "metric": "muscle",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle -2 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "bad"
+    },
+    {
+      "name": "muscle -0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "muscle 0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "muscle 2 on a bulk (maintenance)",
+      "input": {
+        "metric": "muscle",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "good"
+    },
+    {
+      "name": "water -2 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.6 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.5 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.4 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.3 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.29 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.2 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.1 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.05 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.01 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.009 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.009 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.01 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.05 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.1 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.2 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.29 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.3 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.4 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.5 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.6 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 2 on a cut",
+      "input": {
+        "metric": "water",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -2 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.009 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.009,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.01 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.01,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.05 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.05,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.1 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.1,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.2 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.29 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.29,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.3 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.3,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.4 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.4,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.5 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.5,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.6 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.6,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 2 on a cut (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 2,
+        "phase": "cut",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -2 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.6 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.5 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.4 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.3 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.29 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.2 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.1 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.05 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.01 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.009 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.009 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.01 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.05 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.1 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.2 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.29 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.3 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.4 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.5 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.6 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 2 on a bulk",
+      "input": {
+        "metric": "water",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": false
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -2 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water -0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": -0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.009 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.009,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.01 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.01,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.05 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.05,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.1 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.1,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.2 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.29 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.29,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.3 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.3,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.4 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.4,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.5 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.5,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 0.6 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 0.6,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    },
+    {
+      "name": "water 2 on a bulk (maintenance)",
+      "input": {
+        "metric": "water",
+        "delta": 2,
+        "phase": "bulk",
+        "maintenance": true
+      },
+      "expected": "neutral"
+    }
+  ]
+}

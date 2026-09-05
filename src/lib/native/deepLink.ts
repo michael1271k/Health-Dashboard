@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core'
  * app's home screen, which means tapping the calorie ring COST you a navigation
  * instead of saving you one — and a shortcut that lands you further from what
  * you tapped is not a shortcut. Each face now names a destination
- * (`HelixLink` in ios/App/HelixWidgets/HelixPalette.swift) and this is the half
+ * (the widget bundle in native/HelixNativeWidgets) and this is the half
  * that receives it.
  *
  * ── WHY A QUERY PARAMETER AND NOT A HOST ─────────────────────────────────────

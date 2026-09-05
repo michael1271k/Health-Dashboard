@@ -1,0 +1,1627 @@
+{
+  "module": "training/landmarks",
+  "fn": "volumeZone",
+  "note": "na at target ≤ 0; OVER only when DIRECT/target > 1.3; else the TOTAL grades under (< 0.5) / building (< 1) / optimal.",
+  "cases": [
+    {
+      "name": "0/0 (0 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/0 (3 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/0 (8 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/0 (10 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/0 (13 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/0 (14 direct)",
+      "input": {
+        "sets": 0,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (0 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (3 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (8 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (10 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (13 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "3/0 (14 direct)",
+      "input": {
+        "sets": 3,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (0 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (3 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (8 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (10 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (13 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "4/0 (14 direct)",
+      "input": {
+        "sets": 4,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (0 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (3 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (8 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (10 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (13 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "5/0 (14 direct)",
+      "input": {
+        "sets": 5,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (0 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (3 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (8 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (10 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (13 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "7.5/0 (14 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (0 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (3 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (8 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (10 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (13 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "8/0 (14 direct)",
+      "input": {
+        "sets": 8,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (0 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (3 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (8 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (10 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (13 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "10/0 (14 direct)",
+      "input": {
+        "sets": 10,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (0 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (3 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (8 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (10 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (13 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "12/0 (14 direct)",
+      "input": {
+        "sets": 12,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (0 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (3 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (8 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (10 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (13 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "13/0 (14 direct)",
+      "input": {
+        "sets": 13,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (0 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 0
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (3 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 3
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (8 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 8
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (10 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 10
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (13 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 13
+      },
+      "expected": "na"
+    },
+    {
+      "name": "14/0 (14 direct)",
+      "input": {
+        "sets": 14,
+        "target": 0,
+        "direct": 14
+      },
+      "expected": "na"
+    },
+    {
+      "name": "0/8 (0 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/8 (3 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/8 (8 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/8 (10 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/8 (13 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "0/8 (14 direct)",
+      "input": {
+        "sets": 0,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "3/8 (0 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/8 (3 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/8 (8 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/8 (10 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/8 (13 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "3/8 (14 direct)",
+      "input": {
+        "sets": 3,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "4/8 (0 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "4/8 (3 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "4/8 (8 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "4/8 (10 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "4/8 (13 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "4/8 (14 direct)",
+      "input": {
+        "sets": 4,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "5/8 (0 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/8 (3 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/8 (8 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/8 (10 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/8 (13 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "5/8 (14 direct)",
+      "input": {
+        "sets": 5,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "7.5/8 (0 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/8 (3 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/8 (8 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/8 (10 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/8 (13 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "7.5/8 (14 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "8/8 (0 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "8/8 (3 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "8/8 (8 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "8/8 (10 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "8/8 (13 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "8/8 (14 direct)",
+      "input": {
+        "sets": 8,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "10/8 (0 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/8 (3 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/8 (8 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/8 (10 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/8 (13 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "10/8 (14 direct)",
+      "input": {
+        "sets": 10,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "12/8 (0 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/8 (3 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/8 (8 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/8 (10 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/8 (13 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "12/8 (14 direct)",
+      "input": {
+        "sets": 12,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "13/8 (0 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/8 (3 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/8 (8 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/8 (10 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/8 (13 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "13/8 (14 direct)",
+      "input": {
+        "sets": 13,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "14/8 (0 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/8 (3 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/8 (8 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/8 (10 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/8 (13 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 13
+      },
+      "expected": "over"
+    },
+    {
+      "name": "14/8 (14 direct)",
+      "input": {
+        "sets": 14,
+        "target": 8,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "0/10 (0 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/10 (3 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/10 (8 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/10 (10 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/10 (13 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "under"
+    },
+    {
+      "name": "0/10 (14 direct)",
+      "input": {
+        "sets": 0,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "3/10 (0 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/10 (3 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/10 (8 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/10 (10 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/10 (13 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "under"
+    },
+    {
+      "name": "3/10 (14 direct)",
+      "input": {
+        "sets": 3,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "4/10 (0 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "under"
+    },
+    {
+      "name": "4/10 (3 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "under"
+    },
+    {
+      "name": "4/10 (8 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "under"
+    },
+    {
+      "name": "4/10 (10 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "under"
+    },
+    {
+      "name": "4/10 (13 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "under"
+    },
+    {
+      "name": "4/10 (14 direct)",
+      "input": {
+        "sets": 4,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "5/10 (0 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/10 (3 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/10 (8 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/10 (10 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/10 (13 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "building"
+    },
+    {
+      "name": "5/10 (14 direct)",
+      "input": {
+        "sets": 5,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "7.5/10 (0 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/10 (3 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/10 (8 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/10 (10 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/10 (13 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "building"
+    },
+    {
+      "name": "7.5/10 (14 direct)",
+      "input": {
+        "sets": 7.5,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "8/10 (0 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "building"
+    },
+    {
+      "name": "8/10 (3 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "building"
+    },
+    {
+      "name": "8/10 (8 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "building"
+    },
+    {
+      "name": "8/10 (10 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "building"
+    },
+    {
+      "name": "8/10 (13 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "building"
+    },
+    {
+      "name": "8/10 (14 direct)",
+      "input": {
+        "sets": 8,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "10/10 (0 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/10 (3 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/10 (8 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/10 (10 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/10 (13 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "10/10 (14 direct)",
+      "input": {
+        "sets": 10,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "12/10 (0 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/10 (3 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/10 (8 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/10 (10 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/10 (13 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "12/10 (14 direct)",
+      "input": {
+        "sets": 12,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "13/10 (0 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/10 (3 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/10 (8 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/10 (10 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/10 (13 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "13/10 (14 direct)",
+      "input": {
+        "sets": 13,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    },
+    {
+      "name": "14/10 (0 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 0
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/10 (3 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 3
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/10 (8 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 8
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/10 (10 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 10
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/10 (13 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 13
+      },
+      "expected": "optimal"
+    },
+    {
+      "name": "14/10 (14 direct)",
+      "input": {
+        "sets": 14,
+        "target": 10,
+        "direct": 14
+      },
+      "expected": "over"
+    }
+  ]
+}

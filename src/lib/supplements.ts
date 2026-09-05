@@ -111,8 +111,7 @@ export function supplementCountForDate(isTraining: boolean, dbSlots: SupplementS
 }
 
 /** Has a slot's scheduled time ("HH:MM") passed in the DEVICE's local time? (for auto-log) */
-export function slotTimePassed(hhmm: string): boolean {
+export function slotTimePassed(hhmm: string, now: Date = new Date()): boolean {
   const [h, m] = hhmm.split(':').map(Number)
-  const now = new Date()
   return now.getHours() * 60 + now.getMinutes() >= h * 60 + m
 }

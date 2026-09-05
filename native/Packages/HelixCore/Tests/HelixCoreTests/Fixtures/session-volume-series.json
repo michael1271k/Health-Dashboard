@@ -1,0 +1,4779 @@
+{
+  "module": "charts/series",
+  "fn": "sessionVolumeSeries",
+  "note": "Sessions bucketed by resolveChartSplit(date, split ?? \"\", era, dayKey); null splitDay keeps all. Then dailySeries(sum, limit): same-day sessions add, null volume is skipped, empty days omitted.",
+  "cases": [
+    {
+      "name": "all · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        },
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        },
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        },
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        },
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "all · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "upper_a · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        }
+      ]
+    },
+    {
+      "name": "upper_a · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        }
+      ]
+    },
+    {
+      "name": "upper_b · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "upper_b · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "arms · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "arms · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "legs_a · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_a · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_b · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "legs_b · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "push · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "push · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "pull · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "pull · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "legs · all · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "all",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "legs · all · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "all",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "all · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        },
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        },
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        },
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        },
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "all · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "upper_a · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        }
+      ]
+    },
+    {
+      "name": "upper_a · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        }
+      ]
+    },
+    {
+      "name": "upper_b · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "upper_b · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "arms · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "arms · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "legs_a · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_a · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_b · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "legs_b · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "push · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "push · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "pull · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "pull · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "legs · ppl · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "ppl",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "legs · ppl · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "ppl",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "all · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        },
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        },
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        },
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        },
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "all · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": null,
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "upper_a · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "v": 8100
+        },
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "upper_a · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_a",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-31",
+          "v": 8300
+        },
+        {
+          "d": "2026-09-02",
+          "v": 6000
+        }
+      ]
+    },
+    {
+      "name": "upper_b · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "upper_b · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "upper_b",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-27",
+          "v": 7900
+        }
+      ]
+    },
+    {
+      "name": "arms · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "arms · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "arms",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-26",
+          "v": 5600
+        }
+      ]
+    },
+    {
+      "name": "legs_a · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_a · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_a",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-25",
+          "v": 12400
+        }
+      ]
+    },
+    {
+      "name": "legs_b · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "legs_b · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs_b",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-08-28",
+          "v": 12200
+        }
+      ]
+    },
+    {
+      "name": "push · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "push · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "push",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-01",
+          "v": 7000
+        }
+      ]
+    },
+    {
+      "name": "pull · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "pull · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "pull",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-02",
+          "v": 6500
+        }
+      ]
+    },
+    {
+      "name": "legs · axis · limit 10",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "axis",
+        "limit": 10
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "legs · axis · limit 2",
+      "input": {
+        "sessions": [
+          {
+            "date": "2026-08-24",
+            "dayKey": "cb_a",
+            "volumeKg": 8100
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "legs_a",
+            "volumeKg": 12400
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": "arms",
+            "volumeKg": 5600
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "volumeKg": 7900
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 11800
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "volumeKg": 400
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "cb_a",
+            "volumeKg": 8300
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": null,
+            "split": "legs",
+            "volumeKg": 12000
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": "",
+            "split": "upper",
+            "volumeKg": 6000
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "volumeKg": null
+          },
+          {
+            "date": "2026-06-01",
+            "dayKey": "ppl_push_sun",
+            "volumeKg": 7000
+          },
+          {
+            "date": "2026-06-02",
+            "dayKey": null,
+            "split": "pull",
+            "volumeKg": 6500
+          },
+          {
+            "date": "2026-06-03",
+            "dayKey": null,
+            "split": "lower",
+            "volumeKg": 9000
+          }
+        ],
+        "splitDay": "legs",
+        "era": "axis",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "d": "2026-06-03",
+          "v": 9000
+        },
+        {
+          "d": "2026-09-01",
+          "v": 12000
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "input": {
+        "sessions": [],
+        "splitDay": null,
+        "era": "all",
+        "limit": 5
+      },
+      "expected": []
+    }
+  ]
+}

@@ -1,0 +1,4714 @@
+{
+  "module": "supplements + hooks/useCustomSupplements",
+  "fn": "SUPPLEMENT_PROTOCOL / protocolForDate / stackForDate / supplementCountForDate / slotTimePassed / customSlotsForDate / customDoseFor / supplementKeyOf",
+  "note": "The seed drops trainingOnly items on rest days and removes empty slots; the multivitamin is 2 tabs on Mon/Fri. DB rows group by time (empty/null → \"—\"), sorted as localeCompare sorts them: \"—\" first, then bytewise (\"9:00\" after \"22:00\"). `||` fallbacks: an empty dose/key/colour/time is an absence. supplementCountForDate ignores the weekday — it only changes a dose string. slotTimePassed parses like Number(): trimmed, empty part = 0, junk = NaN = false.",
+  "cases": [
+    {
+      "name": "tables",
+      "input": {
+        "fn": "tables"
+      },
+      "expected": {
+        "tables": {
+          "seed": [
+            {
+              "key": "morning",
+              "time": "10:30",
+              "label": "Morning",
+              "accent": "#3E9E7A",
+              "items": [
+                {
+                  "key": "multivitamin",
+                  "name": "Two Per Day Multivitamin",
+                  "dose": "1 tab",
+                  "notes": "2 tabs on Monday & Friday (Leg Days)"
+                },
+                {
+                  "key": "d3k2",
+                  "name": "Vitamin D3 + K2",
+                  "dose": "125 mcg"
+                }
+              ]
+            },
+            {
+              "key": "pre",
+              "time": "11:45",
+              "label": "Pre-Workout",
+              "accent": "#8E9AAC",
+              "items": [
+                {
+                  "key": "citrulline",
+                  "name": "L-Citrulline",
+                  "dose": "3 g",
+                  "trainingOnly": true
+                },
+                {
+                  "key": "caffeine",
+                  "name": "Nutricost Caffeine",
+                  "dose": "200 mg",
+                  "trainingOnly": true
+                }
+              ]
+            },
+            {
+              "key": "post",
+              "time": "15:00",
+              "label": "Lunch / Post-Workout",
+              "accent": "#3D7AB8",
+              "items": [
+                {
+                  "key": "creatine",
+                  "name": "Creatine Monohydrate",
+                  "dose": "5 g"
+                },
+                {
+                  "key": "omega3",
+                  "name": "Omega-3 Fish Oil",
+                  "dose": "2 caps"
+                }
+              ]
+            },
+            {
+              "key": "night",
+              "time": "22:00",
+              "label": "Before Bed",
+              "accent": "#8A6FA8",
+              "items": [
+                {
+                  "key": "magnesium",
+                  "name": "Magnesium Glycinate",
+                  "dose": "300 mg"
+                },
+                {
+                  "key": "glycine",
+                  "name": "Glycine",
+                  "dose": "5 g"
+                },
+                {
+                  "key": "theanine",
+                  "name": "L-Theanine",
+                  "dose": "200 mg"
+                }
+              ]
+            }
+          ],
+          "allKeys": [
+            "multivitamin",
+            "d3k2",
+            "citrulline",
+            "caffeine",
+            "creatine",
+            "omega3",
+            "magnesium",
+            "glycine",
+            "theanine"
+          ]
+        }
+      }
+    },
+    {
+      "name": "protocolForDate · 0 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 0
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 0 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 0
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 1 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 1
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 1 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 1
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 2 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 2
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 2 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 2
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 3 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 3
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 3 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 3
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 4 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 4
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 4 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 4
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 5 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 5
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 5 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 5
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 6 · training",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": true,
+        "weekday": 6
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocolForDate · 6 · rest",
+      "input": {
+        "fn": "protocolForDate",
+        "isTraining": false,
+        "weekday": 6
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Monday training",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 1,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-zinc",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "r-zinc"
+              },
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              },
+              {
+                "key": "custom:r-mon",
+                "name": "Monday only",
+                "dose": "1 scoop",
+                "customId": "r-mon"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Monday rest",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 1,
+        "isTraining": false
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-zinc",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "r-zinc"
+              },
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "300 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              },
+              {
+                "key": "custom:r-mon",
+                "name": "Monday only",
+                "dose": "1 scoop",
+                "customId": "r-mon"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Tuesday training",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 2,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Tuesday rest",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 2,
+        "isTraining": false
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "300 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Friday training",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 5,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-zinc",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "r-zinc"
+              },
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Saturday rest",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 6,
+        "isTraining": false
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "300 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              },
+              {
+                "key": "custom:r-sat",
+                "name": "Saturday only",
+                "dose": "1",
+                "customId": "r-sat"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · Sunday training",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-multi",
+            "name": "Two Per Day Multivitamin",
+            "dose": "1 tab",
+            "color": "#3E9E7A",
+            "form": "tablet",
+            "time": "10:30",
+            "schedule": {
+              "key": "multivitamin",
+              "slot": "Morning",
+              "trainingDose": "2 tabs",
+              "restDose": "1 tab",
+              "notes": "2 tabs on Monday & Friday (Leg Days)"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-d3",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "color": "#3E9E7A",
+            "form": "capsule",
+            "time": "10:30",
+            "schedule": {
+              "key": "d3k2",
+              "slot": "Morning"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-cre",
+            "name": "Creatine Monohydrate",
+            "dose": "5 g",
+            "color": "#3D7AB8",
+            "form": "powder",
+            "time": "15:00",
+            "schedule": {
+              "key": "creatine",
+              "slot": "Lunch / Post-Workout"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": "#8A6FA8",
+            "form": "tablet",
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium",
+              "slot": "Before Bed"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          },
+          {
+            "id": "r-fish",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "color": "#3D7AB8",
+            "form": "capsule",
+            "time": "07:00",
+            "schedule": {
+              "days": [],
+              "trainingOnly": false,
+              "notes": "with food"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-mon",
+            "name": "Monday only",
+            "dose": "1 scoop",
+            "color": "#111111",
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                1
+              ],
+              "slot": "Post"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 0,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · empty table",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [],
+        "weekday": 1,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": []
+      }
+    },
+    {
+      "name": "customSlotsForDate · only training-only rows on a rest day",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-cit",
+            "name": "L-Citrulline",
+            "dose": "6 g",
+            "color": "#8E9AAC",
+            "form": "powder",
+            "time": "11:45",
+            "schedule": {
+              "key": "citrulline",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          },
+          {
+            "id": "r-caf",
+            "name": "Nutricost Caffeine",
+            "dose": "200 mg",
+            "color": "#8E9AAC",
+            "form": "pill",
+            "time": "11:45",
+            "schedule": {
+              "key": "caffeine",
+              "slot": "Pre-Workout",
+              "trainingOnly": true
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 3,
+        "isTraining": false
+      },
+      "expected": {
+        "slots": []
+      }
+    },
+    {
+      "name": "customSlotsForDate · a lone row with no schedule",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-b12",
+            "name": "B12",
+            "dose": "1000 mcg",
+            "color": "#D4AF37",
+            "form": "tablet",
+            "time": "9:00",
+            "schedule": null,
+            "micros": null
+          }
+        ],
+        "weekday": 3,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · a lone row with no time",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 1,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-zinc",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "r-zinc"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · slot label comes from the first member WITH a slot",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          },
+          {
+            "id": "r-sat",
+            "name": "Saturday only",
+            "dose": "1",
+            "color": null,
+            "form": null,
+            "time": "15:00",
+            "schedule": {
+              "days": [
+                6
+              ],
+              "slot": "Weekend"
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 6,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Weekend",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-sat",
+                "name": "Saturday only",
+                "dose": "1",
+                "customId": "r-sat"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "customSlotsForDate · accent comes from the first member, blank or not",
+      "input": {
+        "fn": "customSlotsForDate",
+        "customs": [
+          {
+            "id": "r-ash",
+            "name": "Ashwagandha",
+            "dose": "600 mg",
+            "color": "",
+            "form": "capsule",
+            "time": "",
+            "schedule": {
+              "key": "",
+              "slot": "",
+              "restDose": "300 mg"
+            },
+            "micros": null
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": {
+              "days": [
+                1,
+                5
+              ]
+            },
+            "micros": null
+          }
+        ],
+        "weekday": 5,
+        "isTraining": true
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              },
+              {
+                "key": "custom:r-zinc",
+                "name": "Zinc",
+                "dose": "15 mg",
+                "customId": "r-zinc"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "stackForDate · empty db → seed",
+      "input": {
+        "fn": "stackForDate",
+        "dbSlots": [],
+        "isTraining": true,
+        "weekday": 1
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "pre",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "3 g",
+                "trainingOnly": true
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "stackForDate · empty db → seed, rest Sunday",
+      "input": {
+        "fn": "stackForDate",
+        "dbSlots": [],
+        "isTraining": false,
+        "weekday": 0
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "1 tab",
+                "notes": "2 tabs on Monday & Friday (Leg Days)"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "post",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "dose": "2 caps"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "5 g"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "dose": "200 mg"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "stackForDate · db rows win untouched",
+      "input": {
+        "fn": "stackForDate",
+        "dbSlots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ],
+        "isTraining": false,
+        "weekday": 1
+      },
+      "expected": {
+        "slots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "count · seed training",
+      "input": {
+        "fn": "count",
+        "isTraining": true,
+        "dbSlots": []
+      },
+      "expected": {
+        "count": 9
+      }
+    },
+    {
+      "name": "count · seed rest",
+      "input": {
+        "fn": "count",
+        "isTraining": false,
+        "dbSlots": []
+      },
+      "expected": {
+        "count": 7
+      }
+    },
+    {
+      "name": "count · db rows",
+      "input": {
+        "fn": "count",
+        "isTraining": false,
+        "dbSlots": [
+          {
+            "key": "stack-—",
+            "time": "—",
+            "label": "Stack",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "custom:r-ash",
+                "name": "Ashwagandha",
+                "dose": "600 mg",
+                "customId": "r-ash"
+              }
+            ]
+          },
+          {
+            "key": "stack-07:00",
+            "time": "07:00",
+            "label": "Stack",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "custom:r-fish",
+                "name": "Fish oil",
+                "dose": "2 caps",
+                "trainingOnly": false,
+                "notes": "with food",
+                "customId": "r-fish"
+              }
+            ]
+          },
+          {
+            "key": "stack-10:30",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs",
+                "notes": "2 tabs on Monday & Friday (Leg Days)",
+                "customId": "r-multi"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg",
+                "customId": "r-d3"
+              }
+            ]
+          },
+          {
+            "key": "stack-11:45",
+            "time": "11:45",
+            "label": "Pre-Workout",
+            "accent": "#8E9AAC",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "dose": "6 g",
+                "trainingOnly": true,
+                "customId": "r-cit"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "dose": "200 mg",
+                "trainingOnly": true,
+                "customId": "r-caf"
+              }
+            ]
+          },
+          {
+            "key": "stack-15:00",
+            "time": "15:00",
+            "label": "Lunch / Post-Workout",
+            "accent": "#3D7AB8",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "dose": "5 g",
+                "customId": "r-cre"
+              }
+            ]
+          },
+          {
+            "key": "stack-22:00",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg",
+                "customId": "r-mag"
+              }
+            ]
+          },
+          {
+            "key": "stack-9:00",
+            "time": "9:00",
+            "label": "Stack",
+            "accent": "#D4AF37",
+            "items": [
+              {
+                "key": "custom:r-b12",
+                "name": "B12",
+                "dose": "1000 mcg",
+                "customId": "r-b12"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "count": 9
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:30\" @ 629",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:30",
+        "nowMinutes": 629
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:30\" @ 630",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:30",
+        "nowMinutes": 630
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:30\" @ 631",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:30",
+        "nowMinutes": 631
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"22:00\" @ 1439",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "22:00",
+        "nowMinutes": 1439
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"22:00\" @ 1319",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "22:00",
+        "nowMinutes": 1319
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"00:00\" @ 0",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "00:00",
+        "nowMinutes": 0
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"\" @ 600",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "",
+        "nowMinutes": 600
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10\" @ 600",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10",
+        "nowMinutes": 600
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:\" @ 600",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:",
+        "nowMinutes": 600
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \" 10:30\" @ 630",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": " 10:30",
+        "nowMinutes": 630
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:30:00\" @ 630",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:30:00",
+        "nowMinutes": 630
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"ab:cd\" @ 600",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "ab:cd",
+        "nowMinutes": 600
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:3x\" @ 600",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:3x",
+        "nowMinutes": 600
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"9:5\" @ 545",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "9:5",
+        "nowMinutes": 545
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "slotTimePassed · \"9:5\" @ 544",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "9:5",
+        "nowMinutes": 544
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"24:00\" @ 1439",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "24:00",
+        "nowMinutes": 1439
+      },
+      "expected": {
+        "passed": false
+      }
+    },
+    {
+      "name": "slotTimePassed · \"10:30\" @ 1439",
+      "input": {
+        "fn": "slotTimePassed",
+        "hhmm": "10:30",
+        "nowMinutes": 1439
+      },
+      "expected": {
+        "passed": true
+      }
+    },
+    {
+      "name": "customDoseFor · both per-day doses · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-multi",
+          "name": "Two Per Day Multivitamin",
+          "dose": "1 tab",
+          "color": "#3E9E7A",
+          "form": "tablet",
+          "time": "10:30",
+          "schedule": {
+            "key": "multivitamin",
+            "slot": "Morning",
+            "trainingDose": "2 tabs",
+            "restDose": "1 tab",
+            "notes": "2 tabs on Monday & Friday (Leg Days)"
+          },
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "2 tabs"
+      }
+    },
+    {
+      "name": "customDoseFor · both per-day doses · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-multi",
+          "name": "Two Per Day Multivitamin",
+          "dose": "1 tab",
+          "color": "#3E9E7A",
+          "form": "tablet",
+          "time": "10:30",
+          "schedule": {
+            "key": "multivitamin",
+            "slot": "Morning",
+            "trainingDose": "2 tabs",
+            "restDose": "1 tab",
+            "notes": "2 tabs on Monday & Friday (Leg Days)"
+          },
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "1 tab"
+      }
+    },
+    {
+      "name": "supplementKeyOf · both per-day doses",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-multi",
+          "name": "Two Per Day Multivitamin",
+          "dose": "1 tab",
+          "color": "#3E9E7A",
+          "form": "tablet",
+          "time": "10:30",
+          "schedule": {
+            "key": "multivitamin",
+            "slot": "Morning",
+            "trainingDose": "2 tabs",
+            "restDose": "1 tab",
+            "notes": "2 tabs on Monday & Friday (Leg Days)"
+          },
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "multivitamin"
+      }
+    },
+    {
+      "name": "customDoseFor · rest dose only · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-ash",
+          "name": "Ashwagandha",
+          "dose": "600 mg",
+          "color": "",
+          "form": "capsule",
+          "time": "",
+          "schedule": {
+            "key": "",
+            "slot": "",
+            "restDose": "300 mg"
+          },
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "600 mg"
+      }
+    },
+    {
+      "name": "customDoseFor · rest dose only · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-ash",
+          "name": "Ashwagandha",
+          "dose": "600 mg",
+          "color": "",
+          "form": "capsule",
+          "time": "",
+          "schedule": {
+            "key": "",
+            "slot": "",
+            "restDose": "300 mg"
+          },
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "300 mg"
+      }
+    },
+    {
+      "name": "supplementKeyOf · rest dose only",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-ash",
+          "name": "Ashwagandha",
+          "dose": "600 mg",
+          "color": "",
+          "form": "capsule",
+          "time": "",
+          "schedule": {
+            "key": "",
+            "slot": "",
+            "restDose": "300 mg"
+          },
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "custom:r-ash"
+      }
+    },
+    {
+      "name": "customDoseFor · no schedule · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-b12",
+          "name": "B12",
+          "dose": "1000 mcg",
+          "color": "#D4AF37",
+          "form": "tablet",
+          "time": "9:00",
+          "schedule": null,
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "1000 mcg"
+      }
+    },
+    {
+      "name": "customDoseFor · no schedule · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-b12",
+          "name": "B12",
+          "dose": "1000 mcg",
+          "color": "#D4AF37",
+          "form": "tablet",
+          "time": "9:00",
+          "schedule": null,
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "1000 mcg"
+      }
+    },
+    {
+      "name": "supplementKeyOf · no schedule",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-b12",
+          "name": "B12",
+          "dose": "1000 mcg",
+          "color": "#D4AF37",
+          "form": "tablet",
+          "time": "9:00",
+          "schedule": null,
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "custom:r-b12"
+      }
+    },
+    {
+      "name": "customDoseFor · training dose empty · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-x",
+          "name": "X",
+          "dose": "1",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "trainingDose": "",
+            "restDose": "2"
+          },
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "1"
+      }
+    },
+    {
+      "name": "customDoseFor · training dose empty · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-x",
+          "name": "X",
+          "dose": "1",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "trainingDose": "",
+            "restDose": "2"
+          },
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "2"
+      }
+    },
+    {
+      "name": "supplementKeyOf · training dose empty",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-x",
+          "name": "X",
+          "dose": "1",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "trainingDose": "",
+            "restDose": "2"
+          },
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "custom:r-x"
+      }
+    },
+    {
+      "name": "customDoseFor · seeded key · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-cit",
+          "name": "L-Citrulline",
+          "dose": "6 g",
+          "color": "#8E9AAC",
+          "form": "powder",
+          "time": "11:45",
+          "schedule": {
+            "key": "citrulline",
+            "slot": "Pre-Workout",
+            "trainingOnly": true
+          },
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "6 g"
+      }
+    },
+    {
+      "name": "customDoseFor · seeded key · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-cit",
+          "name": "L-Citrulline",
+          "dose": "6 g",
+          "color": "#8E9AAC",
+          "form": "powder",
+          "time": "11:45",
+          "schedule": {
+            "key": "citrulline",
+            "slot": "Pre-Workout",
+            "trainingOnly": true
+          },
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "6 g"
+      }
+    },
+    {
+      "name": "supplementKeyOf · seeded key",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-cit",
+          "name": "L-Citrulline",
+          "dose": "6 g",
+          "color": "#8E9AAC",
+          "form": "powder",
+          "time": "11:45",
+          "schedule": {
+            "key": "citrulline",
+            "slot": "Pre-Workout",
+            "trainingOnly": true
+          },
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "citrulline"
+      }
+    },
+    {
+      "name": "customDoseFor · no key · training",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-zinc",
+          "name": "Zinc",
+          "dose": "15 mg",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "days": [
+              1,
+              5
+            ]
+          },
+          "micros": null
+        },
+        "isTraining": true
+      },
+      "expected": {
+        "text": "15 mg"
+      }
+    },
+    {
+      "name": "customDoseFor · no key · rest",
+      "input": {
+        "fn": "customDoseFor",
+        "custom": {
+          "id": "r-zinc",
+          "name": "Zinc",
+          "dose": "15 mg",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "days": [
+              1,
+              5
+            ]
+          },
+          "micros": null
+        },
+        "isTraining": false
+      },
+      "expected": {
+        "text": "15 mg"
+      }
+    },
+    {
+      "name": "supplementKeyOf · no key",
+      "input": {
+        "fn": "supplementKeyOf",
+        "custom": {
+          "id": "r-zinc",
+          "name": "Zinc",
+          "dose": "15 mg",
+          "color": null,
+          "form": null,
+          "time": null,
+          "schedule": {
+            "days": [
+              1,
+              5
+            ]
+          },
+          "micros": null
+        }
+      },
+      "expected": {
+        "text": "custom:r-zinc"
+      }
+    }
+  ]
+}

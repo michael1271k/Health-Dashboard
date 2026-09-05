@@ -1,0 +1,249 @@
+{
+  "module": "sessions/estimates",
+  "fn": "estimateCalories",
+  "note": "Personal median first, MET formula second, null when neither can fire; kcal is Math.round(rate × minutes).",
+  "cases": [
+    {
+      "name": "personal median",
+      "input": {
+        "durationMin": 60,
+        "samples": [
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": {
+        "kcal": 540,
+        "basis": "personal-median"
+      }
+    },
+    {
+      "name": "met fallback",
+      "input": {
+        "durationMin": 60,
+        "samples": [
+          {
+            "kcal": 540,
+            "durationMin": 60
+          },
+          {
+            "kcal": 540,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": {
+        "kcal": 473,
+        "basis": "met-formula"
+      }
+    },
+    {
+      "name": "nothing to fire",
+      "input": {
+        "durationMin": 60,
+        "samples": [],
+        "bodyweightKg": null
+      },
+      "expected": null
+    },
+    {
+      "name": "no duration",
+      "input": {
+        "durationMin": null,
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": null
+    },
+    {
+      "name": "zero duration",
+      "input": {
+        "durationMin": 0,
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": null
+    },
+    {
+      "name": "half hour",
+      "input": {
+        "durationMin": 30,
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": {
+        "kcal": 240,
+        "basis": "personal-median"
+      }
+    },
+    {
+      "name": "fractional duration rounds",
+      "input": {
+        "durationMin": 47.5,
+        "samples": [],
+        "bodyweightKg": 72.3
+      },
+      "expected": {
+        "kcal": 361,
+        "basis": "met-formula"
+      }
+    },
+    {
+      "name": "negative duration",
+      "input": {
+        "durationMin": -10,
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ],
+        "bodyweightKg": 75
+      },
+      "expected": null
+    }
+  ]
+}

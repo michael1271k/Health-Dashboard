@@ -1,0 +1,125 @@
+{
+  "module": "training/effort",
+  "fn": "CR10_ANCHORS / RPE_LADDER / EFFORT_WORDS / constants",
+  "note": "Data. Colours are not exported — a hex is a HelixUI token.",
+  "cases": [
+    {
+      "name": "the tables",
+      "input": {},
+      "expected": {
+        "cr10Min": 1,
+        "cr10Max": 10,
+        "anchors": [
+          {
+            "value": 1,
+            "label": "Very light"
+          },
+          {
+            "value": 2,
+            "label": "Light"
+          },
+          {
+            "value": 3,
+            "label": "Moderate"
+          },
+          {
+            "value": 4,
+            "label": "Somewhat hard"
+          },
+          {
+            "value": 5,
+            "label": "Hard"
+          },
+          {
+            "value": 7,
+            "label": "Very hard"
+          },
+          {
+            "value": 9,
+            "label": "Extremely hard"
+          },
+          {
+            "value": 10,
+            "label": "Maximal"
+          }
+        ],
+        "ladder": [
+          {
+            "value": 5,
+            "label": "Very Easy",
+            "hint": "5+ reps left"
+          },
+          {
+            "value": 6.5,
+            "label": "Easy",
+            "hint": "~4 left"
+          },
+          {
+            "value": 7.5,
+            "label": "Medium",
+            "hint": "3 left"
+          },
+          {
+            "value": 8,
+            "label": "Challenging",
+            "hint": "2–3 left"
+          },
+          {
+            "value": 8.5,
+            "label": "Hard",
+            "hint": "2 left"
+          },
+          {
+            "value": 9,
+            "label": "Very Hard",
+            "hint": "1 left"
+          },
+          {
+            "value": 9.5,
+            "label": "Max Effort",
+            "hint": "0 left, form held"
+          },
+          {
+            "value": 10,
+            "label": "Failure",
+            "hint": "missed or form broke"
+          }
+        ],
+        "words": [
+          {
+            "key": "easy",
+            "label": "Easy",
+            "cr10": 5,
+            "hint": "lighter than usual — plenty left"
+          },
+          {
+            "key": "solid",
+            "label": "Solid",
+            "cr10": 6.5,
+            "hint": "a normal working session"
+          },
+          {
+            "key": "hard",
+            "label": "Hard",
+            "cr10": 8,
+            "hint": "the session you planned, in full"
+          },
+          {
+            "key": "brutal",
+            "label": "Brutal",
+            "cr10": 9,
+            "hint": "harder than this day usually is"
+          },
+          {
+            "key": "everything",
+            "label": "Everything",
+            "cr10": 10,
+            "hint": "nothing left in the tank"
+          }
+        ],
+        "coldBaseline": 8.8,
+        "minHistory": 3
+      }
+    }
+  ]
+}

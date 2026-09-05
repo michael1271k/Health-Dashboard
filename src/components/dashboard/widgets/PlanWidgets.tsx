@@ -15,56 +15,14 @@ import { isoAddDays } from '@/lib/utils/week'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { MACRO_COLORS } from '@/lib/nutrition/colors'
 import { dayColor, EMERALD, OXIDE, GOLD, MUTED, REST, STEEL } from '@/lib/theme/palette'
-import { phaseSpanFor } from '@/lib/phases'
+import { ledgerWindow, consistencyWindow } from '@/lib/dashboard/tiles'
+export { ledgerWindow, consistencyWindow }
 import { exerciseColor } from '@/lib/theme/muscleHue'
 import { WIDGET_META, type WidgetSize } from '@/lib/dashboard/layout'
 
 /* ────────────────────────────────────────────────────────────────────────────
  * DEFICIT LEDGER
  * ──────────────────────────────────────────────────────────────────────────── */
-
-/**
- * The shortest window the ledger will report a rate from.
- *
- * A rate computed from three days is a rate computed from three days, and on a
- * cut those three days routinely include a refeed. Below this the arithmetic is
- * still arithmetic but the answer is noise wearing a decimal point.
- */
-const LEDGER_FLOOR_DAYS = 14
-
-/** The most it will ever sum. Beyond a month the early days describe a body that
- *  no longer exists. */
-const LEDGER_MAX_DAYS = 30
-
-/**
- * How many days this ledger should weigh, and how many of them belong to the
- * current phase.
- *
- * ── WHY A FLAT 30 DAYS WAS WRONG ─────────────────────────────────────────────
- * The tile summed a rolling month regardless of what had happened in it. On the
- * day a phase turns — a cut becoming a maintenance week, which happens on
- * 2026-08-30 — that window is 29 days of one calorie target and 1 of another,
- * averaged into a single "kg/wk" presented as the slope you are on. It is not:
- * it is the slope you WERE on, dragged one day toward the new one, and it stays
- * wrong for a month.
- *
- * ── AND WHY IT DOES NOT JUST USE THE PHASE ───────────────────────────────────
- * Because a phase that started on Tuesday would then report a two-day rate, and
- * a two-day rate on a cut is mostly water. So the window is phase-to-date, and
- * when the phase is younger than the floor it reaches BACK past the boundary to
- * make up the difference — those days are drawn dimmed, so the chart says which
- * part of the number belongs to the regime you are actually in.
- */
-export function ledgerWindow(todayISO: string): { days: number; inPhase: number; label: string | null } {
-  const span = phaseSpanFor(todayISO)
-  if (!span) return { days: LEDGER_MAX_DAYS, inPhase: LEDGER_MAX_DAYS, label: null }
-  const inPhase = Math.min(span.dayIndex + 1, LEDGER_MAX_DAYS)
-  return {
-    days: Math.min(LEDGER_MAX_DAYS, Math.max(inPhase, LEDGER_FLOOR_DAYS)),
-    inPhase,
-    label: `${span.def.short ?? span.def.name} · day ${span.dayIndex + 1}`,
-  }
-}
 
 /**
  * What the last month of eating is actually worth, as a rate.
@@ -313,22 +271,6 @@ const GRID: Record<WidgetSize, { weeks: number; cell: number; gap: number }> = {
   // error in every place that has to answer for it, which is the point.
   w: { weeks: 52, cell: 4, gap: 2 },
   xl: { weeks: 52, cell: 4, gap: 2 },
-}
-
-/**
- * How many days `Heatmap` will actually draw for `weeks` columns ending today.
- *
- * The grid is week-aligned: its last column is the current, partial week, so it
- * winds back to the Sunday that opens the earliest column. That is
- * `(weeks - 1) * 7` whole weeks plus however many days of this week have already
- * happened — NOT `weeks * 7`, and certainly not `weeks * 7 + 7`.
- *
- * Exported so the widget and the chart cannot answer this differently, which is
- * exactly how they came to disagree.
- */
-export function consistencyWindow(weeks: number, todayISO: string): number {
-  const dow = new Date(`${todayISO}T12:00:00Z`).getUTCDay()
-  return (weeks - 1) * 7 + dow + 1
 }
 
 /**

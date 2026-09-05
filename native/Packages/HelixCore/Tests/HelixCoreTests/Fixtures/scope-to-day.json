@@ -1,0 +1,210 @@
+{
+  "module": "training/scopeToDay",
+  "fn": "scopeToDay",
+  "note": "Extracted from ProgressionAlerts. A falsy day key (null, undefined, \"\") keeps EVERYTHING — the PPL era; a key keeps only alerts carrying exactly that key, in order. `kind` says which falsy value the null in `dayKey` stands for.",
+  "cases": [
+    {
+      "name": "key=\"legs_a\"",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": "legs_a",
+        "kind": "string"
+      },
+      "expected": [
+        "a",
+        "d"
+      ]
+    },
+    {
+      "name": "key=\"legs_b\"",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": "legs_b",
+        "kind": "string"
+      },
+      "expected": [
+        "b"
+      ]
+    },
+    {
+      "name": "key=\"cb_a\"",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": "cb_a",
+        "kind": "string"
+      },
+      "expected": []
+    },
+    {
+      "name": "key=null",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": null,
+        "kind": "null"
+      },
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "name": "key=undefined",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": null,
+        "kind": "undefined"
+      },
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "name": "key=\"\"",
+      "input": {
+        "alerts": [
+          {
+            "id": "a",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "b",
+            "dayKey": "legs_b"
+          },
+          {
+            "id": "c",
+            "dayKey": null
+          },
+          {
+            "id": "d",
+            "dayKey": "legs_a"
+          },
+          {
+            "id": "e",
+            "dayKey": ""
+          }
+        ],
+        "dayKey": "",
+        "kind": "string"
+      },
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    }
+  ]
+}

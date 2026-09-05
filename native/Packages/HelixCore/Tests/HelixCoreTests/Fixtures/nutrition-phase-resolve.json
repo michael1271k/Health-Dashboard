@@ -1,0 +1,2438 @@
+{
+  "module": "nutrition/phase",
+  "fn": "resolveDayPhase",
+  "note": "A flagged day (exception OR estimated) keeps the active phase. Labels only — never a term in any score.",
+  "cases": [
+    {
+      "name": "kcal=null exc=null est=null active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=null active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=null active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=null active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=null active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=false active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=false active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=false active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=false active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=false active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=true active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=null est=true active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=null est=true active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=null est=true active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=null est=true active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=null est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=null stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=cut stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=bulk stored=null",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=null exc=\"Social\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": null,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=null est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=null stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=cut stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=1800 exc=\"Social\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 1800,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=null est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=null stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=cut stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2150 exc=\"Social\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=null est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=null active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": null,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=false active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": false,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=null stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=null stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": null,
+        "stored": "maintenance"
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=cut stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=cut stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=bulk stored=null",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2600 exc=\"Social\" est=true active=bulk stored=maintenance",
+      "input": {
+        "calories": 2600,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "bulk",
+        "stored": "maintenance"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "regression: 2026-08-11 date night keeps the cut it was eaten in",
+      "input": {
+        "calories": 2150,
+        "exception": "Social",
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "regression: a flagged day ignores the stored phase it was written with",
+      "input": {
+        "calories": 2150,
+        "exception": "Refeed",
+        "estimated": null,
+        "activePhase": "cut",
+        "stored": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "regression: estimated alone is enough to hold the phase",
+      "input": {
+        "calories": 2600,
+        "exception": null,
+        "estimated": true,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "regression: a whitespace exception does not flag the day",
+      "input": {
+        "calories": 2600,
+        "exception": "   ",
+        "estimated": false,
+        "activePhase": "cut",
+        "stored": null
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "regression: a flagged day with no active phase falls back to the band",
+      "input": {
+        "calories": 2600,
+        "exception": "Travel",
+        "estimated": null,
+        "activePhase": null,
+        "stored": null
+      },
+      "expected": "bulk"
+    }
+  ]
+}

@@ -1,0 +1,468 @@
+{
+  "module": "hooks/useSleepDebt",
+  "fn": "computeSleepDebt",
+  "note": "Window 14 nights, weekly decay 0.75. Nights are sorted by date (stable) and folded oldest → newest; shortfall adds, surplus repays, the total never drops below zero; a night strictly before weekAgo carries 0.75 weight. debtHours is Math.round(x*10)/10. Nights with null/zero/negative minutes are not counted.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "nights": [],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 0,
+        "worstNightMin": null,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "three recent 7h nights → 3h",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 3,
+        "nights": 3,
+        "worstNightMin": 420,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "surplus repays",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 480
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 3,
+        "worstNightMin": 420,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "surplus never banks credit — a long night then a short one",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 1,
+        "nights": 2,
+        "worstNightMin": 420,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "a week-old 6h night decays to 1.5h",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-24",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 1.5,
+        "nights": 1,
+        "worstNightMin": 360,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "the night ON weekAgo is full weight; the night before decays",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-27",
+            "sleepMinutes": 360
+          },
+          {
+            "date": "2026-08-26",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 3.5,
+        "nights": 2,
+        "worstNightMin": 360,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "only the older night decays",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-26",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 1.5,
+        "nights": 1,
+        "worstNightMin": 360,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "unsorted input is folded oldest → newest",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 2,
+        "nights": 3,
+        "worstNightMin": 300,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "nulls, zeros and negatives are not nights",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": null
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 0
+          },
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": -30
+          },
+          {
+            "date": "2026-09-03",
+            "sleepMinutes": 480
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 1,
+        "worstNightMin": 480,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "duplicate dates keep input order — long then short",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 1,
+        "nights": 2,
+        "worstNightMin": 420,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "duplicate dates keep input order — short then long",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 600
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 2,
+        "worstNightMin": 420,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "a 7.5h goal",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 450
+          }
+        ],
+        "goalHours": 7.5,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0.5,
+        "nights": 2,
+        "worstNightMin": 420,
+        "goalHours": 7.5
+      }
+    },
+    {
+      "name": "rounding to one decimal",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 411
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 1.2,
+        "nights": 1,
+        "worstNightMin": 411,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "worst night is the minimum, not the last",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-30",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 200
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 480
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 7.7,
+        "nights": 3,
+        "worstNightMin": 200,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "a full 14-night window",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-20",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-21",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-22",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-23",
+            "sleepMinutes": 540
+          },
+          {
+            "date": "2026-08-24",
+            "sleepMinutes": 360
+          },
+          {
+            "date": "2026-08-25",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-08-26",
+            "sleepMinutes": 450
+          },
+          {
+            "date": "2026-08-27",
+            "sleepMinutes": 300
+          },
+          {
+            "date": "2026-08-28",
+            "sleepMinutes": 420
+          },
+          {
+            "date": "2026-08-29",
+            "sleepMinutes": 480
+          },
+          {
+            "date": "2026-08-30",
+            "sleepMinutes": 540
+          },
+          {
+            "date": "2026-08-31",
+            "sleepMinutes": 360
+          },
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 600
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 450
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 6.1,
+        "nights": 14,
+        "worstNightMin": 300,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "weekAgo in the future decays everything",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 360
+          },
+          {
+            "date": "2026-09-02",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-12-01"
+      },
+      "expected": {
+        "debtHours": 3,
+        "nights": 2,
+        "worstNightMin": 360,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "weekAgo in the past decays nothing",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-08-01",
+            "sleepMinutes": 360
+          },
+          {
+            "date": "2026-08-02",
+            "sleepMinutes": 360
+          }
+        ],
+        "goalHours": 8,
+        "weekAgo": "2026-01-01"
+      },
+      "expected": {
+        "debtHours": 4,
+        "nights": 2,
+        "worstNightMin": 360,
+        "goalHours": 8
+      }
+    },
+    {
+      "name": "a zero goal — every night is surplus",
+      "input": {
+        "nights": [
+          {
+            "date": "2026-09-01",
+            "sleepMinutes": 420
+          }
+        ],
+        "goalHours": 0,
+        "weekAgo": "2026-08-27"
+      },
+      "expected": {
+        "debtHours": 0,
+        "nights": 1,
+        "worstNightMin": 420,
+        "goalHours": 0
+      }
+    }
+  ]
+}

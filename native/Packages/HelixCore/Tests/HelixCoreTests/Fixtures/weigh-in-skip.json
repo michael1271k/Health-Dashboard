@@ -1,0 +1,87 @@
+{
+  "module": "body/weighIn",
+  "fn": "weighInSkipReason / isDefaultSkipReason",
+  "note": "Trimmed stored reason, else \"As Planned\" — the protocol default, not a logging gap.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "stored": null
+      },
+      "expected": {
+        "reason": "As Planned",
+        "isDefault": true
+      }
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "stored": ""
+      },
+      "expected": {
+        "reason": "As Planned",
+        "isDefault": true
+      }
+    },
+    {
+      "name": "\"  \"",
+      "input": {
+        "stored": "  "
+      },
+      "expected": {
+        "reason": "As Planned",
+        "isDefault": true
+      }
+    },
+    {
+      "name": "\"No BM\"",
+      "input": {
+        "stored": "No BM"
+      },
+      "expected": {
+        "reason": "No BM",
+        "isDefault": false
+      }
+    },
+    {
+      "name": "\"Travel\"",
+      "input": {
+        "stored": "Travel"
+      },
+      "expected": {
+        "reason": "Travel",
+        "isDefault": false
+      }
+    },
+    {
+      "name": "\" Sick \"",
+      "input": {
+        "stored": " Sick "
+      },
+      "expected": {
+        "reason": "Sick",
+        "isDefault": false
+      }
+    },
+    {
+      "name": "\"As Planned\"",
+      "input": {
+        "stored": "As Planned"
+      },
+      "expected": {
+        "reason": "As Planned",
+        "isDefault": true
+      }
+    },
+    {
+      "name": "\"anything\"",
+      "input": {
+        "stored": "anything"
+      },
+      "expected": {
+        "reason": "anything",
+        "isDefault": false
+      }
+    }
+  ]
+}

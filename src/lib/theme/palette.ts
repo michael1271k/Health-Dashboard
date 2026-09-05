@@ -242,7 +242,7 @@ export const REST = '#3E4757'
  * `cb_a` and Helix-4 `upper_a` are the same session under two names).
  *
  * `src/tests/day-color-parity.test.ts` fails unless `Helix.day` in
- * `ios/App/HelixWidgets/HelixPalette.swift` carries the same keys and values.
+ * `HelixTokens` in `native/Packages/HelixUI` carries the same keys and values.
  */
 export const DAY_COLOR: Record<string, string> = {
   // Helix-5 (active) — Chest family base/deep, Legs family base/deep, Shoulders

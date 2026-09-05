@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { generate, tokenize, swiftPath, readAtlas } from '../../scripts/gen-atlas-swift.mjs'
+import { generate, tokenize, swiftPath, readAtlas, TARGETS } from '../../scripts/gen-atlas-swift.mjs'
 import { MUSCLE_PATHS, BASE_SHAPES, ATLAS_VIEWBOX, musclesOnView } from '@/lib/body/atlas'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 
@@ -15,9 +15,24 @@ import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
  */
 
 const SOURCE = readFileSync('src/lib/body/atlas.ts', 'utf8')
-const SWIFT = readFileSync('ios/App/HelixWidgets/HelixAtlas.swift', 'utf8')
+const SWIFT = readFileSync('native/Packages/HelixUI/Sources/HelixUI/Atlas/HelixAtlas.swift', 'utf8')
 
 describe('the generated Swift atlas', () => {
+  it('is written to exactly one place, and that place is HelixUI', () => {
+    // One package, imported by the app and the widget extension alike. A
+    // second copy would be a second body to keep in step; the generator's
+    // target list is the only list of bodies there is.
+    expect(TARGETS).toHaveLength(1)
+    expect(TARGETS[0]).toMatch(/native\/Packages\/HelixUI\/Sources\/HelixUI\/Atlas\/HelixAtlas\.swift$/)
+    expect(readFileSync(TARGETS[0], 'utf8')).toBe(SWIFT)
+  })
+
+  it('is public API — both hosts draw it from outside the module', () => {
+    expect(SWIFT).toContain('public enum HelixAtlas')
+    expect(SWIFT).toContain('public static let muscles')
+    expect(SWIFT).toContain('public struct HelixAtlasPath')
+  })
+
   it('is exactly what the generator produces from the current atlas', () => {
     // The whole contract. If this fails: node scripts/gen-atlas-swift.mjs
     expect(SWIFT).toBe(generate(SOURCE))

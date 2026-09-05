@@ -1,0 +1,547 @@
+{
+  "module": "widget/derive",
+  "fn": "cardioBlock",
+  "note": "paceOf is lib/cardio/metrics paceMinPerKm. Zone 2 is a COUNT of sessions ≥ zone2MinMinutes inside [weekStart, today]. Trend is per-day SUM of minutes, newest `trendDays` days. `last` is the newest row at or before today; on a date tie the later-in-input row wins (stable sort).",
+  "cases": [
+    {
+      "name": "a normal week",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-07-30",
+            "kind": "walk",
+            "distance_m": 4000,
+            "duration_min": 45
+          },
+          {
+            "date": "2026-08-02",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28
+          },
+          {
+            "date": "2026-08-03",
+            "kind": "walk",
+            "distance_m": 2000,
+            "duration_min": 20
+          },
+          {
+            "date": "2026-08-04",
+            "kind": null,
+            "distance_m": null,
+            "duration_min": 19.5
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "bike",
+            "distance_m": 12000,
+            "duration_min": 35
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "walk",
+            "distance_m": 1500,
+            "duration_min": 15
+          },
+          {
+            "date": "2026-08-09",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 27
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "bike",
+          "date": "2026-08-05",
+          "distanceM": 12000,
+          "durationMin": 35,
+          "paceMinPerKm": 2.9166666666666665
+        },
+        "weekSessions": 3,
+        "weekTarget": 2,
+        "weekMinutes": 118,
+        "trend": [
+          {
+            "d": "2026-07-30",
+            "v": 45
+          },
+          {
+            "d": "2026-08-02",
+            "v": 28
+          },
+          {
+            "d": "2026-08-03",
+            "v": 20
+          },
+          {
+            "d": "2026-08-04",
+            "v": 19.5
+          },
+          {
+            "d": "2026-08-05",
+            "v": 50
+          },
+          {
+            "d": "2026-08-09",
+            "v": 27
+          }
+        ]
+      }
+    },
+    {
+      "name": "the newest at or before today wins; the last logged that day",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-07-30",
+            "kind": "walk",
+            "distance_m": 4000,
+            "duration_min": 45
+          },
+          {
+            "date": "2026-08-02",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28
+          },
+          {
+            "date": "2026-08-03",
+            "kind": "walk",
+            "distance_m": 2000,
+            "duration_min": 20
+          },
+          {
+            "date": "2026-08-04",
+            "kind": null,
+            "distance_m": null,
+            "duration_min": 19.5
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "bike",
+            "distance_m": 12000,
+            "duration_min": 35
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "walk",
+            "distance_m": 1500,
+            "duration_min": 15
+          },
+          {
+            "date": "2026-08-09",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 27
+          }
+        ],
+        "opts": {
+          "today": "2026-08-05",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "bike",
+          "date": "2026-08-05",
+          "distanceM": 12000,
+          "durationMin": 35,
+          "paceMinPerKm": 2.9166666666666665
+        },
+        "weekSessions": 3,
+        "weekTarget": 2,
+        "weekMinutes": 118,
+        "trend": [
+          {
+            "d": "2026-07-30",
+            "v": 45
+          },
+          {
+            "d": "2026-08-02",
+            "v": 28
+          },
+          {
+            "d": "2026-08-03",
+            "v": 20
+          },
+          {
+            "d": "2026-08-04",
+            "v": 19.5
+          },
+          {
+            "d": "2026-08-05",
+            "v": 50
+          },
+          {
+            "d": "2026-08-09",
+            "v": 27
+          }
+        ]
+      }
+    },
+    {
+      "name": "nothing logged",
+      "input": {
+        "rows": [],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": null,
+        "weekSessions": 0,
+        "weekTarget": 2,
+        "weekMinutes": 0,
+        "trend": []
+      }
+    },
+    {
+      "name": "a row with no kind falls back to \"Cardio\"",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-04",
+            "kind": null,
+            "distance_m": null,
+            "duration_min": 30
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "Cardio",
+          "date": "2026-08-04",
+          "distanceM": null,
+          "durationMin": 30,
+          "paceMinPerKm": null
+        },
+        "weekSessions": 1,
+        "weekTarget": 2,
+        "weekMinutes": 30,
+        "trend": [
+          {
+            "d": "2026-08-04",
+            "v": 30
+          }
+        ]
+      }
+    },
+    {
+      "name": "a row with no distance has no pace",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-04",
+            "kind": "walk",
+            "distance_m": null,
+            "duration_min": 30
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "walk",
+          "date": "2026-08-04",
+          "distanceM": null,
+          "durationMin": 30,
+          "paceMinPerKm": null
+        },
+        "weekSessions": 1,
+        "weekTarget": 2,
+        "weekMinutes": 30,
+        "trend": [
+          {
+            "d": "2026-08-04",
+            "v": 30
+          }
+        ]
+      }
+    },
+    {
+      "name": "every row in the future",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-09",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 27
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": null,
+        "weekSessions": 0,
+        "weekTarget": 2,
+        "weekMinutes": 0,
+        "trend": [
+          {
+            "d": "2026-08-09",
+            "v": 27
+          }
+        ]
+      }
+    },
+    {
+      "name": "minutes round to a whole",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-04",
+            "kind": "walk",
+            "distance_m": 1000,
+            "duration_min": 10.4
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "walk",
+            "distance_m": 1000,
+            "duration_min": 10.1
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "walk",
+          "date": "2026-08-05",
+          "distanceM": 1000,
+          "durationMin": 10.1,
+          "paceMinPerKm": 10.1
+        },
+        "weekSessions": 0,
+        "weekTarget": 2,
+        "weekMinutes": 21,
+        "trend": [
+          {
+            "d": "2026-08-04",
+            "v": 10.4
+          },
+          {
+            "d": "2026-08-05",
+            "v": 10.1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a different Zone-2 minimum and target",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-07-30",
+            "kind": "walk",
+            "distance_m": 4000,
+            "duration_min": 45
+          },
+          {
+            "date": "2026-08-02",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28
+          },
+          {
+            "date": "2026-08-03",
+            "kind": "walk",
+            "distance_m": 2000,
+            "duration_min": 20
+          },
+          {
+            "date": "2026-08-04",
+            "kind": null,
+            "distance_m": null,
+            "duration_min": 19.5
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "bike",
+            "distance_m": 12000,
+            "duration_min": 35
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "walk",
+            "distance_m": 1500,
+            "duration_min": 15
+          },
+          {
+            "date": "2026-08-09",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 27
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-02",
+          "zone2MinMinutes": 30,
+          "weekTarget": 3,
+          "trendDays": 3
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "bike",
+          "date": "2026-08-05",
+          "distanceM": 12000,
+          "durationMin": 35,
+          "paceMinPerKm": 2.9166666666666665
+        },
+        "weekSessions": 1,
+        "weekTarget": 3,
+        "weekMinutes": 118,
+        "trend": [
+          {
+            "d": "2026-08-04",
+            "v": 19.5
+          },
+          {
+            "d": "2026-08-05",
+            "v": 50
+          },
+          {
+            "d": "2026-08-09",
+            "v": 27
+          }
+        ]
+      }
+    },
+    {
+      "name": "week starts today",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-07-30",
+            "kind": "walk",
+            "distance_m": 4000,
+            "duration_min": 45
+          },
+          {
+            "date": "2026-08-02",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 28
+          },
+          {
+            "date": "2026-08-03",
+            "kind": "walk",
+            "distance_m": 2000,
+            "duration_min": 20
+          },
+          {
+            "date": "2026-08-04",
+            "kind": null,
+            "distance_m": null,
+            "duration_min": 19.5
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "bike",
+            "distance_m": 12000,
+            "duration_min": 35
+          },
+          {
+            "date": "2026-08-05",
+            "kind": "walk",
+            "distance_m": 1500,
+            "duration_min": 15
+          },
+          {
+            "date": "2026-08-09",
+            "kind": "run",
+            "distance_m": 5000,
+            "duration_min": 27
+          }
+        ],
+        "opts": {
+          "today": "2026-08-06",
+          "weekStart": "2026-08-06",
+          "zone2MinMinutes": 20,
+          "weekTarget": 2,
+          "trendDays": 7
+        }
+      },
+      "expected": {
+        "last": {
+          "kind": "bike",
+          "date": "2026-08-05",
+          "distanceM": 12000,
+          "durationMin": 35,
+          "paceMinPerKm": 2.9166666666666665
+        },
+        "weekSessions": 0,
+        "weekTarget": 2,
+        "weekMinutes": 0,
+        "trend": [
+          {
+            "d": "2026-07-30",
+            "v": 45
+          },
+          {
+            "d": "2026-08-02",
+            "v": 28
+          },
+          {
+            "d": "2026-08-03",
+            "v": 20
+          },
+          {
+            "d": "2026-08-04",
+            "v": 19.5
+          },
+          {
+            "d": "2026-08-05",
+            "v": 50
+          },
+          {
+            "d": "2026-08-09",
+            "v": 27
+          }
+        ]
+      }
+    }
+  ]
+}

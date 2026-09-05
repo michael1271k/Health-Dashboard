@@ -1,0 +1,245 @@
+{
+  "module": "body/readings",
+  "fn": "hasScaleMetrics / SCALE_METRIC_KEYS",
+  "note": "Extracted from InBody. True when ANY of the twelve scale columns is non-null (0 counts). The key list is asserted.",
+  "cases": [
+    {
+      "name": "<null>",
+      "input": {
+        "log": null,
+        "i": 0,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "{}",
+      "input": {
+        "log": {},
+        "i": 1,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "{\"weight_kg\":66.2}",
+      "input": {
+        "log": {
+          "weight_kg": 66.2
+        },
+        "i": 2,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "{\"weight_kg\":null}",
+      "input": {
+        "log": {
+          "weight_kg": null
+        },
+        "i": 3,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "{\"steps\":9000}",
+      "input": {
+        "log": {
+          "steps": 9000
+        },
+        "i": 4,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "{\"bmi\":21.1}",
+      "input": {
+        "log": {
+          "bmi": 21.1
+        },
+        "i": 5,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "{\"estimated_waist_to_hip_ratio\":0.86}",
+      "input": {
+        "log": {
+          "estimated_waist_to_hip_ratio": 0.86
+        },
+        "i": 6,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "{\"skeletal_muscle_mass_kg\":0}",
+      "input": {
+        "log": {
+          "skeletal_muscle_mass_kg": 0
+        },
+        "i": 7,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "{\"weight_kg\":null,\"body_fat_pct\":null,\"bmr\":1500}",
+      "input": {
+        "log": {
+          "weight_kg": null,
+          "body_fat_pct": null,
+          "bmr": 1500
+        },
+        "i": 8,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "{\"waist_cm\":80}",
+      "input": {
+        "log": {
+          "waist_cm": 80
+        },
+        "i": 9,
+        "keys": [
+          "weight_kg",
+          "body_fat_pct",
+          "muscle_percent",
+          "water_percent",
+          "muscle_mass_kg",
+          "fat_free_mass_kg",
+          "bone_mineral",
+          "visceral_fat",
+          "bmr",
+          "bmi",
+          "skeletal_muscle_mass_kg",
+          "estimated_waist_to_hip_ratio"
+        ]
+      },
+      "expected": false
+    }
+  ]
+}

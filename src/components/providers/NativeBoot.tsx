@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { initNativeSync } from '@/lib/native/sync'
 import { initDeepLinks } from '@/lib/native/deepLink'
-import { reloadWidgets } from '@/lib/native/widgets'
 import { invalidateHealthData } from '@/lib/query/workoutKeys'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 import { warmHaptics } from '@/lib/native/haptics'
@@ -42,10 +41,6 @@ export function NativeBoot() {
       // never triggers that path.
       void hydratePrefsFromDb()
       qc.invalidateQueries({ queryKey: ['schedule_overrides'] })
-      // A sync is the moment the server's answer definitely changed. Without
-      // this the home screen keeps whatever it fetched up to half an hour ago,
-      // even though the app is right here having just replaced it.
-      void reloadWidgets()
     })
     return () => { stopSync() }
   }, [qc])

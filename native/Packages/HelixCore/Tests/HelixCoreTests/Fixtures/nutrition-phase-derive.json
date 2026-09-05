@@ -1,0 +1,154 @@
+{
+  "module": "nutrition/phase",
+  "fn": "derivePhase",
+  "note": "cut <= 2050 < maintenance < 2450 <= bulk. null means untracked.",
+  "cases": [
+    {
+      "name": "kcal=null",
+      "input": {
+        "calories": null
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=0",
+      "input": {
+        "calories": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=-1",
+      "input": {
+        "calories": -1
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=-2400",
+      "input": {
+        "calories": -2400
+      },
+      "expected": null
+    },
+    {
+      "name": "kcal=0.5",
+      "input": {
+        "calories": 0.5
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1",
+      "input": {
+        "calories": 1
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1200",
+      "input": {
+        "calories": 1200
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=1900",
+      "input": {
+        "calories": 1900
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2049",
+      "input": {
+        "calories": 2049
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2049.9",
+      "input": {
+        "calories": 2049.9
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2050",
+      "input": {
+        "calories": 2050
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "kcal=2050.1",
+      "input": {
+        "calories": 2050.1
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2051",
+      "input": {
+        "calories": 2051
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2200",
+      "input": {
+        "calories": 2200
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2449",
+      "input": {
+        "calories": 2449
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2449.9",
+      "input": {
+        "calories": 2449.9
+      },
+      "expected": "maintenance"
+    },
+    {
+      "name": "kcal=2450",
+      "input": {
+        "calories": 2450
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=2450.1",
+      "input": {
+        "calories": 2450.1
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=3200",
+      "input": {
+        "calories": 3200
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "kcal=10000",
+      "input": {
+        "calories": 10000
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "regression: zero calories is untracked, not a cut day",
+      "input": {
+        "calories": 0
+      },
+      "expected": null
+    }
+  ]
+}

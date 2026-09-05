@@ -93,7 +93,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes] = await Promise.all([
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, baselineLogs] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -216,6 +216,15 @@ async function fetchRange(weekStart: string, weekEnd: string) {
        tag and the untracked marks and nothing else at all. */
     supabase.from('daily_targets').select('date, profile_key, track_carbs, track_fat')
       .gte('date', weekStart).lte('date', weekEnd),
+    // ── BATTERY v8's DERIVED BLOCK ─────────────────────────────────────────
+    // Battery is still not printed on a daily line (it is HELIX's opinion, see
+    // weeklyExport's header). The stored figure and the two trailing baselines
+    // go to the Derived section only, where the arithmetic behind it is
+    // stated. Eight days back, because the scorer's window is the eight most
+    // recent rows up to and including the day, minus the day itself.
+    supabase.from('daily_scores').select('date, battery_pct').gte('date', weekStart).lte('date', weekEnd),
+    supabase.from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate')
+      .gte('date', isoAddDays(weekStart, -8)).lte('date', weekEnd).order('date', { ascending: true }),
   ])
 
   return {
@@ -280,6 +289,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // Sessions logged before this week. Null (not 0) when the count fails, so a
     // failed query prints no ordinal rather than restarting the numbering at 1.
     priorSessions: priorCount.error ? null : (priorCount.count ?? null),
+    // Either failing leaves the Derived battery block printing em-dashes.
+    scores: (scores.error ? [] : (scores.data ?? [])) as Array<{ date: string; battery_pct: number | null }>,
+    baselineLogs: (baselineLogs.error ? [] : (baselineLogs.data ?? [])) as Array<{
+      date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null
+    }>,
   }
 }
 
@@ -421,6 +435,21 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
     fat: r.track_fat !== false,
   }]))
 
+  // The scorer's baselines, reproduced: the eight most recent logged days up to
+  // and including the date, minus the date, averaged over the readings that
+  // exist. `?? []` because the export-payload fixtures predate both fields.
+  const scoreByDate = new Map((d.scores ?? []).map((r) => [r.date, r.battery_pct]))
+  const baselineOf = (date: string, pick: (r: { hrv_ms: number | null; avg_rest_heart_rate: number | null }) => number | null) => {
+    const trail = (d.baselineLogs ?? [])
+      .filter((r) => r.date <= date)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 8)
+      .filter((r) => r.date !== date)
+      .map(pick)
+      .filter((v): v is number => v != null)
+    return trail.length ? trail.reduce((a, b) => a + b, 0) / trail.length : null
+  }
+
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
     const l = logs.get(date) as Record<string, number | null> | undefined
@@ -462,6 +491,9 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       // `false` — the column is NOT NULL DEFAULT false and a missing row is the
       // same statement as an unticked one. Only an unreadable column is `null`.
       sleepOnsetTrouble: onsetByDate === null ? null : (onsetByDate.get(date) ?? false),
+      restingHrBaseline: baselineOf(date, (r) => r.avg_rest_heart_rate),
+      hrvBaseline: baselineOf(date, (r) => r.hrv_ms),
+      batteryPct: scoreByDate.get(date) ?? null,
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
       supplementsLog: suppLogByDate.get(date) ?? [],

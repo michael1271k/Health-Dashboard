@@ -1,0 +1,189 @@
+{
+  "module": "sessions/sessionClock",
+  "fn": "getSessionClock (parse + staleness)",
+  "note": "Tolerant read of the stored row: unknown mode → timer, non-number startedAt → null, accumulatedMs ≥ 0, duration clamped 15–3600 with the v1 `targetSec` honoured; a clock started more than an hour before `now` is discarded to idle (mode and duration kept).",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "raw": null,
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "raw": "{not json",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "v1 targetSec",
+      "input": {
+        "raw": "{\"startedAt\":null,\"targetSec\":120}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 120
+      }
+    },
+    {
+      "name": "stopwatch running",
+      "input": {
+        "raw": "{\"mode\":\"stopwatch\",\"startedAt\":1787565595000,\"accumulatedMs\":0,\"durationSec\":60}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787565595000,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "unknown mode is timer",
+      "input": {
+        "raw": "{\"mode\":\"countdown\",\"startedAt\":null,\"accumulatedMs\":0,\"durationSec\":45}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 45
+      }
+    },
+    {
+      "name": "negative accumulated clamps",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":null,\"accumulatedMs\":-5,\"durationSec\":45}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 45
+      }
+    },
+    {
+      "name": "duration out of bounds",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":null,\"accumulatedMs\":0,\"durationSec\":5000}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 3600
+      }
+    },
+    {
+      "name": "duration fractional",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":null,\"accumulatedMs\":0,\"durationSec\":44.4}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 44
+      }
+    },
+    {
+      "name": "startedAt as string is ignored",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":\"yesterday\",\"accumulatedMs\":0,\"durationSec\":60}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "stale — started 61 min ago",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":1787561940000,\"accumulatedMs\":30000,\"durationSec\":90}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 90
+      }
+    },
+    {
+      "name": "not stale — started 59 min ago",
+      "input": {
+        "raw": "{\"mode\":\"stopwatch\",\"startedAt\":1787562060000,\"accumulatedMs\":30000,\"durationSec\":90}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": 1787562060000,
+        "accumulatedMs": 30000,
+        "durationSec": 90
+      }
+    },
+    {
+      "name": "paused is never stale",
+      "input": {
+        "raw": "{\"mode\":\"stopwatch\",\"startedAt\":null,\"accumulatedMs\":30000000,\"durationSec\":90}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "stopwatch",
+        "startedAt": null,
+        "accumulatedMs": 30000000,
+        "durationSec": 90
+      }
+    },
+    {
+      "name": "array is idle",
+      "input": {
+        "raw": "[1,2]",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    },
+    {
+      "name": "durationSec null falls to default",
+      "input": {
+        "raw": "{\"mode\":\"timer\",\"startedAt\":null,\"accumulatedMs\":0,\"durationSec\":null}",
+        "now": 1787565600000
+      },
+      "expected": {
+        "mode": "timer",
+        "startedAt": null,
+        "accumulatedMs": 0,
+        "durationSec": 60
+      }
+    }
+  ]
+}

@@ -112,7 +112,7 @@ describe('no route handler reaches a client module', () => {
   })
 
   it('resolves @/ and relative specifiers (guards the resolver)', () => {
-    const probe = join(SRC, 'app', 'api', 'widget', 'snapshot', 'route.ts')
+    const probe = join(SRC, 'app', 'api', 'compute-score', 'route.ts')
     expect(resolveImport('@/lib/utils/measure', probe)).toContain('utils/measure.ts')
     expect(resolveImport('next/server', probe)).toBeNull()
   })

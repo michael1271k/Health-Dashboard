@@ -1,0 +1,1505 @@
+{
+  "module": "sessions/deck",
+  "fn": "nudgeLoad / nudgeReps / fmtKg / trimNum",
+  "note": "The ± chips: 2.5 kg on tap, 0.25 kg on hold, snapped to the quarter-kg grid and floored at 0; reps floor at 1. fmtKg prints the shortest of 0/1/2 decimals that is exact (3.75 never \"3.8\"). trimNum is toFixed with dead zeros trimmed. Constants are asserted.",
+  "cases": [
+    {
+      "name": "load 0 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.5,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0 +0",
+      "input": {
+        "kind": "load",
+        "a": 0,
+        "b": 0
+      },
+      "expected": {
+        "number": 0,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.1 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.1,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.5,
+        "text": "0.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.1 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.1,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.1 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.1,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.1 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.1,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.1 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.1,
+        "b": 0
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.12 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.12,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.5,
+        "text": "0.12",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.12 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.12,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.12",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.12 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.12,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.12",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.12 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.12,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.12",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.12 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.12,
+        "b": 0
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.12",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.13 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.13,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.75,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.13 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.13,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.13 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.13,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.5,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.13 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.13,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.13 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.13,
+        "b": 0
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.125 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.125,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.75,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.125 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.125,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.125 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.125,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.5,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.125 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.125,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.125 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.125,
+        "b": 0
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.375 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.375,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 3,
+        "text": "0.38",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.375 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.375,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.38",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.375 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.375,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.75,
+        "text": "0.38",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.375 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.375,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.38",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.375 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.375,
+        "b": 0
+      },
+      "expected": {
+        "number": 0.5,
+        "text": "0.38",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 2.5 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 2.5,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 5,
+        "text": "2.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 2.5 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 2.5,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "2.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 2.5 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 2.5,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 2.75,
+        "text": "2.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 2.5 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 2.5,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 2.25,
+        "text": "2.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 2.5 +0",
+      "input": {
+        "kind": "load",
+        "a": 2.5,
+        "b": 0
+      },
+      "expected": {
+        "number": 2.5,
+        "text": "2.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 3.75 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 3.75,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 6.25,
+        "text": "3.75",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 3.75 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 3.75,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 1.25,
+        "text": "3.75",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 3.75 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 3.75,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 4,
+        "text": "3.75",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 3.75 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 3.75,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 3.5,
+        "text": "3.75",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 3.75 +0",
+      "input": {
+        "kind": "load",
+        "a": 3.75,
+        "b": 0
+      },
+      "expected": {
+        "number": 3.75,
+        "text": "3.75",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 16.25 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 16.25,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 18.75,
+        "text": "16.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 16.25 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 16.25,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 13.75,
+        "text": "16.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 16.25 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 16.25,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 16.5,
+        "text": "16.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 16.25 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 16.25,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 16,
+        "text": "16.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 16.25 +0",
+      "input": {
+        "kind": "load",
+        "a": 16.25,
+        "b": 0
+      },
+      "expected": {
+        "number": 16.25,
+        "text": "16.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 60,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 62.5,
+        "text": "60",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 60,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 57.5,
+        "text": "60",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 60,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 60.25,
+        "text": "60",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 60,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 59.75,
+        "text": "60",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60 +0",
+      "input": {
+        "kind": "load",
+        "a": 60,
+        "b": 0
+      },
+      "expected": {
+        "number": 60,
+        "text": "60",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.1 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 60.1,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 62.5,
+        "text": "60.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.1 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 60.1,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 57.5,
+        "text": "60.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.1 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 60.1,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 60.25,
+        "text": "60.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.1 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 60.1,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 59.75,
+        "text": "60.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.1 +0",
+      "input": {
+        "kind": "load",
+        "a": 60.1,
+        "b": 0
+      },
+      "expected": {
+        "number": 60,
+        "text": "60.1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.126 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 60.126,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 62.75,
+        "text": "60.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.126 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 60.126,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 57.75,
+        "text": "60.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.126 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 60.126,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 60.5,
+        "text": "60.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.126 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 60.126,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 60,
+        "text": "60.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 60.126 +0",
+      "input": {
+        "kind": "load",
+        "a": 60.126,
+        "b": 0
+      },
+      "expected": {
+        "number": 60.25,
+        "text": "60.13",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 100.5 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 100.5,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 103,
+        "text": "100.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 100.5 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 100.5,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 98,
+        "text": "100.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 100.5 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 100.5,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 100.75,
+        "text": "100.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 100.5 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 100.5,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 100.25,
+        "text": "100.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 100.5 +0",
+      "input": {
+        "kind": "load",
+        "a": 100.5,
+        "b": 0
+      },
+      "expected": {
+        "number": 100.5,
+        "text": "100.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 102.25 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 102.25,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 104.75,
+        "text": "102.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 102.25 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 102.25,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 99.75,
+        "text": "102.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 102.25 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 102.25,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 102.5,
+        "text": "102.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 102.25 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 102.25,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 102,
+        "text": "102.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 102.25 +0",
+      "input": {
+        "kind": "load",
+        "a": 102.25,
+        "b": 0
+      },
+      "expected": {
+        "number": 102.25,
+        "text": "102.25",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.24 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.24,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.75,
+        "text": "0.24",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.24 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.24,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.24",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.24 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.24,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.5,
+        "text": "0.24",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.24 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.24,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.24",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.24 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.24,
+        "b": 0
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.24",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.26 +2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.26,
+        "b": 2.5
+      },
+      "expected": {
+        "number": 2.75,
+        "text": "0.26",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.26 -2.5",
+      "input": {
+        "kind": "load",
+        "a": 0.26,
+        "b": -2.5
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.26",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.26 +0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.26,
+        "b": 0.25
+      },
+      "expected": {
+        "number": 0.5,
+        "text": "0.26",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.26 -0.25",
+      "input": {
+        "kind": "load",
+        "a": 0.26,
+        "b": -0.25
+      },
+      "expected": {
+        "number": 0,
+        "text": "0.26",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "load 0.26 +0",
+      "input": {
+        "kind": "load",
+        "a": 0.26,
+        "b": 0
+      },
+      "expected": {
+        "number": 0.25,
+        "text": "0.26",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 1 +1",
+      "input": {
+        "kind": "reps",
+        "a": 1,
+        "b": 1
+      },
+      "expected": {
+        "number": 2,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 1 -1",
+      "input": {
+        "kind": "reps",
+        "a": 1,
+        "b": -1
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 1 -5",
+      "input": {
+        "kind": "reps",
+        "a": 1,
+        "b": -5
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 1 +0",
+      "input": {
+        "kind": "reps",
+        "a": 1,
+        "b": 0
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 2 +1",
+      "input": {
+        "kind": "reps",
+        "a": 2,
+        "b": 1
+      },
+      "expected": {
+        "number": 3,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 2 -1",
+      "input": {
+        "kind": "reps",
+        "a": 2,
+        "b": -1
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 2 -5",
+      "input": {
+        "kind": "reps",
+        "a": 2,
+        "b": -5
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 2 +0",
+      "input": {
+        "kind": "reps",
+        "a": 2,
+        "b": 0
+      },
+      "expected": {
+        "number": 2,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 5 +1",
+      "input": {
+        "kind": "reps",
+        "a": 5,
+        "b": 1
+      },
+      "expected": {
+        "number": 6,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 5 -1",
+      "input": {
+        "kind": "reps",
+        "a": 5,
+        "b": -1
+      },
+      "expected": {
+        "number": 4,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 5 -5",
+      "input": {
+        "kind": "reps",
+        "a": 5,
+        "b": -5
+      },
+      "expected": {
+        "number": 1,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 5 +0",
+      "input": {
+        "kind": "reps",
+        "a": 5,
+        "b": 0
+      },
+      "expected": {
+        "number": 5,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 12 +1",
+      "input": {
+        "kind": "reps",
+        "a": 12,
+        "b": 1
+      },
+      "expected": {
+        "number": 13,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 12 -1",
+      "input": {
+        "kind": "reps",
+        "a": 12,
+        "b": -1
+      },
+      "expected": {
+        "number": 11,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 12 -5",
+      "input": {
+        "kind": "reps",
+        "a": 12,
+        "b": -5
+      },
+      "expected": {
+        "number": 7,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "reps 12 +0",
+      "input": {
+        "kind": "reps",
+        "a": 12,
+        "b": 0
+      },
+      "expected": {
+        "number": 12,
+        "text": null,
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 0.37 @2",
+      "input": {
+        "kind": "trim",
+        "a": 0.37,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "0.37",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 0.3 @2",
+      "input": {
+        "kind": "trim",
+        "a": 0.3,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "0.3",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 5 @2",
+      "input": {
+        "kind": "trim",
+        "a": 5,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 12.5 @1",
+      "input": {
+        "kind": "trim",
+        "a": 12.5,
+        "b": 1
+      },
+      "expected": {
+        "number": null,
+        "text": "12.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 12.5 @2",
+      "input": {
+        "kind": "trim",
+        "a": 12.5,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "12.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 0 @2",
+      "input": {
+        "kind": "trim",
+        "a": 0,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 100 @0",
+      "input": {
+        "kind": "trim",
+        "a": 100,
+        "b": 0
+      },
+      "expected": {
+        "number": null,
+        "text": "1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 1.005 @2",
+      "input": {
+        "kind": "trim",
+        "a": 1.005,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "1",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 2.675 @2",
+      "input": {
+        "kind": "trim",
+        "a": 2.675,
+        "b": 2
+      },
+      "expected": {
+        "number": null,
+        "text": "2.67",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim 0.00001 @3",
+      "input": {
+        "kind": "trim",
+        "a": 0.00001,
+        "b": 3
+      },
+      "expected": {
+        "number": null,
+        "text": "0",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    },
+    {
+      "name": "trim -1.5 @1",
+      "input": {
+        "kind": "trim",
+        "a": -1.5,
+        "b": 1
+      },
+      "expected": {
+        "number": null,
+        "text": "-1.5",
+        "plate": 2.5,
+        "fine": 0.25
+      }
+    }
+  ]
+}

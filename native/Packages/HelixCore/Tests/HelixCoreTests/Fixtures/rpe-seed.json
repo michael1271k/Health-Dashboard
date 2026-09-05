@@ -1,0 +1,1807 @@
+{
+  "module": "training/rpeMemory",
+  "fn": "resolveSeededRpe",
+  "note": "A remembered rating clears (stale) when the load rose, or when reps rose at the SAME load. A lighter set keeps it. 0 kg is real data — the reps branch is the only one that can fire there.",
+  "cases": [
+    {
+      "name": "no seed vs 0×8",
+      "input": {
+        "seed": null,
+        "weightKg": 0,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 0×10",
+      "input": {
+        "seed": null,
+        "weightKg": 0,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 0×12",
+      "input": {
+        "seed": null,
+        "weightKg": 0,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 0×15",
+      "input": {
+        "seed": null,
+        "weightKg": 0,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 0×16",
+      "input": {
+        "seed": null,
+        "weightKg": 0,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 30×8",
+      "input": {
+        "seed": null,
+        "weightKg": 30,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 30×10",
+      "input": {
+        "seed": null,
+        "weightKg": 30,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 30×12",
+      "input": {
+        "seed": null,
+        "weightKg": 30,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 30×15",
+      "input": {
+        "seed": null,
+        "weightKg": 30,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 30×16",
+      "input": {
+        "seed": null,
+        "weightKg": 30,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 32.5×8",
+      "input": {
+        "seed": null,
+        "weightKg": 32.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 32.5×10",
+      "input": {
+        "seed": null,
+        "weightKg": 32.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 32.5×12",
+      "input": {
+        "seed": null,
+        "weightKg": 32.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 32.5×15",
+      "input": {
+        "seed": null,
+        "weightKg": 32.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 32.5×16",
+      "input": {
+        "seed": null,
+        "weightKg": 32.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 57.5×8",
+      "input": {
+        "seed": null,
+        "weightKg": 57.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 57.5×10",
+      "input": {
+        "seed": null,
+        "weightKg": 57.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 57.5×12",
+      "input": {
+        "seed": null,
+        "weightKg": 57.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 57.5×15",
+      "input": {
+        "seed": null,
+        "weightKg": 57.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 57.5×16",
+      "input": {
+        "seed": null,
+        "weightKg": 57.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 60×8",
+      "input": {
+        "seed": null,
+        "weightKg": 60,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 60×10",
+      "input": {
+        "seed": null,
+        "weightKg": 60,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 60×12",
+      "input": {
+        "seed": null,
+        "weightKg": 60,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 60×15",
+      "input": {
+        "seed": null,
+        "weightKg": 60,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 60×16",
+      "input": {
+        "seed": null,
+        "weightKg": 60,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 62.5×8",
+      "input": {
+        "seed": null,
+        "weightKg": 62.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 62.5×10",
+      "input": {
+        "seed": null,
+        "weightKg": 62.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 62.5×12",
+      "input": {
+        "seed": null,
+        "weightKg": 62.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 62.5×15",
+      "input": {
+        "seed": null,
+        "weightKg": 62.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "no seed vs 62.5×16",
+      "input": {
+        "seed": null,
+        "weightKg": 62.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 0×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 0,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 0×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 0,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 0×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 0,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 0×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 0,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 0×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 0,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 30×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 30,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 30×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 30,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 30×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 30,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 30×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 30,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 30×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 30,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 32.5×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 32.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 32.5×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 32.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 32.5×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 32.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 32.5×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 32.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 32.5×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 32.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 57.5×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 57.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 57.5×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 57.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 57.5×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 57.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 57.5×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 57.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 57.5×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 57.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 60×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 60,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 60×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 60,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 8,
+        "stale": false
+      }
+    },
+    {
+      "name": "8@60×10 vs 60×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 60,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 60×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 60,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 60×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 60,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 62.5×8",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 62.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 62.5×10",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 62.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 62.5×12",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 62.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 62.5×15",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 62.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "8@60×10 vs 62.5×16",
+      "input": {
+        "seed": {
+          "rpe": 8,
+          "weightKg": 60,
+          "reps": 10
+        },
+        "weightKg": 62.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 0×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 0,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 10,
+        "stale": false
+      }
+    },
+    {
+      "name": "10@0×15 vs 0×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 0,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 10,
+        "stale": false
+      }
+    },
+    {
+      "name": "10@0×15 vs 0×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 0,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 10,
+        "stale": false
+      }
+    },
+    {
+      "name": "10@0×15 vs 0×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 0,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 10,
+        "stale": false
+      }
+    },
+    {
+      "name": "10@0×15 vs 0×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 0,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 30×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 30,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 30×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 30,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 30×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 30,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 30×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 30,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 30×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 30,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 32.5×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 32.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 32.5×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 32.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 32.5×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 32.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 32.5×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 32.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 32.5×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 32.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 57.5×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 57.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 57.5×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 57.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 57.5×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 57.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 57.5×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 57.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 57.5×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 57.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 60×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 60,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 60×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 60,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 60×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 60,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 60×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 60,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 60×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 60,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 62.5×8",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 62.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 62.5×10",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 62.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 62.5×12",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 62.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 62.5×15",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 62.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "10@0×15 vs 62.5×16",
+      "input": {
+        "seed": {
+          "rpe": 10,
+          "weightKg": 0,
+          "reps": 15
+        },
+        "weightKg": 62.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 0×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 0,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 0×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 0,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 0×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 0,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 0×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 0,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 0×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 0,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 30×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 30,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 30×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 30,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 30×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 30,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 30×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 30,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 30×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 30,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 32.5×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 32.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 32.5×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 32.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 32.5×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 32.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": 7.5,
+        "stale": false
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 32.5×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 32.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 32.5×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 32.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 57.5×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 57.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 57.5×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 57.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 57.5×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 57.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 57.5×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 57.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 57.5×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 57.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 60×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 60,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 60×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 60,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 60×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 60,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 60×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 60,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 60×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 60,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 62.5×8",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 62.5,
+        "reps": 8
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 62.5×10",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 62.5,
+        "reps": 10
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 62.5×12",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 62.5,
+        "reps": 12
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 62.5×15",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 62.5,
+        "reps": 15
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    },
+    {
+      "name": "7.5@32.5×12 vs 62.5×16",
+      "input": {
+        "seed": {
+          "rpe": 7.5,
+          "weightKg": 32.5,
+          "reps": 12
+        },
+        "weightKg": 62.5,
+        "reps": 16
+      },
+      "expected": {
+        "rpe": null,
+        "stale": true
+      }
+    }
+  ]
+}

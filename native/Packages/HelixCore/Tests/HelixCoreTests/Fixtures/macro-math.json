@@ -1,0 +1,4427 @@
+{
+  "module": "nutrition/macroMath",
+  "fn": "adjustMacros",
+  "note": "Calories are always the Atwater sum of the macros; a calorie edit pins protein and carbs/fat absorb the delta in c·4 : f·9 ratio, whole grams, up to four rounds; an untracked (null) macro is never handed a figure; nothing tracked keeps the figure asked for.",
+  "cases": [
+    {
+      "name": "the fixture day · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1697,
+        "protein": 128,
+        "carbs": 177,
+        "fat": 53
+      }
+    },
+    {
+      "name": "the fixture day · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1249,
+        "protein": 128,
+        "carbs": 110,
+        "fat": 33
+      }
+    },
+    {
+      "name": "the fixture day · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "the fixture day · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "the fixture day · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "the fixture day · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "the fixture day · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1002,
+        "protein": 128,
+        "carbs": 73,
+        "fat": 22
+      }
+    },
+    {
+      "name": "the fixture day · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2003,
+        "protein": 128,
+        "carbs": 222,
+        "fat": 67
+      }
+    },
+    {
+      "name": "the fixture day · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1450,
+        "protein": 128,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "the fixture day · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1498,
+        "protein": 140,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "the fixture day · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 1110,
+        "protein": 43,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "the fixture day · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 890,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 42
+      }
+    },
+    {
+      "name": "the fixture day · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 890,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 42
+      }
+    },
+    {
+      "name": "the fixture day · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1612,
+        "protein": 128,
+        "carbs": 140,
+        "fat": 60
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1698,
+        "protein": 150,
+        "carbs": null,
+        "fat": 122
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1248,
+        "protein": 150,
+        "carbs": null,
+        "fat": 72
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": null,
+        "fat": 0
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": null,
+        "fat": 0
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": null,
+        "fat": 0
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": null,
+        "fat": 0
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 996,
+        "protein": 150,
+        "carbs": null,
+        "fat": 44
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2004,
+        "protein": 150,
+        "carbs": null,
+        "fat": 156
+      }
+    },
+    {
+      "name": "no carbs tracked · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1446,
+        "protein": 150,
+        "carbs": null,
+        "fat": 94
+      }
+    },
+    {
+      "name": "no carbs tracked · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1118,
+        "protein": 140,
+        "carbs": null,
+        "fat": 62
+      }
+    },
+    {
+      "name": "no carbs tracked · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 730,
+        "protein": 43,
+        "carbs": null,
+        "fat": 62
+      }
+    },
+    {
+      "name": "no carbs tracked · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 1158,
+        "protein": 150,
+        "carbs": 0,
+        "fat": 62
+      }
+    },
+    {
+      "name": "no carbs tracked · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 1158,
+        "protein": 150,
+        "carbs": 0,
+        "fat": 62
+      }
+    },
+    {
+      "name": "no carbs tracked · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1158,
+          "protein": 150,
+          "carbs": null,
+          "fat": 62
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1140,
+        "protein": 150,
+        "carbs": null,
+        "fat": 60
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 150,
+        "carbs": 275,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1252,
+        "protein": 150,
+        "carbs": 163,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": 150,
+        "carbs": 100,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2000,
+        "protein": 150,
+        "carbs": 350,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1452,
+        "protein": 150,
+        "carbs": 213,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1120,
+        "protein": 140,
+        "carbs": 140,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 732,
+        "protein": 43,
+        "carbs": 140,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "no fat tracked · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 150,
+          "carbs": 140,
+          "fat": null
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 150,
+        "carbs": 140,
+        "fat": 60
+      }
+    },
+    {
+      "name": "kcal only · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1250,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 327,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 326,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2001,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1450,
+        "protein": null,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 560,
+        "protein": 140,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 172,
+        "protein": 43,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": null,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": null,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "kcal only · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1800,
+          "protein": null,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 540,
+        "protein": null,
+        "carbs": null,
+        "fat": 60
+      }
+    },
+    {
+      "name": "protein only · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1250,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 327,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 326,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2001,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · kcal same",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1450,
+        "protein": 150,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · protein 140",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 560,
+        "protein": 140,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 172,
+        "protein": 43,
+        "carbs": null,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 600,
+        "protein": 150,
+        "carbs": 0,
+        "fat": null
+      }
+    },
+    {
+      "name": "protein only · fat 60",
+      "input": {
+        "current": {
+          "kcal": 600,
+          "protein": 150,
+          "carbs": null,
+          "fat": null
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1140,
+        "protein": 150,
+        "carbs": null,
+        "fat": 60
+      }
+    },
+    {
+      "name": "empty day · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 0,
+        "carbs": 425,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1252,
+        "protein": 0,
+        "carbs": 313,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 328,
+        "protein": 0,
+        "carbs": 82,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 328,
+        "protein": 0,
+        "carbs": 82,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 0,
+        "carbs": 100,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": 0,
+        "carbs": 250,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2000,
+        "protein": 0,
+        "carbs": 500,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · kcal same",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1452,
+        "protein": 0,
+        "carbs": 363,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · protein 140",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 560,
+        "protein": 140,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 172,
+        "protein": 43,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "empty day · fat 60",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 540,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 60
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 100,
+        "carbs": 235,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1252,
+        "protein": 100,
+        "carbs": 123,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": 100,
+        "carbs": 60,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2000,
+        "protein": 100,
+        "carbs": 310,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · kcal same",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1452,
+        "protein": 100,
+        "carbs": 173,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · protein 140",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 920,
+        "protein": 140,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 532,
+        "protein": 43,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 760,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "carbs at zero · fat 60",
+      "input": {
+        "current": {
+          "kcal": 760,
+          "protein": 100,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 940,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 60
+      }
+    },
+    {
+      "name": "fat at zero · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1700,
+        "protein": 100,
+        "carbs": 325,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1252,
+        "protein": 100,
+        "carbs": 213,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000,
+        "protein": 100,
+        "carbs": 150,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2000,
+        "protein": 100,
+        "carbs": 400,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · kcal same",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1452,
+        "protein": 100,
+        "carbs": 263,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · protein 140",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1120,
+        "protein": 140,
+        "carbs": 140,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 732,
+        "protein": 43,
+        "carbs": 140,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 400,
+        "protein": 100,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fat at zero · fat 60",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 100,
+          "carbs": 140,
+          "fat": 0
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1500,
+        "protein": 100,
+        "carbs": 140,
+        "fat": 60
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1697,
+        "protein": 128,
+        "carbs": 177,
+        "fat": 53
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1249,
+        "protein": 128,
+        "carbs": 110,
+        "fat": 33
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 512,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1002,
+        "protein": 128,
+        "carbs": 73,
+        "fat": 22
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2003,
+        "protein": 128,
+        "carbs": 222,
+        "fat": 67
+      }
+    },
+    {
+      "name": "recorded above atwater · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1450,
+        "protein": 128,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "recorded above atwater · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1498,
+        "protein": 140,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "recorded above atwater · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 1110,
+        "protein": 43,
+        "carbs": 140,
+        "fat": 42
+      }
+    },
+    {
+      "name": "recorded above atwater · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 890,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 42
+      }
+    },
+    {
+      "name": "recorded above atwater · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 890,
+        "protein": 128,
+        "carbs": 0,
+        "fat": 42
+      }
+    },
+    {
+      "name": "recorded above atwater · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1480,
+          "protein": 128,
+          "carbs": 140,
+          "fat": 42
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1612,
+        "protein": 128,
+        "carbs": 140,
+        "fat": 60
+      }
+    },
+    {
+      "name": "fractional grams · kcal 1700",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 1700
+        }
+      },
+      "expected": {
+        "kcal": 1699.4,
+        "protein": 127.6,
+        "carbs": 178,
+        "fat": 53
+      }
+    },
+    {
+      "name": "fractional grams · kcal 1250",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 1250
+        }
+      },
+      "expected": {
+        "kcal": 1251.4,
+        "protein": 127.6,
+        "carbs": 111,
+        "fat": 33
+      }
+    },
+    {
+      "name": "fractional grams · kcal 327",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 327
+        }
+      },
+      "expected": {
+        "kcal": 510.4,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fractional grams · kcal 326",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 326
+        }
+      },
+      "expected": {
+        "kcal": 510.4,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fractional grams · kcal 0",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 0
+        }
+      },
+      "expected": {
+        "kcal": 510.4,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fractional grams · kcal 400",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 400
+        }
+      },
+      "expected": {
+        "kcal": 510.4,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "fractional grams · kcal 1000",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 1000
+        }
+      },
+      "expected": {
+        "kcal": 1000.4,
+        "protein": 127.6,
+        "carbs": 73,
+        "fat": 22
+      }
+    },
+    {
+      "name": "fractional grams · kcal 2000.5",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 2000.5
+        }
+      },
+      "expected": {
+        "kcal": 2000.4,
+        "protein": 127.6,
+        "carbs": 224,
+        "fat": 66
+      }
+    },
+    {
+      "name": "fractional grams · kcal same",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "calories": 1450
+        }
+      },
+      "expected": {
+        "kcal": 1452.4,
+        "protein": 127.6,
+        "carbs": 141,
+        "fat": 42
+      }
+    },
+    {
+      "name": "fractional grams · protein 140",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "protein": 140
+        }
+      },
+      "expected": {
+        "kcal": 1495.1,
+        "protein": 140,
+        "carbs": 140.4,
+        "fat": 41.5
+      }
+    },
+    {
+      "name": "fractional grams · protein 42.5",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "protein": 42.5
+        }
+      },
+      "expected": {
+        "kcal": 1107.1,
+        "protein": 43,
+        "carbs": 140.4,
+        "fat": 41.5
+      }
+    },
+    {
+      "name": "fractional grams · carbs 0",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "carbs": 0
+        }
+      },
+      "expected": {
+        "kcal": 883.9,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 41.5
+      }
+    },
+    {
+      "name": "fractional grams · carbs -3",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "carbs": -3
+        }
+      },
+      "expected": {
+        "kcal": 883.9,
+        "protein": 127.6,
+        "carbs": 0,
+        "fat": 41.5
+      }
+    },
+    {
+      "name": "fractional grams · fat 60",
+      "input": {
+        "current": {
+          "kcal": 1450,
+          "protein": 127.6,
+          "carbs": 140.4,
+          "fat": 41.5
+        },
+        "edited": {
+          "fat": 60
+        }
+      },
+      "expected": {
+        "kcal": 1612,
+        "protein": 127.6,
+        "carbs": 140.4,
+        "fat": 60
+      }
+    },
+    {
+      "name": "sweep P0 C0 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 136,
+        "protein": 0,
+        "carbs": 34,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C0 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 0,
+        "carbs": 343,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C0 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 0,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 651,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C0 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 360,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 360,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P0 C0 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 360,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 0,
+        "carbs": 253,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P0 C0 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 360,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 561,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P0 C0 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 720,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 720,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P0 C0 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 720,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 0,
+        "carbs": 163,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P0 C0 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 720,
+          "protein": 0,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 471,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P0 C120 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 480,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 136,
+        "protein": 0,
+        "carbs": 34,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C120 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 480,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 0,
+        "carbs": 343,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C120 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 480,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 651,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C120 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 840,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 139,
+        "protein": 0,
+        "carbs": 19,
+        "fat": 7
+      }
+    },
+    {
+      "name": "sweep P0 C120 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 840,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1369,
+        "protein": 0,
+        "carbs": 196,
+        "fat": 65
+      }
+    },
+    {
+      "name": "sweep P0 C120 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 840,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 372,
+        "fat": 124
+      }
+    },
+    {
+      "name": "sweep P0 C120 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 1200,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 137,
+        "protein": 0,
+        "carbs": 14,
+        "fat": 9
+      }
+    },
+    {
+      "name": "sweep P0 C120 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1200,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1367,
+        "protein": 0,
+        "carbs": 137,
+        "fat": 91
+      }
+    },
+    {
+      "name": "sweep P0 C120 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1200,
+          "protein": 0,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2606,
+        "protein": 0,
+        "carbs": 260,
+        "fat": 174
+      }
+    },
+    {
+      "name": "sweep P0 C240 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 136,
+        "protein": 0,
+        "carbs": 34,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C240 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 0,
+        "carbs": 343,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C240 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 960,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 651,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P0 C240 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 1320,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 136,
+        "protein": 0,
+        "carbs": 25,
+        "fat": 4
+      }
+    },
+    {
+      "name": "sweep P0 C240 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1320,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1370,
+        "protein": 0,
+        "carbs": 248,
+        "fat": 42
+      }
+    },
+    {
+      "name": "sweep P0 C240 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1320,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2603,
+        "protein": 0,
+        "carbs": 473,
+        "fat": 79
+      }
+    },
+    {
+      "name": "sweep P0 C240 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 1680,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 139,
+        "protein": 0,
+        "carbs": 19,
+        "fat": 7
+      }
+    },
+    {
+      "name": "sweep P0 C240 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1680,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1369,
+        "protein": 0,
+        "carbs": 196,
+        "fat": 65
+      }
+    },
+    {
+      "name": "sweep P0 C240 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1680,
+          "protein": 0,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 0,
+        "carbs": 372,
+        "fat": 124
+      }
+    },
+    {
+      "name": "sweep P80 C0 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 320,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C0 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 320,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 263,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C0 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 320,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 80,
+        "carbs": 571,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C0 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 680,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 680,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P80 C0 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 680,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 173,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P80 C0 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 680,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 80,
+        "carbs": 481,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P80 C0 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 1040,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 1040,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P80 C0 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1040,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 83,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P80 C0 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1040,
+          "protein": 80,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 80,
+        "carbs": 391,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P80 C120 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C120 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 263,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C120 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 80,
+        "carbs": 571,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C120 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C120 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1370,
+        "protein": 80,
+        "carbs": 150,
+        "fat": 50
+      }
+    },
+    {
+      "name": "sweep P80 C120 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2605,
+        "protein": 80,
+        "carbs": 326,
+        "fat": 109
+      }
+    },
+    {
+      "name": "sweep P80 C120 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C120 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1370,
+        "protein": 80,
+        "carbs": 105,
+        "fat": 70
+      }
+    },
+    {
+      "name": "sweep P80 C120 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 80,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2600,
+        "protein": 80,
+        "carbs": 228,
+        "fat": 152
+      }
+    },
+    {
+      "name": "sweep P80 C240 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C240 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 263,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C240 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 80,
+        "carbs": 571,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C240 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C240 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 80,
+        "carbs": 191,
+        "fat": 32
+      }
+    },
+    {
+      "name": "sweep P80 C240 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2601,
+        "protein": 80,
+        "carbs": 415,
+        "fat": 69
+      }
+    },
+    {
+      "name": "sweep P80 C240 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 320,
+        "protein": 80,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P80 C240 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1370,
+        "protein": 80,
+        "carbs": 150,
+        "fat": 50
+      }
+    },
+    {
+      "name": "sweep P80 C240 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 80,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2605,
+        "protein": 80,
+        "carbs": 326,
+        "fat": 109
+      }
+    },
+    {
+      "name": "sweep P200 C0 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C0 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 200,
+        "carbs": 143,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C0 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 800,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 200,
+        "carbs": 451,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C0 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 1160,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P200 C0 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 200,
+        "carbs": 53,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P200 C0 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1160,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 200,
+        "carbs": 361,
+        "fat": 40
+      }
+    },
+    {
+      "name": "sweep P200 C0 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 1520,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P200 C0 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1520,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P200 C0 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1520,
+          "protein": 200,
+          "carbs": 0,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 200,
+        "carbs": 271,
+        "fat": 80
+      }
+    },
+    {
+      "name": "sweep P200 C120 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C120 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 200,
+        "carbs": 143,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C120 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1280,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 200,
+        "carbs": 451,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C120 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C120 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1367,
+        "protein": 200,
+        "carbs": 81,
+        "fat": 27
+      }
+    },
+    {
+      "name": "sweep P200 C120 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1640,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2606,
+        "protein": 200,
+        "carbs": 258,
+        "fat": 86
+      }
+    },
+    {
+      "name": "sweep P200 C120 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C120 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1370,
+        "protein": 200,
+        "carbs": 57,
+        "fat": 38
+      }
+    },
+    {
+      "name": "sweep P200 C120 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 2000,
+          "protein": 200,
+          "carbs": 120,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2600,
+        "protein": 200,
+        "carbs": 180,
+        "fat": 120
+      }
+    },
+    {
+      "name": "sweep P200 C240 F0 → 137",
+      "input": {
+        "current": {
+          "kcal": 1760,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C240 F0 → 1370",
+      "input": {
+        "current": {
+          "kcal": 1760,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1372,
+        "protein": 200,
+        "carbs": 143,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C240 F0 → 2603",
+      "input": {
+        "current": {
+          "kcal": 1760,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 0
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2604,
+        "protein": 200,
+        "carbs": 451,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C240 F40 → 137",
+      "input": {
+        "current": {
+          "kcal": 2120,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C240 F40 → 1370",
+      "input": {
+        "current": {
+          "kcal": 2120,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1369,
+        "protein": 200,
+        "carbs": 104,
+        "fat": 17
+      }
+    },
+    {
+      "name": "sweep P200 C240 F40 → 2603",
+      "input": {
+        "current": {
+          "kcal": 2120,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 40
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2603,
+        "protein": 200,
+        "carbs": 327,
+        "fat": 55
+      }
+    },
+    {
+      "name": "sweep P200 C240 F80 → 137",
+      "input": {
+        "current": {
+          "kcal": 2480,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 137
+        }
+      },
+      "expected": {
+        "kcal": 800,
+        "protein": 200,
+        "carbs": 0,
+        "fat": 0
+      }
+    },
+    {
+      "name": "sweep P200 C240 F80 → 1370",
+      "input": {
+        "current": {
+          "kcal": 2480,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 1370
+        }
+      },
+      "expected": {
+        "kcal": 1367,
+        "protein": 200,
+        "carbs": 81,
+        "fat": 27
+      }
+    },
+    {
+      "name": "sweep P200 C240 F80 → 2603",
+      "input": {
+        "current": {
+          "kcal": 2480,
+          "protein": 200,
+          "carbs": 240,
+          "fat": 80
+        },
+        "edited": {
+          "calories": 2603
+        }
+      },
+      "expected": {
+        "kcal": 2606,
+        "protein": 200,
+        "carbs": 258,
+        "fat": 86
+      }
+    }
+  ]
+}

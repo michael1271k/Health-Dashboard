@@ -1,0 +1,876 @@
+{
+  "module": "sessions/nextSet",
+  "fn": "findNextSet + formatLastTime / formatLastRpe / formatLoad / formatRpe",
+  "note": "First uncommitted working set in deck order (cardio, warm-ups and ghosts skipped, a pair counted once); last time is the history's Nth working set (pairs folded to their first row). `history` is a list of {name, history} standing in for the Map.",
+  "cases": [
+    {
+      "name": "null draft",
+      "input": {
+        "draft": null,
+        "history": null
+      },
+      "expected": {
+        "next": null,
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "first unticked, in deck order",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Incline Press",
+              "name": "Incline Press",
+              "sets": [
+                {
+                  "weightKg": 60,
+                  "reps": 8,
+                  "done": true
+                },
+                {
+                  "weightKg": 60,
+                  "reps": 8,
+                  "done": true
+                }
+              ]
+            },
+            {
+              "localId": "Lateral Raise Cable",
+              "name": "Lateral Raise Cable",
+              "sets": [
+                {
+                  "weightKg": 3.75,
+                  "reps": 16,
+                  "done": true
+                },
+                {
+                  "weightKg": 3.75,
+                  "reps": 16,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "Lateral Raise Cable",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 3.75,
+          "reps": 16,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "3.75 kg × 16",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "ghosts carry no ordinal",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Bench Press",
+              "name": "Bench Press",
+              "sets": [
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "setType": "ghost",
+                  "done": true
+                },
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "done": false
+                },
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "Bench Press",
+          "setNumber": 1,
+          "setTotal": 2,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 80,
+          "reps": 6,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "80 kg × 6",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "warm-ups carry no ordinal",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Bench Press",
+              "name": "Bench Press",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 12,
+                  "setType": "warmup",
+                  "done": false
+                },
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "Bench Press",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 80,
+          "reps": 6,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "80 kg × 6",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "cardio skipped",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Treadmill",
+              "name": "Treadmill",
+              "sets": [],
+              "kind": "cardio"
+            },
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "Row",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 50,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "50 kg × 10",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "a pair is one set",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Single Arm Pushdown",
+              "name": "Single Arm Pushdown",
+              "sets": [
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "L",
+                  "pairId": "p1",
+                  "done": true
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "R",
+                  "pairId": "p1",
+                  "done": true
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "L",
+                  "pairId": "p2",
+                  "done": false
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "R",
+                  "pairId": "p2",
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "Single Arm Pushdown",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 15,
+          "reps": 12,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "15 kg × 12",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "all done",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": true
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": null,
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "an exercise with only warm-ups is skipped",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "A",
+              "name": "A",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 12,
+                  "setType": "warmup",
+                  "done": false
+                }
+              ]
+            },
+            {
+              "localId": "B",
+              "name": "B",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "B",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 50,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "50 kg × 10",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "last time aligned by working set number",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Bench Press",
+              "name": "Bench Press",
+              "sets": [
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "done": true
+                },
+                {
+                  "weightKg": 80,
+                  "reps": 6,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Bench Press",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 20,
+                  "reps": 12,
+                  "setType": "warmup"
+                },
+                {
+                  "weightKg": 77.5,
+                  "reps": 7,
+                  "rpe": 8
+                },
+                {
+                  "weightKg": 77.5,
+                  "reps": 6,
+                  "rpe": 9.5
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Bench Press",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": 77.5,
+          "lastReps": 6,
+          "lastRpe": 9.5,
+          "weightKg": 80,
+          "reps": 6,
+          "rpe": null
+        },
+        "lastTime": "77.5 kg × 6",
+        "lastRpe": "RPE 9.5",
+        "load": "80 kg × 6",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "last time had fewer sets",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": true
+                },
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Row",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 47.5,
+                  "reps": 11
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Row",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 50,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "50 kg × 10",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "history pair folds to its first row",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "SA",
+              "name": "SA",
+              "sets": [
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "L",
+                  "pairId": "p1",
+                  "done": true
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "side": "R",
+                  "pairId": "p1",
+                  "done": true
+                },
+                {
+                  "weightKg": 15,
+                  "reps": 12,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "SA",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 12,
+                  "reps": 10,
+                  "side": "R",
+                  "pairId": "h1",
+                  "rpe": 8
+                },
+                {
+                  "weightKg": 12,
+                  "reps": 10,
+                  "side": "L",
+                  "pairId": "h1",
+                  "rpe": 9
+                },
+                {
+                  "weightKg": 12,
+                  "reps": 9,
+                  "rpe": 7
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "SA",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": 12,
+          "lastReps": 9,
+          "lastRpe": 7,
+          "weightKg": 15,
+          "reps": 12,
+          "rpe": null
+        },
+        "lastTime": "12 kg × 9",
+        "lastRpe": "RPE 7",
+        "load": "15 kg × 12",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "history ghost stripped",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Row",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 40,
+                  "reps": 5,
+                  "setType": "ghost"
+                },
+                {
+                  "weightKg": 47.5,
+                  "reps": 11
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Row",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": 47.5,
+          "lastReps": 11,
+          "lastRpe": null,
+          "weightKg": 50,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "47.5 kg × 11",
+        "lastRpe": "",
+        "load": "50 kg × 10",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "history for another exercise is ignored",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Row",
+              "name": "Row",
+              "sets": [
+                {
+                  "weightKg": 50,
+                  "reps": 10,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Bench",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 47.5,
+                  "reps": 11
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Row",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 50,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "50 kg × 10",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "unloaded next set with unloaded history",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Reverse Crunch",
+              "name": "Reverse Crunch",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 17,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Reverse Crunch",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 0,
+                  "reps": 15,
+                  "rpe": 10
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Reverse Crunch",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": 0,
+          "lastReps": 15,
+          "lastRpe": 10,
+          "weightKg": 0,
+          "reps": 17,
+          "rpe": null
+        },
+        "lastTime": "15 reps",
+        "lastRpe": "RPE 10",
+        "load": "17 reps",
+        "rpe": ""
+      }
+    },
+    {
+      "name": "quarter-plate load on the set you are on",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "Lateral Raise",
+              "name": "Lateral Raise",
+              "sets": [
+                {
+                  "weightKg": 3.75,
+                  "reps": 16,
+                  "rpe": 8,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": [
+          {
+            "name": "Lateral Raise",
+            "history": {
+              "date": "2026-08-18",
+              "sets": [
+                {
+                  "weightKg": 3.75,
+                  "reps": 15,
+                  "rpe": 9
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "next": {
+          "exercise": "Lateral Raise",
+          "setNumber": 1,
+          "setTotal": 1,
+          "lastWeightKg": 3.75,
+          "lastReps": 15,
+          "lastRpe": 9,
+          "weightKg": 3.75,
+          "reps": 16,
+          "rpe": 8
+        },
+        "lastTime": "3.75 kg × 15",
+        "lastRpe": "RPE 9",
+        "load": "3.75 kg × 16",
+        "rpe": "RPE 8"
+      }
+    },
+    {
+      "name": "empty pairId is no pair",
+      "input": {
+        "draft": {
+          "splitDay": "upper",
+          "date": "2026-08-25",
+          "notes": "",
+          "startedAt": "2026-08-25T09:00:00.000Z",
+          "exercises": [
+            {
+              "localId": "X",
+              "name": "X",
+              "sets": [
+                {
+                  "weightKg": 10,
+                  "reps": 10,
+                  "pairId": "",
+                  "done": true
+                },
+                {
+                  "weightKg": 10,
+                  "reps": 10,
+                  "pairId": "",
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        "history": null
+      },
+      "expected": {
+        "next": {
+          "exercise": "X",
+          "setNumber": 2,
+          "setTotal": 2,
+          "lastWeightKg": null,
+          "lastReps": null,
+          "lastRpe": null,
+          "weightKg": 10,
+          "reps": 10,
+          "rpe": null
+        },
+        "lastTime": "",
+        "lastRpe": "",
+        "load": "10 kg × 10",
+        "rpe": ""
+      }
+    }
+  ]
+}

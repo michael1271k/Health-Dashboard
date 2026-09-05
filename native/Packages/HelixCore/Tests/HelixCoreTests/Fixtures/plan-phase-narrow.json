@@ -1,0 +1,91 @@
+{
+  "module": "types/workout",
+  "fn": "asNutritionMode === activePhase",
+  "note": "Exactly the string \"bulk\" is a bulk. Everything else — including the deleted \"maintenance\", null and any casing — is a cut. Two TS functions, one Swift.",
+  "cases": [
+    {
+      "name": "\"cut\"",
+      "input": {
+        "raw": "cut"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"bulk\"",
+      "input": {
+        "raw": "bulk"
+      },
+      "expected": "bulk"
+    },
+    {
+      "name": "\"maintenance\"",
+      "input": {
+        "raw": "maintenance"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "null",
+      "input": {
+        "raw": null
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"\"",
+      "input": {
+        "raw": ""
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"Bulk\"",
+      "input": {
+        "raw": "Bulk"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"BULK\"",
+      "input": {
+        "raw": "BULK"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\" bulk\"",
+      "input": {
+        "raw": " bulk"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"lean bulk\"",
+      "input": {
+        "raw": "lean bulk"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"peak\"",
+      "input": {
+        "raw": "peak"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"deload\"",
+      "input": {
+        "raw": "deload"
+      },
+      "expected": "cut"
+    },
+    {
+      "name": "\"cut \"",
+      "input": {
+        "raw": "cut "
+      },
+      "expected": "cut"
+    }
+  ]
+}

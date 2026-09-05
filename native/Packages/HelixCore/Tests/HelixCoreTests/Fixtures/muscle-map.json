@@ -1,0 +1,143 @@
+{
+  "module": "charts/muscleAggregate",
+  "fn": "MUSCLE_MAP / MUSCLE_GROUPS",
+  "note": "Hevy tag → one of six display groups. Ordered as written.",
+  "cases": [
+    {
+      "name": "the table",
+      "input": null,
+      "expected": {
+        "map": [
+          [
+            "chest",
+            "Chest"
+          ],
+          [
+            "pecs",
+            "Chest"
+          ],
+          [
+            "back",
+            "Back"
+          ],
+          [
+            "lats",
+            "Back"
+          ],
+          [
+            "traps",
+            "Back"
+          ],
+          [
+            "rhomboids",
+            "Back"
+          ],
+          [
+            "upper back",
+            "Back"
+          ],
+          [
+            "lower back",
+            "Back"
+          ],
+          [
+            "shoulders",
+            "Shoulders"
+          ],
+          [
+            "delts",
+            "Shoulders"
+          ],
+          [
+            "rear_delts",
+            "Shoulders"
+          ],
+          [
+            "side_delts",
+            "Shoulders"
+          ],
+          [
+            "front_delts",
+            "Shoulders"
+          ],
+          [
+            "biceps",
+            "Arms"
+          ],
+          [
+            "triceps",
+            "Arms"
+          ],
+          [
+            "forearms",
+            "Arms"
+          ],
+          [
+            "arms",
+            "Arms"
+          ],
+          [
+            "quads",
+            "Legs"
+          ],
+          [
+            "quadriceps",
+            "Legs"
+          ],
+          [
+            "hamstrings",
+            "Legs"
+          ],
+          [
+            "glutes",
+            "Legs"
+          ],
+          [
+            "calves",
+            "Legs"
+          ],
+          [
+            "abductors",
+            "Legs"
+          ],
+          [
+            "adductors",
+            "Legs"
+          ],
+          [
+            "inner_thigh",
+            "Legs"
+          ],
+          [
+            "legs",
+            "Legs"
+          ],
+          [
+            "core",
+            "Core"
+          ],
+          [
+            "abs",
+            "Core"
+          ],
+          [
+            "abdominals",
+            "Core"
+          ],
+          [
+            "obliques",
+            "Core"
+          ]
+        ],
+        "groups": [
+          "Chest",
+          "Back",
+          "Shoulders",
+          "Arms",
+          "Legs",
+          "Core"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,391 @@
+{
+  "module": "dashboard/weekSoFar",
+  "fn": "biggestChange",
+  "note": "Ranked by |%|; sessions rank flat at 1 so a count only wins a week where nothing else moved. Sleep needs |Δ| >= 10 min. Text uses the typographic minus for a fall.",
+  "cases": [
+    {
+      "name": "identical weeks say nothing",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "tonnage up wins by percent",
+      "input": {
+        "cur": {
+          "volumeKg": 13800,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Tonnage",
+        "text": "+15%",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "tonnage down is bad",
+      "input": {
+        "cur": {
+          "volumeKg": 9000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Tonnage",
+        "text": "-25%",
+        "direction": "down",
+        "good": false
+      }
+    },
+    {
+      "name": "a week from zero has no tonnage percentage",
+      "input": {
+        "cur": {
+          "volumeKg": 5000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 0,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "sleep under ten minutes is noise",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 438,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "sleep exactly ten minutes counts",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 440,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Sleep",
+        "text": "+10m",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "sleep down formats as h m",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 355,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Sleep",
+        "text": "−1h 15m",
+        "direction": "down",
+        "good": false
+      }
+    },
+    {
+      "name": "sleep null on either side is skipped",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": null,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "score moves by one",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 73
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Daily score",
+        "text": "+1",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "score null on either side is skipped",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": null
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "sessions only wins an otherwise flat week",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 5,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Sessions",
+        "text": "+1",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "sessions down",
+      "input": {
+        "cur": {
+          "volumeKg": 12000,
+          "sessions": 2,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Sessions",
+        "text": "−2",
+        "direction": "down",
+        "good": false
+      }
+    },
+    {
+      "name": "sessions lose to a real percentage move",
+      "input": {
+        "cur": {
+          "volumeKg": 12240,
+          "sessions": 6,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Tonnage",
+        "text": "+2%",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "sleep outranks tonnage when its percentage is larger",
+      "input": {
+        "cur": {
+          "volumeKg": 12240,
+          "sessions": 4,
+          "sleepMin": 300,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Sleep",
+        "text": "−2h 10m",
+        "direction": "down",
+        "good": false
+      }
+    },
+    {
+      "name": "tie on rank keeps builder order (tonnage first)",
+      "input": {
+        "cur": {
+          "volumeKg": 13200,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 79.2
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Tonnage",
+        "text": "+10%",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "rounding: 0.4% tonnage is zero and dropped",
+      "input": {
+        "cur": {
+          "volumeKg": 12048,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "empty previous week",
+      "input": {
+        "cur": {
+          "volumeKg": 8000,
+          "sessions": 3,
+          "sleepMin": 410,
+          "score": 60
+        },
+        "prev": {
+          "volumeKg": 0,
+          "sessions": 0,
+          "sleepMin": null,
+          "score": null
+        }
+      },
+      "expected": {
+        "label": "Sessions",
+        "text": "+3",
+        "direction": "up",
+        "good": true
+      }
+    },
+    {
+      "name": "empty current week",
+      "input": {
+        "cur": {
+          "volumeKg": 0,
+          "sessions": 0,
+          "sleepMin": null,
+          "score": null
+        },
+        "prev": {
+          "volumeKg": 12000,
+          "sessions": 4,
+          "sleepMin": 430,
+          "score": 72
+        }
+      },
+      "expected": {
+        "label": "Tonnage",
+        "text": "-100%",
+        "direction": "down",
+        "good": false
+      }
+    }
+  ]
+}

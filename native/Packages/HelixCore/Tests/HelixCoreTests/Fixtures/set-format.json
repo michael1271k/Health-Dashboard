@@ -1,0 +1,1351 @@
+{
+  "module": "utils/setFormat",
+  "fn": "formatSet / isUnloadedSet",
+  "note": "`60kg × 12` · `17 reps` (singular at 1) · `58 sec`; bare drops the unit words; null reps read 0; unloaded is ≤ 0 or absent.",
+  "cases": [
+    {
+      "name": "null × null",
+      "input": {
+        "weightKg": null,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × null bare",
+      "input": {
+        "weightKg": null,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × null timed",
+      "input": {
+        "weightKg": null,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × null timed bare",
+      "input": {
+        "weightKg": null,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 0",
+      "input": {
+        "weightKg": null,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 0 bare",
+      "input": {
+        "weightKg": null,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 0 timed",
+      "input": {
+        "weightKg": null,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 0 timed bare",
+      "input": {
+        "weightKg": null,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 1",
+      "input": {
+        "weightKg": null,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 rep",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 1 bare",
+      "input": {
+        "weightKg": null,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 1 timed",
+      "input": {
+        "weightKg": null,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 1 timed bare",
+      "input": {
+        "weightKg": null,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 12",
+      "input": {
+        "weightKg": null,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 12 bare",
+      "input": {
+        "weightKg": null,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 12 timed",
+      "input": {
+        "weightKg": null,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "null × 12 timed bare",
+      "input": {
+        "weightKg": null,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × null",
+      "input": {
+        "weightKg": 0,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × null bare",
+      "input": {
+        "weightKg": 0,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × null timed",
+      "input": {
+        "weightKg": 0,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × null timed bare",
+      "input": {
+        "weightKg": 0,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 0",
+      "input": {
+        "weightKg": 0,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 0 bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 0 timed",
+      "input": {
+        "weightKg": 0,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 0 timed bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 1",
+      "input": {
+        "weightKg": 0,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 rep",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 1 bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 1 timed",
+      "input": {
+        "weightKg": 0,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 1 timed bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 12",
+      "input": {
+        "weightKg": 0,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 12 bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 12 timed",
+      "input": {
+        "weightKg": 0,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "0 × 12 timed bare",
+      "input": {
+        "weightKg": 0,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × null",
+      "input": {
+        "weightKg": -1,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × null bare",
+      "input": {
+        "weightKg": -1,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × null timed",
+      "input": {
+        "weightKg": -1,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × null timed bare",
+      "input": {
+        "weightKg": -1,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 0",
+      "input": {
+        "weightKg": -1,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 0 bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 0 timed",
+      "input": {
+        "weightKg": -1,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 0 timed bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 1",
+      "input": {
+        "weightKg": -1,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 rep",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 1 bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 1 timed",
+      "input": {
+        "weightKg": -1,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 1 timed bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 12",
+      "input": {
+        "weightKg": -1,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 reps",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 12 bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 12 timed",
+      "input": {
+        "weightKg": -1,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "-1 × 12 timed bare",
+      "input": {
+        "weightKg": -1,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": true
+      }
+    },
+    {
+      "name": "5 × null",
+      "input": {
+        "weightKg": 5,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × null bare",
+      "input": {
+        "weightKg": 5,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × null timed",
+      "input": {
+        "weightKg": 5,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × null timed bare",
+      "input": {
+        "weightKg": 5,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 0",
+      "input": {
+        "weightKg": 5,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 0 bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 0 timed",
+      "input": {
+        "weightKg": 5,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 0 timed bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 1",
+      "input": {
+        "weightKg": 5,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 1 bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 1 timed",
+      "input": {
+        "weightKg": 5,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 1 timed bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 12",
+      "input": {
+        "weightKg": 5,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 12 bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "5kg × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 12 timed",
+      "input": {
+        "weightKg": 5,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "5 × 12 timed bare",
+      "input": {
+        "weightKg": 5,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × null",
+      "input": {
+        "weightKg": 3.75,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × null bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × null timed",
+      "input": {
+        "weightKg": 3.75,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × null timed bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 0",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 0 bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 0 timed",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 0 timed bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 1",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 1 bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 1 timed",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 1 timed bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 12",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 12 bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "3.75kg × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 12 timed",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": null
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "3.75 × 12 timed bare",
+      "input": {
+        "weightKg": 3.75,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × null lb",
+      "input": {
+        "weightKg": 60,
+        "reps": null,
+        "timed": false,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "60lb × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × null bare",
+      "input": {
+        "weightKg": 60,
+        "reps": null,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "60kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × null timed lb",
+      "input": {
+        "weightKg": 60,
+        "reps": null,
+        "timed": true,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × null timed bare",
+      "input": {
+        "weightKg": 60,
+        "reps": null,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 0 lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 0,
+        "timed": false,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "60lb × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 0 bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 0,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "60kg × 0",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 0 timed lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 0,
+        "timed": true,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "0 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 0 timed bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 0,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "0s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 1 lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 1,
+        "timed": false,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "60lb × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 1 bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 1,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "60kg × 1",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 1 timed lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 1,
+        "timed": true,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "1 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 1 timed bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 1,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "1s",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 12 lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 12,
+        "timed": false,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "60lb × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 12 bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 12,
+        "timed": false,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "60kg × 12",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 12 timed lb",
+      "input": {
+        "weightKg": 60,
+        "reps": 12,
+        "timed": true,
+        "bare": false,
+        "unit": "lb"
+      },
+      "expected": {
+        "text": "12 sec",
+        "unloaded": false
+      }
+    },
+    {
+      "name": "60 × 12 timed bare",
+      "input": {
+        "weightKg": 60,
+        "reps": 12,
+        "timed": true,
+        "bare": true,
+        "unit": null
+      },
+      "expected": {
+        "text": "12s",
+        "unloaded": false
+      }
+    }
+  ]
+}

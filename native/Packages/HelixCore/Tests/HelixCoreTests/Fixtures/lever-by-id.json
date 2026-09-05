@@ -1,0 +1,311 @@
+{
+  "module": "nutrition/levers",
+  "fn": "leverById / isLeverId / applyLever",
+  "note": "Exact id match. `custom` is a valid id that names NO rung; applyLever hands the goals back untouched for custom, unknown and absent.",
+  "cases": [
+    {
+      "name": "baseline",
+      "input": {
+        "id": "baseline",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": {
+          "id": "baseline",
+          "kind": "deficit",
+          "label": "Baseline",
+          "summary": "The plan as written — full carbs, 10k steps.",
+          "calorieGoal": 1955,
+          "proteinGoalG": 170,
+          "carbsGoalG": 195,
+          "fatGoalG": 55,
+          "stepsGoal": 10000
+        },
+        "isLeverId": true,
+        "applied": {
+          "calorie": 1955,
+          "protein": 170,
+          "carbs": 195,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "lever-1",
+      "input": {
+        "id": "lever-1",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": {
+          "id": "lever-1",
+          "kind": "deficit",
+          "label": "Lever 1",
+          "summary": "−70 kcal off carbs and fat, steps to 10k.",
+          "calorieGoal": 1885,
+          "proteinGoalG": 170,
+          "carbsGoalG": 182,
+          "fatGoalG": 53,
+          "stepsGoal": 10000
+        },
+        "isLeverId": true,
+        "applied": {
+          "calorie": 1885,
+          "protein": 170,
+          "carbs": 182,
+          "fat": 53,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "lever-2",
+      "input": {
+        "id": "lever-2",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": {
+          "id": "lever-2",
+          "kind": "deficit",
+          "label": "Lever 2",
+          "summary": "Same food as Lever 1, steps 12k–15k. The last rung.",
+          "calorieGoal": 1885,
+          "proteinGoalG": 170,
+          "carbsGoalG": 182,
+          "fatGoalG": 53,
+          "stepsGoal": 12000
+        },
+        "isLeverId": true,
+        "applied": {
+          "calorie": 1885,
+          "protein": 170,
+          "carbs": 182,
+          "fat": 53,
+          "steps": 12000
+        }
+      }
+    },
+    {
+      "name": "maintenance-week",
+      "input": {
+        "id": "maintenance-week",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": {
+          "id": "maintenance-week",
+          "kind": "release",
+          "label": "Maintenance Week",
+          "summary": "A planned week at maintenance — full food, lighter steps. Still cutting.",
+          "calorieGoal": 2151,
+          "proteinGoalG": 170,
+          "carbsGoalG": 244,
+          "fatGoalG": 55,
+          "stepsGoal": 7500
+        },
+        "isLeverId": true,
+        "applied": {
+          "calorie": 2151,
+          "protein": 170,
+          "carbs": 244,
+          "fat": 55,
+          "steps": 7500
+        }
+      }
+    },
+    {
+      "name": "custom",
+      "input": {
+        "id": "custom",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": true,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": "lever-3",
+      "input": {
+        "id": "lever-3",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": "lever-9",
+      "input": {
+        "id": "lever-9",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "id": "",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": "null",
+      "input": {
+        "id": null,
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": "Baseline",
+      "input": {
+        "id": "Baseline",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    },
+    {
+      "name": " baseline",
+      "input": {
+        "id": " baseline",
+        "goals": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      },
+      "expected": {
+        "lever": null,
+        "isLeverId": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 100,
+          "carbs": 300,
+          "fat": 80,
+          "steps": 6000
+        }
+      }
+    }
+  ]
+}

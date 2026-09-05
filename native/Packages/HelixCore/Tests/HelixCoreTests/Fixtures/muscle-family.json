@@ -1,0 +1,119 @@
+{
+  "module": "theme/muscleHue",
+  "fn": "familyOf",
+  "note": "Landmark muscle → one of six families. Colours are NOT ported.",
+  "cases": [
+    {
+      "name": "Chest",
+      "input": {
+        "muscle": "Chest"
+      },
+      "expected": "Chest"
+    },
+    {
+      "name": "Lats",
+      "input": {
+        "muscle": "Lats"
+      },
+      "expected": "Back"
+    },
+    {
+      "name": "Upper back",
+      "input": {
+        "muscle": "Upper back"
+      },
+      "expected": "Back"
+    },
+    {
+      "name": "Lower back",
+      "input": {
+        "muscle": "Lower back"
+      },
+      "expected": "Back"
+    },
+    {
+      "name": "Front delts",
+      "input": {
+        "muscle": "Front delts"
+      },
+      "expected": "Shoulders"
+    },
+    {
+      "name": "Side delts",
+      "input": {
+        "muscle": "Side delts"
+      },
+      "expected": "Shoulders"
+    },
+    {
+      "name": "Rear delts",
+      "input": {
+        "muscle": "Rear delts"
+      },
+      "expected": "Shoulders"
+    },
+    {
+      "name": "Biceps",
+      "input": {
+        "muscle": "Biceps"
+      },
+      "expected": "Arms"
+    },
+    {
+      "name": "Triceps",
+      "input": {
+        "muscle": "Triceps"
+      },
+      "expected": "Arms"
+    },
+    {
+      "name": "Forearms",
+      "input": {
+        "muscle": "Forearms"
+      },
+      "expected": "Arms"
+    },
+    {
+      "name": "Quads",
+      "input": {
+        "muscle": "Quads"
+      },
+      "expected": "Legs"
+    },
+    {
+      "name": "Hamstrings",
+      "input": {
+        "muscle": "Hamstrings"
+      },
+      "expected": "Legs"
+    },
+    {
+      "name": "Glutes",
+      "input": {
+        "muscle": "Glutes"
+      },
+      "expected": "Legs"
+    },
+    {
+      "name": "Adductors",
+      "input": {
+        "muscle": "Adductors"
+      },
+      "expected": "Legs"
+    },
+    {
+      "name": "Calves",
+      "input": {
+        "muscle": "Calves"
+      },
+      "expected": "Legs"
+    },
+    {
+      "name": "Abs/core",
+      "input": {
+        "muscle": "Abs/core"
+      },
+      "expected": "Core"
+    }
+  ]
+}

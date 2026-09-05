@@ -1,0 +1,244 @@
+{
+  "module": "nutrition/profiles",
+  "fn": "profileByKey",
+  "note": "Exact key match against the given list; nothing resolves to the first profile by default.",
+  "cases": [
+    {
+      "name": "home",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": "home"
+      },
+      "expected": {
+        "key": "home",
+        "label": "Home",
+        "summary": "Cooked and weighed — every macro is a real target.",
+        "sort": 0,
+        "kcal": 2150,
+        "proteinG": 170,
+        "carbsG": 244,
+        "fatG": 55,
+        "stepsGoal": null
+      }
+    },
+    {
+      "name": "restaurant",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": "restaurant"
+      },
+      "expected": {
+        "key": "restaurant",
+        "label": "Restaurant",
+        "summary": "Eating out — hit the protein, let the split go.",
+        "sort": 1,
+        "kcal": 2400,
+        "proteinG": 170,
+        "carbsG": null,
+        "fatG": null,
+        "stepsGoal": null
+      }
+    },
+    {
+      "name": "brunch",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": "brunch"
+      },
+      "expected": null
+    },
+    {
+      "name": "empty",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "null",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": null
+      },
+      "expected": null
+    },
+    {
+      "name": "Home",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": "Home"
+      },
+      "expected": null
+    },
+    {
+      "name": " home",
+      "input": {
+        "profiles": [
+          {
+            "key": "home",
+            "label": "Home",
+            "summary": "Cooked and weighed — every macro is a real target.",
+            "sort": 0,
+            "kcal": 2150,
+            "proteinG": 170,
+            "carbsG": 244,
+            "fatG": 55,
+            "stepsGoal": null
+          },
+          {
+            "key": "restaurant",
+            "label": "Restaurant",
+            "summary": "Eating out — hit the protein, let the split go.",
+            "sort": 1,
+            "kcal": 2400,
+            "proteinG": 170,
+            "carbsG": null,
+            "fatG": null,
+            "stepsGoal": null
+          }
+        ],
+        "key": " home"
+      },
+      "expected": null
+    }
+  ]
+}

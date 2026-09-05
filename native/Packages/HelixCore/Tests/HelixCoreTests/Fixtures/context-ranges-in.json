@@ -1,0 +1,453 @@
+{
+  "module": "nutrition/context",
+  "fn": "contextRangesIn + contextRangeLabel",
+  "note": "Contiguous RANGE contexts across stamped days, oldest first; gaps and mode changes break a range. labels are contextRangeLabel of each range, exact strings.",
+  "cases": [
+    {
+      "name": "the test week",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": null
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-12",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-13",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-14",
+            "exception": null
+          },
+          {
+            "date": "2026-08-15",
+            "exception": "Refeed"
+          },
+          {
+            "date": "2026-08-16",
+            "exception": "Illness"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-11",
+            "to": "2026-08-13",
+            "days": 3
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-16",
+            "to": "2026-08-16",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-11 → 2026-08-13 (3 days)",
+          "Illness · 2026-08-16"
+        ]
+      }
+    },
+    {
+      "name": "unsorted input is sorted first",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-16",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-15",
+            "exception": "Refeed"
+          },
+          {
+            "date": "2026-08-14",
+            "exception": null
+          },
+          {
+            "date": "2026-08-13",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-12",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-10",
+            "exception": null
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-11",
+            "to": "2026-08-13",
+            "days": 3
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-16",
+            "to": "2026-08-16",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-11 → 2026-08-13 (3 days)",
+          "Illness · 2026-08-16"
+        ]
+      }
+    },
+    {
+      "name": "all normal",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": null
+          },
+          {
+            "date": "2026-08-11",
+            "exception": null
+          },
+          {
+            "date": "2026-08-12",
+            "exception": null
+          },
+          {
+            "date": "2026-08-13",
+            "exception": null
+          },
+          {
+            "date": "2026-08-14",
+            "exception": null
+          },
+          {
+            "date": "2026-08-15",
+            "exception": null
+          },
+          {
+            "date": "2026-08-16",
+            "exception": null
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [],
+        "labels": []
+      }
+    },
+    {
+      "name": "adjacent different range modes are two ranges",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Travel"
+          },
+          {
+            "date": "2026-08-12",
+            "exception": "travel"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "travel",
+            "from": "2026-08-11",
+            "to": "2026-08-12",
+            "days": 2
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-10",
+          "Travel · 2026-08-11 → 2026-08-12 (2 days)"
+        ]
+      }
+    },
+    {
+      "name": "a one-day mode between two illness days breaks the range",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Event"
+          },
+          {
+            "date": "2026-08-12",
+            "exception": "Illness"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-12",
+            "to": "2026-08-12",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-10",
+          "Illness · 2026-08-12"
+        ]
+      }
+    },
+    {
+      "name": "a missing day between two illness days breaks the range",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-12",
+            "exception": "Illness"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-12",
+            "to": "2026-08-12",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-10",
+          "Illness · 2026-08-12"
+        ]
+      }
+    },
+    {
+      "name": "an unknown label is an event and never a range",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Wedding"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Wedding"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [],
+        "labels": []
+      }
+    },
+    {
+      "name": "the exception field absent",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "emergency"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "emergency",
+            "from": "2026-08-11",
+            "to": "2026-08-11",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Emergency · 2026-08-11"
+        ]
+      }
+    },
+    {
+      "name": "a duplicate date extends nothing",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Illness"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-11",
+            "days": 2
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-10",
+          "Illness · 2026-08-10 → 2026-08-11 (2 days)"
+        ]
+      }
+    },
+    {
+      "name": "same date, two labels — the sort is stable, input order decides",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-10",
+            "exception": "Travel"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Illness"
+          },
+          {
+            "date": "2026-08-11",
+            "exception": "Travel"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "illness",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "travel",
+            "from": "2026-08-10",
+            "to": "2026-08-10",
+            "days": 1
+          },
+          {
+            "mode": "illness",
+            "from": "2026-08-11",
+            "to": "2026-08-11",
+            "days": 1
+          },
+          {
+            "mode": "travel",
+            "from": "2026-08-11",
+            "to": "2026-08-11",
+            "days": 1
+          }
+        ],
+        "labels": [
+          "Illness · 2026-08-10",
+          "Travel · 2026-08-10",
+          "Illness · 2026-08-11",
+          "Travel · 2026-08-11"
+        ]
+      }
+    },
+    {
+      "name": "across a month end",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "exception": "Travel"
+          },
+          {
+            "date": "2026-09-01",
+            "exception": "Travel"
+          },
+          {
+            "date": "2026-09-02",
+            "exception": "Travel"
+          }
+        ]
+      },
+      "expected": {
+        "ranges": [
+          {
+            "mode": "travel",
+            "from": "2026-08-31",
+            "to": "2026-09-02",
+            "days": 3
+          }
+        ],
+        "labels": [
+          "Travel · 2026-08-31 → 2026-09-02 (3 days)"
+        ]
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "days": []
+      },
+      "expected": {
+        "ranges": [],
+        "labels": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "markdownTable",
+  "note": "Padded to a common width counted in CODE POINTS; the rule row carries the alignment colons.",
+  "cases": [
+    {
+      "name": "three columns",
+      "input": {
+        "header": [
+          "Week",
+          "Kcal",
+          ""
+        ],
+        "body": [
+          [
+            "Week 5",
+            "1885",
+            "↑"
+          ],
+          [
+            "Week 10",
+            "—",
+            "→"
+          ]
+        ],
+        "align": [
+          "left",
+          "right",
+          "center"
+        ]
+      },
+      "expected": [
+        "| Week    | Kcal |   |",
+        "|:--------|-----:|:-:|",
+        "| Week 5  | 1885 | ↑ |",
+        "| Week 10 |    — | → |"
+      ]
+    },
+    {
+      "name": "code points not utf-16",
+      "input": {
+        "header": [
+          "A",
+          "B"
+        ],
+        "body": [
+          [
+            "▁▂▃",
+            "x"
+          ],
+          [
+            "—",
+            "yy"
+          ],
+          [
+            "💪🏋️",
+            "z"
+          ]
+        ],
+        "align": [
+          "left",
+          "left"
+        ]
+      },
+      "expected": [
+        "| A   | B  |",
+        "|:----|:---|",
+        "| ▁▂▃ | x  |",
+        "| —   | yy |",
+        "| 💪🏋️ | z  |"
+      ]
+    },
+    {
+      "name": "header only",
+      "input": {
+        "header": [
+          "A",
+          "B"
+        ],
+        "body": [],
+        "align": [
+          "center",
+          "right"
+        ]
+      },
+      "expected": [
+        "| A | B |",
+        "|:-:|--:|"
+      ]
+    },
+    {
+      "name": "ragged rows",
+      "input": {
+        "header": [
+          "A",
+          "B",
+          "C"
+        ],
+        "body": [
+          [
+            "1"
+          ],
+          [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        ],
+        "align": [
+          "left",
+          "left",
+          "left"
+        ]
+      },
+      "expected": [
+        "| A | B | C |",
+        "|:--|:--|:--|",
+        "| 1 |",
+        "| 1 | 2 | 3 | 4 |"
+      ]
+    }
+  ]
+}

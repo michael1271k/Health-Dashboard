@@ -1,0 +1,1799 @@
+{
+  "module": "training/progressionQueue",
+  "fn": "progressionAlerts",
+  "note": "Targets walked in order; rows bucketed by (day_key, exercise) → started_at (sorted) → working sets (warm-ups/ghosts dropped, null day_key dropped); last two sessions graded by progressionVerdict / timedProgressionVerdict against the programmed ceiling on THAT day; ready and one-more surface, currentKg = top load of the latest session.",
+  "cases": [
+    {
+      "name": "deck · cut",
+      "input": {
+        "phase": "cut",
+        "targets": [
+          {
+            "id": "ex-incline-db-press",
+            "name": "Incline DB Press",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-lat-pulldown",
+            "name": "Lat Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-seated-cable-row-v-grip-",
+            "name": "Seated Cable Row (V-Grip)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-pec-deck",
+            "name": "Pec Deck",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-straight-arm-pulldown",
+            "name": "Straight-Arm Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-face-pull",
+            "name": "Face Pull",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-hack-squat",
+            "name": "Hack Squat",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-leg-extension",
+            "name": "Leg Extension",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-crunch-machine",
+            "name": "Crunch Machine",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-reverse-crunch",
+            "name": "Reverse Crunch",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-db-shoulder-press",
+            "name": "DB Shoulder Press",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-incline-db-curl",
+            "name": "Seated Incline DB Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-cable-overhead-extension",
+            "name": "Cable Overhead Extension",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-db-hammer-curl",
+            "name": "DB Hammer Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-rope-triceps-pushdown",
+            "name": "Rope Triceps Pushdown",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-reverse-ez-bar-curl",
+            "name": "Reverse EZ-Bar Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-neutral-grip-lat-pulldown",
+            "name": "Neutral-Grip Lat Pulldown",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-cable-crossover",
+            "name": "Single Arm Cable Crossover",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-seated-cable-row-wide-grip-",
+            "name": "Seated Cable Row (Wide Grip)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-preacher-curl-machine-",
+            "name": "Preacher Curl (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-triceps-pushdown-cable-",
+            "name": "Single Arm Triceps Pushdown (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-romanian-deadlift-dumbbell-",
+            "name": "Romanian Deadlift (Dumbbell)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-thrust-machine-",
+            "name": "Hip Thrust (Machine)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-side-plank",
+            "name": "Side Plank",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          }
+        ],
+        "rows": [
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 20,
+            "reps": 8,
+            "set_type": "warmup",
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 10,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-01T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-01T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-08T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-08T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 52.5,
+            "reps": 9,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-15T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 52.5,
+            "reps": 8,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-15T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 17,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-04T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-04T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-11T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-11T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 60,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 55,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 65,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 55,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          }
+        ]
+      },
+      "expected": [
+        {
+          "exerciseId": "ex-incline-db-press",
+          "name": "Incline DB Press",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": 42.5,
+          "currentKg": 40,
+          "timed": false,
+          "ceiling": 12,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-lat-pulldown",
+          "name": "Lat Pulldown",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": null,
+          "currentKg": 30,
+          "timed": false,
+          "ceiling": 12,
+          "state": "one-more"
+        },
+        {
+          "exerciseId": "ex-pec-deck",
+          "name": "Pec Deck",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": null,
+          "currentKg": null,
+          "timed": false,
+          "ceiling": 15,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-chest-press-machine-",
+          "name": "Chest Press (Machine)",
+          "dayKey": "cb_b",
+          "dayLabel": "Upper B",
+          "dayColor": "#B4522A",
+          "suggestKg": 75,
+          "currentKg": 72.5,
+          "timed": false,
+          "ceiling": 12,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-side-plank",
+          "name": "Side Plank",
+          "dayKey": "legs_b",
+          "dayLabel": "Legs & Core B",
+          "dayColor": "#2E5C8A",
+          "suggestKg": null,
+          "currentKg": null,
+          "timed": true,
+          "ceiling": 55,
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "name": "no history · cut",
+      "input": {
+        "phase": "cut",
+        "targets": [
+          {
+            "id": "ex-incline-db-press",
+            "name": "Incline DB Press",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-lat-pulldown",
+            "name": "Lat Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-seated-cable-row-v-grip-",
+            "name": "Seated Cable Row (V-Grip)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-pec-deck",
+            "name": "Pec Deck",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-straight-arm-pulldown",
+            "name": "Straight-Arm Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-face-pull",
+            "name": "Face Pull",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-hack-squat",
+            "name": "Hack Squat",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-leg-extension",
+            "name": "Leg Extension",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-crunch-machine",
+            "name": "Crunch Machine",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-reverse-crunch",
+            "name": "Reverse Crunch",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-db-shoulder-press",
+            "name": "DB Shoulder Press",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-incline-db-curl",
+            "name": "Seated Incline DB Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-cable-overhead-extension",
+            "name": "Cable Overhead Extension",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-db-hammer-curl",
+            "name": "DB Hammer Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-rope-triceps-pushdown",
+            "name": "Rope Triceps Pushdown",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-reverse-ez-bar-curl",
+            "name": "Reverse EZ-Bar Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-neutral-grip-lat-pulldown",
+            "name": "Neutral-Grip Lat Pulldown",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-cable-crossover",
+            "name": "Single Arm Cable Crossover",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-seated-cable-row-wide-grip-",
+            "name": "Seated Cable Row (Wide Grip)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-preacher-curl-machine-",
+            "name": "Preacher Curl (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-triceps-pushdown-cable-",
+            "name": "Single Arm Triceps Pushdown (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-romanian-deadlift-dumbbell-",
+            "name": "Romanian Deadlift (Dumbbell)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-thrust-machine-",
+            "name": "Hip Thrust (Machine)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-side-plank",
+            "name": "Side Plank",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          }
+        ],
+        "rows": []
+      },
+      "expected": []
+    },
+    {
+      "name": "deck · bulk",
+      "input": {
+        "phase": "bulk",
+        "targets": [
+          {
+            "id": "ex-incline-db-press",
+            "name": "Incline DB Press",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-lat-pulldown",
+            "name": "Lat Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-seated-cable-row-v-grip-",
+            "name": "Seated Cable Row (V-Grip)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-pec-deck",
+            "name": "Pec Deck",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-straight-arm-pulldown",
+            "name": "Straight-Arm Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-face-pull",
+            "name": "Face Pull",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-hack-squat",
+            "name": "Hack Squat",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-leg-extension",
+            "name": "Leg Extension",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-crunch-machine",
+            "name": "Crunch Machine",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-reverse-crunch",
+            "name": "Reverse Crunch",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-db-shoulder-press",
+            "name": "DB Shoulder Press",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-incline-db-curl",
+            "name": "Seated Incline DB Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-cable-overhead-extension",
+            "name": "Cable Overhead Extension",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-db-hammer-curl",
+            "name": "DB Hammer Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-rope-triceps-pushdown",
+            "name": "Rope Triceps Pushdown",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-reverse-ez-bar-curl",
+            "name": "Reverse EZ-Bar Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-db-wrist-curl",
+            "name": "Seated DB Wrist Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-neutral-grip-lat-pulldown",
+            "name": "Neutral-Grip Lat Pulldown",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-cable-crossover",
+            "name": "Single Arm Cable Crossover",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-seated-cable-row-wide-grip-",
+            "name": "Seated Cable Row (Wide Grip)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-preacher-curl-machine-",
+            "name": "Preacher Curl (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-triceps-pushdown-cable-",
+            "name": "Single Arm Triceps Pushdown (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-romanian-deadlift-dumbbell-",
+            "name": "Romanian Deadlift (Dumbbell)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-thrust-machine-",
+            "name": "Hip Thrust (Machine)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-adduction",
+            "name": "Hip Adduction",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-side-plank",
+            "name": "Side Plank",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          }
+        ],
+        "rows": [
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 20,
+            "reps": 8,
+            "set_type": "warmup",
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-incline-db-press",
+            "weight_kg": 40,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 10,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-lat-pulldown",
+            "weight_kg": 30,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-01T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-01T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-08T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 50,
+            "reps": 12,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-08T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 52.5,
+            "reps": 9,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-15T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 52.5,
+            "reps": 8,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-15T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-seated-cable-row-v-grip-",
+            "weight_kg": 40,
+            "reps": 20,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": null
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 17,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-pec-deck",
+            "weight_kg": 0,
+            "reps": 15,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "cb_a"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-04T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-04T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-11T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-chest-press-machine-",
+            "weight_kg": 72.5,
+            "reps": 13,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-11T09:00:00Z",
+              "day_key": "cb_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 60,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 55,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-03T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 65,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          },
+          {
+            "exercise_id": "ex-side-plank",
+            "weight_kg": 0,
+            "reps": 55,
+            "set_type": null,
+            "workout_sessions": {
+              "started_at": "2026-08-10T09:00:00Z",
+              "day_key": "legs_b"
+            }
+          }
+        ]
+      },
+      "expected": [
+        {
+          "exerciseId": "ex-incline-db-press",
+          "name": "Incline DB Press",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": 42.5,
+          "currentKg": 40,
+          "timed": false,
+          "ceiling": 12,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-lat-pulldown",
+          "name": "Lat Pulldown",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": null,
+          "currentKg": 30,
+          "timed": false,
+          "ceiling": 12,
+          "state": "one-more"
+        },
+        {
+          "exerciseId": "ex-pec-deck",
+          "name": "Pec Deck",
+          "dayKey": "cb_a",
+          "dayLabel": "Upper A",
+          "dayColor": "#E0703C",
+          "suggestKg": null,
+          "currentKg": null,
+          "timed": false,
+          "ceiling": 15,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-chest-press-machine-",
+          "name": "Chest Press (Machine)",
+          "dayKey": "cb_b",
+          "dayLabel": "Upper B",
+          "dayColor": "#B4522A",
+          "suggestKg": 75,
+          "currentKg": 72.5,
+          "timed": false,
+          "ceiling": 12,
+          "state": "ready"
+        },
+        {
+          "exerciseId": "ex-side-plank",
+          "name": "Side Plank",
+          "dayKey": "legs_b",
+          "dayLabel": "Legs & Core B",
+          "dayColor": "#2E5C8A",
+          "suggestKg": null,
+          "currentKg": null,
+          "timed": true,
+          "ceiling": 55,
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "name": "no history · bulk",
+      "input": {
+        "phase": "bulk",
+        "targets": [
+          {
+            "id": "ex-incline-db-press",
+            "name": "Incline DB Press",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-lat-pulldown",
+            "name": "Lat Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-seated-cable-row-v-grip-",
+            "name": "Seated Cable Row (V-Grip)",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-pec-deck",
+            "name": "Pec Deck",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-straight-arm-pulldown",
+            "name": "Straight-Arm Pulldown",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-face-pull",
+            "name": "Face Pull",
+            "dayKey": "cb_a",
+            "dayLabel": "Upper A",
+            "color": "#E0703C"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-hack-squat",
+            "name": "Hack Squat",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-leg-extension",
+            "name": "Leg Extension",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-crunch-machine",
+            "name": "Crunch Machine",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-reverse-crunch",
+            "name": "Reverse Crunch",
+            "dayKey": "legs_a",
+            "dayLabel": "Legs & Core A",
+            "color": "#3D7AB8"
+          },
+          {
+            "id": "ex-db-shoulder-press",
+            "name": "DB Shoulder Press",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-incline-db-curl",
+            "name": "Seated Incline DB Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-cable-overhead-extension",
+            "name": "Cable Overhead Extension",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-db-hammer-curl",
+            "name": "DB Hammer Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-rope-triceps-pushdown",
+            "name": "Rope Triceps Pushdown",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-reverse-ez-bar-curl",
+            "name": "Reverse EZ-Bar Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-seated-db-wrist-curl",
+            "name": "Seated DB Wrist Curl",
+            "dayKey": "arms",
+            "dayLabel": "Delts & Arms",
+            "color": "#8A6FA8"
+          },
+          {
+            "id": "ex-chest-press-machine-",
+            "name": "Chest Press (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-neutral-grip-lat-pulldown",
+            "name": "Neutral-Grip Lat Pulldown",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-cable-crossover",
+            "name": "Single Arm Cable Crossover",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-seated-cable-row-wide-grip-",
+            "name": "Seated Cable Row (Wide Grip)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-lateral-raise-cable-",
+            "name": "Single Arm Lateral Raise (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-preacher-curl-machine-",
+            "name": "Preacher Curl (Machine)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-single-arm-triceps-pushdown-cable-",
+            "name": "Single Arm Triceps Pushdown (Cable)",
+            "dayKey": "cb_b",
+            "dayLabel": "Upper B",
+            "color": "#B4522A"
+          },
+          {
+            "id": "ex-romanian-deadlift-dumbbell-",
+            "name": "Romanian Deadlift (Dumbbell)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-thrust-machine-",
+            "name": "Hip Thrust (Machine)",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-leg-press",
+            "name": "Leg Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hip-adduction",
+            "name": "Hip Adduction",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-seated-leg-curl",
+            "name": "Seated Leg Curl",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-calf-press",
+            "name": "Calf Press",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-hanging-knee-raise",
+            "name": "Hanging Knee Raise",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          },
+          {
+            "id": "ex-side-plank",
+            "name": "Side Plank",
+            "dayKey": "legs_b",
+            "dayLabel": "Legs & Core B",
+            "color": "#2E5C8A"
+          }
+        ],
+        "rows": []
+      },
+      "expected": []
+    }
+  ]
+}

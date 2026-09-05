@@ -117,6 +117,39 @@ export function latestDelta(
   }
 }
 
+/** A slot on a fixed axis: dated, and empty when nothing landed. */
+export interface PaddedPoint { date: string; value: number | null }
+
+/**
+ * `dailySeries` laid back onto the calendar: exactly `limit` buckets ending on
+ * `endingOn`, oldest first, `value` null where no row landed. The twin of
+ * `WidgetDerive.paddedWindow` (Phase 2 §2.2 — the strip that drew four bars
+ * filling a week's width).
+ *
+ * The compact series stays right and stays not enough: omission drops the
+ * day's POSITION too, and in a fixed window that is a second lie. A null
+ * bucket is a slot the renderer can draw as an empty track. A reading on
+ * either side of the window is DROPPED, never folded onto the nearest edge;
+ * duplicate dates resolve last-wins. Either exactly `limit` buckets or none:
+ * an `endingOn` that is not an ISO day has no window.
+ */
+export function paddedWindow(
+  series: ReadonlyArray<TrendPoint>,
+  endingOn: string,
+  limit: number,
+): PaddedPoint[] {
+  if (!(limit > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(endingOn)) return []
+  const [, m, d] = endingOn.split('-').map(Number)
+  if (m < 1 || m > 12 || d < 1 || d > 31) return []
+  const byDay = new Map(series.map((p) => [p.d, p.v] as const))
+  const out: PaddedPoint[] = []
+  for (let back = limit - 1; back >= 0; back--) {
+    const date = shiftISO(endingOn, -back)
+    out.push({ date, value: byDay.get(date) ?? null })
+  }
+  return out
+}
+
 // ── The training calendar ────────────────────────────────────────────────────
 
 /** A session, as the calendar needs it. */

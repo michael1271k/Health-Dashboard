@@ -3,9 +3,6 @@
 import { useMemo, useState } from 'react'
 import { Trophy, Flame, ArrowUp, Plus } from 'lucide-react'
 import type { DetailExercise } from '@/lib/hooks/useSessionDetail'
-import { prAxisLabel } from '@/lib/training/prEngine'
-import { isTimedExercise } from '@/lib/exercises/timed'
-import { formatSet } from '@/lib/utils/setFormat'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
 import { sessionVerdict } from '@/lib/training/sessionVerdict'
@@ -14,40 +11,8 @@ import { GOLD, SAPPHIRE, EMERALD } from '@/lib/theme/palette'
 /** How many chips show before the row folds the rest behind a counter. */
 const VISIBLE = 4
 
-/** The highest est-1RM of the session — a ranking, not a record. */
-export function strongestOf(exercises: readonly DetailExercise[]): DetailExercise | null {
-  let best: DetailExercise | null = null
-  for (const e of exercises) {
-    const v = e.bestEst1rm ?? 0
-    if (v > 0 && (!best || v > (best.bestEst1rm ?? 0))) best = e
-  }
-  return best
-}
-
-interface Highlight { name: string; axes: string[]; detail: string }
-
-/** Every record in the session, one line each, resolved from the set that won it. */
-export function highlightsOf(exercises: readonly DetailExercise[], toDisplay: (kg: number) => number | null, unit: string): Highlight[] {
-  const out: Highlight[] = []
-  for (const ex of exercises) {
-    const timed = isTimedExercise(ex.name)
-    const won = ex.sets.filter((s) => s.isPr)
-    if (!won.length) continue
-    // Collapse to ONE line per exercise: the set that carries the most axes,
-    // then the heaviest. Two trophy rows for one movement reads as two records.
-    // `prAxes` is read defensively throughout: a localStorage-persisted session
-    // detail written before the field existed rehydrates without it, and a bare
-    // `.length` here took the whole report down with an error boundary.
-    const lead = [...won].sort((a, b) => (b.prAxes?.length ?? 0) - (a.prAxes?.length ?? 0) || b.weightKg - a.weightKg)[0]
-    const axes = (lead.prAxes?.length ? lead.prAxes : ex.prAxes ?? []).map((a) => prAxisLabel(a, timed))
-    out.push({
-      name: ex.name,
-      axes: [...new Set(axes)],
-      detail: formatSet(lead.weightKg, lead.reps, { timed, unit, toDisplay }),
-    })
-  }
-  return out
-}
+import { strongestOf, highlightsOf } from '@/lib/sessions/detail'
+export { strongestOf, highlightsOf }
 
 /**
  * Everything the session is notable FOR, in one row of chips: records, the

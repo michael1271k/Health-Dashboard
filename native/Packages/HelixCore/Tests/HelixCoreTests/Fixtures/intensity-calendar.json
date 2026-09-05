@@ -1,0 +1,1933 @@
+{
+  "module": "charts/intensityCalendar",
+  "fn": "buildIntensityCalendar",
+  "note": "`volume` is the Map as an ordered array of [date, kg]. Null when the map is empty. Cells after today are `elapsed: false`. avgLoad divides by ELAPSED days in the rendered window. Streak = longest run of consecutive active (v > 0) days inside the window. Hardest ties keep the earlier date.",
+  "cases": [
+    {
+      "name": "empty is null",
+      "input": {
+        "volume": [],
+        "days": 28,
+        "todayISO": "2026-08-05"
+      },
+      "expected": null
+    },
+    {
+      "name": "mid-week — future days are not elapsed",
+      "input": {
+        "volume": [
+          [
+            "2026-08-02",
+            8000
+          ],
+          [
+            "2026-08-03",
+            12000
+          ],
+          [
+            "2026-08-04",
+            6000
+          ]
+        ],
+        "days": 28,
+        "todayISO": "2026-08-05"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-12",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-13",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-14",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-15",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-16",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-17",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-18",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0.6666666666666666,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0.5,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": false
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 3,
+          "hardest": {
+            "date": "2026-08-03",
+            "volume": 12000
+          },
+          "avgLoad": 1040,
+          "streak": 3
+        }
+      }
+    },
+    {
+      "name": "a four-day streak",
+      "input": {
+        "volume": [
+          [
+            "2026-08-02",
+            5000
+          ],
+          [
+            "2026-08-03",
+            5000
+          ],
+          [
+            "2026-08-04",
+            5000
+          ],
+          [
+            "2026-08-05",
+            5000
+          ],
+          [
+            "2026-08-07",
+            3000
+          ]
+        ],
+        "days": 14,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0.6,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 5,
+          "hardest": {
+            "date": "2026-08-02",
+            "volume": 5000
+          },
+          "avgLoad": 1642.857142857143,
+          "streak": 4
+        }
+      }
+    },
+    {
+      "name": "streak of one for a single day",
+      "input": {
+        "volume": [
+          [
+            "2026-08-04",
+            9000
+          ]
+        ],
+        "days": 7,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 1,
+          "hardest": {
+            "date": "2026-08-04",
+            "volume": 9000
+          },
+          "avgLoad": 1285.7142857142858,
+          "streak": 1
+        }
+      }
+    },
+    {
+      "name": "rows outside the window are ignored",
+      "input": {
+        "volume": [
+          [
+            "2026-01-01",
+            99999
+          ],
+          [
+            "2026-08-04",
+            9000
+          ],
+          [
+            "2026-08-20",
+            500
+          ]
+        ],
+        "days": 14,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0.09000090000900009,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 1,
+          "hardest": {
+            "date": "2026-08-04",
+            "volume": 9000
+          },
+          "avgLoad": 642.8571428571429,
+          "streak": 1
+        }
+      }
+    },
+    {
+      "name": "caps at 16 weeks",
+      "input": {
+        "volume": [
+          [
+            "2026-08-04",
+            9000
+          ],
+          [
+            "2026-01-06",
+            4000
+          ]
+        ],
+        "days": 365,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-04-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-04-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-04-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-01",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-02",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-05-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-04",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-08",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-09",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-05-10",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-11",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-12",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-13",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-14",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-15",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-16",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-05-17",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-18",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-23",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-05-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-25",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-05-30",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-05-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-01",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-04",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-06",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-06-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-08",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-09",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-10",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-11",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-12",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-13",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-06-14",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-15",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-16",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-17",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-18",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-20",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-06-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-25",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-27",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-06-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-06-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-01",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-04",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-08",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-09",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-10",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-11",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-12",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-13",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-14",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-15",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-16",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-17",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-18",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 1,
+          "hardest": {
+            "date": "2026-08-04",
+            "volume": 9000
+          },
+          "avgLoad": 80.35714285714286,
+          "streak": 1
+        }
+      }
+    },
+    {
+      "name": "at least one week for a two-day range",
+      "input": {
+        "volume": [
+          [
+            "2026-08-07",
+            9000
+          ]
+        ],
+        "days": 2,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 1,
+          "hardest": {
+            "date": "2026-08-07",
+            "volume": 9000
+          },
+          "avgLoad": 1285.7142857142858,
+          "streak": 1
+        }
+      }
+    },
+    {
+      "name": "zero volumes do not count as active but set no max above 1",
+      "input": {
+        "volume": [
+          [
+            "2026-08-04",
+            0
+          ],
+          [
+            "2026-08-05",
+            0
+          ]
+        ],
+        "days": 14,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 0,
+          "hardest": null,
+          "avgLoad": 0,
+          "streak": 0
+        }
+      }
+    },
+    {
+      "name": "a tie for hardest keeps the earlier date",
+      "input": {
+        "volume": [
+          [
+            "2026-08-03",
+            7000
+          ],
+          [
+            "2026-08-05",
+            7000
+          ]
+        ],
+        "days": 14,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 2,
+          "hardest": {
+            "date": "2026-08-03",
+            "volume": 7000
+          },
+          "avgLoad": 1000,
+          "streak": 1
+        }
+      }
+    },
+    {
+      "name": "exactly 7 days is one week",
+      "input": {
+        "volume": [
+          [
+            "2026-07-26",
+            1
+          ],
+          [
+            "2026-07-27",
+            2
+          ],
+          [
+            "2026-07-28",
+            3
+          ],
+          [
+            "2026-07-29",
+            4
+          ],
+          [
+            "2026-07-30",
+            5
+          ],
+          [
+            "2026-07-31",
+            6
+          ],
+          [
+            "2026-08-01",
+            7
+          ]
+        ],
+        "days": 7,
+        "todayISO": "2026-08-01"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0.14285714285714285,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0.2857142857142857,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0.42857142857142855,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0.5714285714285714,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0.7142857142857143,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0.8571428571428571,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 1,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 7,
+          "hardest": {
+            "date": "2026-08-01",
+            "volume": 7
+          },
+          "avgLoad": 4,
+          "streak": 7
+        }
+      }
+    },
+    {
+      "name": "eight days is two weeks",
+      "input": {
+        "volume": [
+          [
+            "2026-07-26",
+            1
+          ],
+          [
+            "2026-07-27",
+            2
+          ],
+          [
+            "2026-07-28",
+            3
+          ],
+          [
+            "2026-07-29",
+            4
+          ],
+          [
+            "2026-07-30",
+            5
+          ],
+          [
+            "2026-07-31",
+            6
+          ],
+          [
+            "2026-08-01",
+            7
+          ]
+        ],
+        "days": 8,
+        "todayISO": "2026-08-01"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0.14285714285714285,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0.2857142857142857,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0.42857142857142855,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0.5714285714285714,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0.7142857142857143,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0.8571428571428571,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 1,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 7,
+          "hardest": {
+            "date": "2026-08-01",
+            "volume": 7
+          },
+          "avgLoad": 2,
+          "streak": 7
+        }
+      }
+    },
+    {
+      "name": "today on a Sunday",
+      "input": {
+        "volume": [
+          [
+            "2026-08-01",
+            5000
+          ],
+          [
+            "2026-08-02",
+            6000
+          ]
+        ],
+        "days": 21,
+        "todayISO": "2026-08-02"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 0.8333333333333334,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-04",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-05",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-07",
+              "t": 0,
+              "elapsed": false
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": false
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 2,
+          "hardest": {
+            "date": "2026-08-02",
+            "volume": 6000
+          },
+          "avgLoad": 733.3333333333334,
+          "streak": 2
+        }
+      }
+    },
+    {
+      "name": "a long streak across a week boundary",
+      "input": {
+        "volume": [
+          [
+            "2026-07-29",
+            4000
+          ],
+          [
+            "2026-07-30",
+            4000
+          ],
+          [
+            "2026-07-31",
+            4000
+          ],
+          [
+            "2026-08-01",
+            4000
+          ],
+          [
+            "2026-08-02",
+            4000
+          ],
+          [
+            "2026-08-03",
+            4000
+          ],
+          [
+            "2026-08-04",
+            4000
+          ],
+          [
+            "2026-08-05",
+            4000
+          ],
+          [
+            "2026-08-07",
+            4000
+          ]
+        ],
+        "days": 28,
+        "todayISO": "2026-08-08"
+      },
+      "expected": {
+        "weeks": [
+          [
+            {
+              "date": "2026-07-12",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-13",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-14",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-15",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-16",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-17",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-18",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-19",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-20",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-21",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-22",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-23",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-24",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-25",
+              "t": 0,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-07-26",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-27",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-28",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-29",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-30",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-07-31",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-01",
+              "t": 1,
+              "elapsed": true
+            }
+          ],
+          [
+            {
+              "date": "2026-08-02",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-03",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-04",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-05",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-06",
+              "t": 0,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-07",
+              "t": 1,
+              "elapsed": true
+            },
+            {
+              "date": "2026-08-08",
+              "t": 0,
+              "elapsed": true
+            }
+          ]
+        ],
+        "stats": {
+          "activeDays": 9,
+          "hardest": {
+            "date": "2026-07-29",
+            "volume": 4000
+          },
+          "avgLoad": 1285.7142857142858,
+          "streak": 8
+        }
+      }
+    }
+  ]
+}

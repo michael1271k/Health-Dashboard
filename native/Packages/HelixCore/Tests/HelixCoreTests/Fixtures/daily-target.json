@@ -1,0 +1,1193 @@
+{
+  "module": "nutrition/dailyTargets",
+  "fn": "hasDailyTarget / tracksCarbs / tracksFat / applyDailyTarget",
+  "note": "Field by field, > 0 (a stored zero is a broken row); an untracked macro resolves to NULL, not zero and not the rung; an absent flag means tracked; an all-null row is not an override but an untrack flag alone is.",
+  "cases": [
+    {
+      "name": "null over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": null
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "date only over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "kcal only over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2400,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "zero kcal is a broken row over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 0
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "negative kcal is a broken row over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": -5
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "all null over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": null,
+          "protein_g": null,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "every figure over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 180,
+          "carbs_g": 250,
+          "fat_g": 60,
+          "steps_goal": 8000
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2400,
+          "protein": 180,
+          "carbs": 250,
+          "fat": 60,
+          "steps": 8000
+        }
+      }
+    },
+    {
+      "name": "untrack fat only over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_fat": false
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": null,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "untrack carbs with a carbs figure — the flag wins over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": false,
+          "carbs_g": 300
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": null,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "tracked flags true, nothing else over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": true,
+          "track_fat": true
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "tracked flags null over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": null,
+          "track_fat": null
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "zero macros over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "carbs_g": 0,
+          "fat_g": 0
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "steps only over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "steps_goal": 12000
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 12000
+        }
+      }
+    },
+    {
+      "name": "half a gram of protein counts over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "protein_g": 0.5
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 0.5,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "a note alone is not an override over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "note": "x"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "a profile key alone is not an override over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "profile_key": "restaurant"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "home profile row over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2150,
+          "protein": 170,
+          "carbs": 244,
+          "fat": 55,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "restaurant profile row over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 170,
+          "carbs": null,
+          "fat": null,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "restaurant hand-edited over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2650,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 2650,
+          "protein": 170,
+          "carbs": null,
+          "fat": null,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "fat untracked, carbs stated over rung",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 206,
+          "fat": 55,
+          "steps": 10000
+        },
+        "target": {
+          "date": "2026-09-04",
+          "carbs_g": 180,
+          "track_fat": false
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 1999,
+          "protein": 170,
+          "carbs": 180,
+          "fat": null,
+          "steps": 10000
+        }
+      }
+    },
+    {
+      "name": "null over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": null
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "date only over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "kcal only over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2400,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "zero kcal is a broken row over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 0
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "negative kcal is a broken row over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": -5
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "all null over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": null,
+          "protein_g": null,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "every figure over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 180,
+          "carbs_g": 250,
+          "fat_g": 60,
+          "steps_goal": 8000
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2400,
+          "protein": 180,
+          "carbs": 250,
+          "fat": 60,
+          "steps": 8000
+        }
+      }
+    },
+    {
+      "name": "untrack fat only over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_fat": false
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "untrack carbs with a carbs figure — the flag wins over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": false,
+          "carbs_g": 300
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "tracked flags true, nothing else over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": true,
+          "track_fat": true
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "tracked flags null over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "track_carbs": null,
+          "track_fat": null
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "zero macros over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "carbs_g": 0,
+          "fat_g": 0
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "steps only over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "steps_goal": 12000
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": 12000
+        }
+      }
+    },
+    {
+      "name": "half a gram of protein counts over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "protein_g": 0.5
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": 0.5,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "a note alone is not an override over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "note": "x"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "a profile key alone is not an override over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "profile_key": "restaurant"
+        }
+      },
+      "expected": {
+        "has": false,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "home profile row over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": true,
+        "applied": {
+          "calorie": 2150,
+          "protein": 170,
+          "carbs": 244,
+          "fat": 55,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "restaurant profile row over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 2400,
+          "protein": 170,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "restaurant hand-edited over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2650,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": false,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 2650,
+          "protein": 170,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        }
+      }
+    },
+    {
+      "name": "fat untracked, carbs stated over bare",
+      "input": {
+        "goals": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "steps": null
+        },
+        "target": {
+          "date": "2026-09-04",
+          "carbs_g": 180,
+          "track_fat": false
+        }
+      },
+      "expected": {
+        "has": true,
+        "tracksCarbs": true,
+        "tracksFat": false,
+        "applied": {
+          "calorie": 1999,
+          "protein": null,
+          "carbs": 180,
+          "fat": null,
+          "steps": null
+        }
+      }
+    }
+  ]
+}

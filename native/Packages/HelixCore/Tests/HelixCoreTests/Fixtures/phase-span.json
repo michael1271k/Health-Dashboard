@@ -1,0 +1,1529 @@
+{
+  "module": "phases",
+  "fn": "phaseSpanFor",
+  "note": "The phase a DATE falls in and how far into it that date is. First match in table order; null between phases and for an unparseable date.",
+  "cases": [
+    {
+      "name": "2026-03-01",
+      "input": {
+        "date": "2026-03-01"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-03-04",
+      "input": {
+        "date": "2026-03-04"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-03-07",
+      "input": {
+        "date": "2026-03-07"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-03-10",
+      "input": {
+        "date": "2026-03-10"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 2
+      }
+    },
+    {
+      "name": "2026-03-13",
+      "input": {
+        "date": "2026-03-13"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 5
+      }
+    },
+    {
+      "name": "2026-03-16",
+      "input": {
+        "date": "2026-03-16"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 8
+      }
+    },
+    {
+      "name": "2026-03-19",
+      "input": {
+        "date": "2026-03-19"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 11
+      }
+    },
+    {
+      "name": "2026-03-22",
+      "input": {
+        "date": "2026-03-22"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 14
+      }
+    },
+    {
+      "name": "2026-03-25",
+      "input": {
+        "date": "2026-03-25"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 17
+      }
+    },
+    {
+      "name": "2026-03-28",
+      "input": {
+        "date": "2026-03-28"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 20
+      }
+    },
+    {
+      "name": "2026-03-31",
+      "input": {
+        "date": "2026-03-31"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 23
+      }
+    },
+    {
+      "name": "2026-04-03",
+      "input": {
+        "date": "2026-04-03"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 26
+      }
+    },
+    {
+      "name": "2026-04-06",
+      "input": {
+        "date": "2026-04-06"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 29
+      }
+    },
+    {
+      "name": "2026-04-09",
+      "input": {
+        "date": "2026-04-09"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 32
+      }
+    },
+    {
+      "name": "2026-04-12",
+      "input": {
+        "date": "2026-04-12"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 35
+      }
+    },
+    {
+      "name": "2026-04-15",
+      "input": {
+        "date": "2026-04-15"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 38
+      }
+    },
+    {
+      "name": "2026-04-18",
+      "input": {
+        "date": "2026-04-18"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 41
+      }
+    },
+    {
+      "name": "2026-04-21",
+      "input": {
+        "date": "2026-04-21"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 44
+      }
+    },
+    {
+      "name": "2026-04-24",
+      "input": {
+        "date": "2026-04-24"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 47
+      }
+    },
+    {
+      "name": "2026-04-27",
+      "input": {
+        "date": "2026-04-27"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 50
+      }
+    },
+    {
+      "name": "2026-04-30",
+      "input": {
+        "date": "2026-04-30"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 53
+      }
+    },
+    {
+      "name": "2026-05-03",
+      "input": {
+        "date": "2026-05-03"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 56
+      }
+    },
+    {
+      "name": "2026-05-06",
+      "input": {
+        "date": "2026-05-06"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 59
+      }
+    },
+    {
+      "name": "2026-05-09",
+      "input": {
+        "date": "2026-05-09"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 62
+      }
+    },
+    {
+      "name": "2026-05-12",
+      "input": {
+        "date": "2026-05-12"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 2
+      }
+    },
+    {
+      "name": "2026-05-15",
+      "input": {
+        "date": "2026-05-15"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 5
+      }
+    },
+    {
+      "name": "2026-05-18",
+      "input": {
+        "date": "2026-05-18"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 8
+      }
+    },
+    {
+      "name": "2026-05-21",
+      "input": {
+        "date": "2026-05-21"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 11
+      }
+    },
+    {
+      "name": "2026-05-24",
+      "input": {
+        "date": "2026-05-24"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 14
+      }
+    },
+    {
+      "name": "2026-05-27",
+      "input": {
+        "date": "2026-05-27"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 17
+      }
+    },
+    {
+      "name": "2026-05-30",
+      "input": {
+        "date": "2026-05-30"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 20
+      }
+    },
+    {
+      "name": "2026-06-02",
+      "input": {
+        "date": "2026-06-02"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 23
+      }
+    },
+    {
+      "name": "2026-06-05",
+      "input": {
+        "date": "2026-06-05"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 26
+      }
+    },
+    {
+      "name": "2026-06-08",
+      "input": {
+        "date": "2026-06-08"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 29
+      }
+    },
+    {
+      "name": "2026-06-11",
+      "input": {
+        "date": "2026-06-11"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 32
+      }
+    },
+    {
+      "name": "2026-06-14",
+      "input": {
+        "date": "2026-06-14"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 35
+      }
+    },
+    {
+      "name": "2026-06-17",
+      "input": {
+        "date": "2026-06-17"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 38
+      }
+    },
+    {
+      "name": "2026-06-20",
+      "input": {
+        "date": "2026-06-20"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 41
+      }
+    },
+    {
+      "name": "2026-06-23",
+      "input": {
+        "date": "2026-06-23"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Peak Week (Maintenance)",
+        "start": "2026-06-21",
+        "dayIndex": 2
+      }
+    },
+    {
+      "name": "2026-06-26",
+      "input": {
+        "date": "2026-06-26"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Peak Week (Maintenance)",
+        "start": "2026-06-21",
+        "dayIndex": 5
+      }
+    },
+    {
+      "name": "2026-06-29",
+      "input": {
+        "date": "2026-06-29"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 1
+      }
+    },
+    {
+      "name": "2026-07-02",
+      "input": {
+        "date": "2026-07-02"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 4
+      }
+    },
+    {
+      "name": "2026-07-05",
+      "input": {
+        "date": "2026-07-05"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 7
+      }
+    },
+    {
+      "name": "2026-07-08",
+      "input": {
+        "date": "2026-07-08"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 10
+      }
+    },
+    {
+      "name": "2026-07-11",
+      "input": {
+        "date": "2026-07-11"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 13
+      }
+    },
+    {
+      "name": "2026-07-14",
+      "input": {
+        "date": "2026-07-14"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Week 0 · Transition",
+        "start": "2026-07-12",
+        "dayIndex": 2
+      }
+    },
+    {
+      "name": "2026-07-17",
+      "input": {
+        "date": "2026-07-17"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Week 0 · Transition",
+        "start": "2026-07-12",
+        "dayIndex": 5
+      }
+    },
+    {
+      "name": "2026-07-20",
+      "input": {
+        "date": "2026-07-20"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 1
+      }
+    },
+    {
+      "name": "2026-07-23",
+      "input": {
+        "date": "2026-07-23"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 4
+      }
+    },
+    {
+      "name": "2026-07-26",
+      "input": {
+        "date": "2026-07-26"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 7
+      }
+    },
+    {
+      "name": "2026-07-29",
+      "input": {
+        "date": "2026-07-29"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 10
+      }
+    },
+    {
+      "name": "2026-08-01",
+      "input": {
+        "date": "2026-08-01"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 13
+      }
+    },
+    {
+      "name": "2026-08-04",
+      "input": {
+        "date": "2026-08-04"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 16
+      }
+    },
+    {
+      "name": "2026-08-07",
+      "input": {
+        "date": "2026-08-07"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 19
+      }
+    },
+    {
+      "name": "2026-08-10",
+      "input": {
+        "date": "2026-08-10"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 22
+      }
+    },
+    {
+      "name": "2026-08-13",
+      "input": {
+        "date": "2026-08-13"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 25
+      }
+    },
+    {
+      "name": "2026-08-16",
+      "input": {
+        "date": "2026-08-16"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 28
+      }
+    },
+    {
+      "name": "2026-08-19",
+      "input": {
+        "date": "2026-08-19"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 31
+      }
+    },
+    {
+      "name": "2026-08-22",
+      "input": {
+        "date": "2026-08-22"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 34
+      }
+    },
+    {
+      "name": "2026-08-25",
+      "input": {
+        "date": "2026-08-25"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 37
+      }
+    },
+    {
+      "name": "2026-08-28",
+      "input": {
+        "date": "2026-08-28"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 40
+      }
+    },
+    {
+      "name": "2026-08-31",
+      "input": {
+        "date": "2026-08-31"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 43
+      }
+    },
+    {
+      "name": "2026-09-03",
+      "input": {
+        "date": "2026-09-03"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 46
+      }
+    },
+    {
+      "name": "2026-09-06",
+      "input": {
+        "date": "2026-09-06"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 49
+      }
+    },
+    {
+      "name": "2026-09-09",
+      "input": {
+        "date": "2026-09-09"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 52
+      }
+    },
+    {
+      "name": "2026-09-12",
+      "input": {
+        "date": "2026-09-12"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 55
+      }
+    },
+    {
+      "name": "2026-09-15",
+      "input": {
+        "date": "2026-09-15"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 58
+      }
+    },
+    {
+      "name": "2026-09-18",
+      "input": {
+        "date": "2026-09-18"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 61
+      }
+    },
+    {
+      "name": "2026-09-21",
+      "input": {
+        "date": "2026-09-21"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 64
+      }
+    },
+    {
+      "name": "2026-09-24",
+      "input": {
+        "date": "2026-09-24"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 67
+      }
+    },
+    {
+      "name": "2026-09-27",
+      "input": {
+        "date": "2026-09-27"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 70
+      }
+    },
+    {
+      "name": "2026-09-30",
+      "input": {
+        "date": "2026-09-30"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 73
+      }
+    },
+    {
+      "name": "2026-10-03",
+      "input": {
+        "date": "2026-10-03"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 76
+      }
+    },
+    {
+      "name": "2026-10-06",
+      "input": {
+        "date": "2026-10-06"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 79
+      }
+    },
+    {
+      "name": "2026-10-09",
+      "input": {
+        "date": "2026-10-09"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 82
+      }
+    },
+    {
+      "name": "2026-10-12",
+      "input": {
+        "date": "2026-10-12"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 85
+      }
+    },
+    {
+      "name": "2026-10-15",
+      "input": {
+        "date": "2026-10-15"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 88
+      }
+    },
+    {
+      "name": "2026-10-18",
+      "input": {
+        "date": "2026-10-18"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-10-21",
+      "input": {
+        "date": "2026-10-21"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 3
+      }
+    },
+    {
+      "name": "2026-10-24",
+      "input": {
+        "date": "2026-10-24"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 6
+      }
+    },
+    {
+      "name": "2026-10-27",
+      "input": {
+        "date": "2026-10-27"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 9
+      }
+    },
+    {
+      "name": "2026-10-30",
+      "input": {
+        "date": "2026-10-30"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 12
+      }
+    },
+    {
+      "name": "2026-11-02",
+      "input": {
+        "date": "2026-11-02"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 1
+      }
+    },
+    {
+      "name": "2026-11-05",
+      "input": {
+        "date": "2026-11-05"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 4
+      }
+    },
+    {
+      "name": "2026-11-08",
+      "input": {
+        "date": "2026-11-08"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 7
+      }
+    },
+    {
+      "name": "2026-11-11",
+      "input": {
+        "date": "2026-11-11"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 10
+      }
+    },
+    {
+      "name": "2026-11-14",
+      "input": {
+        "date": "2026-11-14"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 13
+      }
+    },
+    {
+      "name": "2026-11-17",
+      "input": {
+        "date": "2026-11-17"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 16
+      }
+    },
+    {
+      "name": "2026-11-20",
+      "input": {
+        "date": "2026-11-20"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 19
+      }
+    },
+    {
+      "name": "2026-11-23",
+      "input": {
+        "date": "2026-11-23"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 22
+      }
+    },
+    {
+      "name": "2026-11-26",
+      "input": {
+        "date": "2026-11-26"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 25
+      }
+    },
+    {
+      "name": "2026-11-29",
+      "input": {
+        "date": "2026-11-29"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 28
+      }
+    },
+    {
+      "name": "2026-12-02",
+      "input": {
+        "date": "2026-12-02"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 31
+      }
+    },
+    {
+      "name": "2026-12-05",
+      "input": {
+        "date": "2026-12-05"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 34
+      }
+    },
+    {
+      "name": "2026-12-08",
+      "input": {
+        "date": "2026-12-08"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 37
+      }
+    },
+    {
+      "name": "2026-12-11",
+      "input": {
+        "date": "2026-12-11"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 40
+      }
+    },
+    {
+      "name": "2026-12-14",
+      "input": {
+        "date": "2026-12-14"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 43
+      }
+    },
+    {
+      "name": "2026-12-17",
+      "input": {
+        "date": "2026-12-17"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 46
+      }
+    },
+    {
+      "name": "2026-12-20",
+      "input": {
+        "date": "2026-12-20"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 49
+      }
+    },
+    {
+      "name": "2026-12-23",
+      "input": {
+        "date": "2026-12-23"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 52
+      }
+    },
+    {
+      "name": "2026-12-26",
+      "input": {
+        "date": "2026-12-26"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 55
+      }
+    },
+    {
+      "name": "2026-12-29",
+      "input": {
+        "date": "2026-12-29"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 58
+      }
+    },
+    {
+      "name": "2027-01-01",
+      "input": {
+        "date": "2027-01-01"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 61
+      }
+    },
+    {
+      "name": "2027-01-04",
+      "input": {
+        "date": "2027-01-04"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 64
+      }
+    },
+    {
+      "name": "2027-01-07",
+      "input": {
+        "date": "2027-01-07"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 67
+      }
+    },
+    {
+      "name": "2027-01-10",
+      "input": {
+        "date": "2027-01-10"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 70
+      }
+    },
+    {
+      "name": "2027-01-13",
+      "input": {
+        "date": "2027-01-13"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 73
+      }
+    },
+    {
+      "name": "2027-01-16",
+      "input": {
+        "date": "2027-01-16"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 76
+      }
+    },
+    {
+      "name": "2027-01-19",
+      "input": {
+        "date": "2027-01-19"
+      },
+      "expected": null
+    },
+    {
+      "name": "2027-01-22",
+      "input": {
+        "date": "2027-01-22"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-03-07",
+      "input": {
+        "date": "2026-03-07"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-03-08",
+      "input": {
+        "date": "2026-03-08"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-05-09",
+      "input": {
+        "date": "2026-05-09"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Bulk",
+        "start": "2026-03-08",
+        "dayIndex": 62
+      }
+    },
+    {
+      "name": "2026-05-10",
+      "input": {
+        "date": "2026-05-10"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-06-20",
+      "input": {
+        "date": "2026-06-20"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-05-10",
+        "dayIndex": 41
+      }
+    },
+    {
+      "name": "2026-06-21",
+      "input": {
+        "date": "2026-06-21"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Peak Week (Maintenance)",
+        "start": "2026-06-21",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-06-27",
+      "input": {
+        "date": "2026-06-27"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Peak Week (Maintenance)",
+        "start": "2026-06-21",
+        "dayIndex": 6
+      }
+    },
+    {
+      "name": "2026-06-28",
+      "input": {
+        "date": "2026-06-28"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-07-11",
+      "input": {
+        "date": "2026-07-11"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Thailand Vacation",
+        "start": "2026-06-28",
+        "dayIndex": 13
+      }
+    },
+    {
+      "name": "2026-07-12",
+      "input": {
+        "date": "2026-07-12"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Week 0 · Transition",
+        "start": "2026-07-12",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-07-18",
+      "input": {
+        "date": "2026-07-18"
+      },
+      "expected": {
+        "kind": "peak",
+        "name": "Week 0 · Transition",
+        "start": "2026-07-12",
+        "dayIndex": 6
+      }
+    },
+    {
+      "name": "2026-07-19",
+      "input": {
+        "date": "2026-07-19"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-10-17",
+      "input": {
+        "date": "2026-10-17"
+      },
+      "expected": {
+        "kind": "cut",
+        "name": "Cut",
+        "start": "2026-07-19",
+        "dayIndex": 90
+      }
+    },
+    {
+      "name": "2026-10-18",
+      "input": {
+        "date": "2026-10-18"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2026-10-31",
+      "input": {
+        "date": "2026-10-31"
+      },
+      "expected": {
+        "kind": "deload",
+        "name": "Transition",
+        "start": "2026-10-18",
+        "dayIndex": 13
+      }
+    },
+    {
+      "name": "2026-11-01",
+      "input": {
+        "date": "2026-11-01"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 0
+      }
+    },
+    {
+      "name": "2027-01-16",
+      "input": {
+        "date": "2027-01-16"
+      },
+      "expected": {
+        "kind": "bulk",
+        "name": "Lean Bulk",
+        "start": "2026-11-01",
+        "dayIndex": 76
+      }
+    },
+    {
+      "name": "2027-01-17",
+      "input": {
+        "date": "2027-01-17"
+      },
+      "expected": null
+    },
+    {
+      "name": "2025-12-31",
+      "input": {
+        "date": "2025-12-31"
+      },
+      "expected": null
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "date": "garbage"
+      },
+      "expected": null
+    },
+    {
+      "name": "empty",
+      "input": {
+        "date": ""
+      },
+      "expected": null
+    }
+  ]
+}

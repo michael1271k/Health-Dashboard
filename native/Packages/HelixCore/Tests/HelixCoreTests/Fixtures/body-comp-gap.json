@@ -1,0 +1,208 @@
+{
+  "module": "body/compGap",
+  "fn": "bodyCompState / missingBodyCompFields / bodyCompGapLabel / bodyCompGapShort",
+  "note": "A weigh-in with an empty composition is a STATE, not an absence. Present means a finite number > 0. The label names the owed fields in entry order, \"lean soft tissue\" never \"muscle\".",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "row": null
+      },
+      "expected": {
+        "state": "none",
+        "missing": [],
+        "label": null,
+        "short": null
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "row": {}
+      },
+      "expected": {
+        "state": "none",
+        "missing": [],
+        "label": null,
+        "short": null
+      }
+    },
+    {
+      "name": "weight only",
+      "input": {
+        "row": {
+          "weight_kg": 64.2
+        }
+      },
+      "expected": {
+        "state": "weight-only",
+        "missing": [
+          "body_fat_pct",
+          "muscle_mass_kg",
+          "skeletal_muscle_mass_kg"
+        ],
+        "label": "Weight synced — add body fat, lean soft tissue and skeletal muscle",
+        "short": null
+      }
+    },
+    {
+      "name": "weight with nulls",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "body_fat_pct": null,
+          "muscle_mass_kg": null,
+          "skeletal_muscle_mass_kg": null
+        }
+      },
+      "expected": {
+        "state": "weight-only",
+        "missing": [
+          "body_fat_pct",
+          "muscle_mass_kg",
+          "skeletal_muscle_mass_kg"
+        ],
+        "label": "Weight synced — add body fat, lean soft tissue and skeletal muscle",
+        "short": null
+      }
+    },
+    {
+      "name": "zero weight is no weight",
+      "input": {
+        "row": {
+          "weight_kg": 0,
+          "body_fat_pct": 17
+        }
+      },
+      "expected": {
+        "state": "none",
+        "missing": [],
+        "label": null,
+        "short": null
+      }
+    },
+    {
+      "name": "body fat only",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "body_fat_pct": 16.8
+        }
+      },
+      "expected": {
+        "state": "partial",
+        "missing": [
+          "muscle_mass_kg",
+          "skeletal_muscle_mass_kg"
+        ],
+        "label": null,
+        "short": "add lean soft tissue and skeletal muscle"
+      }
+    },
+    {
+      "name": "lean soft tissue only",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "muscle_mass_kg": 50.3
+        }
+      },
+      "expected": {
+        "state": "partial",
+        "missing": [
+          "body_fat_pct",
+          "skeletal_muscle_mass_kg"
+        ],
+        "label": null,
+        "short": "add body fat and skeletal muscle"
+      }
+    },
+    {
+      "name": "skeletal only",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "skeletal_muscle_mass_kg": 26.8
+        }
+      },
+      "expected": {
+        "state": "partial",
+        "missing": [
+          "body_fat_pct",
+          "muscle_mass_kg"
+        ],
+        "label": null,
+        "short": "add body fat and lean soft tissue"
+      }
+    },
+    {
+      "name": "two of three",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "body_fat_pct": 16.8,
+          "muscle_mass_kg": 50.3
+        }
+      },
+      "expected": {
+        "state": "partial",
+        "missing": [
+          "skeletal_muscle_mass_kg"
+        ],
+        "label": null,
+        "short": "add skeletal muscle"
+      }
+    },
+    {
+      "name": "complete",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "body_fat_pct": 16.8,
+          "muscle_mass_kg": 50.3,
+          "skeletal_muscle_mass_kg": 26.8
+        }
+      },
+      "expected": {
+        "state": "complete",
+        "missing": [],
+        "label": null,
+        "short": null
+      }
+    },
+    {
+      "name": "a zero body fat is not present",
+      "input": {
+        "row": {
+          "weight_kg": 64.2,
+          "body_fat_pct": 0,
+          "muscle_mass_kg": 50.3,
+          "skeletal_muscle_mass_kg": 26.8
+        }
+      },
+      "expected": {
+        "state": "partial",
+        "missing": [
+          "body_fat_pct"
+        ],
+        "label": null,
+        "short": "add body fat"
+      }
+    },
+    {
+      "name": "no weight but composition",
+      "input": {
+        "row": {
+          "body_fat_pct": 16.8,
+          "muscle_mass_kg": 50.3
+        }
+      },
+      "expected": {
+        "state": "none",
+        "missing": [],
+        "label": null,
+        "short": null
+      }
+    }
+  ]
+}

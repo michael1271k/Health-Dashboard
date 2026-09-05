@@ -1,0 +1,513 @@
+{
+  "module": "sessions/draft",
+  "fn": "isPairCompactable + pairAsymmetry",
+  "note": "Compactable: both present, both committed, same setType (absent = normal), same weight AND reps. Asymmetry: work = weight × reps when loaded else reps; pct = round((1 − min/max) × 100), null under 3 or with no work.",
+  "cases": [
+    {
+      "name": "same load, different effort",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 9
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": true,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "identical",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": true,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "different load",
+      "input": {
+        "l": {
+          "weightKg": 30,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 8,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "different reps",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 9,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 10,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "left unticked",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8,
+          "done": false
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "right unticked",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8,
+          "done": false
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "warm-up left",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8,
+          "setType": "warmup"
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "both failure",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8,
+          "setType": "failure"
+        },
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8,
+          "setType": "failure"
+        }
+      },
+      "expected": {
+        "compactable": true,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "no right",
+      "input": {
+        "l": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": null
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "no left",
+      "input": {
+        "l": null,
+        "r": {
+          "weightKg": 32.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "30×8 vs 30×10",
+      "input": {
+        "l": {
+          "weightKg": 30,
+          "reps": 8,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 30,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 20,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "30×10 vs 27.5×10",
+      "input": {
+        "l": {
+          "weightKg": 30,
+          "reps": 10,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 27.5,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 8,
+          "weak": "R"
+        }
+      }
+    },
+    {
+      "name": "trivial gap 49 vs 50",
+      "input": {
+        "l": {
+          "weightKg": 30,
+          "reps": 49,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 30,
+          "reps": 50,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "timed hold 40 s vs 65 s",
+      "input": {
+        "l": {
+          "weightKg": 0,
+          "reps": 40,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 0,
+          "reps": 65,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 38,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "bodyweight 12 vs 10",
+      "input": {
+        "l": {
+          "weightKg": 0,
+          "reps": 12,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 0,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 17,
+          "weak": "R"
+        }
+      }
+    },
+    {
+      "name": "unloaded match",
+      "input": {
+        "l": {
+          "weightKg": 0,
+          "reps": 60,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 0,
+          "reps": 60,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": true,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "loaded 5×40 vs 5×65",
+      "input": {
+        "l": {
+          "weightKg": 5,
+          "reps": 40,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 5,
+          "reps": 65,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 38,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "no work either side",
+      "input": {
+        "l": {
+          "weightKg": 0,
+          "reps": 0,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 0,
+          "reps": 0,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": true,
+        "asymmetry": null
+      }
+    },
+    {
+      "name": "one side zero",
+      "input": {
+        "l": {
+          "weightKg": 0,
+          "reps": 0,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 0,
+          "reps": 10,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 100,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "3% exactly",
+      "input": {
+        "l": {
+          "weightKg": 100,
+          "reps": 97,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 100,
+          "reps": 100,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 3,
+          "weak": "L"
+        }
+      }
+    },
+    {
+      "name": "2.5% rounds to 3",
+      "input": {
+        "l": {
+          "weightKg": 100,
+          "reps": 39,
+          "side": "L",
+          "pairId": "p1",
+          "rpe": 8
+        },
+        "r": {
+          "weightKg": 100,
+          "reps": 40,
+          "side": "R",
+          "pairId": "p1",
+          "rpe": 8
+        }
+      },
+      "expected": {
+        "compactable": false,
+        "asymmetry": {
+          "pct": 3,
+          "weak": "L"
+        }
+      }
+    }
+  ]
+}

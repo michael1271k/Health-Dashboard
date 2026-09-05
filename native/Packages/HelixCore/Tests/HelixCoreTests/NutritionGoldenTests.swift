@@ -1,0 +1,276 @@
+import Foundation
+import Testing
+@testable import HelixCore
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phases, levers, maintenance, context, daily targets and profiles — replayed
+// from `npm run golden`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+private struct Empty: Decodable {}
+private struct DateIn: Decodable { let date: String }
+
+@Suite("Phases — the timeline")
+struct PhasesGoldenTests {
+    @Test("the table equals the TypeScript")
+    func tableMatches() throws {
+        let e = try #require(try GoldenFixture<Empty, [PhaseDef]>.load("phases-table").cases.first).expected
+        #expect(Phases.all == e)
+    }
+
+    struct SpanOut: Decodable { let kind: PhaseKind; let name: String; let start: String; let dayIndex: Int }
+
+    @Test("phaseSpanFor matches on every boundary")
+    func spanMatches() throws {
+        let fixture = try GoldenFixture<DateIn, SpanOut?>.load("phase-span")
+        #expect(fixture.cases.count > 100)
+        for c in fixture.cases {
+            let s = Phases.span(for: c.input.date)
+            #expect(s?.def.kind == c.expected?.kind, "kind — \(c.name)")
+            #expect(s?.def.name == c.expected?.name, "name — \(c.name)")
+            #expect(s?.start == c.expected?.start, "start — \(c.name)")
+            #expect(s?.dayIndex == c.expected?.dayIndex, "dayIndex — \(c.name)")
+        }
+    }
+
+    struct WeekIn: Decodable { let weekStart: String }
+
+    @Test("getWeekPhase matches, label for label")
+    func weekPhaseMatches() throws {
+        for c in try GoldenFixture<WeekIn, WeekPhase?>.load("week-phase").cases {
+            #expect(Phases.weekPhase(weekStart: c.input.weekStart) == c.expected, "getWeekPhase — \(c.name)")
+        }
+    }
+
+    struct KindsIn: Decodable { let kinds: [PhaseKind] }
+
+    @Test("enumerateWeeks matches, newest first")
+    func enumerateMatches() throws {
+        for c in try GoldenFixture<KindsIn, [ProgramWeek]>.load("enumerate-weeks").cases {
+            #expect(Phases.enumerateWeeks(c.input.kinds) == c.expected, "enumerateWeeks — \(c.name)")
+        }
+    }
+
+    @Test("ISO day arithmetic round-trips and agrees with the civil calendar")
+    func isoDates() {
+        #expect(ISODate.dayNumber("1970-01-01") == 0)
+        #expect(ISODate.dayNumber("2026-09-03") == 20699)
+        #expect(ISODate.iso(dayNumber: 20699) == "2026-09-03")
+        #expect(ISODate.addDays("2026-02-28", 1) == "2026-03-01")
+        #expect(ISODate.addDays("2028-02-28", 1) == "2028-02-29")
+        #expect(ISODate.addDays("2026-12-31", 1) == "2027-01-01")
+        #expect(ISODate.dayNumber("garbage") == nil)
+        #expect(ISODate.dayNumber("2026-13-01") == nil)
+        #expect(ISODate.dayNumber("") == nil)
+    }
+}
+
+@Suite("Nutrition levers — the rungs and the date axis")
+struct LeversGoldenTests {
+    struct Table: Decodable { let levers: [NutritionLever]; let deficitIds: [LeverId]; let defaultLever: LeverId; let schedule: [LeverPeriod] }
+
+    @Test("the ladder and the schedule equal the TypeScript")
+    func tableMatches() throws {
+        let e = try #require(try GoldenFixture<Empty, Table>.load("levers-table").cases.first).expected
+        #expect(Levers.all == e.levers)
+        #expect(Levers.deficit.map(\.id) == e.deficitIds)
+        #expect(Levers.defaultLever == e.defaultLever)
+        #expect(Levers.schedule == e.schedule)
+    }
+
+    struct IdIn: Decodable { let id: String?; let goals: LeverGoals }
+    struct IdOut: Decodable { let lever: NutritionLever?; let isLeverId: Bool; let applied: LeverGoals }
+
+    @Test("leverById, isLeverId and applyLever match")
+    func idRulesMatch() throws {
+        for c in try GoldenFixture<IdIn, IdOut>.load("lever-by-id").cases {
+            #expect(Levers.lever(byId: c.input.id) == c.expected.lever, "leverById — \(c.name)")
+            #expect(Levers.isLeverId(c.input.id) == c.expected.isLeverId, "isLeverId — \(c.name)")
+            #expect(Levers.applyLever(c.input.goals, c.input.id) == c.expected.applied, "applyLever — \(c.name)")
+        }
+    }
+
+    struct TripleIn: Decodable { let proteinG, carbsG, fatG: Double }
+
+    @Test("atwaterKcal matches")
+    func atwaterMatches() throws {
+        for c in try GoldenFixture<TripleIn, Double>.load("atwater").cases {
+            expectClose(Levers.atwaterKcal(proteinG: c.input.proteinG, carbsG: c.input.carbsG, fatG: c.input.fatG), c.expected, "atwaterKcal — \(c.name)")
+        }
+    }
+
+    struct DateCase: Decodable { let date: String; let stored: String?; let today: String; let releaseEndsOn: String? }
+    struct DateOut: Decodable {
+        let scheduled: LeverId?; let lever: LeverId?; let kind: LeverKind; let goals: LeverGoals
+        let maintenanceLever: Bool; let maintenanceDate: Bool
+    }
+
+    @Test("leverForDate and everything that hangs off it match across the grid")
+    func leverForDateMatches() throws {
+        let fixture = try GoldenFixture<DateCase, DateOut>.load("lever-for-date")
+        #expect(fixture.cases.count > 600)
+        let fb = LeverGoals(calorie: 2400, protein: 100, carbs: 300, fat: 80, steps: 6000)
+        for c in fixture.cases {
+            let i = c.input
+            #expect(Levers.scheduledLever(on: i.date) == c.expected.scheduled, "scheduledLeverOn — \(c.name)")
+            #expect(Levers.leverForDate(i.date, stored: i.stored, today: i.today, releaseEndsOn: i.releaseEndsOn) == c.expected.lever, "leverForDate — \(c.name)")
+            #expect(Levers.leverKind(on: i.date, stored: i.stored, today: i.today, releaseEndsOn: i.releaseEndsOn) == c.expected.kind, "leverKindOn — \(c.name)")
+            #expect(Levers.goalsForDate(i.date, stored: i.stored, today: i.today, fallback: fb, releaseEndsOn: i.releaseEndsOn) == c.expected.goals, "goalsForDate — \(c.name)")
+            #expect(Maintenance.leverOn(i.date, stored: i.stored, until: i.releaseEndsOn, today: i.today) == c.expected.maintenanceLever, "maintenanceLeverOn — \(c.name)")
+            #expect(Maintenance.isMaintenanceDate(i.date, stored: i.stored, until: i.releaseEndsOn, today: i.today) == c.expected.maintenanceDate, "isMaintenanceDate — \(c.name)")
+        }
+    }
+
+    struct PeriodsIn: Decodable {
+        let dates: [String]; let stored: String?; let today: String; let fallback: LeverGoals
+        let releaseEndsOn: String?; let dailyTargets: [DailyTarget]?
+    }
+
+    @Test("leverPeriods matches — runs glued on resolved goals")
+    func periodsMatch() throws {
+        for c in try GoldenFixture<PeriodsIn, [TargetPeriod]>.load("lever-periods").cases {
+            let i = c.input
+            let actual = Levers.leverPeriods(i.dates, stored: i.stored, today: i.today, fallback: i.fallback, releaseEndsOn: i.releaseEndsOn, dailyTargets: i.dailyTargets)
+            #expect(actual == c.expected, "leverPeriods — \(c.name)")
+        }
+    }
+}
+
+@Suite("Maintenance — lever first, phase as fallback")
+struct MaintenanceGoldenTests {
+    @Test("maintenanceSpanFor matches")
+    func spanMatches() throws {
+        for c in try GoldenFixture<DateIn, Maintenance.Span?>.load("maintenance-span").cases {
+            #expect(Maintenance.span(for: c.input.date) == c.expected, "maintenanceSpanFor — \(c.name)")
+        }
+    }
+
+    struct DatesIn: Decodable { let dates: [String] }
+
+    @Test("maintenanceBands matches — clamped, never merged across a cut")
+    func bandsMatch() throws {
+        for c in try GoldenFixture<DatesIn, [Maintenance.Span]>.load("maintenance-bands").cases {
+            #expect(Maintenance.bands(c.input.dates) == c.expected, "maintenanceBands — \(c.name)")
+        }
+    }
+}
+
+@Suite("Context — one vocabulary")
+struct ContextGoldenTests {
+    struct ModeIn: Decodable { let mode: ContextMode }
+    struct MetaOut: Decodable { let meta: ContextMeta; let isRange: Bool; let scoring: ScoringContext; let suspendsSteps: Bool }
+
+    @Test("the vocabulary and what each mode does match")
+    func metaMatches() throws {
+        let fixture = try GoldenFixture<ModeIn, MetaOut>.load("context-meta")
+        #expect(fixture.cases.count == ContextMode.allCases.count)
+        for c in fixture.cases {
+            let m = c.input.mode
+            #expect(Context.meta[m] == c.expected.meta, "CONTEXT_META — \(c.name)")
+            #expect(Context.isRangeMode(m) == c.expected.isRange, "isRangeMode — \(c.name)")
+            #expect(Context.scoringContext(for: m) == c.expected.scoring, "scoringContextFor — \(c.name)")
+            #expect(Context.suspendsStepGoal(m) == c.expected.suspendsSteps, "suspendsStepGoal — \(c.name)")
+        }
+    }
+
+    struct StoredIn: Decodable { let stored: String? }
+
+    @Test("both readers match — unknown label is an event, unknown setting is normal")
+    func readersMatch() throws {
+        for c in try GoldenFixture<StoredIn, ContextMode>.load("context-from-label").cases {
+            #expect(Context.fromDayLabel(c.input.stored) == c.expected, "contextFromDayLabel — \(c.name)")
+        }
+        for c in try GoldenFixture<StoredIn, ContextMode>.load("context-from-setting").cases {
+            #expect(Context.fromSetting(c.input.stored) == c.expected, "contextFromSetting — \(c.name)")
+        }
+    }
+
+    struct PairIn: Decodable { let a: String; let b: String }
+
+    @Test("daysBetween matches")
+    func daysMatch() throws {
+        for c in try GoldenFixture<PairIn, Int>.load("days-between").cases {
+            #expect(Context.daysBetween(c.input.a, c.input.b) == c.expected, "daysBetween — \(c.name)")
+        }
+    }
+
+    struct CoverIn: Decodable { let mode: ContextMode; let since: String?; let date: String; let today: String }
+
+    @Test("rangeCovers matches")
+    func coversMatch() throws {
+        for c in try GoldenFixture<CoverIn, Bool>.load("context-range-covers").cases {
+            #expect(Context.rangeCovers(c.input.mode, since: c.input.since, date: c.input.date, today: c.input.today) == c.expected, "rangeCovers — \(c.name)")
+        }
+    }
+
+    struct LineIn: Decodable { let mode: ContextMode; let since: String?; let today: String }
+
+    @Test("contextRangeLine matches, exact string")
+    func lineMatches() throws {
+        for c in try GoldenFixture<LineIn, String?>.load("context-range-line").cases {
+            #expect(Context.rangeLine(c.input.mode, since: c.input.since, today: c.input.today) == c.expected, "contextRangeLine — \(c.name)")
+        }
+    }
+
+    struct DaysIn: Decodable { let days: [StampedDay] }
+    struct RangesOut: Decodable { let ranges: [ContextRange]; let labels: [String] }
+
+    @Test("contextRangesIn and its labels match")
+    func rangesMatch() throws {
+        for c in try GoldenFixture<DaysIn, RangesOut>.load("context-ranges-in").cases {
+            let ranges = Context.rangesIn(c.input.days)
+            #expect(ranges == c.expected.ranges, "contextRangesIn — \(c.name)")
+            #expect(ranges.map(Context.rangeLabel) == c.expected.labels, "contextRangeLabel — \(c.name)")
+        }
+    }
+}
+
+@Suite("Daily targets and profiles")
+struct DailyTargetGoldenTests {
+    struct TargetIn: Decodable { let goals: LeverGoals; let target: DailyTarget? }
+    struct TargetOut: Decodable { let has: Bool; let tracksCarbs: Bool; let tracksFat: Bool; let applied: LeverGoals }
+
+    @Test("the daily-target layer matches — field by field, untracked to nil")
+    func targetsMatch() throws {
+        for c in try GoldenFixture<TargetIn, TargetOut>.load("daily-target").cases {
+            let t = c.input.target
+            #expect(DailyTargets.hasTarget(t) == c.expected.has, "hasDailyTarget — \(c.name)")
+            #expect(DailyTargets.tracksCarbs(t) == c.expected.tracksCarbs, "tracksCarbs — \(c.name)")
+            #expect(DailyTargets.tracksFat(t) == c.expected.tracksFat, "tracksFat — \(c.name)")
+            #expect(DailyTargets.apply(c.input.goals, t) == c.expected.applied, "applyDailyTarget — \(c.name)")
+        }
+    }
+
+    @Test("the shipped profiles equal the TypeScript")
+    func tableMatches() throws {
+        let e = try #require(try GoldenFixture<Empty, [TargetProfile]>.load("profiles-table").cases.first).expected
+        #expect(TargetProfiles.builtin == e)
+    }
+
+    struct KeyIn: Decodable { let profiles: [TargetProfile]; let key: String? }
+
+    @Test("profileByKey matches")
+    func byKeyMatches() throws {
+        for c in try GoldenFixture<KeyIn, TargetProfile?>.load("profile-by-key").cases {
+            #expect(TargetProfiles.byKey(c.input.profiles, c.input.key) == c.expected, "profileByKey — \(c.name)")
+        }
+    }
+
+    struct ToRowIn: Decodable { let profile: TargetProfile; let date: String }
+
+    @Test("profileToDailyTarget matches, every field stated")
+    func toRowMatches() throws {
+        for c in try GoldenFixture<ToRowIn, DailyTarget>.load("profile-to-daily-target").cases {
+            #expect(TargetProfiles.dailyTarget(c.input.profile, date: c.input.date) == c.expected, "profileToDailyTarget — \(c.name)")
+        }
+    }
+
+    struct MatchIn: Decodable { let target: DailyTarget?; let profile: TargetProfile }
+
+    @Test("matchesProfile matches — figures and flags, never steps or the stamp")
+    func matchesMatch() throws {
+        for c in try GoldenFixture<MatchIn, Bool>.load("profile-matches").cases {
+            #expect(TargetProfiles.matches(c.input.target, c.input.profile) == c.expected, "matchesProfile — \(c.name)")
+        }
+    }
+}

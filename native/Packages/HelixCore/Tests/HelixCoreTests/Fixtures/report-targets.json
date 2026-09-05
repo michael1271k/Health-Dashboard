@@ -1,0 +1,736 @@
+{
+  "module": "reports/fmtV2 + reports/targetMatch",
+  "fn": "parseTargets / hasTargets / targetForExercise / formatTarget",
+  "note": "Every field is independently optional; nil is never zero. `matched` is targetForExercise for the given lookup name, `formatted` its display string. The matcher is exact after alias canonicalisation — it must never merge two catalogue rows that were split on purpose.",
+  "cases": [
+    {
+      "name": "inline ladder with arrows and rep windows",
+      "input": {
+        "name": "inline ladder with arrows and rep windows",
+        "lines": [
+          "Incline DB Press → 22.5 kg × 8-10",
+          "Seated Cable Row (Wide Grip) → 49.5 kg × 10-12",
+          "Rope Triceps Pushdown at 27 kg x12"
+        ],
+        "lookup": "incline db press"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Incline DB Press",
+              "loadKg": 22.5,
+              "repsLow": 8,
+              "repsHigh": 10
+            },
+            {
+              "name": "Seated Cable Row (Wide Grip)",
+              "loadKg": 49.5,
+              "repsLow": 10,
+              "repsHigh": 12
+            },
+            {
+              "name": "Rope Triceps Pushdown",
+              "loadKg": 27,
+              "repsLow": 12,
+              "repsHigh": 12
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Incline DB Press",
+          "loadKg": 22.5,
+          "repsLow": 8,
+          "repsHigh": 10
+        },
+        "formatted": "22.5 kg × 8–10"
+      }
+    },
+    {
+      "name": "a separator, not an arrow",
+      "input": {
+        "name": "a separator, not an arrow",
+        "lines": [
+          "Hack Squat — 95 kg × 6-8"
+        ],
+        "lookup": "hack squat"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Hack Squat",
+              "loadKg": 95,
+              "repsLow": 6,
+              "repsHigh": 8
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Hack Squat",
+          "loadKg": 95,
+          "repsLow": 6,
+          "repsHigh": 8
+        },
+        "formatted": "95 kg × 6–8"
+      }
+    },
+    {
+      "name": "a colon separator",
+      "input": {
+        "name": "a colon separator",
+        "lines": [
+          "Pec Deck: 45 kg"
+        ],
+        "lookup": "pec deck"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Pec Deck",
+              "loadKg": 45,
+              "repsLow": null,
+              "repsHigh": null
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Pec Deck",
+          "loadKg": 45,
+          "repsLow": null,
+          "repsHigh": null
+        },
+        "formatted": "45 kg"
+      }
+    },
+    {
+      "name": "the word \"to\"",
+      "input": {
+        "name": "the word \"to\"",
+        "lines": [
+          "Face Pull to 18 kg × 15"
+        ],
+        "lookup": "face pull"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Face Pull",
+              "loadKg": 18,
+              "repsLow": 15,
+              "repsHigh": 15
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Face Pull",
+          "loadKg": 18,
+          "repsLow": 15,
+          "repsHigh": 15
+        },
+        "formatted": "18 kg × 15"
+      }
+    },
+    {
+      "name": "prose containing a load is not a prescription",
+      "input": {
+        "name": "prose containing a load is not a prescription",
+        "lines": [
+          "Volume dropped to 24 kg per set on Tuesday and it showed in the last two sets."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Volume dropped",
+              "loadKg": 24,
+              "repsLow": null,
+              "repsHigh": null
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a zero load is not a prescription",
+      "input": {
+        "name": "a zero load is not a prescription",
+        "lines": [
+          "Bodyweight Dip → 0 kg × 10"
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Bodyweight Dip → 0 kg × 10"
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a pipe table with a load and a reps column",
+      "input": {
+        "name": "a pipe table with a load and a reps column",
+        "lines": [
+          "Exercise | Target kg | Reps",
+          "Incline DB Press | 22.5 | 8-10",
+          "Hack Squat | 95 | 6-8"
+        ],
+        "lookup": "Incline DB Press"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Incline DB Press",
+              "loadKg": 22.5,
+              "repsLow": null,
+              "repsHigh": null
+            },
+            {
+              "name": "Hack Squat",
+              "loadKg": 95,
+              "repsLow": null,
+              "repsHigh": null
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Incline DB Press",
+          "loadKg": 22.5,
+          "repsLow": null,
+          "repsHigh": null
+        },
+        "formatted": "22.5 kg"
+      }
+    },
+    {
+      "name": "a table whose separator row the author wrote",
+      "input": {
+        "name": "a table whose separator row the author wrote",
+        "lines": [
+          "Exercise | Load | Reps",
+          "--- | --- | ---",
+          "Pec Deck | 45 | 12-15"
+        ],
+        "lookup": "Pec Deck"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Pec Deck",
+              "loadKg": 45,
+              "repsLow": null,
+              "repsHigh": null
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Pec Deck",
+          "loadKg": 45,
+          "repsLow": null,
+          "repsHigh": null
+        },
+        "formatted": "45 kg"
+      }
+    },
+    {
+      "name": "a table with no load column is not a ladder",
+      "input": {
+        "name": "a table with no load column is not a ladder",
+        "lines": [
+          "Muscle | Sets | Δ",
+          "Chest | 11 | +1"
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": false,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a hydration range",
+      "input": {
+        "name": "a hydration range",
+        "lines": [
+          "Water: 3.0-3.5 L a day, front-loaded before training."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": {
+            "minL": 3,
+            "maxL": 3.5
+          },
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a single hydration figure",
+      "input": {
+        "name": "a single hydration figure",
+        "lines": [
+          "Hold hydration at 3.2 L."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": {
+            "minL": 3.2,
+            "maxL": 3.2
+          },
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "millilitres written as litres are out of bounds",
+      "input": {
+        "name": "millilitres written as litres are out of bounds",
+        "lines": [
+          "Water 3200 L"
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Water 3200 L"
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a step target in thousands",
+      "input": {
+        "name": "a step target in thousands",
+        "lines": [
+          "Steps: 12k minimum, 15k on rest days."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": 12000,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a plain step target",
+      "input": {
+        "name": "a plain step target",
+        "lines": [
+          "Steps 12,000 daily."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": 12000,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a step figure below the floor is not a target",
+      "input": {
+        "name": "a step figure below the floor is not a target",
+        "lines": [
+          "Steps dropped 400 on Thursday."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Steps dropped 400 on Thursday."
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a macro triple",
+      "input": {
+        "name": "a macro triple",
+        "lines": [
+          "Hold 1,885 kcal · 170 P / 182 C / 53 F."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": {
+            "kcal": 1885,
+            "proteinG": 170,
+            "carbsG": 182,
+            "fatG": 53
+          },
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "kcal alone",
+      "input": {
+        "name": "kcal alone",
+        "lines": [
+          "Target 1,885 kcal this week."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": {
+            "kcal": 1885,
+            "proteinG": null,
+            "carbsG": null,
+            "fatG": null
+          },
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "instructions become notes, capped at four",
+      "input": {
+        "name": "instructions become notes, capped at four",
+        "lines": [
+          "Keep the top set inside the rep window before adding load.",
+          "Push the hip thrust to the ceiling of its window this week.",
+          "Do not chase the lateral raise past 12 kg until the left side catches up.",
+          "Hold the calf press pause for a full second at the bottom.",
+          "This fifth sentence should not appear in the notes at all."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Keep the top set inside the rep window before adding load.",
+            "Push the hip thrust to the ceiling of its window this week.",
+            "Do not chase the lateral raise past 12 kg until the left side catches up.",
+            "Hold the calf press pause for a full second at the bottom."
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a shouted line is a heading, not an instruction",
+      "input": {
+        "name": "a shouted line is a heading, not an instruction",
+        "lines": [
+          "⚑ DB LADDER VALIDATOR",
+          "Keep the top set inside the rep window before adding load."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Keep the top set inside the rep window before adding load."
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "decoration and short lines are not instructions",
+      "input": {
+        "name": "decoration and short lines are not instructions",
+        "lines": [
+          "─────────────────",
+          "Too short.",
+          "**Push the hip thrust to the ceiling of its window this week.**"
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Push the hip thrust to the ceiling of its window this week."
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "a consumed line is not also a note",
+      "input": {
+        "name": "a consumed line is not also a note",
+        "lines": [
+          "Water: 3.0-3.5 L a day, front-loaded before training.",
+          "Keep the top set inside the rep window before adding load."
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": {
+            "minL": 3,
+            "maxL": 3.5
+          },
+          "steps": null,
+          "macros": null,
+          "notes": [
+            "Keep the top set inside the rep window before adding load."
+          ]
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "the matcher folds punctuation and case",
+      "input": {
+        "name": "the matcher folds punctuation and case",
+        "lines": [
+          "Incline DB Press → 22.5 kg × 8-10"
+        ],
+        "lookup": "incline db press."
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Incline DB Press",
+              "loadKg": 22.5,
+              "repsLow": 8,
+              "repsHigh": 10
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": {
+          "name": "Incline DB Press",
+          "loadKg": 22.5,
+          "repsLow": 8,
+          "repsHigh": 10
+        },
+        "formatted": "22.5 kg × 8–10"
+      }
+    },
+    {
+      "name": "the matcher does NOT merge the two row grips",
+      "input": {
+        "name": "the matcher does NOT merge the two row grips",
+        "lines": [
+          "Seated Cable Row (Wide Grip) → 49.5 kg × 10-12"
+        ],
+        "lookup": "Seated Cable Row (V-Grip)"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Seated Cable Row (Wide Grip)",
+              "loadKg": 49.5,
+              "repsLow": 10,
+              "repsHigh": 12
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "an unnamed exercise matches nothing",
+      "input": {
+        "name": "an unnamed exercise matches nothing",
+        "lines": [
+          "Pec Deck: 45 kg"
+        ],
+        "lookup": "Leg Press"
+      },
+      "expected": {
+        "targets": {
+          "exercises": [
+            {
+              "name": "Pec Deck",
+              "loadKg": 45,
+              "repsLow": null,
+              "repsHigh": null
+            }
+          ],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": true,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "nothing at all",
+      "input": {
+        "name": "nothing at all",
+        "lines": []
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": false,
+        "matched": null,
+        "formatted": null
+      }
+    },
+    {
+      "name": "blank lines only",
+      "input": {
+        "name": "blank lines only",
+        "lines": [
+          "",
+          "   ",
+          ""
+        ]
+      },
+      "expected": {
+        "targets": {
+          "exercises": [],
+          "water": null,
+          "steps": null,
+          "macros": null,
+          "notes": []
+        },
+        "has": false,
+        "matched": null,
+        "formatted": null
+      }
+    }
+  ]
+}

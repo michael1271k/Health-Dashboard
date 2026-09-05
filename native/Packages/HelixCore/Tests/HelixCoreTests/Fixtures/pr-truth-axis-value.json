@@ -1,0 +1,999 @@
+{
+  "module": "training/prTruth",
+  "fn": "truthAxisValue",
+  "note": "volume resolves the stored set to kg × reps; reps is seconds ?? reps; an unknown name (no record) reads null on every axis.",
+  "cases": [
+    {
+      "name": "Incline DB Press · weight",
+      "input": {
+        "name": "Incline DB Press",
+        "axis": "weight"
+      },
+      "expected": 40
+    },
+    {
+      "name": "Incline DB Press · reps",
+      "input": {
+        "name": "Incline DB Press",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Incline DB Press · volume",
+      "input": {
+        "name": "Incline DB Press",
+        "axis": "volume"
+      },
+      "expected": 432
+    },
+    {
+      "name": "Incline DB Press · e1rm",
+      "input": {
+        "name": "Incline DB Press",
+        "axis": "e1rm"
+      },
+      "expected": 53.33
+    },
+    {
+      "name": "Chest Press (Machine) · weight",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "axis": "weight"
+      },
+      "expected": 40
+    },
+    {
+      "name": "Chest Press (Machine) · reps",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Chest Press (Machine) · volume",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "axis": "volume"
+      },
+      "expected": 450
+    },
+    {
+      "name": "Chest Press (Machine) · e1rm",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "axis": "e1rm"
+      },
+      "expected": 53.33
+    },
+    {
+      "name": "Pec Deck · weight",
+      "input": {
+        "name": "Pec Deck",
+        "axis": "weight"
+      },
+      "expected": 55
+    },
+    {
+      "name": "Pec Deck · reps",
+      "input": {
+        "name": "Pec Deck",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Pec Deck · volume",
+      "input": {
+        "name": "Pec Deck",
+        "axis": "volume"
+      },
+      "expected": 750
+    },
+    {
+      "name": "Pec Deck · e1rm",
+      "input": {
+        "name": "Pec Deck",
+        "axis": "e1rm"
+      },
+      "expected": 75.34
+    },
+    {
+      "name": "Single Arm Cable Crossover · weight",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "axis": "weight"
+      },
+      "expected": 8.75
+    },
+    {
+      "name": "Single Arm Cable Crossover · reps",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Single Arm Cable Crossover · volume",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "axis": "volume"
+      },
+      "expected": 112.5
+    },
+    {
+      "name": "Single Arm Cable Crossover · e1rm",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "axis": "e1rm"
+      },
+      "expected": 12.32
+    },
+    {
+      "name": "DB Shoulder Press · weight",
+      "input": {
+        "name": "DB Shoulder Press",
+        "axis": "weight"
+      },
+      "expected": 31
+    },
+    {
+      "name": "DB Shoulder Press · reps",
+      "input": {
+        "name": "DB Shoulder Press",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "DB Shoulder Press · volume",
+      "input": {
+        "name": "DB Shoulder Press",
+        "axis": "volume"
+      },
+      "expected": 360
+    },
+    {
+      "name": "DB Shoulder Press · e1rm",
+      "input": {
+        "name": "DB Shoulder Press",
+        "axis": "e1rm"
+      },
+      "expected": 42.25
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · weight",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "axis": "weight"
+      },
+      "expected": 5
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · reps",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · volume",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "axis": "volume"
+      },
+      "expected": 85
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · e1rm",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "axis": "e1rm"
+      },
+      "expected": 7.81
+    },
+    {
+      "name": "Cable Overhead Extension · weight",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "axis": "weight"
+      },
+      "expected": 12.5
+    },
+    {
+      "name": "Cable Overhead Extension · reps",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Cable Overhead Extension · volume",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "axis": "volume"
+      },
+      "expected": 168.75
+    },
+    {
+      "name": "Cable Overhead Extension · e1rm",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "axis": "e1rm"
+      },
+      "expected": 16.79
+    },
+    {
+      "name": "Rope Triceps Pushdown · weight",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "axis": "weight"
+      },
+      "expected": 15
+    },
+    {
+      "name": "Rope Triceps Pushdown · reps",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Rope Triceps Pushdown · volume",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "axis": "volume"
+      },
+      "expected": 225
+    },
+    {
+      "name": "Rope Triceps Pushdown · e1rm",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "axis": "e1rm"
+      },
+      "expected": 22.39
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · weight",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "axis": "weight"
+      },
+      "expected": 6.25
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · reps",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · volume",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "axis": "volume"
+      },
+      "expected": 93.75
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · e1rm",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "axis": "e1rm"
+      },
+      "expected": 9.33
+    },
+    {
+      "name": "Lat Pulldown · weight",
+      "input": {
+        "name": "Lat Pulldown",
+        "axis": "weight"
+      },
+      "expected": 49.5
+    },
+    {
+      "name": "Lat Pulldown · reps",
+      "input": {
+        "name": "Lat Pulldown",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Lat Pulldown · volume",
+      "input": {
+        "name": "Lat Pulldown",
+        "axis": "volume"
+      },
+      "expected": 585
+    },
+    {
+      "name": "Lat Pulldown · e1rm",
+      "input": {
+        "name": "Lat Pulldown",
+        "axis": "e1rm"
+      },
+      "expected": 67.81
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · weight",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "axis": "weight"
+      },
+      "expected": 47
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · reps",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · volume",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "axis": "volume"
+      },
+      "expected": 540
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · e1rm",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "axis": "e1rm"
+      },
+      "expected": 64.38
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · weight",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "axis": "weight"
+      },
+      "expected": 50
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · reps",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · volume",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "axis": "volume"
+      },
+      "expected": 595
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · e1rm",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "axis": "e1rm"
+      },
+      "expected": 62.5
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · weight",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "axis": "weight"
+      },
+      "expected": 42.5
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · reps",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · volume",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "axis": "volume"
+      },
+      "expected": 467.5
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · e1rm",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "axis": "e1rm"
+      },
+      "expected": 58.22
+    },
+    {
+      "name": "Straight-Arm Pulldown · weight",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "axis": "weight"
+      },
+      "expected": 17.5
+    },
+    {
+      "name": "Straight-Arm Pulldown · reps",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Straight-Arm Pulldown · volume",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "axis": "volume"
+      },
+      "expected": 243.75
+    },
+    {
+      "name": "Straight-Arm Pulldown · e1rm",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "axis": "e1rm"
+      },
+      "expected": 24.65
+    },
+    {
+      "name": "Face Pull · weight",
+      "input": {
+        "name": "Face Pull",
+        "axis": "weight"
+      },
+      "expected": 16.25
+    },
+    {
+      "name": "Face Pull · reps",
+      "input": {
+        "name": "Face Pull",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Face Pull · volume",
+      "input": {
+        "name": "Face Pull",
+        "axis": "volume"
+      },
+      "expected": 243.75
+    },
+    {
+      "name": "Face Pull · e1rm",
+      "input": {
+        "name": "Face Pull",
+        "axis": "e1rm"
+      },
+      "expected": 24.25
+    },
+    {
+      "name": "Seated Incline DB Curl · weight",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "axis": "weight"
+      },
+      "expected": 16
+    },
+    {
+      "name": "Seated Incline DB Curl · reps",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Incline DB Curl · volume",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "axis": "volume"
+      },
+      "expected": 192
+    },
+    {
+      "name": "Seated Incline DB Curl · e1rm",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "axis": "e1rm"
+      },
+      "expected": 22.54
+    },
+    {
+      "name": "DB Hammer Curl · weight",
+      "input": {
+        "name": "DB Hammer Curl",
+        "axis": "weight"
+      },
+      "expected": 20
+    },
+    {
+      "name": "DB Hammer Curl · reps",
+      "input": {
+        "name": "DB Hammer Curl",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "DB Hammer Curl · volume",
+      "input": {
+        "name": "DB Hammer Curl",
+        "axis": "volume"
+      },
+      "expected": 240
+    },
+    {
+      "name": "DB Hammer Curl · e1rm",
+      "input": {
+        "name": "DB Hammer Curl",
+        "axis": "e1rm"
+      },
+      "expected": 28.17
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · weight",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "axis": "weight"
+      },
+      "expected": 15
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · reps",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · volume",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "axis": "volume"
+      },
+      "expected": 195
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · e1rm",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "axis": "e1rm"
+      },
+      "expected": 21.43
+    },
+    {
+      "name": "Preacher Curl (Machine) · weight",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "axis": "weight"
+      },
+      "expected": 17.5
+    },
+    {
+      "name": "Preacher Curl (Machine) · reps",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Preacher Curl (Machine) · volume",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "axis": "volume"
+      },
+      "expected": 210
+    },
+    {
+      "name": "Preacher Curl (Machine) · e1rm",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "axis": "e1rm"
+      },
+      "expected": 24.65
+    },
+    {
+      "name": "Leg Press · weight",
+      "input": {
+        "name": "Leg Press",
+        "axis": "weight"
+      },
+      "expected": 80
+    },
+    {
+      "name": "Leg Press · reps",
+      "input": {
+        "name": "Leg Press",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Leg Press · volume",
+      "input": {
+        "name": "Leg Press",
+        "axis": "volume"
+      },
+      "expected": 980
+    },
+    {
+      "name": "Leg Press · e1rm",
+      "input": {
+        "name": "Leg Press",
+        "axis": "e1rm"
+      },
+      "expected": 109.59
+    },
+    {
+      "name": "Hack Squat · weight",
+      "input": {
+        "name": "Hack Squat",
+        "axis": "weight"
+      },
+      "expected": 60
+    },
+    {
+      "name": "Hack Squat · reps",
+      "input": {
+        "name": "Hack Squat",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hack Squat · volume",
+      "input": {
+        "name": "Hack Squat",
+        "axis": "volume"
+      },
+      "expected": 660
+    },
+    {
+      "name": "Hack Squat · e1rm",
+      "input": {
+        "name": "Hack Squat",
+        "axis": "e1rm"
+      },
+      "expected": 77.46
+    },
+    {
+      "name": "Leg Extension · weight",
+      "input": {
+        "name": "Leg Extension",
+        "axis": "weight"
+      },
+      "expected": 42.5
+    },
+    {
+      "name": "Leg Extension · reps",
+      "input": {
+        "name": "Leg Extension",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Leg Extension · volume",
+      "input": {
+        "name": "Leg Extension",
+        "axis": "volume"
+      },
+      "expected": 600
+    },
+    {
+      "name": "Leg Extension · e1rm",
+      "input": {
+        "name": "Leg Extension",
+        "axis": "e1rm"
+      },
+      "expected": 59.86
+    },
+    {
+      "name": "Seated Leg Curl · weight",
+      "input": {
+        "name": "Seated Leg Curl",
+        "axis": "weight"
+      },
+      "expected": 50
+    },
+    {
+      "name": "Seated Leg Curl · reps",
+      "input": {
+        "name": "Seated Leg Curl",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Seated Leg Curl · volume",
+      "input": {
+        "name": "Seated Leg Curl",
+        "axis": "volume"
+      },
+      "expected": 712.5
+    },
+    {
+      "name": "Seated Leg Curl · e1rm",
+      "input": {
+        "name": "Seated Leg Curl",
+        "axis": "e1rm"
+      },
+      "expected": 73.53
+    },
+    {
+      "name": "Romanian Deadlift (DB) · weight",
+      "input": {
+        "name": "Romanian Deadlift (DB)",
+        "axis": "weight"
+      },
+      "expected": 40
+    },
+    {
+      "name": "Romanian Deadlift (DB) · reps",
+      "input": {
+        "name": "Romanian Deadlift (DB)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Romanian Deadlift (DB) · volume",
+      "input": {
+        "name": "Romanian Deadlift (DB)",
+        "axis": "volume"
+      },
+      "expected": 420
+    },
+    {
+      "name": "Romanian Deadlift (DB) · e1rm",
+      "input": {
+        "name": "Romanian Deadlift (DB)",
+        "axis": "e1rm"
+      },
+      "expected": 53.33
+    },
+    {
+      "name": "Hip Thrust (Machine) · weight",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "axis": "weight"
+      },
+      "expected": 27.5
+    },
+    {
+      "name": "Hip Thrust (Machine) · reps",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hip Thrust (Machine) · volume",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "axis": "volume"
+      },
+      "expected": 385
+    },
+    {
+      "name": "Hip Thrust (Machine) · e1rm",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "axis": "e1rm"
+      },
+      "expected": 40.44
+    },
+    {
+      "name": "Calf Press · weight",
+      "input": {
+        "name": "Calf Press",
+        "axis": "weight"
+      },
+      "expected": 72.5
+    },
+    {
+      "name": "Calf Press · reps",
+      "input": {
+        "name": "Calf Press",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Calf Press · volume",
+      "input": {
+        "name": "Calf Press",
+        "axis": "volume"
+      },
+      "expected": 1012.5
+    },
+    {
+      "name": "Calf Press · e1rm",
+      "input": {
+        "name": "Calf Press",
+        "axis": "e1rm"
+      },
+      "expected": 100.75
+    },
+    {
+      "name": "Crunch Machine · weight",
+      "input": {
+        "name": "Crunch Machine",
+        "axis": "weight"
+      },
+      "expected": 57.5
+    },
+    {
+      "name": "Crunch Machine · reps",
+      "input": {
+        "name": "Crunch Machine",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Crunch Machine · volume",
+      "input": {
+        "name": "Crunch Machine",
+        "axis": "volume"
+      },
+      "expected": 690
+    },
+    {
+      "name": "Crunch Machine · e1rm",
+      "input": {
+        "name": "Crunch Machine",
+        "axis": "e1rm"
+      },
+      "expected": 80.99
+    },
+    {
+      "name": "Reverse Crunch · weight",
+      "input": {
+        "name": "Reverse Crunch",
+        "axis": "weight"
+      },
+      "expected": null
+    },
+    {
+      "name": "Reverse Crunch · reps",
+      "input": {
+        "name": "Reverse Crunch",
+        "axis": "reps"
+      },
+      "expected": 18
+    },
+    {
+      "name": "Reverse Crunch · volume",
+      "input": {
+        "name": "Reverse Crunch",
+        "axis": "volume"
+      },
+      "expected": null
+    },
+    {
+      "name": "Reverse Crunch · e1rm",
+      "input": {
+        "name": "Reverse Crunch",
+        "axis": "e1rm"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hanging Knee Raise · weight",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "axis": "weight"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hanging Knee Raise · reps",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "axis": "reps"
+      },
+      "expected": 16
+    },
+    {
+      "name": "Hanging Knee Raise · volume",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "axis": "volume"
+      },
+      "expected": null
+    },
+    {
+      "name": "Hanging Knee Raise · e1rm",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "axis": "e1rm"
+      },
+      "expected": null
+    },
+    {
+      "name": "Side Plank · weight",
+      "input": {
+        "name": "Side Plank",
+        "axis": "weight"
+      },
+      "expected": null
+    },
+    {
+      "name": "Side Plank · reps",
+      "input": {
+        "name": "Side Plank",
+        "axis": "reps"
+      },
+      "expected": 60
+    },
+    {
+      "name": "Side Plank · volume",
+      "input": {
+        "name": "Side Plank",
+        "axis": "volume"
+      },
+      "expected": null
+    },
+    {
+      "name": "Side Plank · e1rm",
+      "input": {
+        "name": "Side Plank",
+        "axis": "e1rm"
+      },
+      "expected": null
+    },
+    {
+      "name": "Zercher Squat · weight",
+      "input": {
+        "name": "Zercher Squat",
+        "axis": "weight"
+      },
+      "expected": null
+    },
+    {
+      "name": "Zercher Squat · reps",
+      "input": {
+        "name": "Zercher Squat",
+        "axis": "reps"
+      },
+      "expected": null
+    },
+    {
+      "name": "Zercher Squat · volume",
+      "input": {
+        "name": "Zercher Squat",
+        "axis": "volume"
+      },
+      "expected": null
+    },
+    {
+      "name": "Zercher Squat · e1rm",
+      "input": {
+        "name": "Zercher Squat",
+        "axis": "e1rm"
+      },
+      "expected": null
+    }
+  ]
+}

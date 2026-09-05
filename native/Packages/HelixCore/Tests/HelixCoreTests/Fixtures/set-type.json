@@ -1,0 +1,256 @@
+{
+  "module": "training/setTags",
+  "fn": "isWorkingSet / setTagFor / setQualityFor / isSetQuality",
+  "note": "isWorkingSet excludes exactly warmup and ghost. setTagFor / setQualityFor read the table by exact key, null for a plain set. isSetQuality is a closed-vocabulary guard.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "v": null
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "v": ""
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "warmup",
+      "input": {
+        "v": "warmup"
+      },
+      "expected": {
+        "working": false,
+        "tag": {
+          "label": "W",
+          "full": "Warm-up"
+        },
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "failure",
+      "input": {
+        "v": "failure"
+      },
+      "expected": {
+        "working": true,
+        "tag": {
+          "label": "F",
+          "full": "Taken to failure"
+        },
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "dropset",
+      "input": {
+        "v": "dropset"
+      },
+      "expected": {
+        "working": true,
+        "tag": {
+          "label": "D",
+          "full": "Drop set"
+        },
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "ghost",
+      "input": {
+        "v": "ghost"
+      },
+      "expected": {
+        "working": false,
+        "tag": {
+          "label": "G",
+          "full": "Ghost set — logged, not counted"
+        },
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "working",
+      "input": {
+        "v": "working"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "Warmup",
+      "input": {
+        "v": "Warmup"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "top",
+      "input": {
+        "v": "top"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "momentum",
+      "input": {
+        "v": "momentum"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Momentum",
+          "full": "Used body English to move the load"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "momentum",
+      "input": {
+        "v": "momentum"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Momentum",
+          "full": "Used body English to move the load"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "partial_rom",
+      "input": {
+        "v": "partial_rom"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Short ROM",
+          "full": "Cut the range short to finish the set"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "form_breakdown",
+      "input": {
+        "v": "form_breakdown"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Form broke",
+          "full": "The last reps lost position"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "needed_warmup",
+      "input": {
+        "v": "needed_warmup"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Cold",
+          "full": "The first reps were poor — needed a longer warm-up"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "assisted",
+      "input": {
+        "v": "assisted"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Assisted",
+          "full": "A spotter or the other arm helped"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "cut_short",
+      "input": {
+        "v": "cut_short"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": {
+          "label": "Cut short",
+          "full": "Stopped before the target for a reason other than failure"
+        },
+        "isQuality": true
+      }
+    },
+    {
+      "name": "partial",
+      "input": {
+        "v": "partial"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "Momentum",
+      "input": {
+        "v": "Momentum"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    }
+  ]
+}

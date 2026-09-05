@@ -1,0 +1,469 @@
+{
+  "module": "nutrition/maintenance",
+  "fn": "maintenanceSpanFor",
+  "note": "The inclusive span of the DELOAD PHASE containing the date — from PHASES only, never the lever. null elsewhere.",
+  "cases": [
+    {
+      "name": "2026-06-20",
+      "input": {
+        "date": "2026-06-20"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-06-23",
+      "input": {
+        "date": "2026-06-23"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-06-26",
+      "input": {
+        "date": "2026-06-26"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-06-29",
+      "input": {
+        "date": "2026-06-29"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-02",
+      "input": {
+        "date": "2026-07-02"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-05",
+      "input": {
+        "date": "2026-07-05"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-08",
+      "input": {
+        "date": "2026-07-08"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-11",
+      "input": {
+        "date": "2026-07-11"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-14",
+      "input": {
+        "date": "2026-07-14"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-07-17",
+      "input": {
+        "date": "2026-07-17"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-07-20",
+      "input": {
+        "date": "2026-07-20"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-07-23",
+      "input": {
+        "date": "2026-07-23"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-07-26",
+      "input": {
+        "date": "2026-07-26"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-07-29",
+      "input": {
+        "date": "2026-07-29"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-01",
+      "input": {
+        "date": "2026-08-01"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-04",
+      "input": {
+        "date": "2026-08-04"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-07",
+      "input": {
+        "date": "2026-08-07"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-10",
+      "input": {
+        "date": "2026-08-10"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-13",
+      "input": {
+        "date": "2026-08-13"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-16",
+      "input": {
+        "date": "2026-08-16"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-19",
+      "input": {
+        "date": "2026-08-19"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-22",
+      "input": {
+        "date": "2026-08-22"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-25",
+      "input": {
+        "date": "2026-08-25"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-28",
+      "input": {
+        "date": "2026-08-28"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-31",
+      "input": {
+        "date": "2026-08-31"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-03",
+      "input": {
+        "date": "2026-09-03"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-06",
+      "input": {
+        "date": "2026-09-06"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-09",
+      "input": {
+        "date": "2026-09-09"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-12",
+      "input": {
+        "date": "2026-09-12"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-15",
+      "input": {
+        "date": "2026-09-15"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-18",
+      "input": {
+        "date": "2026-09-18"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-21",
+      "input": {
+        "date": "2026-09-21"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-24",
+      "input": {
+        "date": "2026-09-24"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-27",
+      "input": {
+        "date": "2026-09-27"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-09-30",
+      "input": {
+        "date": "2026-09-30"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-03",
+      "input": {
+        "date": "2026-10-03"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-06",
+      "input": {
+        "date": "2026-10-06"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-09",
+      "input": {
+        "date": "2026-10-09"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-12",
+      "input": {
+        "date": "2026-10-12"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-15",
+      "input": {
+        "date": "2026-10-15"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-18",
+      "input": {
+        "date": "2026-10-18"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-10-21",
+      "input": {
+        "date": "2026-10-21"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-10-24",
+      "input": {
+        "date": "2026-10-24"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-10-27",
+      "input": {
+        "date": "2026-10-27"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-10-30",
+      "input": {
+        "date": "2026-10-30"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-11-02",
+      "input": {
+        "date": "2026-11-02"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-11-05",
+      "input": {
+        "date": "2026-11-05"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-11-08",
+      "input": {
+        "date": "2026-11-08"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-11-11",
+      "input": {
+        "date": "2026-11-11"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-11-14",
+      "input": {
+        "date": "2026-11-14"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-06-27",
+      "input": {
+        "date": "2026-06-27"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-06-28",
+      "input": {
+        "date": "2026-06-28"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-11",
+      "input": {
+        "date": "2026-07-11"
+      },
+      "expected": {
+        "start": "2026-06-28",
+        "end": "2026-07-11"
+      }
+    },
+    {
+      "name": "2026-07-12",
+      "input": {
+        "date": "2026-07-12"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-08-30",
+      "input": {
+        "date": "2026-08-30"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-17",
+      "input": {
+        "date": "2026-10-17"
+      },
+      "expected": null
+    },
+    {
+      "name": "2026-10-18",
+      "input": {
+        "date": "2026-10-18"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-10-31",
+      "input": {
+        "date": "2026-10-31"
+      },
+      "expected": {
+        "start": "2026-10-18",
+        "end": "2026-10-31"
+      }
+    },
+    {
+      "name": "2026-11-01",
+      "input": {
+        "date": "2026-11-01"
+      },
+      "expected": null
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "date": "garbage"
+      },
+      "expected": null
+    }
+  ]
+}

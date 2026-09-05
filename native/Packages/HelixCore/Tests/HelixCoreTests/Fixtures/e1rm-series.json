@@ -1,0 +1,897 @@
+{
+  "module": "charts/series",
+  "fn": "exerciseTrend",
+  "note": "Sessions oldest FIRST, working sets only. points = per-session MEAN headline (est-1RM kg loaded via stored est || Epley; reps when no session ever carried load; seconds when timed), one decimal; pairs collapse to one set (R leads); best = best SET; tonnage via sessionVolumeKg (or Σ reps when byReps); progression over the last two. Null with no sessions.",
+  "cases": [
+    {
+      "name": "ladder @12",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 11
+            },
+            {
+              "weightKg": 18,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          26,
+          26.2,
+          26.6,
+          27.1
+        ],
+        "pctChange": 1.9,
+        "best": 28,
+        "tonnage": 696,
+        "tonnageDelta": 38,
+        "topSet": {
+          "weightKg": 20,
+          "reps": 12
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "no",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "ladder @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 11
+            },
+            {
+              "weightKg": 18,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 15
+      },
+      "expected": {
+        "points": [
+          26,
+          26.2,
+          26.6,
+          27.1
+        ],
+        "pctChange": 1.9,
+        "best": 28,
+        "tonnage": 696,
+        "tonnageDelta": 38,
+        "topSet": {
+          "weightKg": 20,
+          "reps": 12
+        },
+        "setsAtCeiling": 0,
+        "progression": {
+          "state": "no",
+          "ceiling": 15,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "ladder unprogrammed",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 11
+            },
+            {
+              "weightKg": 18,
+              "reps": 11
+            }
+          ],
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 18,
+              "reps": 12
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": null
+      },
+      "expected": {
+        "points": [
+          26,
+          26.2,
+          26.6,
+          27.1
+        ],
+        "pctChange": 1.9,
+        "best": 28,
+        "tonnage": 696,
+        "tonnageDelta": 38,
+        "topSet": {
+          "weightKg": 20,
+          "reps": 12
+        },
+        "setsAtCeiling": 0,
+        "progression": {
+          "state": "no",
+          "ceiling": null,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "first session only",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 9
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          26
+        ],
+        "pctChange": null,
+        "best": 28,
+        "tonnage": 602,
+        "tonnageDelta": null,
+        "topSet": {
+          "weightKg": 20,
+          "reps": 12
+        },
+        "setsAtCeiling": 1,
+        "progression": {
+          "state": "no",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "stored est beats Epley, stored 0 is missing",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 60,
+              "reps": 8,
+              "est": 76
+            },
+            {
+              "weightKg": 60,
+              "reps": 8,
+              "est": 0
+            }
+          ],
+          [
+            {
+              "weightKg": 62.5,
+              "reps": 8,
+              "est": 79.2
+            },
+            {
+              "weightKg": 62.5,
+              "reps": 8
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 8
+      },
+      "expected": {
+        "points": [
+          76,
+          79.2
+        ],
+        "pctChange": 4.2,
+        "best": 79.2,
+        "tonnage": 1000,
+        "tonnageDelta": 40,
+        "topSet": {
+          "weightKg": 62.5,
+          "reps": 8
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "ready",
+          "ceiling": 8,
+          "suggestKg": 65
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "a unilateral pair is one set, right side leads",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 12,
+              "reps": 12,
+              "side": "L",
+              "pairId": "a"
+            },
+            {
+              "weightKg": 14,
+              "reps": 12,
+              "side": "R",
+              "pairId": "a"
+            },
+            {
+              "weightKg": 12,
+              "reps": 10,
+              "side": "L",
+              "pairId": "b"
+            },
+            {
+              "weightKg": 12,
+              "reps": 11,
+              "side": "R",
+              "pairId": "b"
+            }
+          ],
+          [
+            {
+              "weightKg": 14,
+              "reps": 12,
+              "side": "L",
+              "pairId": "c"
+            },
+            {
+              "weightKg": 14,
+              "reps": 12,
+              "side": "R",
+              "pairId": "c"
+            },
+            {
+              "weightKg": 14,
+              "reps": 12,
+              "side": "L",
+              "pairId": "d"
+            },
+            {
+              "weightKg": 14,
+              "reps": 12,
+              "side": "R",
+              "pairId": "d"
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          18,
+          19.6
+        ],
+        "pctChange": 8.9,
+        "best": 19.6,
+        "tonnage": 336,
+        "tonnageDelta": 72,
+        "topSet": {
+          "weightKg": 14,
+          "reps": 12
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "one-more",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "a lone side is not a pair",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 10,
+              "reps": 12,
+              "side": "L"
+            },
+            {
+              "weightKg": 10,
+              "reps": 9,
+              "side": "R"
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          13.5
+        ],
+        "pctChange": null,
+        "best": 14,
+        "tonnage": 210,
+        "tonnageDelta": null,
+        "topSet": {
+          "weightKg": 10,
+          "reps": 12
+        },
+        "setsAtCeiling": 1,
+        "progression": {
+          "state": "no",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "unloaded work is scored on reps",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 15
+            },
+            {
+              "weightKg": 0,
+              "reps": 14
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 17
+            },
+            {
+              "weightKg": 0,
+              "reps": 16
+            },
+            {
+              "weightKg": 0,
+              "reps": 15
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 15
+      },
+      "expected": {
+        "points": [
+          14.5,
+          16
+        ],
+        "pctChange": 10.3,
+        "best": 17,
+        "tonnage": 48,
+        "tonnageDelta": 19,
+        "topSet": {
+          "weightKg": 0,
+          "reps": 17
+        },
+        "setsAtCeiling": 3,
+        "progression": {
+          "state": "one-more",
+          "ceiling": 15,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": true
+      }
+    },
+    {
+      "name": "a lift loaded later is scored on est-1RM throughout",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 15
+            },
+            {
+              "weightKg": 0,
+              "reps": 15
+            }
+          ],
+          [
+            {
+              "weightKg": 5,
+              "reps": 12
+            },
+            {
+              "weightKg": 5,
+              "reps": 12
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          0,
+          7
+        ],
+        "pctChange": null,
+        "best": 7,
+        "tonnage": 120,
+        "tonnageDelta": 120,
+        "topSet": {
+          "weightKg": 5,
+          "reps": 12
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "ready",
+          "ceiling": 12,
+          "suggestKg": 7.5
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "a timed hold is seconds",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 45
+            },
+            {
+              "weightKg": 0,
+              "reps": 40
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "timed": true,
+        "ceiling": 55
+      },
+      "expected": {
+        "points": [
+          42.5,
+          59,
+          60
+        ],
+        "pctChange": 1.7,
+        "best": 60,
+        "tonnage": 120,
+        "tonnageDelta": 2,
+        "topSet": {
+          "weightKg": 0,
+          "reps": 60
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "ready",
+          "ceiling": 55,
+          "suggestKg": null
+        },
+        "timed": true,
+        "byReps": true
+      }
+    },
+    {
+      "name": "a timed hold with no target",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 45
+            },
+            {
+              "weightKg": 0,
+              "reps": 40
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 58
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 60
+            },
+            {
+              "weightKg": 0,
+              "reps": 60
+            }
+          ]
+        ],
+        "timed": true,
+        "ceiling": null
+      },
+      "expected": {
+        "points": [
+          42.5,
+          59,
+          60
+        ],
+        "pctChange": 1.7,
+        "best": 60,
+        "tonnage": 120,
+        "tonnageDelta": 2,
+        "topSet": {
+          "weightKg": 0,
+          "reps": 60
+        },
+        "setsAtCeiling": 0,
+        "progression": {
+          "state": "no",
+          "ceiling": null,
+          "suggestKg": null
+        },
+        "timed": true,
+        "byReps": true
+      }
+    },
+    {
+      "name": "clean twice — ready",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          49,
+          49
+        ],
+        "pctChange": 0,
+        "best": 49,
+        "tonnage": 1260,
+        "tonnageDelta": 0,
+        "topSet": {
+          "weightKg": 35,
+          "reps": 12
+        },
+        "setsAtCeiling": 3,
+        "progression": {
+          "state": "ready",
+          "ceiling": 12,
+          "suggestKg": 37.5
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "a fade breaks the chain",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            }
+          ],
+          [
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 12
+            },
+            {
+              "weightKg": 35,
+              "reps": 8
+            }
+          ]
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          49,
+          47.4
+        ],
+        "pctChange": -3.3,
+        "best": 49,
+        "tonnage": 1120,
+        "tonnageDelta": -140,
+        "topSet": {
+          "weightKg": 35,
+          "reps": 12
+        },
+        "setsAtCeiling": 2,
+        "progression": {
+          "state": "no",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "empty session inside",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 20,
+              "reps": 12
+            },
+            {
+              "weightKg": 20,
+              "reps": 10
+            },
+            {
+              "weightKg": 18,
+              "reps": 9
+            }
+          ],
+          []
+        ],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": {
+        "points": [
+          26,
+          0
+        ],
+        "pctChange": -100,
+        "best": 28,
+        "tonnage": 0,
+        "tonnageDelta": -602,
+        "topSet": null,
+        "setsAtCeiling": 0,
+        "progression": {
+          "state": "no",
+          "ceiling": 12,
+          "suggestKg": null
+        },
+        "timed": false,
+        "byReps": false
+      }
+    },
+    {
+      "name": "no sessions",
+      "input": {
+        "sessions": [],
+        "timed": false,
+        "ceiling": 12
+      },
+      "expected": null
+    }
+  ]
+}

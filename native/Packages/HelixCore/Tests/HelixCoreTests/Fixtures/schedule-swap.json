@@ -1,0 +1,1147 @@
+{
+  "module": "schedule/swap",
+  "fn": "planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove",
+  "note": "The resolver is the app's layering, rebuilt in the test: `overrides[date]` (a dayKey; \"rest\"; \"label:X\" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Onyx-5 day whose effective weekday (under `layout`) is the date's Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, \"Rest\" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.",
+  "cases": [
+    {
+      "name": "rest: Tuesday moves Delts & Arms to Wednesday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-04",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-05",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "sentence": "Delts & Arms moved to Wed 5 Aug."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: Thursday finds Saturday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-06",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-06",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "cb_b"
+            }
+          ],
+          "moved": {
+            "label": "Upper B",
+            "sub": "Chest + Back",
+            "dayKey": "cb_b"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "sentence": "Upper B moved to Sat 8 Aug."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: Friday finds Saturday, never Wednesday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-07",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-07",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "legs_b"
+            }
+          ],
+          "moved": {
+            "label": "Legs & Core B",
+            "sub": "Posterior Focus",
+            "dayKey": "legs_b"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "sentence": "Legs & Core B moved to Sat 8 Aug."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: already rest on Wednesday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-05",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "sentence": "Already a rest day."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: chained — Wednesday taken, Tuesday goes to Saturday",
+      "input": {
+        "overrides": {
+          "2026-08-05": "legs_a",
+          "2026-08-03": "rest"
+        },
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-04",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-08",
+              "dayKey": "arms"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": "2026-08-08",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "sentence": "Delts & Arms moved to Sat 8 Aug."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: crosses into next week and says so",
+      "input": {
+        "overrides": {
+          "2026-08-08": "cb_b"
+        },
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-07",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-07",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-12",
+              "dayKey": "legs_b"
+            }
+          ],
+          "moved": {
+            "label": "Legs & Core B",
+            "sub": "Posterior Focus",
+            "dayKey": "legs_b"
+          },
+          "movedTo": "2026-08-12",
+          "sameWeek": false,
+          "outcome": "swapped",
+          "sentence": "Legs & Core B moved to Wed 12 Aug — next week."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: no slot inside a 3-day horizon",
+      "input": {
+        "overrides": {
+          "2026-08-05": "legs_a"
+        },
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-04",
+          "horizon": 3
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "no-slot",
+          "sentence": "Rest day set. No free rest slot in the next 13 days, so Delts & Arms was dropped."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: no slot at the full horizon when every rest day is taken",
+      "input": {
+        "overrides": {
+          "2026-08-05": "cb_a",
+          "2026-08-08": "cb_a",
+          "2026-08-12": "cb_a",
+          "2026-08-15": "cb_a"
+        },
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-04",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Delts & Arms",
+            "dayKey": "arms"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "no-slot",
+          "sentence": "Rest day set. No free rest slot in the next 13 days, so Delts & Arms was dropped."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: Saturday rest already",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-08",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [],
+          "moved": null,
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "already-rest",
+          "sentence": "Already a rest day."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: a PPL-era label with no key is unscheduled",
+      "input": {
+        "overrides": {
+          "2026-08-04": "label:Push"
+        },
+        "layout": {},
+        "rest": {
+          "dateISO": "2026-08-04",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "rest"
+            }
+          ],
+          "moved": {
+            "label": "Push"
+          },
+          "movedTo": null,
+          "sameWeek": true,
+          "outcome": "unscheduled",
+          "sentence": "Rest day set."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "rest: Sunday with the layout moving arms to Wednesday — Saturday is the first free",
+      "input": {
+        "overrides": {},
+        "layout": {
+          "arms": 3
+        },
+        "rest": {
+          "dateISO": "2026-08-02",
+          "horizon": null
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": {
+          "writes": [
+            {
+              "date": "2026-08-02",
+              "dayKey": "rest"
+            },
+            {
+              "date": "2026-08-04",
+              "dayKey": "cb_a"
+            }
+          ],
+          "moved": {
+            "label": "Upper A",
+            "sub": "Chest + Back",
+            "dayKey": "cb_a"
+          },
+          "movedTo": "2026-08-04",
+          "sameWeek": true,
+          "outcome": "swapped",
+          "sentence": "Upper A moved to Tue 4 Aug."
+        },
+        "swap": null,
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: Friday legs_b onto Wednesday — exchange, Friday becomes rest",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-05",
+          "dayKey": "legs_b",
+          "naturalDate": "2026-08-07"
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "rest"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: Tuesday arms onto Thursday — cb_b takes Tuesday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-06",
+          "dayKey": "arms",
+          "naturalDate": "2026-08-04"
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-06",
+            "dayKey": "arms"
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "cb_b"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: follows a day already moved",
+      "input": {
+        "overrides": {
+          "2026-08-05": "arms",
+          "2026-08-04": "rest"
+        },
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-08",
+          "dayKey": "arms",
+          "naturalDate": "2026-08-04"
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-08",
+            "dayKey": "arms"
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": "rest"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: already on that date writes one row",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-04",
+          "dayKey": "arms",
+          "naturalDate": "2026-08-04"
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: no source at all writes one row",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-05",
+          "dayKey": "upper_a",
+          "naturalDate": null
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "upper_a"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "swap: target is a PPL label with no key — source gets rest",
+      "input": {
+        "overrides": {
+          "2026-08-05": "label:Push"
+        },
+        "layout": {},
+        "rest": null,
+        "swap": {
+          "dateISO": "2026-08-05",
+          "dayKey": "legs_b",
+          "naturalDate": "2026-08-07"
+        },
+        "block": null,
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": [
+          {
+            "date": "2026-08-05",
+            "dayKey": "legs_b"
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "rest"
+          }
+        ],
+        "block": null,
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: target logged a different day",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-04",
+          "dayKey": "legs_b",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": "2026-08-07"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": {
+            "kind": "target-logged",
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          },
+          "sentence": "Tue 4 Aug already has Delts & Arms logged."
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: target logged the same day is a no-op",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-04",
+          "dayKey": "arms",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": "2026-08-07"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": null,
+          "sentence": null
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: source logged",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-06",
+          "dayKey": "arms",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": "2026-08-04"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": {
+            "kind": "source-logged",
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          },
+          "sentence": "Delts & Arms is already logged on Tue 4 Aug — it can't move."
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: source logged with a null key",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-06",
+          "dayKey": "legs_a",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": "2026-08-03"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": {
+            "kind": "source-logged",
+            "date": "2026-08-03",
+            "dayKey": null
+          },
+          "sentence": "Rest is already logged on Mon 3 Aug — it can't move."
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: source equals target is not a source block",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-04",
+          "dayKey": "arms",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": "2026-08-04"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": null,
+          "sentence": null
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: nothing logged",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-06",
+          "dayKey": "arms",
+          "logged": [],
+          "sourceDate": "2026-08-04"
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": null,
+          "sentence": null
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "block: null source",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": {
+          "dateISO": "2026-08-06",
+          "dayKey": "arms",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-03",
+              "dayKey": null
+            }
+          ],
+          "sourceDate": null
+        },
+        "permanent": null
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": {
+          "block": null,
+          "sentence": null
+        },
+        "permanent": null
+      }
+    },
+    {
+      "name": "permanent: forward-only change needs no writes (today Sunday)",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "arms",
+          "weekday": 3,
+          "todayISO": "2026-08-02",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 3,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "permanent: pins the spent Tuesday when arms moves to Wednesday on Thursday",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "arms",
+          "weekday": 3,
+          "todayISO": "2026-08-06",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 3,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "rest"
+            }
+          ],
+          "pinned": [
+            "2026-08-04",
+            "2026-08-05"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "permanent: trade pins both spent days",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "legs_b",
+          "weekday": 0,
+          "todayISO": "2026-08-05",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 5,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 4,
+            "legs_b": 0
+          },
+          "writes": [
+            {
+              "date": "2026-08-02",
+              "dayKey": "cb_a"
+            }
+          ],
+          "pinned": [
+            "2026-08-02"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "permanent: refused — target date logged another day",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "legs_b",
+          "weekday": 2,
+          "todayISO": "2026-08-06",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": null,
+          "writes": [],
+          "pinned": [],
+          "block": {
+            "kind": "target-logged",
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          }
+        }
+      }
+    },
+    {
+      "name": "permanent: refused — source logged",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "arms",
+          "weekday": 3,
+          "todayISO": "2026-08-06",
+          "logged": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": null,
+          "writes": [],
+          "pinned": [],
+          "block": {
+            "kind": "source-logged",
+            "date": "2026-08-04",
+            "dayKey": "arms"
+          }
+        }
+      }
+    },
+    {
+      "name": "permanent: an override on a past day is pinned as it was",
+      "input": {
+        "overrides": {
+          "2026-08-04": "rest"
+        },
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "legs_a",
+          "weekday": 2,
+          "todayISO": "2026-08-06",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 2,
+            "arms": 1,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-03",
+              "dayKey": "legs_a"
+            }
+          ],
+          "pinned": [
+            "2026-08-03"
+          ],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "permanent: a move that changes nothing in the past",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "cb_b",
+          "weekday": 6,
+          "todayISO": "2026-08-04",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 2,
+            "cb_b": 6,
+            "legs_b": 5
+          },
+          "writes": [],
+          "pinned": [],
+          "block": null
+        }
+      }
+    },
+    {
+      "name": "permanent: on a Saturday every day is spent",
+      "input": {
+        "overrides": {},
+        "layout": {},
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "dayKey": "arms",
+          "weekday": 3,
+          "todayISO": "2026-08-08",
+          "logged": []
+        }
+      },
+      "expected": {
+        "rest": null,
+        "swap": null,
+        "block": null,
+        "permanent": {
+          "layout": {
+            "cb_a": 0,
+            "legs_a": 1,
+            "arms": 3,
+            "cb_b": 4,
+            "legs_b": 5
+          },
+          "writes": [
+            {
+              "date": "2026-08-04",
+              "dayKey": "arms"
+            },
+            {
+              "date": "2026-08-05",
+              "dayKey": "rest"
+            }
+          ],
+          "pinned": [
+            "2026-08-04",
+            "2026-08-05"
+          ],
+          "block": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "module": "nutrition/exceptionDay",
+  "fn": "exceptionReason / isExceptionDay / exceptionTag",
+  "note": "null means an ORDINARY day — the inverse of weighIn.ts, whose absent value means \"As Planned\".",
+  "cases": [
+    {
+      "name": "stored=null",
+      "input": {
+        "stored": null
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\"\"",
+      "input": {
+        "stored": ""
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\" \"",
+      "input": {
+        "stored": " "
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\"   \"",
+      "input": {
+        "stored": "   "
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\"\\n\"",
+      "input": {
+        "stored": "\n"
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\" \\n\\t \"",
+      "input": {
+        "stored": " \n\t "
+      },
+      "expected": {
+        "reason": null,
+        "isException": false,
+        "tag": ""
+      }
+    },
+    {
+      "name": "stored=\"Event\"",
+      "input": {
+        "stored": "Event"
+      },
+      "expected": {
+        "reason": "Event",
+        "isException": true,
+        "tag": " [Exception: Event]"
+      }
+    },
+    {
+      "name": "stored=\"Refeed\"",
+      "input": {
+        "stored": "Refeed"
+      },
+      "expected": {
+        "reason": "Refeed",
+        "isException": true,
+        "tag": " [Exception: Refeed]"
+      }
+    },
+    {
+      "name": "stored=\"Travel\"",
+      "input": {
+        "stored": "Travel"
+      },
+      "expected": {
+        "reason": "Travel",
+        "isException": true,
+        "tag": " [Exception: Travel]"
+      }
+    },
+    {
+      "name": "stored=\"Illness\"",
+      "input": {
+        "stored": "Illness"
+      },
+      "expected": {
+        "reason": "Illness",
+        "isException": true,
+        "tag": " [Exception: Illness]"
+      }
+    },
+    {
+      "name": "stored=\"Social\"",
+      "input": {
+        "stored": "Social"
+      },
+      "expected": {
+        "reason": "Social",
+        "isException": true,
+        "tag": " [Exception: Social]"
+      }
+    },
+    {
+      "name": "stored=\" Social \"",
+      "input": {
+        "stored": " Social "
+      },
+      "expected": {
+        "reason": "Social",
+        "isException": true,
+        "tag": " [Exception: Social]"
+      }
+    },
+    {
+      "name": "stored=\"social\"",
+      "input": {
+        "stored": "social"
+      },
+      "expected": {
+        "reason": "social",
+        "isException": true,
+        "tag": " [Exception: social]"
+      }
+    },
+    {
+      "name": "stored=\"Wedding\"",
+      "input": {
+        "stored": "Wedding"
+      },
+      "expected": {
+        "reason": "Wedding",
+        "isException": true,
+        "tag": " [Exception: Wedding]"
+      }
+    },
+    {
+      "name": "stored=\"0\"",
+      "input": {
+        "stored": "0"
+      },
+      "expected": {
+        "reason": "0",
+        "isException": true,
+        "tag": " [Exception: 0]"
+      }
+    },
+    {
+      "name": "regression: the string \"0\" is a reason, not an absence",
+      "input": {
+        "stored": "0"
+      },
+      "expected": {
+        "reason": "0",
+        "isException": true,
+        "tag": " [Exception: 0]"
+      }
+    },
+    {
+      "name": "regression: an unlisted reason still counts",
+      "input": {
+        "stored": "Wedding"
+      },
+      "expected": {
+        "reason": "Wedding",
+        "isException": true,
+        "tag": " [Exception: Wedding]"
+      }
+    }
+  ]
+}

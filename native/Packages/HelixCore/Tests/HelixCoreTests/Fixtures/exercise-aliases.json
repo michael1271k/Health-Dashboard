@@ -1,0 +1,35 @@
+{
+  "module": "exercises/aliases",
+  "fn": "EXERCISE_ALIASES",
+  "note": "Data, not arithmetic. Keys are lower-case + trimmed, values are canonical catalogue names; the Swift table must equal this one.",
+  "cases": [
+    {
+      "name": "the table",
+      "input": {},
+      "expected": {
+        "lat pulldown - close grip (cable)": "Neutral-Grip Lat Pulldown",
+        "lat pulldown close grip (cable)": "Neutral-Grip Lat Pulldown",
+        "close grip lat pulldown (cable)": "Neutral-Grip Lat Pulldown",
+        "hack/smith squat": "Hack Squat",
+        "smith squat": "Hack Squat",
+        "chest press machine": "Chest Press (Machine)",
+        "machine chest press": "Chest Press (Machine)",
+        "leg press horizontal": "Leg Press",
+        "leg press horizontal (machine)": "Leg Press",
+        "seated cable row (v grip)": "Seated Cable Row (V-Grip)",
+        "seated cable row v-grip": "Seated Cable Row (V-Grip)",
+        "seated cable row - v-bar": "Seated Cable Row (V-Grip)",
+        "seated cable row - bar wide grip": "Seated Cable Row (Wide Grip)",
+        "seated cable row (wide bar)": "Seated Cable Row (Wide Grip)",
+        "wide-grip cable row": "Seated Cable Row (Wide Grip)",
+        "cable lateral raise": "Single Arm Lateral Raise (Cable)",
+        "single arm cable lateral raise": "Single Arm Lateral Raise (Cable)",
+        "sa lateral raise (cable)": "Single Arm Lateral Raise (Cable)",
+        "sa lateral raise": "Single Arm Lateral Raise (Cable)",
+        "incline db bench press": "Incline DB Press",
+        "incline dumbbell bench press": "Incline DB Press",
+        "incline dumbbell press": "Incline DB Press"
+      }
+    }
+  ]
+}

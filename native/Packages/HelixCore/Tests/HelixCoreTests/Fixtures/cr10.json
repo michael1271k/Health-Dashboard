@@ -1,0 +1,642 @@
+{
+  "module": "training/effort",
+  "fn": "cr10Label / normalizeCr10 / rpeStopIndex / rpeLabel / nudgeRpe / effortWordFor",
+  "note": "Per value: the nearest anchor at or below; snapped to the 0.5 grid and clamped 1–10 (null stays null); the lit ladder pip or -1; ladder label else CR10 anchor; ±0.5 nudges; the nearest session word (ties keep the lower).",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "v": null
+      },
+      "expected": {
+        "label": "—",
+        "normalized": null,
+        "stopIndex": -1,
+        "rpeLabel": "—",
+        "up": null,
+        "down": null,
+        "word": null
+      }
+    },
+    {
+      "name": "0",
+      "input": {
+        "v": 0
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "0.3",
+      "input": {
+        "v": 0.3
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "0.5",
+      "input": {
+        "v": 0.5
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "1",
+      "input": {
+        "v": 1
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1.5,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "1.5",
+      "input": {
+        "v": 1.5
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1.5,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 2,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "2",
+      "input": {
+        "v": 2
+      },
+      "expected": {
+        "label": "Light",
+        "normalized": 2,
+        "stopIndex": -1,
+        "rpeLabel": "Light",
+        "up": 2.5,
+        "down": 1.5,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "2.5",
+      "input": {
+        "v": 2.5
+      },
+      "expected": {
+        "label": "Light",
+        "normalized": 2.5,
+        "stopIndex": -1,
+        "rpeLabel": "Light",
+        "up": 3,
+        "down": 2,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "3",
+      "input": {
+        "v": 3
+      },
+      "expected": {
+        "label": "Moderate",
+        "normalized": 3,
+        "stopIndex": -1,
+        "rpeLabel": "Moderate",
+        "up": 3.5,
+        "down": 2.5,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "4",
+      "input": {
+        "v": 4
+      },
+      "expected": {
+        "label": "Somewhat hard",
+        "normalized": 4,
+        "stopIndex": -1,
+        "rpeLabel": "Somewhat hard",
+        "up": 4.5,
+        "down": 3.5,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "4.5",
+      "input": {
+        "v": 4.5
+      },
+      "expected": {
+        "label": "Somewhat hard",
+        "normalized": 4.5,
+        "stopIndex": -1,
+        "rpeLabel": "Somewhat hard",
+        "up": 5,
+        "down": 4,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "5",
+      "input": {
+        "v": 5
+      },
+      "expected": {
+        "label": "Hard",
+        "normalized": 5,
+        "stopIndex": 0,
+        "rpeLabel": "Very Easy",
+        "up": 5.5,
+        "down": 4.5,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "5.5",
+      "input": {
+        "v": 5.5
+      },
+      "expected": {
+        "label": "Hard",
+        "normalized": 5.5,
+        "stopIndex": -1,
+        "rpeLabel": "Hard",
+        "up": 6,
+        "down": 5,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "6",
+      "input": {
+        "v": 6
+      },
+      "expected": {
+        "label": "Hard",
+        "normalized": 6,
+        "stopIndex": -1,
+        "rpeLabel": "Hard",
+        "up": 6.5,
+        "down": 5.5,
+        "word": {
+          "key": "solid",
+          "label": "Solid",
+          "cr10": 6.5,
+          "hint": "a normal working session"
+        }
+      }
+    },
+    {
+      "name": "6.5",
+      "input": {
+        "v": 6.5
+      },
+      "expected": {
+        "label": "Hard",
+        "normalized": 6.5,
+        "stopIndex": 1,
+        "rpeLabel": "Easy",
+        "up": 7,
+        "down": 6,
+        "word": {
+          "key": "solid",
+          "label": "Solid",
+          "cr10": 6.5,
+          "hint": "a normal working session"
+        }
+      }
+    },
+    {
+      "name": "7",
+      "input": {
+        "v": 7
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 7,
+        "stopIndex": -1,
+        "rpeLabel": "Very hard",
+        "up": 7.5,
+        "down": 6.5,
+        "word": {
+          "key": "solid",
+          "label": "Solid",
+          "cr10": 6.5,
+          "hint": "a normal working session"
+        }
+      }
+    },
+    {
+      "name": "7.5",
+      "input": {
+        "v": 7.5
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 7.5,
+        "stopIndex": 2,
+        "rpeLabel": "Medium",
+        "up": 8,
+        "down": 7,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "8",
+      "input": {
+        "v": 8
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 8,
+        "stopIndex": 3,
+        "rpeLabel": "Challenging",
+        "up": 8.5,
+        "down": 7.5,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "8.5",
+      "input": {
+        "v": 8.5
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 8.5,
+        "stopIndex": 4,
+        "rpeLabel": "Hard",
+        "up": 9,
+        "down": 8,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "9",
+      "input": {
+        "v": 9
+      },
+      "expected": {
+        "label": "Extremely hard",
+        "normalized": 9,
+        "stopIndex": 5,
+        "rpeLabel": "Very Hard",
+        "up": 9.5,
+        "down": 8.5,
+        "word": {
+          "key": "brutal",
+          "label": "Brutal",
+          "cr10": 9,
+          "hint": "harder than this day usually is"
+        }
+      }
+    },
+    {
+      "name": "9.5",
+      "input": {
+        "v": 9.5
+      },
+      "expected": {
+        "label": "Extremely hard",
+        "normalized": 9.5,
+        "stopIndex": 6,
+        "rpeLabel": "Max Effort",
+        "up": 10,
+        "down": 9,
+        "word": {
+          "key": "brutal",
+          "label": "Brutal",
+          "cr10": 9,
+          "hint": "harder than this day usually is"
+        }
+      }
+    },
+    {
+      "name": "9.75",
+      "input": {
+        "v": 9.75
+      },
+      "expected": {
+        "label": "Extremely hard",
+        "normalized": 10,
+        "stopIndex": -1,
+        "rpeLabel": "Extremely hard",
+        "up": 10,
+        "down": 9.5,
+        "word": {
+          "key": "everything",
+          "label": "Everything",
+          "cr10": 10,
+          "hint": "nothing left in the tank"
+        }
+      }
+    },
+    {
+      "name": "10",
+      "input": {
+        "v": 10
+      },
+      "expected": {
+        "label": "Maximal",
+        "normalized": 10,
+        "stopIndex": 7,
+        "rpeLabel": "Failure",
+        "up": 10,
+        "down": 9.5,
+        "word": {
+          "key": "everything",
+          "label": "Everything",
+          "cr10": 10,
+          "hint": "nothing left in the tank"
+        }
+      }
+    },
+    {
+      "name": "10.5",
+      "input": {
+        "v": 10.5
+      },
+      "expected": {
+        "label": "Maximal",
+        "normalized": 10,
+        "stopIndex": -1,
+        "rpeLabel": "Maximal",
+        "up": 10,
+        "down": 10,
+        "word": {
+          "key": "everything",
+          "label": "Everything",
+          "cr10": 10,
+          "hint": "nothing left in the tank"
+        }
+      }
+    },
+    {
+      "name": "11",
+      "input": {
+        "v": 11
+      },
+      "expected": {
+        "label": "Maximal",
+        "normalized": 10,
+        "stopIndex": -1,
+        "rpeLabel": "Maximal",
+        "up": 10,
+        "down": 10,
+        "word": {
+          "key": "everything",
+          "label": "Everything",
+          "cr10": 10,
+          "hint": "nothing left in the tank"
+        }
+      }
+    },
+    {
+      "name": "-1",
+      "input": {
+        "v": -1
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "0.25",
+      "input": {
+        "v": 0.25
+      },
+      "expected": {
+        "label": "Very light",
+        "normalized": 1,
+        "stopIndex": -1,
+        "rpeLabel": "Very light",
+        "up": 1,
+        "down": 1,
+        "word": {
+          "key": "easy",
+          "label": "Easy",
+          "cr10": 5,
+          "hint": "lighter than usual — plenty left"
+        }
+      }
+    },
+    {
+      "name": "7.25",
+      "input": {
+        "v": 7.25
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 7.5,
+        "stopIndex": -1,
+        "rpeLabel": "Very hard",
+        "up": 8,
+        "down": 7,
+        "word": {
+          "key": "solid",
+          "label": "Solid",
+          "cr10": 6.5,
+          "hint": "a normal working session"
+        }
+      }
+    },
+    {
+      "name": "7.75",
+      "input": {
+        "v": 7.75
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 8,
+        "stopIndex": -1,
+        "rpeLabel": "Very hard",
+        "up": 8.5,
+        "down": 7.5,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "8.24",
+      "input": {
+        "v": 8.24
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 8,
+        "stopIndex": -1,
+        "rpeLabel": "Very hard",
+        "up": 8.5,
+        "down": 7.5,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "8.26",
+      "input": {
+        "v": 8.26
+      },
+      "expected": {
+        "label": "Very hard",
+        "normalized": 8.5,
+        "stopIndex": -1,
+        "rpeLabel": "Very hard",
+        "up": 9,
+        "down": 8,
+        "word": {
+          "key": "hard",
+          "label": "Hard",
+          "cr10": 8,
+          "hint": "the session you planned, in full"
+        }
+      }
+    },
+    {
+      "name": "100",
+      "input": {
+        "v": 100
+      },
+      "expected": {
+        "label": "Maximal",
+        "normalized": 10,
+        "stopIndex": -1,
+        "rpeLabel": "Maximal",
+        "up": 10,
+        "down": 10,
+        "word": {
+          "key": "everything",
+          "label": "Everything",
+          "cr10": 10,
+          "hint": "nothing left in the tank"
+        }
+      }
+    }
+  ]
+}

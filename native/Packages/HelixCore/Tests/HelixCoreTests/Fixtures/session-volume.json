@@ -1,0 +1,1127 @@
+{
+  "module": "sessions/volume",
+  "fn": "sessionVolumeKg",
+  "note": "A genuine L/R pair is ONE set at min(weight) × min(reps); a lone side, a pairId without a side, or a 3+ bucket scores each row as logged. Ghosts contribute nothing; warm-ups count. Rounded to 2 dp.",
+  "cases": [
+    {
+      "name": "no sets",
+      "input": {
+        "sets": []
+      },
+      "expected": 0
+    },
+    {
+      "name": "bilateral sets",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12
+          },
+          {
+            "weightKg": 60,
+            "reps": 11
+          },
+          {
+            "weightKg": 57.5,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": 1955
+    },
+    {
+      "name": "regression: L 5×10 / R 5×14 is 50 — the weaker side, once",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 50
+    },
+    {
+      "name": "regression: the lower weight too",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 7.5,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 10,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 90
+    },
+    {
+      "name": "regression: 2026-08-18 a split set weighs what the unsided set weighs",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 15,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 3.75,
+            "reps": 15,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 56.25
+    },
+    {
+      "name": "the same set unsided",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 15
+          }
+        ]
+      },
+      "expected": 56.25
+    },
+    {
+      "name": "a lone logged side scores on its own",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 20,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 200
+    },
+    {
+      "name": "pairs stay independent and mix with bilateral work",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 10
+          },
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p2"
+          },
+          {
+            "weightKg": 5,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p2"
+          }
+        ]
+      },
+      "expected": 710
+    },
+    {
+      "name": "regression: quarter-kg microloads stay exact (22.25 × 9 = 200.25)",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 200.25
+    },
+    {
+      "name": "regression: float representation error is snapped (0.1 × 3)",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.1,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 0.3
+    },
+    {
+      "name": "a pairId with no side is an ordinary set",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 8,
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 40,
+            "reps": 6,
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 560
+    },
+    {
+      "name": "a side with no pairId is an ordinary set",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 8,
+            "side": "L"
+          },
+          {
+            "weightKg": 40,
+            "reps": 6,
+            "side": "R"
+          }
+        ]
+      },
+      "expected": 560
+    },
+    {
+      "name": "an empty-string pairId is no pairId",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 8,
+            "side": "L",
+            "pairId": ""
+          },
+          {
+            "weightKg": 40,
+            "reps": 6,
+            "side": "R",
+            "pairId": ""
+          }
+        ]
+      },
+      "expected": 560
+    },
+    {
+      "name": "a malformed bucket of three rows scores each as logged",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 10,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 10,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 10,
+            "reps": 8,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 100
+    },
+    {
+      "name": "two lefts and no right is not a pair",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 10,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 10,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 220
+    },
+    {
+      "name": "regression: a ghost weighs nothing",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": "ghost"
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "a warm-up still counts",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": "warmup"
+          }
+        ]
+      },
+      "expected": 400
+    },
+    {
+      "name": "a drop set counts",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": "dropset"
+          }
+        ]
+      },
+      "expected": 400
+    },
+    {
+      "name": "a failure set counts",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": "failure"
+          }
+        ]
+      },
+      "expected": 400
+    },
+    {
+      "name": "an unknown set type counts",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": "whatever"
+          }
+        ]
+      },
+      "expected": 400
+    },
+    {
+      "name": "a null set type counts",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 10,
+            "setType": null
+          }
+        ]
+      },
+      "expected": 400
+    },
+    {
+      "name": "regression: a ghosted pair does not leave a lone partner to score",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 10,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1",
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 10,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1",
+            "setType": "ghost"
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "one ghosted side leaves the other as a lone side",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 10,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1",
+            "setType": "ghost"
+          },
+          {
+            "weightKg": 10,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 120
+    },
+    {
+      "name": "unloaded work: 0 kg × 17 is 0 tonnage, not an error",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "negative reps are arithmetic, not a guard",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 10,
+            "reps": -2
+          }
+        ]
+      },
+      "expected": -20
+    },
+    {
+      "name": "order of sides does not matter",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ]
+      },
+      "expected": 50
+    },
+    {
+      "name": "pairs interleaved with other pairs",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 5,
+            "reps": 14,
+            "side": "R",
+            "pairId": "a"
+          },
+          {
+            "weightKg": 7,
+            "reps": 9,
+            "side": "L",
+            "pairId": "b"
+          },
+          {
+            "weightKg": 5,
+            "reps": 10,
+            "side": "L",
+            "pairId": "a"
+          },
+          {
+            "weightKg": 7,
+            "reps": 11,
+            "side": "R",
+            "pairId": "b"
+          }
+        ]
+      },
+      "expected": 113
+    },
+    {
+      "name": "grid 0 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 0
+    },
+    {
+      "name": "grid 0.25 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 0.25
+    },
+    {
+      "name": "grid 0.25 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 0.75
+    },
+    {
+      "name": "grid 0.25 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 1.75
+    },
+    {
+      "name": "grid 0.25 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 2.25
+    },
+    {
+      "name": "grid 0.25 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 3.25
+    },
+    {
+      "name": "grid 0.25 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0.25,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 4.25
+    },
+    {
+      "name": "grid 1.25 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 1.25
+    },
+    {
+      "name": "grid 1.25 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 3.75
+    },
+    {
+      "name": "grid 1.25 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 8.75
+    },
+    {
+      "name": "grid 1.25 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 11.25
+    },
+    {
+      "name": "grid 1.25 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 16.25
+    },
+    {
+      "name": "grid 1.25 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 1.25,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 21.25
+    },
+    {
+      "name": "grid 2.5 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "grid 2.5 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 7.5
+    },
+    {
+      "name": "grid 2.5 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 17.5
+    },
+    {
+      "name": "grid 2.5 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 22.5
+    },
+    {
+      "name": "grid 2.5 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 32.5
+    },
+    {
+      "name": "grid 2.5 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 2.5,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 42.5
+    },
+    {
+      "name": "grid 3.75 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 3.75
+    },
+    {
+      "name": "grid 3.75 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 11.25
+    },
+    {
+      "name": "grid 3.75 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 26.25
+    },
+    {
+      "name": "grid 3.75 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 33.75
+    },
+    {
+      "name": "grid 3.75 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 48.75
+    },
+    {
+      "name": "grid 3.75 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 3.75,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 63.75
+    },
+    {
+      "name": "grid 11.25 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 11.25
+    },
+    {
+      "name": "grid 11.25 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 33.75
+    },
+    {
+      "name": "grid 11.25 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 78.75
+    },
+    {
+      "name": "grid 11.25 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 101.25
+    },
+    {
+      "name": "grid 11.25 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 146.25
+    },
+    {
+      "name": "grid 11.25 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 11.25,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 191.25
+    },
+    {
+      "name": "grid 22.25 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 22.25
+    },
+    {
+      "name": "grid 22.25 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 66.75
+    },
+    {
+      "name": "grid 22.25 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 155.75
+    },
+    {
+      "name": "grid 22.25 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 200.25
+    },
+    {
+      "name": "grid 22.25 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 289.25
+    },
+    {
+      "name": "grid 22.25 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 22.25,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 378.25
+    },
+    {
+      "name": "grid 82.5 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 82.5
+    },
+    {
+      "name": "grid 82.5 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 247.5
+    },
+    {
+      "name": "grid 82.5 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 577.5
+    },
+    {
+      "name": "grid 82.5 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 742.5
+    },
+    {
+      "name": "grid 82.5 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 1072.5
+    },
+    {
+      "name": "grid 82.5 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 82.5,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 1402.5
+    },
+    {
+      "name": "grid 142.5 × 1",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 1
+          }
+        ]
+      },
+      "expected": 142.5
+    },
+    {
+      "name": "grid 142.5 × 3",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 3
+          }
+        ]
+      },
+      "expected": 427.5
+    },
+    {
+      "name": "grid 142.5 × 7",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 7
+          }
+        ]
+      },
+      "expected": 997.5
+    },
+    {
+      "name": "grid 142.5 × 9",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 9
+          }
+        ]
+      },
+      "expected": 1282.5
+    },
+    {
+      "name": "grid 142.5 × 13",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 13
+          }
+        ]
+      },
+      "expected": 1852.5
+    },
+    {
+      "name": "grid 142.5 × 17",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 142.5,
+            "reps": 17
+          }
+        ]
+      },
+      "expected": 2422.5
+    }
+  ]
+}

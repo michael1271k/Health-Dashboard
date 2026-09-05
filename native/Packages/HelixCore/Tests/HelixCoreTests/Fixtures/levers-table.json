@@ -1,0 +1,94 @@
+{
+  "module": "nutrition/levers",
+  "fn": "LEVERS / DEFICIT_LEVERS / DEFAULT_LEVER / LEVER_SCHEDULE",
+  "note": "Data, not arithmetic. Every rung is Atwater-exact (4/4/9); the deficit ladder is ordered; the schedule is oldest first and a `custom` row may pin the goals of a CLOSED stretch.",
+  "cases": [
+    {
+      "name": "the ladder",
+      "input": {},
+      "expected": {
+        "levers": [
+          {
+            "id": "baseline",
+            "kind": "deficit",
+            "label": "Baseline",
+            "summary": "The plan as written — full carbs, 10k steps.",
+            "calorieGoal": 1955,
+            "proteinGoalG": 170,
+            "carbsGoalG": 195,
+            "fatGoalG": 55,
+            "stepsGoal": 10000
+          },
+          {
+            "id": "lever-1",
+            "kind": "deficit",
+            "label": "Lever 1",
+            "summary": "−70 kcal off carbs and fat, steps to 10k.",
+            "calorieGoal": 1885,
+            "proteinGoalG": 170,
+            "carbsGoalG": 182,
+            "fatGoalG": 53,
+            "stepsGoal": 10000
+          },
+          {
+            "id": "lever-2",
+            "kind": "deficit",
+            "label": "Lever 2",
+            "summary": "Same food as Lever 1, steps 12k–15k. The last rung.",
+            "calorieGoal": 1885,
+            "proteinGoalG": 170,
+            "carbsGoalG": 182,
+            "fatGoalG": 53,
+            "stepsGoal": 12000
+          },
+          {
+            "id": "maintenance-week",
+            "kind": "release",
+            "label": "Maintenance Week",
+            "summary": "A planned week at maintenance — full food, lighter steps. Still cutting.",
+            "calorieGoal": 2151,
+            "proteinGoalG": 170,
+            "carbsGoalG": 244,
+            "fatGoalG": 55,
+            "stepsGoal": 7500
+          }
+        ],
+        "deficitIds": [
+          "baseline",
+          "lever-1",
+          "lever-2"
+        ],
+        "defaultLever": "baseline",
+        "schedule": [
+          {
+            "from": "2026-07-15",
+            "leverId": "baseline"
+          },
+          {
+            "from": "2026-08-16",
+            "leverId": "lever-1"
+          },
+          {
+            "from": "2026-08-20",
+            "leverId": "custom",
+            "goals": {
+              "calorie": 1999,
+              "protein": 170,
+              "carbs": 206,
+              "fat": 55,
+              "steps": 10000
+            }
+          },
+          {
+            "from": "2026-08-30",
+            "leverId": "maintenance-week"
+          },
+          {
+            "from": "2026-09-06",
+            "leverId": "custom"
+          }
+        ]
+      }
+    }
+  ]
+}

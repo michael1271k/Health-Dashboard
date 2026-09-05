@@ -1,4 +1,4 @@
-import { weekStartOf } from '@/lib/utils/week'
+import { weekStartOf, isoAddDays } from '@/lib/utils/week'
 import { getWeekPhase } from '@/lib/phases'
 
 /**
@@ -70,4 +70,30 @@ export function weekLabelOf(weekStartISO: string): string {
  */
 export function programWeekNumber(todayISO: string): number {
   return weekNumberForDate(todayISO)
+}
+
+/**
+ * One week as the settings cut it — the golden source for
+ * `HelixCore/Time/WeekWindow.swift`. An unparseable date echoes as both bounds
+ * with no days, the way `weekStartOf` echoes its input.
+ */
+export interface WeekWindow {
+  start: string
+  end: string
+  number: number
+  isCurrent: boolean
+  days: string[]
+}
+
+export function weekWindowOf(dateISO: string, startDay: number, todayISO: string): WeekWindow {
+  const start = weekStartOf(dateISO, startDay)
+  const parses = !Number.isNaN(new Date(`${start}T12:00:00Z`).getTime())
+  const days = parses ? Array.from({ length: 7 }, (_, i) => isoAddDays(start, i)) : []
+  return {
+    start,
+    end: days[6] ?? start,
+    number: weekNumberOf(start),
+    isCurrent: days.includes(todayISO),
+    days,
+  }
 }

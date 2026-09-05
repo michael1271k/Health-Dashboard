@@ -11,6 +11,8 @@ import { activeKcalOf, distanceKm, formatPace, paceMinPerKm } from '@/lib/cardio
 import { tapLight, tapSuccess } from '@/lib/native/haptics'
 import { formatSleep } from '@/lib/utils/format'
 import { logicalTodayISO } from '@/lib/utils/day'
+import { stepMarks, daysAgo as daysAgoOn, stackSchedule, dueLabel, type StackSlot } from '@/lib/dashboard/tiles'
+export { stepMarks, type StackSlot }
 import { isTrainingDay } from '@/lib/programs'
 import { useScheduleVersion } from '@/lib/hooks/useScheduleVersion'
 import {
@@ -268,19 +270,6 @@ function SleepWidgetImpl({ size, onOpen, sleep, sleepMin, goalHours, nightly }: 
  * ──────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The waypoints a person actually reasons in, up to the goal.
- *
- * Derived from the goal rather than hardcoded at 2/4/6/8/10k: the goal is a
- * user setting, and a fixed ladder would put five marks under a 6,000-step goal
- * with three of them already past the end of the track.
- */
-export function stepMarks(goal: number): number[] {
-  const step = Math.max(500, Math.round(goal / 5 / 500) * 500)
-  const marks = [step, step * 2, step * 3, step * 4].filter((v) => v < goal)
-  return [...marks, goal]
-}
-
-/**
  * Movement, and what it actually cost.
  *
  * TDEE, not the watch's active burn: active kcal alone is the half of
@@ -401,10 +390,7 @@ const KIND_LABEL: Record<string, string> = { walk: 'Walk', run: 'Run', bike: 'Bi
 
 /** `2026-08-25` → `today` / `yesterday` / `4d ago`. */
 export function daysAgo(iso: string, today = logicalTodayISO()): string {
-  const n = Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${iso}T12:00:00Z`)) / 86_400_000)
-  if (n <= 0) return 'today'
-  if (n === 1) return 'yesterday'
-  return `${n}d ago`
+  return daysAgoOn(iso, today)
 }
 
 /**
@@ -617,14 +603,6 @@ function CardioWidgetImpl({ size, onOpen }: { size: WidgetSize; onOpen?: () => v
  * STACK
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export interface StackSlot { key: string; name: string; time: string }
-
-/** `HH:MM` → minutes since midnight. An unparseable time sorts to the end. */
-function parseMin(t: string): number {
-  const [h, m] = t.split(':').map(Number)
-  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : 24 * 60
-}
-
 /**
  * The protocol, as the next thing to take.
  *
@@ -709,52 +687,18 @@ function StackWidgetImpl({ size, onOpen, slots, skipped, nowMinutes }: {
   // medium's height and `xl` is a large's; what makes them different is WIDTH,
   // and width is answered by the container queries below.
   const tier = heightTier(size)
-  /** Still ahead of you, collapsed into the time blocks they are taken in. */
-  const blocks = useMemo(() => {
-    const byTime = new Map<string, StackSlot[]>()
-    for (const s of slots) {
-      if (skipped.has(s.key) || parseMin(s.time) <= minutes) continue
-      const list = byTime.get(s.time)
-      if (list) list.push(s)
-      else byTime.set(s.time, [s])
-    }
-    return [...byTime.entries()]
-      .map(([time, items]) => ({ time, items, at: parseMin(time) }))
-      .sort((a, b) => a.at - b.at)
-  }, [slots, skipped, minutes])
-
-  /** What is already behind you, most recent first. */
-  const behind = useMemo(
-    () => slots
-      .filter((s) => skipped.has(s.key) || parseMin(s.time) <= minutes)
-      .map((s) => ({ ...s, wasSkipped: skipped.has(s.key) }))
-      .sort((a, b) => parseMin(b.time) - parseMin(a.time)),
+  // The whole schedule is one pure fold — `lib/dashboard/tiles.ts`.
+  const { blocks, behind, onProtocol, blockCount, next, inMin } = useMemo(
+    () => stackSchedule(slots, skipped, minutes),
     [slots, skipped, minutes],
   )
   const done = useMemo(() => behind.filter((b) => !b.wasSkipped), [behind])
-
-  /** The protocol minus what was deliberately dropped — the honest denominator. */
-  const onProtocol = useMemo(() => slots.filter((s) => !skipped.has(s.key)), [slots, skipped])
-
-  /** How many distinct time blocks today's protocol was taken in. */
-  const blockCount = useMemo(() => new Set(onProtocol.map((s) => s.time)).size, [onProtocol])
-  // The next block DUE, not the next on the clock: something already overdue
-  // outranks something scheduled for this evening.
-  const next = blocks[0] ?? null
-  // Nothing is overdue any more: a block whose time has passed has BEEN taken
-  // unless it was skipped, so the only blocks left are genuinely still ahead.
-  const inMin = next != null ? next.at - minutes : null
   // Small shows THREE, not two: a morning block is routinely three tablets and
   // a tile that named two of them plus "+1 more" was making the reader open it
   // to learn a word it had room for.
   const shown = tier === 's' ? 3 : 4
 
-  const due = (mins: number): string => {
-    if (mins < 0) return `${Math.abs(mins) < 60 ? `${Math.abs(mins)} min` : `${Math.floor(Math.abs(mins) / 60)}h`} overdue`
-    if (mins < 1) return 'now'
-    if (mins < 60) return `in ${mins} min`
-    return `in ${Math.floor(mins / 60)}h ${mins % 60 ? `${mins % 60}m` : ''}`.trim()
-  }
+  const due = dueLabel
 
   return (
     <WidgetFrame {...WIDGET_META.stack} size={size} onOpen={onOpen}>

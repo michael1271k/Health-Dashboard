@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Medal, Timer, TrendingUp, ChevronRight } from 'lucide-react'
-import type { DetailExercise, DetailSet } from '@/lib/hooks/useSessionDetail'
+import type { DetailExercise } from '@/lib/hooks/useSessionDetail'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { useSessionIntel } from '@/lib/hooks/useSessionIntel'
-import { useSessionTrends, LOAD_STEP_KG } from '@/lib/hooks/useSessionTrends'
+import { useSessionTrends } from '@/lib/hooks/useSessionTrends'
 import { useUnitSystem, displayWeight } from '@/lib/utils/units'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { Surface } from '@/components/ui/Zone'
@@ -14,14 +14,20 @@ import { formatSet } from '@/lib/utils/setFormat'
 import { rpeColor, rpeLabel } from '@/lib/training/effort'
 import { setTagFor } from '@/lib/training/setTags'
 import { exerciseColor } from '@/lib/theme/muscleHue'
-import { useGlobalSetHistory, workingSets, type HistorySet } from '@/lib/hooks/useExerciseSetHistory'
+import { useGlobalSetHistory, workingSets } from '@/lib/hooks/useExerciseSetHistory'
 import { useSessionPrRecords, prSetKey } from '@/lib/hooks/useSessionPrRecords'
 import { PrRecordSheet } from '@/components/command-center/PrRecordSheet'
 import { repWindowFor, holdTargetFor } from '@/lib/training/ceilings'
 import { restTargetFor, formatRestTarget } from '@/lib/training/restTargets'
 import { eraForDate } from '@/lib/programs'
 import { GOLD, OXIDE, EMERALD, SAPPHIRE, EMBER, STEEL, MUTED } from '@/lib/theme/palette'
-import { isWorkingSet } from '@/lib/training/setTags'
+import { toRows, rowsWithPrev, deltaGlyph, progressionCue as cueFor, exerciseStats } from '@/lib/sessions/detail'
+export { toRows, exerciseStats }
+
+/** The report's cue, with the unit preference applied — the pure rule is in `lib/sessions/detail.ts`. */
+export function progressionCue(t: Parameters<typeof cueFor>[0], timed: boolean, unit: string) {
+  return cueFor(t, timed, unit, displayWeight)
+}
 
 // recharts lives ONLY in this sheet, which opens on tap. Loading it statically
 // pulled the whole chart library into the Session Report's first-load bundle
@@ -60,12 +66,6 @@ const ExerciseHistorySheet = dynamic(
  * glyph is unchanged for that case; the SessionIntelCard, which has room for
  * words, is where "same weights, more work" is spelled out.
  */
-function deltaGlyph(delta: -1 | 0 | 1 | null | undefined): string | null {
-  if (delta === undefined) return null
-  if (delta == null) return '🆕'
-  return delta === 1 ? '⬆️' : delta === -1 ? '⬇️' : '═'
-}
-
 /** Continuous est-1RM trend — one point per session. */
 function Sparkline({ points, color }: { points: number[]; color: string }) {
   if (points.length < 2) return null
@@ -90,33 +90,6 @@ function Sparkline({ points, color }: { points: number[]; color: string }) {
  * "Set 1" should be the first WORKING set, which is what the program
  * prescribes and what "2/3 sets at ceiling" is counted against.
  */
-type Row =
-  | { kind: 'single'; num: number | null; set: DetailSet }
-  | { kind: 'pair'; num: number | null; left?: DetailSet; right?: DetailSet }
-
-export function toRows(sets: DetailSet[]): Row[] {
-  const rows: Row[] = []
-  const byPair = new Map<string, Extract<Row, { kind: 'pair' }>>()
-  let num = 0
-  for (const s of sets) {
-    const counts = isWorkingSet(s.setType)
-    if (s.pairId) {
-      let g = byPair.get(s.pairId)
-      if (!g) {
-        if (counts) num += 1
-        g = { kind: 'pair', num: counts ? num : null }
-        byPair.set(s.pairId, g)
-        rows.push(g)
-      }
-      if (s.side === 'R') g.right = s; else g.left = s
-    } else {
-      if (counts) num += 1
-      rows.push({ kind: 'single', num: counts ? num : null, set: s })
-    }
-  }
-  return rows
-}
-
 /**
  * The ledger's column template — declared once, used by the header row and
  * every data row, so a column cannot be added to one without the other.
@@ -199,21 +172,6 @@ function Effort({ side, rpe }: { side: 'L' | 'R'; rpe: number }) {
  * already filtered them out, and a light first set matched against last week's
  * working set compares two different things.
  */
-function rowsWithPrev(rows: Row[], prevSets: HistorySet[]): Array<{
-  row: Row; prev?: HistorySet; prevRight?: HistorySet
-}> {
-  let i = 0
-  return rows.map((row) => {
-    if (row.num == null) return { row }              // warm-up: no counterpart
-    if (row.kind === 'pair') {
-      const out = { row, prev: prevSets[i], prevRight: prevSets[i + 1] }
-      i += 2
-      return out
-    }
-    return { row, prev: prevSets[i++] }
-  })
-}
-
 /**
  * The set's identity, in one box.
  *
@@ -320,27 +278,6 @@ function SetBadge({ num, tag, isPr, timed, axes = [], onOpen }: {
  * else has nothing to say and must render nothing: a cue that always appears is
  * a cue nobody reads.
  */
-export function progressionCue(
-  t: { progression: { state: string; ceiling: number | null; suggestKg: number | null } } | undefined,
-  timed: boolean,
-  unit: string,
-): { short: string; title: string; color: string } | null {
-  const p = t?.progression
-  if (!p || (p.state !== 'ready' && p.state !== 'one-more')) return null
-  const ceil = `${p.ceiling}${timed ? 's' : ' reps'}`
-  if (p.state === 'one-more') {
-    return { short: '1 more', title: `One more clean session at ${ceil}`, color: GOLD }
-  }
-  if (timed) return { short: 'extend', title: `Cleared twice — extend past ${p.ceiling}s`, color: EMBER }
-  // No load to add on bodyweight work; the cue is reps.
-  if (p.suggestKg == null) return { short: 'extend', title: `Cleared twice — extend past ${ceil}`, color: EMBER }
-  return {
-    short: `+${LOAD_STEP_KG}${unit}`,
-    title: `Cleared twice — add ${LOAD_STEP_KG}${unit} to ${displayWeight(p.suggestKg)}${unit}`,
-    color: EMBER,
-  }
-}
-
 /**
  * The six facts a finished exercise has, computed once.
  *
@@ -364,42 +301,6 @@ export function progressionCue(
  * Warm-ups are excluded from every figure except the set count they never had:
  * they are not the work, and a light first set drags a mean down.
  */
-export function exerciseStats(ex: DetailExercise): {
-  totalReps: number
-  avgRpe: number | null
-  topKg: number
-  /** Best single set by reps (or seconds, on a timed hold). Never null. */
-  topReps: number
-} {
-  const working = ex.sets.filter((s) => isWorkingSet(s.setType))
-  // A unilateral pair is ONE set of work, so its reps count once — the same
-  // rule tonnage already uses, and the reason this cannot just sum the rows.
-  const seen = new Set<string>()
-  let totalReps = 0
-  for (const s of working) {
-    const key = s.pairId ?? `#${s.setNumber}-${s.side ?? ''}`
-    if (s.pairId && seen.has(key)) continue
-    seen.add(key)
-    totalReps += s.reps
-  }
-
-  const rpes = working.map((s) => s.rpe).filter((v): v is number => v != null)
-  const avgRpe = rpes.length
-    ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10
-    : null
-
-  return {
-    totalReps,
-    avgRpe,
-    topKg: working.reduce((m, s) => Math.max(m, s.weightKg), 0),
-    // Per SET, not summed — "top" means the best one, which on an unloaded lift
-    // is the longest set rather than the heaviest. A pair is not deduped here
-    // because taking the max of two sides is already the weaker-side-agnostic
-    // answer: the best single effort is the best single effort.
-    topReps: working.reduce((m, s) => Math.max(m, s.reps || 0), 0),
-  }
-}
-
 /** "12 Aug" — the date the PREVIOUS column is quoting. */
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })

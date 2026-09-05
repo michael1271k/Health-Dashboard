@@ -1,0 +1,92 @@
+{
+  "module": "reports/weeklyExport",
+  "fn": "sparkline",
+  "note": "Eight bars scaled from ZERO to the max; a missing day is ·; empty when nothing was logged; max ≤ 0 draws the lowest bar.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "values": []
+      },
+      "expected": ""
+    },
+    {
+      "name": "all missing",
+      "input": {
+        "values": [
+          null,
+          null
+        ]
+      },
+      "expected": ""
+    },
+    {
+      "name": "flat",
+      "input": {
+        "values": [
+          11200,
+          11400,
+          11700
+        ]
+      },
+      "expected": "███"
+    },
+    {
+      "name": "zeros",
+      "input": {
+        "values": [
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": "▁▁▁"
+    },
+    {
+      "name": "one day",
+      "input": {
+        "values": [
+          5000
+        ]
+      },
+      "expected": "█"
+    },
+    {
+      "name": "gap in the middle",
+      "input": {
+        "values": [
+          3000,
+          null,
+          12000,
+          6000
+        ]
+      },
+      "expected": "▃·█▅"
+    },
+    {
+      "name": "negative",
+      "input": {
+        "values": [
+          -5,
+          10
+        ]
+      },
+      "expected": "▁█"
+    },
+    {
+      "name": "rest zeros with volume",
+      "input": {
+        "values": [
+          0,
+          8329.25,
+          0,
+          1210.5,
+          0,
+          5400,
+          0
+        ]
+      },
+      "expected": "▁█▁▂▁▆▁"
+    }
+  ]
+}

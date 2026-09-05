@@ -1,0 +1,21 @@
+{
+  "module": "scoring/battery",
+  "fn": "relMinFor",
+  "note": "A LOWER floor can only ever lower a drain, which is what keeps MAX_TOTAL_DRAIN an upper bound.",
+  "cases": [
+    {
+      "name": "maintenance=false",
+      "input": {
+        "maintenance": false
+      },
+      "expected": 0.6
+    },
+    {
+      "name": "maintenance=true",
+      "input": {
+        "maintenance": true
+      },
+      "expected": 0.35
+    }
+  ]
+}

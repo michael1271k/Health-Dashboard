@@ -1,0 +1,449 @@
+{
+  "module": "training/prTruth",
+  "fn": "PR_TRUTH / PR_LOGGED / PR_TRUTH_AS_OF",
+  "note": "The asserted book and what Helix's own sets produce. Data, not arithmetic — the Swift constants must equal these, field for field.",
+  "cases": [
+    {
+      "name": "the book",
+      "input": {},
+      "expected": {
+        "asOf": "2026-08-10",
+        "truth": {
+          "Incline DB Press": {
+            "weight": 40,
+            "e1rm": 53.33,
+            "setVolume": {
+              "kg": 36,
+              "reps": 12
+            },
+            "sessionVolume": 1260
+          },
+          "Chest Press (Machine)": {
+            "weight": 40,
+            "e1rm": 53.33,
+            "setVolume": {
+              "kg": 37.5,
+              "reps": 12
+            },
+            "sessionVolume": 1417.5
+          },
+          "Pec Deck": {
+            "weight": 55,
+            "e1rm": 75.34,
+            "setVolume": {
+              "kg": 50,
+              "reps": 15
+            },
+            "sessionVolume": 2150
+          },
+          "Single Arm Cable Crossover": {
+            "weight": 8.75,
+            "e1rm": 12.32,
+            "setVolume": {
+              "kg": 7.5,
+              "reps": 15
+            },
+            "sessionVolume": 217.5
+          },
+          "DB Shoulder Press": {
+            "weight": 31,
+            "e1rm": 42.25,
+            "setVolume": {
+              "kg": 30,
+              "reps": 12
+            },
+            "sessionVolume": 990
+          },
+          "Single Arm Lateral Raise (Cable)": {
+            "weight": 5,
+            "e1rm": 7.81,
+            "setVolume": {
+              "kg": 5,
+              "reps": 17
+            },
+            "sessionVolume": 272.5
+          },
+          "Cable Overhead Extension": {
+            "weight": 12.5,
+            "e1rm": 16.79,
+            "setVolume": {
+              "kg": 11.25,
+              "reps": 15
+            },
+            "sessionVolume": 446.25
+          },
+          "Rope Triceps Pushdown": {
+            "weight": 15,
+            "e1rm": 22.39,
+            "setVolume": {
+              "kg": 15,
+              "reps": 15
+            },
+            "sessionVolume": 795
+          },
+          "Single Arm Triceps Pushdown (Cable)": {
+            "weight": 6.25,
+            "e1rm": 9.33,
+            "setVolume": {
+              "kg": 6.25,
+              "reps": 15
+            },
+            "sessionVolume": 175
+          },
+          "Lat Pulldown": {
+            "weight": 49.5,
+            "e1rm": 67.81,
+            "setVolume": {
+              "kg": 45,
+              "reps": 13
+            },
+            "sessionVolume": 1764
+          },
+          "Neutral-Grip Lat Pulldown": {
+            "weight": 47,
+            "e1rm": 64.38,
+            "setVolume": {
+              "kg": 45,
+              "reps": 12
+            },
+            "sessionVolume": 1080
+          },
+          "Seated Cable Row (V-Grip)": {
+            "weight": 50,
+            "e1rm": 62.5,
+            "setVolume": {
+              "kg": 42.5,
+              "reps": 14
+            },
+            "sessionVolume": 1572.5
+          },
+          "Seated Cable Row (Wide Grip)": {
+            "weight": 42.5,
+            "e1rm": 58.22,
+            "setVolume": {
+              "kg": 42.5,
+              "reps": 11
+            },
+            "sessionVolume": 887.5
+          },
+          "Straight-Arm Pulldown": {
+            "weight": 17.5,
+            "e1rm": 24.65,
+            "setVolume": {
+              "kg": 16.25,
+              "reps": 15
+            },
+            "sessionVolume": 682.5
+          },
+          "Face Pull": {
+            "weight": 16.25,
+            "e1rm": 24.25,
+            "setVolume": {
+              "kg": 16.25,
+              "reps": 15
+            },
+            "sessionVolume": 840
+          },
+          "Seated Incline DB Curl": {
+            "weight": 16,
+            "e1rm": 22.54,
+            "setVolume": {
+              "kg": 16,
+              "reps": 12
+            },
+            "sessionVolume": 512
+          },
+          "DB Hammer Curl": {
+            "weight": 20,
+            "e1rm": 28.17,
+            "setVolume": {
+              "kg": 20,
+              "reps": 12
+            },
+            "sessionVolume": 720
+          },
+          "Reverse EZ-Bar Curl": {
+            "weight": 15,
+            "e1rm": 21.43,
+            "setVolume": {
+              "kg": 15,
+              "reps": 13
+            },
+            "sessionVolume": 390
+          },
+          "Preacher Curl (Machine)": {
+            "weight": 17.5,
+            "e1rm": 24.65,
+            "setVolume": {
+              "kg": 17.5,
+              "reps": 12
+            },
+            "sessionVolume": 600
+          },
+          "Leg Press": {
+            "weight": 80,
+            "e1rm": 109.59,
+            "setVolume": {
+              "kg": 70,
+              "reps": 14
+            },
+            "sessionVolume": 3655
+          },
+          "Hack Squat": {
+            "weight": 60,
+            "e1rm": 77.46,
+            "setVolume": {
+              "kg": 55,
+              "reps": 12
+            },
+            "sessionVolume": 1320
+          },
+          "Leg Extension": {
+            "weight": 42.5,
+            "e1rm": 59.86,
+            "setVolume": {
+              "kg": 37.5,
+              "reps": 16
+            },
+            "sessionVolume": 1800
+          },
+          "Seated Leg Curl": {
+            "weight": 50,
+            "e1rm": 73.53,
+            "setVolume": {
+              "kg": 47.5,
+              "reps": 15
+            },
+            "sessionVolume": 2137.5
+          },
+          "Romanian Deadlift (DB)": {
+            "weight": 40,
+            "e1rm": 53.33,
+            "setVolume": {
+              "kg": 35,
+              "reps": 12
+            },
+            "sessionVolume": 1260
+          },
+          "Hip Thrust (Machine)": {
+            "weight": 27.5,
+            "e1rm": 40.44,
+            "setVolume": {
+              "kg": 27.5,
+              "reps": 14
+            },
+            "sessionVolume": 1117.5
+          },
+          "Calf Press": {
+            "weight": 72.5,
+            "e1rm": 100.75,
+            "setVolume": {
+              "kg": 67.5,
+              "reps": 15
+            },
+            "sessionVolume": 3240
+          },
+          "Crunch Machine": {
+            "weight": 57.5,
+            "e1rm": 80.99,
+            "setVolume": {
+              "kg": 57.5,
+              "reps": 12
+            },
+            "sessionVolume": 2070
+          },
+          "Reverse Crunch": {
+            "reps": 18,
+            "sessionReps": 51
+          },
+          "Hanging Knee Raise": {
+            "reps": 16,
+            "sessionReps": 45
+          },
+          "Side Plank": {
+            "seconds": 60
+          }
+        },
+        "logged": {
+          "Cable Overhead Extension": {
+            "weight": 11.25,
+            "e1rm": 16.9,
+            "volume": 168.75,
+            "sessionVolume": 446.25
+          },
+          "Calf Press": {
+            "weight": 70,
+            "e1rm": 101.3,
+            "volume": 1012.5,
+            "sessionVolume": 3037.5
+          },
+          "Chest Press (Machine)": {
+            "weight": 40,
+            "e1rm": 53.3,
+            "volume": 450,
+            "sessionVolume": 1350
+          },
+          "Crunch Machine": {
+            "weight": 57.5,
+            "e1rm": 80.5,
+            "volume": 690,
+            "sessionVolume": 2040
+          },
+          "DB Hammer Curl": {
+            "weight": 20,
+            "e1rm": 28,
+            "volume": 240,
+            "sessionVolume": 658
+          },
+          "DB Shoulder Press": {
+            "weight": 30,
+            "e1rm": 42,
+            "volume": 360,
+            "sessionVolume": 990
+          },
+          "Face Pull": {
+            "weight": 16.25,
+            "e1rm": 24.4,
+            "volume": 243.75,
+            "sessionVolume": 708.75
+          },
+          "Hack Squat": {
+            "weight": 60,
+            "e1rm": 77,
+            "volume": 660,
+            "sessionVolume": 1320
+          },
+          "Hanging Knee Raise": {
+            "weight": 0,
+            "volume": 0,
+            "sessionVolume": 0,
+            "reps": 16
+          },
+          "Hip Thrust (Machine)": {
+            "weight": 27.5,
+            "e1rm": 40.3,
+            "volume": 385,
+            "sessionVolume": 1117.5
+          },
+          "Incline DB Press": {
+            "weight": 40,
+            "e1rm": 53.3,
+            "volume": 420,
+            "sessionVolume": 1260
+          },
+          "Lat Pulldown": {
+            "weight": 47,
+            "e1rm": 65.8,
+            "volume": 564,
+            "sessionVolume": 1598
+          },
+          "Leg Extension": {
+            "weight": 37.5,
+            "e1rm": 53.8,
+            "volume": 525,
+            "sessionVolume": 1462.5
+          },
+          "Leg Press": {
+            "weight": 72.5,
+            "e1rm": 103.9,
+            "volume": 942.5,
+            "sessionVolume": 2755
+          },
+          "Neutral-Grip Lat Pulldown": {
+            "weight": 47,
+            "e1rm": 64.2,
+            "volume": 540,
+            "sessionVolume": 1080
+          },
+          "Pec Deck": {
+            "weight": 52.5,
+            "e1rm": 75,
+            "volume": 750,
+            "sessionVolume": 1300
+          },
+          "Preacher Curl (Machine)": {
+            "weight": 17.5,
+            "e1rm": 24.5,
+            "volume": 210,
+            "sessionVolume": 600
+          },
+          "Reverse Crunch": {
+            "weight": 0,
+            "volume": 0,
+            "sessionVolume": 0,
+            "reps": 18
+          },
+          "Reverse EZ-Bar Curl": {
+            "weight": 15,
+            "e1rm": 21.5,
+            "volume": 195,
+            "sessionVolume": 390
+          },
+          "Romanian Deadlift (DB)": {
+            "weight": 40,
+            "e1rm": 53.3,
+            "volume": 420,
+            "sessionVolume": 1260
+          },
+          "Rope Triceps Pushdown": {
+            "weight": 15,
+            "e1rm": 19.3,
+            "volume": 165,
+            "sessionVolume": 330
+          },
+          "Seated Cable Row (V-Grip)": {
+            "weight": 50,
+            "e1rm": 60.9,
+            "volume": 552.5,
+            "sessionVolume": 1062.5
+          },
+          "Seated Cable Row (Wide Grip)": {
+            "weight": 42.5,
+            "e1rm": 58.1,
+            "volume": 467.5,
+            "sessionVolume": 887.5
+          },
+          "Seated Incline DB Curl": {
+            "weight": 16,
+            "e1rm": 22.4,
+            "volume": 192,
+            "sessionVolume": 512
+          },
+          "Seated Leg Curl": {
+            "weight": 45,
+            "e1rm": 67.5,
+            "volume": 675,
+            "sessionVolume": 1935
+          },
+          "Side Plank": {
+            "seconds": 60
+          },
+          "Single Arm Cable Crossover": {
+            "weight": 8.75,
+            "e1rm": 12.3,
+            "volume": 112.5,
+            "sessionVolume": 217.5
+          },
+          "Single Arm Lateral Raise (Cable)": {
+            "weight": 5,
+            "e1rm": 7.8,
+            "volume": 85,
+            "sessionVolume": 272.5
+          },
+          "Single Arm Triceps Pushdown (Cable)": {
+            "weight": 6.25,
+            "e1rm": 9.4,
+            "volume": 93.75,
+            "sessionVolume": 175
+          },
+          "Straight-Arm Pulldown": {
+            "weight": 16.25,
+            "e1rm": 24.4,
+            "volume": 243.75,
+            "sessionVolume": 618.75
+          }
+        }
+      }
+    }
+  ]
+}

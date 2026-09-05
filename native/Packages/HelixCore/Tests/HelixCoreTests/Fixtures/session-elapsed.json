@@ -1,0 +1,408 @@
+{
+  "module": "sessions/sessionElapsed",
+  "fn": "sessionElapsedSec / sessionActiveSec / elapsedDurationMin / pausedMsAt",
+  "note": "Elapsed = floor((now − started) / 1000), null outside 0…6 h or unparseable; active subtracts banked + open pause (never negative) after the wall-clock bound; durationMin rounds and refuses < 30 s. `now` is epoch ms.",
+  "cases": [
+    {
+      "name": "live session, 70m40s",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "no ms, Z",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "offset +00:00",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000+00:00",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "offset +02:00",
+      "input": {
+        "startedAt": "2026-08-28T14:00:00.000+02:00",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "back-dated six days",
+      "input": {
+        "startedAt": "2026-08-22T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "future start",
+      "input": {
+        "startedAt": "2026-08-28T14:00:00.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "exactly the bound",
+      "input": {
+        "startedAt": "2026-08-28T07:10:40.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 21600,
+        "active": 21600,
+        "durationMin": 360,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "one past the bound",
+      "input": {
+        "startedAt": "2026-08-28T07:10:39.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "null",
+      "input": {
+        "startedAt": null,
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "startedAt": "",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "garbage",
+      "input": {
+        "startedAt": "not a date",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "under 30 s",
+      "input": {
+        "startedAt": "2026-08-28T13:10:20.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 20,
+        "active": 20,
+        "durationMin": null,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "31 s",
+      "input": {
+        "startedAt": "2026-08-28T13:10:09.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 31,
+        "active": 31,
+        "durationMin": 1,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "61:40 rounds to 62",
+      "input": {
+        "startedAt": "2026-08-28T12:09:00.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 3700,
+        "active": 3700,
+        "durationMin": 62,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "61:20 rounds to 61",
+      "input": {
+        "startedAt": "2026-08-28T12:09:20.000Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 3680,
+        "active": 3680,
+        "durationMin": 61,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "closed pause of 10 min",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 600000
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 3640,
+        "durationMin": 61,
+        "pausedMs": 600000
+      }
+    },
+    {
+      "name": "open pause since 12:40",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 0,
+          "pausedAt": "2026-08-28T12:40:00.000Z"
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 2400,
+        "durationMin": 40,
+        "pausedMs": 1840000
+      }
+    },
+    {
+      "name": "open pause plus bank",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 300000,
+          "pausedAt": "2026-08-28T13:07:00.000Z"
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 3720,
+        "durationMin": 62,
+        "pausedMs": 520000
+      }
+    },
+    {
+      "name": "pause in the future",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 120000,
+          "pausedAt": "2026-08-28T13:30:00.000Z"
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4120,
+        "durationMin": 69,
+        "pausedMs": 120000
+      }
+    },
+    {
+      "name": "negative bank",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": -900
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "unparseable pausedAt",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 180000,
+          "pausedAt": "not a date"
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4060,
+        "durationMin": 68,
+        "pausedMs": 180000
+      }
+    },
+    {
+      "name": "over-long pause clamps to zero",
+      "input": {
+        "startedAt": "2026-08-28T13:05:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 3600000
+        }
+      },
+      "expected": {
+        "elapsed": 340,
+        "active": 0,
+        "durationMin": null,
+        "pausedMs": 3600000
+      }
+    },
+    {
+      "name": "mis-dated draft not rescued by a pause",
+      "input": {
+        "startedAt": "2026-08-25T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 259200000
+        }
+      },
+      "expected": {
+        "elapsed": null,
+        "active": null,
+        "durationMin": null,
+        "pausedMs": 259200000
+      }
+    },
+    {
+      "name": "empty pause object",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {}
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4240,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "pausedAt empty string",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.000Z",
+        "now": 1787922640000,
+        "pause": {
+          "pausedMs": 1000,
+          "pausedAt": ""
+        }
+      },
+      "expected": {
+        "elapsed": 4240,
+        "active": 4239,
+        "durationMin": 71,
+        "pausedMs": 1000
+      }
+    },
+    {
+      "name": "date-only startedAt",
+      "input": {
+        "startedAt": "2026-08-28",
+        "now": 1787878800000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 3600,
+        "active": 3600,
+        "durationMin": 60,
+        "pausedMs": 0
+      }
+    },
+    {
+      "name": "fractional seconds .5",
+      "input": {
+        "startedAt": "2026-08-28T12:00:00.500Z",
+        "now": 1787922640000,
+        "pause": null
+      },
+      "expected": {
+        "elapsed": 4239,
+        "active": 4239,
+        "durationMin": 71,
+        "pausedMs": 0
+      }
+    }
+  ]
+}

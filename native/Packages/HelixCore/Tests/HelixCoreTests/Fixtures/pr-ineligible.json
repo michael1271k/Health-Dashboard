@@ -1,0 +1,84 @@
+{
+  "module": "training/prEngine",
+  "fn": "isPrIneligible",
+  "note": "Exactly warmup, dropset and ghost — case-sensitive. Everything else can win and can set a bar.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "setType": null
+      },
+      "expected": false
+    },
+    {
+      "name": "",
+      "input": {
+        "setType": ""
+      },
+      "expected": false
+    },
+    {
+      "name": "warmup",
+      "input": {
+        "setType": "warmup"
+      },
+      "expected": true
+    },
+    {
+      "name": "dropset",
+      "input": {
+        "setType": "dropset"
+      },
+      "expected": true
+    },
+    {
+      "name": "ghost",
+      "input": {
+        "setType": "ghost"
+      },
+      "expected": true
+    },
+    {
+      "name": "failure",
+      "input": {
+        "setType": "failure"
+      },
+      "expected": false
+    },
+    {
+      "name": "working",
+      "input": {
+        "setType": "working"
+      },
+      "expected": false
+    },
+    {
+      "name": "Warmup",
+      "input": {
+        "setType": "Warmup"
+      },
+      "expected": false
+    },
+    {
+      "name": "WARMUP",
+      "input": {
+        "setType": "WARMUP"
+      },
+      "expected": false
+    },
+    {
+      "name": "drop",
+      "input": {
+        "setType": "drop"
+      },
+      "expected": false
+    },
+    {
+      "name": "top",
+      "input": {
+        "setType": "top"
+      },
+      "expected": false
+    }
+  ]
+}

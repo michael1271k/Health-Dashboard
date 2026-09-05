@@ -6,7 +6,8 @@
   Apple has required one since May 2024 for any app whose binary calls a
   "required reason" API, and rejects the upload without it. This project had
   none: a search of ios/ for NSPrivacyAccessedAPITypes returned nothing, while
-  `HelixSnapshot.swift` and `@capacitor/preferences` both use UserDefaults,
+  `@capacitor/preferences` uses UserDefaults (so did the widget bridge, until
+  the extension was removed in Wave 5),
   which is category NSPrivacyAccessedAPICategoryUserDefaults. The failure is
   invisible until the first App Store Connect upload, which is the worst place
   to discover it.
@@ -29,8 +30,7 @@
     NSPrivacyCollectedDataTypeHealth / …Fitness. Apple's list has no finer
     grain and inventing one would be worse than using theirs.
 
-  The widget extension is a separate binary and carries its own manifest at
-  ios/App/HelixWidgets/PrivacyInfo.xcprivacy.
+  The native app and its widget bundle (native/) carry their own manifests.
 -->
 <plist version="1.0">
 <dict>
@@ -82,8 +82,7 @@
 		<dict>
 			<!--
 			  UserDefaults. Reached two ways: @capacitor/preferences persists the
-			  app's own settings through it, and HelixWidgetBridge writes the
-			  widget snapshot cache. CA92.1 is the correct reason — the app only
+			  app's own settings through it. CA92.1 is the correct reason — the app only
 			  ever reads back data it wrote itself, in its own container.
 			-->
 			<key>NSPrivacyAccessedAPIType</key>

@@ -1,0 +1,285 @@
+# XcodeGen spec for the parallel native app.
+#
+# ── WHY THE PROJECT FILE IS GENERATED ────────────────────────────────────────
+# `ios/App/App.xcodeproj/project.pbxproj` in the Capacitor app is hand-edited,
+# and the `native` skill documents what that costs: a new .swift file that is not
+# ticked into a target fails at LINK time with an error naming a symbol, not a
+# file. That is a bad failure mode with two targets. The native app will have
+# more, so the project file is a build artefact here — regenerate it, never edit
+# it, and never commit it.
+#
+#     brew install xcodegen
+#     cd native && xcodegen generate && open HelixNative.xcodeproj
+#
+# ── AND WHY IT IS A SECOND BUNDLE ID ─────────────────────────────────────────
+# `app.helix.health.michael.native` installs ALONGSIDE the Capacitor app rather
+# than over it. Both read the same Supabase, so the old app stays your daily
+# driver — and your reference implementation — for as long as this one takes.
+# Nothing about this migration requires a day where neither app works.
+
+name: HelixNative
+
+options:
+  bundleIdPrefix: app.helix.health.michael
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+packages:
+  HelixCore:
+    path: Packages/HelixCore
+  HelixData:
+    path: Packages/HelixData
+  HelixUI:
+    path: Packages/HelixUI
+
+targets:
+  HelixNative:
+    type: application
+    platform: iOS
+
+    sources:
+      - path: HelixNative
+        excludes:
+          # The example is documentation. The real one is gitignored and is
+          # attached below as a config file, not compiled as a source.
+          - "Support/Secrets.example.xcconfig"
+          - "Support/Secrets.xcconfig"
+          - "Support/HelixNative.entitlements"
+      # `Shared/` is in BOTH targets, and it has to be: ActivityKit matches the
+      # app's `Activity.request` to the extension's `ActivityConfiguration` by
+      # the ATTRIBUTES TYPE, and two identically-named structs compiled into two
+      # modules are two different types. That failure does not break the build —
+      # the activity starts and nothing draws.
+      - path: Shared
+
+    dependencies:
+      - package: HelixCore
+        product: HelixCore
+      - package: HelixData
+        product: HelixData
+      - package: HelixUI
+        product: HelixUI
+      # Embedding the extension is what puts its `ActivityConfiguration` in the
+      # app bundle. Without this the app can request an activity and the system
+      # has nothing to draw it with.
+      - target: HelixNativeWidgets
+
+    # Secrets arrive as build settings and are surfaced through Info.plist, the
+    # same convention the widget extension already uses for HELIX_SNAPSHOT_URL.
+    configFiles:
+      Debug: HelixNative/Support/Secrets.xcconfig
+      Release: HelixNative/Support/Secrets.xcconfig
+
+    # ── The App Group ────────────────────────────────────────────────────────
+    # Gate 0 (§5.0): the shared container is where `helix.sqlite` lives, so the
+    # widget extension reads the SAME file the app writes — no snapshot route,
+    # no token, no HTTP. Needs the paid Developer Program; a free personal team
+    # cannot sign this entitlement, and `AppDatabase.sharedFolder()` falls back
+    # to Application Support so the app still runs (widgets then stay empty).
+    entitlements:
+      path: HelixNative/Support/HelixNative.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.helix.health
+        # ── HealthKit ────────────────────────────────────────────────────────
+        # Read access to the quantity types in `HealthCatalogue` plus sleep
+        # analysis. This is the ONLY entitlement key standard read access needs:
+        # `.access` is clinical records (none are requested) and
+        # `.background-delivery` is for `enableBackgroundDelivery`, which is
+        # never called. The two usage strings below are the other half —
+        # `requestAuthorization` traps immediately without them.
+        #
+        # A personal team can provision HealthKit, but not the App Group above,
+        # and Xcode refuses the profile for the target as a whole — so on-device
+        # Health still waits on Gate 0 (buy the Developer Program).
+        com.apple.developer.healthkit: true
+
+    info:
+      path: HelixNative/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Onyx
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        # Dark only, matching the web app — which pins `defaultTheme="dark"` and
+        # ships no toggle anywhere. A light palette is not a port, it is a design
+        # project, and it is not in Wave 1.
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # Live Activities are opt-in per app and this is the opt-in. Without it
+        # `ActivityAuthorizationInfo().areActivitiesEnabled` is false forever
+        # and the controller silently does nothing.
+        NSSupportsLiveActivities: true
+        # The rest clock keeps counting on the Lock Screen without the app being
+        # woken, so no background mode is needed for it. `workout-processing`
+        # arrives with the Watch in Wave 5.
+        NSSupportsLiveActivitiesFrequentUpdates: false
+        # ── Export compliance ────────────────────────────────────────────
+        # App Store Connect asks this on EVERY upload and blocks the build in
+        # "Missing Compliance" until it is answered. Declaring it here answers
+        # it once, in the binary, so TestFlight never stalls waiting on a form.
+        # `false` is the correct answer: the only cryptography in the app is
+        # HTTPS to Supabase and the system Keychain, both of which are the
+        # exemptions in Category 5 Part 2 — nothing here implements or bundles
+        # its own encryption.
+        ITSAppUsesNonExemptEncryption: false
+        # ── Health permission copy ───────────────────────────────────────
+        # Shown in the system sheet the first time `HealthSync` asks. App Review
+        # rejects a generic string: it has to name the data and the purpose the
+        # user gets out of it, so these list the actual categories read and what
+        # the app computes from them.
+        NSHealthShareUsageDescription: >-
+          Onyx reads your activity, heart, sleep, body-measurement and
+          nutrition data from Apple Health to work out your daily readiness and
+          recovery scores, your training load and your energy balance, and to
+          fill in the charts and Home Screen widgets. Nothing is read that you
+          do not allow, and your data is stored only on this device and in your
+          own private Onyx account.
+        # Not written today — `HealthKitReader` requests `toShare: []`, and the
+        # sheet only ever shows the half being asked for, so this string is
+        # currently never displayed. It is declared ahead of the Watch client
+        # (1.1), which saves its strength sessions back. Declaring it early
+        # prevents no prompt (the WRITE prompt is triggered by a non-empty
+        # `toShare:`, not by this key) — it just means the plist is already
+        # right when that call lands.
+        NSHealthUpdateUsageDescription: >-
+          Onyx saves the strength workouts you log — their duration, active
+          energy and heart rate — back to Apple Health, so the training you do
+          here appears alongside the rest of your activity rings.
+        # Substituted from Secrets.xcconfig at build time.
+        HELIX_SUPABASE_URL: $(HELIX_SUPABASE_URL)
+        HELIX_SUPABASE_ANON_KEY: $(HELIX_SUPABASE_ANON_KEY)
+        # `helix://open?path=/nutrition` — what every tile's `.widgetURL` opens.
+        # Received by `.onOpenURL` in RootView through `DeepLink.safePath`, the
+        # same allow-list the web app used (`src/lib/native/deepLink.ts`).
+        CFBundleURLTypes:
+          - CFBundleURLName: app.helix.health.michael.native
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - helix
+        # Required-reason API declaration lives in the privacy manifest, not
+        # here — see PrivacyInfo.xcprivacy. The Capacitor app was rejected-ready
+        # without one for months; this target starts with it.
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native
+        # The 1024×1024 mark from `Resources/Assets.xcassets`, carried over from
+        # the Capacitor app so both icons are the same brand. Without this the
+        # target has no icon at all: a blank Home Screen tile, and an upload the
+        # validator rejects for a missing marketing icon.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # Automatic signing with the free personal team. The 7-day provisioning
+        # expiry is a property of that team, not of this setting.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: W9UMPV973P
+        SWIFT_VERSION: "6.0"
+        # Strict concurrency from day one. Retrofitting it later is the thing
+        # that makes people abandon it.
+        SWIFT_STRICT_CONCURRENCY: complete
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        GENERATE_INFOPLIST_FILE: NO
+
+  # ── The widget extension ─────────────────────────────────────────────────
+  #
+  # Wave 5: the five Home Screen families (Fuel, Training, Body, Daily, Vitals),
+  # the Lock Screen accessory and the running-workout Live Activity. The tiles
+  # are `HelixUI` views; the provider reads the App Group GRDB file through
+  # HelixData and never touches the network. `HelixIntents` (the focus pickers)
+  # came across intact.
+  HelixNativeWidgets:
+    type: app-extension
+    platform: iOS
+
+    sources:
+      - path: HelixNativeWidgets
+        excludes:
+          - "Support/Info.plist"
+          - "Support/HelixNativeWidgets.entitlements"
+      - path: Shared
+
+    dependencies:
+      - package: HelixCore
+        product: HelixCore
+      # Read-only. `AppDatabase.readOnly(folderURL:)` opens the shared file
+      # without running migrations — an extension that migrated would race the
+      # app for the schema.
+      - package: HelixData
+        product: HelixData
+      - package: HelixUI
+        product: HelixUI
+
+    entitlements:
+      path: HelixNativeWidgets/Support/HelixNativeWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.helix.health
+
+    info:
+      path: HelixNativeWidgets/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Onyx Activity
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.widgets
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: W9UMPV973P
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+
+  # ── The app's own tests ──────────────────────────────────────────────────
+  #
+  # Almost everything provable lives in HelixCore and HelixData, which test on
+  # the command line in seconds with no simulator, no signing and no Xcode. This
+  # target is for what genuinely cannot: `LoggerModel` is @MainActor, holds
+  # @Observable view state, and enforces one rule with no home in the domain —
+  # what happens to sets already logged when the prescription changes under them.
+  HelixNativeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: HelixNativeTests
+    dependencies:
+      - target: HelixNative
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.helix.health.michael.native.tests
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        # Hosted by the app, so `@testable import HelixNative` can see it.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelixNative.app/HelixNative"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  HelixNative:
+    build:
+      targets:
+        HelixNative: all
+        HelixNativeWidgets: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      # The domain and store suites run from the command line with `swift test`
+      # and do not need the app scheme. They are listed here so ⌘U in Xcode runs
+      # everything, which is what a person actually expects it to do.
+      targets:
+        - HelixNativeTests
+        - package: HelixCore/HelixCoreTests
+        - package: HelixData/HelixDataTests
+        - package: HelixUI/HelixUITests

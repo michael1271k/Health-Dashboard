@@ -1,0 +1,865 @@
+{
+  "module": "widget/derive",
+  "fn": "e1rmTrends",
+  "note": "Per-exercise per-DAY best of (stored est1rmKg when > 0, else Epley). Only working sets (isWorkingSet). Baseline = newest day at or before asOf − windowDays (default 28); null delta without one. Sorted most-recently-trained first, heaviest breaks the tie; limit default 3. Values round to one place.",
+  "cases": [
+    {
+      "name": "four weeks, default limit",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-01",
+            "weightKg": 180,
+            "reps": 10,
+            "est1rmKg": 240,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 190,
+            "reps": 8,
+            "est1rmKg": null,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 170,
+            "reps": 12,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8,
+            "est1rmKg": 253.33,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 75,
+            "reps": 8,
+            "setType": "dropset"
+          },
+          {
+            "exercise": "Plank",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 60,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Pull-Up",
+            "day": "2026-08-04",
+            "weightKg": null,
+            "reps": 10,
+            "est1rmKg": null
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 60,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 5,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-10",
+            "weightKg": 55,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-09",
+            "weightKg": 58,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "failure"
+          }
+        ],
+        "asOf": "2026-08-06",
+        "windowDays": null,
+        "limit": null
+      },
+      "expected": [
+        {
+          "exercise": "Leg Press",
+          "kg": 253.3,
+          "deltaKg": 12.6,
+          "trend": [
+            {
+              "d": "2026-07-01",
+              "v": 240
+            },
+            {
+              "d": "2026-07-08",
+              "v": 240.7
+            },
+            {
+              "d": "2026-08-05",
+              "v": 253.3
+            }
+          ]
+        },
+        {
+          "exercise": "Chest Press",
+          "kg": 80,
+          "deltaKg": 2.7,
+          "trend": [
+            {
+              "d": "2026-07-09",
+              "v": 77.3
+            },
+            {
+              "d": "2026-07-10",
+              "v": 73.3
+            },
+            {
+              "d": "2026-08-05",
+              "v": 80
+            }
+          ]
+        },
+        {
+          "exercise": "Hammer Curl",
+          "kg": 19.6,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-05",
+              "v": 19.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "limit 10",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-01",
+            "weightKg": 180,
+            "reps": 10,
+            "est1rmKg": 240,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 190,
+            "reps": 8,
+            "est1rmKg": null,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 170,
+            "reps": 12,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8,
+            "est1rmKg": 253.33,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 75,
+            "reps": 8,
+            "setType": "dropset"
+          },
+          {
+            "exercise": "Plank",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 60,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Pull-Up",
+            "day": "2026-08-04",
+            "weightKg": null,
+            "reps": 10,
+            "est1rmKg": null
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 60,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 5,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-10",
+            "weightKg": 55,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-09",
+            "weightKg": 58,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "failure"
+          }
+        ],
+        "asOf": "2026-08-06",
+        "windowDays": null,
+        "limit": 10
+      },
+      "expected": [
+        {
+          "exercise": "Leg Press",
+          "kg": 253.3,
+          "deltaKg": 12.6,
+          "trend": [
+            {
+              "d": "2026-07-01",
+              "v": 240
+            },
+            {
+              "d": "2026-07-08",
+              "v": 240.7
+            },
+            {
+              "d": "2026-08-05",
+              "v": 253.3
+            }
+          ]
+        },
+        {
+          "exercise": "Chest Press",
+          "kg": 80,
+          "deltaKg": 2.7,
+          "trend": [
+            {
+              "d": "2026-07-09",
+              "v": 77.3
+            },
+            {
+              "d": "2026-07-10",
+              "v": 73.3
+            },
+            {
+              "d": "2026-08-05",
+              "v": 80
+            }
+          ]
+        },
+        {
+          "exercise": "Hammer Curl",
+          "kg": 19.6,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-05",
+              "v": 19.6
+            }
+          ]
+        },
+        {
+          "exercise": "Lat Pulldown",
+          "kg": 95,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-04",
+              "v": 95
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a seven-day window",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-01",
+            "weightKg": 180,
+            "reps": 10,
+            "est1rmKg": 240,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 190,
+            "reps": 8,
+            "est1rmKg": null,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 170,
+            "reps": 12,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8,
+            "est1rmKg": 253.33,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 75,
+            "reps": 8,
+            "setType": "dropset"
+          },
+          {
+            "exercise": "Plank",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 60,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Pull-Up",
+            "day": "2026-08-04",
+            "weightKg": null,
+            "reps": 10,
+            "est1rmKg": null
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 60,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 5,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-10",
+            "weightKg": 55,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-09",
+            "weightKg": 58,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "failure"
+          }
+        ],
+        "asOf": "2026-08-06",
+        "windowDays": 7,
+        "limit": 10
+      },
+      "expected": [
+        {
+          "exercise": "Leg Press",
+          "kg": 253.3,
+          "deltaKg": 12.6,
+          "trend": [
+            {
+              "d": "2026-07-01",
+              "v": 240
+            },
+            {
+              "d": "2026-07-08",
+              "v": 240.7
+            },
+            {
+              "d": "2026-08-05",
+              "v": 253.3
+            }
+          ]
+        },
+        {
+          "exercise": "Chest Press",
+          "kg": 80,
+          "deltaKg": 6.7,
+          "trend": [
+            {
+              "d": "2026-07-09",
+              "v": 77.3
+            },
+            {
+              "d": "2026-07-10",
+              "v": 73.3
+            },
+            {
+              "d": "2026-08-05",
+              "v": 80
+            }
+          ]
+        },
+        {
+          "exercise": "Hammer Curl",
+          "kg": 19.6,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-05",
+              "v": 19.6
+            }
+          ]
+        },
+        {
+          "exercise": "Lat Pulldown",
+          "kg": 95,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-04",
+              "v": 95
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "as-of before everything",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-01",
+            "weightKg": 180,
+            "reps": 10,
+            "est1rmKg": 240,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 190,
+            "reps": 8,
+            "est1rmKg": null,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 170,
+            "reps": 12,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8,
+            "est1rmKg": 253.33,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 75,
+            "reps": 8,
+            "setType": "dropset"
+          },
+          {
+            "exercise": "Plank",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 60,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Pull-Up",
+            "day": "2026-08-04",
+            "weightKg": null,
+            "reps": 10,
+            "est1rmKg": null
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 60,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 5,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-10",
+            "weightKg": 55,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-09",
+            "weightKg": 58,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "failure"
+          }
+        ],
+        "asOf": "2026-06-01",
+        "windowDays": null,
+        "limit": 10
+      },
+      "expected": [
+        {
+          "exercise": "Leg Press",
+          "kg": 253.3,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-07-01",
+              "v": 240
+            },
+            {
+              "d": "2026-07-08",
+              "v": 240.7
+            },
+            {
+              "d": "2026-08-05",
+              "v": 253.3
+            }
+          ]
+        },
+        {
+          "exercise": "Chest Press",
+          "kg": 80,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-07-09",
+              "v": 77.3
+            },
+            {
+              "d": "2026-07-10",
+              "v": 73.3
+            },
+            {
+              "d": "2026-08-05",
+              "v": 80
+            }
+          ]
+        },
+        {
+          "exercise": "Hammer Curl",
+          "kg": 19.6,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-05",
+              "v": 19.6
+            }
+          ]
+        },
+        {
+          "exercise": "Lat Pulldown",
+          "kg": 95,
+          "deltaKg": null,
+          "trend": [
+            {
+              "d": "2026-08-04",
+              "v": 95
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "limit 0",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-01",
+            "weightKg": 180,
+            "reps": 10,
+            "est1rmKg": 240,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 190,
+            "reps": 8,
+            "est1rmKg": null,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-07-08",
+            "weightKg": 170,
+            "reps": 12,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 8,
+            "est1rmKg": 253.33,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Leg Press",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 70,
+            "reps": 10,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Lat Pulldown",
+            "day": "2026-08-04",
+            "weightKg": 75,
+            "reps": 8,
+            "setType": "dropset"
+          },
+          {
+            "exercise": "Plank",
+            "day": "2026-08-04",
+            "weightKg": 0,
+            "reps": 60,
+            "est1rmKg": 0,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Pull-Up",
+            "day": "2026-08-04",
+            "weightKg": null,
+            "reps": 10,
+            "est1rmKg": null
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 60,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 200,
+            "reps": 5,
+            "setType": "warmup"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-10",
+            "weightKg": 55,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Chest Press",
+            "day": "2026-07-09",
+            "weightKg": 58,
+            "reps": 10,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "normal"
+          },
+          {
+            "exercise": "Hammer Curl",
+            "day": "2026-08-05",
+            "weightKg": 14,
+            "reps": 12,
+            "est1rmKg": 19.6,
+            "setType": "failure"
+          }
+        ],
+        "asOf": "2026-08-06",
+        "windowDays": null,
+        "limit": 0
+      },
+      "expected": []
+    },
+    {
+      "name": "empty",
+      "input": {
+        "sets": [],
+        "asOf": "2026-08-06",
+        "windowDays": null,
+        "limit": null
+      },
+      "expected": []
+    }
+  ]
+}

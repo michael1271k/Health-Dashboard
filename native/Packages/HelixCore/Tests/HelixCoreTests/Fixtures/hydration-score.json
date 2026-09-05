@@ -1,0 +1,151 @@
+{
+  "module": "scoring/score",
+  "fn": "computeHydrationScore",
+  "note": "Ratio capped at 100. No goal, or nothing logged, is null — an unlogged morning is never penalised.",
+  "cases": [
+    {
+      "name": "water=0/0",
+      "input": {
+        "waterMl": 0,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=0/-5",
+      "input": {
+        "waterMl": 0,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=0/3000",
+      "input": {
+        "waterMl": 0,
+        "waterGoalMl": 3000
+      },
+      "expected": null
+    },
+    {
+      "name": "water=-1/0",
+      "input": {
+        "waterMl": -1,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=-1/-5",
+      "input": {
+        "waterMl": -1,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=-1/3000",
+      "input": {
+        "waterMl": -1,
+        "waterGoalMl": 3000
+      },
+      "expected": null
+    },
+    {
+      "name": "water=1/0",
+      "input": {
+        "waterMl": 1,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=1/-5",
+      "input": {
+        "waterMl": 1,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=1/3000",
+      "input": {
+        "waterMl": 1,
+        "waterGoalMl": 3000
+      },
+      "expected": 0.03333333333333333
+    },
+    {
+      "name": "water=1500/0",
+      "input": {
+        "waterMl": 1500,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=1500/-5",
+      "input": {
+        "waterMl": 1500,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=1500/3000",
+      "input": {
+        "waterMl": 1500,
+        "waterGoalMl": 3000
+      },
+      "expected": 50
+    },
+    {
+      "name": "water=3000/0",
+      "input": {
+        "waterMl": 3000,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=3000/-5",
+      "input": {
+        "waterMl": 3000,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=3000/3000",
+      "input": {
+        "waterMl": 3000,
+        "waterGoalMl": 3000
+      },
+      "expected": 100
+    },
+    {
+      "name": "water=4000/0",
+      "input": {
+        "waterMl": 4000,
+        "waterGoalMl": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "water=4000/-5",
+      "input": {
+        "waterMl": 4000,
+        "waterGoalMl": -5
+      },
+      "expected": null
+    },
+    {
+      "name": "water=4000/3000",
+      "input": {
+        "waterMl": 4000,
+        "waterGoalMl": 3000
+      },
+      "expected": 100
+    }
+  ]
+}

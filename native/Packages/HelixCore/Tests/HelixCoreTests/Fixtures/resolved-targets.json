@@ -1,0 +1,3248 @@
+{
+  "module": "nutrition/targets",
+  "fn": "resolveTargets / mergedProfiles",
+  "note": "own numbers → rung in force on the DATE (schedule for the past, selection today+, release expiry) → daily_targets on top; water/sleep pass through; leverId is leverForDate (null before the cut); profileKey is the MATCHED profile over stored-then-builtin, not the stamp.",
+  "cases": [
+    {
+      "name": "custom, no override on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "custom, no override on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "no selection on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "lever 1 selected on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "unknown lever on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-9",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance until 2026-09-06 on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": "2026-09-06",
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "maintenance, no end on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "maintenance-week",
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "restaurant day on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "restaurant day on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "protein_g": 170,
+            "carbs_g": null,
+            "fat_g": null,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": false,
+            "track_fat": false,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": null,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "restaurant"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "home day, stamped restaurant on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "restaurant",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 195,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 182,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 206,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 244,
+        "fat": null,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 182,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 182,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "hand override under lever 1 on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "lever-1",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2400,
+            "track_fat": false
+          },
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2400,
+        "protein": 170,
+        "carbs": 182,
+        "fat": null,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile replaces home on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2100,
+            "protein_g": 170,
+            "carbs_g": 230,
+            "fat_g": 55
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2100,
+        "protein": 170,
+        "carbs": 230,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": "home"
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "stored profile, builtin figures no longer match on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 1999,
+            "protein": 170,
+            "carbs": 206,
+            "fat": 55,
+            "steps": 10000
+          },
+          "waterMl": 3000,
+          "sleepHours": 8,
+          "activeLever": "custom",
+          "maintenanceUntil": null,
+          "dayTarget": {
+            "date": "2026-09-05",
+            "kcal": 2150,
+            "protein_g": 170,
+            "carbs_g": 244,
+            "fat_g": 55,
+            "steps_goal": null,
+            "profile_key": "home",
+            "track_carbs": true,
+            "track_fat": true,
+            "note": null
+          },
+          "profiles": [
+            {
+              "key": "home",
+              "label": "Mine",
+              "summary": "",
+              "sort": 0,
+              "kcal": 2100,
+              "proteinG": 170,
+              "carbsG": 230,
+              "fatG": 55,
+              "stepsGoal": null
+            }
+          ]
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2150,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": 3000,
+        "sleepHours": 8,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-07-14",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-07-14",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1955,
+        "protein": 170,
+        "carbs": 195,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": null,
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-08-18",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-18",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1885,
+        "protein": 170,
+        "carbs": 182,
+        "fat": 53,
+        "steps": 10000,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "lever-1",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-08-25",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-08-25",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 1999,
+        "protein": 170,
+        "carbs": 206,
+        "fat": 55,
+        "steps": 10000,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-09-01",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-01",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-09-05",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-05",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 2151,
+        "protein": 170,
+        "carbs": 244,
+        "fat": 55,
+        "steps": 7500,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "maintenance-week",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-09-08",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-08",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": null,
+        "carbs": null,
+        "fat": null,
+        "steps": null,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    },
+    {
+      "name": "bare row on 2026-09-20",
+      "input": {
+        "sources": {
+          "own": {
+            "calorie": 0,
+            "protein": null,
+            "carbs": null,
+            "fat": null,
+            "steps": null
+          },
+          "waterMl": null,
+          "sleepHours": null,
+          "activeLever": null,
+          "maintenanceUntil": null,
+          "dayTarget": null,
+          "profiles": []
+        },
+        "date": "2026-09-20",
+        "today": "2026-09-05"
+      },
+      "expected": {
+        "kcal": 0,
+        "protein": null,
+        "carbs": null,
+        "fat": null,
+        "steps": null,
+        "waterMl": null,
+        "sleepHours": null,
+        "leverId": "custom",
+        "profileKey": null
+      }
+    }
+  ]
+}

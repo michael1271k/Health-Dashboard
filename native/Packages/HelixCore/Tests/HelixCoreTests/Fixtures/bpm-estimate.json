@@ -1,0 +1,56 @@
+{
+  "module": "sessions/estimates",
+  "fn": "estimateAvgBpm",
+  "note": "The previous value, rounded; null for nothing or non-positive.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "previousBpm": null
+      },
+      "expected": null
+    },
+    {
+      "name": "0",
+      "input": {
+        "previousBpm": 0
+      },
+      "expected": null
+    },
+    {
+      "name": "-1",
+      "input": {
+        "previousBpm": -1
+      },
+      "expected": null
+    },
+    {
+      "name": "118",
+      "input": {
+        "previousBpm": 118
+      },
+      "expected": 118
+    },
+    {
+      "name": "117.6",
+      "input": {
+        "previousBpm": 117.6
+      },
+      "expected": 118
+    },
+    {
+      "name": "117.5",
+      "input": {
+        "previousBpm": 117.5
+      },
+      "expected": 118
+    },
+    {
+      "name": "60.4999",
+      "input": {
+        "previousBpm": 60.4999
+      },
+      "expected": 60
+    }
+  ]
+}

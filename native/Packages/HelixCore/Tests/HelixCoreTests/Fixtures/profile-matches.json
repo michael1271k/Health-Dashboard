@@ -1,0 +1,669 @@
+{
+  "module": "nutrition/profiles",
+  "fn": "matchesProfile",
+  "note": "Compared on the four food figures and both tracking flags (absent = tracked); steps excluded; the stamp is NOT consulted.",
+  "cases": [
+    {
+      "name": "null vs home",
+      "input": {
+        "target": null,
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home row vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "restaurant row vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant edited kcal vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2650,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant figures but tracked flags vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "track_carbs": true,
+          "track_fat": true
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant figures, flags absent vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures, flags absent vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "home figures with a different fat vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 60
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures, fat untracked vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "track_fat": false
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home with a step goal — steps are excluded vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": 12000,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "home figures under a restaurant stamp — the stamp is not consulted vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "restaurant figures under a home stamp vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "empty day vs home",
+      "input": {
+        "target": {
+          "date": "2026-09-04"
+        },
+        "profile": {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "null vs restaurant",
+      "input": {
+        "target": null,
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home row vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant row vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "restaurant edited kcal vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2650,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant figures but tracked flags vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "track_carbs": true,
+          "track_fat": true
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant figures, flags absent vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures, flags absent vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures with a different fat vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 60
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures, fat untracked vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "track_fat": false
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home with a step goal — steps are excluded vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": 12000,
+          "profile_key": "home",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "home figures under a restaurant stamp — the stamp is not consulted vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2150,
+          "protein_g": 170,
+          "carbs_g": 244,
+          "fat_g": 55,
+          "steps_goal": null,
+          "profile_key": "restaurant",
+          "track_carbs": true,
+          "track_fat": true,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "restaurant figures under a home stamp vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04",
+          "kcal": 2400,
+          "protein_g": 170,
+          "carbs_g": null,
+          "fat_g": null,
+          "steps_goal": null,
+          "profile_key": "home",
+          "track_carbs": false,
+          "track_fat": false,
+          "note": null
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "empty day vs restaurant",
+      "input": {
+        "target": {
+          "date": "2026-09-04"
+        },
+        "profile": {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      },
+      "expected": false
+    }
+  ]
+}

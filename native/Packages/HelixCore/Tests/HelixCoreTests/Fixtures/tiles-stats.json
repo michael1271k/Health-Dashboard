@@ -1,0 +1,2722 @@
+{
+  "module": "dashboard/tiles",
+  "fn": "mean / vsBaseline / stepMarks / nutrientRisk / consistencyWindow / daysAgo / parseMin / dueLabel",
+  "note": "Extracted from widgets/parts, PlanWidgets, FuelWidget and DailyWidgets. vsBaseline compares today against the mean of series[0..-1] (the series EXCLUDING its last element), rounded to one place. nutrientRisk is -1 when unmeasured, 0 at or past a non-positive target. consistencyWindow = (weeks-1)*7 + Sunday-anchored weekday + 1.",
+  "cases": [
+    {
+      "name": "vsBaseline [] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,55,60] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          55,
+          60
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,55,60] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          55,
+          60
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 6.5,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,55,60] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          55,
+          60
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -1.2,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,55,60] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          55,
+          60
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -53.5,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,52,null,54,57] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          52,
+          null,
+          54,
+          57
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,52,null,54,57] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          52,
+          null,
+          54,
+          57
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,52,null,54,57] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          52,
+          null,
+          54,
+          57
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -0.7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,52,null,54,57] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          52,
+          null,
+          54,
+          57
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -53,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,null,50] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          null,
+          50
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,null,50] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          null,
+          50
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,null,50] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          null,
+          50
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [null,null,50] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          null,
+          null,
+          50
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,null] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          null
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,null] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          null
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,null] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          null
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -0.7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [52,54,53,null] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          52,
+          54,
+          53,
+          null
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -53,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [70,70,70,70] today null",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          70,
+          70,
+          70,
+          70
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [70,70,70,70] today 60",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          70,
+          70,
+          70,
+          70
+        ],
+        "today": 60,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -10,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [70,70,70,70] today 52.34",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          70,
+          70,
+          70,
+          70
+        ],
+        "today": 52.34,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -17.7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "vsBaseline [70,70,70,70] today 0",
+      "input": {
+        "kind": "baseline",
+        "series": [
+          70,
+          70,
+          70,
+          70
+        ],
+        "today": 0,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -70,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean []",
+      "input": {
+        "kind": "mean",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [52]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          52
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 52,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [52,54,53,55,60]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          52,
+          54,
+          53,
+          55,
+          60
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 54.8,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [null,52,null,54,57]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          null,
+          52,
+          null,
+          54,
+          57
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 54.333333333333336,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [null,null,50]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          null,
+          null,
+          50
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 50,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [52,54,53,null]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          52,
+          54,
+          53,
+          null
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 53,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "mean [70,70,70,70]",
+      "input": {
+        "kind": "mean",
+        "series": [
+          70,
+          70,
+          70,
+          70
+        ],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 70,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 0",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 0,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          0
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 100",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 100,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          100
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 499",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 499,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          499
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 500",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 500,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          500
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 1000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 1000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          500,
+          1000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 2500",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 2500,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          500,
+          1000,
+          1500,
+          2000,
+          2500
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 3000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 3000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          500,
+          1000,
+          1500,
+          2000,
+          3000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 4999",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 4999,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          1000,
+          2000,
+          3000,
+          4000,
+          4999
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 5000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 5000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          1000,
+          2000,
+          3000,
+          4000,
+          5000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 6000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 6000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          1000,
+          2000,
+          3000,
+          4000,
+          6000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 7500",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 7500,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          1500,
+          3000,
+          4500,
+          6000,
+          7500
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 8000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 8000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          1500,
+          3000,
+          4500,
+          6000,
+          8000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 10000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 10000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          2000,
+          4000,
+          6000,
+          8000,
+          10000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 12000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 12000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          2500,
+          5000,
+          7500,
+          10000,
+          12000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 12500",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 12500,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          2500,
+          5000,
+          7500,
+          10000,
+          12500
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 15000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 15000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          3000,
+          6000,
+          9000,
+          12000,
+          15000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 20000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 20000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          4000,
+          8000,
+          12000,
+          16000,
+          20000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "stepMarks 25000",
+      "input": {
+        "kind": "steps",
+        "series": [],
+        "today": null,
+        "goal": 25000,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": [
+          5000,
+          10000,
+          15000,
+          20000,
+          25000
+        ],
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk null/30 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": 30,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -1,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 18/30 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 18,
+        "target": 30,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0.4,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 30/30 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 30,
+        "target": 30,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 45/30 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 45,
+        "target": 30,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 0/30 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 0,
+        "target": 30,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 1,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 4200/3000 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 4200,
+        "target": 3000,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0.3999999999999999,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 3000/3000 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 3000,
+        "target": 3000,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 1500/3000 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 1500,
+        "target": 3000,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk null/3000 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": 3000,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": -1,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 10/0 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 10,
+        "target": 0,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 10/-5 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 10,
+        "target": -5,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 1/3 floor",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 1,
+        "target": 3,
+        "risk": "floor",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0.6666666666666667,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "nutrientRisk 2/3 ceiling",
+      "input": {
+        "kind": "risk",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": 2,
+        "target": 3,
+        "risk": "ceiling",
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 1w on 2026-08-02",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 1,
+        "dateISO": null,
+        "todayISO": "2026-08-02",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 1,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 1w on 2026-08-05",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 1,
+        "dateISO": null,
+        "todayISO": "2026-08-05",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 4,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 1w on 2026-08-08",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 1,
+        "dateISO": null,
+        "todayISO": "2026-08-08",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 7,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 1w on 2026-12-31",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 1,
+        "dateISO": null,
+        "todayISO": "2026-12-31",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 5,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 12w on 2026-08-02",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 12,
+        "dateISO": null,
+        "todayISO": "2026-08-02",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 78,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 12w on 2026-08-05",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 12,
+        "dateISO": null,
+        "todayISO": "2026-08-05",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 81,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 12w on 2026-08-08",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 12,
+        "dateISO": null,
+        "todayISO": "2026-08-08",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 84,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 12w on 2026-12-31",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 12,
+        "dateISO": null,
+        "todayISO": "2026-12-31",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 82,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 26w on 2026-08-02",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 26,
+        "dateISO": null,
+        "todayISO": "2026-08-02",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 176,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 26w on 2026-08-05",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 26,
+        "dateISO": null,
+        "todayISO": "2026-08-05",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 179,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 26w on 2026-08-08",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 26,
+        "dateISO": null,
+        "todayISO": "2026-08-08",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 182,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 26w on 2026-12-31",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 26,
+        "dateISO": null,
+        "todayISO": "2026-12-31",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 180,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 52w on 2026-08-02",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 52,
+        "dateISO": null,
+        "todayISO": "2026-08-02",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 358,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 52w on 2026-08-05",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 52,
+        "dateISO": null,
+        "todayISO": "2026-08-05",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 361,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 52w on 2026-08-08",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 52,
+        "dateISO": null,
+        "todayISO": "2026-08-08",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 364,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "consistencyWindow 52w on 2026-12-31",
+      "input": {
+        "kind": "consistency",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": 52,
+        "dateISO": null,
+        "todayISO": "2026-12-31",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": 362,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "daysAgo 2026-08-25 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2026-08-25",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "today"
+      }
+    },
+    {
+      "name": "daysAgo 2026-08-24 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2026-08-24",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "yesterday"
+      }
+    },
+    {
+      "name": "daysAgo 2026-08-21 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2026-08-21",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "4d ago"
+      }
+    },
+    {
+      "name": "daysAgo 2026-08-26 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2026-08-26",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "today"
+      }
+    },
+    {
+      "name": "daysAgo 2026-07-25 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2026-07-25",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "31d ago"
+      }
+    },
+    {
+      "name": "daysAgo 2025-08-25 on 2026-08-25",
+      "input": {
+        "kind": "daysAgo",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": "2025-08-25",
+        "todayISO": "2026-08-25",
+        "text": null,
+        "mins": null
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "365d ago"
+      }
+    },
+    {
+      "name": "parseMin \"10:30\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "10:30",
+        "mins": null
+      },
+      "expected": {
+        "number": 630,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"00:00\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "00:00",
+        "mins": null
+      },
+      "expected": {
+        "number": 0,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"23:59\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "23:59",
+        "mins": null
+      },
+      "expected": {
+        "number": 1439,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"11:45\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "11:45",
+        "mins": null
+      },
+      "expected": {
+        "number": 705,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"9:05\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "9:05",
+        "mins": null
+      },
+      "expected": {
+        "number": 545,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"24:00\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "24:00",
+        "mins": null
+      },
+      "expected": {
+        "number": 1440,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"noon\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "noon",
+        "mins": null
+      },
+      "expected": {
+        "number": 1440,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "",
+        "mins": null
+      },
+      "expected": {
+        "number": 1440,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"10\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "10",
+        "mins": null
+      },
+      "expected": {
+        "number": 1440,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"10:xx\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "10:xx",
+        "mins": null
+      },
+      "expected": {
+        "number": 1440,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "parseMin \"10:30:15\"",
+      "input": {
+        "kind": "parseMin",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": "10:30:15",
+        "mins": null
+      },
+      "expected": {
+        "number": 630,
+        "numbers": null,
+        "text": null
+      }
+    },
+    {
+      "name": "dueLabel -125",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": -125
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "2h overdue"
+      }
+    },
+    {
+      "name": "dueLabel -60",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": -60
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "1h overdue"
+      }
+    },
+    {
+      "name": "dueLabel -59",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": -59
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "59 min overdue"
+      }
+    },
+    {
+      "name": "dueLabel -1",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": -1
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "1 min overdue"
+      }
+    },
+    {
+      "name": "dueLabel 0",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 0
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "now"
+      }
+    },
+    {
+      "name": "dueLabel 0.5",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 0.5
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "now"
+      }
+    },
+    {
+      "name": "dueLabel 1",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 1
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 1 min"
+      }
+    },
+    {
+      "name": "dueLabel 12",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 12
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 12 min"
+      }
+    },
+    {
+      "name": "dueLabel 59",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 59
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 59 min"
+      }
+    },
+    {
+      "name": "dueLabel 60",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 60
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 1h"
+      }
+    },
+    {
+      "name": "dueLabel 61",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 61
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 1h 1m"
+      }
+    },
+    {
+      "name": "dueLabel 125",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 125
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 2h 5m"
+      }
+    },
+    {
+      "name": "dueLabel 180",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 180
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 3h"
+      }
+    },
+    {
+      "name": "dueLabel 1439",
+      "input": {
+        "kind": "due",
+        "series": [],
+        "today": null,
+        "goal": null,
+        "have": null,
+        "target": null,
+        "risk": null,
+        "weeks": null,
+        "dateISO": null,
+        "todayISO": null,
+        "text": null,
+        "mins": 1439
+      },
+      "expected": {
+        "number": null,
+        "numbers": null,
+        "text": "in 23h 59m"
+      }
+    }
+  ]
+}

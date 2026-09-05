@@ -1,0 +1,49 @@
+{
+  "module": "training/prEngine",
+  "fn": "repsAxisEligible",
+  "note": "The reps axis exists only at exactly 0 kg.",
+  "cases": [
+    {
+      "name": "0 kg",
+      "input": {
+        "weightKg": 0
+      },
+      "expected": true
+    },
+    {
+      "name": "0.25 kg",
+      "input": {
+        "weightKg": 0.25
+      },
+      "expected": false
+    },
+    {
+      "name": "2.5 kg",
+      "input": {
+        "weightKg": 2.5
+      },
+      "expected": false
+    },
+    {
+      "name": "5 kg",
+      "input": {
+        "weightKg": 5
+      },
+      "expected": false
+    },
+    {
+      "name": "-1 kg",
+      "input": {
+        "weightKg": -1
+      },
+      "expected": false
+    },
+    {
+      "name": "100 kg",
+      "input": {
+        "weightKg": 100
+      },
+      "expected": false
+    }
+  ]
+}

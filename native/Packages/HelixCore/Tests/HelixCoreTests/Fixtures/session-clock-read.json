@@ -1,0 +1,327 @@
+{
+  "module": "sessions/sessionClock",
+  "fn": "elapsedMs / elapsedSec / remainingSec / isTimerDone / clockReadingSec / clockIsLive",
+  "note": "elapsed = banked + max(0, now − startedAt); remaining = max(0, duration − floor(elapsed s)); done only for a timer at or past its duration; live when running or with a bank.",
+  "cases": [
+    {
+      "name": "idle timer",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "elapsedMs": 0,
+        "elapsedSec": 0,
+        "remainingSec": 60,
+        "done": false,
+        "reading": 60,
+        "live": false
+      }
+    },
+    {
+      "name": "timer just started",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "elapsedMs": 0,
+        "elapsedSec": 0,
+        "remainingSec": 60,
+        "done": false,
+        "reading": 60,
+        "live": true
+      }
+    },
+    {
+      "name": "timer at 0.9 s",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565600900
+      },
+      "expected": {
+        "elapsedMs": 900,
+        "elapsedSec": 0,
+        "remainingSec": 60,
+        "done": false,
+        "reading": 60,
+        "live": true
+      }
+    },
+    {
+      "name": "timer at 1 s",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565601000
+      },
+      "expected": {
+        "elapsedMs": 1000,
+        "elapsedSec": 1,
+        "remainingSec": 59,
+        "done": false,
+        "reading": 59,
+        "live": true
+      }
+    },
+    {
+      "name": "timer at 59.999 s",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565659999
+      },
+      "expected": {
+        "elapsedMs": 59999,
+        "elapsedSec": 59,
+        "remainingSec": 1,
+        "done": false,
+        "reading": 1,
+        "live": true
+      }
+    },
+    {
+      "name": "timer done at 60 s",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565660000
+      },
+      "expected": {
+        "elapsedMs": 60000,
+        "elapsedSec": 60,
+        "remainingSec": 0,
+        "done": true,
+        "reading": 0,
+        "live": true
+      }
+    },
+    {
+      "name": "timer well past",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565720000
+      },
+      "expected": {
+        "elapsedMs": 120000,
+        "elapsedSec": 120,
+        "remainingSec": 0,
+        "done": true,
+        "reading": 0,
+        "live": true
+      }
+    },
+    {
+      "name": "timer paused with 20 s banked",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": null,
+          "accumulatedMs": 20000,
+          "durationSec": 60
+        },
+        "now": 1787566599999
+      },
+      "expected": {
+        "elapsedMs": 20000,
+        "elapsedSec": 20,
+        "remainingSec": 40,
+        "done": false,
+        "reading": 40,
+        "live": true
+      }
+    },
+    {
+      "name": "timer resumed with bank",
+      "input": {
+        "clock": {
+          "mode": "timer",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 20000,
+          "durationSec": 60
+        },
+        "now": 1787565610000
+      },
+      "expected": {
+        "elapsedMs": 30000,
+        "elapsedSec": 30,
+        "remainingSec": 30,
+        "done": false,
+        "reading": 30,
+        "live": true
+      }
+    },
+    {
+      "name": "stopwatch running",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565672000
+      },
+      "expected": {
+        "elapsedMs": 72000,
+        "elapsedSec": 72,
+        "remainingSec": 0,
+        "done": false,
+        "reading": 72,
+        "live": true
+      }
+    },
+    {
+      "name": "stopwatch paused",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": null,
+          "accumulatedMs": 20000,
+          "durationSec": 60
+        },
+        "now": 1787574600000
+      },
+      "expected": {
+        "elapsedMs": 20000,
+        "elapsedSec": 20,
+        "remainingSec": 40,
+        "done": false,
+        "reading": 20,
+        "live": true
+      }
+    },
+    {
+      "name": "stopwatch bank + open",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 30000,
+          "durationSec": 60
+        },
+        "now": 1787565620000
+      },
+      "expected": {
+        "elapsedMs": 50000,
+        "elapsedSec": 50,
+        "remainingSec": 10,
+        "done": false,
+        "reading": 50,
+        "live": true
+      }
+    },
+    {
+      "name": "stopwatch never done",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787569200000
+      },
+      "expected": {
+        "elapsedMs": 3600000,
+        "elapsedSec": 3600,
+        "remainingSec": 0,
+        "done": false,
+        "reading": 3600,
+        "live": true
+      }
+    },
+    {
+      "name": "clock moved backwards",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565605000,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "elapsedMs": 0,
+        "elapsedSec": 0,
+        "remainingSec": 60,
+        "done": false,
+        "reading": 0,
+        "live": true
+      }
+    },
+    {
+      "name": "idle stopwatch",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": null,
+          "accumulatedMs": 0,
+          "durationSec": 60
+        },
+        "now": 1787565600000
+      },
+      "expected": {
+        "elapsedMs": 0,
+        "elapsedSec": 0,
+        "remainingSec": 60,
+        "done": false,
+        "reading": 0,
+        "live": false
+      }
+    },
+    {
+      "name": "fractional ms",
+      "input": {
+        "clock": {
+          "mode": "stopwatch",
+          "startedAt": 1787565600000,
+          "accumulatedMs": 1500,
+          "durationSec": 60
+        },
+        "now": 1787565602499
+      },
+      "expected": {
+        "elapsedMs": 3999,
+        "elapsedSec": 3,
+        "remainingSec": 57,
+        "done": false,
+        "reading": 3,
+        "live": true
+      }
+    }
+  ]
+}

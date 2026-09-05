@@ -1,0 +1,98 @@
+{
+  "module": "training/prSeed",
+  "fn": "isAssertedSession",
+  "note": "Everything ≤ SEED_CUTOFF (string order) plus the individually listed dates. A dateless session is LIVE, never asserted.",
+  "cases": [
+    {
+      "name": "null",
+      "input": {
+        "date": null
+      },
+      "expected": false
+    },
+    {
+      "name": "",
+      "input": {
+        "date": ""
+      },
+      "expected": true
+    },
+    {
+      "name": "2025-12-31",
+      "input": {
+        "date": "2025-12-31"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-03-10",
+      "input": {
+        "date": "2026-03-10"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-05-20",
+      "input": {
+        "date": "2026-05-20"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-07-30",
+      "input": {
+        "date": "2026-07-30"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-07-31",
+      "input": {
+        "date": "2026-07-31"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-08-01",
+      "input": {
+        "date": "2026-08-01"
+      },
+      "expected": false
+    },
+    {
+      "name": "2026-08-02",
+      "input": {
+        "date": "2026-08-02"
+      },
+      "expected": true
+    },
+    {
+      "name": "2026-08-03",
+      "input": {
+        "date": "2026-08-03"
+      },
+      "expected": false
+    },
+    {
+      "name": "2026-08-09",
+      "input": {
+        "date": "2026-08-09"
+      },
+      "expected": false
+    },
+    {
+      "name": "2026-12-31",
+      "input": {
+        "date": "2026-12-31"
+      },
+      "expected": false
+    },
+    {
+      "name": "2027-01-01",
+      "input": {
+        "date": "2027-01-01"
+      },
+      "expected": false
+    }
+  ]
+}

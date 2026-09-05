@@ -5,7 +5,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { hydratePrefsFromDb } from '@/lib/utils/prefsSync'
 import { useScheduleOverrides } from '@/lib/hooks/useScheduleOverrides'
-import { WORKOUT_QUERY_KEYS } from '@/lib/query/workoutKeys'
 
 /**
  * Pure client Supabase WebSocket → scoped React Query invalidation. A DB change
@@ -41,50 +40,7 @@ import { WORKOUT_QUERY_KEYS } from '@/lib/query/workoutKeys'
  * `['readiness_today']` gets the same treatment: it reads battery + sleep score
  * and nothing invalidated it at all.
  */
-const TABLE_KEYS: Record<string, string[][]> = {
-  daily_logs: [['daily_logs'], ['today'], ['readiness_today'], ['coach'], ['trends'], ['continuum'], ['day_vault'], ['sleep_debt']],
-  // Steps and active-cal have no key of their own: `useDailyLogs` joins this
-  // table into `['daily_logs', …]`, and the dashboard reads it from `['today']`.
-  daily_metrics: [['daily_logs'], ['today'], ['readiness_today'], ['day_vault']],
-  // Intake moves the day score, not readiness — battery drains on activity and
-  // volume, never on calories.
-  nutrition_entries: [['nutrition_entries'], ['daily_logs'], ['today'], ['coach'], ['continuum'], ['day_vault']],
-  body_composition: [['body_composition'], ['trends'], ['coach']],
-  // Sleep is 40% of readiness directly, plus the wake-charge term in battery.
-  sleep_sessions: [['sleep_sessions'], ['today'], ['readiness_today'], ['trends'], ['weekly_review'], ['sleep_debt']],
-  // Shares the canonical workout-derived key list with the commit/delete
-  // mutations so a session change from ANY device refreshes the same surfaces.
-  workout_sessions: WORKOUT_QUERY_KEYS,
-  // Subscribe to the SETS table too: an in-place set edit can touch only
-  // workout_sets (the parent session row is untouched), so without this the
-  // desktop/other devices wouldn't see a live rep/weight change until reload.
-  workout_sets: WORKOUT_QUERY_KEYS,
-  daily_scores: [['today'], ['readiness_today'], ['daily_logs'], ['weekly_review'], ['trends'], ['coach'], ['continuum'], ['day_vault'], ['month_activity'], ['week_recovery']],
-  supplement_log: [['supplement_log'], ['day_vault']],
-  // `['water_intake']` is what tells the OTHER device a day now carries a manual
-  // override, and therefore whether to offer "Clear & use Apple Health". Without
-  // it, correcting hydration on the phone left the laptop's sheet unable to show
-  // the way back out of an override it could see the result of.
-  water_intake: [['water_intake'], ['today'], ['day_vault'], ['continuum'], ['weekly_review']],
-  reports: [['reports'], ['weekly_review']],
-  // Settings live-sync across devices: a change on desktop invalidates the phone.
-  //
-  // NOT just `['user_goals']`. The calorie/protein/step targets this row holds
-  // are baked into the `['today', date]` bundle and every surface that grades
-  // against them, so switching phase on the desktop left the phone's macro
-  // rings drawing the previous target for a full staleTime — and longer after a
-  // cold open, since that key is restored from localStorage. Same fan-out the
-  // manual macro override already performs (useMacroOverride CASCADE_KEYS).
-  user_goals: [['user_goals'], ['today'], ['readiness_today'], ['coach'], ['day_vault'], ['nutrition_entries']],
-  // Day swaps. This table was MISSING from the map, which is half of why a
-  // rest-day swap made on the phone never reached the desktop: nothing told the
-  // other device the schedule had moved. (The other half was the override cache
-  // being invisible to React — see src/lib/schedule/overrides.ts.) The swap
-  // cascades into supplements and the day's plan, so its invalidation list
-  // matches what useSwapDay itself invalidates after a write.
-  schedule_overrides: [['schedule_overrides'], ['day_vault'], ['daily_logs'], ['workout_sessions'], ['supplement_log']],
-}
-const TABLES = Object.keys(TABLE_KEYS)
+import { TABLE_KEYS, REALTIME_TABLES as TABLES } from '@/lib/query/realtimeKeys'
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()

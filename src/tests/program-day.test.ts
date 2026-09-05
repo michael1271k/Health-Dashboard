@@ -36,7 +36,7 @@ const ORB = readFileSync('src/components/dashboard/ReadinessOrb.tsx', 'utf8')
 const STREAK = readFileSync('src/lib/training/streak.ts', 'utf8')
 const DERIVE = readFileSync('src/lib/widget/derive.ts', 'utf8')
 
-/** Sunday = 0. Helix-5 rests Wednesday and Saturday. */
+/** Sunday = 0. Onyx-5 rests Wednesday and Saturday. */
 const REST_WEEKDAYS = new Set([3, 6])
 
 /** Every date from `from` to `to` inclusive, as `YYYY-MM-DD`. */
@@ -80,14 +80,11 @@ describe('there is one streak', () => {
     expect(streakFromDerive).toBe(streakFrom)
   })
 
-  it('both surfaces read the same derivation for the flame', () => {
-    const ROUTE = readFileSync('src/app/api/widget/snapshot/route.ts', 'utf8')
+  it('the hook reads the same derivation for the flame', () => {
+    // The widget snapshot route was the second surface; it left with the
+    // Capacitor extension in Wave 5. The Swift port pins the window instead.
     const HOOK = readFileSync('src/lib/hooks/useStreak.ts', 'utf8')
-    expect(ROUTE).toMatch(/programDayCount\(/)
     expect(HOOK).toMatch(/programDayCount\(/)
-    // The calendar window is still the widget's, and still one constant — the
-    // month grid and `streakFrom` are both built from it.
-    expect(ROUTE).toMatch(/CALENDAR_DAYS = STREAK_WINDOW_DAYS/)
     expect(STREAK_WINDOW_DAYS).toBe(42)
   })
 })

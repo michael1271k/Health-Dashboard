@@ -1,0 +1,132 @@
+{
+  "module": "nutrition/targets",
+  "fn": "mergedProfiles",
+  "note": "Stored first, then built-ins whose key is not stored.",
+  "cases": [
+    {
+      "name": "none stored",
+      "input": {
+        "stored": []
+      },
+      "expected": [
+        {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      ]
+    },
+    {
+      "name": "home replaced",
+      "input": {
+        "stored": [
+          {
+            "key": "home",
+            "label": "Mine",
+            "summary": "",
+            "sort": 0,
+            "kcal": 2100,
+            "proteinG": 170,
+            "carbsG": 230,
+            "fatG": 55,
+            "stepsGoal": null
+          }
+        ]
+      },
+      "expected": [
+        {
+          "key": "home",
+          "label": "Mine",
+          "summary": "",
+          "sort": 0,
+          "kcal": 2100,
+          "proteinG": 170,
+          "carbsG": 230,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      ]
+    },
+    {
+      "name": "a third profile",
+      "input": {
+        "stored": [
+          {
+            "key": "hike",
+            "label": "Hike",
+            "summary": "",
+            "sort": 5,
+            "kcal": 2100,
+            "proteinG": 170,
+            "carbsG": 230,
+            "fatG": 55,
+            "stepsGoal": null
+          }
+        ]
+      },
+      "expected": [
+        {
+          "key": "hike",
+          "label": "Hike",
+          "summary": "",
+          "sort": 5,
+          "kcal": 2100,
+          "proteinG": 170,
+          "carbsG": 230,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        {
+          "key": "home",
+          "label": "Home",
+          "summary": "Cooked and weighed — every macro is a real target.",
+          "sort": 0,
+          "kcal": 2150,
+          "proteinG": 170,
+          "carbsG": 244,
+          "fatG": 55,
+          "stepsGoal": null
+        },
+        {
+          "key": "restaurant",
+          "label": "Restaurant",
+          "summary": "Eating out — hit the protein, let the split go.",
+          "sort": 1,
+          "kcal": 2400,
+          "proteinG": 170,
+          "carbsG": null,
+          "fatG": null,
+          "stepsGoal": null
+        }
+      ]
+    }
+  ]
+}

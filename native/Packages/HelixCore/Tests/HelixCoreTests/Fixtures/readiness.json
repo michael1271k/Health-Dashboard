@@ -1,0 +1,3969 @@
+{
+  "module": "scoring/readiness",
+  "fn": "computeReadiness",
+  "note": "Sleep 40%, battery 40%, recovery 20%. >=70 train hard, >=45 train light.",
+  "cases": [
+    {
+      "name": "s=null r=null b=0",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=null b=5",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=null b=45",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=null b=55",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=null b=70",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=null b=88",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=null b=100",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=0 b=0",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=0 b=5",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=0 b=45",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=0 b=55",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=0 b=70",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=0 b=88",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=0 b=100",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=40 b=0",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=40 b=5",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=40 b=45",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=40 b=55",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=40 b=70",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=40 b=88",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=40 b=100",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=70 b=0",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=70 b=5",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=70 b=45",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=70 b=55",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=70 b=70",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=70 b=88",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=70 b=100",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=100 b=0",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=100 b=5",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=null r=100 b=45",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=100 b=55",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=null r=100 b=70",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=100 b=88",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=null r=100 b=100",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=0 r=null b=0",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=null b=5",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=null b=45",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=null b=55",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=null b=70",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=null b=88",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=null b=100",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=0",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=5",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=45",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=55",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=70",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=88",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=0 b=100",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=0",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=5",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=45",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=55",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=70",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=88",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=40 b=100",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=0",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=5",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=45",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=55",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=70",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=88",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=70 b=100",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=0",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=5",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=45",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=55",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=70",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=88",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=0 r=100 b=100",
+      "input": {
+        "sleepScore": 0,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=null b=0",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=null b=5",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=null b=45",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=null b=55",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=null b=70",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=null b=88",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=null b=100",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=0",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=5",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=45",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=55",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=70",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=88",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=0 b=100",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=0",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=5",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=45",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=55",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=70",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=88",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=40 b=100",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=0",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=5",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=45",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=55",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=70",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=88",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=70 b=100",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=0",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=5",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=45",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=55",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=70",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=88",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=30 r=100 b=100",
+      "input": {
+        "sleepScore": 30,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=45 r=null b=0",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=null b=5",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=null b=45",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=null b=55",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=null b=70",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=null b=88",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=45 r=null b=100",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=0",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=5",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=45",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=55",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=70",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=88",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=0 b=100",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=0",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=5",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=45",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=55",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=70",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=88",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=40 b=100",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=0",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=5",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=45",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=55",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=70",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=88",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=70 b=100",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=0",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=5",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=45",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=55",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=70",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=88",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=45 r=100 b=100",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=null b=0",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=null b=5",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=null b=45",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=null b=55",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=null b=70",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=null b=88",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=null b=100",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=0",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=5",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=45",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=55",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=70",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=88",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=0 b=100",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=0",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=5",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=45",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=55",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=70",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=88",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=40 b=100",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=0",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=5",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=45",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=55",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=70",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=88",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=70 b=100",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=0",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=5",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=45",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=55",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=70",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=88",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=60 r=100 b=100",
+      "input": {
+        "sleepScore": 60,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=null b=0",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=null b=5",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=null b=45",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=null b=55",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=null b=70",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=null b=88",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=null b=100",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=0",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=5",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=45",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=55",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=70",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=88",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=0 b=100",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=0",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=5",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=45",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=55",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=70",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=88",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=40 b=100",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=0",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=5",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=45",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=55",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=70",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=88",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=70 b=100",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=0",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=5",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=45",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=55",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=70",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=88",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=70 r=100 b=100",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=null b=0",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=null b=5",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=null b=45",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=null b=55",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=null b=70",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=null b=88",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=null b=100",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=0",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=5",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=45",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=55",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=70",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=88",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=0 b=100",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=0",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=5",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=45",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=55",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=70",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=88",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=40 b=100",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=0",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=5",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=45",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=55",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=70",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=88",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=70 b=100",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=0",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=5",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=45",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=55",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=70",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=88",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=85 r=100 b=100",
+      "input": {
+        "sleepScore": 85,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=null b=0",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=100 r=null b=5",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=100 r=null b=45",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=null b=55",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=null b=70",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=null b=88",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=null b=100",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": null,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=0",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=5",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=45",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=55",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=70",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=88",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=0 b=100",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 0,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=0",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=5",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=45",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=55",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=70",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=88",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=40 b=100",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 40,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=0",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=5",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=45",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=55",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=70",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=88",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=70 b=100",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 70,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=0",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 0
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=5",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 5
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=45",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=55",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 55
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=70",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=88",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "s=100 r=100 b=100",
+      "input": {
+        "sleepScore": 100,
+        "recoveryScore": 100,
+        "batteryPct": 100
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "boundary: exactly 70 is train_hard",
+      "input": {
+        "sleepScore": 70,
+        "recoveryScore": 70,
+        "batteryPct": 70
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "boundary: exactly 45 is train_light",
+      "input": {
+        "sleepScore": 45,
+        "recoveryScore": 45,
+        "batteryPct": 45
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "regression: null sleep and recovery fall back to the battery",
+      "input": {
+        "sleepScore": null,
+        "recoveryScore": null,
+        "batteryPct": 88
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    }
+  ]
+}

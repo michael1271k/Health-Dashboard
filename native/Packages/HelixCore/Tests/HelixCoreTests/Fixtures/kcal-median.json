@@ -1,0 +1,222 @@
+{
+  "module": "sessions/estimates",
+  "fn": "medianKcalPerMin",
+  "note": "Median kcal/min over usable samples (both > 0 and finite); null below 5.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "samples": []
+      },
+      "expected": null
+    },
+    {
+      "name": "four is too few",
+      "input": {
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "five",
+      "input": {
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          }
+        ]
+      },
+      "expected": 8
+    },
+    {
+      "name": "outlier",
+      "input": {
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 900,
+            "durationMin": 60
+          }
+        ]
+      },
+      "expected": 8
+    },
+    {
+      "name": "even count",
+      "input": {
+        "samples": [
+          {
+            "kcal": 60,
+            "durationMin": 10
+          },
+          {
+            "kcal": 70,
+            "durationMin": 10
+          },
+          {
+            "kcal": 80,
+            "durationMin": 10
+          },
+          {
+            "kcal": 90,
+            "durationMin": 10
+          },
+          {
+            "kcal": 100,
+            "durationMin": 10
+          },
+          {
+            "kcal": 110,
+            "durationMin": 10
+          }
+        ]
+      },
+      "expected": 8.5
+    },
+    {
+      "name": "unusable rows dropped",
+      "input": {
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 0,
+            "durationMin": 60
+          },
+          {
+            "kcal": 400,
+            "durationMin": 0
+          }
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "negative rows dropped",
+      "input": {
+        "samples": [
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": 480,
+            "durationMin": 60
+          },
+          {
+            "kcal": -5,
+            "durationMin": 60
+          },
+          {
+            "kcal": 300,
+            "durationMin": -1
+          }
+        ]
+      },
+      "expected": 8
+    },
+    {
+      "name": "unsorted",
+      "input": {
+        "samples": [
+          {
+            "kcal": 300,
+            "durationMin": 30
+          },
+          {
+            "kcal": 180,
+            "durationMin": 30
+          },
+          {
+            "kcal": 240,
+            "durationMin": 30
+          },
+          {
+            "kcal": 210,
+            "durationMin": 30
+          },
+          {
+            "kcal": 270,
+            "durationMin": 30
+          }
+        ]
+      },
+      "expected": 8
+    }
+  ]
+}

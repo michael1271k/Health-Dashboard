@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { denyIfUnauthorized } from '@/lib/auth/guard'
-import { resolveCallerUserId, defaultUserId } from '@/lib/auth/identity'
+import { requireUserId } from '@/lib/auth/identity'
 import { nightWindow } from '@/lib/sleep/nightWindow'
 import { logicalTodayISO } from '@/lib/utils/day'
 import type { Tables } from '@/lib/supabase/types'
@@ -18,12 +17,9 @@ import type { Tables } from '@/lib/supabase/types'
  * for the (rare) headless call.
  */
 export async function GET(req: Request) {
-  const denied = denyIfUnauthorized(req)
-  if (denied) return denied
-
   const supabase = getServerSupabaseClient()
-  const userId = (await resolveCallerUserId(req, supabase)) ?? (await defaultUserId(supabase))
-  if (!userId) return NextResponse.json({ error: 'No user' }, { status: 401 })
+  const userId = await requireUserId(req, supabase)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const url = new URL(req.url)
   const qDate = url.searchParams.get('date')

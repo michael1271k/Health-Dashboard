@@ -3,17 +3,15 @@
 import { memo } from 'react'
 import { BedDouble } from 'lucide-react'
 import { useSleepDebt } from '@/lib/hooks/useSleepDebt'
+import { debtBand } from '@/lib/sleep/debt'
 import { EMBER, EMBER_DEEP, GOLD, OXIDE } from '@/lib/theme/palette'
 
 // Was `ACCENT` holding #B4522A, which is EMBER_DEEP. Sleep debt is a debt:
 // it belongs on the ember ramp, and the name should say so.
 const ACCENT = EMBER_DEEP
 
-function debtColor(h: number): string {
-  if (h <= 2) return EMBER
-  if (h <= 5) return GOLD
-  return OXIDE
-}
+const BAND_COLOR = { ember: EMBER, gold: GOLD, oxide: OXIDE } as const
+const debtColor = (h: number): string => BAND_COLOR[debtBand(h)]
 
 /**
  * Sleep Debt Bank — rolling 14-night decayed shortfall vs the sleep

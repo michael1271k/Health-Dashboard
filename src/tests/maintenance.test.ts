@@ -109,8 +109,8 @@ describe('the battery on a deload', () => {
   })
 
   it('lowers the CEILING too, which the relative term cannot express', () => {
-    expect(workoutMaxFor('legs_a', true)).toBe(30 * MAINTENANCE_DRAIN_FACTOR)
-    expect(workoutMaxFor('legs_a', false)).toBe(30)
+    expect(workoutMaxFor('legs_a', true)).toBe(32 * MAINTENANCE_DRAIN_FACTOR)   // v8: legs 32
+    expect(workoutMaxFor('legs_a', false)).toBe(32)
     // A session at its own ceiling still costs less on a deload week.
     expect(workoutDrain(28000, 20000, 10, 'legs_a', true))
       .toBeLessThan(workoutDrain(28000, 20000, 10, 'legs_a', false))

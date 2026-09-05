@@ -1,0 +1,62 @@
+{
+  "module": "dashboard/layout",
+  "fn": "tileHeightPx / heightTier / bodyHeightPx",
+  "note": "52px row unit, 8px gap; s=2 m=3 l=5 w=3 xl=5 rows. Body = tile − 18 − 18 − 6.",
+  "cases": [
+    {
+      "name": "s",
+      "input": {
+        "size": "s"
+      },
+      "expected": {
+        "tile": 112,
+        "tier": "s",
+        "body": 70
+      }
+    },
+    {
+      "name": "m",
+      "input": {
+        "size": "m"
+      },
+      "expected": {
+        "tile": 172,
+        "tier": "m",
+        "body": 130
+      }
+    },
+    {
+      "name": "l",
+      "input": {
+        "size": "l"
+      },
+      "expected": {
+        "tile": 292,
+        "tier": "l",
+        "body": 250
+      }
+    },
+    {
+      "name": "w",
+      "input": {
+        "size": "w"
+      },
+      "expected": {
+        "tile": 172,
+        "tier": "m",
+        "body": 130
+      }
+    },
+    {
+      "name": "xl",
+      "input": {
+        "size": "xl"
+      },
+      "expected": {
+        "tile": 292,
+        "tier": "l",
+        "body": 250
+      }
+    }
+  ]
+}

@@ -2,15 +2,14 @@
  * The widget's refresh cadence, mirrored from Swift so it can be tested.
  *
  * ── THIS IS A GUARD, NOT AN IMPLEMENTATION ───────────────────────────────────
- * Nothing on the web side reads it. `HelixRefresh.schedule` in
- * `ios/App/HelixWidgets/HelixProvider.swift` is the real table; this exists
- * because there is no Swift test runner in this project, and the one property
- * that matters about a refresh table is arithmetic — how many refreshes a day it
- * asks for. A table that quietly drifts past the grant does not fail loudly, it
- * just makes the widget stale at an hour nobody chose.
+ * Nothing on the web side reads it. `WidgetCadence` in HelixCore
+ * (`native/Packages/HelixCore/Sources/HelixCore/Widget/`) is the real table,
+ * and it replays this module's golden vectors; the one property that matters
+ * about a refresh table is arithmetic — how many refreshes a day it asks for. A
+ * table that quietly drifts past the grant does not fail loudly, it just makes
+ * the widget stale at an hour nobody chose.
  *
- * `widget-cadence.test.ts` asserts the two literals agree AND that the daily
- * total stays inside the band.
+ * `widget-cadence-budget.test.ts` asserts the daily total stays inside the band.
  *
  * ── WHY THE SHAPE ────────────────────────────────────────────────────────────
  * WidgetKit grants roughly 40–70 timeline refreshes a day, per kind. A flat

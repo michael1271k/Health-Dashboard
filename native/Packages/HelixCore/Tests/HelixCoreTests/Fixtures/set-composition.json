@@ -1,0 +1,116 @@
+{
+  "module": "training/setTags",
+  "fn": "setComposition",
+  "note": "Only kinds that occurred (> 0), in the fixed order warmup, failure, dropset, ghost. Colours stripped.",
+  "cases": [
+    {
+      "name": "none",
+      "input": {
+        "counts": {}
+      },
+      "expected": []
+    },
+    {
+      "name": "2W 1F 1D",
+      "input": {
+        "counts": {
+          "warmup": 2,
+          "failure": 1,
+          "dropset": 1
+        }
+      },
+      "expected": [
+        {
+          "label": "W",
+          "full": "Warm-up",
+          "count": 2
+        },
+        {
+          "label": "F",
+          "full": "Taken to failure",
+          "count": 1
+        },
+        {
+          "label": "D",
+          "full": "Drop set",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "out of order in, fixed order out",
+      "input": {
+        "counts": {
+          "ghost": 1,
+          "dropset": 2,
+          "warmup": 1
+        }
+      },
+      "expected": [
+        {
+          "label": "W",
+          "full": "Warm-up",
+          "count": 1
+        },
+        {
+          "label": "D",
+          "full": "Drop set",
+          "count": 2
+        },
+        {
+          "label": "G",
+          "full": "Ghost set — logged, not counted",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "zeros vanish",
+      "input": {
+        "counts": {
+          "warmup": 0,
+          "failure": 3
+        }
+      },
+      "expected": [
+        {
+          "label": "F",
+          "full": "Taken to failure",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "name": "unknown keys are ignored",
+      "input": {
+        "counts": {
+          "top": 4,
+          "failure": 1
+        }
+      },
+      "expected": [
+        {
+          "label": "F",
+          "full": "Taken to failure",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "negative is not a count",
+      "input": {
+        "counts": {
+          "warmup": -1,
+          "ghost": 2
+        }
+      },
+      "expected": [
+        {
+          "label": "G",
+          "full": "Ghost set — logged, not counted",
+          "count": 2
+        }
+      ]
+    }
+  ]
+}

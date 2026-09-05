@@ -1,0 +1,183 @@
+{
+  "module": "body/composition",
+  "fn": "whrBand",
+  "note": "WHO bands on the SCALE's own ratio: male low < 0.90 ≤ moderate < 1.00 ≤ high; female 0.80 / 0.85.",
+  "cases": [
+    {
+      "name": "male 0.7",
+      "input": {
+        "ratio": 0.7,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.79",
+      "input": {
+        "ratio": 0.79,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.8",
+      "input": {
+        "ratio": 0.8,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.84",
+      "input": {
+        "ratio": 0.84,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.85",
+      "input": {
+        "ratio": 0.85,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.89",
+      "input": {
+        "ratio": 0.89,
+        "sex": "male"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "male 0.9",
+      "input": {
+        "ratio": 0.9,
+        "sex": "male"
+      },
+      "expected": "moderate"
+    },
+    {
+      "name": "male 0.95",
+      "input": {
+        "ratio": 0.95,
+        "sex": "male"
+      },
+      "expected": "moderate"
+    },
+    {
+      "name": "male 0.99",
+      "input": {
+        "ratio": 0.99,
+        "sex": "male"
+      },
+      "expected": "moderate"
+    },
+    {
+      "name": "male 1",
+      "input": {
+        "ratio": 1,
+        "sex": "male"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "male 1.1",
+      "input": {
+        "ratio": 1.1,
+        "sex": "male"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 0.7",
+      "input": {
+        "ratio": 0.7,
+        "sex": "female"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "female 0.79",
+      "input": {
+        "ratio": 0.79,
+        "sex": "female"
+      },
+      "expected": "low"
+    },
+    {
+      "name": "female 0.8",
+      "input": {
+        "ratio": 0.8,
+        "sex": "female"
+      },
+      "expected": "moderate"
+    },
+    {
+      "name": "female 0.84",
+      "input": {
+        "ratio": 0.84,
+        "sex": "female"
+      },
+      "expected": "moderate"
+    },
+    {
+      "name": "female 0.85",
+      "input": {
+        "ratio": 0.85,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 0.89",
+      "input": {
+        "ratio": 0.89,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 0.9",
+      "input": {
+        "ratio": 0.9,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 0.95",
+      "input": {
+        "ratio": 0.95,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 0.99",
+      "input": {
+        "ratio": 0.99,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 1",
+      "input": {
+        "ratio": 1,
+        "sex": "female"
+      },
+      "expected": "high"
+    },
+    {
+      "name": "female 1.1",
+      "input": {
+        "ratio": 1.1,
+        "sex": "female"
+      },
+      "expected": "high"
+    }
+  ]
+}

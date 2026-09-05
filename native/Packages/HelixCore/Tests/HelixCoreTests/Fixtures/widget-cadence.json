@@ -1,0 +1,63 @@
+{
+  "module": "widget/cadence",
+  "fn": "REFRESH_SCHEDULE / refreshMinutesForHour / refreshesPerDay / FAILURE_MINUTES",
+  "note": "The web mirror of HelixRefresh.schedule. `perHour` is refreshMinutesForHour for 0…23.",
+  "cases": [
+    {
+      "name": "the table",
+      "input": null,
+      "expected": {
+        "schedule": [
+          [
+            0,
+            150
+          ],
+          [
+            6,
+            20
+          ],
+          [
+            10,
+            45
+          ],
+          [
+            17,
+            20
+          ],
+          [
+            22,
+            60
+          ]
+        ],
+        "failureMinutes": 5,
+        "perHour": [
+          150,
+          150,
+          150,
+          150,
+          150,
+          150,
+          20,
+          20,
+          20,
+          20,
+          45,
+          45,
+          45,
+          45,
+          45,
+          45,
+          45,
+          20,
+          20,
+          20,
+          20,
+          20,
+          60,
+          60
+        ],
+        "perDay": 40.733333333333334
+      }
+    }
+  ]
+}

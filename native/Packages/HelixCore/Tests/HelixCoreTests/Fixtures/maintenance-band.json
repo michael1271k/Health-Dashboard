@@ -1,0 +1,17 @@
+{
+  "module": "body/deltaVerdict",
+  "fn": "MAINTENANCE_BAND",
+  "note": "The dead band per metric; water is unbounded (never a verdict) and is exported as null.",
+  "cases": [
+    {
+      "name": "the band",
+      "input": {},
+      "expected": {
+        "weight": 0.5,
+        "fat": 0.3,
+        "muscle": 0.3,
+        "water": null
+      }
+    }
+  ]
+}

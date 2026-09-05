@@ -1,0 +1,71 @@
+{
+  "module": "training/prEngine",
+  "fn": "prAxisLabel",
+  "note": "Whole words, no \"PR \" prefix; reps reads Duration on a timed hold.",
+  "cases": [
+    {
+      "name": "weight",
+      "input": {
+        "axis": "weight",
+        "timed": false
+      },
+      "expected": "Weight"
+    },
+    {
+      "name": "weight timed",
+      "input": {
+        "axis": "weight",
+        "timed": true
+      },
+      "expected": "Weight"
+    },
+    {
+      "name": "reps",
+      "input": {
+        "axis": "reps",
+        "timed": false
+      },
+      "expected": "Reps"
+    },
+    {
+      "name": "reps timed",
+      "input": {
+        "axis": "reps",
+        "timed": true
+      },
+      "expected": "Duration"
+    },
+    {
+      "name": "volume",
+      "input": {
+        "axis": "volume",
+        "timed": false
+      },
+      "expected": "Volume"
+    },
+    {
+      "name": "volume timed",
+      "input": {
+        "axis": "volume",
+        "timed": true
+      },
+      "expected": "Volume"
+    },
+    {
+      "name": "e1rm",
+      "input": {
+        "axis": "e1rm",
+        "timed": false
+      },
+      "expected": "1RM"
+    },
+    {
+      "name": "e1rm timed",
+      "input": {
+        "axis": "e1rm",
+        "timed": true
+      },
+      "expected": "1RM"
+    }
+  ]
+}

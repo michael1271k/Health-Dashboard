@@ -1,0 +1,1615 @@
+{
+  "module": "dashboard/tiles",
+  "fn": "stackSchedule",
+  "note": "Extracted from DailyWidgets' StackWidget. A dose whose time has passed (<= minutes) is behind, one whose time has not is ahead, a skip removes it from ahead and marks it in behind. Ahead is grouped by EXACT time string, sorted by minutes; behind is most recent first (a stable sort — equal times keep input order).",
+  "cases": [
+    {
+      "name": "early morning — everything ahead",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [],
+        "minutes": 480
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "10:30",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "time": "10:30"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "time": "10:30"
+              }
+            ],
+            "at": 630
+          },
+          {
+            "time": "11:45",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "time": "11:45"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "time": "11:45"
+              }
+            ],
+            "at": 705
+          },
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "time": "22:00"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "10:30",
+          "items": [
+            {
+              "key": "multivitamin",
+              "name": "Two Per Day Multivitamin",
+              "time": "10:30"
+            },
+            {
+              "key": "d3k2",
+              "name": "Vitamin D3 + K2",
+              "time": "10:30"
+            }
+          ],
+          "at": 630
+        },
+        "inMin": 150
+      }
+    },
+    {
+      "name": "exactly at 10:30 — that block is behind",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [],
+        "minutes": 630
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "11:45",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "time": "11:45"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "time": "11:45"
+              }
+            ],
+            "at": 705
+          },
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "time": "22:00"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "11:45",
+          "items": [
+            {
+              "key": "citrulline",
+              "name": "L-Citrulline",
+              "time": "11:45"
+            },
+            {
+              "key": "caffeine",
+              "name": "Nutricost Caffeine",
+              "time": "11:45"
+            }
+          ],
+          "at": 705
+        },
+        "inMin": 75
+      }
+    },
+    {
+      "name": "one minute before the pre-workout block",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [],
+        "minutes": 704
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "11:45",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "time": "11:45"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "time": "11:45"
+              }
+            ],
+            "at": 705
+          },
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "time": "22:00"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "11:45",
+          "items": [
+            {
+              "key": "citrulline",
+              "name": "L-Citrulline",
+              "time": "11:45"
+            },
+            {
+              "key": "caffeine",
+              "name": "Nutricost Caffeine",
+              "time": "11:45"
+            }
+          ],
+          "at": 705
+        },
+        "inMin": 1
+      }
+    },
+    {
+      "name": "mid-afternoon with caffeine skipped",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [
+          "caffeine"
+        ],
+        "minutes": 840
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "time": "22:00"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45",
+            "wasSkipped": true
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "15:00",
+          "items": [
+            {
+              "key": "creatine",
+              "name": "Creatine Monohydrate",
+              "time": "15:00"
+            },
+            {
+              "key": "omega3",
+              "name": "Omega-3 Fish Oil",
+              "time": "15:00"
+            }
+          ],
+          "at": 900
+        },
+        "inMin": 60
+      }
+    },
+    {
+      "name": "late evening — all done",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [],
+        "minutes": 1380
+      },
+      "expected": {
+        "blocks": [],
+        "behind": [
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": null,
+        "inMin": null
+      }
+    },
+    {
+      "name": "a whole block skipped disappears from ahead and counts as behind",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [
+          "magnesium",
+          "glycine",
+          "theanine"
+        ],
+        "minutes": 720
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          }
+        ],
+        "behind": [
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00",
+            "wasSkipped": true
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00",
+            "wasSkipped": true
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00",
+            "wasSkipped": true
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          }
+        ],
+        "blockCount": 3,
+        "next": {
+          "time": "15:00",
+          "items": [
+            {
+              "key": "creatine",
+              "name": "Creatine Monohydrate",
+              "time": "15:00"
+            },
+            {
+              "key": "omega3",
+              "name": "Omega-3 Fish Oil",
+              "time": "15:00"
+            }
+          ],
+          "at": 900
+        },
+        "inMin": 180
+      }
+    },
+    {
+      "name": "an unparseable time sorts to the end and is never behind",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          },
+          {
+            "key": "x",
+            "name": "Odd",
+            "time": "noon"
+          }
+        ],
+        "skipped": [],
+        "minutes": 1380
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "noon",
+            "items": [
+              {
+                "key": "x",
+                "name": "Odd",
+                "time": "noon"
+              }
+            ],
+            "at": 1440
+          }
+        ],
+        "behind": [
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00",
+            "wasSkipped": false
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45",
+            "wasSkipped": false
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30",
+            "wasSkipped": false
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30",
+            "wasSkipped": false
+          }
+        ],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          },
+          {
+            "key": "x",
+            "name": "Odd",
+            "time": "noon"
+          }
+        ],
+        "blockCount": 5,
+        "next": {
+          "time": "noon",
+          "items": [
+            {
+              "key": "x",
+              "name": "Odd",
+              "time": "noon"
+            }
+          ],
+          "at": 1440
+        },
+        "inMin": 60
+      }
+    },
+    {
+      "name": "no slots",
+      "input": {
+        "slots": [],
+        "skipped": [],
+        "minutes": 720
+      },
+      "expected": {
+        "blocks": [],
+        "behind": [],
+        "onProtocol": [],
+        "blockCount": 0,
+        "next": null,
+        "inMin": null
+      }
+    },
+    {
+      "name": "unsorted input is sorted by time",
+      "input": {
+        "slots": [
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          }
+        ],
+        "skipped": [],
+        "minutes": 540
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "10:30",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "time": "10:30"
+              }
+            ],
+            "at": 630
+          },
+          {
+            "time": "11:45",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "time": "11:45"
+              }
+            ],
+            "at": 705
+          },
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [],
+        "onProtocol": [
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "10:30",
+          "items": [
+            {
+              "key": "multivitamin",
+              "name": "Two Per Day Multivitamin",
+              "time": "10:30"
+            }
+          ],
+          "at": 630
+        },
+        "inMin": 90
+      }
+    },
+    {
+      "name": "midnight",
+      "input": {
+        "slots": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "skipped": [],
+        "minutes": 0
+      },
+      "expected": {
+        "blocks": [
+          {
+            "time": "10:30",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "time": "10:30"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "time": "10:30"
+              }
+            ],
+            "at": 630
+          },
+          {
+            "time": "11:45",
+            "items": [
+              {
+                "key": "citrulline",
+                "name": "L-Citrulline",
+                "time": "11:45"
+              },
+              {
+                "key": "caffeine",
+                "name": "Nutricost Caffeine",
+                "time": "11:45"
+              }
+            ],
+            "at": 705
+          },
+          {
+            "time": "15:00",
+            "items": [
+              {
+                "key": "creatine",
+                "name": "Creatine Monohydrate",
+                "time": "15:00"
+              },
+              {
+                "key": "omega3",
+                "name": "Omega-3 Fish Oil",
+                "time": "15:00"
+              }
+            ],
+            "at": 900
+          },
+          {
+            "time": "22:00",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "time": "22:00"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "time": "22:00"
+              },
+              {
+                "key": "theanine",
+                "name": "L-Theanine",
+                "time": "22:00"
+              }
+            ],
+            "at": 1320
+          }
+        ],
+        "behind": [],
+        "onProtocol": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "time": "10:30"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "time": "10:30"
+          },
+          {
+            "key": "citrulline",
+            "name": "L-Citrulline",
+            "time": "11:45"
+          },
+          {
+            "key": "caffeine",
+            "name": "Nutricost Caffeine",
+            "time": "11:45"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine Monohydrate",
+            "time": "15:00"
+          },
+          {
+            "key": "omega3",
+            "name": "Omega-3 Fish Oil",
+            "time": "15:00"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "time": "22:00"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "time": "22:00"
+          },
+          {
+            "key": "theanine",
+            "name": "L-Theanine",
+            "time": "22:00"
+          }
+        ],
+        "blockCount": 4,
+        "next": {
+          "time": "10:30",
+          "items": [
+            {
+              "key": "multivitamin",
+              "name": "Two Per Day Multivitamin",
+              "time": "10:30"
+            },
+            {
+              "key": "d3k2",
+              "name": "Vitamin D3 + K2",
+              "time": "10:30"
+            }
+          ],
+          "at": 630
+        },
+        "inMin": 630
+      }
+    }
+  ]
+}
