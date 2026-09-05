@@ -1,1 +1,13 @@
+# graphify's graph.json is a generated artefact with a union-mergeable shape;
+# the custom driver merges the node/edge sets rather than conflicting.
 graphify-out/graph.json merge=graphify
+
+# Everything else under graphify-out is regenerated wholesale by
+# `graphify update .` (graph.html, GRAPH_REPORT.md, manifest.json, the label
+# files and their signature). A merge conflict in them is never information —
+# take the branch being merged INTO and regenerate. Same for the shot loop's
+# PNGs: they are re-shot, never hand-merged.
+#
+# `merge=ours` needs a machine-local driver to exist; see docs/GIT.md.
+graphify-out/** merge=ours
+native/__screenshots__/** merge=ours

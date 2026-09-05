@@ -1,6 +1,19 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  # Native-only commits must not spend a build minute. Netlify SKIPS the build
+  # when this command exits 0, and `git diff --quiet` exits 0 when the range
+  # touched nothing outside the excluded paths — so a wave that only edits
+  # native/, docs/, graphify-out/ or markdown is ignored, while anything that
+  # touches src/, public/, package.json or netlify.toml still deploys.
+  #
+  # This replaces `[skip ci]` in commit messages (retired 2026-09-05). The tag
+  # had to be remembered per commit, and the once it was wrong the API auth fix
+  # sat undeployed for three days behind it.
+  #
+  # Fails open: after a cache clear $CACHED_COMMIT_REF is empty, git errors, the
+  # exit status is non-zero, and the site builds.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)native' ':(exclude)docs' ':(exclude)graphify-out' ':(exclude)*.md'"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"

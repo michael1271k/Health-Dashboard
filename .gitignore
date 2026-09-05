@@ -115,3 +115,7 @@ native/__store__/
 .agents/
 .codex/
 skills-lock.json
+
+# graphify scratch (rebuild lock + pending queue, machine-local)
+graphify-out/.rebuild.lock
+graphify-out/.pending_changes
