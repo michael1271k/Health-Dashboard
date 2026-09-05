@@ -357,6 +357,13 @@ public actor SyncCoordinator: MirrorRefreshing {
         }
 
         state = .running(SyncProgress(reason: reason, step: .score))
+        // A backfill is "re-derive everything from the server", and the PR
+        // ledger is derived — so this is where the one-off replay belongs
+        // rather than in a button somebody has to remember to press. It covers
+        // every session logged on this phone before the recorder existed, and
+        // repairs any whose ledger write was lost. Idempotent, and the closing
+        // drain below is what pushes whatever it wrote.
+        if isBackfill { try database.recomputeAllPrs(userId: userId) }
         try scoreRecentDays(now: now, days: isBackfill ? Self.backfillScoreDays : 2)
         try await drainAll(now: now)
 

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { WORKOUT_QUERY_KEYS, HEALTH_QUERY_KEYS } from '@/lib/query/workoutKeys'
+import { TABLE_KEYS } from '@/lib/query/realtimeKeys'
 
 /**
  * An invalidation that matches nothing is worse than a missing one, because it
@@ -61,6 +62,16 @@ for (const { code } of SOURCES) {
   // by luck is a consumer this guard cannot actually see.
   for (const m of code.matchAll(/export function \w*Key\w*\([^)]*\)[^{]*\{\s*return \[\s*'([^']+)'/g)) REGISTERED.add(m[1])
   for (const m of code.matchAll(/export const \w*Key\w*\s*=\s*\([^)]*\)[^=]*=>\s*\[\s*'([^']+)'/g)) REGISTERED.add(m[1])
+  // Third shape: a file-local root, `const KEY = 'daily_targets'` (or
+  // `= ['custom_supplements']`), used as `queryKey: [KEY, date]`. Three hooks
+  // are written this way and all three read as orphans to a scanner that only
+  // understands literals — which is the failure this guard exists to prevent,
+  // pointed at itself.
+  for (const m of code.matchAll(/const (\w+)\s*=\s*\[?\s*'([^']+)'\s*\]?\s*(?:as const)?\n/g)) {
+    // Used as `queryKey: [KEY, date]` or, when the const is already an
+    // array, as `queryKey: KEY`.
+    if (new RegExp(`queryKey:\\s*\\[?\\s*(?:\\.\\.\\.)?${m[1]}\\b`).test(code)) REGISTERED.add(m[2])
+  }
 }
 
 /** The prefix lists that fan an invalidation out across the app. */
@@ -83,6 +94,10 @@ describe('every invalidated key prefix has a consumer', () => {
   it.each([
     ['WORKOUT_QUERY_KEYS', WORKOUT_QUERY_KEYS],
     ['HEALTH_QUERY_KEYS', HEALTH_QUERY_KEYS],
+    // The realtime fan-out is the third list of prefixes, and W4 more than
+    // doubled it — from 13 tables to 29. It was outside this guard for as long
+    // as it was short enough to eyeball.
+    ...Object.entries(TABLE_KEYS).map(([table, keys]) => [`TABLE_KEYS.${table}`, keys] as const),
   ])('%s', (_name, keys) => {
     const orphans = keys.map(([root]) => root).filter((root) => !REGISTERED.has(root))
     expect(orphans).toEqual([])

@@ -28,6 +28,24 @@ public enum RealtimeKeys {
         ("reports", [["reports"], ["weekly_review"]]),
         ("user_goals", [["user_goals"], ["today"], ["readiness_today"], ["coach"], ["day_vault"], ["nutrition_entries"]]),
         ("schedule_overrides", [["schedule_overrides"], ["day_vault"], ["daily_logs"], ["workout_sessions"], ["supplement_log"]]),
+        // ── W4: the sixteen tables the socket was blind to ─────────────────
+        // Each list is the one the table's OWN mutation cascades, copied rather
+        // than invented, so the socket and the local write refresh the same
+        // surfaces. `src/tests/query-key-coverage.test.ts` fails on any prefix
+        // here with no registered `useQuery`.
+        ("cardio_logs", [["cardio_logs"]]),
+        ("fatigue_logs", [["fatigue_logs"]]),
+        ("doms_logs", [["doms_logs"], ["doms_sources"], ["weekly_export"]]),
+        ("custom_supplements", [["custom_supplements"], ["weekly_export"], ["supplement_log"]]),
+        ("daily_targets", [["daily_targets"], ["weekly_export"], ["today"], ["day_vault"]]),
+        ("target_profiles", [["target_profiles"], ["daily_targets"]]),
+        ("routine_templates", [["routine_template"]]),
+        ("program_day_layout", [["program_day_layout"]]),
+        ("plan_phase_goals", [["plan_phase_goals"], ["user_goals"], ["today"], ["readiness_today"], ["coach"], ["day_vault"], ["nutrition_entries"]]),
+        ("plan_phase_volume", [["plan_phase_goals"], ["weekly_volume"], ["muscle_analytics"]]),
+        ("personal_records", [["personal_records"], ["session_pr_records"], ["session_detail"], ["weekly_review"]]),
+        ("exercises", [["exercises"], ["exercise_history"]]),
+        ("profiles", [["my-profile"]]),
     ]
 
     public static var tables: [String] { tableKeys.map(\.0) }

@@ -552,37 +552,6 @@ public struct SupplementLogRow: Codable, FetchableRecord, PersistableRecord, Sen
     }
 }
 
-// MARK: - supplement_dose_overrides
-
-/// Mirrors `public.supplement_dose_overrides` (daily). Windowed on `date`.
-public struct SupplementDoseOverrideRow: Codable, FetchableRecord, PersistableRecord, Sendable, Equatable {
-    public static let databaseTableName = "supplement_dose_overrides"
-
-    public var userId: String
-    public var date: String
-    public var supplementKey: String
-    public var dose: String
-
-    public enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
-        case date
-        case supplementKey = "supplement_key"
-        case dose
-    }
-
-    public init(
-        userId: String,
-        date: String,
-        supplementKey: String,
-        dose: String
-    ) {
-        self.userId = userId
-        self.date = date
-        self.supplementKey = supplementKey
-        self.dose = dose
-    }
-}
-
 // MARK: - custom_supplements
 
 /// Mirrors `public.custom_supplements` (daily). Pulled whole.
@@ -1737,13 +1706,6 @@ extension AppDatabase {
                 t.column("updated_at", .datetime).notNull()
                 t.primaryKey(["user_id", "date", "item_key"])
             }
-            try db.create(table: "supplement_dose_overrides") { t in
-                t.column("user_id", .text).notNull()
-                t.column("date", .text).notNull()
-                t.column("supplement_key", .text).notNull()
-                t.column("dose", .text).notNull()
-                t.primaryKey(["user_id", "date", "supplement_key"])
-            }
             try db.create(table: "custom_supplements") { t in
                 t.primaryKey("id", .text)
                 t.column("user_id", .text).notNull()
@@ -2018,22 +1980,18 @@ public enum MirrorCatalogue {
                     conflict: "user_id,date,item_key", order: ["user_id", "date", "item_key"],
                     pull: { try await $0.pull(SupplementLogRow.self, from: $1) },
                     push: { try await $1.pushRow(SupplementLogRow.self, from: $0, table: "supplement_log", conflict: "user_id,date,item_key", ref: $2) }),
-        MirrorTable(name: "supplement_dose_overrides", group: .daily, strategy: .window(column: "date"),
-                    conflict: "user_id,date,supplement_key", order: ["user_id", "date", "supplement_key"],
-                    pull: { try await $0.pull(SupplementDoseOverrideRow.self, from: $1) },
-                    push: { try await $1.pushRow(SupplementDoseOverrideRow.self, from: $0, table: "supplement_dose_overrides", conflict: "user_id,date,supplement_key", ref: $2) }),
         MirrorTable(name: "custom_supplements", group: .daily, strategy: .full,
                     conflict: "id", order: ["id"],
                     pull: { try await $0.pull(CustomSupplementRow.self, from: $1) },
                     push: { try await $1.pushRow(CustomSupplementRow.self, from: $0, table: "custom_supplements", conflict: "id", ref: $2) }),
         MirrorTable(name: "fatigue_logs", group: .daily, strategy: .window(column: "date"),
-                    conflict: "id", order: ["id"],
+                    conflict: "user_id,date,slot", order: ["id"],
                     pull: { try await $0.pull(FatigueLogRow.self, from: $1) },
-                    push: { try await $1.pushRow(FatigueLogRow.self, from: $0, table: "fatigue_logs", conflict: "id", ref: $2) }),
+                    push: { try await $1.pushRow(FatigueLogRow.self, from: $0, table: "fatigue_logs", conflict: "user_id,date,slot", ref: $2) }),
         MirrorTable(name: "doms_logs", group: .daily, strategy: .window(column: "date"),
-                    conflict: "id", order: ["id"],
+                    conflict: "user_id,date,muscle_group", order: ["id"],
                     pull: { try await $0.pull(DomsLogRow.self, from: $1) },
-                    push: { try await $1.pushRow(DomsLogRow.self, from: $0, table: "doms_logs", conflict: "id", ref: $2) }),
+                    push: { try await $1.pushRow(DomsLogRow.self, from: $0, table: "doms_logs", conflict: "user_id,date,muscle_group", ref: $2) }),
         MirrorTable(name: "body_composition", group: .body, strategy: .window(column: "date"),
                     conflict: "id", order: ["id"],
                     pull: { try await $0.pull(BodyCompositionRow.self, from: $1) },

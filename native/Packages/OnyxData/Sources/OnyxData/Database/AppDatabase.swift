@@ -806,6 +806,23 @@ extension AppDatabase {
             if let sessionRpe { session.sessionRpe = sessionRpe }
             try session.update(db)
             try Self.enqueueSessionUpsert(sessionId: id, in: db)
+            // The ledger, in the SAME transaction as the close. A record that
+            // exists only because a later write succeeded is a record that
+            // disappears when it does not. `user_id` comes off the session
+            // rather than the environment: the record belongs to whoever owns
+            // the workout, and that is a fact already on disk.
+            //
+            // NOT wrapped in a `try?`. `save.ts` treats its own PR write as
+            // self-healing and ignores the failure, and it is right to: over
+            // there the upsert is a separate HTTP request that can fail against
+            // an un-migrated table while the session has already been saved.
+            // Here it is three more statements inside a transaction that has
+            // just written the session — there is no state in which one lands
+            // and the other does not, so a failure means the store is broken
+            // and swallowing it would only hide that.
+            try PrRecorder.record(
+                db, sessionId: id, userId: session.userId, dayKey: session.dayKey, date: session.date
+            )
             return session
         }
     }

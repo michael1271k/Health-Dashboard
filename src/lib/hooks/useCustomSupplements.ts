@@ -92,7 +92,9 @@ const KEY = ['custom_supplements'] as const
  * the dose that was just replaced — in a string that looks perfectly correct.
  */
 const CASCADE_KEYS: readonly (readonly string[])[] = [
-  KEY, ['weekly_export'], ['supplement_log'], ['micros'],
+  // `['micros']` was here and matched no `useQuery` — the same dead-prefix
+  // mistake `workoutKeys.ts` documents at length. Removed with W4.
+  KEY, ['weekly_export'], ['supplement_log'],
 ]
 
 /** Every custom supplement the user has defined (self-heals if the table is absent). */

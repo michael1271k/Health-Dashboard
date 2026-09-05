@@ -170,7 +170,7 @@ public extension AppDatabase {
     ///
     /// ── TEN OF THE TWENTY-SIX MIRRORED TABLES HAVE COMPOSITE KEYS ───────────
     /// `plan_phase_goals`, `plan_phase_volume`, `target_profiles`,
-    /// `daily_targets`, `supplement_log`, `supplement_dose_overrides`,
+    /// `daily_targets`, `supplement_log`,
     /// `personal_records`, `routine_templates`, `program_day_layout` and
     /// `schedule_overrides` are all keyed locally on the natural key the
     /// catalogue upserts on, because a mirrored row must be findable by the same

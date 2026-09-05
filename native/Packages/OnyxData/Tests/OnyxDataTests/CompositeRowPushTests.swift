@@ -41,12 +41,15 @@ struct CompositeRowPushTests {
 
     private func store() throws -> AppDatabase { try AppDatabase.inMemory(deviceId: "device-a") }
 
-    @Test("ten mirrored tables are keyed on more than one column")
+    @Test("nine mirrored tables are keyed on more than one column")
     func compositeTablesAreReal() throws {
         // Named rather than counted, so that a table gaining or losing a
         // composite key shows up here as a diff rather than as a number.
         let composite = [
-            "daily_targets", "supplement_log", "supplement_dose_overrides",
+            // `supplement_dose_overrides` was here until W4: pulled, never
+            // written, zero readers on either side and zero rows live. A table
+            // nothing reads is not a mirror, it is a decoy.
+            "daily_targets", "supplement_log",
             "personal_records", "routine_templates", "target_profiles",
             "plan_phase_goals", "plan_phase_volume", "program_day_layout",
             "schedule_overrides",

@@ -113,15 +113,18 @@ struct MirrorTests {
 
     @Test("the catalogue covers the schema fixture, minus the three the logger owns")
     func catalogueIsComplete() {
-        // 29 tables in the fixture; `workout_sessions`, `workout_sets` and
+        // 28 tables in the fixture; `workout_sessions`, `workout_sets` and
         // `exercises` are bespoke because they land in tables that already
         // exist locally in a different shape.
-        #expect(MirrorCatalogue.tables.count == 26)
+        #expect(MirrorCatalogue.tables.count == 25)
         let names = Set(MirrorCatalogue.tables.map(\.name))
         #expect(!names.contains("workout_sets"))
         // And the tape table is absent on purpose — ONYX does not do manual
         // limb measurement and the fields must not come back within reach.
         #expect(!names.contains("body_measurements"))
+        // Dropped in W4: pulled, never written, zero readers on either side and
+        // zero rows live. The server table goes with it.
+        #expect(!names.contains("supplement_dose_overrides"))
         // As are the two Notion leftovers and the dying widget token table.
         #expect(names.isDisjoint(with: ["notion_credentials", "notion_exports", "widget_tokens"]))
     }
