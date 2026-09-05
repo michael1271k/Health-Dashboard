@@ -366,11 +366,11 @@ struct PreferencesTests {
         try db.writer.write { conn in
             try UserGoalRow(
                 id: "g1", userId: user, contextMode: "normal",
-                // `axis5_hybrid` is the real dead value still sitting in
+                // `onyx5` is the real dead value still sitting in
                 // `active_program` — read alone, it names a plan that no longer
                 // exists. Hydration read exactly this column for months.
                 goalPreset: "bulk", createdAt: Date(), updatedAt: Date(),
-                autoLogSupplements: false, activeProgram: "axis5_hybrid",
+                autoLogSupplements: false, activeProgram: "onyx5",
                 dayCutoffHour: 0, unitSystem: "imperial", reduceMotion: true,
                 timezone: "Asia/Jerusalem", activePlan: "helix5", trackRpe: false
             ).insert(conn)

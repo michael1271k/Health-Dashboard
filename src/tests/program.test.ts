@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { derivePhase } from '@/lib/nutrition/phase'
 import { DAY_COLOR, SPLIT, STEEL, dayColor } from '@/lib/theme/palette'
-import { APEX51, PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek, isRestDayFor, programDayFor, activeProgram } from '@/lib/programs'
+import { ONYX5, PROGRAMS, DEFAULT_PROGRAM_ID, eraForDate, isReentryWeek, isRestDayFor, programDayFor, activeProgram } from '@/lib/programs'
 import { phaseGoalsFor } from '@/lib/types/workout'
 import { getWeekPhase, PHASES } from '@/lib/phases'
 import { computeBattery, BATTERY } from '@/lib/scoring/battery'
@@ -26,12 +26,12 @@ describe('v5.1 day classification (derivePhase)', () => {
 // ── [5] HELIX-5 split ────────────────────────────────────────────────────────
 describe('HELIX-5 split', () => {
   it('is the default program and trains Sun/Mon/Tue/Thu/Fri', () => {
-    expect(DEFAULT_PROGRAM_ID).toBe('apex51')
-    expect(APEX51.days.map((d) => d.weekday).sort()).toEqual([0, 1, 2, 4, 5])
+    expect(DEFAULT_PROGRAM_ID).toBe('onyx5')
+    expect(ONYX5.days.map((d) => d.weekday).sort()).toEqual([0, 1, 2, 4, 5])
   })
   it('Wed/Sat are Zone-2 rest days in the AXIS era', () => {
-    expect(programDayFor('apex51', 3)).toBe('rest')
-    expect(programDayFor('apex51', 6)).toBe('rest')
+    expect(programDayFor('onyx5', 3)).toBe('rest')
+    expect(programDayFor('onyx5', 6)).toBe('rest')
     expect(isRestDayFor('2026-07-22')).toBe(true)  // Wed
     expect(isRestDayFor('2026-07-25')).toBe(true)  // Sat
     expect(isRestDayFor('2026-07-21')).toBe(false) // Tue = training
@@ -55,12 +55,12 @@ describe('HELIX-5 split', () => {
   })
   it('derives per-phase set counts from the (bulk/cut) plan data', () => {
     const totals = (phase: 'bulk' | 'cut') =>
-      Object.fromEntries(activeProgram('apex51', phase).days.map((d) => [d.key, d.exercises.reduce((n, e) => n + e.sets, 0)]))
+      Object.fromEntries(activeProgram('onyx5', phase).days.map((d) => [d.key, d.exercises.reduce((n, e) => n + e.sets, 0)]))
     expect(totals('bulk')).toEqual({ cb_a: 19, legs_a: 23, arms: 23, cb_b: 20, legs_b: 22 })
     expect(totals('cut')).toEqual({ cb_a: 16, legs_a: 19, arms: 18, cb_b: 17, legs_b: 18 })
     // The two bulk-only lifts (cutSets:0 — Wrist Curl, Hip Adduction) drop out on a cut.
     const exCount = (phase: 'bulk' | 'cut', key: string) =>
-      activeProgram('apex51', phase).days.find((d) => d.key === key)!.exercises.length
+      activeProgram('onyx5', phase).days.find((d) => d.key === key)!.exercises.length
     expect(exCount('bulk', 'arms')).toBe(8)
     expect(exCount('cut', 'arms')).toBe(7)
     expect(exCount('bulk', 'legs_b')).toBe(8)
@@ -68,13 +68,13 @@ describe('HELIX-5 split', () => {
   })
 
   it('phaseGoalsFor: Helix cut = 1955 kcal, PPL cut is leaner (1935, higher protein)', () => {
-    expect(phaseGoalsFor('apex51', 'cut').calorieGoal).toBe(1955)
-    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1955)   // Onyx-4 shares the Helix cut
+    expect(phaseGoalsFor('onyx5', 'cut').calorieGoal).toBe(1955)
+    expect(phaseGoalsFor('onyx4', 'cut').calorieGoal).toBe(1955)   // Onyx-4 shares the Helix cut
     const ppl = phaseGoalsFor('ppl', 'cut')
     expect(ppl.calorieGoal).toBe(1935)
     expect(ppl.proteinGoalG).toBe(180)
     expect(ppl.carbsGoalG).toBe(180)
-    expect(phaseGoalsFor('apex51', 'bulk').calorieGoal).toBe(2600) // Lean Bulk (fat hard cap 70)
+    expect(phaseGoalsFor('onyx5', 'bulk').calorieGoal).toBe(2600) // Lean Bulk (fat hard cap 70)
   })
   it('removed movements are gone from every LIVE template', () => {
     // These were dropped when the Helix templates were refined; the PPL Legacy

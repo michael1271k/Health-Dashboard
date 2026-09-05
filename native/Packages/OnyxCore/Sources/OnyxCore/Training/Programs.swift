@@ -38,7 +38,7 @@ import Foundation
 /// `era`, `active` and `drawer` are dropped on purpose: they are web layout
 /// flags (which sheet a plan appears in), and the native picker is one list.
 public struct PlanInfo: Identifiable, Codable, Equatable, Sendable {
-    /// The stored id. Not a display value and NOT renameable — see `apex51`.
+    /// The stored id. Not a display value and NOT renameable — see `onyx5`.
     public let id: String
     public let label: String
     /// The one-line description under the plan's name in the picker.
@@ -62,23 +62,27 @@ public struct PlanInfo: Identifiable, Codable, Equatable, Sendable {
 public enum Programs {
 
     /// The plan a device falls back to when it has no valid selection.
-    public static let defaultPlanId = "apex51"
+    public static let defaultPlanId = "onyx5"
 
     /// `PROGRAMS`, in declaration order.
     ///
-    /// ── WHY ONYX-5's ID IS `apex51` ─────────────────────────────────────────
-    /// The plan was renamed and the id was not. It is the key a season of
-    /// `localStorage` entries, Supabase rows and exported reports were written
-    /// under, so renaming it would not rename the history — it would orphan it.
-    /// An id is a join key that happens to be readable, never a label.
+    /// ── THE IDS WERE `apex51` AND `axis4` UNTIL 2026-09-05 ──────────────────
+    /// This comment used to argue the opposite: that an id is a join key which
+    /// happens to be readable, and that renaming it would orphan the history
+    /// rather than rename it. That was right about the risk and wrong about the
+    /// remedy. The history is not orphaned by a rename, it is orphaned by a
+    /// rename with nothing to read the old spelling — so the three DB rows move
+    /// (W3) and `legacyPlanId` below absorbs every id ever written, forever.
+    /// A stale id costs a dictionary lookup; a plan called `apex51` in a
+    /// product called Onyx costs a double-take every time anyone reads a row.
     public static let all: [PlanInfo] = [
         PlanInfo(
-            id: "apex51",
+            id: "onyx5",
             label: "Onyx-5",
             blurb: "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest."
         ),
         PlanInfo(
-            id: "axis4",
+            id: "onyx4",
             label: "Onyx-4",
             blurb: "4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it."
         ),
@@ -115,8 +119,15 @@ public enum Programs {
     /// but a device that last synced before the consolidation still holds the
     /// old string, and a stale id must never dead-end a picker.
     private static let legacyPlanId: [String: String] = [
-        "axis4_builder": "axis4",
-        "axis4_defender": "axis4",
+        "onyx4_builder": "onyx4",
+        "onyx4_defender": "onyx4",
+        "axis4_builder": "onyx4",
+        "axis4_defender": "onyx4",
+        // The 2026-09-05 rename. Must stay in step with `LEGACY_PLAN_ID` in
+        // `src/lib/programs.ts` — the vector `plan-id-normalize.json` pins it.
+        "apex51": "onyx5",
+        "axis4": "onyx4",
+        "axis5_hybrid": "onyx5",
     ]
 
     /// A valid, known plan id, or nil.
@@ -298,7 +309,7 @@ public extension Programs {
     /// `PhaseGoals.preset`, so PPL's cut shows its own numbers and not Onyx's.
     ///
     /// The id is used RAW, exactly as the TypeScript uses it: a legacy alias
-    /// like `axis4_builder` misses the override table and lands on the
+    /// like `onyx4_builder` misses the override table and lands on the
     /// defaults. Normalising here would be a second, silent place where ids get
     /// rewritten — call `normalizePlanId` first if that is what you want.
     static func goals(planId: String, phase: ProgramPhase) -> PhaseGoals {

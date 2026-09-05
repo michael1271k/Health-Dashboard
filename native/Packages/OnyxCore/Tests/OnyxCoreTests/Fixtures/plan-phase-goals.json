@@ -4,9 +4,9 @@
   "note": "The plan overlay is spread OVER the Helix default: PPL runs a leaner cut (1935 kcal / 180P·180C·55F) and inherits every other field, including the cut’s body targets. PPL’s BULK has no overlay at all.",
   "cases": [
     {
-      "name": "apex51 · cut",
+      "name": "onyx5 · cut",
       "input": {
-        "planId": "apex51",
+        "planId": "onyx5",
         "phase": "cut"
       },
       "expected": {
@@ -29,9 +29,9 @@
       }
     },
     {
-      "name": "apex51 · bulk",
+      "name": "onyx5 · bulk",
       "input": {
-        "planId": "apex51",
+        "planId": "onyx5",
         "phase": "bulk"
       },
       "expected": {
@@ -54,9 +54,9 @@
       }
     },
     {
-      "name": "axis4 · cut",
+      "name": "onyx4 · cut",
       "input": {
-        "planId": "axis4",
+        "planId": "onyx4",
         "phase": "cut"
       },
       "expected": {
@@ -79,9 +79,9 @@
       }
     },
     {
-      "name": "axis4 · bulk",
+      "name": "onyx4 · bulk",
       "input": {
-        "planId": "axis4",
+        "planId": "onyx4",
         "phase": "bulk"
       },
       "expected": {
@@ -154,9 +154,9 @@
       }
     },
     {
-      "name": "axis4_builder · cut",
+      "name": "onyx4_builder · cut",
       "input": {
-        "planId": "axis4_builder",
+        "planId": "onyx4_builder",
         "phase": "cut"
       },
       "expected": {
@@ -179,9 +179,9 @@
       }
     },
     {
-      "name": "axis4_builder · bulk",
+      "name": "onyx4_builder · bulk",
       "input": {
-        "planId": "axis4_builder",
+        "planId": "onyx4_builder",
         "phase": "bulk"
       },
       "expected": {

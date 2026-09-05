@@ -45,7 +45,7 @@ enum PreviewHarness {
             row.sleepGoalHours = 8
             row.waterGoalMl = 3000
             row.activeLever = LeverId.custom.rawValue
-            row.activePlan = "apex51"
+            row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.unitSystem = "kg"
             row.weekEndDay = 6
@@ -54,7 +54,7 @@ enum PreviewHarness {
             row.targetBodyFatPct = 13
             row.targetMuscleMassKg = 33
         }
-        try? database.editPlanPhaseGoals(userId: userId, planId: "apex51", phase: "cut") { row in
+        try? database.editPlanPhaseGoals(userId: userId, planId: "onyx5", phase: "cut") { row in
             row.kcal = 1955
             row.proteinG = 170
             row.carbsG = 195

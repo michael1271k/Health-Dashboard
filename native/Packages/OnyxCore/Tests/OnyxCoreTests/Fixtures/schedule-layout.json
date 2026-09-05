@@ -197,10 +197,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/cb_a · silent",
+      "name": "effectiveWeekday · onyx5/cb_a · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "cb_a",
         "layout": {}
       },
@@ -209,10 +209,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/cb_a · first day remapped to 3",
+      "name": "effectiveWeekday · onyx5/cb_a · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "cb_a",
         "layout": {
           "cb_a": 3
@@ -223,10 +223,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/legs_a · silent",
+      "name": "effectiveWeekday · onyx5/legs_a · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "legs_a",
         "layout": {}
       },
@@ -235,10 +235,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/legs_a · first day remapped to 3",
+      "name": "effectiveWeekday · onyx5/legs_a · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "legs_a",
         "layout": {
           "cb_a": 3
@@ -249,10 +249,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/arms · silent",
+      "name": "effectiveWeekday · onyx5/arms · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "arms",
         "layout": {}
       },
@@ -261,10 +261,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/arms · first day remapped to 3",
+      "name": "effectiveWeekday · onyx5/arms · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "arms",
         "layout": {
           "cb_a": 3
@@ -275,10 +275,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/cb_b · silent",
+      "name": "effectiveWeekday · onyx5/cb_b · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "cb_b",
         "layout": {}
       },
@@ -287,10 +287,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/cb_b · first day remapped to 3",
+      "name": "effectiveWeekday · onyx5/cb_b · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "cb_b",
         "layout": {
           "cb_a": 3
@@ -301,10 +301,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/legs_b · silent",
+      "name": "effectiveWeekday · onyx5/legs_b · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "legs_b",
         "layout": {}
       },
@@ -313,10 +313,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · apex51/legs_b · first day remapped to 3",
+      "name": "effectiveWeekday · onyx5/legs_b · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "legs_b",
         "layout": {
           "cb_a": 3
@@ -327,10 +327,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 0",
+      "name": "dayKeyForWeekday · onyx5 · authored · 0",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 0
       },
@@ -339,10 +339,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 0",
+      "name": "programDayIn · onyx5 · authored · 0",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 0
       },
@@ -356,10 +356,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 1",
+      "name": "dayKeyForWeekday · onyx5 · authored · 1",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 1
       },
@@ -368,10 +368,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 1",
+      "name": "programDayIn · onyx5 · authored · 1",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 1
       },
@@ -385,10 +385,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 2",
+      "name": "dayKeyForWeekday · onyx5 · authored · 2",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 2
       },
@@ -397,10 +397,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 2",
+      "name": "programDayIn · onyx5 · authored · 2",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 2
       },
@@ -414,10 +414,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 3",
+      "name": "dayKeyForWeekday · onyx5 · authored · 3",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 3
       },
@@ -426,10 +426,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 3",
+      "name": "programDayIn · onyx5 · authored · 3",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 3
       },
@@ -438,10 +438,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 4",
+      "name": "dayKeyForWeekday · onyx5 · authored · 4",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 4
       },
@@ -450,10 +450,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 4",
+      "name": "programDayIn · onyx5 · authored · 4",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 4
       },
@@ -467,10 +467,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 5",
+      "name": "dayKeyForWeekday · onyx5 · authored · 5",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 5
       },
@@ -479,10 +479,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 5",
+      "name": "programDayIn · onyx5 · authored · 5",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 5
       },
@@ -496,10 +496,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · authored · 6",
+      "name": "dayKeyForWeekday · onyx5 · authored · 6",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 6
       },
@@ -508,10 +508,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · authored · 6",
+      "name": "programDayIn · onyx5 · authored · 6",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 6
       },
@@ -520,10 +520,10 @@
       }
     },
     {
-      "name": "fullLayout · apex51 · authored",
+      "name": "fullLayout · onyx5 · authored",
       "input": {
         "fn": "fullLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {}
       },
       "expected": {
@@ -537,10 +537,10 @@
       }
     },
     {
-      "name": "isAuthoredLayout · apex51 · authored",
+      "name": "isAuthoredLayout · onyx5 · authored",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {}
       },
       "expected": {
@@ -548,10 +548,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 0",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 0",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -562,10 +562,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 0",
+      "name": "programDayIn · onyx5 · remapped · 0",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -576,10 +576,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 1",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 1",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -590,10 +590,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 1",
+      "name": "programDayIn · onyx5 · remapped · 1",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -609,10 +609,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 2",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 2",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -623,10 +623,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 2",
+      "name": "programDayIn · onyx5 · remapped · 2",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -642,10 +642,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 3",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 3",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -656,10 +656,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 3",
+      "name": "programDayIn · onyx5 · remapped · 3",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -675,10 +675,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 4",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 4",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -689,10 +689,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 4",
+      "name": "programDayIn · onyx5 · remapped · 4",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -708,10 +708,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 5",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 5",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -722,10 +722,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 5",
+      "name": "programDayIn · onyx5 · remapped · 5",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -741,10 +741,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · apex51 · remapped · 6",
+      "name": "dayKeyForWeekday · onyx5 · remapped · 6",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -755,10 +755,10 @@
       }
     },
     {
-      "name": "programDayIn · apex51 · remapped · 6",
+      "name": "programDayIn · onyx5 · remapped · 6",
       "input": {
         "fn": "programDayIn",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         },
@@ -769,10 +769,10 @@
       }
     },
     {
-      "name": "fullLayout · apex51 · remapped",
+      "name": "fullLayout · onyx5 · remapped",
       "input": {
         "fn": "fullLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         }
@@ -788,10 +788,10 @@
       }
     },
     {
-      "name": "isAuthoredLayout · apex51 · remapped",
+      "name": "isAuthoredLayout · onyx5 · remapped",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 3
         }
@@ -801,10 +801,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/upper_a · silent",
+      "name": "effectiveWeekday · onyx4/upper_a · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "upper_a",
         "layout": {}
       },
@@ -813,10 +813,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/upper_a · first day remapped to 3",
+      "name": "effectiveWeekday · onyx4/upper_a · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "upper_a",
         "layout": {
           "upper_a": 3
@@ -827,10 +827,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/lower_a · silent",
+      "name": "effectiveWeekday · onyx4/lower_a · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "lower_a",
         "layout": {}
       },
@@ -839,10 +839,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/lower_a · first day remapped to 3",
+      "name": "effectiveWeekday · onyx4/lower_a · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "lower_a",
         "layout": {
           "upper_a": 3
@@ -853,10 +853,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/upper_b · silent",
+      "name": "effectiveWeekday · onyx4/upper_b · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "upper_b",
         "layout": {}
       },
@@ -865,10 +865,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/upper_b · first day remapped to 3",
+      "name": "effectiveWeekday · onyx4/upper_b · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "upper_b",
         "layout": {
           "upper_a": 3
@@ -879,10 +879,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/lower_b · silent",
+      "name": "effectiveWeekday · onyx4/lower_b · silent",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "lower_b",
         "layout": {}
       },
@@ -891,10 +891,10 @@
       }
     },
     {
-      "name": "effectiveWeekday · axis4/lower_b · first day remapped to 3",
+      "name": "effectiveWeekday · onyx4/lower_b · first day remapped to 3",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "dayKey": "lower_b",
         "layout": {
           "upper_a": 3
@@ -905,10 +905,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 0",
+      "name": "dayKeyForWeekday · onyx4 · authored · 0",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 0
       },
@@ -917,10 +917,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 0",
+      "name": "programDayIn · onyx4 · authored · 0",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 0
       },
@@ -929,10 +929,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 1",
+      "name": "dayKeyForWeekday · onyx4 · authored · 1",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 1
       },
@@ -941,10 +941,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 1",
+      "name": "programDayIn · onyx4 · authored · 1",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 1
       },
@@ -958,10 +958,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 2",
+      "name": "dayKeyForWeekday · onyx4 · authored · 2",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 2
       },
@@ -970,10 +970,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 2",
+      "name": "programDayIn · onyx4 · authored · 2",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 2
       },
@@ -987,10 +987,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 3",
+      "name": "dayKeyForWeekday · onyx4 · authored · 3",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 3
       },
@@ -999,10 +999,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 3",
+      "name": "programDayIn · onyx4 · authored · 3",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 3
       },
@@ -1011,10 +1011,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 4",
+      "name": "dayKeyForWeekday · onyx4 · authored · 4",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 4
       },
@@ -1023,10 +1023,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 4",
+      "name": "programDayIn · onyx4 · authored · 4",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 4
       },
@@ -1040,10 +1040,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 5",
+      "name": "dayKeyForWeekday · onyx4 · authored · 5",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 5
       },
@@ -1052,10 +1052,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 5",
+      "name": "programDayIn · onyx4 · authored · 5",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 5
       },
@@ -1069,10 +1069,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · authored · 6",
+      "name": "dayKeyForWeekday · onyx4 · authored · 6",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 6
       },
@@ -1081,10 +1081,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · authored · 6",
+      "name": "programDayIn · onyx4 · authored · 6",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "weekday": 6
       },
@@ -1093,10 +1093,10 @@
       }
     },
     {
-      "name": "fullLayout · axis4 · authored",
+      "name": "fullLayout · onyx4 · authored",
       "input": {
         "fn": "fullLayout",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {}
       },
       "expected": {
@@ -1109,10 +1109,10 @@
       }
     },
     {
-      "name": "isAuthoredLayout · axis4 · authored",
+      "name": "isAuthoredLayout · onyx4 · authored",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {}
       },
       "expected": {
@@ -1120,10 +1120,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 0",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 0",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1134,10 +1134,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 0",
+      "name": "programDayIn · onyx4 · remapped · 0",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1148,10 +1148,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 1",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 1",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1162,10 +1162,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 1",
+      "name": "programDayIn · onyx4 · remapped · 1",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1176,10 +1176,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 2",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 2",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1190,10 +1190,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 2",
+      "name": "programDayIn · onyx4 · remapped · 2",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1209,10 +1209,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 3",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 3",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1223,10 +1223,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 3",
+      "name": "programDayIn · onyx4 · remapped · 3",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1242,10 +1242,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 4",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 4",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1256,10 +1256,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 4",
+      "name": "programDayIn · onyx4 · remapped · 4",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1275,10 +1275,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 5",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 5",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1289,10 +1289,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 5",
+      "name": "programDayIn · onyx4 · remapped · 5",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1308,10 +1308,10 @@
       }
     },
     {
-      "name": "dayKeyForWeekday · axis4 · remapped · 6",
+      "name": "dayKeyForWeekday · onyx4 · remapped · 6",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1322,10 +1322,10 @@
       }
     },
     {
-      "name": "programDayIn · axis4 · remapped · 6",
+      "name": "programDayIn · onyx4 · remapped · 6",
       "input": {
         "fn": "programDayIn",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         },
@@ -1336,10 +1336,10 @@
       }
     },
     {
-      "name": "fullLayout · axis4 · remapped",
+      "name": "fullLayout · onyx4 · remapped",
       "input": {
         "fn": "fullLayout",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         }
@@ -1354,10 +1354,10 @@
       }
     },
     {
-      "name": "isAuthoredLayout · axis4 · remapped",
+      "name": "isAuthoredLayout · onyx4 · remapped",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {
           "upper_a": 3
         }
@@ -1974,7 +1974,7 @@
       "name": "effectiveWeekday · an invalid mapped value falls back to the authored weekday",
       "input": {
         "fn": "effectiveWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "dayKey": "arms",
         "layout": {
           "arms": 9
@@ -1988,7 +1988,7 @@
       "name": "dayKeyForWeekday · weekday 7 is nobody",
       "input": {
         "fn": "dayKeyForWeekday",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "weekday": 7
       },
@@ -2000,7 +2000,7 @@
       "name": "moveDay · arms → Thu exchanges with cb_b",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 4
@@ -2019,7 +2019,7 @@
       "name": "moveDay · arms → Wed just moves; Tue becomes rest",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 3
@@ -2038,7 +2038,7 @@
       "name": "moveDay · arms → its own Tue is a no-op (full layout back)",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 2
@@ -2057,7 +2057,7 @@
       "name": "moveDay · a day of another plan is a no-op",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "upper_a",
         "weekday": 3
@@ -2076,7 +2076,7 @@
       "name": "moveDay · weekday 7 is invalid — full layout back",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 7
@@ -2095,7 +2095,7 @@
       "name": "moveDay · weekday -1 is invalid — full layout back",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": -1
@@ -2114,7 +2114,7 @@
       "name": "moveDay · from a sparse layout {arms:3}, cb_b → Wed exchanges with arms (arms takes Thu)",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "arms": 3
         },
@@ -2135,7 +2135,7 @@
       "name": "moveDay · from a sparse layout {arms:3}, arms → Tue goes home (Wed rests again)",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "arms": 3
         },
@@ -2153,10 +2153,10 @@
       }
     },
     {
-      "name": "moveDay · helix4 upper_a → Sun (free)",
+      "name": "moveDay · onyx4 upper_a → Sun (free)",
       "input": {
         "fn": "moveDay",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "dayKey": "upper_a",
         "weekday": 0
@@ -2171,10 +2171,10 @@
       }
     },
     {
-      "name": "moveDay · helix4 lower_b → Mon exchanges with upper_a",
+      "name": "moveDay · onyx4 lower_b → Mon exchanges with upper_a",
       "input": {
         "fn": "moveDay",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "dayKey": "lower_b",
         "weekday": 1
@@ -2230,7 +2230,7 @@
       "name": "moveDay · chain · arms → 4",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 4
@@ -2249,7 +2249,7 @@
       "name": "moveDay · chain · cb_a → 5",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 0,
           "legs_a": 1,
@@ -2274,7 +2274,7 @@
       "name": "moveDay · chain · legs_b → 0",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 5,
           "legs_a": 1,
@@ -2299,7 +2299,7 @@
       "name": "moveDay · chain · arms → 3",
       "input": {
         "fn": "moveDay",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "cb_a": 5,
           "legs_a": 1,
@@ -2324,7 +2324,7 @@
       "name": "isAuthoredLayout · a key of another plan says nothing",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "upper_a": 3
         }
@@ -2337,7 +2337,7 @@
       "name": "isAuthoredLayout · an authored value spelled out is still authored",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "arms": 2
         }
@@ -2350,7 +2350,7 @@
       "name": "isAuthoredLayout · an invalid value falls back and is authored",
       "input": {
         "fn": "isAuthoredLayout",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "arms": 9
         }

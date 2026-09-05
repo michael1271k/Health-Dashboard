@@ -19,7 +19,7 @@ public extension Program {
     /// Onyx-4 — the 4-day upper/lower backup (Mon/Tue/Thu/Fri). One plan; the
     /// former Builder/Defender pair is a PHASE now, via `sets` vs `cutSets`.
     static let onyx4 = Program(
-        id: "axis4",
+        id: "onyx4",
         label: "Onyx-4",
         blurb: "4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.",
         days: [
@@ -133,7 +133,7 @@ public extension Program {
     static let all: [Program] = [onyx5, onyx4, pplLegacy]
 
     /// `PROGRAMS[id]` — nil for an id nothing claims. The fallback is the
-    /// caller's, as it is everywhere in `programs.ts` (`?? APEX51`).
+    /// caller's, as it is everywhere in `programs.ts` (`?? ONYX5`).
     static func byId(_ id: String) -> Program? {
         all.first { $0.id == id }
     }

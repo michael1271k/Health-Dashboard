@@ -163,7 +163,7 @@ struct MirrorTests {
         let remote = FakeMirror()
         await remote.put("plans", [[
             "id": "p1", "user_id": "u1", "name": "ONYX-5",
-            "program_id": "apex51", "active": true, "started_on": "2026-07-15",
+            "program_id": "onyx5", "active": true, "started_on": "2026-07-15",
             "created_at": iso(0),
         ]])
 
@@ -183,7 +183,7 @@ struct MirrorTests {
         let goals = try table("user_goals")
         func row(_ updated: String) -> [String: Any] {
             ["id": "g1", "user_id": "u1", "context_mode": "cut", "created_at": iso(0),
-             "updated_at": updated, "auto_log_supplements": true, "active_program": "apex51",
+             "updated_at": updated, "auto_log_supplements": true, "active_program": "onyx5",
              "day_cutoff_hour": 0, "unit_system": "metric", "reduce_motion": false,
              "timezone": "Asia/Jerusalem", "track_rpe": true]
         }

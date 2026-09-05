@@ -17,7 +17,7 @@ struct ProgramDeckGoldenTests {
 
     @Test("the Swift deck equals the TypeScript deck, per phase")
     func deckMatches() throws {
-        for c in try GoldenFixture<PhaseIn, DeckOut>.load("program-helix5").cases {
+        for c in try GoldenFixture<PhaseIn, DeckOut>.load("program-onyx5").cases {
             let p = Program.onyx5
             #expect(p.id == c.expected.id)
             let days = p.days.map { d in

@@ -455,7 +455,7 @@ describe('cascadeSetEdit — inherited ratings clear across the cascade', () => 
  * day while appearing to work on the rare cold-start one.
  */
 describe('RPE memory reaches the deck through every seeding path', () => {
-  const legsB = PROGRAMS.apex51.days.find((d) => d.key === 'legs_b')!
+  const legsB = PROGRAMS.onyx5.days.find((d) => d.key === 'legs_b')!
 
   it('path 1 — history: seeds the rating and the numbers it was earned against', () => {
     const history = new Map<string, ExerciseHistoryEntry>([

@@ -63,7 +63,7 @@ struct CompositeRowPushTests {
     @Test("a plan-phase goal row reaches the remote under its natural key")
     func planPhaseGoalsPush() async throws {
         let db = try store()
-        try db.editPlanPhaseGoals(userId: user, planId: "apex51", phase: "cut") { row in
+        try db.editPlanPhaseGoals(userId: user, planId: "onyx5", phase: "cut") { row in
             row.kcal = 1885
             row.proteinG = 170
         }
@@ -84,7 +84,7 @@ struct CompositeRowPushTests {
     func planPhaseVolumePush() async throws {
         let db = try store()
         try db.setPlanPhaseVolume(
-            userId: user, planId: "apex51", phase: "cut", muscle: "Side delts", targetSets: 9
+            userId: user, planId: "onyx5", phase: "cut", muscle: "Side delts", targetSets: 9
         )
 
         let push = RecordingPush()
@@ -104,7 +104,7 @@ struct CompositeRowPushTests {
     func editsCollapse() async throws {
         let db = try store()
         for kcal in [1900, 1910, 1920, 1930, 1940] {
-            try db.editPlanPhaseGoals(userId: user, planId: "apex51", phase: "cut") { $0.kcal = kcal }
+            try db.editPlanPhaseGoals(userId: user, planId: "onyx5", phase: "cut") { $0.kcal = kcal }
         }
 
         #expect(try db.pendingOutbox().count == 1)

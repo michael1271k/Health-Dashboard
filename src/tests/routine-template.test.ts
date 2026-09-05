@@ -6,7 +6,7 @@ import {
 } from '@/lib/sessions/routineTemplate'
 import { countCommittedSets } from '@/lib/sessions/schema'
 
-const cbB = PROGRAMS.apex51.days.find((d) => d.key === 'cb_b')!
+const cbB = PROGRAMS.onyx5.days.find((d) => d.key === 'cb_b')!
 
 const set = (o: Partial<TemplateSourceSet> & Pick<TemplateSourceSet, 'exerciseName'>): TemplateSourceSet =>
   ({ weightKg: 20, reps: 10, exerciseOrder: 0, ...o })

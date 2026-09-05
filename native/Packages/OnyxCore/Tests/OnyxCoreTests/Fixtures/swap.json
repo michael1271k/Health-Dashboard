@@ -10,7 +10,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -47,7 +47,7 @@
         "date": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -85,7 +85,7 @@
         "date": "2026-08-05",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -110,7 +110,7 @@
         "date": "2026-08-08",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -135,7 +135,7 @@
         "date": "2026-08-02",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -173,7 +173,7 @@
         "date": "2026-08-05",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-04": "rest",
@@ -213,7 +213,7 @@
         "date": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-05": "cb_a",
@@ -254,7 +254,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-04": "cb_a",
@@ -304,7 +304,7 @@
         "date": "2026-06-01",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -341,7 +341,7 @@
         "date": "2026-06-01",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -380,7 +380,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -408,7 +408,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -446,7 +446,7 @@
         "date": "2026-08-06",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -481,7 +481,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -515,7 +515,7 @@
         "date": "2026-06-01",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -552,7 +552,7 @@
         "date": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {
@@ -579,7 +579,7 @@
         "date": "2026-08-05",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {
@@ -618,7 +618,7 @@
         "date": "2026-08-10",
         "resolver": {
           "ctx": {
-            "programId": "axis4",
+            "programId": "onyx4",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -655,7 +655,7 @@
         "date": "2026-08-14",
         "resolver": {
           "ctx": {
-            "programId": "axis4",
+            "programId": "onyx4",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -692,7 +692,7 @@
         "date": "2026-08-31",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -730,7 +730,7 @@
         "date": "2026-12-31",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -770,7 +770,7 @@
         "naturalDate": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -799,7 +799,7 @@
         "naturalDate": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -828,7 +828,7 @@
         "naturalDate": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-07": "rest",
@@ -860,7 +860,7 @@
         "naturalDate": "2026-08-04",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -885,7 +885,7 @@
         "naturalDate": null,
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -910,7 +910,7 @@
         "naturalDate": null,
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -939,7 +939,7 @@
         "naturalDate": "2026-08-01",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-07": "rest",
@@ -971,7 +971,7 @@
         "naturalDate": "",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -996,7 +996,7 @@
         "naturalDate": "2026-08-07",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {
               "2026-08-05": "cb_a"
@@ -1027,7 +1027,7 @@
         "naturalDate": "2026-06-05",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1056,7 +1056,7 @@
         "naturalDate": "2026-07-29",
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1367,7 +1367,7 @@
       "name": "planPermanentMove · cb_b → Sat: nothing behind today changes",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "cb_b",
         "weekday": 6,
@@ -1375,7 +1375,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1401,7 +1401,7 @@
       "name": "planPermanentMove · arms → Wed: pins Tue arms and Wed rest",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 3,
@@ -1409,7 +1409,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1447,7 +1447,7 @@
       "name": "planPermanentMove · cb_a ↔ legs_a both in the past: pins Sun and Mon",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "cb_a",
         "weekday": 1,
@@ -1455,7 +1455,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1493,7 +1493,7 @@
       "name": "planPermanentMove · today logged cb_b — legs_b → Thu refused (target)",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "legs_b",
         "weekday": 4,
@@ -1506,7 +1506,7 @@
         ],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1530,7 +1530,7 @@
       "name": "planPermanentMove · today logged cb_b — cb_b → Sat refused (source)",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "cb_b",
         "weekday": 6,
@@ -1543,7 +1543,7 @@
         ],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1567,7 +1567,7 @@
       "name": "planPermanentMove · today logged cb_b — cb_a → Sat allowed, today untouched",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "cb_a",
         "weekday": 6,
@@ -1580,7 +1580,7 @@
         ],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1613,7 +1613,7 @@
       "name": "planPermanentMove · Tuesday logged arms — legs_a → Tue refused",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "legs_a",
         "weekday": 2,
@@ -1626,7 +1626,7 @@
         ],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1650,7 +1650,7 @@
       "name": "planPermanentMove · from {arms:3}, arms back → Tue: pins Tue rest and Wed arms",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {
           "arms": 3
         },
@@ -1660,7 +1660,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {
@@ -1700,7 +1700,7 @@
       "name": "planPermanentMove · weekday 7: no move, no pins, the full layout back",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 7,
@@ -1708,7 +1708,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1734,7 +1734,7 @@
       "name": "planPermanentMove · an unknown dayKey: the full layout back, nothing pinned",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "upper_a",
         "weekday": 3,
@@ -1742,7 +1742,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1768,7 +1768,7 @@
       "name": "planPermanentMove · today is Sunday: nothing is spent",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "arms",
         "weekday": 3,
@@ -1776,7 +1776,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1802,7 +1802,7 @@
       "name": "planPermanentMove · today is Saturday: cb_a → Sat pins only Sunday",
       "input": {
         "fn": "planPermanentMove",
-        "program": "apex51",
+        "program": "onyx5",
         "layout": {},
         "dayKey": "cb_a",
         "weekday": 6,
@@ -1810,7 +1810,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "apex51",
+            "programId": "onyx5",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1840,10 +1840,10 @@
       }
     },
     {
-      "name": "planPermanentMove · helix4 lower_b → Sun, today Wed: pins Sunday rest",
+      "name": "planPermanentMove · onyx4 lower_b → Sun, today Wed: pins Sunday rest",
       "input": {
         "fn": "planPermanentMove",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "dayKey": "lower_b",
         "weekday": 0,
@@ -1851,7 +1851,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "axis4",
+            "programId": "onyx4",
             "phase": "cut",
             "overrides": {},
             "layout": {}
@@ -1880,10 +1880,10 @@
       }
     },
     {
-      "name": "planPermanentMove · helix4 upper_a ↔ lower_b, today Sat: pins Mon and Fri",
+      "name": "planPermanentMove · onyx4 upper_a ↔ lower_b, today Sat: pins Mon and Fri",
       "input": {
         "fn": "planPermanentMove",
-        "program": "axis4",
+        "program": "onyx4",
         "layout": {},
         "dayKey": "upper_a",
         "weekday": 5,
@@ -1891,7 +1891,7 @@
         "logged": [],
         "resolver": {
           "ctx": {
-            "programId": "axis4",
+            "programId": "onyx4",
             "phase": "cut",
             "overrides": {},
             "layout": {}

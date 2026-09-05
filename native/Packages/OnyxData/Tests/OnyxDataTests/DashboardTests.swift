@@ -66,7 +66,7 @@ struct TodayFeedBuilderTests {
     @Test("sessions split by week and the change names what moved")
     func weekTotals() throws {
         let db = try AppDatabase.inMemory(deviceId: "device-a")
-        try db.editUserGoals(userId: user) { $0.weekEndDay = 6; $0.activePlan = "apex51" }   // weeks start Sunday
+        try db.editUserGoals(userId: user) { $0.weekEndDay = 6; $0.activePlan = "onyx5" }   // weeks start Sunday
         try db.writer.write { g in
             // This week (Sun 30 Aug…): two sessions. Last week: one, heavier.
             for (id, date, kg) in [("a", "2026-08-31", 100.0), ("b", "2026-09-01", 120.0), ("c", "2026-08-25", 300.0)] {

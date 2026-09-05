@@ -19,7 +19,7 @@ import { payloadToTemplate, templateToDraft } from '@/lib/sessions/routineTempla
  * did not persist looks exactly like a reorder you did not make.
  */
 
-const cbB = PROGRAMS.apex51.days.find((d) => d.key === 'cb_b')!
+const cbB = PROGRAMS.onyx5.days.find((d) => d.key === 'cb_b')!
 
 /** Three exercises off the real program, in the order the deck seeds them. */
 const NAMES = cbB.exercises.slice(0, 3).map((e) => e.name)

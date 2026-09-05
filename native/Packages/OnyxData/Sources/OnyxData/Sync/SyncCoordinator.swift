@@ -334,6 +334,14 @@ public actor SyncCoordinator: MirrorRefreshing {
 
         state = .running(SyncProgress(reason: reason, step: .pull))
         let report = isBackfill ? try await backfillPull(now: now) : await pull(now: now)
+        // Between the pull and the ledger, because this is the last moment at
+        // which abandoning the run costs nothing. `pull` catches every error
+        // per table into `report.failures` — cancellation included — so a run
+        // stopped mid-pull arrives here with a report in hand and, without
+        // this line, went on to `record` it. That is sign-out stamping the
+        // ledger for the user who has just left, which is the exact thing
+        // `stop()`'s own comment claims it prevents.
+        try checkStopped()
         // A backfill's ledger is all or nothing: a table that did not land
         // must leave the user looking "never synced", so the next launch runs
         // the whole thing again. A normal sync records what it got.
@@ -412,6 +420,11 @@ public actor SyncCoordinator: MirrorRefreshing {
 
         report.merge(await puller.refresh(tables: rest, now: now, onTable: tick))
         apply(report)
+        // The LAST group had no check after it, and `rest` is where every table
+        // but `user_goals` and `plans` lives. A run stopped while parked on one
+        // of those returned its report and stamped the ledger — after sign-out,
+        // for the user who had just left.
+        try checkStopped()
         return report
     }
 

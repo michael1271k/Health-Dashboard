@@ -28,13 +28,13 @@ struct WeeklyExportBuilderTests {
             try UserGoalRow(
                 id: "g1", userId: user, sleepGoalHours: 8, calorieGoal: 1999, proteinGoalG: 170, carbsGoalG: 206,
                 fatGoalG: 55, stepsGoal: 10_000, waterGoalMl: 3000, contextMode: "normal", createdAt: t, updatedAt: t,
-                autoLogSupplements: false, activeProgram: "apex51", dayCutoffHour: 4, unitSystem: "metric",
-                reduceMotion: false, timezone: "UTC", activePlan: "apex51", activePhase: "cut", trackRpe: true,
+                autoLogSupplements: false, activeProgram: "onyx5", dayCutoffHour: 4, unitSystem: "metric",
+                reduceMotion: false, timezone: "UTC", activePlan: "onyx5", activePhase: "cut", trackRpe: true,
                 activeLever: "custom"
             ).insert(conn)
             // Thursday (cb_b) swapped to rest.
             try ScheduleOverrideRow(userId: user, date: "2026-08-27", dayKey: "rest", updatedAt: t).insert(conn)
-            try PlanPhaseVolumeRow(userId: user, planId: "apex51", phase: "cut", muscle: "Quads", targetSets: 12).insert(conn)
+            try PlanPhaseVolumeRow(userId: user, planId: "onyx5", phase: "cut", muscle: "Quads", targetSets: 12).insert(conn)
 
             try Exercise(id: "ex-lp", name: "Leg Press").insert(conn)
             try Exercise(id: "ex-rc", name: "Reverse Crunch").insert(conn)

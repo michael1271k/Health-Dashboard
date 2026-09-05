@@ -33,18 +33,18 @@ describe('repWindowFor', () => {
   it('reads the window for the DAY actually logged', () => {
     // Calf Press runs 10–15 on both leg days in the current plan; the dayKey path
     // still resolves to that exact day's window.
-    expect(repWindowFor('Calf Press', 'legs_a', 'apex51')).toEqual({ floor: 10, ceiling: 15 })
-    expect(repWindowFor('Calf Press', 'legs_b', 'apex51')).toEqual({ floor: 10, ceiling: 15 })
+    expect(repWindowFor('Calf Press', 'legs_a', 'onyx5')).toEqual({ floor: 10, ceiling: 15 })
+    expect(repWindowFor('Calf Press', 'legs_b', 'onyx5')).toEqual({ floor: 10, ceiling: 15 })
   })
   it('falls back to the STRICTEST window when the day is unknown', () => {
     // Ambiguity must under-trigger, never over-trigger, the badge.
-    expect(repWindowFor('Calf Press', null, 'apex51')?.ceiling).toBe(15)
+    expect(repWindowFor('Calf Press', null, 'onyx5')?.ceiling).toBe(15)
   })
   it('is null for an exercise not in the program', () => {
-    expect(repWindowFor('Zercher Squat', 'legs_a', 'apex51')).toBeNull()
+    expect(repWindowFor('Zercher Squat', 'legs_a', 'onyx5')).toBeNull()
   })
   it('is null for a timed hold that IS in the program', () => {
-    expect(repWindowFor('Side Plank', 'legs_b', 'apex51')).toBeNull()
+    expect(repWindowFor('Side Plank', 'legs_b', 'onyx5')).toBeNull()
   })
 })
 
@@ -205,10 +205,10 @@ describe('progressionVerdict', () => {
  */
 describe('holdTargetFor', () => {
   it('reads the programmed hold in seconds', () => {
-    expect(holdTargetFor('Side Plank', 'legs_b', 'apex51')).toBe(55)
+    expect(holdTargetFor('Side Plank', 'legs_b', 'onyx5')).toBe(55)
   })
   it('is null for a loaded lift', () => {
-    expect(holdTargetFor('Calf Press', 'legs_b', 'apex51')).toBeNull()
+    expect(holdTargetFor('Calf Press', 'legs_b', 'onyx5')).toBeNull()
   })
 })
 

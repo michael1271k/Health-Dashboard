@@ -261,7 +261,7 @@ final class SettingsModel {
     /// screen that shows the wrong plan's sessions is worse than one that says
     /// it does not have them.
     func deck(for planId: String) -> Program? {
-        planId == "apex51" ? Program.onyx5 : nil
+        planId == "onyx5" ? Program.onyx5 : nil
     }
 
     // MARK: - Writing

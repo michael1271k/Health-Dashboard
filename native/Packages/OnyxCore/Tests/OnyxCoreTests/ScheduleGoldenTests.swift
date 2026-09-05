@@ -124,7 +124,7 @@ struct ScheduleContextGoldenTests {
 
     @Test("every deck in the catalogue is reachable by id, and the ids are the web's")
     func catalogueIsComplete() {
-        #expect(Program.all.map(\.id) == ["apex51", "axis4", "ppl"])
+        #expect(Program.all.map(\.id) == ["onyx5", "onyx4", "ppl"])
         #expect(Set(Program.all.map(\.id)) == Set(Programs.all.map(\.id)))
         for p in Program.all { #expect(Program.byId(p.id) == p) }
         #expect(Program.byId("bogus") == nil)
@@ -196,7 +196,7 @@ struct SwapGoldenTests {
 
     // MARK: The rules
 
-    private static let onyx = ScheduleContext(programId: "apex51", phase: .cut)
+    private static let onyx = ScheduleContext(programId: "onyx5", phase: .cut)
     private static func resolver(_ overrides: [String: String] = [:], _ ctx: ScheduleContext = onyx) -> ResolveDay {
         let c = ScheduleContext(programId: ctx.programId, phase: ctx.phase, overrides: overrides, layout: ctx.layout)
         return { Schedule.scheduleDayIn(c, $0) }

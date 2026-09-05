@@ -22,16 +22,24 @@ private actor Wire: SyncRemote, MirrorPushRemote, MirrorRemote {
     /// landed before there was anything to abandon, and the test failed for
     /// reasons that had nothing to do with the coordinator. Waiting on the
     /// fact instead of on the clock is both faster and true.
-    var parked = false
+    var parked: Set<String> = []
 
     func hold() { held = true }
     func release() { held = false }
 
-    /// Suspend until a caller is parked on the hold. Bounded, so a genuine
-    /// regression that never reaches the wire FAILS the test rather than
-    /// hanging the suite.
-    func waitUntilParked() async {
-        for _ in 0..<400 where !parked { try? await Task.sleep(for: .milliseconds(5)) }
+    /// Suspend until a pull of THIS TABLE is parked on the hold.
+    ///
+    /// Naming the table is what makes the caller deterministic. `refresh` walks
+    /// the catalogue in order and `stop()` only bites at the checkpoint after
+    /// the group in flight, so "some pull is parked" left the test racing the
+    /// scheduler for which group that was — passing when it happened to be
+    /// `head`, failing when the run had already sailed into `rest`. Bounded, so
+    /// a regression that never reaches the wire FAILS rather than hangs.
+    func waitUntilParked(_ table: String) async {
+        for _ in 0..<400 {
+            if parked.contains(table) { return }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
     }
 
     func put(_ table: String, _ objects: [[String: Any]]) { rows[table] = objects }
@@ -53,7 +61,7 @@ private actor Wire: SyncRemote, MirrorPushRemote, MirrorRemote {
 
     // MirrorRemote
     func select<T: Decodable & Sendable>(_ type: T.Type, request: MirrorRequest) async throws -> [T] {
-        if held { parked = true }
+        if held { parked.insert(request.table) }
         while held { try await Task.sleep(for: .milliseconds(5)) }
         if let failure { throw failure }
         if pullFailures.contains(request.table) { throw Unreachable() }
@@ -90,7 +98,14 @@ private struct ScriptedHealth: HealthReading {
     func sleepSamples(start: Date, end: Date) async throws -> [SleepSample] { [] }
 }
 
-@Suite("The sync coordinator")
+/// `.serialized` because two of these tests drive the coordinator through
+/// deliberate suspensions — a held wire, a `stop()` timed against a run in
+/// flight — and swift-testing otherwise runs them alongside thirty-nine other
+/// suites on the same cooperative pool. Under that load the scheduler, not the
+/// coordinator, decided which side of a checkpoint `stop()` landed on, and
+/// `stopAbandons` failed perhaps two runs in five with nothing wrong. These
+/// tests are cheap; the whole suite is well under a second.
+@Suite("The sync coordinator", .serialized)
 struct SyncCoordinatorTests {
 
     private let user = "u1"
@@ -121,7 +136,7 @@ struct SyncCoordinatorTests {
     /// Something for the outbox to push: a plan-phase goal, which is a mirrored
     /// row and goes out through the generic `row.upsert`.
     private func queueOneRow(_ db: AppDatabase) throws {
-        try db.editPlanPhaseGoals(userId: user, planId: "apex51", phase: "cut") { $0.kcal = 1885 }
+        try db.editPlanPhaseGoals(userId: user, planId: "onyx5", phase: "cut") { $0.kcal = 1885 }
     }
 
     // MARK: Order
@@ -273,6 +288,12 @@ struct SyncCoordinatorTests {
         async let a: Void = c.syncNow(reason: .launch)
         async let b: Void = c.syncNow(reason: .foreground)
         async let d: Void = c.syncNow(reason: .pull)
+        // Park the FIRST run before timing anything. The bare 50 ms had to
+        // cover three task starts plus a full walk to the wire, and when it
+        // did not, `d` had never reached `syncNow`, nothing was queued behind
+        // `a`, and the test failed claiming the coordinator had coalesced too
+        // hard. Now the only thing left inside the window is two actor hops.
+        await wire.waitUntilParked("daily_logs")
         try await Task.sleep(for: .milliseconds(50))
         await wire.release()
         _ = try await (a, b, d)
@@ -319,7 +340,7 @@ struct SyncCoordinatorTests {
         await wire.hold()
         let c = coordinator(db, wire)
         let run = Task { try await c.syncNow(reason: .launch) }
-        await wire.waitUntilParked()
+        await wire.waitUntilParked("daily_logs")
         await c.stop()
         await wire.release()
         await #expect(throws: (any Error).self) { try await run.value }

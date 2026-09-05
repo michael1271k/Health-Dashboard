@@ -55,7 +55,7 @@ public enum Schedule {
     /// layout, whatever plan is selected: `program_day_layout` records a remap
     /// of the plan you are RUNNING, and applying it to a finished block would
     /// move history. An unknown `programId` falls back to Onyx-5, as
-    /// `PROGRAMS[id] ?? APEX51` does.
+    /// `PROGRAMS[id] ?? ONYX5` does.
     public static func programForContext(_ ctx: ScheduleContext, _ dateISO: String) -> (program: Program, layout: DayLayout) {
         if Era.forDate(dateISO) == .ppl { return (Program.pplLegacy, [:]) }
         return (Program.byId(ctx.programId) ?? .onyx5, ctx.layout)

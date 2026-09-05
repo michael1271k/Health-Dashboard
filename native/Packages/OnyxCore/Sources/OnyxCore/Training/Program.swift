@@ -190,10 +190,10 @@ public extension Program {
 
     /// ONYX-5 — Sun/Mon/Tue/Thu/Fri, with Wed & Sat as Zone-2 rest.
     ///
-    /// `id` is `apex51` and stays that way: it is the key 24 `localStorage`
+    /// `id` is `onyx5` and stays that way: it is the key 24 `localStorage`
     /// entries and a season of Supabase rows were written under.
     static let onyx5 = Program(
-        id: "apex51",
+        id: "onyx5",
         label: "Onyx-5",
         blurb: "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.",
         days: [

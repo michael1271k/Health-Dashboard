@@ -19,7 +19,7 @@ enum BodyTrendsPreviews {
         let today = LogicalDay.today()
         let from = ISODate.addDays(today, -89) ?? today
         try? database.editUserGoals(userId: userId) { row in
-            row.activePlan = "apex51"
+            row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.targetWeightKg = 62
             row.stepsGoal = 10_000

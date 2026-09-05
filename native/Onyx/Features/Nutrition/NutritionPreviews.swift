@@ -39,7 +39,7 @@ enum NutritionPreviews {
             row.stepsGoal = 10000
             row.waterGoalMl = 3000
             row.activeLever = LeverId.custom.rawValue
-            row.activePlan = "apex51"
+            row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.goalPreset = ProgramPhase.cut.rawValue
         }

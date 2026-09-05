@@ -4,10 +4,10 @@
   "note": "day: null = rest. A per-date override wins; a stale key falls through in scheduleDayIn but counts as TRAINING in isTrainingDayIn (the two disagree on purpose — web behaviour). Dates before 2026-07-15 resolve against PPL with an EMPTY layout whatever is selected. sessionTarget is the untrimmed plan's day count and is not era-aware. era is a plain string compare.",
   "cases": [
     {
-      "name": "helix5 · 2026-08-09",
+      "name": "onyx5 · 2026-08-09",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -26,10 +26,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-10",
+      "name": "onyx5 · 2026-08-10",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -48,10 +48,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-11",
+      "name": "onyx5 · 2026-08-11",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -70,10 +70,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-12",
+      "name": "onyx5 · 2026-08-12",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -88,10 +88,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-13",
+      "name": "onyx5 · 2026-08-13",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -110,10 +110,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-14",
+      "name": "onyx5 · 2026-08-14",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -132,10 +132,10 @@
       }
     },
     {
-      "name": "helix5 · 2026-08-15",
+      "name": "onyx5 · 2026-08-15",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -150,10 +150,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-09",
+      "name": "onyx4 · 2026-08-09",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -168,10 +168,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-10",
+      "name": "onyx4 · 2026-08-10",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -190,10 +190,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-11",
+      "name": "onyx4 · 2026-08-11",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -212,10 +212,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-12",
+      "name": "onyx4 · 2026-08-12",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -230,10 +230,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-13",
+      "name": "onyx4 · 2026-08-13",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -252,10 +252,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-14",
+      "name": "onyx4 · 2026-08-14",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -274,10 +274,10 @@
       }
     },
     {
-      "name": "helix4 · 2026-08-15",
+      "name": "onyx4 · 2026-08-15",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -441,7 +441,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-05-31",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -465,7 +465,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-01",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -489,7 +489,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-02",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -513,7 +513,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-03",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -533,7 +533,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-04",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -557,7 +557,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-05",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -581,7 +581,7 @@
       "name": "PPL era, helix4 selected + a layout, both ignored · 2026-06-06",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -601,7 +601,7 @@
       "name": "bulk phase changes nothing",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "bulk",
           "overrides": {},
           "layout": {}
@@ -645,7 +645,7 @@
       "name": "a legacy alias is NOT normalised here — Onyx-5",
       "input": {
         "ctx": {
-          "programId": "axis4_builder",
+          "programId": "onyx4_builder",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -667,7 +667,7 @@
       "name": "override places another day on Sunday",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-09": "legs_b"
@@ -691,7 +691,7 @@
       "name": "override places a session on a rest day",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-12": "cb_a"
@@ -715,7 +715,7 @@
       "name": "the literal 'rest' clears a training day",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-09": "rest"
@@ -735,7 +735,7 @@
       "name": "a stale override key on a training day falls through to the weekday",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-09": "upper_a"
@@ -759,7 +759,7 @@
       "name": "a stale override key on a REST day — the day says rest, training says true",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-12": "upper_a"
@@ -779,7 +779,7 @@
       "name": "an override on another date does not leak",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-09": "rest"
@@ -803,7 +803,7 @@
       "name": "layout arms→Wed — Wednesday trains",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -827,7 +827,7 @@
       "name": "layout arms→Wed — Tuesday rests",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -847,7 +847,7 @@
       "name": "override beats layout",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-08-12": "rest"
@@ -869,7 +869,7 @@
       "name": "a layout naming another plan's day is inert",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -889,7 +889,7 @@
       "name": "helix4 with a layout",
       "input": {
         "ctx": {
-          "programId": "axis4",
+          "programId": "onyx4",
           "phase": "cut",
           "overrides": {},
           "layout": {
@@ -933,7 +933,7 @@
       "name": "a PPL-era override naming a PPL key applies",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-06-03": "ppl_legs_tue"
@@ -957,7 +957,7 @@
       "name": "a PPL-era override naming a Helix key is stale",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-06-03": "arms"
@@ -977,7 +977,7 @@
       "name": "a PPL-era rest override",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "2026-06-01": "rest"
@@ -997,7 +997,7 @@
       "name": "the day before the cut opened is PPL (Tue Legs)",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -1019,7 +1019,7 @@
       "name": "the cut opens on a Wednesday — Helix rest",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -1037,7 +1037,7 @@
       "name": "Week 0 Saturday",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -1055,7 +1055,7 @@
       "name": "Week 1 Sunday — the axis anchor",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -1077,7 +1077,7 @@
       "name": "an unparseable date rests",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}
@@ -1095,7 +1095,7 @@
       "name": "an unparseable date with an override still honours it",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {
             "nope": "arms"
@@ -1119,7 +1119,7 @@
       "name": "an empty date rests and is PPL",
       "input": {
         "ctx": {
-          "programId": "apex51",
+          "programId": "onyx5",
           "phase": "cut",
           "overrides": {},
           "layout": {}

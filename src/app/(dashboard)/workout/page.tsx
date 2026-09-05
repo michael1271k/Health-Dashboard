@@ -32,7 +32,7 @@ export default function WorkoutPage() {
   // The active plan+phase is chosen in Settings → Plans (single source).
   // Init to a deterministic default so SSR and first client render match; the
   // effect then reads the real active plan (localStorage) after mount.
-  const [program, setProgram] = useState<Program>(() => activeProgram('apex51', 'bulk'))
+  const [program, setProgram] = useState<Program>(() => activeProgram('onyx5', 'bulk'))
 
   /**
    * ── A RUNNING WORKOUT IS ANNOUNCED ONCE ────────────────────────────────────

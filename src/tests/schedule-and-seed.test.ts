@@ -16,8 +16,8 @@ describe('multivitamin dosing', () => {
   })
 })
 
-const cbB = PROGRAMS.apex51.days.find((d) => d.key === 'cb_b')!
-const legsB = PROGRAMS.apex51.days.find((d) => d.key === 'legs_b')!
+const cbB = PROGRAMS.onyx5.days.find((d) => d.key === 'cb_b')!
+const legsB = PROGRAMS.onyx5.days.find((d) => d.key === 'legs_b')!
 
 describe('buildTemplateDraft — per-set seed + cardio + memory override', () => {
   it('seeds Upper B with the Treadmill warm-up and exact per-set numbers', () => {
@@ -31,7 +31,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
   })
 
   it('prepends the Treadmill warm-up to non-seed days too (e.g. Upper A)', () => {
-    const cbA = PROGRAMS.apex51.days.find((day) => day.key === 'cb_a')!
+    const cbA = PROGRAMS.onyx5.days.find((day) => day.key === 'cb_a')!
     const d = buildTemplateDraft(cbA, '2026-07-16')
     expect(d.exercises[0]).toMatchObject({ name: 'Treadmill', kind: 'cardio', distanceKm: 0.37 })
   })

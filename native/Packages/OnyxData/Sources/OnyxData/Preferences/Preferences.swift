@@ -39,7 +39,7 @@ public struct Preferences: Sendable, Equatable {
     public var trackRpe: Bool
     /// `metric`/`imperial` and the rest are free text server-side; the id is
     /// validated by the caller against `Program`, never adopted blind — a dead
-    /// plan id (`axis5_hybrid`) is exactly what is still sitting in
+    /// plan id (`onyx5`) is exactly what is still sitting in
     /// `active_program`.
     public var activePlan: String?
     public var activePhase: String?

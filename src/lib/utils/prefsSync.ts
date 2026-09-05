@@ -17,7 +17,7 @@ import { weekStartDayFromEndDay } from '@/lib/utils/week'
  *
  *  1. WRONG COLUMN. It read `active_program`, a pre-consolidation column. The
  *     current writer (Settings → applyPlanPhase) writes `active_plan` and
- *     `active_phase`. Live check: `active_program` still holds "axis5_hybrid",
+ *     `active_phase`. Live check: `active_program` still holds "onyx5",
  *     a plan id that no longer exists in PROGRAMS.
  *  2. WRONG KEY. It wrote `helix_active_program`, which `getActiveProgramId`
  *     consults only as a FALLBACK behind `helix_active_plan`. Any device that

@@ -13,7 +13,7 @@ import type { SessionDraft } from '@/lib/sessions/draft'
  * frequently committed day, therefore never opened with it.
  */
 
-const legsB = PROGRAMS.apex51.days.find((d) => d.key === 'legs_b')!
+const legsB = PROGRAMS.onyx5.days.find((d) => d.key === 'legs_b')!
 
 const set = (o: Partial<TemplateSourceSet> & Pick<TemplateSourceSet, 'exerciseName'>): TemplateSourceSet =>
   ({ weightKg: 20, reps: 10, exerciseOrder: 0, ...o })

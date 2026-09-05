@@ -12,7 +12,7 @@ import {
  */
 describe('phaseGoalsFor — plan-specific numbers layer over the phase preset', () => {
   it('falls back to the shared preset for a plan with no overrides', () => {
-    expect(phaseGoalsFor('apex51', 'cut')).toEqual(NUTRITION_PRESETS.cut)
+    expect(phaseGoalsFor('onyx5', 'cut')).toEqual(NUTRITION_PRESETS.cut)
   })
 
   it('applies the plan-specific override where one exists', () => {
@@ -25,7 +25,7 @@ describe('phaseGoalsFor — plan-specific numbers layer over the phase preset', 
   })
 
   it('covers both directions for every plan', () => {
-    for (const planId of ['apex51', 'axis4', 'ppl']) {
+    for (const planId of ['onyx5', 'onyx4', 'ppl']) {
       for (const phase of ['cut', 'bulk'] as const) {
         expect(phaseGoalsFor(planId, phase).calorieGoal).toBeGreaterThan(0)
       }

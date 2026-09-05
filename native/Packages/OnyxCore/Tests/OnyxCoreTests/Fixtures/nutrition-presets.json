@@ -110,9 +110,9 @@
       }
     },
     {
-      "name": "apex51 cut",
+      "name": "onyx5 cut",
       "input": {
-        "planId": "apex51",
+        "planId": "onyx5",
         "mode": "cut"
       },
       "expected": {
@@ -134,9 +134,9 @@
       }
     },
     {
-      "name": "apex51 bulk",
+      "name": "onyx5 bulk",
       "input": {
-        "planId": "apex51",
+        "planId": "onyx5",
         "mode": "bulk"
       },
       "expected": {

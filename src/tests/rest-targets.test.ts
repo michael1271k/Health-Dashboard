@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { APEX51 } from '@/lib/programs'
+import { ONYX5 } from '@/lib/programs'
 import {
   programRestSec, restTargetFor, setRestTarget, hasRestOverride,
   clampRestSec, formatRestTarget, restTargetKey,
@@ -26,13 +26,13 @@ beforeEach(() => {
 
 describe('the plan carries a target for every lift', () => {
   it('every exercise on every Onyx-5 day has one', () => {
-    const missing = APEX51.days.flatMap((d) =>
+    const missing = ONYX5.days.flatMap((d) =>
       d.exercises.filter((e) => e.restSec == null).map((e) => `${d.key}/${e.name}`))
     expect(missing).toEqual([])
   })
 
   it('every target is a legal, on-grid value', () => {
-    for (const d of APEX51.days) {
+    for (const d of ONYX5.days) {
       for (const e of d.exercises) {
         expect(e.restSec).toBeGreaterThanOrEqual(REST_MIN_SEC)
         expect(e.restSec).toBeLessThanOrEqual(REST_MAX_SEC)
@@ -42,60 +42,60 @@ describe('the plan carries a target for every lift', () => {
   })
 
   it('matches the Helix 5.1 table — compounds rest longest', () => {
-    expect(programRestSec('Leg Press', 'legs_a', 'apex51')).toBe(135)
-    expect(programRestSec('Incline DB Press', 'cb_a', 'apex51')).toBe(120)
-    expect(programRestSec('Face Pull', 'cb_a', 'apex51')).toBe(105)
-    expect(programRestSec('Reverse Crunch', 'legs_a', 'apex51')).toBe(75)
+    expect(programRestSec('Leg Press', 'legs_a', 'onyx5')).toBe(135)
+    expect(programRestSec('Incline DB Press', 'cb_a', 'onyx5')).toBe(120)
+    expect(programRestSec('Face Pull', 'cb_a', 'onyx5')).toBe(105)
+    expect(programRestSec('Reverse Crunch', 'legs_a', 'onyx5')).toBe(75)
   })
 })
 
 describe('the DAY disambiguates', () => {
   it('Calf Press rests 1:30 on Legs A and 1:45 on Legs B', () => {
-    expect(programRestSec('Calf Press', 'legs_a', 'apex51')).toBe(90)
-    expect(programRestSec('Calf Press', 'legs_b', 'apex51')).toBe(105)
+    expect(programRestSec('Calf Press', 'legs_a', 'onyx5')).toBe(90)
+    expect(programRestSec('Calf Press', 'legs_b', 'onyx5')).toBe(105)
   })
 
   it('an unknown day takes the LONGEST — too much rest costs time, not the set', () => {
-    expect(programRestSec('Calf Press', null, 'apex51')).toBe(105)
+    expect(programRestSec('Calf Press', null, 'onyx5')).toBe(105)
   })
 
   it('is null for a movement the plan does not name', () => {
-    expect(programRestSec('Zercher Carry', 'cb_a', 'apex51')).toBeNull()
-    expect(restTargetFor('Zercher Carry', 'cb_a', 'apex51')).toBeNull()
+    expect(programRestSec('Zercher Carry', 'cb_a', 'onyx5')).toBeNull()
+    expect(restTargetFor('Zercher Carry', 'cb_a', 'onyx5')).toBeNull()
   })
 })
 
 describe('overrides', () => {
   it('an edit wins over the plan, and only on its own day', () => {
-    setRestTarget('Calf Press', 150, 'legs_a', 'apex51')
-    expect(restTargetFor('Calf Press', 'legs_a', 'apex51')).toBe(150)
-    expect(restTargetFor('Calf Press', 'legs_b', 'apex51')).toBe(105)
+    setRestTarget('Calf Press', 150, 'legs_a', 'onyx5')
+    expect(restTargetFor('Calf Press', 'legs_a', 'onyx5')).toBe(150)
+    expect(restTargetFor('Calf Press', 'legs_b', 'onyx5')).toBe(105)
   })
 
   it('storing the plan\'s own number stores nothing', () => {
     // Otherwise this exercise is frozen at today's value the next time the
     // plan's rest times are revised.
-    setRestTarget('Leg Press', 135, 'legs_a', 'apex51')
-    expect(hasRestOverride('Leg Press', 'legs_a', 'apex51')).toBe(false)
+    setRestTarget('Leg Press', 135, 'legs_a', 'onyx5')
+    expect(hasRestOverride('Leg Press', 'legs_a', 'onyx5')).toBe(false)
   })
 
   it('null clears back to the plan', () => {
-    setRestTarget('Leg Press', 180, 'legs_a', 'apex51')
-    expect(hasRestOverride('Leg Press', 'legs_a', 'apex51')).toBe(true)
-    setRestTarget('Leg Press', null, 'legs_a', 'apex51')
-    expect(restTargetFor('Leg Press', 'legs_a', 'apex51')).toBe(135)
+    setRestTarget('Leg Press', 180, 'legs_a', 'onyx5')
+    expect(hasRestOverride('Leg Press', 'legs_a', 'onyx5')).toBe(true)
+    setRestTarget('Leg Press', null, 'legs_a', 'onyx5')
+    expect(restTargetFor('Leg Press', 'legs_a', 'onyx5')).toBe(135)
   })
 
   it('clamps and snaps whatever it is handed', () => {
-    setRestTarget('Leg Press', 4000, 'legs_a', 'apex51')
-    expect(restTargetFor('Leg Press', 'legs_a', 'apex51')).toBe(REST_MAX_SEC)
-    setRestTarget('Leg Press', 1, 'legs_a', 'apex51')
-    expect(restTargetFor('Leg Press', 'legs_a', 'apex51')).toBe(REST_MIN_SEC)
+    setRestTarget('Leg Press', 4000, 'legs_a', 'onyx5')
+    expect(restTargetFor('Leg Press', 'legs_a', 'onyx5')).toBe(REST_MAX_SEC)
+    setRestTarget('Leg Press', 1, 'legs_a', 'onyx5')
+    expect(restTargetFor('Leg Press', 'legs_a', 'onyx5')).toBe(REST_MIN_SEC)
   })
 
   it('keys on the canonical name, so an alias edits the same target', () => {
-    expect(restTargetKey('Leg Press', 'legs_a', 'apex51'))
-      .toBe(restTargetKey('leg press', 'legs_a', 'apex51'))
+    expect(restTargetKey('Leg Press', 'legs_a', 'onyx5'))
+      .toBe(restTargetKey('leg press', 'legs_a', 'onyx5'))
   })
 })
 
