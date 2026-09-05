@@ -53,6 +53,15 @@ enum HistoryPreviews {
                 WorkoutTabView(seededDay: Program.onyx5.day(key: "cb_b"), seededToday: "2026-09-03")
             }
             .environment(environment())
+        case "train-empty":
+            // A REST day: no session card, no footer CTA, and the cardio card
+            // sits where the deck would be — which is the only way to
+            // photograph it in full, and the state a Wednesday actually is.
+            // `2026-09-05` is the seeded block's Saturday.
+            NavigationStack {
+                WorkoutTabView(seededToday: "2026-09-05")
+            }
+            .environment(environment())
         case "library":
             NavigationStack { ExerciseLibraryView(seeded: PreviewHarness.sampleExercises) }
                 .environment(environment())
@@ -154,8 +163,27 @@ enum HistoryPreviews {
                                   sessionId: lastSession, achievedOn: "2026-09-01", updatedAt: Date()).insert(db)
         }
 
-        try CardioLogRow(id: "c-1", userId: userId, date: "2026-09-01", kind: "treadmill", distanceM: 1800, durationMin: 15,
-                         fromHealthkit: false, createdAt: Date(), sessionId: lastSession, inclinePct: 10).insert(db)
+        // Five bouts, so the Workout tab's cardio trail has something to draw
+        // and the last one carries every figure the card can print. Two of them
+        // clear `Zone2.minMinutes`, which is what makes the rail read 2/2 on a
+        // week that earned it.
+        let bouts: [(String, String, Double, Double, Double, Double)] = [
+            ("c-5", "2026-08-22", 3200, 32, 121, 6),
+            ("c-4", "2026-08-25", 2400, 22, 118, 8),
+            ("c-3", "2026-08-28", 1600, 14, 124, 10),
+            ("c-2", "2026-08-31", 4100, 38, 126, 4),
+            ("c-1", "2026-09-01", 1800, 15, 131, 10),
+        ]
+        for (id, date, distance, minutes, hr, incline) in bouts {
+            try CardioLogRow(
+                id: id, userId: userId, date: date, kind: "treadmill",
+                distanceM: distance, durationMin: minutes,
+                fromHealthkit: false, createdAt: Date(),
+                avgHr: hr,
+                sessionId: id == "c-1" ? lastSession : nil,
+                inclinePct: incline
+            ).insert(db)
+        }
     }
 }
 

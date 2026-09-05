@@ -4,39 +4,37 @@ import OnyxCore
 
 /// The day's micronutrients, against the targets this athlete actually holds.
 ///
-/// ── WHY A `List` AND NOT MORE TILES ─────────────────────────────────────────
-/// Twenty rows of "name, figure, bar" is a table, and iOS has one. A grid of
-/// glass tiles here would be twenty boxes that each repeat the box above with a
-/// different word in it — the §3.6 failure — and it would lose the section
-/// headers that are doing the actual organising.
+/// ── TWENTY ROWS WERE TWO AND A HALF SCREENS ─────────────────────────────────
+/// Every nutrient had a 44 pt row to itself: a name on the left, a figure on
+/// the right, a bar under both and — after §W6 — a third line saying how much
+/// of it came from the stack. Twenty of those is a scroll with no shape to it,
+/// and the thing you actually come here to ask ("what am I short of?") took
+/// three swipes to answer.
+///
+/// Two per row halves the height, and the pair reads as a comparison rather
+/// than as two more entries in a list. §3.6 allows exactly this: a `List` for
+/// tables, "unless it is a grid" — and this is a grid, of cells, inside the
+/// sections a `List` gives for free.
+///
+/// ── FOUR SECTIONS THAT NAME WHAT THEY HOLD ──────────────────────────────────
+/// The old groups were Fuel · Electrolytes · Vitamins & minerals · Performance
+/// stack, which put iron under "Vitamins" and sorted by where a nutrient comes
+/// from rather than what it is. Macros · Vitamins · Minerals · Other is the
+/// taxonomy a label uses, and it is now declared once in `NutrientTargets` so
+/// this screen and the web page cannot disagree about it.
 ///
 /// ── FLOOR AND CEILING ARE NOT THE SAME BAR ──────────────────────────────────
-/// A floor (fibre, potassium) is met by going UP and full is good; a ceiling
-/// (sodium, added sugar) is met by staying DOWN and full is the warning. Same
-/// geometry, opposite verdict, so the colour is the only thing that can carry
-/// it — good while a ceiling has room, danger once it is past.
+/// A floor (fibre, potassium) is met by going UP and past the tick is good; a
+/// ceiling (sodium, added sugar) is met by staying DOWN and past the tick is
+/// the warning. Same geometry, opposite verdict, so the tick marks WHERE the
+/// target is and the colour says which side of it you want to be on.
 struct NutrientsView: View {
     let model: NutritionModel
 
-    /// The stack's own nutrients are still shown apart from the food's — they
-    /// are a different KIND of intake, and creatine belongs next to citrulline
-    /// rather than next to fibre. What changed in §W6 is that they now carry a
-    /// reading: the phone credits a dose the moment its slot has passed, the
-    /// same rule the web has always used, so "5 000 / 5 000 mg creatine" is a
-    /// measurement of the protocol rather than a blank with a target beside it.
-    private var groups: [(String, [NutrientTarget])] {
-        let food = NutrientTargets.all.filter { !$0.fromStack }
-        var seen: [String] = []
-        for target in food where !seen.contains(target.group) { seen.append(target.group) }
-        return seen.map { group in (group, food.filter { $0.group == group }) }
-    }
-
-    private var stack: [NutrientTarget] { NutrientTargets.all.filter(\.fromStack) }
-
-    /// `NutrientTargets` hardcodes protein at 170 g, which is the rung's
-    /// figure and not necessarily the DAY's — an override or a lever moves it,
-    /// and this screen sat one tap from a tab reading "175 / 150 g" while it
-    /// said "175 / 170 g" about the same nutrient on the same day.
+    /// `NutrientTargets` hardcodes protein at 170 g, which is the rung's figure
+    /// and not necessarily the DAY's — an override or a lever moves it, and
+    /// this screen sat one tap from a tab reading "175 / 150 g" while it said
+    /// "175 / 170 g" about the same nutrient on the same day.
     private func resolved(_ target: NutrientTarget) -> NutrientTarget {
         guard target.key == "protein", let protein = model.target.protein, protein > 0 else { return target }
         var resolved = target
@@ -50,36 +48,107 @@ struct NutrientsView: View {
         // `ForEach` did that a dozen times per body pass, on every scroll.
         let day = model.nutrients
         let fromStack = model.stack.nutrients
-        List {
-            ForEach(groups, id: \.0) { group, targets in
-                Section {
-                    ForEach(targets, id: \.key) { target in
-                        NutrientRow(target: resolved(target), amount: day[target.key], stack: fromStack[target.key])
-                    }
-                } header: {
-                    OnyxSectionHeader(group, .fuel)
-                }
-            }
+        // Resolved ONCE, and everything on the screen reads this array. The
+        // toolbar used to score `NutrientTargets.all` — the raw table — while
+        // the section headers scored the resolved copy, so on a day whose
+        // protein target is not 170 g the two counts could disagree about
+        // whether protein was met. That is the same bug `resolved` exists to
+        // fix, reintroduced one line above the fix.
+        let targets = NutrientTargets.all.map(resolved)
+        let reading: (NutrientTarget) -> Double? = { target in
+            let food = day[target.key], stack = fromStack[target.key]
+            guard food != nil || stack != nil else { return nil }
+            return (food ?? 0) + (stack ?? 0)
+        }
 
-            Section {
-                ForEach(stack, id: \.key) { target in
-                    NutrientRow(target: target, amount: nil, stack: fromStack[target.key])
+        List {
+            ForEach(NutrientTargets.groups, id: \.self) { group in
+                let section = targets.filter { $0.group == group }
+                Section {
+                    grid(section, day: day, stack: fromStack)
+                } header: {
+                    header(group, section, reading: reading)
+                } footer: {
+                    if group == NutrientTargets.groups.last {
+                        Text("A pill glyph marks what only the stack delivers: Apple Health measures none of those, so the reading is the protocol — a dose counts once its slot has passed, unless it was skipped.")
+                    }
                 }
-            } header: {
-                OnyxSectionHeader("From the stack", .fuel)
-            } footer: {
-                Text("Apple Health measures none of these — the reading is the protocol: a dose counts once its slot has passed, unless it was skipped. Change that on the Stack screen.")
             }
         }
+        // §3.1's section gap, not the platform default — which is 34 pt here and
+        // put a third of a screen of black between four cards.
+        .listSectionSpacing(OnyxSpace.l)
         .onyxFormBackground(.fuel)
         .navigationTitle("Nutrients")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // The screen's own score, in the one place iOS puts a screen-level
+            // summary. A row of its own would have been a box that repeats the
+            // sections under it (§3.6), and it would have cost 44 pt to say
+            // eight characters.
+            ToolbarItem(placement: .topBarTrailing) { total(targets, reading: reading) }
+        }
+    }
+
+    // MARK: - The grid
+
+    /// Two across, one at an accessibility size — where a name and a figure
+    /// cannot share a cell, let alone two cells share a row.
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.m, alignment: .topLeading),
+              count: typeSize.isAccessibilitySize ? 1 : 2)
+    }
+
+    private func grid(
+        _ targets: [NutrientTarget], day: [String: Double], stack: [String: Double]
+    ) -> some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: OnyxSpace.m) {
+            ForEach(targets, id: \.key) { target in
+                NutrientCell(target: target, amount: day[target.key], stack: stack[target.key])
+            }
+        }
+        // The grid IS the row: the section's own inset is the card's padding,
+        // and a second one inside it would be a box inside a box.
+        .padding(.vertical, OnyxSpace.xs)
+    }
+
+    // MARK: - The counts
+
+    private func header(
+        _ group: String, _ targets: [NutrientTarget], reading: (NutrientTarget) -> Double?
+    ) -> some View {
+        let score = NutrientTargets.completion(targets, reading: reading)
+        return HStack(alignment: .firstTextBaseline) {
+            OnyxSectionHeader(group, .fuel)
+            Spacer(minLength: OnyxSpace.s)
+            if score.measured > 0 {
+                Text("\(score.met)/\(score.measured)")
+                    .onyxType(.micro).onyxNumeral()
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .accessibilityLabel("\(score.met) of \(score.measured) met")
+            }
+        }
+    }
+
+    private func total(_ targets: [NutrientTarget], reading: (NutrientTarget) -> Double?) -> some View {
+        let score = NutrientTargets.completion(targets, reading: reading)
+        return Text("\(score.met)/\(score.measured) met")
+            .onyxType(.caption).onyxNumeral()
+            .foregroundStyle(score.met == score.measured && score.measured > 0
+                             ? Color.onyx.good : Color.onyx.textSecondary)
+            .accessibilityLabel(
+                "\(score.met) of \(score.measured) measured targets met. "
+                + "Nutrients nothing measured are not counted."
+            )
     }
 }
 
-/// One nutrient: name, figure, and a bar whose colour says which way it should
-/// be going.
-private struct NutrientRow: View {
+// MARK: - One nutrient
+
+/// Name, figure, and a bullet bar with the target marked on it.
+private struct NutrientCell: View {
     let target: NutrientTarget
     /// What FOOD delivered. `nil` when nothing measured it — an em dash, never
     /// a zero.
@@ -87,92 +156,90 @@ private struct NutrientRow: View {
     /// What the STACK delivered, credited by `StackCredit`.
     var stack: Double?
 
-    /// Food plus stack, or nil when neither has anything to say.
     private var total: Double? {
         guard amount != nil || stack != nil else { return nil }
         return (amount ?? 0) + (stack ?? 0)
     }
 
-    private func fraction(_ value: Double?) -> Double {
-        guard let value, target.target > 0 else { return 0 }
-        return min(max(value / target.target, 0), 1)
-    }
-
     /// A floor fills toward good; a ceiling fills toward danger, and only turns
     /// once it is genuinely past.
     private var tint: Color {
-        guard let total else { return Color.onyx.textTertiary }
+        guard NutrientTargets.isMet(target, total: total) != nil else { return Color.onyx.textTertiary }
         switch target.kind {
-        case .floor:   return total >= target.target ? Color.onyx.good : OnyxDomain.fuel.accent
-        case .ceiling: return total > target.target ? Color.onyx.danger : Color.onyx.good
+        case .floor:   return NutrientTargets.isMet(target, total: total) == true ? Color.onyx.good : OnyxDomain.fuel.accent
+        case .ceiling: return NutrientTargets.isMet(target, total: total) == true ? Color.onyx.good : Color.onyx.danger
         }
     }
 
-    @Environment(\.dynamicTypeSize) private var typeSize
-
     var body: some View {
-        VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-            // At the accessibility sizes a name and a figure cannot share a
-            // line: the figure holds its width and "Protein" came out one
-            // letter per line. The name takes the line and the figure follows.
-            if typeSize.isAccessibilitySize {
-                name
-                figure
-            } else {
-                HStack(spacing: OnyxSpace.s) {
-                    name
-                    Spacer(minLength: OnyxSpace.s)
-                    figure
-                }
-            }
-            if total != nil { bar }
-            if let stackNote {
-                Text(stackNote)
-                    .onyxType(.caption)
-                    .foregroundStyle(Color.onyx.textTertiary)
-            }
+        VStack(alignment: .leading, spacing: 3) {
+            name
+            figure
+            bar
         }
-        .frame(minHeight: 44)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(target.label)
         .accessibilityValue(spoken)
     }
 
-    /// Two segments on one rail: what food delivered, and what the stack put on
-    /// top of it. A single total would hide the one fact worth knowing here —
-    /// that a target is being met by a tablet — and `Gauge` cannot draw two, so
-    /// the rail is drawn rather than styled.
-    private var bar: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.onyx.hairline)
-                Capsule()
-                    .fill(tint.opacity(0.45))
-                    .frame(width: width * fraction(total))
-                Capsule()
-                    .fill(tint)
-                    .frame(width: width * fraction(amount))
-            }
-        }
-        .frame(height: 4)
-        .accessibilityHidden(true)
-    }
-
     private var name: some View {
-        Text(target.label)
-            .onyxType(.body)
-            .foregroundStyle(Color.onyx.textPrimary)
-            .fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: 3) {
+            Text(target.label)
+                .onyxType(.caption)
+                .foregroundStyle(Color.onyx.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            if target.fromStack {
+                // A glyph, not a colour: the one fact that changes how the
+                // reading was arrived at has to survive a colour-blind reader
+                // and a greyscale screenshot.
+                Image(systemName: "pills.fill")
+                    .onyxType(.micro)
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .accessibilityHidden(true)
+            }
+            Spacer(minLength: 0)
+        }
     }
 
     private var figure: some View {
         Text(figures)
-            .onyxType(.secondary)
-            .onyxNumeral()
-            .foregroundStyle(Color.onyx.textSecondary)
-            .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
-            .layoutPriority(1)
+            .onyxType(.secondary).onyxNumeral()
+            .foregroundStyle(Color.onyx.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+    }
+
+    /// ── A BULLET BAR, NOT A PROGRESS BAR ────────────────────────────────────
+    /// Scaled to the READING as well as the target, so the tick sits where the
+    /// target actually is and an overshoot is visible as an overshoot. A bar
+    /// normalised to the target caps at full and then says nothing more —
+    /// which on a ceiling is precisely the case worth seeing.
+    ///
+    /// Two fills: what food delivered, and what the stack put on top of it. A
+    /// single total would hide the one fact worth knowing here — that a target
+    /// is being met by a tablet.
+    private var bar: some View {
+        let scale = max(total ?? 0, target.target) * 1.15
+        return GeometryReader { geometry in
+            let width = geometry.size.width
+            let x = { (value: Double) in scale > 0 ? width * min(max(value / scale, 0), 1) : 0 }
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.onyx.hairline).frame(height: 3)
+                Capsule().fill(tint.opacity(0.45)).frame(width: x(total ?? 0), height: 3)
+                Capsule().fill(tint).frame(width: x(amount ?? 0), height: 3)
+                // The target, marked. 1 pt of ink and the only thing on this
+                // bar that does not move with the reading.
+                Rectangle()
+                    .fill(Color.onyx.textSecondary)
+                    .frame(width: 1, height: 5)
+                    .offset(x: x(target.target) - 0.5)
+            }
+            .frame(height: 5, alignment: .center)
+        }
+        .frame(height: 5)
+        .accessibilityHidden(true)
     }
 
     private var figures: String {
@@ -181,19 +248,23 @@ private struct NutrientRow: View {
         return "\(NutritionFormat.whole(total)) / \(goal)"
     }
 
-    /// Only when the stack is actually carrying some of it — a caption that
-    /// says "0 from the stack" is a line of type spent saying nothing.
-    private var stackNote: String? {
-        guard let stack, stack > 0, amount != nil else { return nil }
-        return "\(NutritionFormat.whole(stack)) from the stack"
-    }
-
     private var spoken: String {
         let direction = target.kind == .floor ? "at least" : "at most"
         let goal = "\(direction) \(NutritionFormat.whole(target.target)) \(target.unit)"
-        guard let total else { return "not measured, \(goal)" }
-        let note = stackNote.map { ", \($0)" } ?? ""
-        return "\(NutritionFormat.whole(total)) \(target.unit)\(note), \(goal)"
+        guard let total else {
+            return target.fromStack
+                ? "not measured — the stack has not delivered it yet, \(goal)"
+                : "not measured, \(goal)"
+        }
+        var parts = ["\(NutritionFormat.whole(total)) \(target.unit)"]
+        if let stack, stack > 0, (amount ?? 0) > 0 {
+            parts.append("\(NutritionFormat.whole(stack)) of it from the stack")
+        } else if target.fromStack {
+            parts.append("from the stack")
+        }
+        parts.append(goal)
+        parts.append(NutrientTargets.isMet(target, total: total) == true ? "met" : "not met")
+        return parts.joined(separator: ", ")
     }
 }
 
