@@ -1,0 +1,231 @@
+{
+  "module": "scoring/readiness",
+  "fn": "cardioLoad",
+  "note": "Effort × minutes. An unrated bout carries NO load; effort clamped 0..10.",
+  "cases": [
+    {
+      "name": "{\"effort\":null,\"durationMin\":null}",
+      "input": {
+        "effort": null,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":null,\"durationMin\":0}",
+      "input": {
+        "effort": null,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":null,\"durationMin\":20}",
+      "input": {
+        "effort": null,
+        "durationMin": 20
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":null,\"durationMin\":45.5}",
+      "input": {
+        "effort": null,
+        "durationMin": 45.5
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":0,\"durationMin\":null}",
+      "input": {
+        "effort": 0,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":0,\"durationMin\":0}",
+      "input": {
+        "effort": 0,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":0,\"durationMin\":20}",
+      "input": {
+        "effort": 0,
+        "durationMin": 20
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":0,\"durationMin\":45.5}",
+      "input": {
+        "effort": 0,
+        "durationMin": 45.5
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":2,\"durationMin\":null}",
+      "input": {
+        "effort": 2,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":2,\"durationMin\":0}",
+      "input": {
+        "effort": 2,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":2,\"durationMin\":20}",
+      "input": {
+        "effort": 2,
+        "durationMin": 20
+      },
+      "expected": 40
+    },
+    {
+      "name": "{\"effort\":2,\"durationMin\":45.5}",
+      "input": {
+        "effort": 2,
+        "durationMin": 45.5
+      },
+      "expected": 91
+    },
+    {
+      "name": "{\"effort\":3,\"durationMin\":null}",
+      "input": {
+        "effort": 3,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":3,\"durationMin\":0}",
+      "input": {
+        "effort": 3,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":3,\"durationMin\":20}",
+      "input": {
+        "effort": 3,
+        "durationMin": 20
+      },
+      "expected": 60
+    },
+    {
+      "name": "{\"effort\":3,\"durationMin\":45.5}",
+      "input": {
+        "effort": 3,
+        "durationMin": 45.5
+      },
+      "expected": 136.5
+    },
+    {
+      "name": "{\"effort\":4,\"durationMin\":null}",
+      "input": {
+        "effort": 4,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":4,\"durationMin\":0}",
+      "input": {
+        "effort": 4,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":4,\"durationMin\":20}",
+      "input": {
+        "effort": 4,
+        "durationMin": 20
+      },
+      "expected": 80
+    },
+    {
+      "name": "{\"effort\":4,\"durationMin\":45.5}",
+      "input": {
+        "effort": 4,
+        "durationMin": 45.5
+      },
+      "expected": 182
+    },
+    {
+      "name": "{\"effort\":7,\"durationMin\":null}",
+      "input": {
+        "effort": 7,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":7,\"durationMin\":0}",
+      "input": {
+        "effort": 7,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":7,\"durationMin\":20}",
+      "input": {
+        "effort": 7,
+        "durationMin": 20
+      },
+      "expected": 140
+    },
+    {
+      "name": "{\"effort\":7,\"durationMin\":45.5}",
+      "input": {
+        "effort": 7,
+        "durationMin": 45.5
+      },
+      "expected": 318.5
+    },
+    {
+      "name": "{\"effort\":11,\"durationMin\":null}",
+      "input": {
+        "effort": 11,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":11,\"durationMin\":0}",
+      "input": {
+        "effort": 11,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"effort\":11,\"durationMin\":20}",
+      "input": {
+        "effort": 11,
+        "durationMin": 20
+      },
+      "expected": 200
+    },
+    {
+      "name": "{\"effort\":11,\"durationMin\":45.5}",
+      "input": {
+        "effort": 11,
+        "durationMin": 45.5
+      },
+      "expected": 455
+    }
+  ]
+}

@@ -3,6 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
 import { weekStartOf, isoAddDays } from '@/lib/utils/week'
+import { computeReadinessSignals, READINESS } from '@/lib/scoring/readiness'
+import { readinessHistoryFor, flattenReadiness } from '@/lib/scoring/readinessHistory'
 import { logicalTodayISO } from '@/lib/utils/day'
 import {
   buildWeeklyExport, trendTotals,
@@ -93,7 +95,11 @@ async function fetchRange(weekStart: string, weekEnd: string) {
 
   // Active Energy, Day Score and Battery are deliberately NOT fetched — none of
   // the three appears in the export any more (see weeklyExport.ts).
-  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, baselineLogs] = await Promise.all([
+  // Readiness v9 reaches back 49 days from EACH day of the week, so the
+  // history window starts 48 days before the week does.
+  const historyFrom = isoAddDays(weekStart, -(READINESS.historyDays - 1))
+  const historyStartInstant = `${historyFrom}T00:00:00Z`
+  const [logs, nutrition, sessions, sets, water, supps, doms, fatigue, bodyComp, cardio, rpe, bodyLedger, skips, prAxes, whr, exceptions, priorCount, sleepStages, onset, shapes, scores, historyLogs, historyMetrics, historySessions, historyCardio] = await Promise.all([
     // `active_energy` and `bmr` join the main select rather than getting their
     // own isolated slot: both are long-standing columns (verified live), and the
     // isolation convention exists for columns whose paste-SQL may not have run.
@@ -216,15 +222,26 @@ async function fetchRange(weekStart: string, weekEnd: string) {
        tag and the untracked marks and nothing else at all. */
     supabase.from('daily_targets').select('date, profile_key, track_carbs, track_fat')
       .gte('date', weekStart).lte('date', weekEnd),
-    // ── BATTERY v8's DERIVED BLOCK ─────────────────────────────────────────
+    // ── THE BATTERY's DERIVED BLOCK ────────────────────────────────────────
     // Battery is still not printed on a daily line (it is HELIX's opinion, see
-    // weeklyExport's header). The stored figure and the two trailing baselines
-    // go to the Derived section only, where the arithmetic behind it is
-    // stated. Eight days back, because the scorer's window is the eight most
-    // recent rows up to and including the day, minus the day itself.
+    // weeklyExport's header). The stored figure goes to the Derived section
+    // only, where the arithmetic behind it is stated.
     supabase.from('daily_scores').select('date, battery_pct').gte('date', weekStart).lte('date', weekEnd),
+    // ── READINESS v9's DERIVED BLOCK ───────────────────────────────────────
+    // The 49-day series behind each day, for the z-signals and the load
+    // ratio. Four narrow selects; `readinessHistoryFor` lays them on the
+    // calendar exactly as the scorer does, so the export's figures ARE the
+    // scorer's. Each failing reads as an empty series — em-dashes, not zeros.
+    // The same logs select also supplies the recovery score's eight-day
+    // baselines (`baselineLogs`, a filtered view of it below).
     supabase.from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate')
-      .gte('date', isoAddDays(weekStart, -8)).lte('date', weekEnd).order('date', { ascending: true }),
+      .gte('date', historyFrom).lte('date', weekEnd).order('date', { ascending: true }),
+    supabase.from('daily_metrics').select('date, rest_hr')
+      .gte('date', historyFrom).lte('date', weekEnd),
+    supabase.from('workout_sessions').select('started_at, session_rpe, duration_min')
+      .gte('started_at', historyStartInstant).lt('started_at', `${isoAddDays(weekEnd, 1)}T00:00:00Z`),
+    supabase.from('cardio_logs').select('date, effort, duration_min')
+      .gte('date', historyFrom).lte('date', weekEnd),
   ])
 
   return {
@@ -291,8 +308,21 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     priorSessions: priorCount.error ? null : (priorCount.count ?? null),
     // Either failing leaves the Derived battery block printing em-dashes.
     scores: (scores.error ? [] : (scores.data ?? [])) as Array<{ date: string; battery_pct: number | null }>,
-    baselineLogs: (baselineLogs.error ? [] : (baselineLogs.data ?? [])) as Array<{
+    // The recovery score's eight-day baselines: a filtered view of the
+    // history select — same columns, the last eight days of its window.
+    baselineLogs: (historyLogs.error ? [] : (historyLogs.data ?? [])).filter(
+      (r) => (r as { date: string }).date >= isoAddDays(weekStart, -8),
+    ) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>,
+    // Readiness v9's history. Any of the four failing leaves that series empty.
+    historyLogs: (historyLogs.error ? [] : (historyLogs.data ?? [])) as Array<{
       date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null
+    }>,
+    historyMetrics: (historyMetrics.error ? [] : (historyMetrics.data ?? [])) as Array<{ date: string; rest_hr: number | null }>,
+    historySessions: (historySessions.error ? [] : (historySessions.data ?? [])) as Array<{
+      started_at: string; session_rpe: number | null; duration_min: number | null
+    }>,
+    historyCardio: (historyCardio.error ? [] : (historyCardio.data ?? [])) as Array<{
+      date: string; effort: number | null; duration_min: number | null
     }>,
   }
 }
@@ -450,6 +480,15 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
     return trail.length ? trail.reduce((a, b) => a + b, 0) / trail.length : null
   }
 
+  // Readiness v9's signals, per day, from the 49 days behind each. `?? []`
+  // because the export-payload fixtures predate the four history fields.
+  const historyRows = {
+    logs: d.historyLogs ?? [], metrics: d.historyMetrics ?? [],
+    sessions: d.historySessions ?? [], cardio: d.historyCardio ?? [],
+  }
+  const readinessFor = (date: string) =>
+    flattenReadiness(computeReadinessSignals(readinessHistoryFor(date, historyRows)))
+
   return Array.from({ length: 7 }, (_, i) => {
     const date = isoAddDays(weekStart, i)
     const l = logs.get(date) as Record<string, number | null> | undefined
@@ -494,6 +533,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       restingHrBaseline: baselineOf(date, (r) => r.avg_rest_heart_rate),
       hrvBaseline: baselineOf(date, (r) => r.hrv_ms),
       batteryPct: scoreByDate.get(date) ?? null,
+      readiness: readinessFor(date),
       waterMl: waterByDate.get(date) ?? l?.water_ml ?? null,
       supplementsTaken: suppsByDate.get(date) ?? null,
       supplementsLog: suppLogByDate.get(date) ?? [],

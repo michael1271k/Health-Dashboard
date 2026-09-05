@@ -8,13 +8,17 @@ private struct ScriptedHealth: HealthReading {
     var isAvailable = true
     var quantities: [String: Double] = [:]
     var samples: [SleepSample] = []
+    /// Answers by WINDOW when set — the overnight HRV read asks for the same
+    /// identifier as the daily one, over the night instead of the day.
+    var windowed: (@Sendable (String, Date, Date) -> Double?)? = nil
 
     func requestAuthorization(read: [String]) async throws -> Bool { true }
 
     func quantity(
         _ identifier: String, reduce: HealthReduce, start: Date, end: Date
     ) async throws -> Double? {
-        quantities[identifier]
+        if let windowed, let v = windowed(identifier, start, end) { return v }
+        return quantities[identifier]
     }
 
     func sleepSamples(start: Date, end: Date) async throws -> [SleepSample] { samples }
@@ -309,6 +313,34 @@ struct IngestTests {
         #expect(row.steps == 8422, "a count is rounded to a count")
         #expect(row.bloodOxygen == 98.2, "scaled before rounding, or it reads 1%")
         #expect(row.weightKg == 77.35)
+    }
+
+    @Test("v9: the night's SDNN mean replaces the day's, and is flagged as the night's")
+    func overnightHrvWins() async throws {
+        let db = try store()
+        let bed = Date(timeIntervalSince1970: 1_788_638_400)          // 2026-09-05T20:00Z, in the night of the 6th
+        let wake = bed.addingTimeInterval(8 * 3600)
+        let night = "2026-09-06"
+        let reader = ScriptedHealth(
+            quantities: ["HKQuantityTypeIdentifierHeartRateVariabilitySDNN": 58.3, "HKQuantityTypeIdentifierStepCount": 100],
+            samples: [SleepSample(value: 3, start: bed, end: wake)],
+            windowed: { id, start, end in
+                // The night's window is the bed window exactly; the day's is not.
+                id == "HKQuantityTypeIdentifierHeartRateVariabilitySDNN" && start == bed && end == wake ? 71.26 : nil
+            }
+        )
+        let sync = HealthSync(database: db, reader: reader, userId: user)
+        let report = try await sync.sync(day: night, isToday: false)
+        #expect(report.hrvOvernight)
+        let row = try #require(try await db.writer.read { conn in
+            try DailyLogRow.filter(Column("date") == night).fetchOne(conn)
+        })
+        #expect(row.hrvMs == 71.26, "the night's mean, not the day's 58.3")
+
+        // No night → the day's mean stands, unflagged.
+        let dayOnly = ScriptedHealth(quantities: ["HKQuantityTypeIdentifierHeartRateVariabilitySDNN": 58.3])
+        let fallback = try await HealthSync(database: try store(), reader: dayOnly, userId: user).sync(day: night, isToday: false)
+        #expect(!fallback.hrvOvernight)
     }
 
     @Test("a store with no Health data writes nothing")

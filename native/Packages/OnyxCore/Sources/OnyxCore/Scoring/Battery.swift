@@ -13,10 +13,11 @@ public struct BatteryState: Codable, Sendable, Equatable {
     }
 }
 
-/// Phone-like battery — drain-only (v7) with v8's morning-charge and stress
-/// terms on top. A direct port of `src/lib/scoring/battery.ts`; the reasoning lives there and is not duplicated
-/// here, but the one rule that must survive translation is repeated because a
-/// port is exactly where it would be lost:
+/// Phone-like battery — drain-only (v7), v8's stages-share charge, v9's
+/// readiness signals on top. A direct port of `src/lib/scoring/battery.ts`;
+/// the reasoning lives there and in `docs/READINESS_MODEL.md` and is not
+/// duplicated here, but the one rule that must survive translation is repeated
+/// because a port is exactly where it would be lost:
 ///
 /// > **The drain budget must stay strictly under the charge budget.**
 ///
@@ -27,6 +28,7 @@ public struct BatteryState: Codable, Sendable, Equatable {
 /// that catches the edit being unsafe.
 public enum Battery {
     public struct Defaults: Sendable {
+        public let version: Double = 9
         public let floor: Double = 5
         /// Worst-sleep wake charge.
         public let wakeMin: Double = 55
@@ -37,13 +39,17 @@ public enum Battery {
         public let activityCap: Double = 12
         /// The heaviest day's ceiling — see `workoutMaxByDay`.
         public let workoutMax: Double = 32
-        /// v8 — RHR elevation + HRV suppression + the latest fatigue reading.
-        public let stressCap: Double = 10
-        /// v8 — a night you struggled to fall into starts the day 3 lower.
-        public let onsetPenalty: Double = 3
+        /// v9 — ACWR past 1.3, and a strain above your own normal.
+        public let loadCap: Double = 8
+        /// v9 — the Hooper-style index: fatigue, soreness, onset, short sleep.
+        public let wellnessCap: Double = 6
         /// v8 — (deep + REM) / asleep at which the stages term saturates.
         public let restorativeShare: Double = 0.45
-        /// Used when `session_rpe` is absent (74 legacy sessions carry none).
+        /// The charge a z-signal reads at exactly baseline, or when it has no opinion.
+        public let zNeutral: Double = 0.75
+        /// Charge per baseline SD: +1 SD fills the term, −2 SD leaves a quarter.
+        public let zSlope: Double = 0.25
+        /// Used when `session_rpe` is absent (legacy sessions carry none).
         /// Note this is already a 0–1 fraction, *not* a CR-10 value.
         public let defaultRpe: Double = 0.7
         /// A session at or below 60% of normal still costs something.
@@ -56,9 +62,9 @@ public enum Battery {
     public static let defaults = Defaults()
 
     /// The worst case the model can ever charge in a single day.
-    /// v8: 35 + 12 + 32 + 10 = 89.
+    /// v9: 35 + 12 + 32 + 8 + 6 = 93.
     public static var maxTotalDrain: Double {
-        defaults.timeMax + defaults.activityCap + defaults.workoutMax + defaults.stressCap
+        defaults.timeMax + defaults.activityCap + defaults.workoutMax + defaults.loadCap + defaults.wellnessCap
     }
 
     /// The workout drain ceiling, **per programme day**.
@@ -93,12 +99,17 @@ public enum Battery {
         maintenance ? maintenanceRelMin : defaults.relMin
     }
 
-    /// Wake charge from sleep quality (0...1): `55 + 45·q`, rounded — then
-    /// minus 3 for a night you struggled to fall into (v8). The penalty lands
-    /// AFTER the rounding and OUTSIDE the clamp, so the worst start is 52.
-    public static func computeMorningCharge(sleepQuality: Double, onsetTrouble: Bool = false) -> Double {
+    /// Wake charge from sleep quality (0...1): `55 + 45·q`, rounded. v9 retired
+    /// the onset penalty here — the flag is a wellness item now.
+    public static func computeMorningCharge(sleepQuality: Double) -> Double {
         jsRound(defaults.wakeMin + defaults.wakeRange * clamp(sleepQuality, 0, 1))
-            - (onsetTrouble ? defaults.onsetPenalty : 0)
+    }
+
+    /// A z-signal as a 0...1 charge term. Neutral 0.75 at z = 0 or unknown;
+    /// +1 SD fills the term; −2 SD leaves a quarter.
+    public static func zQuality(_ z: Double?) -> Double {
+        guard let z, z.isFinite else { return defaults.zNeutral }
+        return clamp(defaults.zNeutral + defaults.zSlope * z, 0, 1)
     }
 
     /// `computeSleepQuality`, with the four terms it is built from. Each 0...1.
@@ -107,17 +118,16 @@ public enum Battery {
         public var ratio: Double
         /// (deep + REM) / asleep, saturating at `restorativeShare`.
         public var stagesQ: Double
-        /// 0.5 at baseline; 1 at twice it; 0 at zero. 0.5 when either side is missing.
+        /// `zQuality(hrvZ)`.
         public var hrvQ: Double
-        /// 1 at or below baseline; 0 at +20 bpm. 1 when either side is missing.
+        /// `zQuality(−rhrZ)`.
         public var rhrQ: Double
         public var quality: Double
     }
 
-    /// Sleep quality 0...1 (v8) — 55 % duration vs goal, 15 % restorative
-    /// stages, 15 % HRV vs baseline, 15 % resting HR vs baseline. Every term
-    /// degrades to its NEUTRAL value when its inputs are missing, never to a
-    /// penalty: an unsynced reading is not a bad reading.
+    /// Sleep quality 0...1 (v9) — 45 % duration vs goal, 15 % restorative
+    /// stages, 25 % HRV z, 15 % resting-HR z. Every term degrades to its
+    /// NEUTRAL value when its inputs are missing, never to a penalty.
     public static func sleepQualityParts(_ inputs: ScoringInputs) -> SleepQualityParts {
         let ratio = inputs.sleepGoalHours != 0
             ? Swift.min(1, inputs.sleepHours / inputs.sleepGoalHours)
@@ -126,20 +136,10 @@ public enum Battery {
         let stagesQ = asleepMin > 0
             ? clamp((inputs.deepMinutes + inputs.remMinutes) / (defaults.restorativeShare * asleepMin), 0, 1)
             : 0
-        // Mirrors JavaScript truthiness: the TypeScript guards are
-        // `if (inputs.hrvMs && inputs.hrvBaseline)` and
-        // `if (inputs.restingHR && inputs.baselineHR)`, so a present-but-zero
-        // reading takes the same branch as an absent one.
-        var hrvQ = 0.5
-        if let hrv = inputs.hrvMs, hrv != 0, let base = inputs.hrvBaseline, base != 0 {
-            hrvQ = clamp(0.5 + (hrv - base) / (2 * base), 0, 1)
-        }
-        var rhrQ: Double = 1
-        if let rhr = inputs.restingHR, rhr != 0, let base = inputs.baselineHR, base != 0 {
-            // +20 bpm over baseline reaches 0; at or below baseline is 1.
-            rhrQ = clamp(1 - (rhr - base) / 20, 0, 1)
-        }
-        let quality = clamp(0.55 * ratio + 0.15 * stagesQ + 0.15 * hrvQ + 0.15 * rhrQ, 0, 1)
+        let hrvQ = zQuality(inputs.hrvZ)
+        // A HIGH resting HR is the bad direction, so the sign flips.
+        let rhrQ = zQuality(inputs.rhrZ.map { -$0 })
+        let quality = clamp(0.45 * ratio + 0.15 * stagesQ + 0.25 * hrvQ + 0.15 * rhrQ, 0, 1)
         return SleepQualityParts(ratio: ratio, stagesQ: stagesQ, hrvQ: hrvQ, rhrQ: rhrQ, quality: quality)
     }
 
@@ -147,43 +147,80 @@ public enum Battery {
         sleepQualityParts(inputs).quality
     }
 
-    /// The stress drain, term by term.
-    public struct StressParts: Codable, Sendable, Equatable {
-        /// 4 per 10 bpm over the resting-HR baseline. 0 at or below it, or unmeasured.
-        public var rhrTerm: Double
-        /// 3 at half the HRV baseline. 0 at or above it, or unmeasured.
-        public var hrvTerm: Double
-        /// 0...4 — Fresh / Fine / Worn / Heavy / Empty of the LATEST slot logged today.
-        public var fatigueTerm: Double
-        /// The sum, capped at `stressCap`.
+    /// The Hooper-style index, item by item. Each 0...1 where 1 is WORST, and
+    /// nil when the question was not answered that day.
+    public struct WellnessParts: Codable, Sendable, Equatable {
+        /// (level − 1) / 4 — Fresh 0 … Empty 1.
+        public var fatigue: Double?
+        /// Mean DOMS severity / 3.
+        public var soreness: Double?
+        /// 1 for a night that was hard to fall into, 0 otherwise. Nil when unasked.
+        public var onset: Double?
+        /// 1 − duration/goal. Nil with no night.
+        public var sleep: Double?
+        /// Mean of the answered items. Nil when none was.
+        public var index: Double?
+        /// `wellnessCap × index`; 0 when nothing was answered.
         public var drain: Double
     }
 
-    /// Stress drain (v8, cap 10) — the day's physiological and felt load that
-    /// no session explains. Every term is floored at zero: a low resting HR or
-    /// a high HRV is credited by the wake charge and recharges nothing,
-    /// because nothing does.
-    public static func stressParts(_ inputs: ScoringInputs) -> StressParts {
-        var rhrTerm: Double = 0
-        if let rhr = inputs.restingHR, rhr != 0, let base = inputs.baselineHR, base != 0 {
-            rhrTerm = 4 * Swift.max(0, (rhr - base) / 10)
+    /// Wellness drain (v9, cap 6) — the mean of the ANSWERED items, so a day
+    /// with the tracker unopened drains nothing rather than reading as perfect.
+    public static func wellnessParts(_ inputs: ScoringInputs) -> WellnessParts {
+        var fatigue: Double?
+        if let level = inputs.fatigueLevel, level.isFinite, level >= 1 {
+            fatigue = clamp((level - 1) / 4, 0, 1)
         }
-        var hrvTerm: Double = 0
-        if let hrv = inputs.hrvMs, hrv != 0, let base = inputs.hrvBaseline, base != 0 {
-            hrvTerm = 3 * Swift.max(0, ((base - hrv) / base) * 2)
+        var soreness: Double?
+        if let sev = inputs.domsSeverity, sev.isFinite, sev >= 0 {
+            soreness = clamp(sev / 3, 0, 1)
         }
-        var fatigueTerm: Double = 0
-        if let level = inputs.fatigueLevel, level >= 1 {
-            fatigueTerm = clamp(level - 1, 0, 4)
+        let onset: Double? = inputs.sleepOnsetTrouble.map { $0 ? 1 : 0 }
+        var sleep: Double?
+        if inputs.sleepHours > 0, inputs.sleepGoalHours > 0 {
+            sleep = clamp(1 - Swift.min(1, inputs.sleepHours / inputs.sleepGoalHours), 0, 1)
         }
-        return StressParts(
-            rhrTerm: rhrTerm, hrvTerm: hrvTerm, fatigueTerm: fatigueTerm,
-            drain: Swift.min(defaults.stressCap, rhrTerm + hrvTerm + fatigueTerm)
+        let answered = [fatigue, soreness, onset, sleep].compactMap { $0 }
+        let index: Double? = answered.isEmpty ? nil : answered.reduce(0, +) / Double(answered.count)
+        return WellnessParts(
+            fatigue: fatigue, soreness: soreness, onset: onset, sleep: sleep, index: index,
+            drain: index.map { defaults.wellnessCap * $0 } ?? 0
         )
     }
 
-    public static func stressDrain(_ inputs: ScoringInputs) -> Double {
-        stressParts(inputs).drain
+    public static func wellnessDrain(_ inputs: ScoringInputs) -> Double {
+        wellnessParts(inputs).drain
+    }
+
+    public struct LoadParts: Codable, Sendable, Equatable {
+        /// 0 at or below an ACWR of 1.3, `loadCap × acwrShare` at 2.0 and beyond.
+        public var acwrTerm: Double
+        /// 0 at or below your own normal strain, the rest of the cap at +2 SD.
+        public var strainTerm: Double
+        /// The sum, capped at `loadCap`.
+        public var drain: Double
+    }
+
+    /// Load drain (v9, cap 8) — the training you have done that today's
+    /// session does not explain. Both terms floored at zero: a light week
+    /// recharges nothing.
+    public static func loadParts(_ inputs: ScoringInputs) -> LoadParts {
+        let r = Readiness.constants
+        let acwrCap = defaults.loadCap * r.acwrShare
+        let strainCap = defaults.loadCap - acwrCap
+        var acwrTerm: Double = 0
+        if let acwr = inputs.acwr, acwr.isFinite {
+            acwrTerm = acwrCap * clamp((acwr - r.acwrOnset) / (r.acwrSaturation - r.acwrOnset), 0, 1)
+        }
+        var strainTerm: Double = 0
+        if let z = inputs.strainZ, z.isFinite {
+            strainTerm = strainCap * clamp(z / r.zClamp, 0, 1)
+        }
+        return LoadParts(acwrTerm: acwrTerm, strainTerm: strainTerm, drain: Swift.min(defaults.loadCap, acwrTerm + strainTerm))
+    }
+
+    public static func loadDrain(_ inputs: ScoringInputs) -> Double {
+        loadParts(inputs).drain
     }
 
     /// How far through the waking day the user is — `hoursAwakeInTZ` from the
@@ -227,12 +264,39 @@ public enum Battery {
             / defaults.relMax
     }
 
-    /// Current battery % — strict drain-only. There is no recharge term, which
-    /// is why eating breakfast can never make the battery jump.
-    public static func computeBattery(_ inputs: ScoringInputs, hoursAwake: Double? = nil) -> BatteryState {
-        let wakeCharge = computeMorningCharge(
-            sleepQuality: computeSleepQuality(inputs), onsetTrouble: inputs.sleepOnsetTrouble == true
-        )
+    /// Every term behind one battery reading — `BatteryBreakdown`. What the
+    /// dashboard tile draws and what the export's Derived block prints.
+    public struct Breakdown: Codable, Sendable, Equatable {
+        public struct Charge: Codable, Sendable, Equatable {
+            public var ratio: Double
+            public var stagesQ: Double
+            public var hrvQ: Double
+            public var rhrQ: Double
+            public var quality: Double
+            public var morningCharge: Double
+        }
+        public struct Drains: Codable, Sendable, Equatable {
+            public var time: Double
+            public var activity: Double
+            public var workout: Double
+            public var load: Double
+            public var wellness: Double
+            /// The five, summed — before the floor and ceiling.
+            public var total: Double
+        }
+        public var version: Double
+        public var hoursAwake: Double
+        public var charge: Charge
+        public var drains: Drains
+        public var loadParts: LoadParts
+        public var wellnessParts: WellnessParts
+        public var currentPct: Double
+    }
+
+    /// `batteryBreakdown` — the model, term by term.
+    public static func breakdown(_ inputs: ScoringInputs, hoursAwake: Double? = nil) -> Breakdown {
+        let q = sleepQualityParts(inputs)
+        let wakeCharge = computeMorningCharge(sleepQuality: q.quality)
 
         let awake = clamp(hoursAwake ?? inputs.hoursAwake ?? 8, 0, defaults.maxAwake)
         let time = timeDrain(hoursAwake: awake)
@@ -247,10 +311,26 @@ public enum Battery {
             dayKey: inputs.sessionDayKey,
             maintenance: inputs.isMaintenance ?? false
         )
+        let load = loadParts(inputs)
+        let wellness = wellnessParts(inputs)
+        let total = time + activity + workout + load.drain + wellness.drain
 
-        let stress = stressDrain(inputs)
+        let currentPct = clamp(wakeCharge - total, defaults.floor, 100)
+        return Breakdown(
+            version: defaults.version,
+            hoursAwake: awake,
+            charge: .init(ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ, quality: q.quality, morningCharge: wakeCharge),
+            drains: .init(time: time, activity: activity, workout: workout, load: load.drain, wellness: wellness.drain, total: total),
+            loadParts: load,
+            wellnessParts: wellness,
+            currentPct: jsRound(currentPct)
+        )
+    }
 
-        let currentPct = clamp(wakeCharge - time - activity - workout - stress, defaults.floor, 100)
-        return BatteryState(morningCharge: wakeCharge, currentPct: jsRound(currentPct))
+    /// Current battery % — strict drain-only. There is no recharge term, which
+    /// is why eating breakfast can never make the battery jump.
+    public static func computeBattery(_ inputs: ScoringInputs, hoursAwake: Double? = nil) -> BatteryState {
+        let b = breakdown(inputs, hoursAwake: hoursAwake)
+        return BatteryState(morningCharge: b.charge.morningCharge, currentPct: b.currentPct)
     }
 }

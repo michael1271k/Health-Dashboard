@@ -19,6 +19,8 @@ import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
 import { foldFatigueRows, latestFatigue } from '@/lib/recovery/fatigue'
+import { computeReadinessSignals } from '@/lib/scoring/readiness'
+import { historyStart, readinessHistoryFor, type HistoryRows } from '@/lib/scoring/readinessHistory'
 
 /** The goals a user with no `user_goals` row is graded against. */
 const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
@@ -65,10 +67,43 @@ export interface ComputeDayContext {
   isToday?: boolean
   /** Bypass the `finalized` freeze — an explicit edit/delete recompute. */
   force?: boolean
+  /**
+   * Readiness v9's history rows, fetched ONCE by the caller for a whole
+   * backfill range. Each day's 49-day series overlaps its neighbour's by 48,
+   * so a 31-day backfill fetching per day would issue ~124 near-identical
+   * selects in parallel. `readinessHistoryFor` filters to each day's own
+   * window, so a superset is safe. Absent, the day fetches its own.
+   */
+  history?: HistoryRows
 }
 
 function nextDay(d: string): string {
   const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10)
+}
+
+/**
+ * The rows behind readiness v9 for `[from, to]` — four narrow selects. A
+ * table that cannot be read gives an empty series, and the battery then sees
+ * `null` signals and charges neutrally, never punitively. Exported so the
+ * compute-score route can fetch a whole backfill's window once.
+ */
+export async function fetchReadinessHistory(supabase: DB, userId: string, from: string, to: string): Promise<HistoryRows> {
+  const [hLogs, hMetrics, hSessions, hCardio] = await Promise.all([
+    supabase.from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate').eq('user_id', userId)
+      .gte('date', from).lte('date', to),
+    supabase.from('daily_metrics').select('date, rest_hr').eq('user_id', userId)
+      .gte('date', from).lte('date', to),
+    supabase.from('workout_sessions').select('started_at, session_rpe, duration_min').eq('user_id', userId)
+      .gte('started_at', `${from}T00:00:00Z`).lt('started_at', `${nextDay(to)}T00:00:00Z`),
+    supabase.from('cardio_logs').select('date, effort, duration_min').eq('user_id', userId)
+      .gte('date', from).lte('date', to),
+  ])
+  return {
+    logs: (hLogs.error ? [] : (hLogs.data ?? [])) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>,
+    metrics: (hMetrics.error ? [] : (hMetrics.data ?? [])) as Array<{ date: string; rest_hr: number | null }>,
+    sessions: (hSessions.error ? [] : (hSessions.data ?? [])) as Array<{ started_at: string; session_rpe: number | null; duration_min: number | null }>,
+    cardio: (hCardio.error ? [] : (hCardio.data ?? [])) as Array<{ date: string; effort: number | null; duration_min: number | null }>,
+  }
 }
 
 export type ComputedScoreRow = InsertRow<'daily_scores'> & { finalized?: boolean }
@@ -80,7 +115,7 @@ export async function computeForDate(
   hoursAwake: number,
   ctx: ComputeDayContext,
 ): Promise<ComputedScoreRow | null> {
-  const { isRestDay, todayISO, isToday = false, force = false } = ctx
+  const { isRestDay, todayISO, isToday = false, force = false, history: sharedHistory } = ctx
   // FREEZE: a past day is sealed the first time it's computed after its own
   // midnight. Today accumulates live (recomputed every call); a past day whose
   // row is already `finalized` is immutable — re-ingesting old data never
@@ -197,8 +232,8 @@ export async function computeForDate(
   // an unmigrated `nutrition_exception` cost us `hrv_ms` as well — losing a live
   // baseline to a column that isn't there yet. Normal path is still one request.
   // `sleep_onset_trouble` is the newest column and sits in the widest tier
-  // only: battery v8 reads it, and a store without it degrades to "no night
-  // was hard" rather than losing the HRV baseline.
+  // only: the battery reads it as a wellness item, and a store without it
+  // degrades to "no night was hard" rather than losing the HRV baseline.
   const DL_COLUMN_SETS = [
     'date, hrv_ms, avg_rest_heart_rate, nutrition_exception, sleep_onset_trouble',
     'date, hrv_ms, avg_rest_heart_rate, nutrition_exception',
@@ -282,7 +317,7 @@ export async function computeForDate(
     ghostSets = ghosts.size
   }
 
-  // ── THE DAY'S LATEST FATIGUE READING (battery v8) ─────────────────────────
+  // ── THE DAY'S LATEST FATIGUE READING (a battery wellness item) ────────────
   // Folded the way the tracker folds it — legacy keys filed by the kind of day
   // — and summarised by the LATEST slot, which is the tracker's own rule for
   // the day's one figure. An un-migrated table reads as nothing logged.
@@ -290,6 +325,21 @@ export async function computeForDate(
   const fatigueLevel = fatigueRes.error
     ? null
     : latestFatigue(foldFatigueRows((fatigueRes.data ?? []) as Array<{ slot: string; level: number }>, !isRestDay))?.level ?? null
+
+  // ── READINESS v9: THE 49 DAYS BEHIND THE DAY ──────────────────────────────
+  // The history window (fetched here, or handed in once for a whole backfill),
+  // laid onto the calendar by `readinessHistoryFor` — the one place that
+  // decides which day a session files under and which resting-HR column wins
+  // — then through the model.
+  const [historyRows, domsRes] = await Promise.all([
+    sharedHistory ?? fetchReadinessHistory(supabase, userId, historyStart(date), date),
+    supabase.from('doms_logs').select('severity').eq('user_id', userId).eq('date', date),
+  ])
+  const signals = computeReadinessSignals(readinessHistoryFor(date, historyRows))
+  // Mean severity of the day's soreness rows, zeros included — a muscle rated
+  // "not sore" is an answer. No rows is no answer.
+  const domsRows = (domsRes.error ? [] : (domsRes.data ?? [])) as Array<{ severity: number }>
+  const domsSeverity = domsRows.length ? domsRows.reduce((a, r) => a + r.severity, 0) / domsRows.length : null
 
   // isToday comes from the caller (the client knows its own timezone); derive the
   // user's local hour from hoursAwake (07:00 wake convention) instead of a fixed zone.
@@ -491,6 +541,12 @@ export async function computeForDate(
     hrvBaseline: hrvBaseline ?? undefined,
     sleepOnsetTrouble: todayDl?.sleep_onset_trouble === true,
     fatigueLevel,
+    // v9 — see the history block above.
+    hrvZ: signals.hrv.z,
+    rhrZ: signals.rhr.z,
+    acwr: signals.load.acwr,
+    strainZ: signals.load.strainZ,
+    domsSeverity,
     contextMode: dayContext,
     isCurrentDay,
     localHour,

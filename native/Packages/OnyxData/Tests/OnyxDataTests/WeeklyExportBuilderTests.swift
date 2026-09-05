@@ -146,8 +146,14 @@ struct WeeklyExportBuilderTests {
         #expect(got.weekLabel == want.weekLabel)
         #expect(got.programLabel == want.programLabel)
         #expect(got.targetPeriods == want.targetPeriods)
-        for (g, w) in zip(got.days, want.days) { #expect(g == w, "day \(w.date)") }
+        // Readiness v9's per-day signals are asserted on their own below — the
+        // hand-written payload predates them, and a 49-day EWMA is not a thing
+        // to write out by hand seven times.
+        func withoutReadiness(_ d: ExportDay) -> ExportDay { var x = d; x.readiness = nil; return x }
+        for (g, w) in zip(got.days, want.days) { #expect(withoutReadiness(g) == w, "day \(w.date)") }
         #expect(got.days.count == want.days.count)
+        var gotStripped = got
+        gotStripped.days = got.days.map(withoutReadiness)
         #expect(got.sessions == want.sessions)
         #expect(got.volumeByMuscle == want.volumeByMuscle)
         #expect(got.tonnageByMuscle == want.tonnageByMuscle)
@@ -157,7 +163,28 @@ struct WeeklyExportBuilderTests {
         #expect(got.cardio == want.cardio)
         #expect(got.supplementProtocol == want.supplementProtocol)
         #expect(got.ledger == want.ledger)
-        #expect(got == want)
+        #expect(gotStripped == want)
+
+        // ── READINESS v9 on the days ──
+        // Every day carries the signals; with six weeks of history absent the
+        // z-signals have no opinion (nil, never a number), and the loads are
+        // the seeded sessions': s1 on the 24th is RPE 8.5 × 78 min = 663.
+        let byDate = Dictionary(uniqueKeysWithValues: got.days.map { ($0.date, $0.readiness) })
+        for day in got.days { #expect(day.readiness != nil, "readiness \(day.date)") }
+        #expect(byDate["2026-08-23"]??.hrvZ == nil)
+        #expect(byDate["2026-08-23"]??.rhrZ == nil)
+        #expect(byDate["2026-08-23"]??.load == 0)
+        #expect(byDate["2026-08-24"]??.load == 663)
+        // A first real session against a chronic side built on nothing is NOT
+        // a spike — the ratio has no opinion until three loaded days precede
+        // the rolling week (`minLoadDays`).
+        #expect(byDate["2026-08-24"]??.acwr == nil)
+        #expect((byDate["2026-08-24"]??.acute ?? 0) > 0)
+        // And the builder's series IS the scorer's series.
+        let viaScorer = try db.read { conn in
+            ExportReadiness(signals: Readiness.signals(try AppDatabase.readinessHistory(conn, userId: user, date: "2026-08-24")))
+        }
+        #expect(byDate["2026-08-24"]! == viaScorer)
 
         let markdown = WeeklyExport.build(got)
         #expect(markdown.contains("Legs & Core A"))

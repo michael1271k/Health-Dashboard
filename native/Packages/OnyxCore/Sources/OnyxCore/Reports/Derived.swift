@@ -37,7 +37,7 @@ public struct ExerciseProgression: Codable, Equatable, Sendable {
     public var sessions: Int
 }
 
-/// One day's battery v8 inputs, exactly as the scorer read them — `BatteryDay`.
+/// One day's battery v9 inputs, exactly as the scorer read them — `BatteryDay`.
 public struct BatteryDay: Codable, Equatable, Sendable {
     public var date: String
     public var weekdayLabel: String
@@ -48,13 +48,22 @@ public struct BatteryDay: Codable, Equatable, Sendable {
     public var stagesQ: Double
     public var hrvQ: Double
     public var rhrQ: Double
-    public var onsetTrouble: Bool
-    public var stress: Double
-    public var rhrTerm: Double
-    public var hrvTerm: Double
-    public var fatigueTerm: Double
+    public var hrvZ: Double?
+    public var rhrZ: Double?
+    public var acwr: Double?
+    public var monotony: Double?
+    public var strain: Double?
+    public var strainZ: Double?
+    public var loadDrain: Double
+    /// The Hooper-style index, 0...1. Nil when nothing was answered.
+    public var wellness: Double?
+    public var wellnessDrain: Double
     /// The latest fatigue reading's word, or nil when none was logged.
     public var fatigueLabel: String?
+    /// Mean DOMS severity of the day's rows, 0...3. Nil when none was logged.
+    public var soreness: Double?
+    /// Nil when the question was never asked.
+    public var onsetTrouble: Bool?
 }
 
 public struct DerivedWeek: Codable, Equatable, Sendable {
@@ -142,7 +151,8 @@ public enum Derived {
         }
     }
 
-    /// `batteryDays` — the LATEST fatigue slot wins, by its position in the day.
+    /// `batteryDays` — the LATEST fatigue slot wins, by its position in the
+    /// day. Soreness is the mean of the day's DOMS rows, zeros included.
     static func batteryDays(_ input: WeeklyExportInput) -> [BatteryDay] {
         func slotIndex(_ label: String) -> Int { FatigueSlot.allCases.firstIndex { $0.label == label } ?? -1 }
         return input.days.map { d in
@@ -150,23 +160,31 @@ public enum Derived {
             for f in (input.fatigue ?? []) where f.date == d.date {
                 if latest == nil || slotIndex(f.slot) > slotIndex(latest!.slot) { latest = f }
             }
+            let soreness = meanOf(input.doms.filter { $0.date == d.date }.map { Optional($0.severity) })
+            let r = d.readiness
+            let onsetTrouble: Bool? = d.sleepOnsetTrouble.map { $0 == true }
             let signals = ScoringInputs(
                 sleepHours: (d.sleepMin ?? 0) / 60, deepMinutes: d.deepMin ?? 0, remMinutes: d.remMin ?? 0,
                 sleepGoalHours: input.sleepGoalHours ?? 8,
-                restingHR: d.restingHr, baselineHR: d.restingHrBaseline,
-                hrvMs: d.hrvMs, hrvBaseline: d.hrvBaseline,
+                hrvZ: r?.hrvZ, rhrZ: r?.rhrZ, acwr: r?.acwr, strainZ: r?.strainZ,
+                domsSeverity: soreness, sleepOnsetTrouble: onsetTrouble,
                 fatigueLevel: latest?.level
             )
             let q = Battery.sleepQualityParts(signals)
-            let st = Battery.stressParts(signals)
-            let onsetTrouble = d.sleepOnsetTrouble == true
+            let load = Battery.loadParts(signals)
+            let wellness = Battery.wellnessParts(signals)
             return BatteryDay(
                 date: d.date, weekdayLabel: d.weekdayLabel,
                 appPct: d.batteryPct,
-                morningCharge: Battery.computeMorningCharge(sleepQuality: q.quality, onsetTrouble: onsetTrouble),
-                ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ, onsetTrouble: onsetTrouble,
-                stress: st.drain, rhrTerm: st.rhrTerm, hrvTerm: st.hrvTerm, fatigueTerm: st.fatigueTerm,
-                fatigueLabel: latest.map { Fatigue.level(Int($0.level))?.label ?? jsIntegerString($0.level) }
+                morningCharge: Battery.computeMorningCharge(sleepQuality: q.quality),
+                ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ,
+                hrvZ: r?.hrvZ, rhrZ: r?.rhrZ,
+                acwr: r?.acwr, monotony: r?.monotony, strain: r?.strain, strainZ: r?.strainZ,
+                loadDrain: load.drain,
+                wellness: wellness.index, wellnessDrain: wellness.drain,
+                fatigueLabel: latest.map { Fatigue.level(Int($0.level))?.label ?? jsIntegerString($0.level) },
+                soreness: soreness,
+                onsetTrouble: onsetTrouble
             )
         }
     }

@@ -111,7 +111,7 @@ struct ScoringHolesTests {
         #expect(got.nutritionException == true)
     }
 
-    @Test("v8: the night's onset flag and the LATEST fatigue slot reach the battery")
+    @Test("v9: the night's onset flag and the LATEST fatigue slot reach the battery")
     func onsetAndFatigue() throws {
         let db = try store()
         try db.writer.write { conn in
@@ -124,7 +124,7 @@ struct ScoringHolesTests {
         let got = try #require(try inputs(db))
         #expect(got.sleepOnsetTrouble == true)
         #expect(got.fatigueLevel == 4)
-        #expect(Battery.stressParts(got).fatigueTerm == 3)
+        #expect(Battery.wellnessParts(got).fatigue == 0.75)
 
         // Nothing logged, nothing flagged: neutral, not a penalty.
         let quiet = try store()
@@ -134,6 +134,56 @@ struct ScoringHolesTests {
         let none = try #require(try inputs(quiet))
         #expect(none.sleepOnsetTrouble == false)
         #expect(none.fatigueLevel == nil)
+    }
+
+    @Test("v9: the readiness signals and the day's soreness reach the battery")
+    func readinessSignals() throws {
+        let db = try store()
+        let now = Date()
+        try db.writer.write { conn in
+            // 49 days of HRV and resting HR: a steady baseline, then a suppressed
+            // week — so both z-signals have an opinion, and it is negative for
+            // HRV and positive for RHR.
+            for i in 0..<49 {
+                let d = ISODate.addDays(day, i - 48)!
+                let hrv = i < 42 ? (i % 2 == 0 ? 64.0 : 56.0) : 44.0
+                let rhr = i < 42 ? (i % 2 == 0 ? 53 : 51) : 58
+                try DailyLogRow(id: "d\(i)", userId: user, date: d, avgRestHeartRate: rhr, createdAt: now, updatedAt: now,
+                                hrvMs: hrv, nutritionEstimated: false, sleepOnsetTrouble: false).insert(conn)
+            }
+            // Six weeks of one rated hour every other day, then a heavy week
+            // that still varies day to day (a monotone week has no strain).
+            for i in 0..<49 where i % 2 == 0 || i >= 42 {
+                let d = ISODate.addDays(day, i - 48)!
+                let rpe: Double = i >= 42 ? (i % 2 == 0 ? 9 : 7) : 7
+                let minutes: Double = i >= 42 ? (i % 2 == 0 ? 75 : 45) : 60
+                try WorkoutSession(id: "s\(i)", userId: user, dayKey: "legs_a", date: d, durationMin: minutes, sessionRpe: rpe).insert(conn)
+            }
+            try DomsLogRow(id: "m1", userId: user, date: day, muscleGroup: "Quads", severity: 2).insert(conn)
+            try DomsLogRow(id: "m2", userId: user, date: day, muscleGroup: "Hamstrings", severity: 0).insert(conn)
+            try DomsLogRow(id: "m3", userId: user, date: "2026-09-03", muscleGroup: "Chest", severity: 3).insert(conn)
+        }
+        let got = try #require(try inputs(db))
+        #expect(got.domsSeverity == 1, "the day's rows only, zeros included")
+        let hrvZ = try #require(got.hrvZ)
+        let rhrZ = try #require(got.rhrZ)
+        #expect(hrvZ < 0 && hrvZ >= -2)
+        #expect(rhrZ > 0 && rhrZ <= 2)
+        let acwr = try #require(got.acwr)
+        #expect(acwr > 1.3, "a heavy week after six steady ones is a spike")
+        #expect(got.strainZ != nil)
+
+        // The inputs are exactly what the history builder says they are.
+        let signals = try db.read { conn in Readiness.signals(try AppDatabase.readinessHistory(conn, userId: user, date: day)) }
+        #expect(got.hrvZ == signals.hrv.z && got.rhrZ == signals.rhr.z && got.acwr == signals.load.acwr && got.strainZ == signals.load.strainZ)
+
+        // And with no history at all, every signal is nil — neutral, not a penalty.
+        let bare = try store()
+        try bare.writer.write { conn in
+            try DailyLogRow(id: "d1", userId: user, date: day, createdAt: now, updatedAt: now, nutritionEstimated: false, sleepOnsetTrouble: false).insert(conn)
+        }
+        let none = try #require(try inputs(bare))
+        #expect(none.hrvZ == nil && none.rhrZ == nil && none.acwr == nil && none.strainZ == nil && none.domsSeverity == nil)
     }
 
     // MARK: The writer

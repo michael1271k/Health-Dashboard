@@ -10,6 +10,10 @@ public struct IngestReport: Sendable, Equatable {
     /// declined metric is reported rather than dropped in silence — a manual
     /// correction that quietly stops being honoured is invisible otherwise.
     public var declined: [String] = []
+    /// The stored `hrv_ms` is the night's mean (the watch was worn to sleep)
+    /// rather than the calendar day's. Nothing in the schema carries this yet;
+    /// it is reported so the day can say which reading it holds.
+    public var hrvOvernight: Bool = false
 
     public var isEmpty: Bool { tables.isEmpty }
 }
@@ -51,6 +55,7 @@ public extension AppDatabase {
             weight = nil
         }
 
+        report.hrvOvernight = payload.hrvOvernight && payload[.hrv] != nil
         try writer.write { db in
             // ── A HAND-CORRECTED DAY WINS ───────────────────────────────────
             // ONE probe, TWO skips: `daily_logs.water_ml` and the `water_intake`

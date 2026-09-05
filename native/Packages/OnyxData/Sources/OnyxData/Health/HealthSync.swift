@@ -89,6 +89,21 @@ public actor HealthSync {
             payload.sleep = Sleep.aggregate(samples)
         }
 
+        // ── OVERNIGHT HRV (readiness v9) ────────────────────────────────────
+        // The watch takes an SDNN reading every few hours and during sleep,
+        // and the daytime ones carry the day — a walk, a coffee, a meeting.
+        // The readings inside the night's bed window are the ones that track
+        // recovery (Plews 2013), so when the night is known the day's `hrv`
+        // is their mean. A statistics query, like every other metric, so the
+        // iPhone/Watch dedupe is Apple's. No night, or no samples inside it,
+        // and the calendar-day mean stands, flagged as such.
+        if let slept = payload.sleep, let bedStart = slept.bedStart, let bedEnd = slept.bedEnd, bedEnd > bedStart,
+           let overnight = try? await reader.quantity(HealthCatalogue.hrvIdentifier, reduce: .average, start: bedStart, end: bedEnd),
+           let value = HealthCatalogue.round(overnight, reduce: .average) {
+            payload[.hrv] = value
+            payload.hrvOvernight = true
+        }
+
         // Nothing in HealthKit's continuations is cancellation-aware, so the
         // 32-metric loop above runs to completion even after `signOut` cancels
         // this task. Checking HERE is what stops the write landing — in the

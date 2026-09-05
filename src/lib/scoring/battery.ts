@@ -1,4 +1,5 @@
 import type { ScoringInputs } from './types'
+import { READINESS } from './readiness'
 
 export interface BatteryState {
   morningCharge: number   // 0–100 (charge at wake, sleep-driven)
@@ -8,9 +9,12 @@ export interface BatteryState {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
 /**
- * Phone-like battery — drain-only (v7), with v8's morning-charge and stress
- * terms on top. v8 changed WHAT the charge reads (stages share, HRV, onset) and
- * added ONE drain (stress, capped at 10) — the shape below is unchanged.
+ * Phone-like battery — drain-only (v7), v8's stages-share charge, and v9's
+ * readiness signals on top. v9 changed WHAT the charge reads (HRV and resting
+ * HR as z-scores against your own 42-day baseline rather than a 7-day mean)
+ * and replaced ONE drain (v8's stress term) with TWO (training load, and a
+ * Hooper-style wellness index) — the shape below is otherwise unchanged.
+ * `docs/READINESS_MODEL.md` states the model with its citations.
  *
  * ── WHY v6 WAS REPLACED ──────────────────────────────────────────────────────
  * v6 could not describe a training day. On 2026-08-10 (`legs_a`, 13,072.5 kg) it
@@ -42,9 +46,21 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  *      moves a lot of iron because the machine is loaded heavy.
  *   4. Time drain was linear, so hour 1 cost what hour 15 cost.
  *
+ * ── WHY v8's STRESS DRAIN WAS REPLACED (v9) ──────────────────────────────────
+ * v8 compared today's HRV and resting HR against a seven-day mean, twice: once
+ * in the charge (as a quality term) and once in a "stress" drain. A single
+ * night's HRV is noisy enough that Plews (2013) recommends never reading it
+ * alone, and a seven-day mean as the baseline meant a bad week quietly became
+ * the new normal. v9 reads a 7-day ROLLING mean against a 42-day baseline and
+ * its SD (Buchheit 2014), with the smallest worthwhile change as a dead-band,
+ * and reads each signal ONCE, in the charge. The drain budget that used to hold
+ * stress now holds the two things v8 could not see at all: training load
+ * (Foster's sRPE through Williams's EWMA ACWR, plus monotony/strain) and how
+ * the athlete says they feel (Hooper 1995).
+ *
  * ── THE MODEL ────────────────────────────────────────────────────────────────
  *   - Wake high (≈90–100 after good sleep, never below 55).
- *   - Only ever depletes: chronological time + activity + the workout. There is
+ *   - Only ever depletes: time + activity + workout + load + wellness. There is
  *     still NO recharge term, so eating breakfast can never make the battery
  *     jump (the old protein/water bug stays fixed).
  *   - The workout term is RELATIVE and RPE-aware, so a normal session for you
@@ -59,16 +75,21 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  * modelled around: the day's end state is right, the intraday path is not.
  */
 export const BATTERY = {
+  version: 9,
   floor: 5,
   wakeMin: 55,         // worst-sleep wake charge
   wakeRange: 45,       // + up to 45 for perfect sleep → 100
   timeMax: 35,         // full chronological cost of an 18h day, cosine-distributed
   activityCap: 12,
   workoutMax: 32,      // the HEAVIEST day's ceiling — see WORKOUT_MAX_BY_DAY
-  stressCap: 10,       // v8 — RHR elevation + HRV suppression + the latest fatigue reading
-  onsetPenalty: 3,     // v8 — a night you struggled to fall into starts the day 3 lower
+  loadCap: 8,          // v9 — ACWR past 1.3, and a strain above your own normal
+  wellnessCap: 6,      // v9 — the Hooper-style index: fatigue, soreness, onset, short sleep
   restorativeShare: 0.45, // v8 — (deep + REM) / asleep at which the stages term saturates
-  defaultRpe: 0.7,     // when session_rpe is absent (74 legacy sessions carry none)
+  /** The charge a z-signal reads at exactly baseline, or when it has no opinion. */
+  zNeutral: 0.75,
+  /** Charge per baseline SD: +1 SD fills the term, −2 SD leaves a quarter. */
+  zSlope: 0.25,
+  defaultRpe: 0.7,     // when session_rpe is absent (legacy sessions carry none)
   relMin: 0.6,         // a session at ≤60% of normal still costs something
   relMax: 1.4,         // beyond 140% of normal, more tonnage stops adding drain
   maxAwake: 18,
@@ -82,11 +103,12 @@ export const BATTERY = {
  * Uses `workoutMax`, the ceiling across every day type, so the invariant is
  * checked against the worst case a leg day can produce.
  *
- * v8: 35 + 12 + 32 + 10 = 89. The stress term arrived with its own cap and the
- * leg-day ceiling rose by two, and the sum is still under a full charge — even
- * a night with onset trouble (97 at best) leaves 8 points above the floor.
+ * v9: 35 + 12 + 32 + 8 + 6 = 93. The stress cap (10) left with the term; the
+ * two drains that replaced it are capped at 14 between them, and the onset
+ * penalty that used to sit outside the budget is a wellness item now — so the
+ * worst day on a perfect night ends at 7, two above the floor.
  */
-export const MAX_TOTAL_DRAIN = BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax + BATTERY.stressCap
+export const MAX_TOTAL_DRAIN = BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax + BATTERY.loadCap + BATTERY.wellnessCap
 
 /**
  * The workout drain ceiling, PER PROGRAMME DAY.
@@ -141,7 +163,7 @@ export const WORKOUT_MAX_DEFAULT = 24
  * The week's whole point is that its hardest day is not a hard day.
  *
  * A factor strictly below 1 is also the only shape that is safe here:
- * `MAX_TOTAL_DRAIN` is 89 against a 100 charge budget, and v6 broke precisely by
+ * `MAX_TOTAL_DRAIN` is 93 against a 100 charge budget, and v6 broke precisely by
  * letting the worst case reach 104.2. This can only ever lower the worst case,
  * never raise it — `battery.test.ts` asserts that too.
  */
@@ -187,23 +209,35 @@ export function relMinFor(maintenance: boolean): number {
 }
 
 /**
- * Wake charge from sleep quality (0..1): 55 + 45·q, rounded — then minus 3 for
- * a night you struggled to fall into (`daily_logs.sleep_onset_trouble`, v8).
+ * Wake charge from sleep quality (0..1): 55 + 45·q, rounded.
  *
- * The penalty is applied AFTER the rounding and OUTSIDE the clamp, so the worst
- * start is 52, not 55: the flag is a fact about the night that the stages and
- * the duration cannot see (a long night that took ninety minutes to begin is
- * still a long night), and folding it into `q` would have let a perfect
- * duration cancel it.
+ * v8 took a further 3 off here for a night that was hard to fall into. v9
+ * reads that flag as one of the four wellness items instead (see
+ * `wellnessParts`), so it is charged once, in the drain that describes how the
+ * athlete feels, rather than once here and again there.
  */
-export function computeMorningCharge(sleepQuality: number, onsetTrouble = false): number {
+export function computeMorningCharge(sleepQuality: number): number {
   return Math.round(BATTERY.wakeMin + BATTERY.wakeRange * clamp(sleepQuality, 0, 1))
-    - (onsetTrouble ? BATTERY.onsetPenalty : 0)
+}
+
+/**
+ * A z-signal as a 0..1 charge term.
+ *
+ * Neutral is 0.75, not 0.5: a z of zero means "exactly your own normal", and
+ * a normal night should charge nearly fully — the term exists to take charge
+ * away when the signal is suppressed and to add a little when it is genuinely
+ * good, not to withhold a quarter of the charge every ordinary morning. +1 SD
+ * fills the term; −2 SD (the clamp) leaves a quarter of it. A missing z — thin
+ * history, a flat baseline — reads as neutral, never as a penalty.
+ */
+export function zQuality(z: number | null | undefined): number {
+  if (z == null || !Number.isFinite(z)) return BATTERY.zNeutral
+  return clamp(BATTERY.zNeutral + BATTERY.zSlope * z, 0, 1)
 }
 
 /** The signals the wake charge reads. A subset of `ScoringInputs`, so the export can hand in a day. */
 export type SleepSignals = Pick<ScoringInputs,
-  'sleepHours' | 'deepMinutes' | 'remMinutes' | 'sleepGoalHours' | 'restingHR' | 'baselineHR' | 'hrvMs' | 'hrvBaseline'>
+  'sleepHours' | 'deepMinutes' | 'remMinutes' | 'sleepGoalHours' | 'hrvZ' | 'rhrZ'>
 
 /** `computeSleepQuality`, with the four terms it is built from. Each is 0..1. */
 export interface SleepQualityParts {
@@ -211,28 +245,26 @@ export interface SleepQualityParts {
   ratio: number
   /** (deep + REM) / asleep, saturating at `restorativeShare` (45 %). */
   stagesQ: number
-  /** 0.5 at baseline; 1 at twice the baseline; 0 at zero. 0.5 when either side is missing. */
+  /** `zQuality(hrvZ)`: 0.75 at baseline or unknown, 1 at +1 SD, 0.25 at −2 SD. */
   hrvQ: number
-  /** 1 at or below baseline; 0 at +20 bpm. 1 when either side is missing. */
+  /** `zQuality(−rhrZ)`: 0.75 at baseline or unknown, 1 at −1 SD, 0.25 at +2 SD. */
   rhrQ: number
   quality: number
 }
 
 /**
- * Sleep quality 0..1 (v8) — 55 % duration vs goal, 15 % restorative stages,
- * 15 % HRV vs baseline, 15 % resting HR vs baseline. Drives the wake charge.
+ * Sleep quality 0..1 (v9) — 45 % duration vs goal, 15 % restorative stages,
+ * 25 % HRV z, 15 % resting-HR z. Drives the wake charge.
  *
- * ── WHAT CHANGED FROM v7 ─────────────────────────────────────────────────────
- * v7 read 70 % duration, 15 % deep minutes (75 min = 1), 15 % RHR. Deep alone
- * missed REM — a 5h30 night with 60 min deep scored the stages term as well as
- * a 9h one — and HRV, the one overnight signal the watch reports that actually
- * tracks recovery, was read by the recovery score and never by the battery.
- * The stages term is now a SHARE of the night (Apple's own ~45 % restorative
- * guide), so it cannot be bought with a long night alone, and HRV takes the
- * 15 points that came off duration.
+ * ── WHAT CHANGED FROM v8 ─────────────────────────────────────────────────────
+ * v8 read 55 % duration, 15 % stages, 15 % HRV vs a 7-day mean, 15 % RHR vs a
+ * 7-day mean. HRV takes ten points off duration because it is the one
+ * overnight signal that tracks the autonomic state the battery is trying to
+ * describe, and because as a z-score against six weeks of your own readings it
+ * finally means something a single-night ratio never did (Plews 2013).
  *
  * Every term degrades to its neutral value when its inputs are missing —
- * `hrvQ` to 0.5, `rhrQ` to 1, `stagesQ` to 0 on a night with no minutes —
+ * `hrvQ` and `rhrQ` to 0.75, `stagesQ` to 0 on a night with no minutes —
  * rather than to a penalty, because an unsynced reading is not a bad reading.
  */
 export function sleepQualityParts(inputs: SleepSignals): SleepQualityParts {
@@ -241,16 +273,10 @@ export function sleepQualityParts(inputs: SleepSignals): SleepQualityParts {
   const stagesQ = asleepMin > 0
     ? clamp((inputs.deepMinutes + inputs.remMinutes) / (BATTERY.restorativeShare * asleepMin), 0, 1)
     : 0
-  let hrvQ = 0.5
-  if (inputs.hrvMs && inputs.hrvBaseline) {
-    hrvQ = clamp(0.5 + (inputs.hrvMs - inputs.hrvBaseline) / (2 * inputs.hrvBaseline), 0, 1)
-  }
-  let rhrQ = 1
-  if (inputs.restingHR && inputs.baselineHR) {
-    // +20 bpm over baseline → 0; at/below baseline → 1
-    rhrQ = clamp(1 - (inputs.restingHR - inputs.baselineHR) / 20, 0, 1)
-  }
-  const quality = clamp(0.55 * ratio + 0.15 * stagesQ + 0.15 * hrvQ + 0.15 * rhrQ, 0, 1)
+  const hrvQ = zQuality(inputs.hrvZ)
+  // A HIGH resting HR is the bad direction, so the sign flips.
+  const rhrQ = zQuality(inputs.rhrZ == null ? null : -inputs.rhrZ)
+  const quality = clamp(0.45 * ratio + 0.15 * stagesQ + 0.25 * hrvQ + 0.15 * rhrQ, 0, 1)
   return { ratio, stagesQ, hrvQ, rhrQ, quality }
 }
 
@@ -258,52 +284,114 @@ export function computeSleepQuality(inputs: SleepSignals): number {
   return sleepQualityParts(inputs).quality
 }
 
-/** The signals the stress drain reads. */
-export type StressSignals = Pick<ScoringInputs, 'restingHR' | 'baselineHR' | 'hrvMs' | 'hrvBaseline' | 'fatigueLevel'>
+/** The signals the wellness drain reads. */
+export type WellnessSignals = Pick<ScoringInputs,
+  'fatigueLevel' | 'domsSeverity' | 'sleepOnsetTrouble' | 'sleepHours' | 'sleepGoalHours'>
 
-export interface StressParts {
-  /** 4 per 10 bpm over the resting-HR baseline. 0 at or below it, or unmeasured. */
-  rhrTerm: number
-  /** 3 at half the HRV baseline. 0 at or above it, or unmeasured. */
-  hrvTerm: number
-  /** 0..4 — Fresh / Fine / Worn / Heavy / Empty of the LATEST slot logged today. 0 unlogged. */
-  fatigueTerm: number
-  /** The sum, capped at `stressCap`. */
+/**
+ * The Hooper-style index, item by item. Each item is 0..1 where 1 is WORST,
+ * and null when the question was not answered that day.
+ */
+export interface WellnessParts {
+  /** (level − 1) / 4 — Fresh 0 … Empty 1. */
+  fatigue: number | null
+  /** Mean DOMS severity / 3 — none 0 … severe 1. */
+  soreness: number | null
+  /** 1 for a night that was hard to fall into, 0 otherwise — false IS an answer. Null only when the column was unreadable. */
+  onset: number | null
+  /** 1 − duration/goal — a full night 0, a near-empty one → 1. Null with no night at all. */
+  sleep: number | null
+  /** Mean of the answered items. Null when none was. */
+  index: number | null
+  /** `wellnessCap × index`; 0 when nothing was answered. */
   drain: number
 }
 
 /**
- * Stress drain (v8, cap 10) — the day's physiological and felt load that no
- * session explains: an elevated resting HR, a suppressed HRV, and how the
- * athlete said they felt at the last reading of the day.
+ * Wellness drain (v9, cap 6) — how the athlete SAYS they are, in the four
+ * questions Hooper (1995) found track overtraining ahead of the physiology:
+ * fatigue, muscle soreness, sleep, and (in place of Hooper's "stress") the
+ * night that was hard to fall into.
  *
- * ── THE FATIGUE TERM IS THE FIRST SELF-REPORT TO REACH A NUMBER ──────────────
- * `useFatigue` says the tracker "does NOT feed the score" and that stays true:
- * the DAY SCORE does not read it. The battery is a different object — it is
- * the one number that is supposed to describe how much is left, and "Empty"
- * is the wearer saying so in the only unit they actually feel. Four points at
- * most, against a 100-point charge, and only for the latest reading: a Fresh
- * morning that ended Heavy is Heavy.
+ * ── THE ITEMS ARE AVERAGED OVER THE ONES THAT WERE ANSWERED ──────────────────
+ * Hooper's index is a sum over four items that are always answered. Here two
+ * of them are optional self-reports, and a sum would read "did not open the
+ * tracker" as "feels perfect". So the index is the MEAN of what was answered:
+ * three complaints out of three answered is the same index as four out of
+ * four, and a day with nothing answered has no index and drains nothing.
  *
- * Every term is floored at zero. A LOW resting HR or a HIGH HRV is already
- * credited by the wake charge; it does not also recharge the battery, because
- * nothing does (see the header).
+ * Onset and sleep are (nearly) always answered: onset because the column is
+ * NOT NULL and an unticked night is a "no", sleep whenever a night was
+ * recorded. So on an ordinary logged day the index is a mean of three or
+ * four, and the two optional complaints are diluted by the two that were
+ * fine — which is the point. "Empty" on a full night that fell asleep easily
+ * is one complaint out of three, not the whole story.
+ *
+ * ── SLEEP IS COUNTED HERE AND IN THE CHARGE, ON PURPOSE ──────────────────────
+ * The duration ratio already drives 45 % of the wake charge. Hooper's sleep
+ * item is not a second reading of the same fact but the same fact in a
+ * different frame — a short night as a COMPLAINT, alongside the other three —
+ * and it is worth at most a quarter of a six-point cap. The double count
+ * approaches 1.5 points on a near-empty night; a night with no record at all
+ * is not a short night but an unknown one, and contributes nothing here.
  */
-export function stressParts(inputs: StressSignals): StressParts {
-  const rhrTerm = inputs.restingHR && inputs.baselineHR
-    ? 4 * Math.max(0, (inputs.restingHR - inputs.baselineHR) / 10)
-    : 0
-  const hrvTerm = inputs.hrvMs && inputs.hrvBaseline
-    ? 3 * Math.max(0, ((inputs.hrvBaseline - inputs.hrvMs) / inputs.hrvBaseline) * 2)
-    : 0
-  const fatigueTerm = inputs.fatigueLevel != null && inputs.fatigueLevel >= 1
-    ? clamp(inputs.fatigueLevel - 1, 0, 4)
-    : 0
-  return { rhrTerm, hrvTerm, fatigueTerm, drain: Math.min(BATTERY.stressCap, rhrTerm + hrvTerm + fatigueTerm) }
+export function wellnessParts(inputs: WellnessSignals): WellnessParts {
+  const fatigue = inputs.fatigueLevel != null && Number.isFinite(inputs.fatigueLevel) && inputs.fatigueLevel >= 1
+    ? clamp((inputs.fatigueLevel - 1) / 4, 0, 1)
+    : null
+  const soreness = inputs.domsSeverity != null && Number.isFinite(inputs.domsSeverity) && inputs.domsSeverity >= 0
+    ? clamp(inputs.domsSeverity / 3, 0, 1)
+    : null
+  const onset = inputs.sleepOnsetTrouble == null ? null : (inputs.sleepOnsetTrouble ? 1 : 0)
+  const sleep = inputs.sleepHours > 0 && inputs.sleepGoalHours > 0
+    ? clamp(1 - Math.min(1, inputs.sleepHours / inputs.sleepGoalHours), 0, 1)
+    : null
+  const answered = [fatigue, soreness, onset, sleep].filter((v): v is number => v != null)
+  const index = answered.length ? answered.reduce((a, b) => a + b, 0) / answered.length : null
+  return { fatigue, soreness, onset, sleep, index, drain: index != null ? BATTERY.wellnessCap * index : 0 }
 }
 
-export function stressDrain(inputs: StressSignals): number {
-  return stressParts(inputs).drain
+export function wellnessDrain(inputs: WellnessSignals): number {
+  return wellnessParts(inputs).drain
+}
+
+/** The signals the load drain reads. */
+export type LoadSignals = Pick<ScoringInputs, 'acwr' | 'strainZ'>
+
+export interface LoadParts {
+  /** 0 at or below an ACWR of 1.3, `loadCap × acwrShare` at 2.0 and beyond. */
+  acwrTerm: number
+  /** 0 at or below your own normal strain, `loadCap × (1 − acwrShare)` at +2 SD. */
+  strainTerm: number
+  /** The sum, capped at `loadCap`. */
+  drain: number
+}
+
+/**
+ * Load drain (v9, cap 8) — the training you have done that today's session
+ * does not explain.
+ *
+ * The ACWR term reads the top of the "sweet spot": below 1.3 the acute load is
+ * inside what the chronic load has prepared you for and nothing is charged;
+ * from 1.3 to 2.0 the charge rises linearly and then saturates. The strain
+ * term reads this week's Foster strain against your own rolling strains —
+ * positive only. A LOW ratio or a light week is credited by nothing here,
+ * because nothing recharges (see the header).
+ */
+export function loadParts(inputs: LoadSignals): LoadParts {
+  const acwrCap = BATTERY.loadCap * READINESS.acwrShare
+  const strainCap = BATTERY.loadCap - acwrCap
+  const acwrTerm = inputs.acwr != null && Number.isFinite(inputs.acwr)
+    ? acwrCap * clamp((inputs.acwr - READINESS.acwrOnset) / (READINESS.acwrSaturation - READINESS.acwrOnset), 0, 1)
+    : 0
+  const strainTerm = inputs.strainZ != null && Number.isFinite(inputs.strainZ)
+    ? strainCap * clamp(inputs.strainZ / READINESS.zClamp, 0, 1)
+    : 0
+  return { acwrTerm, strainTerm, drain: Math.min(BATTERY.loadCap, acwrTerm + strainTerm) }
+}
+
+export function loadDrain(inputs: LoadSignals): number {
+  return loadParts(inputs).drain
 }
 
 /**
@@ -357,17 +445,42 @@ export function workoutDrain(
 }
 
 /**
- * Current battery % — strict drain-only (v8).
- *   currentPct = clamp(wakeCharge − timeDrain − activityDrain − workoutDrain − stressDrain, floor, 100)
- *   wakeCharge    = round(55 + 45·q) − (onsetTrouble ? 3 : 0)
+ * Every term behind one battery reading — what the future dashboard tile
+ * draws and what the export's Derived block prints. `computeBattery` is this
+ * with everything but the two numbers thrown away.
+ */
+export interface BatteryBreakdown {
+  version: number
+  hoursAwake: number
+  charge: SleepQualityParts & { morningCharge: number }
+  drains: {
+    time: number
+    activity: number
+    workout: number
+    load: number
+    wellness: number
+    /** The five, summed — before the floor and ceiling. */
+    total: number
+  }
+  loadParts: LoadParts
+  wellnessParts: WellnessParts
+  currentPct: number
+}
+
+/**
+ * Current battery % — strict drain-only (v9), term by term.
+ *   currentPct    = clamp(wakeCharge − time − activity − workout − load − wellness, floor, 100)
+ *   wakeCharge    = round(55 + 45·q), q = 0.45·ratio + 0.15·stages + 0.25·hrvQ + 0.15·rhrQ
  *   timeDrain     = timeMax × (1 − cos(π · awake/maxAwake)) / 2
  *   activityDrain = min(cap, 0.004×activeCal + 0.5×(steps/1000))
  *   workoutDrain  = workoutMax × (rpe/10) × clamp(vol/trailingAvg, relMin, 1.4) / 1.4
  *                   relMin = 0.6, or 0.35 on a maintenance day
- *   stressDrain   = min(10, 4·rhrΔ/10 + 3·2·hrvΔ/base + (fatigue − 1))
+ *   loadDrain     = min(8, 5·clamp((ACWR − 1.3)/0.7) + 3·clamp(strainZ/2))
+ *   wellnessDrain = 6 × mean(fatigue, soreness, onset, short sleep — the answered ones)
  */
-export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): BatteryState {
-  const wakeCharge = computeMorningCharge(computeSleepQuality(inputs), inputs.sleepOnsetTrouble === true)
+export function batteryBreakdown(inputs: ScoringInputs, hoursAwake?: number): BatteryBreakdown {
+  const q = sleepQualityParts(inputs)
+  const wakeCharge = computeMorningCharge(q.quality)
 
   const awake = clamp(hoursAwake ?? inputs.hoursAwake ?? 8, 0, BATTERY.maxAwake)
   const time = timeDrain(awake)
@@ -376,9 +489,24 @@ export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): Batt
     inputs.sessionVolumeKg, inputs.trailingAvgVolumeKg, inputs.sessionRpe, inputs.sessionDayKey,
     inputs.isMaintenance,
   )
+  const load = loadParts(inputs)
+  const wellness = wellnessParts(inputs)
+  const total = time + activity + workout + load.drain + wellness.drain
 
-  const stress = stressDrain(inputs)
+  const currentPct = clamp(wakeCharge - total, BATTERY.floor, 100)
+  return {
+    version: BATTERY.version,
+    hoursAwake: awake,
+    charge: { ...q, morningCharge: wakeCharge },
+    drains: { time, activity, workout, load: load.drain, wellness: wellness.drain, total },
+    loadParts: load,
+    wellnessParts: wellness,
+    currentPct: Math.round(currentPct),
+  }
+}
 
-  const currentPct = clamp(wakeCharge - time - activity - workout - stress, BATTERY.floor, 100)
-  return { morningCharge: wakeCharge, currentPct: Math.round(currentPct) }
+/** The two numbers the app stores. See `batteryBreakdown` for the rest. */
+export function computeBattery(inputs: ScoringInputs, hoursAwake?: number): BatteryState {
+  const b = batteryBreakdown(inputs, hoursAwake)
+  return { morningCharge: b.charge.morningCharge, currentPct: b.currentPct }
 }

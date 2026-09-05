@@ -13,11 +13,16 @@ public struct HealthPayload: Sendable, Equatable {
     /// The night that ENDS on the morning of `date`. Its own window, not the
     /// calendar day — see `NightWindow`.
     public var sleep: SleepNight?
+    /// `values[.hrv]` is the mean of the SDNN samples INSIDE the night's bed
+    /// window (readiness v9) rather than the calendar day's average. False
+    /// when the watch was not worn to sleep and the daily mean stood in.
+    public var hrvOvernight: Bool
 
-    public init(date: String, values: [HealthKey: Double] = [:], sleep: SleepNight? = nil) {
+    public init(date: String, values: [HealthKey: Double] = [:], sleep: SleepNight? = nil, hrvOvernight: Bool = false) {
         self.date = date
         self.values = values
         self.sleep = sleep
+        self.hrvOvernight = hrvOvernight
     }
 
     public subscript(key: HealthKey) -> Double? {

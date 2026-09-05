@@ -1,7 +1,7 @@
 {
   "module": "scoring/battery",
-  "fn": "computeBattery",
-  "note": "Drain-only. There is no recharge term, so eating breakfast can never make the battery jump.",
+  "fn": "batteryBreakdown",
+  "note": "Every term behind the number, for the dashboard tile and the export. The drains sum to `total`; currentPct = round(clamp(morningCharge − total, floor, 100)).",
   "cases": [
     {
       "name": "{}",
@@ -34,7 +34,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 15.211156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 77
       }
     },
@@ -70,7 +100,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 0,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 0,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 0.75
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 91
       }
     },
@@ -106,7 +166,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 15.211156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 77
       }
     },
@@ -142,7 +232,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 16,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 33.9446208637534,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 34.6946208637534
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 57
       }
     },
@@ -178,7 +298,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 18,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 35,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 35.75
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 56
       }
     },
@@ -214,7 +364,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 18,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 35,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 35.75
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 56
       }
     },
@@ -250,7 +430,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 12,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 26.249999999999996,
+          "activity": 8.8,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 35.8
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 56
       }
     },
@@ -286,7 +496,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 12,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 26.249999999999996,
+          "activity": 12,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 39
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 53
       }
     },
@@ -322,7 +562,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 85,
+        "version": 9,
+        "hoursAwake": 14,
+        "charge": {
+          "ratio": 0.5,
+          "stagesQ": 0.9259259259259259,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.663888888888889,
+          "morningCharge": 85
+        },
+        "drains": {
+          "time": 30.905777754582115,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 3,
+          "total": 33.90577775458212
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.5,
+          "index": 0.5,
+          "drain": 3
+        },
         "currentPct": 51
       }
     },
@@ -358,7 +628,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 94,
+        "version": 9,
+        "hoursAwake": 6,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.7818930041152263,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.867283950617284,
+          "morningCharge": 94
+        },
+        "drains": {
+          "time": 8.749999999999998,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 8.749999999999998
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 85
       }
     },
@@ -394,7 +694,37 @@
         "hoursAwakeArg": 15
       },
       "expected": {
-        "morningCharge": 92,
+        "version": 9,
+        "hoursAwake": 15,
+        "charge": {
+          "ratio": 0.875,
+          "stagesQ": 0.7936507936507936,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8127976190476189,
+          "morningCharge": 92
+        },
+        "drains": {
+          "time": 32.65544456622767,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0.75,
+          "total": 33.40544456622767
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0.125,
+          "index": 0.125,
+          "drain": 0.75
+        },
         "currentPct": 59
       }
     },
@@ -432,7 +762,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 94,
+        "version": 9,
+        "hoursAwake": 11,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.8333333333333334,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.875,
+          "morningCharge": 94
+        },
+        "drains": {
+          "time": 23.4853525081992,
+          "activity": 6.9,
+          "workout": 16.45374449339207,
+          "load": 0,
+          "wellness": 0,
+          "total": 46.83909700159127
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 47
       }
     },
@@ -471,7 +831,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 94,
+        "version": 9,
+        "hoursAwake": 11,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.8333333333333334,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.875,
+          "morningCharge": 94
+        },
+        "drains": {
+          "time": 23.4853525081992,
+          "activity": 6.9,
+          "workout": 4.628247774880878,
+          "load": 0,
+          "wellness": 0,
+          "total": 35.01360028308007
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 59
       }
     },
@@ -509,7 +899,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 69,
+        "version": 9,
+        "hoursAwake": 18,
+        "charge": {
+          "ratio": 0,
+          "stagesQ": 0,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.3,
+          "morningCharge": 69
+        },
+        "drains": {
+          "time": 35,
+          "activity": 12,
+          "workout": 32,
+          "load": 0,
+          "wellness": 0,
+          "total": 79
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": null,
+          "index": null,
+          "drain": 0
+        },
         "currentPct": 5
       }
     },
@@ -545,7 +965,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
+        "version": 9,
+        "hoursAwake": 0,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.8950617283950617,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8842592592592593,
+          "morningCharge": 95
+        },
+        "drains": {
+          "time": 0,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 0
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 95
       }
     },
@@ -582,7 +1032,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 3,
+          "total": 17.46115689082872
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": 1,
+          "sleep": 0,
+          "index": 0.5,
+          "drain": 3
+        },
         "currentPct": 76
       }
     },
@@ -619,7 +1099,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": 0,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 79
       }
     },
@@ -656,7 +1166,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 79
       }
     },
@@ -693,7 +1233,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 96,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 1,
+          "rhrQ": 0.75,
+          "quality": 0.9166666666666667,
+          "morningCharge": 96
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 82
       }
     },
@@ -730,7 +1300,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 88,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.25,
+          "rhrQ": 0.75,
+          "quality": 0.7291666666666667,
+          "morningCharge": 88
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 74
       }
     },
@@ -767,7 +1367,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 90,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.25,
+          "quality": 0.7791666666666667,
+          "morningCharge": 90
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 76
       }
     },
@@ -804,7 +1434,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 1,
+          "quality": 0.8916666666666667,
+          "morningCharge": 95
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 81
       }
     },
@@ -841,7 +1501,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 3,
+          "total": 17.46115689082872
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": 1,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0.5,
+          "drain": 3
+        },
         "currentPct": 76
       }
     },
@@ -878,7 +1568,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": 0,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 79
       }
     },
@@ -915,7 +1635,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 2,
+          "total": 16.46115689082872
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": 0.6666666666666666,
+          "onset": null,
+          "sleep": 0,
+          "index": 0.3333333333333333,
+          "drain": 2
+        },
         "currentPct": 77
       }
     },
@@ -952,7 +1702,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 2.1428571428571432,
+          "wellness": 0,
+          "total": 16.60401403368586
+        },
+        "loadParts": {
+          "acwrTerm": 2.1428571428571432,
+          "strainTerm": 0,
+          "drain": 2.1428571428571432
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 76
       }
     },
@@ -990,7 +1770,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 79
       }
     },
@@ -1027,7 +1837,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 1.7999999999999998,
+          "wellness": 0,
+          "total": 16.26115689082872
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 1.7999999999999998,
+          "drain": 1.7999999999999998
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 77
       }
     },
@@ -1067,7 +1907,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 93,
+        "version": 9,
+        "hoursAwake": 8,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6944444444444444,
+          "hrvQ": 0.75,
+          "rhrQ": 0.75,
+          "quality": 0.8541666666666667,
+          "morningCharge": 93
+        },
+        "drains": {
+          "time": 14.461156890828718,
+          "activity": 0,
+          "workout": 0,
+          "load": 0,
+          "wellness": 0,
+          "total": 14.461156890828718
+        },
+        "loadParts": {
+          "acwrTerm": 0,
+          "strainTerm": 0,
+          "drain": 0
+        },
+        "wellnessParts": {
+          "fatigue": null,
+          "soreness": null,
+          "onset": null,
+          "sleep": 0,
+          "index": 0,
+          "drain": 0
+        },
         "currentPct": 79
       }
     },
@@ -1110,7 +1980,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 88,
+        "version": 9,
+        "hoursAwake": 12,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.6820682068206821,
+          "hrvQ": 0.4,
+          "rhrQ": 0.475,
+          "quality": 0.7235602310231023,
+          "morningCharge": 88
+        },
+        "drains": {
+          "time": 26.249999999999996,
+          "activity": 0,
+          "workout": 0,
+          "load": 2.421428571428571,
+          "wellness": 3,
+          "total": 31.671428571428567
+        },
+        "loadParts": {
+          "acwrTerm": 1.0714285714285707,
+          "strainTerm": 1.35,
+          "drain": 2.421428571428571
+        },
+        "wellnessParts": {
+          "fatigue": 0.5,
+          "soreness": 0.5,
+          "onset": 1,
+          "sleep": 0,
+          "index": 0.5,
+          "drain": 3
+        },
         "currentPct": 56
       }
     },
@@ -1155,7 +2055,37 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 100,
+        "version": 9,
+        "hoursAwake": 18,
+        "charge": {
+          "ratio": 1,
+          "stagesQ": 0.9876543209876543,
+          "hrvQ": 1,
+          "rhrQ": 1,
+          "quality": 0.9981481481481481,
+          "morningCharge": 100
+        },
+        "drains": {
+          "time": 35,
+          "activity": 12,
+          "workout": 32,
+          "load": 8,
+          "wellness": 4.5,
+          "total": 91.5
+        },
+        "loadParts": {
+          "acwrTerm": 5,
+          "strainTerm": 3,
+          "drain": 8
+        },
+        "wellnessParts": {
+          "fatigue": 1,
+          "soreness": 1,
+          "onset": 1,
+          "sleep": 0,
+          "index": 0.75,
+          "drain": 4.5
+        },
         "currentPct": 9
       }
     }

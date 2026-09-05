@@ -1,0 +1,112 @@
+{
+  "module": "scoring/battery",
+  "fn": "zQuality",
+  "note": "Neutral 0.75 at z = 0 or unknown; +1 SD fills the term; −2 SD leaves a quarter.",
+  "cases": [
+    {
+      "name": "z=null",
+      "input": {
+        "z": null
+      },
+      "expected": 0.75
+    },
+    {
+      "name": "z=-5",
+      "input": {
+        "z": -5
+      },
+      "expected": 0
+    },
+    {
+      "name": "z=-3",
+      "input": {
+        "z": -3
+      },
+      "expected": 0
+    },
+    {
+      "name": "z=-2",
+      "input": {
+        "z": -2
+      },
+      "expected": 0.25
+    },
+    {
+      "name": "z=-1.5",
+      "input": {
+        "z": -1.5
+      },
+      "expected": 0.375
+    },
+    {
+      "name": "z=-1",
+      "input": {
+        "z": -1
+      },
+      "expected": 0.5
+    },
+    {
+      "name": "z=-0.5",
+      "input": {
+        "z": -0.5
+      },
+      "expected": 0.625
+    },
+    {
+      "name": "z=-0.25",
+      "input": {
+        "z": -0.25
+      },
+      "expected": 0.6875
+    },
+    {
+      "name": "z=0",
+      "input": {
+        "z": 0
+      },
+      "expected": 0.75
+    },
+    {
+      "name": "z=0.25",
+      "input": {
+        "z": 0.25
+      },
+      "expected": 0.8125
+    },
+    {
+      "name": "z=0.5",
+      "input": {
+        "z": 0.5
+      },
+      "expected": 0.875
+    },
+    {
+      "name": "z=1",
+      "input": {
+        "z": 1
+      },
+      "expected": 1
+    },
+    {
+      "name": "z=1.5",
+      "input": {
+        "z": 1.5
+      },
+      "expected": 1
+    },
+    {
+      "name": "z=2",
+      "input": {
+        "z": 2
+      },
+      "expected": 1
+    },
+    {
+      "name": "z=3",
+      "input": {
+        "z": 3
+      },
+      "expected": 1
+    }
+  ]
+}

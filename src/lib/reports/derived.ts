@@ -28,7 +28,7 @@
  */
 import type { WeeklyExportInput, ExportDay, ExportFatigue, ExportSession, LedgerWeek } from '@/lib/reports/weeklyExport'
 import { SET_QUALITY } from '@/lib/training/setTags'
-import { computeMorningCharge, sleepQualityParts, stressParts } from '@/lib/scoring/battery'
+import { computeMorningCharge, sleepQualityParts, loadParts, wellnessParts } from '@/lib/scoring/battery'
 import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel } from '@/lib/recovery/fatigue'
 
 /** Mean of the values that EXIST. Null when none do — never 0. */
@@ -83,11 +83,11 @@ export interface ExerciseProgression {
 }
 
 /**
- * One day's battery v8 inputs, exactly as the scorer read them.
+ * One day's battery v9 inputs, exactly as the scorer read them.
  *
- * The app shows `appPct`; this is everything behind it. The four `q` terms and
- * the three stress terms are the scorer's own functions run on the day line's
- * figures plus the two baselines the payload carries for the purpose — so a
+ * The app shows `appPct`; this is everything behind it. The charge terms and
+ * the two drains are the scorer's own functions run on the day line's figures
+ * plus the `readiness` signals the payload carries for the purpose — so a
  * reader can see WHICH input moved the number, which the number cannot say.
  */
 export interface BatteryDay {
@@ -100,13 +100,22 @@ export interface BatteryDay {
   stagesQ: number
   hrvQ: number
   rhrQ: number
-  onsetTrouble: boolean
-  stress: number
-  rhrTerm: number
-  hrvTerm: number
-  fatigueTerm: number
+  hrvZ: number | null
+  rhrZ: number | null
+  acwr: number | null
+  monotony: number | null
+  strain: number | null
+  strainZ: number | null
+  loadDrain: number
+  /** The Hooper-style index, 0..1. Null when nothing was answered. */
+  wellness: number | null
+  wellnessDrain: number
   /** The latest fatigue reading's word, or null when none was logged. */
   fatigueLabel: string | null
+  /** Mean DOMS severity of the day's rows, 0..3. Null when none was logged. */
+  soreness: number | null
+  /** Null when the question was never asked. */
+  onsetTrouble: boolean | null
 }
 
 export interface DerivedWeek {
@@ -210,7 +219,8 @@ function progressionWithin(sessions: readonly ExportSession[]): ExerciseProgress
 /**
  * The battery's view of each day. The LATEST fatigue slot wins, as
  * `latestFatigue` decides it — slots are compared by their position in the
- * day, not by their label's alphabet.
+ * day, not by their label's alphabet. Soreness is the mean of the day's DOMS
+ * rows, zeros included: a muscle rated "not sore" is an answer.
  */
 function batteryDays(input: WeeklyExportInput): BatteryDay[] {
   const slotIndex = (label: string) => FATIGUE_SLOTS.findIndex((s) => SLOT_LABEL[s] === label)
@@ -218,23 +228,31 @@ function batteryDays(input: WeeklyExportInput): BatteryDay[] {
     const latest = (input.fatigue ?? [])
       .filter((f) => f.date === d.date)
       .reduce<ExportFatigue | null>((best, f) => (best == null || slotIndex(f.slot) > slotIndex(best.slot) ? f : best), null)
+    const soreness = mean(input.doms.filter((r) => r.date === d.date).map((r) => r.severity))
+    const r = d.readiness ?? null
+    const onsetTrouble = d.sleepOnsetTrouble == null ? null : d.sleepOnsetTrouble === true
     const signals = {
       sleepHours: (d.sleepMin ?? 0) / 60, deepMinutes: d.deepMin ?? 0, remMinutes: d.remMin ?? 0,
       sleepGoalHours: input.sleepGoalHours ?? 8,
-      restingHR: d.restingHr ?? undefined, baselineHR: d.restingHrBaseline ?? undefined,
-      hrvMs: d.hrvMs ?? undefined, hrvBaseline: d.hrvBaseline ?? undefined,
-      fatigueLevel: latest?.level ?? null,
+      hrvZ: r?.hrvZ ?? null, rhrZ: r?.rhrZ ?? null,
+      acwr: r?.acwr ?? null, strainZ: r?.strainZ ?? null,
+      fatigueLevel: latest?.level ?? null, domsSeverity: soreness, sleepOnsetTrouble: onsetTrouble,
     }
     const q = sleepQualityParts(signals)
-    const st = stressParts(signals)
-    const onsetTrouble = d.sleepOnsetTrouble === true
+    const load = loadParts(signals)
+    const wellness = wellnessParts(signals)
     return {
       date: d.date, weekdayLabel: d.weekdayLabel,
       appPct: d.batteryPct ?? null,
-      morningCharge: computeMorningCharge(q.quality, onsetTrouble),
-      ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ, onsetTrouble,
-      stress: st.drain, rhrTerm: st.rhrTerm, hrvTerm: st.hrvTerm, fatigueTerm: st.fatigueTerm,
+      morningCharge: computeMorningCharge(q.quality),
+      ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ,
+      hrvZ: r?.hrvZ ?? null, rhrZ: r?.rhrZ ?? null,
+      acwr: r?.acwr ?? null, monotony: r?.monotony ?? null, strain: r?.strain ?? null, strainZ: r?.strainZ ?? null,
+      loadDrain: load.drain,
+      wellness: wellness.index, wellnessDrain: wellness.drain,
       fatigueLabel: latest ? (fatigueLevel(latest.level)?.label ?? String(latest.level)) : null,
+      soreness,
+      onsetTrouble,
     }
   })
 }

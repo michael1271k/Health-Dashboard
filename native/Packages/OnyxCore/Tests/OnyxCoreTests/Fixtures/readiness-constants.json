@@ -1,0 +1,29 @@
+{
+  "module": "scoring/readiness",
+  "fn": "READINESS",
+  "note": "The v9 constants the port must not drift from.",
+  "cases": [
+    {
+      "name": "constants",
+      "input": {},
+      "expected": {
+        "rollingDays": 7,
+        "baselineDays": 42,
+        "historyDays": 49,
+        "minRolling": 3,
+        "minBaseline": 14,
+        "swcFactor": 0.5,
+        "zClamp": 2,
+        "acuteLambda": 0.25,
+        "chronicLambda": 0.06896551724137931,
+        "monotonyDays": 7,
+        "minStrainHistory": 14,
+        "minLoadDays": 3,
+        "defaultSessionRpe": 7,
+        "acwrOnset": 1.3,
+        "acwrSaturation": 2,
+        "acwrShare": 0.625
+      }
+    }
+  ]
+}
