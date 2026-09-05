@@ -285,15 +285,25 @@ struct SyncCoordinatorTests {
         let wire = Wire()
         let c = coordinator(db, wire)
         await wire.hold()
+        // ── THE SECOND CALLER MUST ARRIVE AFTER THE FIRST RUN HAS STARTED ───
+        // All three used to be launched together and the test then waited for
+        // one of them to park. That is a race the COORDINATOR is allowed to
+        // win: `started` exists precisely so a caller arriving before the
+        // current run has begun joins it rather than queueing behind it, so an
+        // interleaving where `b` and `d` reach `syncNow` before `a` takes the
+        // slot legitimately produces ONE run — and the test failed on it about
+        // two runs in three.
+        //
+        // Parking `a` at the wire proves it has started. Only then are the
+        // other two launched, which is the situation the test is named for.
         async let a: Void = c.syncNow(reason: .launch)
+        await wire.waitUntilParked("daily_logs")
         async let b: Void = c.syncNow(reason: .foreground)
         async let d: Void = c.syncNow(reason: .pull)
-        // Park the FIRST run before timing anything. The bare 50 ms had to
-        // cover three task starts plus a full walk to the wire, and when it
-        // did not, `d` had never reached `syncNow`, nothing was queued behind
-        // `a`, and the test failed claiming the coordinator had coalesced too
-        // hard. Now the only thing left inside the window is two actor hops.
-        await wire.waitUntilParked("daily_logs")
+        // Two actor hops, so that `b` and `d` land while `a` is still parked —
+        // the queued-behind-a-running-sync path rather than the
+        // arrived-after-it-finished one, which would count the same and prove
+        // less.
         try await Task.sleep(for: .milliseconds(50))
         await wire.release()
         _ = try await (a, b, d)

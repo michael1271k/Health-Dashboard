@@ -13,7 +13,7 @@
           "target": 30,
           "unit": "g",
           "kind": "floor",
-          "group": "Fuel",
+          "group": "Macros",
           "fromStack": false
         },
         {
@@ -22,7 +22,7 @@
           "target": 170,
           "unit": "g",
           "kind": "floor",
-          "group": "Fuel",
+          "group": "Macros",
           "fromStack": false
         },
         {
@@ -31,7 +31,7 @@
           "target": 3000,
           "unit": "mg",
           "kind": "ceiling",
-          "group": "Electrolytes",
+          "group": "Minerals",
           "fromStack": false
         },
         {
@@ -40,7 +40,7 @@
           "target": 3400,
           "unit": "mg",
           "kind": "floor",
-          "group": "Electrolytes",
+          "group": "Minerals",
           "fromStack": false
         },
         {
@@ -49,7 +49,7 @@
           "target": 1000,
           "unit": "mg",
           "kind": "floor",
-          "group": "Electrolytes",
+          "group": "Minerals",
           "fromStack": false
         },
         {
@@ -58,7 +58,7 @@
           "target": 10,
           "unit": "mg",
           "kind": "floor",
-          "group": "Vitamins & minerals",
+          "group": "Minerals",
           "fromStack": false
         },
         {
@@ -67,7 +67,7 @@
           "target": 400,
           "unit": "mg",
           "kind": "floor",
-          "group": "Electrolytes",
+          "group": "Minerals",
           "fromStack": false
         },
         {
@@ -76,7 +76,7 @@
           "target": 90,
           "unit": "mg",
           "kind": "floor",
-          "group": "Vitamins & minerals",
+          "group": "Vitamins",
           "fromStack": false
         },
         {
@@ -85,7 +85,7 @@
           "target": 2000,
           "unit": "IU",
           "kind": "floor",
-          "group": "Vitamins & minerals",
+          "group": "Vitamins",
           "fromStack": false
         },
         {
@@ -94,7 +94,7 @@
           "target": 20,
           "unit": "g",
           "kind": "ceiling",
-          "group": "Fuel",
+          "group": "Macros",
           "fromStack": false
         },
         {
@@ -103,7 +103,7 @@
           "target": 40,
           "unit": "g",
           "kind": "ceiling",
-          "group": "Fuel",
+          "group": "Macros",
           "fromStack": false
         },
         {
@@ -112,7 +112,7 @@
           "target": 2.4,
           "unit": "mcg",
           "kind": "floor",
-          "group": "Vitamins & minerals",
+          "group": "Vitamins",
           "fromStack": true
         },
         {
@@ -121,7 +121,7 @@
           "target": 400,
           "unit": "mcg",
           "kind": "floor",
-          "group": "Vitamins & minerals",
+          "group": "Vitamins",
           "fromStack": true
         },
         {
@@ -130,7 +130,7 @@
           "target": 500,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -139,7 +139,7 @@
           "target": 250,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -148,7 +148,7 @@
           "target": 5000,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -157,7 +157,7 @@
           "target": 3000,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -166,7 +166,7 @@
           "target": 400,
           "unit": "mg",
           "kind": "ceiling",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -175,7 +175,7 @@
           "target": 200,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         },
         {
@@ -184,7 +184,7 @@
           "target": 3000,
           "unit": "mg",
           "kind": "floor",
-          "group": "Performance stack",
+          "group": "Other",
           "fromStack": true
         }
       ]

@@ -19,11 +19,11 @@
  * ceiling. That is the one thing the label cannot tell you at a glance, and it
  * is the reason you opened the page.
  */
-export type NutrientGroup = 'Fuel' | 'Electrolytes' | 'Vitamins & minerals' | 'Performance stack'
+export type NutrientGroup = 'Macros' | 'Vitamins' | 'Minerals' | 'Other'
 
 /** Render order of the bands. */
 export const NUTRIENT_GROUPS: readonly NutrientGroup[] = [
-  'Fuel', 'Electrolytes', 'Vitamins & minerals', 'Performance stack',
+  'Macros', 'Vitamins', 'Minerals', 'Other',
 ] as const
 
 export interface NutrientTarget {
@@ -48,68 +48,68 @@ export interface NutrientTarget {
 }
 
 export const NUTRIENT_TARGETS: NutrientTarget[] = [
-  { key: 'fiber', label: 'Fiber', target: 30, unit: 'g', kind: 'floor', group: 'Fuel',
+  { key: 'fiber', label: 'Fiber', target: 30, unit: 'g', kind: 'floor', group: 'Macros',
     why: '~14 g per 1000 kcal (~27 g at 1955 kcal), rounded up for satiety + gut health on a cut.',
     hkType: 'HKQuantityTypeIdentifierDietaryFiber' },
-  { key: 'protein', label: 'Protein', target: 170, unit: 'g', kind: 'floor', group: 'Fuel',
+  { key: 'protein', label: 'Protein', target: 170, unit: 'g', kind: 'floor', group: 'Macros',
     why: '~2.6 g/kg — high end to preserve lean mass in an aggressive deficit.',
     hkType: 'HKQuantityTypeIdentifierDietaryProtein' },
-  { key: 'sodium', label: 'Sodium', target: 3000, unit: 'mg', kind: 'ceiling', group: 'Electrolytes',
+  { key: 'sodium', label: 'Sodium', target: 3000, unit: 'mg', kind: 'ceiling', group: 'Minerals',
     why: 'Adequate ~1500 mg; up to ~3000 mg is fine given training-sweat losses. Ceiling, not a goal.',
     hkType: 'HKQuantityTypeIdentifierDietarySodium' },
-  { key: 'potassium', label: 'Potassium', target: 3400, unit: 'mg', kind: 'floor', group: 'Electrolytes',
+  { key: 'potassium', label: 'Potassium', target: 3400, unit: 'mg', kind: 'floor', group: 'Minerals',
     why: 'Male AI 3400 mg — supports blood pressure + cramp prevention while cutting.',
     hkType: 'HKQuantityTypeIdentifierDietaryPotassium' },
-  { key: 'calcium', label: 'Calcium', target: 1000, unit: 'mg', kind: 'floor', group: 'Electrolytes',
+  { key: 'calcium', label: 'Calcium', target: 1000, unit: 'mg', kind: 'floor', group: 'Minerals',
     why: 'RDA 1000 mg — bone load management under heavy lifting.',
     hkType: 'HKQuantityTypeIdentifierDietaryCalcium' },
-  { key: 'iron', label: 'Iron', target: 10, unit: 'mg', kind: 'floor', group: 'Vitamins & minerals',
+  { key: 'iron', label: 'Iron', target: 10, unit: 'mg', kind: 'floor', group: 'Minerals',
     why: 'Male RDA 8 mg, nudged to 10 mg for training-related turnover.',
     hkType: 'HKQuantityTypeIdentifierDietaryIron' },
-  { key: 'magnesium', label: 'Magnesium', target: 400, unit: 'mg', kind: 'floor', group: 'Electrolytes',
+  { key: 'magnesium', label: 'Magnesium', target: 400, unit: 'mg', kind: 'floor', group: 'Minerals',
     why: 'RDA ~400 mg — neuromuscular function + sleep quality on a deficit.',
     hkType: 'HKQuantityTypeIdentifierDietaryMagnesium' },
-  { key: 'vitaminC', label: 'Vitamin C', target: 90, unit: 'mg', kind: 'floor', group: 'Vitamins & minerals',
+  { key: 'vitaminC', label: 'Vitamin C', target: 90, unit: 'mg', kind: 'floor', group: 'Vitamins',
     why: 'RDA 90 mg — connective-tissue + immune support under training stress.',
     hkType: 'HKQuantityTypeIdentifierDietaryVitaminC' },
-  { key: 'vitaminD', label: 'Vitamin D', target: 2000, unit: 'IU', kind: 'floor', group: 'Vitamins & minerals',
+  { key: 'vitaminD', label: 'Vitamin D', target: 2000, unit: 'IU', kind: 'floor', group: 'Vitamins',
     why: 'RDA 600 IU; 1000–2000 IU is the practical optimum for strength + immunity.',
     hkType: 'HKQuantityTypeIdentifierDietaryVitaminD' },
-  { key: 'satFat', label: 'Saturated Fat', target: 20, unit: 'g', kind: 'ceiling', group: 'Fuel',
+  { key: 'satFat', label: 'Saturated Fat', target: 20, unit: 'g', kind: 'ceiling', group: 'Macros',
     why: '<10 % of kcal (~22 g at 1955 kcal). Ceiling — keep most fat unsaturated.',
     hkType: 'HKQuantityTypeIdentifierDietaryFatSaturated' },
-  { key: 'sugar', label: 'Added Sugar', target: 40, unit: 'g', kind: 'ceiling', group: 'Fuel',
+  { key: 'sugar', label: 'Added Sugar', target: 40, unit: 'g', kind: 'ceiling', group: 'Macros',
     why: '<10 % of kcal; lower is better on a cut. Ceiling, not a goal.',
     hkType: 'HKQuantityTypeIdentifierDietarySugar' },
 
   // ── Delivered by the supplement stack ──────────────────────────────────────
   // These light up the instant the matching item is ticked off in the Stack —
   // see nutrition/supplementNutrients.ts for each product's label dose.
-  { key: 'vitaminB12', label: 'Vitamin B12', target: 2.4, unit: 'mcg', kind: 'floor', group: 'Vitamins & minerals',
+  { key: 'vitaminB12', label: 'Vitamin B12', target: 2.4, unit: 'mcg', kind: 'floor', group: 'Vitamins',
     why: 'RDA 2.4 mcg. The multivitamin supplies 300 mcg — far above the floor, which is normal for B12 (no toxicity ceiling).',
     fromStack: true },
-  { key: 'folate', label: 'Folate', target: 400, unit: 'mcg', kind: 'floor', group: 'Vitamins & minerals',
+  { key: 'folate', label: 'Folate', target: 400, unit: 'mcg', kind: 'floor', group: 'Vitamins',
     why: 'RDA 400 mcg DFE — red-cell turnover under training load. Multivitamin supplies 680 mcg.',
     fromStack: true },
-  { key: 'epa', label: 'EPA', target: 500, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'epa', label: 'EPA', target: 500, unit: 'mg', kind: 'floor', group: 'Other',
     why: 'Anti-inflammatory omega-3; ~500 mg/day is the practical floor alongside DHA on a deficit.',
     fromStack: true },
-  { key: 'dha', label: 'DHA', target: 250, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'dha', label: 'DHA', target: 250, unit: 'mg', kind: 'floor', group: 'Other',
     why: 'EFSA adequate intake 250 mg/day — neural + membrane support.',
     fromStack: true },
-  { key: 'creatine', label: 'Creatine', target: 5000, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'creatine', label: 'Creatine', target: 5000, unit: 'mg', kind: 'floor', group: 'Other',
     why: '5 g/day maintenance — the single best-evidenced strength and lean-mass supplement, and it matters MORE in a deficit.',
     fromStack: true },
-  { key: 'citrulline', label: 'L-Citrulline', target: 3000, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'citrulline', label: 'L-Citrulline', target: 3000, unit: 'mg', kind: 'floor', group: 'Other',
     why: 'Protocol dose, training days only. 3 g pre-workout for blood flow and rep endurance.',
     fromStack: true },
-  { key: 'caffeine', label: 'Caffeine', target: 400, unit: 'mg', kind: 'ceiling', group: 'Performance stack',
+  { key: 'caffeine', label: 'Caffeine', target: 400, unit: 'mg', kind: 'ceiling', group: 'Other',
     why: 'Protocol dose 200 mg pre-workout. Ceiling 400 mg/day — beyond that it starts costing the sleep this whole system is built on.',
     fromStack: true },
-  { key: 'theanine', label: 'L-Theanine', target: 200, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'theanine', label: 'L-Theanine', target: 200, unit: 'mg', kind: 'floor', group: 'Other',
     why: 'Protocol dose 200 mg before bed — sleep-onset latency without sedation.',
     fromStack: true },
-  { key: 'glycine', label: 'Glycine', target: 3000, unit: 'mg', kind: 'floor', group: 'Performance stack',
+  { key: 'glycine', label: 'Glycine', target: 3000, unit: 'mg', kind: 'floor', group: 'Other',
     why: '3 g before bed lowers core temperature and improves sleep quality; the stack supplies 5 g.',
     fromStack: true },
 ]

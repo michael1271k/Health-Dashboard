@@ -98,11 +98,11 @@ enum PreviewHarness {
             BackfillSheet(model: .preview).environment(AppEnvironment.preview)
         case "you":
             NavigationStack { SettingsTabView(seeded: model) }.environment(AppEnvironment.preview)
-        case "train":
+        case "train", "train-empty":
             // Seeded from the history store: the This-week panel and the
             // Ready-to-progress box are both reads over the ledger, so an empty
             // database photographs the empty states rather than the screen.
-            HistoryPreviews.view("train")
+            HistoryPreviews.view(screen)
         case "sync-status":
             NavigationStack { SyncStatusView(seeded: .preview) }.environment(AppEnvironment.preview)
         // The same screen with every fault it can name — a table behind the
