@@ -141,7 +141,7 @@ enum PreviewHarness {
             NutritionPreviews.view(screen)
         case "logger", "logger-finish":
             LoggerPreviews.view(screen)
-        case "today", "today-edit", "today-sheet", "today-sheet-vitals":
+        case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history":
             HistoryPreviews.view(screen)

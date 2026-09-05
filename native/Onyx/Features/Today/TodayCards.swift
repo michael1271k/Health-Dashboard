@@ -13,8 +13,9 @@ import OnyxUI
 //
 // What survives is what could not be read anywhere else on this screen: the
 // day's score as a numeral, the battery as a ring (different question, so a
-// different shape), and what today's training actually is. The verdict keeps
-// its one home in the coach card below. The sync caption rides here because it
+// different shape), and what today's training actually is. The verdict lost its
+// home when the coach card went (§W5.3) and gets a breakdown tile of its own in
+// Wave 10; the Recovery tile carries it meanwhile. The sync caption rides here because it
 // is the answer to "is what I am looking at current", which is a question about
 // this whole screen and not about any one tile in it.
 
@@ -179,62 +180,158 @@ struct WeeklySummaryCTA: View {
     }
 }
 
-// MARK: - Insight coach
+// MARK: - Goal Board
 
-struct InsightCoachView: View {
-    let readiness: ReadinessResult?
-    let insights: [Insight]
+/// The phase, as three numbers.
+///
+/// ── WHY THIS REPLACED THE INSIGHT COACH ─────────────────────────────────────
+/// The coach drew correlations — "nights over 7 h precede your three heaviest
+/// sessions (r = 0.71)" — and nothing about the day changed on the strength of
+/// one. It also said the readiness verdict a second time, in the same words the
+/// strip above it had already used.
+///
+/// A phase asks exactly one question: is the scale moving at the rate the phase
+/// asked for, when does it arrive, and what has the week's ledger actually
+/// been. Those three are on the row, and each of them can be wrong in a way you
+/// would act on.
+struct GoalBoardRow: View {
+    let board: GoalBoard
+
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Insight Coach", systemImage: "brain.head.profile")
-                .onyxType(.micro)
-                .foregroundStyle(Color.onyx.textSecondary)
-                .textCase(.uppercase)
-            if let readiness {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(readiness.label).onyxType(.display).fontWeight(.bold).foregroundStyle(ReadinessColor.of(readiness))
-                    Text(readiness.reason).onyxType(.caption).foregroundStyle(Color.onyx.textSecondary)
-                }
-            }
-            if insights.isEmpty {
-                Text("Not enough history yet — keep syncing and correlations across sleep, recovery, nutrition and training surface here.")
-                    .onyxType(.caption).foregroundStyle(Color.onyx.textSecondary)
-            } else {
-                ForEach(insights, id: \.id) { insight in
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: symbol(insight.tone))
-                            .onyxType(.caption).fontWeight(.bold)
-                            .foregroundStyle(tint(insight.tone))
-                            .frame(width: 16)
-                            .padding(.top, 2)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(insight.headline).onyxType(.secondary).fontWeight(.semibold).foregroundStyle(Color.onyx.textPrimary)
-                            Text(insight.detail).onyxType(.caption).foregroundStyle(Color.onyx.textSecondary)
-                        }
-                    }
-                }
+        VStack(alignment: .leading, spacing: OnyxSpace.s) {
+            HStack(alignment: .top, spacing: OnyxSpace.m) {
+                cell("RATE", rateText, sub: bandText, ink: paceInk)
+                cell("ARRIVES", etaText, sub: weeksText, ink: Color.onyx.textPrimary)
+                cell("THIS WEEK", balanceText, sub: daysText, ink: balanceInk)
             }
         }
-        .padding(OnyxSpace.l)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // 64 pt at the default size — a label, a figure and one line under it.
+        // It grows with the type scale rather than clipping, because a fixed
+        // height is a promise a Dynamic Type setting can break.
+        .frame(minHeight: 64)
+        .padding(OnyxSpace.m)
         .onyxGlass(.tile)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(spoken)
     }
 
-    private func symbol(_ tone: InsightTone) -> String {
-        switch tone {
-        case .positive: "arrow.up.right"
-        case .caution: "exclamationmark.triangle.fill"
-        case .neutral: "minus"
+    private func cell(_ label: String, _ value: String, sub: String, ink: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label)
+                .onyxType(.micro)
+                .foregroundStyle(Color.onyx.textTertiary)
+            Text(value)
+                .onyxType(.secondary).fontWeight(.semibold).onyxNumeral()
+                .foregroundStyle(ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(sub)
+                .onyxType(.caption).onyxNumeral()
+                .foregroundStyle(Color.onyx.textSecondary)
+                .lineLimit(typeSize.isAccessibilitySize ? 2 : 1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: The three figures
+
+    private var rateText: String {
+        guard let rate = board.ratePerWeekKg else { return "—" }
+        return "\(signed(rate, fraction: 2)) kg"
+    }
+
+    private var bandText: String {
+        guard let lo = board.targetRateMinKgWk, let hi = board.targetRateMaxKgWk else { return "per week" }
+        let low = min(lo, hi), high = max(lo, hi)
+        return "want \(signed(low, fraction: 2)) to \(signed(high, fraction: 2))"
+    }
+
+    private var etaText: String {
+        guard let eta = board.etaISO else { return "—" }
+        return Self.short.string(from: eta) ?? "—"
+    }
+
+    private var weeksText: String {
+        guard let weeks = board.weeksToTarget else {
+            // Not "never": the rate is either unknown or pointing the other
+            // way, and those are different facts to be told.
+            return board.ratePerWeekKg == nil ? "no trend yet" : "wrong way"
+        }
+        guard let target = board.targetWeightKg else { return "\(OnyxFormat.rpe(weeks)) wks" }
+        return "\(OnyxFormat.rpe(weeks)) wks to \(OnyxFormat.kg(target))"
+    }
+
+    private var balanceText: String {
+        guard let kcal = board.weekBalanceKcal else { return "—" }
+        return "\(signed(kcal, fraction: 0)) kcal"
+    }
+
+    private var daysText: String {
+        board.weekDaysCounted == 0 ? "no full days yet" : "over \(board.weekDaysCounted) days"
+    }
+
+    // MARK: Ink
+
+    /// The pace decides the rate's colour, and only the rate's: a deficit is
+    /// not good or bad on its own, it is the rate's cause.
+    private var paceInk: Color {
+        switch board.pace {
+        case .onTrack: Color.onyx.good
+        case .under, .over: OnyxDomain.fuel.accent
+        case .reversed: Color.onyx.danger
+        case .unknown: Color.onyx.textPrimary
         }
     }
 
-    private func tint(_ tone: InsightTone) -> Color {
-        switch tone {
-        case .positive: Color.onyx.good
-        case .caution: OnyxDomain.fuel.accent
-        case .neutral: Color.onyx.textTertiary
-        }
+    private var balanceInk: Color {
+        guard let kcal = board.weekBalanceKcal, board.weekDaysCounted > 0 else { return Color.onyx.textPrimary }
+        // Signed against the phase, not against zero: a deficit is the point on
+        // a cut and the failure on a bulk.
+        let wantsDeficit = (board.targetRateMinKgWk ?? 0) + (board.targetRateMaxKgWk ?? 0) < 0
+        return (kcal < 0) == wantsDeficit ? Color.onyx.textPrimary : OnyxDomain.fuel.accent
+    }
+
+    private var spoken: String {
+        "Goal board. Rate \(rateText) per week, \(bandText). Arrives \(etaText), \(weeksText). This week \(balanceText), \(daysText)."
+    }
+
+    /// A rate of `-0.46` reads `−0.46`; `+0.22` keeps its plus, because the
+    /// sign is the whole message on a bulk.
+    private func signed(_ value: Double, fraction: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = fraction
+        formatter.minimumFractionDigits = fraction
+        formatter.positivePrefix = "+"
+        formatter.negativePrefix = "−"
+        return formatter.string(from: value as NSNumber) ?? "\(value)"
+    }
+
+    /// `12 Nov`. One formatter, because building a `DateFormatter` per row is
+    /// the classic way to make a list scroll badly.
+    private static let short: ISOShortDate = ISOShortDate()
+}
+
+/// ISO in, `12 Nov` out.
+struct ISOShortDate {
+    private let parser: DateFormatter
+    private let printer: DateFormatter
+
+    init() {
+        parser = DateFormatter()
+        parser.calendar = Calendar(identifier: .gregorian)
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd"
+        printer = DateFormatter()
+        printer.setLocalizedDateFormatFromTemplate("d MMM")
+    }
+
+    func string(from iso: String) -> String? {
+        parser.date(from: iso).map { printer.string(from: $0) }
     }
 }
 

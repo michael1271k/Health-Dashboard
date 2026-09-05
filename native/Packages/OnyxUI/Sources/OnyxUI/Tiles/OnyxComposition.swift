@@ -45,7 +45,6 @@ struct CompositionFocusFace: View {
         Caption("BODY FAT", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -90,7 +89,6 @@ struct CompositionFace: View {
         Caption("COMPOSITION", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: large ? 15 : 13)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 6) {

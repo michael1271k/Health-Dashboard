@@ -143,6 +143,10 @@ public struct StepsView: View {
     public init(entry: OnyxTileEntry) { self.entry = entry }
 
     public var body: some View {
+        face.onyxMarked(monochrome: mono, hidden: entry.isStale)
+    }
+
+    @ViewBuilder private var face: some View {
         let s = entry.snapshot
         let spec = FocusSpec.steps(s)
         switch size {
@@ -154,7 +158,6 @@ public struct StepsView: View {
                     Caption(spec.caption, color: mono ? .white : spec.accent)
                     Spacer(minLength: 0)
                     if entry.isStale { StaleTag(age: entry.age) }
-                    OnyxBrand(monochrome: mono, size: 12)
                 }
                 HStack(alignment: .lastTextBaseline, spacing: 8) {
                     BigValue(value: spec.hero, size: size == .large ? 44 : 30, color: .white)
@@ -213,13 +216,16 @@ public struct MuscleView: View {
     }
 
     public var body: some View {
+        face.onyxMarked(monochrome: mono, hidden: entry.isStale)
+    }
+
+    @ViewBuilder private var face: some View {
         let accent = mono ? Color.white : OnyxDomain.train.accent
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Caption("MUSCLE FOCUS", color: accent)
                 Spacer(minLength: 0)
                 if entry.isStale { StaleTag(age: entry.age) }
-                OnyxBrand(monochrome: mono, size: 12)
             }
             if families.isEmpty {
                 Text("No sets logged this week.").font(OnyxWidgetType.face(11)).foregroundStyle(Color.onyx.textSecondary)

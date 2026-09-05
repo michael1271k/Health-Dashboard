@@ -108,58 +108,141 @@ public extension View {
 
 // MARK: - The screen ground
 
+/// How lit the mesh is allowed to be, 0…1 — the device's battery.
+///
+/// ── WHY A BACKGROUND WATCHES THE BATTERY ────────────────────────────────────
+/// The bleed is the one thing on this app that is pure decoration: it says
+/// which domain you are in, and nothing else. On an OLED panel it is also the
+/// only thing that is not black, which means it is the only thing costing
+/// power on a screen that is otherwise free to draw. So it is the first thing
+/// to go quiet when the phone is running out — the same trade every part of
+/// this app makes, stated once here rather than argued at each screen.
+///
+/// It defaults to 1 so a widget, a preview and the shot loop all draw the mesh
+/// at full strength: a screenshot whose look depends on the simulator's battery
+/// is a visual diff that fails for no reason.
+private struct OnyxBatteryLevelKey: EnvironmentKey {
+    static let defaultValue: Double = 1
+}
+
+public extension EnvironmentValues {
+    var onyxBatteryLevel: Double {
+        get { self[OnyxBatteryLevelKey.self] }
+        set { self[OnyxBatteryLevelKey.self] = newValue }
+    }
+}
+
 /// True black, with one mesh bleed of the screen's domain behind the top of it.
 ///
-/// ── ONE BLEED, EIGHT PERCENT, TOP ONLY ──────────────────────────────────────
+/// ── ONE BLEED, TEN PERCENT, TOP ONLY ────────────────────────────────────────
 /// The accent's job is to say which domain you are in before you read a word.
 /// It does that from the corner of your eye; at 30 % it becomes a background you
 /// have to read text against, and every material above it turns muddy because
 /// glass tints towards whatever is behind it. The bleed is behind the TOP
 /// because that is where the title is and where the eye lands.
 ///
-/// v2 took it from 12 % over 340 pt to 8 % over 240 (§3.1). At 12 % across a
-/// third of the screen it had stopped being a bleed and become a gradient
-/// header — the thing that made every screenshot read as a landing page — and
-/// the desaturated v2 accents carry further at lower alpha than the v1 neons
-/// did, so 8 % says the same thing more quietly.
+/// v2 took it from 12 % over 340 pt to 8 % over 240 (§3.1). Phase 2.5 §W5.2
+/// gives it back two points and forty: the desaturated v2 accents were quiet
+/// enough that 8 % over 240 read as a smudge above the title rather than as a
+/// domain, and 10 % over 280 is still under the 12 % that made every screenshot
+/// look like a landing page. The ceiling is 10 %, and the battery is what keeps
+/// the average below it.
+///
+/// ── AND ONE STOP AT THE BOTTOM ──────────────────────────────────────────────
+/// A screen taller than its bleed ends in dead black, which on a long scroll
+/// reads as the app having run out rather than the list having. One faint
+/// ellipse in the bottom-leading corner — half the top's alpha, no structure —
+/// closes the frame without becoming a second gradient.
 private struct OnyxScreenBackground: ViewModifier {
-    let domain: OnyxDomain
+    /// `nil` is the neutral ground: Settings belongs to no domain, and giving
+    /// it one would say the tab is about that domain.
+    let domain: OnyxDomain?
+
+    /// Frostier and opaque when the system asks for it. A mesh under glass is
+    /// the exact thing this setting exists to switch off, so it goes entirely —
+    /// dimming it would leave a tinted haze that is neither the design nor flat.
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.onyxBatteryLevel) private var battery
+
+    /// §W5.2: the peak the bleed may reach, at a full battery.
+    private static let peak: Double = 0.10
+    /// Tall enough to bleed under a large navigation title and no further.
+    private static let bleedHeight: CGFloat = 280
+
+    /// `peak × clamp(0.5 + battery/2)` — full at 100 %, 70 % at 40 %, and never
+    /// under half, because a bleed that has faded out entirely stops saying
+    /// which tab you are on.
+    private var intensity: Double {
+        Self.peak * min(max(0.5 + battery / 2, 0.5), 1)
+    }
+
+    /// The two stops the mesh is lit with. Neutral borrows the text ink, which
+    /// on this ground is a grey lift and not a hue.
+    private var stops: (Color, Color) {
+        guard let domain else { return (Color.onyx.textPrimary, Color.onyx.textSecondary) }
+        return (domain.start, domain.end)
+    }
 
     func body(content: Content) -> some View {
         content.background {
-            ZStack(alignment: .top) {
-                Color.onyx.base
-                MeshGradient(
-                    width: 3,
-                    height: 3,
-                    points: [
-                        .init(0, 0),   .init(0.5, 0),   .init(1, 0),
-                        .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
-                        .init(0, 1),   .init(0.5, 1),   .init(1, 1),
-                    ],
-                    colors: [
-                        domain.start, domain.start, domain.end,
-                        domain.end,   .black,       .black,
-                        .black,       .black,       .black,
-                    ]
-                )
-                .opacity(0.08)
-                // Tall enough to bleed under a large navigation title and no
-                // further. A full-height mesh is an ambient gradient, which is
-                // the look this design mandate exists to avoid.
-                .frame(height: 240)
-                .blur(radius: 40)
+            if reduceTransparency {
+                Color.onyx.base.ignoresSafeArea()
+            } else {
+                ZStack(alignment: .top) {
+                    Color.onyx.base
+                    mesh
+                        .opacity(domain == nil ? intensity / 2 : intensity)
+                        .frame(height: Self.bleedHeight)
+                        .blur(radius: 40)
+                        .ignoresSafeArea()
+                }
+                .overlay(alignment: .bottomLeading) { corner }
                 .ignoresSafeArea()
             }
-            .ignoresSafeArea()
         }
+    }
+
+    private var mesh: some View {
+        let (a, b) = stops
+        return MeshGradient(
+            width: 3,
+            height: 3,
+            points: [
+                .init(0, 0),   .init(0.5, 0),   .init(1, 0),
+                .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
+                .init(0, 1),   .init(0.5, 1),   .init(1, 1),
+            ],
+            colors: [
+                a,     a,      b,
+                b,     .black, .black,
+                .black, .black, .black,
+            ]
+        )
+    }
+
+    /// The bottom-leading stop. An ellipse rather than a second mesh: it has no
+    /// structure to show and a mesh would cost a second render pass to say the
+    /// same thing.
+    private var corner: some View {
+        Ellipse()
+            .fill(stops.1)
+            .frame(width: 240, height: 160)
+            .blur(radius: 60)
+            .opacity(intensity / 2)
+            .offset(x: -60, y: 40)
+            .allowsHitTesting(false)
     }
 }
 
 public extension View {
-    /// The ground every Wave 3 screen stands on.
+    /// The ground every screen stands on, in its domain's colour.
     func onyxScreen(_ domain: OnyxDomain) -> some View {
         modifier(OnyxScreenBackground(domain: domain))
+    }
+
+    /// The neutral ground, for a screen that belongs to no domain.
+    func onyxScreen() -> some View {
+        modifier(OnyxScreenBackground(domain: nil))
     }
 }
 

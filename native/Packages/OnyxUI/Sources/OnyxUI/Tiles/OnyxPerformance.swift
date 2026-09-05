@@ -86,7 +86,6 @@ struct RecordFocusFace: View {
         Caption("LATEST PR", color: mono ? .white : Color.onyx.record)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       if let top {
@@ -153,7 +152,6 @@ struct RecordLedgerFace: View {
       HStack(spacing: 4) {
         Caption("RECORDS", color: accent)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
       Spacer(minLength: 0)
       BigValue(value: s.map { "\($0.week.prs)" }, size: 32,
@@ -182,6 +180,9 @@ struct RecordLedgerFace: View {
       }
     }
     .frame(maxWidth: .infinity)
+    // This column reaches the face's trailing edge, and its first row is level
+    // with the corner the mark sits in.
+    .padding(.trailing, OnyxMark.faceInset)
   }
 }
 
@@ -299,7 +300,6 @@ struct OneRepMaxFocusFace: View {
         Caption("EST 1RM", color: mono ? .white : OnyxDomain.train.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
 
       if let top {
@@ -341,9 +341,10 @@ struct OneRepMaxLedgerFace: View {
         Caption("ESTIMATED 1RM", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
         Text("since 28 days").font(OnyxWidgetType.face(8)).foregroundStyle(Color.onyx.textSecondary)
       }
+      // The corner belongs to the mark; this row's content runs to the edge.
+      .padding(.trailing, OnyxMark.faceInset)
 
       if lifts.isEmpty {
         Text("log a few working sets and the main lifts appear here")

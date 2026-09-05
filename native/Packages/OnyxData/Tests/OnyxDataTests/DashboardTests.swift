@@ -56,7 +56,12 @@ struct TodayFeedBuilderTests {
         let db = try AppDatabase.inMemory(deviceId: "device-a")
         let feed = try TodayFeedBuilder(database: db, userId: user, timeZone: tz).build(now: now)
         #expect(feed.snapshot.date == "2026-09-03")
-        #expect(feed.insights.map(\.id) == ["training-gap"])
+        // No weigh-ins and no ledger, but the phase's own targets still stand:
+        // the board says what the phase asked for and "—" for what it measured.
+        #expect(feed.goalBoard.ratePerWeekKg == nil)
+        #expect(feed.goalBoard.pace == .unknown)
+        #expect(feed.goalBoard.weekDaysCounted == 0)
+        #expect(feed.goalBoard.targetWeightKg == PhaseGoals.cut.targetWeightKg)
         #expect(feed.weekSoFar.current == .empty)
         #expect(feed.weekSoFar.change == nil)
         #expect(!feed.weeklySummaryReady)

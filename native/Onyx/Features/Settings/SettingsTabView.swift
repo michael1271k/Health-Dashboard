@@ -168,7 +168,7 @@ private struct SettingsForm: View {
                 Button("Sign out", role: .destructive) { isSigningOut = true }
             }
         }
-        .onyxFormBackground(.train)
+        .onyxFormBackground()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in

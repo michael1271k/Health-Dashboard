@@ -45,6 +45,7 @@ public struct DailyView: View {
         face
       }
     }
+    .onyxMarked(monochrome: mono, hidden: entry.isStale)
     .containerBackground(Color.onyx.base, for: .widget)
     // The whole-face URL is the home screen: this widget is about the day, and
     // the day's overview is the dashboard. Each quadrant then names its own
@@ -61,7 +62,6 @@ public struct DailyView: View {
         ContextChip(context: s?.context, monochrome: mono)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
 
       // 2×2. Each cell is a Link, so a tap lands on the thing tapped rather

@@ -34,10 +34,12 @@ enum TodayPreviews {
         let feed = TodayFeed(
             snapshot: snapshot,
             readiness: readiness,
-            insights: [
-                Insight(id: "sleep-volume", headline: "Sleep is carrying your volume", detail: "Nights over 7 h precede your three heaviest sessions this month (r = 0.71).", tone: .positive, confidence: 0.82),
-                Insight(id: "rhr-drift", headline: "Resting heart rate is drifting up", detail: "Seven-day mean is 4 bpm above the month — recovery is lagging the load.", tone: .caution, confidence: 0.64),
-            ],
+            goalBoard: GoalBoard(
+                ratePerWeekKg: -0.46, trendWeightKg: 68.4,
+                targetRateMinKgWk: -0.50, targetRateMaxKgWk: -0.40,
+                targetWeightKg: 62, weeksToTarget: 9.6, etaISO: "2026-11-08",
+                weekBalanceKcal: -2_310, weekDaysCounted: 4, pace: .onTrack
+            ),
             weekSoFar: WeekSoFarSummary(
                 weekStart: "2026-08-30", weekNumber: 7, dayOfWeek: 5,
                 current: WeekTotals(volumeKg: 24_120, sessions: 3, sleepMin: 442, score: 78),
@@ -54,6 +56,13 @@ enum TodayPreviews {
         return model
     }
 
+    @MainActor
+    private static var weighInEnvironment: AppEnvironment {
+        let environment = AppEnvironment.preview
+        environment.seedWeighInPendingForPreview()
+        return environment
+    }
+
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         switch screen {
@@ -66,6 +75,34 @@ enum TodayPreviews {
             NavigationStack { TodayTabView(seeded: model(sheet: .tile(.sleep))) }.environment(AppEnvironment.preview)
         case "today-sheet-vitals":
             NavigationStack { TodayTabView(seeded: model(sheet: .tile(.vitals))) }.environment(AppEnvironment.preview)
+        // The weigh-in banner (§W5.4): Health landed a weight and the InBody
+        // numbers it cannot know are still blank.
+        // The Goal Board's three states. It lives under the grid on Today, which
+        // is below the fold in a screenshot, so it gets a contact sheet of its
+        // own — the states are the point and one of them is always wrong.
+        case "today-board":
+            VStack(spacing: OnyxSpace.m) {
+                GoalBoardRow(board: GoalBoard(
+                    ratePerWeekKg: -0.46, trendWeightKg: 68.4,
+                    targetRateMinKgWk: -0.50, targetRateMaxKgWk: -0.40,
+                    targetWeightKg: 62, weeksToTarget: 9.6, etaISO: "2026-11-08",
+                    weekBalanceKcal: -2_310, weekDaysCounted: 4, pace: .onTrack
+                ))
+                GoalBoardRow(board: GoalBoard(
+                    ratePerWeekKg: 0.12, trendWeightKg: 68.4,
+                    targetRateMinKgWk: -0.50, targetRateMaxKgWk: -0.40,
+                    targetWeightKg: 62,
+                    weekBalanceKcal: 1_140, weekDaysCounted: 6, pace: .reversed
+                ))
+                GoalBoardRow(board: GoalBoard(
+                    targetRateMinKgWk: -0.50, targetRateMaxKgWk: -0.40, targetWeightKg: 62
+                ))
+                Spacer(minLength: 0)
+            }
+            .padding(OnyxSpace.l)
+            .onyxScreen(.recover)
+        case "today-weighin":
+            NavigationStack { TodayTabView(seeded: model()) }.environment(weighInEnvironment)
         default:
             NavigationStack { TodayTabView(seeded: model()) }.environment(AppEnvironment.preview)
         }

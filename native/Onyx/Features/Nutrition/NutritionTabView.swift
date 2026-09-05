@@ -71,12 +71,7 @@ private struct NutritionScreen: View {
         ScrollView {
             VStack(spacing: OnyxSpace.m) {
                 if let failure = model.failure {
-                    Label(failure, systemImage: "exclamationmark.triangle.fill")
-                        .onyxType(.caption)
-                        .foregroundStyle(Color.onyx.danger)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(OnyxSpace.m)
-                        .onyxGlass(.tile)
+                    OnyxBanner(tone: .failure, title: "Not saved locally", message: failure)
                 }
                 CaloriesCard(model: model) { sheet = .macros }
                 MacrosCard(model: model) { sheet = .macros }

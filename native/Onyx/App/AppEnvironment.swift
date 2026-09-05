@@ -62,6 +62,35 @@ public final class AppEnvironment {
     private(set) var today: String = LogicalDay.today()
     /// Bumped with `today`, for a view that only needs to know a day passed.
     private(set) var dayTick = 0
+
+    /// Health has today's weight, and the InBody numbers it cannot know are
+    /// still blank.
+    ///
+    /// ── WHY THE ROW AND NOT THE INGEST REPORT ───────────────────────────────
+    /// `HealthSync` reports `body_composition` in its `IngestReport` when a
+    /// weigh-in lands, and that was the obvious hook. It is the wrong one: a
+    /// report exists only for the length of one sync, so a banner keyed to it
+    /// appears once and is gone the next time the app launches — while the two
+    /// blank columns are still blank. The ROW is the fact. HealthKit has no
+    /// muscle-mass or body-water type at all (`DailyLogIngest` says so where it
+    /// deliberately leaves `muscle_mass_kg` alone), so a row with a weight and
+    /// no muscle is exactly "the scale synced, the reading is half here".
+    private(set) var weighInPending = false
+
+    /// Bumped by a banner that wants the InBody sheet. Pulse owns that sheet;
+    /// Today only knows it wants it open, and switching tab is the shell's job.
+    private(set) var scaleEntryRequests = 0
+
+    #if DEBUG
+    /// The shot loop: the banner's state is a row in a store the harness never
+    /// signs in to, so the flag is set directly rather than seeded.
+    func seedWeighInPendingForPreview() { weighInPending = true }
+    #endif
+
+    /// Ask Pulse to open the InBody form. The caller switches to the tab.
+    public func requestScaleEntry() { scaleEntryRequests += 1 }
+
+    private var weighInTask: Task<Void, Never>?
     #if ONYX_ADP
     private var observers: HealthObservers?
     #endif
@@ -206,6 +235,7 @@ public final class AppEnvironment {
             health: HealthSync(database: database, reader: Self.healthReader, userId: userId)
         )
         self.coordinator = coordinator
+        startWeighInWatch()
         let targets = TargetResolver(database: database, userId: userId)
         targets.start()
         self.targets = targets
@@ -307,7 +337,39 @@ public final class AppEnvironment {
         backfill = nil
         targets?.stop()
         targets = nil
+        weighInTask?.cancel()
+        weighInTask = nil
+        weighInPending = false
         auth = .signedOut
+    }
+
+    // MARK: - The weigh-in
+
+    /// One observation over today's `body_composition` row. Restarted by
+    /// `rollDay`, because the row it watches is the DAY's.
+    private func startWeighInWatch() {
+        weighInTask?.cancel()
+        guard case .signedIn(let userID) = auth else {
+            weighInPending = false
+            return
+        }
+        let userId = OnyxJSON.canonicalUserID(userID)
+        let date = today
+        weighInTask = Task { [database] in
+            do {
+                for try await row in database.bodyCompositionStream(userId: userId, date: date) {
+                    if Task.isCancelled { return }
+                    // A weight with no muscle AND no water is a scale that
+                    // synced through Health; either one present means the
+                    // InBody numbers were entered and there is nothing to ask.
+                    self.weighInPending = row != nil && row?.muscleMassKg == nil && row?.waterPct == nil
+                }
+            } catch {
+                // A dropped observation is not worth a banner of its own — the
+                // next day tick restarts it.
+                self.weighInPending = false
+            }
+        }
     }
 
     // MARK: - Midnight
@@ -354,6 +416,7 @@ public final class AppEnvironment {
         guard day != today else { return }
         today = day
         dayTick += 1
+        startWeighInWatch()
     }
 
     /// The signed-in user's id as the store spells it.
