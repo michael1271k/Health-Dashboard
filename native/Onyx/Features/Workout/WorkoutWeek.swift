@@ -77,8 +77,20 @@ final class WorkoutWeek {
         var programId = Program.onyx5.id
         var state: State = .none
         var progression: [ProgressionRow] = []
+        /// This week's tonnage minus last week's. Nil until there is a week
+        /// behind this one to compare against.
+        var weekDeltaKg: Double?
+        /// Distinct movements this device has ever logged a set of — the
+        /// Library door's number.
+        var liftsTracked = 0
+        /// Finished sessions in the CALENDAR month — the History door's.
+        var sessionsThisMonth = 0
         var lastCardio: CardioLogRow?
         var todayCardio: [CardioLogRow] = []
+        /// The last eight bouts, oldest first, for the card's trail.
+        var recentCardio: [CardioLogRow] = []
+        /// This week's bouts long enough to count (`Zone2.minMinutes`).
+        var zone2Done = 0
         /// Whether today carries a `schedule_overrides` row — the one fact the
         /// swap menu needs that the plan alone cannot answer, since an override
         /// resolves to a perfectly ordinary-looking day.
@@ -247,13 +259,61 @@ final class WorkoutWeek {
             )
         }
 
+        // ── Last week, for the Trends door's delta ──────────────────────────
+        //
+        // The same loop as above over the seven dates before this week. It is
+        // the only number on the screen that needs a second week, and a door
+        // that says "Trends" with no number on it is a door with nothing
+        // behind it.
+        if let lastWeekStart = ISODate.addDays(weekStart, -7) {
+            let lastDates = (0..<7).compactMap { ISODate.addDays(lastWeekStart, $0) }
+            let lastSessions = (try? database.read { db in
+                try WorkoutSession
+                    .filter(lastDates.contains(Column("date")) && Column("ended_at") != nil)
+                    .fetchAll(db)
+            }) ?? []
+            if !lastSessions.isEmpty {
+                var previous = 0.0
+                for session in lastSessions {
+                    let rows = (try? database.historySets(sessionId: session.id)) ?? []
+                    previous += SessionVolume.sessionVolumeKg(
+                        rows.filter { SetTags.isWorkingSet($0.setType) }.map(SessionAnalysis.volumeSet)
+                    )
+                }
+                out.weekDeltaKg = jsRound(out.weekTonnageKg - previous)
+            }
+        }
+
+        // ── The other two doors ─────────────────────────────────────────────
+        out.liftsTracked = (try? database.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(DISTINCT exercise_id) FROM workout_sets") ?? 0
+        }) ?? 0
+        // The calendar month, not a rolling thirty days: "sessions this month"
+        // is a sentence people say, and a rolling window would tick down while
+        // you were looking at it.
+        let month = String(today.prefix(7))
+        out.sessionsThisMonth = (try? database.read { db in
+            try WorkoutSession
+                .filter(Column("date").like("\(month)%") && Column("ended_at") != nil)
+                .fetchCount(db)
+        }) ?? 0
+
         // ── Today ───────────────────────────────────────────────────────────
         out.todayCardio = cardio.filter { $0.date == today }
+        out.zone2Done = cardio.filter { Zone2.isZone2($0.durationMin) }.count
         out.lastCardio = (try? database.read { db in
             try CardioLogRow
                 .order(Column("date").desc, Column("created_at").desc)
                 .fetchOne(db)
         }) ?? nil
+        // Oldest first: a trail reads left to right like everything else in
+        // the app, and `Sparkline` takes the points in that order.
+        out.recentCardio = ((try? database.read { db in
+            try CardioLogRow
+                .order(Column("date").desc, Column("created_at").desc)
+                .limit(8)
+                .fetchAll(db)
+        }) ?? []).reversed()
 
         // ── Ready to progress ───────────────────────────────────────────────
         //

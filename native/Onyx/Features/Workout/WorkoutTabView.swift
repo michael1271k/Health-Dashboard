@@ -68,6 +68,8 @@ struct WorkoutTabView: View {
     /// transaction that fired it, so it very likely never played.
     @State private var finishes = 0
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     private var phase: ProgramPhase { ProgramPhase(rawValue: storedPhase) ?? .cut }
     private var accent: Color { Color.onyx.accent(.train) }
 
@@ -85,8 +87,9 @@ struct WorkoutTabView: View {
             VStack(spacing: OnyxSpace.l) {
                 weekPanel
                 if let day = today { sessionCard(day) } else { restCard }
+                doorsRow
+                cardioCard
                 progressionCard
-                cardioRow
             }
             .padding(.horizontal, OnyxSpace.l)
             .padding(.top, OnyxSpace.s)
@@ -95,28 +98,6 @@ struct WorkoutTabView: View {
         .onyxScreen(.train)
         .navigationTitle("Workout")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                // The library, the ledger and the charts are sub-screens of
-                // training, not extra tabs. Five is where iOS stops giving you
-                // a tab bar and starts giving you a "More" list.
-                NavigationLink {
-                    ExerciseLibraryView()
-                } label: {
-                    Label("Exercises", systemImage: "books.vertical")
-                }
-                NavigationLink {
-                    HistoryView()
-                } label: {
-                    Label("History", systemImage: "clock")
-                }
-                NavigationLink {
-                    TrainingTrendsView()
-                } label: {
-                    Label("Trends", systemImage: "chart.xyaxis.line")
-                }
-            }
-        }
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
         .navigationDestination(item: $summary) { id in
             SessionDetailView(sessionId: id)
@@ -459,61 +440,264 @@ struct WorkoutTabView: View {
         }
     }
 
+    // MARK: - The doors
+
+    /// Library · History · Trends, as three cells with a number on each.
+    ///
+    /// ── WHY THEY LEFT THE NAVIGATION BAR ────────────────────────────────────
+    /// They were three glyphs in the top-right corner: a book, a clock and a
+    /// chart, 24 pt each, side by side, with no labels and nothing to say. Three
+    /// unlabelled icons in a row is the pattern iOS uses for ACTIONS on the
+    /// thing you are looking at — and these are not actions, they are three
+    /// other screens. They also left "Workout" no room for its own title.
+    ///
+    /// As cells they can carry the one number that makes a door worth opening:
+    /// how much is behind it. A door with a number on it is a door you decide
+    /// about; a chart glyph is one you tap to find out.
+    private var doorsRow: some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: OnyxSpace.grid) { doors }
+            } else {
+                HStack(spacing: OnyxSpace.grid) { doors }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var doors: some View {
+        door("Library", systemImage: "books.vertical", value: liftsTracked, unit: "lifts") {
+            ExerciseLibraryView()
+        }
+        door("History", systemImage: "clock", value: sessionsThisMonth, unit: "this month") {
+            HistoryView()
+        }
+        door("Trends", systemImage: "chart.xyaxis.line", value: weekDelta, unit: "vs last week") {
+            TrainingTrendsView()
+        }
+    }
+
+    private func door<Destination: View>(
+        _ title: String, systemImage: String, value: String, unit: String,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) -> some View {
+        NavigationLink(destination: destination) {
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: OnyxSpace.xs) {
+                    Image(systemName: systemImage)
+                        .onyxType(.caption)
+                        .foregroundStyle(accent)
+                        .accessibilityHidden(true)
+                    Text(title)
+                        .onyxType(.micro)
+                        .foregroundStyle(Color.onyx.textSecondary)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                Text(value)
+                    .onyxType(.display).onyxNumeral()
+                    .foregroundStyle(Color.onyx.textPrimary)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text(unit)
+                    .onyxType(.micro)
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // 64 pt of CELL (§W9), which three lines of 11/20/11 fill exactly
+            // at `s` padding. `m` made it 83 and the row stopped reading as a
+            // strip of doors.
+            .frame(minHeight: 64)
+            .padding(OnyxSpace.s)
+            .onyxGlass(.tile)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .onyxPress(scale: 0.98)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title), \(value) \(unit)")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private var liftsTracked: String {
+        week.map { "\($0.snapshot.liftsTracked)" } ?? "—"
+    }
+
+    private var sessionsThisMonth: String {
+        week.map { "\($0.snapshot.sessionsLogged == 0 && $0.snapshot.sessionsThisMonth == 0 ? 0 : $0.snapshot.sessionsThisMonth)" } ?? "—"
+    }
+
+    /// Tonnes, signed. A delta with no sign is a number you have to look up the
+    /// other week to read.
+    private var weekDelta: String {
+        guard let delta = week?.snapshot.weekDeltaKg else { return "—" }
+        let tonnes = delta / 1000
+        let sign = tonnes > 0 ? "+" : tonnes < 0 ? "−" : ""
+        return "\(sign)\(jsToFixed1(abs(tonnes))) t"
+    }
+
     // MARK: - Cardio
 
-    /// One row, because cardio is one fact on a training day.
+    /// The last bout in full, the eight before it as a trail, and the week's
+    /// Zone 2 under both.
     ///
-    /// It moved here from the Pulse tab (§5.7 deletes it there): a bout is
-    /// training, and it belongs beside the session it was done around rather
-    /// than beside your sleep.
-    private var cardioRow: some View {
-        HStack(spacing: OnyxSpace.m) {
-            Image(systemName: cardioSymbol)
-                .foregroundStyle(OnyxDomain.body.accent)
-                .frame(width: 24)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Cardio")
-                    .onyxType(.body)
-                    .foregroundStyle(Color.onyx.textPrimary)
-                Text(cardioDetail)
-                    .onyxType(.caption).onyxNumeral()
+    /// ── WHY IT GREW ─────────────────────────────────────────────────────────
+    /// It was one 44 pt row: a glyph, the word "Cardio", and a line of
+    /// `type · km · min · pace` truncated to whatever fitted. Everything that
+    /// makes a bout worth reading — when it was, how hard it was, whether the
+    /// week's Zone 2 is on track — was either missing or squeezed out by
+    /// `lineLimit(1)`. Cardio is the second half of this tab's subject and it
+    /// was the smallest thing on the screen.
+    ///
+    /// The Zone 2 rail lives INSIDE the card rather than beside it because it
+    /// is a fact about the bouts above it; a separate tile would have been a
+    /// box repeating the box above (§3.6).
+    private var cardioCard: some View {
+        VStack(alignment: .leading, spacing: OnyxSpace.s) {
+            HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                OnyxSectionHeader("Cardio", .body)
+                Spacer(minLength: 0)
+                Button { loggingCardio = true } label: {
+                    Image(systemName: "plus")
+                        .onyxType(.body).fontWeight(.semibold)
+                        .foregroundStyle(OnyxDomain.body.accent)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
+                }
+                .onyxPress()
+                .accessibilityLabel("Log cardio")
+            }
+            // The button's own 44 pt box already carries the row's height, so
+            // the header does not ask for any of its own.
+            .padding(.trailing, -OnyxSpace.m)
+
+            if let bout = week?.snapshot.lastCardio {
+                lastBout(bout)
+                if trail.count >= 2 {
+                    Sparkline(points: trail, color: OnyxDomain.body.accent)
+                        .frame(height: 22)
+                        .accessibilityHidden(true)
+                    Text("last \(trail.count) bouts · minutes")
+                        .onyxType(.micro)
+                        .foregroundStyle(Color.onyx.textTertiary)
+                }
+            } else {
+                Text("No bouts logged yet.")
+                    .onyxType(.caption)
                     .foregroundStyle(Color.onyx.textSecondary)
-                    .lineLimit(1)
             }
-            Spacer(minLength: OnyxSpace.s)
-            Button { loggingCardio = true } label: {
-                Image(systemName: "plus")
-                    .onyxType(.body).fontWeight(.semibold)
-                    .foregroundStyle(OnyxDomain.body.accent)
-                    .frame(width: 44, height: 44)
-                    .contentShape(.rect)
-            }
-            .onyxPress()
-            .accessibilityLabel("Log cardio")
+
+            Divider().overlay(Color.onyx.hairline)
+            zone2Row
         }
-        .padding(.leading, OnyxSpace.m)
-        .frame(minHeight: 44)
+        .padding(OnyxSpace.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .onyxGlass(.tile)
         .accessibilityElement(children: .contain)
     }
 
-    private var cardioSymbol: String {
-        CardioKind(week?.snapshot.lastCardio?.kind ?? "walk").symbol
+    /// Date · type on one line, then the numbers that describe the effort.
+    private func lastBout(_ bout: CardioLogRow) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: OnyxSpace.xs) {
+                Image(systemName: CardioKind(bout.kind).symbol)
+                    .onyxType(.caption)
+                    .foregroundStyle(OnyxDomain.body.accent)
+                    .accessibilityHidden(true)
+                Text(CardioKind(bout.kind).label)
+                    .onyxType(.body)
+                    .foregroundStyle(Color.onyx.textPrimary)
+                Spacer(minLength: OnyxSpace.s)
+                Text(boutWhen(bout))
+                    .onyxType(.caption)
+                    .foregroundStyle(Color.onyx.textTertiary)
+            }
+            HStack(spacing: OnyxSpace.m) {
+                ForEach(boutFigures(bout), id: \.0) { label, value in
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(value)
+                            .onyxType(.secondary).onyxNumeral()
+                            .foregroundStyle(Color.onyx.textPrimary)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                        Text(label)
+                            .onyxType(.micro)
+                            .foregroundStyle(Color.onyx.textTertiary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Last bout")
+        .accessibilityValue(
+            ([CardioKind(bout.kind).label, boutWhen(bout)] + boutFigures(bout).map { "\($0.1) \($0.0)" })
+                .joined(separator: ", ")
+        )
     }
 
-    private var cardioDetail: String {
-        guard let bout = week?.snapshot.lastCardio else { return "No bouts logged" }
-        var parts: [String] = [CardioKind(bout.kind).label]
-        if let m = bout.distanceM { parts.append("\(jsToFixed1(m / 1000)) km") }
-        if let min = bout.durationMin { parts.append("\(jsIntegerString(jsRound(min))) min") }
+    /// Every figure a logged bout can carry, and only the ones it does. A
+    /// reserved slot drawn as an em dash says "we measured nothing"; an absent
+    /// one says the bout never had it.
+    private func boutFigures(_ bout: CardioLogRow) -> [(String, String)] {
+        var out: [(String, String)] = []
+        if let m = bout.distanceM, m > 0 { out.append(("km", jsToFixed1(m / 1000))) }
+        if let min = bout.durationMin, min > 0 { out.append(("min", jsIntegerString(jsRound(min)))) }
         if let pace = CardioMetrics.paceMinPerKm(distanceM: bout.distanceM, durationMin: bout.durationMin) {
-            parts.append(CardioMetrics.formatPace(pace))
+            // `formatPace` returns "8:20 /km" — the label under it names the
+            // measure, not the unit, or the row reads "8:20 /km · /km".
+            out.append(("pace", CardioMetrics.formatPace(pace)))
         }
-        if bout.date != week?.today, let date = LogicalDay.date(fromISO: bout.date) {
-            parts.append(OnyxChart.shortDate(date))
+        // A heart rate is a whole number: the column is a Double and printed
+        // "131.0", which reads as a precision the sensor does not have.
+        if let hr = bout.avgHr, hr > 0 { out.append(("avg bpm", jsIntegerString(jsRound(hr)))) }
+        return out
+    }
+
+    private func boutWhen(_ bout: CardioLogRow) -> String {
+        if bout.date == week?.today { return "Today" }
+        guard let date = LogicalDay.date(fromISO: bout.date) else { return bout.date }
+        return OnyxChart.shortDate(date)
+    }
+
+    /// The eight most recent bouts, in minutes. Minutes rather than distance
+    /// because Zone 2 — the rail directly under this — is a rule about
+    /// duration, and a walk with no distance still counts towards it.
+    private var trail: [Double] {
+        (week?.snapshot.recentCardio ?? []).compactMap { $0.durationMin }.filter { $0 > 0 }
+    }
+
+    /// 36 pt: a label, a count and a rail. Zone 2 is a COUNT of sessions over
+    /// the minute floor, never a minute total — `Zone2` says so and the widget
+    /// face already draws it that way.
+    private var zone2Row: some View {
+        let done = week?.snapshot.zone2Done ?? 0
+        let target = Zone2.weeklyTarget
+        return HStack(spacing: OnyxSpace.s) {
+            Text("Zone 2")
+                .onyxType(.caption)
+                .foregroundStyle(Color.onyx.textSecondary)
+            Capsule()
+                .fill(Color.onyx.hairline)
+                .frame(height: 3)
+                .overlay(alignment: .leading) {
+                    GeometryReader { geometry in
+                        Capsule()
+                            .fill(OnyxDomain.body.accent)
+                            .frame(
+                                width: geometry.size.width * min(Double(done) / Double(max(target, 1)), 1),
+                                height: 3
+                            )
+                    }
+                    .frame(height: 3)
+                }
+            Text("\(done)/\(target)")
+                .onyxType(.caption).onyxNumeral()
+                .foregroundStyle(done >= target ? Color.onyx.good : Color.onyx.textSecondary)
         }
-        return parts.joined(separator: " · ")
+        .frame(height: 36)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Zone 2 this week")
+        .accessibilityValue("\(done) of \(target) sessions")
     }
 
     // MARK: - The door
