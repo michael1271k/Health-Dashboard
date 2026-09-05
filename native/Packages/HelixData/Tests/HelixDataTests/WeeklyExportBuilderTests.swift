@@ -6,7 +6,7 @@ import Testing
 
 /// The export gate, variant B: `weekly-export.json`'s rich case is a hand-made
 /// renderer fixture (an exercise with a top load and no sets, a rest target
-/// that differs from its plan, "Helix-5" as a programme label) and cannot be
+/// that differs from its plan, "Onyx-5" as a programme label) and cannot be
 /// seeded back into tables. So this seeds ONE week of real rows and asserts the
 /// builder's `WeeklyExportInput` equals a hand-written one; string equality then
 /// follows from HelixCore's own vector test over `WeeklyExport.build`.

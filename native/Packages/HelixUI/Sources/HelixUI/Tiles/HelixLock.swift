@@ -116,14 +116,40 @@ public struct LockView: View {
     }
   }
 
+  /// The session's state, then the fact the FOCUS asked for.
+  ///
+  /// ── WHY THIS READS `focus` AT ALL ───────────────────────────────────────
+  /// It did not, and this was the only family that ignored it: all four gallery
+  /// options — Battery, Calories, Steps, Workout — drew the identical
+  /// "Delts & Arms / due · battery 72%", so choosing Calories silently gave you
+  /// the battery. The circular and inline faces both branch on `focus`; this
+  /// one had a fixed fallback chain that happened to end at the battery.
+  ///
+  /// The headline stays the session (that is this family's whole reason to
+  /// exist — it is the one accessory with room for a sentence), so it is the
+  /// SUB-line that carries the chosen number.
   private var rectangularSub: String {
-    if s?.workout.isRestDay == true { return "rest day" }
-    if let today = s?.today {
-      let volume = HelixSnapshot.tonnes(today.volumeKg) ?? "—"
-      return "done · \(volume)"
+    let state: String
+    if s?.workout.isRestDay == true {
+      state = "rest day"
+    } else if let today = s?.today {
+      state = "done · \(HelixSnapshot.tonnes(today.volumeKg) ?? "—")"
+    } else {
+      state = "due"
     }
-    if let battery = s?.battery { return "due · battery \(battery)%" }
-    return "due"
+    switch focus {
+    case .workout:
+      return state
+    case .battery:
+      guard let battery = s?.battery else { return state }
+      return "\(state) · battery \(battery)%"
+    case .calories:
+      guard let kcal = s?.caloriesRemaining else { return state }
+      return "\(state) · \(kcal) kcal left"
+    case .steps:
+      guard let steps = s?.steps.count else { return state }
+      return "\(state) · \(steps) steps"
+    }
   }
 
   // MARK: Inline

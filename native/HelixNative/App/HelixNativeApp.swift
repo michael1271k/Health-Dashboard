@@ -71,7 +71,7 @@ private struct StartupErrorView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("HELIX could not start", systemImage: "exclamationmark.triangle")
+            Label("Onyx could not start", systemImage: "exclamationmark.triangle")
         } description: {
             Text(message)
         }

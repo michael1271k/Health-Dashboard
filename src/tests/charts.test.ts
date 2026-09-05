@@ -162,7 +162,7 @@ describe('the era chart window', () => {
    * inside the current era anyway so the filter is a no-op. The WINDOW was —
    * the era VALUE was not. 'all' is a third era with its own meaning, and
    * `VolumeChart` keys its split pills off it: the `all` pill set was Push /
-   * Pull / Legs, so the 1 Month view of a Helix-5 block offered the splits of a
+   * Pull / Legs, so the 1 Month view of a Onyx-5 block offered the splits of a
    * plan that ended in July and matched none of its own sessions.
    */
   it('every window means the ACTIVE plan era — never "all"', () => {

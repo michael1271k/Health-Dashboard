@@ -76,10 +76,7 @@ struct SignInView: View {
                 // screen with room for it at full size, and `OnyxMark` already
                 // carries the Lunar → Ion ramp the app icon is lit with.
                 OnyxMark(size: 44, opacity: 1)
-                Text("HELIX")
-                    .font(.largeTitle.weight(.black))
-                    .tracking(6)
-                    .foregroundStyle(Color.helix.textPrimary)
+                OnyxWordmark(role: .hero)
                     .accessibilityAddTraits(.isHeader)
                 Text("Engineer Your Ascent.")
                     .font(.footnote)

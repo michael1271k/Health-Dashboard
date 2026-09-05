@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 import HelixCore
@@ -39,7 +40,7 @@ struct HelixFuelWidget: Widget {
             FuelView(entry: entry.tile, focus: entry.tile.fuelFocus)
         }
         .configurationDisplayName("Fuel")
-        .description("Calories, macros and hydration. Tap through to Fuel.")
+        .description("Calories, macros and hydration. Tap through to Nutrition.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -61,7 +62,7 @@ struct HelixBodyWidget: Widget {
             BodyView(entry: entry.tile, focus: entry.tile.bodyFocus)
         }
         .configurationDisplayName("Body")
-        .description("Weight, sleep and the daily score. Tap through to Body.")
+        .description("Weight, sleep and the daily score. Tap through to Pulse.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -71,7 +72,7 @@ struct HelixDailyWidget: Widget {
         AppIntentConfiguration(kind: "HelixDailyFamily", intent: DailyConfiguration.self, provider: HelixIntentProvider<DailyConfiguration>()) { entry in
             DailyView(entry: entry.tile)
         }
-        .configurationDisplayName("Helix Daily")
+        .configurationDisplayName("Daily")
         .description("Fuel, water, steps and training in one register.")
         .supportedFamilies([.systemLarge])
     }
@@ -93,7 +94,7 @@ struct HelixLockWidget: Widget {
         AppIntentConfiguration(kind: "HelixLockFamily", intent: LockConfiguration.self, provider: HelixIntentProvider<LockConfiguration>()) { entry in
             LockView(entry: entry.tile, focus: entry.tile.lockFocus)
         }
-        .configurationDisplayName("Helix (Lock Screen)")
+        .configurationDisplayName("Lock Screen")
         .description("One fact on the Lock Screen: battery, calories, steps or today's session.")
         .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
     }
@@ -143,65 +144,75 @@ struct HelixWorkoutActivityWidget: Widget {
                 // and every fact that has a length lives where it can breathe.
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 5) {
-                        Circle()
-                            .fill(Color.helix.day(context.state.dayKey))
-                            .frame(width: 7, height: 7)
-                        Text("HELIX")
-                            .font(.system(size: 10, weight: .black, design: .rounded))
+                        // ── THE MARK, NOT THE NAME ──────────────────────────
+                        // This slot used to read `● HELIX`, which was a dot
+                        // that said nothing beside a wordmark for an app that
+                        // no longer has that name. `OnyxMark` is both at once:
+                        // the ring is the brand AND, tinted with the split's
+                        // colour, it is the same coloured token every other
+                        // surface uses to say which session is running.
+                        OnyxMark(size: 12, tint: Color.helix.day(context.state.dayKey), opacity: 1)
+                        Text("ONYX")
+                            .font(HelixWidgetType.label(10, weight: .black))
                             .tracking(1.2)
                             .foregroundStyle(.white.opacity(0.9))
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Countdown(state: context.state, startedAt: context.attributes.startedAt)
+                    WorkoutCountdown(state: context.state, startedAt: context.attributes.startedAt)
                         .frame(maxWidth: 62, alignment: .trailing)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 6) {
-                        SessionTotals(state: context.state)
+                        WorkoutTotals(state: context.state)
                         HStack(alignment: .bottom, spacing: 10) {
-                            CurrentSet(state: context.state)
+                            WorkoutCurrentSet(state: context.state)
                             Spacer(minLength: 6)
-                            Spark(values: context.state.spark, color: Color.helix.day(context.state.dayKey))
+                            WorkoutSpark(values: context.state.spark, color: Color.helix.day(context.state.dayKey))
                                 .frame(width: 76, height: 30)
                         }
                         if !context.state.lastTime.isEmpty {
                             HStack(alignment: .firstTextBaseline, spacing: 6) {
                                 Text("LAST TIME")
-                                    .font(.system(size: 8, weight: .bold))
+                                    .font(HelixWidgetType.label(8, weight: .bold))
                                     .tracking(1.1)
                                     .foregroundStyle(Color.helix.textTertiary)
                                 Text(context.state.lastTime)
-                                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                                    .monospacedDigit()
+                                    .font(HelixWidgetType.figure(11))
                                     .foregroundStyle(Color.helix.textSecondary)
                             }
+                        }
+                        // Only while the clock is running: a skip button with
+                        // nothing to skip is dead chrome on a surface that has
+                        // no room for any.
+                        if context.state.restEndsAt != nil {
+                            WorkoutSkipRest(dayKey: context.state.dayKey)
                         }
                     }
                 }
             } compactLeading: {
-                Circle()
-                    .fill(Color.helix.day(context.state.dayKey))
-                    .frame(width: 8, height: 8)
+                // The one place the brand is visible while the phone is in a
+                // pocket-to-hand glance, and it costs nothing a filled dot did
+                // not already cost.
+                OnyxMark(size: 14, tint: Color.helix.day(context.state.dayKey), opacity: 1)
             } compactTrailing: {
                 // Whichever number is the answer RIGHT NOW: the rest clock while
                 // resting, the load while working. Two facts competing for one
                 // ~44 pt slot is how the compact region becomes unreadable.
                 Group {
-                    if let endsAt = context.state.restEndsAt {
-                        Text(timerInterval: Date()...endsAt, countsDown: true)
+                    if let countdown = restCountdown(context.state.restEndsAt) {
+                        Text(timerInterval: countdown, countsDown: true)
                             .frame(maxWidth: 44)
                     } else {
                         Text(context.state.load.replacingOccurrences(of: " kg ", with: ""))
                     }
                 }
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .monospacedDigit()
+                .font(HelixWidgetType.figure(12))
                 .foregroundStyle(Color.helix.day(context.state.dayKey))
             } minimal: {
                 Image(systemName: context.state.restEndsAt == nil
                       ? "figure.strengthtraining.traditional" : "timer")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(HelixWidgetType.label(12, weight: .bold))
                     .foregroundStyle(Color.helix.day(context.state.dayKey))
             }
             .keylineTint(Color.helix.day(context.state.dayKey))
@@ -215,200 +226,27 @@ struct HelixWorkoutActivityWidget: Widget {
 
 // MARK: - Lock Screen
 
+/// Unwraps the `ActivityViewContext` and picks the surface.
+///
+/// Everything it draws lives in `Shared/WorkoutActivityCard.swift`, taking the
+/// attributes and the state as plain values — see that file's header for why.
+/// This wrapper is all that has to stay here: the context type only exists
+/// inside a running activity, so it is the one thing the harness cannot make.
 private struct LockScreenWorkout: View {
     let context: ActivityViewContext<HelixWorkoutAttributes>
 
     @Environment(\.activityFamily) private var family
 
-    private var accent: Color { Color.helix.day(context.state.dayKey) }
-
     var body: some View {
         switch family {
-        case .small:  watchCard
-        default:      lockScreenCard
-        }
-    }
-
-    /// The wrist. Four lines, all of them full words — no abbreviations, which
-    /// is the entire lesson of "Helix 1/2 75x13".
-    private var watchCard: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(context.attributes.title)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(accent)
-                .lineLimit(1)
-            Text(context.state.exercise)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-            if let endsAt = context.state.restEndsAt {
-                Text(timerInterval: Date()...endsAt, countsDown: true)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(accent)
-            } else if !context.state.load.isEmpty {
-                Text(context.state.load)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-            }
-            Text("\(context.state.setsDone)/\(context.state.setsPlanned) sets · \(context.state.volume)")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Color.helix.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 4)
-    }
-
-    private var lockScreenCard: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: 6) {
-                    Circle().fill(accent).frame(width: 7, height: 7)
-                    Text(context.attributes.title.uppercased())
-                        .font(.system(size: 10, weight: .black, design: .rounded))
-                        .tracking(1.2)
-                        .foregroundStyle(accent)
-                    Countdown(state: context.state, startedAt: context.attributes.startedAt)
-                }
-                SessionTotals(state: context.state)
-                CurrentSet(state: context.state)
-            }
-            Spacer(minLength: 0)
-            // The right-hand column takes the session's SHAPE rather than a
-            // second set of numbers. The Lock Screen omits "last time"
-            // entirely for the same reason: one reference is context, two is a
-            // table.
-            Spark(values: context.state.spark, color: accent)
-                .frame(width: 86, height: 44)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-}
-
-// MARK: - Pieces
-
-private struct Countdown: View {
-    let state: HelixWorkoutAttributes.ContentState
-    let startedAt: Date
-
-    var body: some View {
-        Group {
-            if let endsAt = state.restEndsAt {
-                Label {
-                    Text(timerInterval: Date()...endsAt, countsDown: true)
-                } icon: {
-                    Image(systemName: "timer")
-                }
-                .foregroundStyle(Color.helix.day(state.dayKey))
-            } else {
-                // A duration counted by the SYSTEM. ActivityKit budgets
-                // updates; a clock is not worth spending them on.
-                Text(startedAt, style: .timer)
-                    .foregroundStyle(Color.helix.textSecondary)
-            }
-        }
-        .font(.system(size: 12, weight: .semibold, design: .rounded))
-        .monospacedDigit()
-    }
-}
-
-private struct SessionTotals: View {
-    let state: HelixWorkoutAttributes.ContentState
-
-    var body: some View {
-        HStack(spacing: 10) {
-            stat(state.volume, Color.helix.day(state.dayKey))
-            stat("\(state.setsDone)/\(state.setsPlanned) sets", Color.helix.textPrimary)
-            // Zero renders as NOTHING. A permanent gold zero is how gold stops
-            // meaning a personal record.
-            if state.prsThisSession > 0 {
-                stat("\(state.prsThisSession) PR", Color.helix.record)
-            }
-        }
-    }
-
-    private func stat(_ text: String, _ color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 12, weight: .bold, design: .rounded))
-            .monospacedDigit()
-            .foregroundStyle(color)
-    }
-}
-
-private struct CurrentSet: View {
-    let state: HelixWorkoutAttributes.ContentState
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
-                Text(state.exercise)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                if !state.setLabel.isEmpty {
-                    Text(state.setLabel)
-                        .font(.system(size: 9, weight: .bold))
-                        .tracking(0.6)
-                        .foregroundStyle(Color.helix.textTertiary)
-                }
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                if !state.load.isEmpty {
-                    Text(state.load)
-                        .font(.system(size: 17, weight: .heavy, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
-                }
-                if !state.rpe.isEmpty {
-                    Text(state.rpe)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.helix.textSecondary)
-                }
-            }
-        }
-    }
-}
-
-/// The session's cumulative tonnage, as a line.
-///
-/// Hand-drawn rather than Swift Charts: a widget extension has a hard memory
-/// budget and this is four points of geometry, not a chart. It draws nothing
-/// below two points — one dot on an axis reads as a rendering failure, not as a
-/// trend.
-private struct Spark: View {
-    let values: [Double]
-    let color: Color
-
-    var body: some View {
-        GeometryReader { proxy in
-            let size = proxy.size
-            if values.count > 1, let low = values.min(), let high = values.max() {
-                let span = high - low
-                let points = values.enumerated().map { index, value -> CGPoint in
-                    let x = size.width * CGFloat(index) / CGFloat(values.count - 1)
-                    // A flat series (identical totals) would divide by zero;
-                    // it sits on the baseline instead, which is what a flat
-                    // series looks like.
-                    let ratio = span > 0 ? (value - low) / span : 0
-                    return CGPoint(x: x, y: size.height * (1 - CGFloat(ratio)))
-                }
-                ZStack {
-                    Path { path in
-                        path.addLines(points)
-                        path.addLine(to: CGPoint(x: size.width, y: size.height))
-                        path.addLine(to: CGPoint(x: 0, y: size.height))
-                        path.closeSubpath()
-                    }
-                    .fill(LinearGradient(
-                        colors: [color.opacity(0.28), color.opacity(0.02)],
-                        startPoint: .top, endPoint: .bottom
-                    ))
-                    Path { $0.addLines(points) }
-                        .stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
-                }
-            }
+        case .small:
+            WorkoutWatchCard(title: context.attributes.title, state: context.state)
+        default:
+            WorkoutLockCard(
+                title: context.attributes.title,
+                startedAt: context.attributes.startedAt,
+                state: context.state
+            )
         }
     }
 }

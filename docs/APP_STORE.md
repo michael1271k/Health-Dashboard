@@ -1,9 +1,14 @@
-# HELIX — App Store 1.0
+# ONYX — App Store 1.0
 
-Everything App Store Connect asks for, in the order it asks. Wave 8 of
-`NATIVE_MIGRATION_PLAN.md`. Fill the `⟨…⟩` placeholders in the web form; every
-other line is already true of the binary and was verified against a Release
-build, not asserted.
+Everything App Store Connect asks for, in the order it asks. Written for Wave 8
+of `NATIVE_MIGRATION_PLAN.md`, refreshed at Wave 2.12 of
+`NATIVE_PHASE_2_PLAN.md` — the wave that renamed the app. Fill the `⟨…⟩`
+placeholders in the web form; every other line is already true of the binary and
+was verified against a Release build, not asserted.
+
+**The app is called Onyx.** The bundle identifiers still read `app.helix.health…`
+and they stay that way until Gate 0: renaming a bundle id before the App Group
+is provisioned means re-provisioning it, and the id is never shown to anyone.
 
 ---
 
@@ -21,22 +26,22 @@ build, not asserted.
 | Primary category | Health & Fitness |
 | Secondary category | *(leave empty)* |
 | Age rating | 4+ — no user-generated content, no web view of arbitrary URLs, no ads |
-| App icon | `native/HelixNative/Resources/Assets.xcassets` — one 1024 × 1024, no alpha, the same helix mark as the Capacitor app. Verified compiled into `Assets.car`. |
+| App icon | `native/HelixNative/Resources/Assets.xcassets/AppIcon.appiconset` — one 1024 × 1024, no alpha: the black onyx squircle with the broken lavender→indigo ring (§8 of the Phase 2 plan). The same ring `OnyxMark` draws in the app, so the Home Screen and the nav bar show one object. Verified compiled into `Assets.car`. |
 
 The app and the widget extension carry the **same** marketing and build numbers.
 App Store Connect rejects an extension whose version differs from its host, and
 they are set from one pair of values in `native/project.yml`.
 
-**The Home Screen name is still `Helix Native`.** That is deliberate — the
-native app installs alongside the Capacitor app rather than over it, and the
-distinct name is how you tell two icons apart. It becomes `HELIX` on the day the
-old app is deleted (Wave 9), not before.
+**The Home Screen name is `Onyx`** (`CFBundleDisplayName`, set in
+`native/project.yml` for both the app and its widget extension, which reads
+`Onyx Activity`). It is already distinct from the Capacitor app's `HELIX`, so
+the two icons still tell themselves apart while both are installed.
 
 ---
 
 ## 2. Metadata template
 
-**Name** (30 chars) — `⟨HELIX⟩`
+**Name** (30 chars) — `Onyx`
 
 **Subtitle** (30) — `⟨Training, fuel and recovery⟩`
 
@@ -47,7 +52,7 @@ old app is deleted (Wave 9), not before.
 
 **Description** (4000)
 
-> ⟨HELIX is a single-user training and nutrition system. It logs strength
+> ⟨Onyx is a single-user training and nutrition system. It logs strength
 > sessions set by set, reads activity, heart, sleep, body-measurement and
 > nutrition data from Apple Health, and turns both into a daily readiness score,
 > a training battery and an energy balance you can act on the same morning.
@@ -55,12 +60,14 @@ old app is deleted (Wave 9), not before.
 > • Live logger — prescribed sets, double progression, rest timer on the Lock
 >   Screen, RPE where you want it
 > • Today — one screen of the tiles you choose, in the order you choose
-> • Fuel — targets that follow the phase you are actually in, not a fixed number
-> • Body — weight, lean soft tissue and fat mass on one axis
+> • Nutrition — targets that follow the phase you are actually in, not a fixed
+>   number
+> • Pulse — sleep, heart, soreness and the recovery battery in one place
+> • History — every week back to the first session, day by day
 > • Charts — every metric back to the first session
 > • Home Screen and Lock Screen widgets for all of it
 >
-> HELIX does not sell your data, share it with anyone, or send it to an
+> Onyx does not sell your data, share it with anyone, or send it to an
 > advertising network. It talks to exactly one server: your own private
 > account.⟩
 
@@ -74,7 +81,7 @@ old app is deleted (Wave 9), not before.
 
 > **This page must exist and return 200 before you submit.** App Review opens it
 > for every app carrying the HealthKit entitlement, and a 404 is an instant
-> rejection under 5.1.1. The same URL is linked in-app from **You → About**
+> rejection under 5.1.1. The same URL is linked in-app from **Settings → About**
 > (`HelixLinks.privacyPolicy`) — change it in one place.
 >
 > It has to say, in plain language: what is collected (Health data, email),
@@ -115,7 +122,7 @@ Mach-O binary at upload, so the app's does not cover `HelixNativeWidgets.appex`.
 
 Paste into **App Review Information → Notes**:
 
-> HELIX is a single-user personal training log. There is no public sign-up — the
+> Onyx is a single-user personal training log. There is no public sign-up — the
 > account is created server-side — so a demo account is provided below.
 >
 > Sign in with:
@@ -131,7 +138,7 @@ Paste into **App Review Information → Notes**:
 > used only to compute the readiness, recovery and energy-balance figures shown
 > in the app; it is never sold, shared or used for advertising.
 >
-> Home Screen widgets: add any HELIX widget from the widget gallery. They read
+> Home Screen widgets: add any Onyx widget from the widget gallery. They read
 > the same local database the app writes and make no network requests.
 
 `Sign in required: Yes`. Demo credentials are a **hard** requirement here — the
@@ -156,10 +163,11 @@ scripts/store-shots.sh
 ```
 
 Writes `native/__store__/6.9in/` (1320 × 2868, **required**) and
-`native/__store__/6.3in/` (1206 × 2622) — six screens each: Today, Train, Day,
-Fuel, Body, Reports, in that order. Deterministic: the `--helix-screen` harness
-seeds in-memory data, so no account and no network are involved and the same
-command produces the same PNGs tomorrow.
+`native/__store__/6.3in/` (1206 × 2622) — six screens each: Today, Workout,
+Nutrition, Pulse, Body trends, History, in that order. That is the app's own tab
+order, then the two screens that show it has history. Deterministic: the
+`--helix-screen` harness seeds in-memory data, so no account and no network are
+involved and the same command produces the same PNGs tomorrow.
 
 The output is gitignored. Regenerate, upload, move on.
 
@@ -171,13 +179,13 @@ Against `capacitor-apple-review-preflight`'s rule set. Every row answered.
 
 | Rule | Verdict |
 |---|---|
-| `design/minimum_functionality` | **Pass.** Native SwiftUI, six tabs, live logging, widgets, Live Activity. Not a web wrapper — the Capacitor shell is a separate bundle ID and is not what ships. |
+| `design/minimum_functionality` | **Pass.** Native SwiftUI, five tabs (Today · Workout · Nutrition · Pulse · Settings), live logging, widgets, an interactive Live Activity. Not a web wrapper — the Capacitor shell is a separate bundle ID and is not what ships. |
 | `design/sign_in_with_apple` | **N/A.** No third-party or social login. Email + password to a first-party server only, which does not trigger 4.8. |
 | `entitlements/unused_entitlements` | **Pass.** Two entitlements, both used: `com.apple.developer.healthkit` (`HealthSync.requestAuthorization`) and the App Group (the shared GRDB file the widgets read). No `.access`, no `.background-delivery`. |
 | `privacy/privacy_manifest` | **Pass.** `PrivacyInfo.xcprivacy` in both bundles; verified present in the Release build, not just in the repo. |
 | `privacy/unnecessary_data` | **Pass.** Health read scope is exactly `HealthCatalogue` plus sleep analysis, and every type feeds a figure on screen. No contacts, no location, no camera, no photos, no ATT. |
 | `metadata/accurate_metadata` | **Open** until §2 is filled in. The description must not promise the Watch app — that is 1.1. |
-| `metadata/apple_trademark` | **Pass** as long as §2 says "Apple Health" and "Home Screen", never "iHelix", "for iPhone" in the name, or an Apple logo in a screenshot. |
+| `metadata/apple_trademark` | **Pass** as long as §2 says "Apple Health" and "Home Screen", never "iOnyx", "for iPhone" in the name, or an Apple logo in a screenshot. |
 | `metadata/china_storefront` | **N/A.** No ICP filing needed; ship to all storefronts or exclude China — either is fine, nothing in the app requires a licence. |
 | `metadata/competitor_terms` | **Pass.** No competitor name in the keywords above. Keep it that way — "Hevy" and "Whoop" appear nowhere in shipping copy. |
 | `subscription/*` (3 rules) | **N/A.** No IAP, no subscription, no paywall. Nothing in the binary links StoreKit. |

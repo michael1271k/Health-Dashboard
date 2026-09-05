@@ -3079,7 +3079,7 @@ describe('golden vectors — daily targets and profiles', () => {
 // Training — ceilings, effort, set tags and the pure half of rest targets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** The Helix-5 deck as each phase trains it — the ONLY program the Swift carries. */
+/** The Onyx-5 deck as each phase trains it — the ONLY program the Swift carries. */
 const HELIX5_ID = 'apex51'
 
 /** Run `fn` with the active phase pinned, then restore the default. */
@@ -3089,7 +3089,7 @@ function withPhase<T>(phase: ProgramPhase, fn: () => T): T {
 }
 
 describe('golden vectors — program deck', () => {
-  it('exports the Helix-5 deck per phase', () => {
+  it('exports the Onyx-5 deck per phase', () => {
     const cases: Case<{ phase: ProgramPhase }, unknown>[] = []
     for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
       const p = activeProgram(HELIX5_ID, phase)
@@ -3168,7 +3168,7 @@ describe('golden vectors — plan catalogue', () => {
     emit('plan-catalogue.json', {
       module: 'programs',
       fn: 'PROGRAMS / planList() / DEFAULT_PROGRAM_ID',
-      note: 'Live plans first, legacy last. The TS sort is STABLE (ES2019), so apex51 keeps its place ahead of axis4 — the Swift must partition, not sort. `apex51` is Helix-5: the id is a localStorage key a season of rows was written under and it does not get renamed.',
+      note: 'Live plans first, legacy last. The TS sort is STABLE (ES2019), so apex51 keeps its place ahead of axis4 — the Swift must partition, not sort. `apex51` is Onyx-5: the id is a localStorage key a season of rows was written under and it does not get renamed.',
       cases: [{
         name: 'the three plans, live first and legacy last',
         input: {},
@@ -3188,7 +3188,7 @@ describe('golden vectors — plan catalogue', () => {
   it('exports normalizePlanId over the legacy aliases and the junk', () => {
     const raws: (string | null)[] = [
       'apex51', 'axis4', 'ppl',
-      // The two Helix-4 variants consolidated into one plan; a device that
+      // The two Onyx-4 variants consolidated into one plan; a device that
       // never synced since still holds these strings.
       'axis4_builder', 'axis4_defender',
       // Falsy, mis-cased, padded and simply wrong. All of these are null, and
@@ -3850,7 +3850,7 @@ describe('golden vectors — session draft', () => {
     emit('clean-title.json', {
       module: 'sessions/draft',
       fn: 'cleanSessionTitle',
-      note: 'The program day\'s label if dayKey resolves (Helix-5), else the title up to its first ·, else the split, else "Workout".',
+      note: 'The program day\'s label if dayKey resolves (Onyx-5), else the title up to its first ·, else the split, else "Workout".',
       cases: titles.map(([name, title, dayKey, splitDay]) => ({
         name,
         input: { title, dayKey, splitDay },
@@ -4374,7 +4374,7 @@ describe('golden vectors — weekly export', () => {
   ]
 
   const RICH: WeeklyExportInput = {
-    weekStart: '2026-08-30', weekEnd: '2026-09-05', weekLabel: 'Week 7', programLabel: 'Helix-5', phaseLabel: ' Cut ',
+    weekStart: '2026-08-30', weekEnd: '2026-09-05', weekLabel: 'Week 7', programLabel: 'Onyx-5', phaseLabel: ' Cut ',
     calorieGoal: 2151, proteinGoalG: 170, stepsGoal: 7500, sleepGoalHours: 8, waterGoalMl: 3000,
     targetPeriods: [
       { leverId: 'maintenance-week', label: 'Maintenance Week', goals: { calorie: 2151, protein: 170, carbs: 244, fat: 55, steps: 7500 }, dates: ['2026-08-30', '2026-08-31', '2026-09-01', '2026-09-02'] },
@@ -5194,8 +5194,8 @@ describe('golden vectors — schedule context', () => {
     for (const d of weekDatesOf('2026-06-03')) run(`PPL era, helix4 selected + a layout, both ignored · ${d}`, ctx({ programId: 'axis4', layout: { upper_a: 0 } }), d)
 
     run('bulk phase changes nothing', ctx({ phase: 'bulk' }), '2026-08-09')
-    run('unknown plan falls back to Helix-5', ctx({ programId: 'bogus' }), '2026-08-10')
-    run('a legacy alias is NOT normalised here — Helix-5', ctx({ programId: 'axis4_builder' }), '2026-08-10')
+    run('unknown plan falls back to Onyx-5', ctx({ programId: 'bogus' }), '2026-08-10')
+    run('a legacy alias is NOT normalised here — Onyx-5', ctx({ programId: 'axis4_builder' }), '2026-08-10')
     run('override places another day on Sunday', ctx({ overrides: { '2026-08-09': 'legs_b' } }), '2026-08-09')
     run('override places a session on a rest day', ctx({ overrides: { '2026-08-12': 'cb_a' } }), '2026-08-12')
     run("the literal 'rest' clears a training day", ctx({ overrides: { '2026-08-09': REST_OVERRIDE } }), '2026-08-09')
@@ -5764,7 +5764,7 @@ describe('golden vectors — schedule layout and swaps', () => {
     emit('schedule-swap.json', {
       module: 'schedule/swap',
       fn: 'planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove',
-      note: 'The resolver is the app\'s layering, rebuilt in the test: `overrides[date]` (a dayKey; "rest"; "label:X" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Helix-5 day whose effective weekday (under `layout`) is the date\'s Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, "Rest" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.',
+      note: 'The resolver is the app\'s layering, rebuilt in the test: `overrides[date]` (a dayKey; "rest"; "label:X" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Onyx-5 day whose effective weekday (under `layout`) is the date\'s Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, "Rest" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.',
       cases,
     })
   })

@@ -36,6 +36,24 @@ final class LiveActivityController {
     }
 
     func start(model: LoggerModel) {
+        // ── THE SKIP BUTTON'S MAILBOX IS THIS TYPE'S JOB ────────────────────
+        // `RestSkipIntent` is performed by the system with no reference to
+        // anything, so something has to leave it one, and this controller is
+        // the only object whose lifetime is exactly the card's — it already
+        // brackets it with `start` and `end`.
+        //
+        // `[weak model]` because that closure lives in a global and outlives
+        // the sheet on purpose: leaving the logger mid-session deliberately
+        // keeps the card, and a strong capture would keep every session that
+        // ever ran alive behind it. The `update` is not optional either — the
+        // screen that normally pushes a `restEndsAt` change to the card is the
+        // logger, which by definition is not on screen when the Lock Screen
+        // button is the thing being tapped.
+        RestSkip.handler = { [weak self, weak model] in
+            guard let model else { return }
+            model.stopRest()
+            self?.update(model: model)
+        }
         guard isEnabled, activity == nil else { return }
         // ── ADOPT WHAT THE LAST LAUNCH LEFT BEHIND ──────────────────────────
         // The handle lived only in memory, so a force-quit or a jetsam
@@ -77,6 +95,7 @@ final class LiveActivityController {
     }
 
     func end() {
+        RestSkip.handler = nil
         guard let activity else { return }
         self.activity = nil
         Task {

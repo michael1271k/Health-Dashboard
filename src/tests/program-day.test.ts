@@ -36,7 +36,7 @@ const ORB = readFileSync('src/components/dashboard/ReadinessOrb.tsx', 'utf8')
 const STREAK = readFileSync('src/lib/training/streak.ts', 'utf8')
 const DERIVE = readFileSync('src/lib/widget/derive.ts', 'utf8')
 
-/** Sunday = 0. Helix-5 rests Wednesday and Saturday. */
+/** Sunday = 0. Onyx-5 rests Wednesday and Saturday. */
 const REST_WEEKDAYS = new Set([3, 6])
 
 /** Every date from `from` to `to` inclusive, as `YYYY-MM-DD`. */

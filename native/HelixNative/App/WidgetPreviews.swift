@@ -77,9 +77,108 @@ enum WidgetPreviews {
         return pages
     }()
 
+    // MARK: - The running workout
+
+    // ── WHY THE LIVE ACTIVITY IS ON THE CONTACT SHEET AT ALL ─────────────────
+    // It is the only widget surface that was never photographed, because an
+    // `ActivityViewContext` can only be made by ActivityKit — so the card was
+    // reviewed by reading it, and it kept a `Text("HELIX")` and its own private
+    // type scale through a whole rename. `Shared/WorkoutActivityCard.swift`
+    // takes the state as a plain value for exactly this reason.
+    //
+    // Three states, because they are three different layouts and the middle one
+    // is what the card looks like for most of a session: mid-set, resting (the
+    // skip button appears), and a set that just took a record.
+    static let activityStates: [(String, HelixWorkoutAttributes.ContentState)] = {
+        func state(
+            rest: Date? = nil, prs: Int = 0, rpe: String = "", setLabel: String = "Set 3 of 4"
+        ) -> HelixWorkoutAttributes.ContentState {
+            .init(
+                exercise: "Seated Cable Row (Wide Grip)",
+                setLabel: setLabel,
+                load: "42.5 kg × 12",
+                rpe: rpe,
+                lastTime: "40 kg × 12",
+                volume: "1 074 kg",
+                setsDone: 9,
+                setsPlanned: 22,
+                prsThisSession: prs,
+                restEndsAt: rest,
+                spark: [120, 265, 388, 505, 640, 762, 869, 1074],
+                dayKey: "arms"
+            )
+        }
+        // Off `Date()` and NOT off `sampleDate`, which is the fixture's own
+        // 2026-09-03 and therefore in the past: a rest that has already ended
+        // is exactly the state `restCountdown` now returns nil for, so the page
+        // would have photographed the fallback and called it the timer. (Before
+        // that guard existed it did something worse — see its header.)
+        let resting = Date().addingTimeInterval(97)
+        return [
+            ("working", state(rpe: "RPE 8")),
+            ("resting", state(rest: resting, rpe: "RPE 8")),
+            ("record", state(rest: resting, prs: 2, rpe: "RPE 9", setLabel: "Set 4 of 4")),
+        ]
+    }()
+
+    private static var activityPage: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(activityStates, id: \.0) { name, state in
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("activity-lock-\(name)")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color.helix.textTertiary)
+                    WorkoutLockCard(
+                        // 45 minutes in, which is what a session looks like.
+                        // `sampleDate` is the fixture's own 2026-09-03, and
+                        // `Text(_:style:.timer)` counting up from a date two
+                        // days ago rendered "48:52:29" — a real reading of a
+                        // wrong number, which is the hardest kind to notice.
+                        title: "Delts & Arms",
+                        startedAt: Date().addingTimeInterval(-45 * 60),
+                        state: state
+                    )
+                    // The Lock Screen's own width, over a stand-in for a
+                    // wallpaper: the real card is `.activityBackgroundTint`
+                    // composited on whatever is behind it, and on this page's
+                    // own black that tint is invisible — the card looked like
+                    // loose text floating on the screen.
+                    .frame(width: 360, alignment: .leading)
+                    .background {
+                        RoundedRectangle(cornerRadius: HelixCorner.tile)
+                            .fill(LinearGradient(
+                                colors: [Color.helix.textPrimary.opacity(0.10),
+                                         Color.helix.textPrimary.opacity(0.04)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ))
+                    }
+                }
+            }
+            VStack(alignment: .leading, spacing: 0) {
+                Text("activity-watch")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color.helix.textTertiary)
+                WorkoutWatchCard(title: "Delts & Arms", state: activityStates[1].1)
+                    .frame(width: 176, alignment: .leading)
+                    .padding(8)
+                    .background {
+                        RoundedRectangle(cornerRadius: HelixCorner.tile)
+                            .fill(Color.helix.textPrimary.opacity(0.08))
+                    }
+            }
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.helix.base)
+    }
+
     /// `widgets` → everything, scrolling. `widgets-3` → page 3 at 1:1.
+    /// `widgets-activity` → the running workout's own surfaces.
     @ViewBuilder
     static func view(_ screen: String) -> some View {
+        if screen == "widgets-activity" {
+            activityPage
+        } else {
         let page = Int(screen.dropFirst("widgets-".count))
         if let page, pages.indices.contains(page) {
             VStack(spacing: 6) {
@@ -97,6 +196,7 @@ enum WidgetPreviews {
                 .padding(.vertical, 8)
             }
             .background(Color.helix.base)
+        }
         }
     }
 

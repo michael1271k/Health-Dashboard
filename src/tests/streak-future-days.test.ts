@@ -21,7 +21,7 @@ import { monthStartOf, lastDayOfMonth, isoAddDays } from '@/lib/utils/week'
 
 const TODAY = '2026-08-16'   // a Sunday
 
-/** Helix-5 trains Sun/Mon/Tue/Thu/Fri; Wed/Sat are Zone-2 rest. */
+/** Onyx-5 trains Sun/Mon/Tue/Thu/Fri; Wed/Sat are Zone-2 rest. */
 function day(d: string, logged: boolean): StreakDay {
   const weekday = new Date(`${d}T12:00:00Z`).getUTCDay()
   const scheduled = weekday !== 3 && weekday !== 6

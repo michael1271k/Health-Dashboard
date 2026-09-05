@@ -194,7 +194,7 @@ public extension Program {
     /// entries and a season of Supabase rows were written under.
     static let helix5 = Program(
         id: "apex51",
-        label: "Helix-5",
+        label: "Onyx-5",
         blurb: "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest.",
         days: [
             ProgramDay(

@@ -100,8 +100,8 @@ describe('the title row carries the way out and the week identity', () => {
       <SessionTitle label="Upper B" accent="#D4AF37" date="2026-08-14" onBack={() => {}} />,
     )
     const text = container.textContent ?? ''
-    // 14 Aug 2026 is Helix-5, Cut, week 4 of the block.
-    expect(text).toMatch(/Helix-5/)
+    // 14 Aug 2026 is Onyx-5, Cut, week 4 of the block.
+    expect(text).toMatch(/Onyx-5/)
     expect(text).toMatch(/Cut/)
     expect(text).toMatch(/Wk \d/)
     // The fused single-tag wording is gone.

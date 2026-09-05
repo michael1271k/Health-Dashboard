@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Helix Native</string>
+	<string>Onyx</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -40,9 +40,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>HELIX reads your activity, heart, sleep, body-measurement and nutrition data from Apple Health to work out your daily readiness and recovery scores, your training load and your energy balance, and to fill in the charts and Home Screen widgets. Nothing is read that you do not allow, and your data is stored only on this device and in your own private HELIX account.</string>
+	<string>Onyx reads your activity, heart, sleep, body-measurement and nutrition data from Apple Health to work out your daily readiness and recovery scores, your training load and your energy balance, and to fill in the charts and Home Screen widgets. Nothing is read that you do not allow, and your data is stored only on this device and in your own private Onyx account.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>HELIX saves the strength workouts you log — their duration, active energy and heart rate — back to Apple Health, so the training you do here appears alongside the rest of your activity rings.</string>
+	<string>Onyx saves the strength workouts you log — their duration, active energy and heart rate — back to Apple Health, so the training you do here appears alongside the rest of your activity rings.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>

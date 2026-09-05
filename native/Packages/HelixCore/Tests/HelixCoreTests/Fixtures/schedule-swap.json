@@ -1,7 +1,7 @@
 {
   "module": "schedule/swap",
   "fn": "planRestDay / describeRestPlan / planDaySwap / blockForPlacement / describeBlock / planPermanentMove",
-  "note": "The resolver is the app's layering, rebuilt in the test: `overrides[date]` (a dayKey; \"rest\"; \"label:X\" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Helix-5 day whose effective weekday (under `layout`) is the date's Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, \"Rest\" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.",
+  "note": "The resolver is the app's layering, rebuilt in the test: `overrides[date]` (a dayKey; \"rest\"; \"label:X\" for a PPL-era day with a label and no key; an unknown key resolves to rest) else the Onyx-5 day whose effective weekday (under `layout`) is the date's Sunday-anchored weekday, else rest. labelFor(dayKey) is the program label, \"Rest\" for null. Week under test: Sun 2026-08-02 … Sat 2026-08-08.",
   "cases": [
     {
       "name": "rest: Tuesday moves Delts & Arms to Wednesday",

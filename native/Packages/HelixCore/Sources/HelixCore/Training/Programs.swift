@@ -31,7 +31,7 @@ import Foundation
 ///
 /// The web `Program` interface carries `days` as well, because there it is one
 /// type doing two jobs: the picker's catalogue entry and the training
-/// prescription. Only Helix-5's deck is ported (`Program.helix5`), and the
+/// prescription. Only Onyx-5's deck is ported (`Program.helix5`), and the
 /// picker needs to list all three plans regardless — so the catalogue entry is
 /// its own small value and the deck stays a separate one.
 ///
@@ -74,12 +74,12 @@ public enum Programs {
     public static let all: [PlanInfo] = [
         PlanInfo(
             id: "apex51",
-            label: "Helix-5",
+            label: "Onyx-5",
             blurb: "5-day antagonist hybrid — Sun/Mon/Tue/Thu/Fri, Wed & Sat Zone-2 rest."
         ),
         PlanInfo(
             id: "axis4",
-            label: "Helix-4",
+            label: "Onyx-4",
             blurb: "4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it."
         ),
         PlanInfo(
@@ -96,9 +96,9 @@ public enum Programs {
     /// The TypeScript sorts on `Number(legacy) - Number(legacy)`, which leaves
     /// every live plan tied with every other live plan. `Array.prototype.sort`
     /// has been REQUIRED to be stable since ES2019, so those ties keep
-    /// declaration order and Helix-5 stays ahead of Helix-4. Swift's `sorted`
+    /// declaration order and Onyx-5 stays ahead of Onyx-4. Swift's `sorted`
     /// is an introsort and is explicitly NOT stable: the same predicate here
-    /// would be free to hand back Helix-4 first, on some inputs, on some
+    /// would be free to hand back Onyx-4 first, on some inputs, on some
     /// releases of the standard library. Two filters are a stable partition by
     /// construction, and they are also shorter.
     public static let pickerOrder: [PlanInfo] = all.filter { !$0.isLegacy } + all.filter { $0.isLegacy }
@@ -110,7 +110,7 @@ public enum Programs {
 
     /// Ids that no longer name a plan, and the plan that absorbed them.
     ///
-    /// Helix-4 used to ship as two plans, "Builder" and "Defender". They are
+    /// Onyx-4 used to ship as two plans, "Builder" and "Defender". They are
     /// one plan with two PHASES now — same movements, different set counts —
     /// but a device that last synced before the consolidation still holds the
     /// old string, and a stale id must never dead-end a picker.

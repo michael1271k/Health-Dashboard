@@ -1,7 +1,7 @@
 {
   "module": "sessions/draft",
   "fn": "cleanSessionTitle",
-  "note": "The program day's label if dayKey resolves (Helix-5), else the title up to its first ·, else the split, else \"Workout\".",
+  "note": "The program day's label if dayKey resolves (Onyx-5), else the title up to its first ·, else the split, else \"Workout\".",
   "cases": [
     {
       "name": "day label wins",

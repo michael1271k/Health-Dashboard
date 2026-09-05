@@ -22,7 +22,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Six screens, in the order they should appear on the product page: what the app
 # opens on, then one per tab. `signin` is deliberately absent — a login wall is
 # the worst possible first screenshot.
-SCREENS="today train day fuel body reports"
+SCREENS="today train fuel day body-trends history"
 
 for spec in '6.9in:iPhone 17 Pro Max' '6.3in:iPhone 17 Pro'; do
   size="${spec%%:*}"

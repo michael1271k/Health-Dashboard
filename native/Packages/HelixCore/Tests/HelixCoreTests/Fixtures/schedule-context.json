@@ -620,7 +620,7 @@
       }
     },
     {
-      "name": "unknown plan falls back to Helix-5",
+      "name": "unknown plan falls back to Onyx-5",
       "input": {
         "ctx": {
           "programId": "bogus",
@@ -642,7 +642,7 @@
       }
     },
     {
-      "name": "a legacy alias is NOT normalised here — Helix-5",
+      "name": "a legacy alias is NOT normalised here — Onyx-5",
       "input": {
         "ctx": {
           "programId": "axis4_builder",

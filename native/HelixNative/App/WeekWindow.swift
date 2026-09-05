@@ -30,7 +30,7 @@ extension WeekWindow {
     /// `Week 7`, or the phase's own label for a week before Week 0.
     var label: String { Week.label(ofWeekStart: start) }
 
-    /// The phase this week sits in, and with it the era (Helix or PPL).
+    /// The phase this week sits in, and with it the era (Onyx or PPL).
     var phase: WeekPhase? { Phases.weekPhase(weekStart: start) }
 
     /// The window `count` weeks after this one — negative walks back.

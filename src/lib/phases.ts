@@ -102,7 +102,7 @@ export function phaseColor(kind: PhaseKind, era: 'ppl' | 'helix' = 'helix'): str
 }
 
 export interface WeekChip {
-  /** "Helix-5" / "Push/Pull/Legs" — supplied by the caller, which knows the plan. */
+  /** "Onyx-5" / "Push/Pull/Legs" — supplied by the caller, which knows the plan. */
   plan: string
   /** "Cut" / "Lean Bulk" / "Maintenance Week" */
   phase: string

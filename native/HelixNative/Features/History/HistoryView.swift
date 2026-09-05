@@ -42,7 +42,7 @@ struct HistoryView: View {
     /// filter is a read of that rather than a date the user has to remember.
     enum EraFilter: String, CaseIterable, Identifiable {
         case all = "All"
-        case helix = "Helix"
+        case helix = "Onyx"
         case ppl = "PPL"
         var id: Self { self }
 

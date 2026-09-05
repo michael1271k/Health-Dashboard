@@ -127,7 +127,7 @@ enum LockFocusOption: String, AppEnum {
 // MARK: - Configurations
 
 struct FuelConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Fuel" }
+  static var title: LocalizedStringResource { "Onyx Fuel" }
   static var description: IntentDescription {
     IntentDescription("Calories, macros and hydration — pick what leads.")
   }
@@ -155,7 +155,7 @@ struct FuelConfiguration: WidgetConfigurationIntent, HelixScoped {
 }
 
 struct TrainingConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Training" }
+  static var title: LocalizedStringResource { "Onyx Training" }
   static var description: IntentDescription {
     IntentDescription("Today's session, the month, volume, streak and records.")
   }
@@ -184,7 +184,7 @@ struct TrainingConfiguration: WidgetConfigurationIntent, HelixScoped {
 }
 
 struct BodyConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Body" }
+  static var title: LocalizedStringResource { "Onyx Body" }
   static var description: IntentDescription {
     IntentDescription("Weight, sleep and the daily score — pick what leads.")
   }
@@ -210,7 +210,7 @@ struct BodyConfiguration: WidgetConfigurationIntent, HelixScoped {
 }
 
 struct VitalsConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Vitals" }
+  static var title: LocalizedStringResource { "Onyx Vitals" }
   static var description: IntentDescription {
     IntentDescription("HRV, resting heart rate, temperature, blood oxygen and breathing.")
   }
@@ -239,7 +239,7 @@ struct VitalsConfiguration: WidgetConfigurationIntent, HelixScoped {
 }
 
 struct LockConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Lock" }
+  static var title: LocalizedStringResource { "Onyx Lock" }
   static var description: IntentDescription {
     IntentDescription("One fact on the Lock Screen: battery, calories, steps or today's session.")
   }
@@ -267,7 +267,7 @@ struct LockConfiguration: WidgetConfigurationIntent, HelixScoped {
 }
 
 struct DailyConfiguration: WidgetConfigurationIntent, HelixScoped {
-  static var title: LocalizedStringResource { "Helix Daily" }
+  static var title: LocalizedStringResource { "Onyx Daily" }
   static var description: IntentDescription {
     IntentDescription("Fuel, water, steps and training — the whole day at once.")
   }

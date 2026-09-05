@@ -5,22 +5,22 @@ import Foundation
 ///
 /// ── WHY THESE ARE HERE AND NOT IN `Program.swift` ────────────────────────────
 /// `Program.helix5` is the ACTIVE deck and the file it lives in is written as
-/// its specification. Helix-4 and PPL are here because `scheduleDayIn` resolves
+/// its specification. Onyx-4 and PPL are here because `scheduleDayIn` resolves
 /// a date against whichever plan owns it: the plan the user SELECTED in the
 /// Helix era, and — for every date before the cut opened — the PPL block,
-/// whatever is selected today. A schedule that only knew Helix-5 would call a
+/// whatever is selected today. A schedule that only knew Onyx-5 would call a
 /// June Friday a rest day, and June Fridays carried fourteen logged sessions.
 ///
-/// The colours are `DAY_COLOR` from `palette.ts`, as `0xRRGGBB`: Helix-4
-/// mirrors its Helix-5 counterpart, and a PPL day takes its split's colour
+/// The colours are `DAY_COLOR` from `palette.ts`, as `0xRRGGBB`: Onyx-4
+/// mirrors its Onyx-5 counterpart, and a PPL day takes its split's colour
 /// because the day IS the split.
 public extension Program {
 
-    /// Helix-4 — the 4-day upper/lower backup (Mon/Tue/Thu/Fri). One plan; the
+    /// Onyx-4 — the 4-day upper/lower backup (Mon/Tue/Thu/Fri). One plan; the
     /// former Builder/Defender pair is a PHASE now, via `sets` vs `cutSets`.
     static let helix4 = Program(
         id: "axis4",
-        label: "Helix-4",
+        label: "Onyx-4",
         blurb: "4-day upper/lower backup — Mon/Tue/Thu/Fri. Bulk adds volume; cut trims it.",
         days: [
             ProgramDay(
@@ -151,7 +151,7 @@ public enum Era: String, Codable, Sendable {
 
     /// The Helix Cut block opens here, absorbing the former Week-0 transition
     /// days (15–17 Jul) — so this, not `axisEraStart`, is the era boundary.
-    /// Jul 15 is a Wednesday and correctly reads as a rest day under Helix-5.
+    /// Jul 15 is a Wednesday and correctly reads as a rest day under Onyx-5.
     public static let helixCutStart = "2026-07-15"
 
     /// `eraForDate`. A plain string comparison, as the web does it: an

@@ -69,7 +69,7 @@ describe('HELIX-5 split', () => {
 
   it('phaseGoalsFor: Helix cut = 1955 kcal, PPL cut is leaner (1935, higher protein)', () => {
     expect(phaseGoalsFor('apex51', 'cut').calorieGoal).toBe(1955)
-    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1955)   // Helix-4 shares the Helix cut
+    expect(phaseGoalsFor('axis4', 'cut').calorieGoal).toBe(1955)   // Onyx-4 shares the Helix cut
     const ppl = phaseGoalsFor('ppl', 'cut')
     expect(ppl.calorieGoal).toBe(1935)
     expect(ppl.proteinGoalG).toBe(180)
@@ -242,7 +242,7 @@ describe('resolveChartSplit', () => {
       expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'arms')).toBe('arms')
     })
 
-    it('maps every Helix-5 day key to its own bucket', () => {
+    it('maps every Onyx-5 day key to its own bucket', () => {
       expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'cb_a')).toBe('upper_a')
       expect(resolveChartSplit('2026-08-05', 'upper', 'axis', 'cb_b')).toBe('upper_b')
       expect(resolveChartSplit('2026-08-05', 'legs', 'axis', 'legs_a')).toBe('legs_a')

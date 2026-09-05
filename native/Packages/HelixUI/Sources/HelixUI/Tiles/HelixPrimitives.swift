@@ -224,7 +224,7 @@ struct Unavailable: View {
 
   private let symbol = "tray"
   private let title = "Nothing to show yet"
-  private let detail = "Open HELIX once and the tiles fill from its database."
+  private let detail = "Open Onyx once and the tiles fill from its database."
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -722,25 +722,32 @@ struct HelixBrand: View {
 // and it gives the token-discipline test one thing to grep for: a bare
 // `.font(.system(size:` under `Tiles/` is now a failure.
 
-enum HelixWidgetType {
+// ── AND WHY IT IS `public` ───────────────────────────────────────────────────
+// The Live Activity is a widget surface that does not live in `Tiles/` — it is
+// declared in the extension, beside the `ActivityConfiguration` that draws it.
+// Leaving the scale internal is what let that one surface type itself in raw
+// `.system(size:)` for a year while every tile beside it used the scale, so the
+// Lock Screen card drifted a half-point at a time from the faces it sits next
+// to. One door means one door from outside the package too.
+public enum HelixWidgetType {
   /// A headline value. Rounded, because it is the one thing being read.
-  static func hero(_ size: CGFloat) -> Font {
+  public static func hero(_ size: CGFloat) -> Font {
     .system(size: size, weight: .bold, design: .rounded)
   }
 
   /// Anything that CHANGES between refreshes — counts, tonnages, times. Monospaced
   /// digits keep the column still while the number moves.
-  static func figure(_ size: CGFloat) -> Font {
+  public static func figure(_ size: CGFloat) -> Font {
     .system(size: size, weight: .bold, design: .monospaced)
   }
 
   /// A name, a label, a session title. Prose, not data.
-  static func label(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+  public static func label(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
     .system(size: size, weight: weight)
   }
 
   /// The small-caps register caption. Paired with `.tracking(1.5)` in `Caption`.
-  static let caption = Font.system(size: 10, weight: .heavy)
+  public static let caption = Font.system(size: 10, weight: .heavy)
 
   /// A face's own size, weight and design, spelled out.
   ///
@@ -749,7 +756,7 @@ enum HelixWidgetType {
   /// each. What this buys is not fewer numbers — it is that the numbers are all
   /// spelled the same way, so `Tiles/` can be swept for a font decision in one
   /// grep and the app's own scale can ban `.system(size:` outright.
-  static func face(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> Font {
+  public static func face(_ size: CGFloat, weight: Font.Weight = .regular, design: Font.Design = .default) -> Font {
     .system(size: size, weight: weight, design: design)
   }
 }

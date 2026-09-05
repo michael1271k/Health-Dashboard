@@ -92,6 +92,7 @@ fi
 if [ "$SCREEN" = "widgets" ] || [ "$SCREEN" = "all" ]; then
   SCREENS=("${SCREENS[@]/widgets}")
   for i in $(seq 0 17); do SCREENS+=("widgets-$i"); done
+  SCREENS+=("widgets-activity")
 fi
 
 for s in "${SCREENS[@]}"; do

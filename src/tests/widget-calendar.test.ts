@@ -5,7 +5,7 @@ import { weekStartOf } from '@/lib/utils/week'
 /**
  * The Training widget's calendar, streak and volume sparkline.
  *
- * Helix-5 trains Sun/Mon/Tue/Thu/Fri and rests Wed/Sat, so every one of these
+ * Onyx-5 trains Sun/Mon/Tue/Thu/Fri and rests Wed/Sat, so every one of these
  * has to reason about scheduled days rather than calendar days — a counter that
  * a rest day could break would be measuring the plan, not the athlete.
  */

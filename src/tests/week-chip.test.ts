@@ -13,26 +13,26 @@ import { EMBER, PLATINUM, SAND, MUTED, rgbTriple } from '@/lib/theme/palette'
  */
 describe('weekChip', () => {
   it('splits a numbered phase into plan · phase · week', () => {
-    const chip = weekChip('2026-07-19', 'Helix-5')!   // Helix Cut Week 1
-    expect(chip.plan).toBe('Helix-5')
+    const chip = weekChip('2026-07-19', 'Onyx-5')!   // Helix Cut Week 1
+    expect(chip.plan).toBe('Onyx-5')
     expect(chip.phase).toBe('Cut')
     expect(chip.week).toBe('Wk 1')
   })
 
   it('numbers later weeks of the same phase', () => {
-    expect(weekChip('2026-08-02', 'Helix-5')!.week).toBe('Wk 3')
+    expect(weekChip('2026-08-02', 'Onyx-5')!.week).toBe('Wk 3')
   })
 
   it('carries the phase colour, not a fixed grey', () => {
-    const cut = weekChip('2026-07-19', 'Helix-5')!
-    const bulk = weekChip('2026-11-01', 'Helix-5')!
+    const cut = weekChip('2026-07-19', 'Onyx-5')!
+    const bulk = weekChip('2026-11-01', 'Onyx-5')!
     expect(cut.rgb).toBe(PHASE_RGB.cut)
     expect(bulk.rgb).toBe(PHASE_RGB.bulk)
     expect(cut.rgb).not.toBe(bulk.rgb)
   })
 
   it('omits the week number on an unnumbered phase', () => {
-    const chip = weekChip('2026-07-12', 'Helix-5')!   // Week 0 · Transition
+    const chip = weekChip('2026-07-12', 'Onyx-5')!   // Week 0 · Transition
     expect(chip.phase).toBe('Week 0 · Transition')
     expect(chip.week).toBeNull()
   })
@@ -43,11 +43,11 @@ describe('weekChip', () => {
    * through it, so the chip says what is being trained.
    */
   it('keeps the cut unbroken through the maintenance week', () => {
-    expect(weekChip('2026-08-30', 'Helix-5')?.phase).toBe('Cut')
+    expect(weekChip('2026-08-30', 'Onyx-5')?.phase).toBe('Cut')
   })
 
   it('returns null for a week outside every phase', () => {
-    expect(weekChip('2020-01-05', 'Helix-5')).toBeNull()
+    expect(weekChip('2020-01-05', 'Onyx-5')).toBeNull()
   })
 })
 
