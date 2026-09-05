@@ -524,7 +524,7 @@ struct WorkoutTabView: View {
     }
 
     private var sessionsThisMonth: String {
-        week.map { "\($0.snapshot.sessionsLogged == 0 && $0.snapshot.sessionsThisMonth == 0 ? 0 : $0.snapshot.sessionsThisMonth)" } ?? "—"
+        week.map { "\($0.snapshot.sessionsThisMonth)" } ?? "—"
     }
 
     /// Tonnes, signed. A delta with no sign is a number you have to look up the

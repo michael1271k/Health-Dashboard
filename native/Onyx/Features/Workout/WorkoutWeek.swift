@@ -270,11 +270,20 @@ final class WorkoutWeek {
             let lastSessions = (try? database.read { db in
                 try WorkoutSession
                     .filter(lastDates.contains(Column("date")) && Column("ended_at") != nil)
+                    .order(Column("date"), Column("started_at"))
                     .fetchAll(db)
             }) ?? []
-            if !lastSessions.isEmpty {
+            // One session per date, first wins — the same rule the current
+            // week's `finished` dictionary applies. Without it a date holding
+            // two finished sessions counts twice on one side of the subtraction
+            // and once on the other, and the delta is wrong by a whole session.
+            var lastFinished: [String: WorkoutSession] = [:]
+            for session in lastSessions where lastFinished[session.date] == nil {
+                lastFinished[session.date] = session
+            }
+            if !lastFinished.isEmpty {
                 var previous = 0.0
-                for session in lastSessions {
+                for session in lastFinished.values {
                     let rows = (try? database.historySets(sessionId: session.id)) ?? []
                     previous += SessionVolume.sessionVolumeKg(
                         rows.filter { SetTags.isWorkingSet($0.setType) }.map(SessionAnalysis.volumeSet)

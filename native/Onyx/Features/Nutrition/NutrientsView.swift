@@ -48,6 +48,13 @@ struct NutrientsView: View {
         // `ForEach` did that a dozen times per body pass, on every scroll.
         let day = model.nutrients
         let fromStack = model.stack.nutrients
+        // Resolved ONCE, and everything on the screen reads this array. The
+        // toolbar used to score `NutrientTargets.all` — the raw table — while
+        // the section headers scored the resolved copy, so on a day whose
+        // protein target is not 170 g the two counts could disagree about
+        // whether protein was met. That is the same bug `resolved` exists to
+        // fix, reintroduced one line above the fix.
+        let targets = NutrientTargets.all.map(resolved)
         let reading: (NutrientTarget) -> Double? = { target in
             let food = day[target.key], stack = fromStack[target.key]
             guard food != nil || stack != nil else { return nil }
@@ -56,11 +63,11 @@ struct NutrientsView: View {
 
         List {
             ForEach(NutrientTargets.groups, id: \.self) { group in
-                let targets = NutrientTargets.inGroup(group).map(resolved)
+                let section = targets.filter { $0.group == group }
                 Section {
-                    grid(targets, day: day, stack: fromStack)
+                    grid(section, day: day, stack: fromStack)
                 } header: {
-                    header(group, targets, reading: reading)
+                    header(group, section, reading: reading)
                 } footer: {
                     if group == NutrientTargets.groups.last {
                         Text("A pill glyph marks what only the stack delivers: Apple Health measures none of those, so the reading is the protocol — a dose counts once its slot has passed, unless it was skipped.")
@@ -79,7 +86,7 @@ struct NutrientsView: View {
             // summary. A row of its own would have been a box that repeats the
             // sections under it (§3.6), and it would have cost 44 pt to say
             // eight characters.
-            ToolbarItem(placement: .topBarTrailing) { total(reading: reading) }
+            ToolbarItem(placement: .topBarTrailing) { total(targets, reading: reading) }
         }
     }
 
@@ -125,8 +132,8 @@ struct NutrientsView: View {
         }
     }
 
-    private func total(reading: (NutrientTarget) -> Double?) -> some View {
-        let score = NutrientTargets.completion(NutrientTargets.all, reading: reading)
+    private func total(_ targets: [NutrientTarget], reading: (NutrientTarget) -> Double?) -> some View {
+        let score = NutrientTargets.completion(targets, reading: reading)
         return Text("\(score.met)/\(score.measured) met")
             .onyxType(.caption).onyxNumeral()
             .foregroundStyle(score.met == score.measured && score.measured > 0
