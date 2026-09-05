@@ -1,0 +1,511 @@
+{
+  "module": "scoring/readiness",
+  "fn": "sessionLoad",
+  "note": "CR-10 × minutes (Foster). Unrated → 7 (the battery default); no positive duration → 0; RPE clamped 0..10.",
+  "cases": [
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": 2
+      },
+      "expected": 14
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": 45
+      },
+      "expected": 315
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": 60
+      },
+      "expected": 420
+    },
+    {
+      "name": "{\"sessionRpe\":null,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": null,
+        "durationMin": 92
+      },
+      "expected": 644
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": 2
+      },
+      "expected": 14
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": 45
+      },
+      "expected": 315
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": 60
+      },
+      "expected": 420
+    },
+    {
+      "name": "{\"sessionRpe\":0,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 0,
+        "durationMin": 92
+      },
+      "expected": 644
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": 2
+      },
+      "expected": 14
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": 45
+      },
+      "expected": 315
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": 60
+      },
+      "expected": 420
+    },
+    {
+      "name": "{\"sessionRpe\":-1,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": -1,
+        "durationMin": 92
+      },
+      "expected": 644
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": 2
+      },
+      "expected": 6
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": 45
+      },
+      "expected": 135
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": 60
+      },
+      "expected": 180
+    },
+    {
+      "name": "{\"sessionRpe\":3,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 3,
+        "durationMin": 92
+      },
+      "expected": 276
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": 2
+      },
+      "expected": 10
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": 45
+      },
+      "expected": 225
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": 60
+      },
+      "expected": 300
+    },
+    {
+      "name": "{\"sessionRpe\":5,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 5,
+        "durationMin": 92
+      },
+      "expected": 460
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": 2
+      },
+      "expected": 14
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": 45
+      },
+      "expected": 315
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": 60
+      },
+      "expected": 420
+    },
+    {
+      "name": "{\"sessionRpe\":7,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 7,
+        "durationMin": 92
+      },
+      "expected": 644
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": 2
+      },
+      "expected": 17
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": 45
+      },
+      "expected": 382.5
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": 60
+      },
+      "expected": 510
+    },
+    {
+      "name": "{\"sessionRpe\":8.5,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 8.5,
+        "durationMin": 92
+      },
+      "expected": 782
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": 2
+      },
+      "expected": 20
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": 45
+      },
+      "expected": 450
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": 60
+      },
+      "expected": 600
+    },
+    {
+      "name": "{\"sessionRpe\":10,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 10,
+        "durationMin": 92
+      },
+      "expected": 920
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":null}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":0}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":-10}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": -10
+      },
+      "expected": 0
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":2}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": 2
+      },
+      "expected": 20
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":45}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": 45
+      },
+      "expected": 450
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":60}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": 60
+      },
+      "expected": 600
+    },
+    {
+      "name": "{\"sessionRpe\":12,\"durationMin\":92}",
+      "input": {
+        "sessionRpe": 12,
+        "durationMin": 92
+      },
+      "expected": 920
+    }
+  ]
+}

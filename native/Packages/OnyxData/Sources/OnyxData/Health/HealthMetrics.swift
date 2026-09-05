@@ -131,6 +131,8 @@ public enum HealthCatalogue {
     ]
 
     public static let sleepIdentifier = "HKCategoryTypeIdentifierSleepAnalysis"
+    /// Read a second time, over the night's bed window, for readiness v9.
+    public static let hrvIdentifier = "HKQuantityTypeIdentifierHeartRateVariabilitySDNN"
 
     /// Types authorised but not pulled into the daily row. Asking for them keeps
     /// the app's entry under Health → Apps complete, and several of them are

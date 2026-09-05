@@ -35,8 +35,11 @@ describe('battery wake charge — "woke up to 55%" regression', () => {
   })
 
   it('a full 9h night wakes NEAR FULL, not at the 55% floor', () => {
+    // v9: with no HRV/RHR history the two z terms sit at their neutral 0.75,
+    // so the most a night can charge on duration and stages alone is 96.
+    // This night's stages share is 0.75, which lands it at 94.
     const charge = computeMorningCharge(computeSleepQuality(night(9.18, 65)))
-    expect(charge).toBeGreaterThanOrEqual(95)
+    expect(charge).toBeGreaterThanOrEqual(93)
   })
 
   it('battery just after waking reflects that charge (not 55%)', () => {
@@ -45,10 +48,10 @@ describe('battery wake charge — "woke up to 55%" regression', () => {
 
   it('55% only happens when there is genuinely NO sleep signal', () => {
     // This is what the broken scorer window produced for every single day.
-    // v8 reads a night with nothing at all as 0.225 (HRV and RHR at their
-    // NEUTRAL values, 0.5 and 1 — unmeasured is not bad) — a 65, and that is
-    // the ceiling for "no signal". Anything real climbs from there.
-    expect(computeMorningCharge(computeSleepQuality(night(0, 0)))).toBe(65)
+    // v9 reads a night with nothing at all as 0.30 (HRV z and RHR z at their
+    // NEUTRAL 0.75 — unmeasured is not bad) — a 69, and that is the ceiling
+    // for "no signal". Anything real climbs from there.
+    expect(computeMorningCharge(computeSleepQuality(night(0, 0)))).toBe(69)
   })
 })
 

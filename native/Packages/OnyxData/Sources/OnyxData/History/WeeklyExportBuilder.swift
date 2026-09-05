@@ -160,10 +160,14 @@ public struct WeeklyExportBuilder: Sendable {
         var priorSessions: Int
         var sleep: [SleepSessionRow]
         var dailyTargets: [DailyTargetRow]
-        /// Battery v8's Derived block: the stored figure and the eight days of
-        /// logs before the week for the scorer's trailing baselines.
+        /// The Derived block's stored figure, and the eight days of logs before
+        /// the week for the recovery score's trailing baselines.
         var scores: [DailyScoreRow]
         var baselineLogs: [DailyLogRow]
+        /// Readiness v9's Derived block: the signals behind each of the seven
+        /// days, from the 49 days behind each — `readinessHistory`, the same
+        /// door the scorer reads through.
+        var readinessByDate: [String: ExportReadiness]
         var customs: [CustomSupplement]
         var volumeOverrides: [LandmarkMuscle: Double]
         /// Week 0 → the exported week, for the trend ledger.
@@ -245,6 +249,10 @@ public struct WeeklyExportBuilder: Sendable {
                 baselineLogs: try DailyLogRow
                     .filter(user && Column("date") >= (ISODate.addDays(weekStart, -8) ?? weekStart) && Column("date") <= weekEnd)
                     .order(Column("date")).fetchAll(db),
+                readinessByDate: Dictionary(uniqueKeysWithValues: try (0..<7).map { i in
+                    let date = ISODate.addDays(weekStart, i) ?? weekStart
+                    return (date, ExportReadiness(signals: Readiness.signals(try AppDatabase.readinessHistory(db, userId: userId, date: date))))
+                }),
                 customs: try CustomSupplementRow.filter(user).order(Column("created_at"), Column("id")).fetchAll(db).map(Self.custom),
                 volumeOverrides: volumeOverrides,
                 ledgerLogs: ledgerLogs, ledgerNutrition: ledgerNutrition, ledgerSessions: ledgerSessions,
@@ -314,6 +322,7 @@ public struct WeeklyExportBuilder: Sendable {
                 "restingHrBaseline": j(baselineOf(date) { $0.avgRestHeartRate.map(Double.init) }),
                 "hrvBaseline": j(baselineOf(date) { $0.hrvMs }),
                 "batteryPct": j(scoreByDate[date]?.batteryPct.map(Double.init)),
+                "readiness": try d.readinessByDate[date].map(Self.encodeToJSON) ?? NSNull(),
                 "waterMl": j(waterByDate[date] ?? l?.waterMl),
                 "supplementsTaken": NSNull(), "supplementsLog": [] as [Any],
                 "activeKcal": j(l?.activeEnergy), "bmrKcal": j(l?.bmr),

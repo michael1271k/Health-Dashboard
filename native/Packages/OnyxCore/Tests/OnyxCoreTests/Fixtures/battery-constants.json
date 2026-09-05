@@ -17,12 +17,15 @@
         "relMin": 0.6,
         "relMax": 1.4,
         "maxAwake": 18,
-        "maxTotalDrain": 89,
+        "maxTotalDrain": 93,
         "maintenanceDrainFactor": 0.75,
         "maintenanceRelMin": 0.35,
-        "stressCap": 10,
-        "onsetPenalty": 3,
-        "restorativeShare": 0.45
+        "restorativeShare": 0.45,
+        "version": 9,
+        "loadCap": 8,
+        "wellnessCap": 6,
+        "zNeutral": 0.75,
+        "zSlope": 0.25
       }
     }
   ]

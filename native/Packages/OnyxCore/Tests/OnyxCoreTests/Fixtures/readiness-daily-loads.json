@@ -1,0 +1,160 @@
+{
+  "module": "scoring/readiness",
+  "fn": "dailyLoads",
+  "note": "One load per calendar date, sessions and cardio summed; a date with nothing is a real zero; rows outside the calendar are ignored.",
+  "cases": [
+    {
+      "name": "a week with doubles, an unrated session, an unrated walk and a stray row",
+      "input": {
+        "dates": [
+          "2026-08-28",
+          "2026-08-29",
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03"
+        ],
+        "sessions": [
+          {
+            "date": "2026-08-28",
+            "sessionRpe": 7,
+            "durationMin": 62
+          },
+          {
+            "date": "2026-08-29",
+            "sessionRpe": null,
+            "durationMin": 55
+          },
+          {
+            "date": "2026-08-31",
+            "sessionRpe": 8.5,
+            "durationMin": 70
+          },
+          {
+            "date": "2026-08-31",
+            "sessionRpe": 5,
+            "durationMin": 20
+          },
+          {
+            "date": "2026-09-02",
+            "sessionRpe": 9,
+            "durationMin": null
+          },
+          {
+            "date": "2026-09-09",
+            "sessionRpe": 9,
+            "durationMin": 60
+          }
+        ],
+        "cardio": [
+          {
+            "date": "2026-08-29",
+            "effort": 3,
+            "durationMin": 40
+          },
+          {
+            "date": "2026-09-01",
+            "effort": null,
+            "durationMin": 30
+          },
+          {
+            "date": "2026-09-03",
+            "effort": 4,
+            "durationMin": 25.5
+          }
+        ]
+      },
+      "expected": [
+        434,
+        505,
+        0,
+        695,
+        0,
+        0,
+        102
+      ]
+    },
+    {
+      "name": "no calendar",
+      "input": {
+        "dates": [],
+        "sessions": [
+          {
+            "date": "2026-08-28",
+            "sessionRpe": 7,
+            "durationMin": 62
+          },
+          {
+            "date": "2026-08-29",
+            "sessionRpe": null,
+            "durationMin": 55
+          },
+          {
+            "date": "2026-08-31",
+            "sessionRpe": 8.5,
+            "durationMin": 70
+          },
+          {
+            "date": "2026-08-31",
+            "sessionRpe": 5,
+            "durationMin": 20
+          },
+          {
+            "date": "2026-09-02",
+            "sessionRpe": 9,
+            "durationMin": null
+          },
+          {
+            "date": "2026-09-09",
+            "sessionRpe": 9,
+            "durationMin": 60
+          }
+        ],
+        "cardio": [
+          {
+            "date": "2026-08-29",
+            "effort": 3,
+            "durationMin": 40
+          },
+          {
+            "date": "2026-09-01",
+            "effort": null,
+            "durationMin": 30
+          },
+          {
+            "date": "2026-09-03",
+            "effort": 4,
+            "durationMin": 25.5
+          }
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "no rows",
+      "input": {
+        "dates": [
+          "2026-08-28",
+          "2026-08-29",
+          "2026-08-30",
+          "2026-08-31",
+          "2026-09-01",
+          "2026-09-02",
+          "2026-09-03"
+        ],
+        "sessions": [],
+        "cardio": []
+      },
+      "expected": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

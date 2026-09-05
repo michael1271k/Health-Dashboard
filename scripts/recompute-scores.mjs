@@ -8,15 +8,29 @@
  * old rules produced. Today self-corrects on the next sync; history does not.
  *
  * First written for the 2026-08-04 recovery rewrite and deleted once that had
- * run; back for battery v8 (2026-09-05), which changes `battery_pct` on EVERY
- * scored day — the wake charge now reads the stages share and HRV, and the
- * stress term is new — so the candidate set is every `daily_scores` row in the
- * range, not a sleep-filtered subset.
+ * run; back for battery v8 (2026-09-05) and kept for readiness v9 (Wave 10,
+ * the same day), which changes `battery_pct` on EVERY scored day — the charge
+ * reads HRV and resting HR as z-scores against a 42-day baseline, and the
+ * stress drain became a load drain and a wellness drain — so the candidate set
+ * is every `daily_scores` row in the range, not a sleep-filtered subset.
+ *
+ * ── IT RUNS AGAINST A LOCAL `next start`, ON PURPOSE ────────────────────────
+ * The formula lives in the working tree long before it is deployed, and this
+ * script recomputes by POSTing to a RUNNING SERVER. Pointed at the deployed
+ * URL it would faithfully rewrite every sealed day with the OLD formula,
+ * report success, and leave history exactly as wrong as it found it. So the
+ * target defaults to `http://localhost:3000`, and a non-local target is
+ * refused unless `--allow-remote` says you mean it.
+ *
+ *   npx next build && npx next start &
+ *   node scripts/recompute-scores.mjs --dry-run
+ *   HELIX_APPLY=1 node scripts/recompute-scores.mjs
  *
  * Usage:
  *   node scripts/recompute-scores.mjs --dry-run                # every scored day, last 400
  *   node scripts/recompute-scores.mjs 2026-07-15               # one date
  *   node scripts/recompute-scores.mjs --from 2026-07-01 --to 2026-08-04
+ *   node scripts/recompute-scores.mjs --app-url http://localhost:3001
  *
  * Needs .env.local (SUPABASE_SERVICE_ROLE_KEY for the read and to mint the
  * owner's token, NEXT_PUBLIC_SUPABASE_ANON_KEY to exchange it,
@@ -67,7 +81,13 @@ const to = opt('to') ?? today
 // Every day that HAS a score row: those are the rows carrying the old number.
 // A day with no row is left alone — the ghost guard in `computeForDate` would
 // refuse it anyway, and a recompute must not invent history.
+/** `battery_pct` before the run, per date, so the tail can print the delta. */
+const before = new Map()
 let dates = explicitDates
+if (dates.length) {
+  const { data } = await supabase.from('daily_scores').select('date, battery_pct').in('date', dates)
+  for (const r of data ?? []) before.set(r.date, r.battery_pct)
+}
 if (!dates.length) {
   const { data, error } = await supabase
     .from('daily_scores')
@@ -81,6 +101,7 @@ if (!dates.length) {
   }
   const rows = data ?? []
   dates = rows.map((r) => r.date)
+  for (const r of rows) before.set(r.date, r.battery_pct)
   console.log(`range ${from} → ${to}: ${rows.length} scored day(s)`)
   for (const r of rows) console.log(`  ${r.date}  battery ${r.battery_pct ?? '—'}%`)
 }
@@ -122,22 +143,29 @@ if (DRY) {
 }
 
 // ── recompute ────────────────────────────────────────────────────────────────
-// `--app-url` overrides NEXT_PUBLIC_APP_URL.
-//
-// A formula change lives in the working tree long before it is deployed, and
-// this script recomputes by POSTing to a RUNNING SERVER — so pointed at the
-// deployed URL it would faithfully rewrite every sealed day using the OLD
-// formula, report success, and leave history exactly as wrong as it found it.
-// Point it at a local `next start` instead:
-//
-//   npx next build && npx next start &
-//   node scripts/recompute-scores.mjs --app-url http://localhost:3000
-const appUrl = (opt('app-url') ?? env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
-if (!appUrl) {
-  console.error('NEXT_PUBLIC_APP_URL unset — cannot reach /api/compute-score.')
+// `--app-url` overrides the local default. See the header for why the default
+// is local and why a remote target needs `--allow-remote`.
+const LOCAL_DEFAULT = 'http://localhost:3000'
+const appUrl = (opt('app-url') ?? LOCAL_DEFAULT).replace(/\/$/, '')
+const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(appUrl)
+if (!isLocal && !flag('allow-remote')) {
+  console.error(`refusing ${appUrl}: a deployed server runs the formula it was deployed with, not the one in this tree.`)
+  console.error('Start a local server (`npx next build && npx next start`) or pass --allow-remote if you really mean it.')
   process.exit(1)
 }
-console.log(`target: ${appUrl}`)
+console.log(`target: ${appUrl}${isLocal ? ' (local)' : ' (REMOTE — --allow-remote)'}`)
+
+// The server must be up AND running THIS tree's formula. `/api/compute-score`
+// answers 401 to an unauthenticated POST when it is up at all; a connection
+// refusal means nothing is listening and every day below would "fail" one by
+// one with the same message.
+try {
+  const probe = await fetch(`${appUrl}/api/compute-score`, { method: 'POST' })
+  if (probe.status !== 401) console.warn(`  probe: unexpected ${probe.status} from /api/compute-score (expected 401 unauthenticated)`)
+} catch (e) {
+  console.error(`cannot reach ${appUrl}: ${e?.cause?.message ?? e?.message ?? e}`)
+  process.exit(1)
+}
 
 // ── A REAL TOKEN, NOT A FORGED ORIGIN ──────────────────────────────────────
 // This used to send `Origin: <appUrl>` and rely on the route treating any
@@ -183,7 +211,11 @@ for (const date of dates) {
     })
     if (res.ok) {
       ok += 1
-      console.log(`  ${date} ✓`)
+      const body = await res.json().catch(() => null)
+      const after = body?.score?.battery_pct
+      const was = before.get(date)
+      const delta = after != null && was != null ? ` (${was}% → ${after}%)` : after != null ? ` (${after}%)` : ''
+      console.log(`  ${date} ✓${delta}`)
     } else {
       console.warn(`  ${date} failed (${res.status}): ${(await res.text()).slice(0, 160)}`)
     }

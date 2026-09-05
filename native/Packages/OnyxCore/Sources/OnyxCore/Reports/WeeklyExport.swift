@@ -796,18 +796,27 @@ public enum WeeklyExport {
             L.append("_Shares, because the minutes are already above: 39 minutes of deep sleep is a different night after 9h than after 5h30._")
             L.append("")
 
-            L.append("### Battery (v8 — the inputs behind the number the app showed)")
+            L.append("### Battery (v9 — the inputs behind the number the app showed)")
             L.append("")
+            func z(_ v: Double?) -> String {
+                guard let v else { return dash }
+                return "\(v > 0 ? "+" : v < 0 ? "−" : "")\(n(abs(v), 2))"
+            }
             for b in d.battery {
                 guard let app = b.appPct else {
                     L.append("- \(b.weekdayLabel) \(b.date): \(dash) (no score row)")
                     continue
                 }
-                let fatigue = b.fatigueLabel.map { "\($0) +\(n(b.fatigueTerm))" } ?? dash
-                L.append("- \(b.weekdayLabel) \(b.date): app \(n(app))% · wake \(n(b.morningCharge)) (sleep \(n(b.ratio, 2)) · stages \(n(b.stagesQ, 2)) · HRV \(n(b.hrvQ, 2)) · RHR \(n(b.rhrQ, 2))\(b.onsetTrouble ? " · onset −3" : "")) · stress \(n(b.stress, 1)) (RHR \(n(b.rhrTerm, 1)) · HRV \(n(b.hrvTerm, 1)) · fatigue \(fatigue))")
+                let wellnessItems = [
+                    "fatigue \(b.fatigueLabel ?? dash)",
+                    "soreness \(b.soreness == nil ? dash : n(b.soreness, 1))",
+                    "onset \(b.onsetTrouble == nil ? dash : b.onsetTrouble! ? "yes" : "no")",
+                    "sleep \(n(b.ratio, 2))",
+                ]
+                L.append("- \(b.weekdayLabel) \(b.date): app \(n(app))% · wake \(n(b.morningCharge)) (sleep \(n(b.ratio, 2)) · stages \(n(b.stagesQ, 2)) · HRV z \(z(b.hrvZ)) · RHR z \(z(b.rhrZ))) · load \(n(b.loadDrain, 1)) (ACWR \(n(b.acwr, 2)) · monotony \(n(b.monotony, 2)) · strain \(n(b.strain)) · z \(z(b.strainZ))) · wellness \(n(b.wellnessDrain, 1)) (\(wellnessItems.joined(separator: " · ")))")
             }
             L.append("")
-            L.append("_Wake charge = 55 + 45·q, q = 0.55·sleep + 0.15·stages + 0.15·HRV + 0.15·RHR, each 0–1, minus 3 for a night that was hard to fall into. Stress drain (cap 10) = resting-HR elevation + HRV suppression + the latest fatigue reading. Baselines are the seven logged days before each date, as the scorer read them; the app figure is the stored score, computed at whatever hour the day was last synced._")
+            L.append("_Wake charge = 55 + 45·q, q = 0.45·sleep + 0.15·stages + 0.25·HRV + 0.15·RHR, each 0–1; the HRV and RHR terms read a z-score of the 7-day rolling mean against the 42 days before it (0.75 at baseline or unknown, 1 at +1 SD, 0.25 at −2 SD; the RHR sign is flipped). Load drain (cap 8) = ACWR past 1.3 (EWMA 7:28 of session RPE × minutes) plus this week's Foster strain above your own rolling normal. Wellness drain (cap 6) = the mean of the answered Hooper-style items: fatigue, soreness, onset trouble, short sleep. The app figure is the stored score, computed at whatever hour the day was last synced._")
             L.append("")
 
             if d.trainingDayKcal != nil || d.restDayKcal != nil {

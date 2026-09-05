@@ -68,6 +68,28 @@ export interface ExportSupplement {
   notes?: string
 }
 
+/**
+ * Readiness v9's signals for one day, exactly as the scorer read them —
+ * `ReadinessSignals` flattened to the figures the Derived block prints.
+ * Every field null when the history was too thin to answer.
+ */
+export interface ExportReadiness {
+  /** 7-day rolling ln-HRV against the 42-day baseline, in SDs, SWC-gated, ±2. */
+  hrvZ: number | null
+  /** The same for resting HR. Positive is BAD. */
+  rhrZ: number | null
+  /** Today's sRPE load and the two EWMAs behind the ratio. */
+  load: number | null
+  acute: number | null
+  chronic: number | null
+  acwr: number | null
+  /** Foster's week: the sum, the monotony, the strain, and the strain's z. */
+  weeklyLoad: number | null
+  monotony: number | null
+  strain: number | null
+  strainZ: number | null
+}
+
 export interface ExportDay {
   date: string                 // YYYY-MM-DD
   weekdayLabel: string         // "Mon"
@@ -152,15 +174,21 @@ export interface ExportDay {
    */
   sleepOnsetTrouble?: boolean | null
   /**
-   * Battery v8's inputs the app read for this day and the raw body cannot
-   * show: the two seven-day trailing baselines the scorer compared against,
-   * and the `daily_scores.battery_pct` it stored. Read ONLY by the Derived
-   * section, which prints them beside the arithmetic they feed. Absent on a
-   * range built before v8; `batteryPct` null when the app never scored the day.
+   * The battery's inputs the app read for this day and the raw body cannot
+   * show, and the `daily_scores.battery_pct` it stored. Read ONLY by the
+   * Derived section, which prints them beside the arithmetic they feed.
+   *
+   * `restingHrBaseline` / `hrvBaseline` are v8's seven-day trailing means —
+   * still carried because the recovery SCORE reads them, but the battery has
+   * not since v9. `readiness` is what v9 reads instead: the z-signals and the
+   * load figures `computeReadinessSignals` resolved from 49 days of history.
+   * Absent on a range built before the field existed; `batteryPct` null when
+   * the app never scored the day.
    */
   restingHrBaseline?: number | null
   hrvBaseline?: number | null
   batteryPct?: number | null
+  readiness?: ExportReadiness | null
   waterMl: number | null
   supplementsTaken: number | null
   /**
@@ -2187,25 +2215,36 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     // not the number (the app shows that) but the INPUTS behind it, so a
     // reader sees the same figures the scorer saw and can tell a low battery
     // that came from a short night from one that came from a suppressed HRV.
-    L.push('### Battery (v8 — the inputs behind the number the app showed)')
+    L.push('### Battery (v9 — the inputs behind the number the app showed)')
     L.push('')
+    const z = (v: number | null) => (v == null ? DASH : `${v > 0 ? '+' : v < 0 ? '−' : ''}${n(Math.abs(v), 2)}`)
     for (const b of d.battery) {
       if (b.appPct == null) {
         L.push(`- ${b.weekdayLabel} ${b.date}: ${DASH} (no score row)`)
         continue
       }
+      const wellnessItems = [
+        `fatigue ${b.fatigueLabel ?? DASH}`,
+        `soreness ${b.soreness == null ? DASH : n(b.soreness, 1)}`,
+        `onset ${b.onsetTrouble == null ? DASH : b.onsetTrouble ? 'yes' : 'no'}`,
+        `sleep ${n(b.ratio, 2)}`,
+      ]
       L.push(`- ${b.weekdayLabel} ${b.date}: app ${n(b.appPct)}%`
         + ` · wake ${n(b.morningCharge)} (sleep ${n(b.ratio, 2)} · stages ${n(b.stagesQ, 2)}`
-        + ` · HRV ${n(b.hrvQ, 2)} · RHR ${n(b.rhrQ, 2)}${b.onsetTrouble ? ' · onset −3' : ''})`
-        + ` · stress ${n(b.stress, 1)} (RHR ${n(b.rhrTerm, 1)} · HRV ${n(b.hrvTerm, 1)}`
-        + ` · fatigue ${b.fatigueLabel == null ? DASH : `${b.fatigueLabel} +${n(b.fatigueTerm)}`})`)
+        + ` · HRV z ${z(b.hrvZ)} · RHR z ${z(b.rhrZ)})`
+        + ` · load ${n(b.loadDrain, 1)} (ACWR ${n(b.acwr, 2)} · monotony ${n(b.monotony, 2)}`
+        + ` · strain ${n(b.strain)} · z ${z(b.strainZ)})`
+        + ` · wellness ${n(b.wellnessDrain, 1)} (${wellnessItems.join(' · ')})`)
     }
     L.push('')
-    L.push('_Wake charge = 55 + 45·q, q = 0.55·sleep + 0.15·stages + 0.15·HRV + 0.15·RHR,'
-      + ' each 0–1, minus 3 for a night that was hard to fall into. Stress drain (cap 10)'
-      + ' = resting-HR elevation + HRV suppression + the latest fatigue reading. Baselines'
-      + ' are the seven logged days before each date, as the scorer read them; the app'
-      + ' figure is the stored score, computed at whatever hour the day was last synced._')
+    L.push('_Wake charge = 55 + 45·q, q = 0.45·sleep + 0.15·stages + 0.25·HRV + 0.15·RHR, each 0–1;'
+      + ' the HRV and RHR terms read a z-score of the 7-day rolling mean against the 42 days'
+      + ' before it (0.75 at baseline or unknown, 1 at +1 SD, 0.25 at −2 SD; the RHR sign is'
+      + ' flipped). Load drain (cap 8) = ACWR past 1.3 (EWMA 7:28 of session RPE × minutes)'
+      + ' plus this week\'s Foster strain above your own rolling normal. Wellness drain (cap 6)'
+      + ' = the mean of the answered Hooper-style items: fatigue, soreness, onset trouble,'
+      + ' short sleep. The app figure is the stored score, computed at whatever hour the day'
+      + ' was last synced._')
     L.push('')
 
     // ── Intake by day type ──

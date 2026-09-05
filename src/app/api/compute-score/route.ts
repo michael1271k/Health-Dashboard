@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
 import { BATTERY } from '@/lib/scoring/battery'
-import { computeForDate, type ComputedScoreRow } from '@/lib/scoring/computeForDate'
+import { computeForDate, fetchReadinessHistory, type ComputedScoreRow } from '@/lib/scoring/computeForDate'
+import { historyStart } from '@/lib/scoring/readinessHistory'
 import { serverScheduleContext } from '@/lib/schedule/serverContext'
 import { isTrainingDayIn } from '@/lib/programs'
 import { requireUserId } from '@/lib/auth/identity'
@@ -64,16 +65,21 @@ export async function POST(req: Request) {
     // Pinning completed days to a full waking day makes a recompute idempotent
     // with respect to the wall clock, which is the only way its output can be
     // compared across runs.
+    // Readiness v9's history ONCE for the whole range: every day's 49-day
+    // series overlaps the next one's by 48, and a per-day fetch inside a
+    // 31-way parallel backfill would be ~124 near-identical selects at once.
+    const oldest = backfillDates[backfillDates.length - 1] ?? today
+    const history = await fetchReadinessHistory(supabase, userId, historyStart(oldest), today)
     const row = await computeForDate(
       supabase, userId, today, targetIsToday ? awake : BATTERY.maxAwake,
-      { isRestDay: !isTrainingDayIn(schedule, today), todayISO: todayISO(), isToday: targetIsToday, force },
+      { isRestDay: !isTrainingDayIn(schedule, today), todayISO: todayISO(), isToday: targetIsToday, force, history },
     )
     // Exactly one caller, always — so this is unambiguously their row.
     computed = row
     await Promise.all(
       backfillDates.map((d) => computeForDate(
         supabase, userId, d, BATTERY.maxAwake,
-        { isRestDay: !isTrainingDayIn(schedule, d), todayISO: todayISO(), isToday: false, force },
+        { isRestDay: !isTrainingDayIn(schedule, d), todayISO: todayISO(), isToday: false, force, history },
       )),
     )
   }

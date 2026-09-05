@@ -102,16 +102,43 @@ export interface ScoringInputs {
   hrvBaseline?: number        // 7-day trailing average HRV
 
   /**
+   * ── READINESS v9 — the signals the battery reads, resolved upstream ────────
+   * Each is a scalar the scorer computed from a 49-day history through
+   * `computeReadinessSignals` (`scoring/readiness.ts`) BEFORE building this
+   * object, so the battery stays a pure function of one day's inputs and the
+   * golden vectors stay small. `null`/absent means "not enough history" and
+   * every reader degrades to neutral — never to a penalty.
+   *
+   * `hrvZ`   — the 7-day rolling mean of ln(HRV) against the 42-day baseline,
+   *            in baseline SDs, SWC-gated and clamped ±2. Positive is good.
+   * `rhrZ`   — the same for resting HR, on the raw value. Positive is BAD.
+   * `acwr`   — EWMA acute (7 d) over chronic (28 d) sRPE load. Williams 2017.
+   * `strainZ`— this week's Foster strain against the rolling strains before it.
+   */
+  hrvZ?: number | null
+  rhrZ?: number | null
+  acwr?: number | null
+  strainZ?: number | null
+  /**
+   * Mean severity of the day's `doms_logs` rows, 0 (none) .. 3 (severe). A
+   * Hooper-style wellness item (battery v9). Absent when nothing was logged.
+   */
+  domsSeverity?: number | null
+
+  /**
    * `daily_logs.sleep_onset_trouble` — the wearer said the night was hard to
-   * fall into. Battery v8 takes 3 off the wake charge for it; nothing else
-   * reads it. Absent/false is an ordinary night.
+   * fall into. Battery v9 reads it as a wellness item, and FALSE IS AN ANSWER:
+   * the column is NOT NULL DEFAULT false and a missing row is the same
+   * statement as an unticked one, so both scorers always hand in a boolean.
+   * `null` exists for one caller only — the export, when the column itself
+   * cannot be read — and means the question was never askable.
    */
   sleepOnsetTrouble?: boolean | null
   /**
    * The LATEST fatigue slot logged today, 1 (Fresh) .. 5 (Empty) — the same
-   * `latestFatigue` rule the tracker shows as the day's summary. Battery v8's
-   * stress drain reads it (0..4 points); the day score still does not, which is
-   * the promise `useFatigue` makes. Absent when nothing was logged.
+   * `latestFatigue` rule the tracker shows as the day's summary. Battery v9's
+   * wellness drain reads it; the day score still does not, which is the
+   * promise `useFatigue` makes. Absent when nothing was logged.
    */
   fatigueLevel?: number | null
 

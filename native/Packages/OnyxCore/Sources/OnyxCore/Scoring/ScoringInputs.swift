@@ -69,11 +69,27 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
     public var baselineHR: Double?
     public var hrvMs: Double?
     public var hrvBaseline: Double?
-    /// `daily_logs.sleep_onset_trouble`. Battery v8 takes 3 off the wake
-    /// charge for it; nothing else reads it.
+
+    // MARK: Readiness v9
+    // The scalars `Readiness.signals` resolved from 49 days of history BEFORE
+    // this object was built, so the battery stays a pure function of one day.
+    // `nil` means "not enough history" and every reader degrades to neutral.
+    /// 7-day rolling ln-HRV against the 42-day baseline, in SDs, ±2. Positive is good.
+    public var hrvZ: Double?
+    /// The same for resting HR. Positive is BAD.
+    public var rhrZ: Double?
+    /// EWMA acute (7 d) over chronic (28 d) sRPE load.
+    public var acwr: Double?
+    /// This week's Foster strain against the rolling strains before it, ±2.
+    public var strainZ: Double?
+    /// Mean severity of the day's `doms_logs` rows, 0 ... 3. Nil when none.
+    public var domsSeverity: Double?
+
+    /// `daily_logs.sleep_onset_trouble`. Battery v9 reads it as a wellness
+    /// item; `nil` means the question was never asked.
     public var sleepOnsetTrouble: Bool?
     /// The LATEST fatigue slot logged today, 1 (Fresh) ... 5 (Empty). Battery
-    /// v8's stress drain reads it; the day score still does not.
+    /// v9's wellness drain reads it; the day score still does not.
     public var fatigueLevel: Double?
 
     // MARK: Context
@@ -120,6 +136,11 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
         baselineHR: Double? = nil,
         hrvMs: Double? = nil,
         hrvBaseline: Double? = nil,
+        hrvZ: Double? = nil,
+        rhrZ: Double? = nil,
+        acwr: Double? = nil,
+        strainZ: Double? = nil,
+        domsSeverity: Double? = nil,
         sleepOnsetTrouble: Bool? = nil,
         fatigueLevel: Double? = nil,
         contextMode: String? = nil,
@@ -164,6 +185,11 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
         self.baselineHR = baselineHR
         self.hrvMs = hrvMs
         self.hrvBaseline = hrvBaseline
+        self.hrvZ = hrvZ
+        self.rhrZ = rhrZ
+        self.acwr = acwr
+        self.strainZ = strainZ
+        self.domsSeverity = domsSeverity
         self.sleepOnsetTrouble = sleepOnsetTrouble
         self.fatigueLevel = fatigueLevel
         self.contextMode = contextMode

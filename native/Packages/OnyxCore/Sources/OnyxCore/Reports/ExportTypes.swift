@@ -22,6 +22,35 @@ public struct SupplementLogEntry: Codable, Equatable, Sendable {
     public var time: String?
 }
 
+/// Readiness v9's signals for one day, exactly as the scorer read them —
+/// `ExportReadiness`. Every field nil when the history was too thin to answer.
+public struct ExportReadiness: Codable, Equatable, Sendable {
+    public var hrvZ: Double?
+    public var rhrZ: Double?
+    public var load: Double?
+    public var acute: Double?
+    public var chronic: Double?
+    public var acwr: Double?
+    public var weeklyLoad: Double?
+    public var monotony: Double?
+    public var strain: Double?
+    public var strainZ: Double?
+
+    public init(hrvZ: Double?, rhrZ: Double?, load: Double?, acute: Double?, chronic: Double?, acwr: Double?, weeklyLoad: Double?, monotony: Double?, strain: Double?, strainZ: Double?) {
+        self.hrvZ = hrvZ; self.rhrZ = rhrZ; self.load = load; self.acute = acute; self.chronic = chronic
+        self.acwr = acwr; self.weeklyLoad = weeklyLoad; self.monotony = monotony; self.strain = strain; self.strainZ = strainZ
+    }
+
+    /// `flattenReadiness` — the signals as the export carries them.
+    public init(signals s: ReadinessSignals) {
+        self.init(
+            hrvZ: s.hrv.z, rhrZ: s.rhr.z,
+            load: s.load.today, acute: s.load.acute, chronic: s.load.chronic, acwr: s.load.acwr,
+            weeklyLoad: s.load.weeklyLoad, monotony: s.load.monotony, strain: s.load.strain, strainZ: s.load.strainZ
+        )
+    }
+}
+
 public struct ExportDay: Codable, Equatable, Sendable {
     public var date: String
     public var weekdayLabel: String
@@ -53,12 +82,14 @@ public struct ExportDay: Codable, Equatable, Sendable {
     public var bedTime: String?
     public var wakeTime: String?
     public var sleepOnsetTrouble: Bool?
-    /// Battery v8's inputs the raw body cannot show — the two trailing
-    /// baselines the scorer compared against and the stored `battery_pct`.
-    /// Read only by the Derived section. Nil on a payload built before v8.
+    /// The battery's inputs the raw body cannot show, and the stored
+    /// `battery_pct`. Read only by the Derived section. The two seven-day
+    /// baselines are v8's (the recovery score still reads them); `readiness`
+    /// is what v9's battery reads. Nil on a payload built before each existed.
     public var restingHrBaseline: Double?
     public var hrvBaseline: Double?
     public var batteryPct: Double?
+    public var readiness: ExportReadiness?
     public var waterMl: Double?
     public var supplementsTaken: Double?
     public var supplementsPlanned: Double?

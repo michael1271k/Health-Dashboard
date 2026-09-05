@@ -64,20 +64,22 @@ struct EnergyGoldenTests {
 // Battery
 // ─────────────────────────────────────────────────────────────────────────────
 
-@Suite("Battery — the drain model (v7)")
+@Suite("Battery — the drain model (v9)")
 struct BatteryGoldenTests {
     struct Constants: Decodable {
         let floor, wakeMin, wakeRange, timeMax, activityCap, workoutMax: Double
         let defaultRpe, relMin, relMax, maxAwake: Double
         let maxTotalDrain, maintenanceDrainFactor, maintenanceRelMin: Double
-        let stressCap, onsetPenalty, restorativeShare: Double
+        let restorativeShare: Double
+        let version, loadCap, wellnessCap, zNeutral, zSlope: Double
     }
     struct Empty: Decodable {}
     struct WorkoutMaxInput: Decodable { let dayKey: String?; let maintenance: Bool }
     struct RelMinInput: Decodable { let maintenance: Bool }
     struct SleepQualityExpected: Decodable {
-        let quality, morningCharge, ratio, stagesQ, hrvQ, rhrQ, onsetCharge: Double
+        let quality, morningCharge, ratio, stagesQ, hrvQ, rhrQ: Double
     }
+    struct ZInput: Decodable { let z: Double? }
     struct WorkoutDrainInput: Decodable {
         let sessionVolumeKg: Double
         let trailingAvgVolumeKg: Double
@@ -111,9 +113,12 @@ struct BatteryGoldenTests {
         expectClose(Battery.maxTotalDrain, e.maxTotalDrain, "maxTotalDrain")
         expectClose(Battery.maintenanceDrainFactor, e.maintenanceDrainFactor, "maintenanceDrainFactor")
         expectClose(Battery.maintenanceRelMin, e.maintenanceRelMin, "maintenanceRelMin")
-        expectClose(d.stressCap, e.stressCap, "stressCap")
-        expectClose(d.onsetPenalty, e.onsetPenalty, "onsetPenalty")
         expectClose(d.restorativeShare, e.restorativeShare, "restorativeShare")
+        expectClose(d.version, e.version, "version")
+        expectClose(d.loadCap, e.loadCap, "loadCap")
+        expectClose(d.wellnessCap, e.wellnessCap, "wellnessCap")
+        expectClose(d.zNeutral, e.zNeutral, "zNeutral")
+        expectClose(d.zSlope, e.zSlope, "zSlope")
     }
 
     @Test("workoutMaxFor matches — keyed on the programme day, never the split")
@@ -156,23 +161,61 @@ struct BatteryGoldenTests {
                 c.expected.morningCharge,
                 "computeMorningCharge — \(c.name)"
             )
-            expectClose(
-                Battery.computeMorningCharge(sleepQuality: quality, onsetTrouble: true),
-                c.expected.onsetCharge,
-                "computeMorningCharge(onset) — \(c.name)"
-            )
         }
     }
 
-    @Test("the v8 stress drain matches, term by term")
-    func stressDrainMatches() throws {
-        let fixture = try GoldenFixture<ScoringInputs, Battery.StressParts>.load("stress-drain")
+    @Test("zQuality matches — neutral 0.75, full at +1, a quarter at −2")
+    func zQualityMatches() throws {
+        for c in try GoldenFixture<ZInput, Double>.load("z-quality").cases {
+            expectClose(Battery.zQuality(c.input.z), c.expected, "zQuality — \(c.name)")
+        }
+    }
+
+    @Test("the v9 wellness drain matches, item by item")
+    func wellnessDrainMatches() throws {
+        let fixture = try GoldenFixture<ScoringInputs, Battery.WellnessParts>.load("wellness-drain")
         for c in fixture.cases {
-            let parts = Battery.stressParts(c.input)
-            expectClose(parts.rhrTerm, c.expected.rhrTerm, "rhrTerm — \(c.name)")
-            expectClose(parts.hrvTerm, c.expected.hrvTerm, "hrvTerm — \(c.name)")
-            expectClose(parts.fatigueTerm, c.expected.fatigueTerm, "fatigueTerm — \(c.name)")
+            let parts = Battery.wellnessParts(c.input)
+            expectClose(parts.fatigue, c.expected.fatigue, "fatigue — \(c.name)")
+            expectClose(parts.soreness, c.expected.soreness, "soreness — \(c.name)")
+            expectClose(parts.onset, c.expected.onset, "onset — \(c.name)")
+            expectClose(parts.sleep, c.expected.sleep, "sleep — \(c.name)")
+            expectClose(parts.index, c.expected.index, "index — \(c.name)")
             expectClose(parts.drain, c.expected.drain, "drain — \(c.name)")
+        }
+    }
+
+    @Test("the v9 load drain matches across the ACWR × strain grid")
+    func loadDrainMatches() throws {
+        let fixture = try GoldenFixture<ScoringInputs, Battery.LoadParts>.load("load-drain")
+        #expect(fixture.cases.count > 100)
+        for c in fixture.cases {
+            let parts = Battery.loadParts(c.input)
+            expectClose(parts.acwrTerm, c.expected.acwrTerm, "acwrTerm — \(c.name)")
+            expectClose(parts.strainTerm, c.expected.strainTerm, "strainTerm — \(c.name)")
+            expectClose(parts.drain, c.expected.drain, "drain — \(c.name)")
+        }
+    }
+
+    @Test("the breakdown matches, every term of it")
+    func breakdownMatches() throws {
+        let fixture = try GoldenFixture<BatteryInput, Battery.Breakdown>.load("battery-breakdown")
+        for c in fixture.cases {
+            let b = Battery.breakdown(c.input.inputs, hoursAwake: c.input.hoursAwakeArg)
+            let e = c.expected
+            expectClose(b.version, e.version, "version — \(c.name)")
+            expectClose(b.hoursAwake, e.hoursAwake, "hoursAwake — \(c.name)")
+            expectClose(b.charge.quality, e.charge.quality, "charge.quality — \(c.name)")
+            expectClose(b.charge.morningCharge, e.charge.morningCharge, "charge.morningCharge — \(c.name)")
+            expectClose(b.drains.time, e.drains.time, "drains.time — \(c.name)")
+            expectClose(b.drains.activity, e.drains.activity, "drains.activity — \(c.name)")
+            expectClose(b.drains.workout, e.drains.workout, "drains.workout — \(c.name)")
+            expectClose(b.drains.load, e.drains.load, "drains.load — \(c.name)")
+            expectClose(b.drains.wellness, e.drains.wellness, "drains.wellness — \(c.name)")
+            expectClose(b.drains.total, e.drains.total, "drains.total — \(c.name)")
+            expectClose(b.loadParts.acwrTerm, e.loadParts.acwrTerm, "loadParts.acwrTerm — \(c.name)")
+            expectClose(b.wellnessParts.index, e.wellnessParts.index, "wellnessParts.index — \(c.name)")
+            expectClose(b.currentPct, e.currentPct, "currentPct — \(c.name)")
         }
     }
 

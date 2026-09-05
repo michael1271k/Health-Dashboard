@@ -130,8 +130,10 @@ public extension AppDatabase {
                 .fetchAll(db)
 
             // The trailing HRV / resting-HR baselines: seven days before this
-            // one. `nil` values are dropped rather than read as zero — a missing
-            // reading degrades to "no baseline", never to a wrong one.
+            // one, for the RECOVERY SCORE (the battery reads the v9 z-signals
+            // below instead). `nil` values are dropped rather than read as
+            // zero — a missing reading degrades to "no baseline", never to a
+            // wrong one.
             let trailingLogs = try DailyLogRow
                 .filter(Column("user_id") == userId && Column("date") <= date)
                 .order(Column("date").desc)
@@ -142,7 +144,7 @@ public extension AppDatabase {
             let hrvBaseline = Self.mean(trail.compactMap(\.hrvMs))
             let rhrBaseline = Self.mean(trail.compactMap { $0.avgRestHeartRate.map(Double.init) })
 
-            // ── THE DAY'S LATEST FATIGUE READING (battery v8) ───────────────
+            // ── THE DAY'S LATEST FATIGUE READING (a battery wellness item) ──
             // Folded as the tracker folds it — legacy keys filed by the kind of
             // day — and summarised by the LATEST slot, the tracker's own rule
             // for the day's one figure.
@@ -151,6 +153,17 @@ public extension AppDatabase {
                 .fetchAll(db)
                 .map { FatigueRow(slot: $0.slot, level: $0.level) }
             let fatigueLevel = Fatigue.latest(Fatigue.foldRows(fatigueRows, isTraining: !isRestDay))?.level
+
+            // ── READINESS v9: THE 49 DAYS BEHIND THE DAY ────────────────────
+            // `readinessHistory` lays the rows on the calendar exactly as the
+            // web's `readinessHistoryFor` does; the model is vector-proven.
+            let signals = Readiness.signals(try Self.readinessHistory(db, userId: userId, date: date))
+            // Mean severity of the day's soreness rows, zeros included — a
+            // muscle rated "not sore" is an answer. No rows is no answer.
+            let domsSeverity = Self.mean(
+                try DomsLogRow.filter(Column("user_id") == userId && Column("date") == date)
+                    .fetchAll(db).map { Double($0.severity) }
+            )
 
             let hasAnything = metrics != nil || sleep != nil || nutrition != nil
                 || !water.isEmpty || supplementCount > 0 || !sessions.isEmpty || todayLog != nil
@@ -292,6 +305,11 @@ public extension AppDatabase {
             inputs.hrvBaseline = hrvBaseline
             inputs.sleepOnsetTrouble = todayLog?.sleepOnsetTrouble == true
             inputs.fatigueLevel = fatigueLevel.map(Double.init)
+            inputs.hrvZ = signals.hrv.z
+            inputs.rhrZ = signals.rhr.z
+            inputs.acwr = signals.load.acwr
+            inputs.strainZ = signals.load.strainZ
+            inputs.domsSeverity = domsSeverity
 
             inputs.contextMode = Context.scoringContext(for: effectiveMode).rawValue
             inputs.isCurrentDay = isToday || date == todayISO

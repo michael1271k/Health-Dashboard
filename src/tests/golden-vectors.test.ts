@@ -4,12 +4,16 @@ import { join } from 'node:path'
 
 import { epley1RM } from '@/lib/utils/epley'
 import { tefKcal, tdeeKcal, TEF_FACTOR } from '@/lib/nutrition/energy'
-import { computeReadiness } from '@/lib/scoring/readiness'
+import {
+  computeReadiness, READINESS, zSignal, loadSignal, sessionLoad, cardioLoad, dailyLoads, computeReadinessSignals,
+  type ZSignal, type LoadSignal, type ReadinessSignals,
+} from '@/lib/scoring/readiness'
 import {
   BATTERY, MAX_TOTAL_DRAIN, MAINTENANCE_DRAIN_FACTOR, MAINTENANCE_REL_MIN,
   workoutMaxFor, relMinFor, computeMorningCharge, computeSleepQuality,
-  timeDrain, workoutDrain, computeBattery,
-  sleepQualityParts, stressParts,
+  timeDrain, workoutDrain, computeBattery, batteryBreakdown,
+  sleepQualityParts, wellnessParts, loadParts, zQuality,
+  type BatteryBreakdown, type WellnessParts, type LoadParts,
 } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import { derivePhase, resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
@@ -420,9 +424,13 @@ describe('golden vectors — battery', () => {
           maintenanceDrainFactor: MAINTENANCE_DRAIN_FACTOR,
           maintenanceRelMin: MAINTENANCE_REL_MIN,
           // v8
-          stressCap: BATTERY.stressCap,
-          onsetPenalty: BATTERY.onsetPenalty,
           restorativeShare: BATTERY.restorativeShare,
+          // v9
+          version: BATTERY.version,
+          loadCap: BATTERY.loadCap,
+          wellnessCap: BATTERY.wellnessCap,
+          zNeutral: BATTERY.zNeutral,
+          zSlope: BATTERY.zSlope,
         },
       }],
     })
@@ -462,7 +470,7 @@ describe('golden vectors — battery', () => {
   it('exports sleep-quality and morning-charge vectors', () => {
     const cases: Case<ScoringInputs, {
       quality: number; morningCharge: number
-      ratio: number; stagesQ: number; hrvQ: number; rhrQ: number; onsetCharge: number
+      ratio: number; stagesQ: number; hrvQ: number; rhrQ: number
     }>[] = []
 
     const grid: Partial<ScoringInputs>[] = [
@@ -473,25 +481,21 @@ describe('golden vectors — battery', () => {
       { sleepHours: 9.5, deepMinutes: 120, sleepGoalHours: 8 },
       // sleepGoalHours 0 takes the `? :` fallback branch (ratio = 1).
       { sleepHours: 3, deepMinutes: 10, sleepGoalHours: 0 },
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 52, baselineHR: 52 },
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 72, baselineHR: 52 },
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 82, baselineHR: 52 },
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 45, baselineHR: 52 },
-      // A present-but-zero reading must take the same branch as an absent one:
-      // the TypeScript guard is `if (inputs.restingHR && inputs.baselineHR)`.
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 0, baselineHR: 52 },
-      { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 60, baselineHR: 0 },
-      // v8 — the restorative SHARE (deep + REM over asleep), and HRV vs baseline.
+      // v8 — the restorative SHARE (deep + REM over asleep).
       { sleepHours: 9, deepMinutes: 60, remMinutes: 0, sleepGoalHours: 8 },
       { sleepHours: 6, deepMinutes: 60, remMinutes: 100, sleepGoalHours: 8 },
       { sleepHours: 8, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 60, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 90, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 150, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 30, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 0, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 60, hrvBaseline: 0 },
-      { sleepHours: 5.5, deepMinutes: 30, remMinutes: 40, sleepGoalHours: 8, hrvMs: 41, hrvBaseline: 58, restingHR: 57, baselineHR: 52 },
+      // v9 — the z-signals. Absent, null, zero, both clamps, and the sign flip on RHR.
+      ...[undefined, null, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 3, -3].map((hrvZ) => ({
+        sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvZ,
+      })),
+      ...[undefined, null, -2, -1, 0, 1, 2, 3].map((rhrZ) => ({
+        sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, rhrZ,
+      })),
+      // The v8 inputs must be inert now: same answer with and without them.
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 90, hrvBaseline: 60, restingHR: 72, baselineHR: 52 },
+      { sleepHours: 5.5, deepMinutes: 30, remMinutes: 40, sleepGoalHours: 8, hrvZ: -1.2, rhrZ: 0.8 },
+      { sleepHours: 9, deepMinutes: 120, remMinutes: 120, sleepGoalHours: 8, hrvZ: 2, rhrZ: -2 },
     ]
 
     for (const over of grid) {
@@ -507,8 +511,6 @@ describe('golden vectors — battery', () => {
         expected: {
           quality, morningCharge: computeMorningCharge(quality),
           ratio: parts.ratio, stagesQ: parts.stagesQ, hrvQ: parts.hrvQ, rhrQ: parts.rhrQ,
-          // The same night, hard to fall into.
-          onsetCharge: computeMorningCharge(quality, true),
         },
       })
     }
@@ -516,41 +518,66 @@ describe('golden vectors — battery', () => {
     emit('sleep-quality.json', {
       module: 'scoring/battery',
       fn: 'sleepQualityParts + computeMorningCharge',
-      note: 'v8: 55% duration vs goal, 15% restorative share (deep + REM over asleep, 45% = 1), 15% HRV vs baseline, 15% resting HR vs baseline. Wake charge = 55 + 45·q, minus 3 for onset trouble.',
+      note: 'v9: 45% duration vs goal, 15% restorative share (deep + REM over asleep, 45% = 1), 25% HRV z, 15% resting-HR z (sign flipped). z → 0.75 + 0.25·z clamped 0..1; missing z is 0.75. Wake charge = 55 + 45·q.',
       cases,
+    })
+
+    emit('z-quality.json', {
+      module: 'scoring/battery',
+      fn: 'zQuality',
+      note: 'Neutral 0.75 at z = 0 or unknown; +1 SD fills the term; −2 SD leaves a quarter.',
+      cases: [null, -5, -3, -2, -1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5, 2, 3].map((z) => ({
+        name: `z=${z}`, input: { z }, expected: zQuality(z),
+      })),
     })
   })
 
-  it('exports stress-drain vectors', () => {
+  it('exports wellness-drain vectors', () => {
     const grid: Partial<ScoringInputs>[] = [
       {},
-      { restingHR: 52, baselineHR: 52 },
-      { restingHR: 45, baselineHR: 52 },
-      { restingHR: 57, baselineHR: 52 },
-      { restingHR: 62, baselineHR: 52 },
-      { restingHR: 90, baselineHR: 52 },
-      { restingHR: 0, baselineHR: 52 },
-      { restingHR: 60, baselineHR: 0 },
-      { hrvMs: 60, hrvBaseline: 60 },
-      { hrvMs: 90, hrvBaseline: 60 },
-      { hrvMs: 45, hrvBaseline: 60 },
-      { hrvMs: 30, hrvBaseline: 60 },
-      { hrvMs: 10, hrvBaseline: 60 },
-      { hrvMs: 0, hrvBaseline: 60 },
-      { hrvMs: 60, hrvBaseline: 0 },
-      ...[null, 0, 1, 2, 3, 4, 5, 9].map((fatigueLevel) => ({ fatigueLevel })),
-      { restingHR: 57, baselineHR: 52, hrvMs: 41, hrvBaseline: 58, fatigueLevel: 3 },
-      // Over the cap from every direction at once.
-      { restingHR: 90, baselineHR: 52, hrvMs: 10, hrvBaseline: 60, fatigueLevel: 5 },
+      { sleepHours: 0 },
+      { sleepHours: 8, sleepGoalHours: 8 },
+      { sleepHours: 4, sleepGoalHours: 8 },
+      { sleepHours: 10, sleepGoalHours: 8 },
+      { sleepHours: 6, sleepGoalHours: 0 },
+      ...[null, 0, 0.5, 1, 2, 3, 4, 5, 9].map((fatigueLevel) => ({ fatigueLevel })),
+      ...[null, -1, 0, 0.5, 1, 1.5, 2, 2.5, 3, 4].map((domsSeverity) => ({ domsSeverity })),
+      ...[null, false, true].map((sleepOnsetTrouble) => ({ sleepOnsetTrouble })),
+      { sleepHours: 0, sleepOnsetTrouble: null, fatigueLevel: null, domsSeverity: null },
+      { sleepHours: 0, sleepOnsetTrouble: true },
+      { fatigueLevel: 3, domsSeverity: 1, sleepOnsetTrouble: false, sleepHours: 7, sleepGoalHours: 8 },
+      // 2026-09-01 in the rich export week: Worn, mildly sore, hard to fall asleep, 8h25.
+      { fatigueLevel: 3, domsSeverity: 1.5, sleepOnsetTrouble: true, sleepHours: 505 / 60, sleepGoalHours: 8 },
+      // Everything at once — the cap.
+      { fatigueLevel: 5, domsSeverity: 3, sleepOnsetTrouble: true, sleepHours: 0 },
+      { fatigueLevel: 5, domsSeverity: 3, sleepOnsetTrouble: true, sleepHours: 1, sleepGoalHours: 8 },
     ]
-    emit('stress-drain.json', {
+    emit('wellness-drain.json', {
       module: 'scoring/battery',
-      fn: 'stressParts',
-      note: 'v8, cap 10: 4 per 10 bpm of resting HR over baseline, 3 at half the HRV baseline, and the latest fatigue reading as 0..4. Every term floored at zero — nothing recharges.',
+      fn: 'wellnessParts',
+      note: 'v9, cap 6: the mean of the ANSWERED Hooper-style items (fatigue (level−1)/4, soreness /3, onset 0|1, short sleep 1 − duration/goal), times the cap. Nothing answered drains nothing.',
       cases: grid.map((over) => {
         const full = inputs(over)
-        return { name: JSON.stringify(over), input: full, expected: stressParts(full) }
+        return { name: JSON.stringify(over), input: full, expected: wellnessParts(full) as WellnessParts }
       }),
+    })
+  })
+
+  it('exports load-drain vectors', () => {
+    const acwrs = [undefined, null, 0, 0.5, 0.8, 1, 1.29, 1.3, 1.31, 1.5, 1.65, 1.8, 2, 2.5, 3]
+    const strains = [undefined, null, -2, -1, 0, 0.5, 1, 1.5, 2, 3]
+    const cases: Case<ScoringInputs, LoadParts>[] = []
+    for (const acwr of acwrs) {
+      for (const strainZ of strains) {
+        const full = inputs({ acwr, strainZ })
+        cases.push({ name: `acwr=${acwr} strainZ=${strainZ}`, input: full, expected: loadParts(full) })
+      }
+    }
+    emit('load-drain.json', {
+      module: 'scoring/battery',
+      fn: 'loadParts',
+      note: 'v9, cap 8: 5 × clamp((ACWR − 1.3) / 0.7) + 3 × clamp(strainZ / 2). Both floored at zero — a light week recharges nothing.',
+      cases,
     })
   })
 
@@ -684,24 +711,32 @@ describe('golden vectors — battery', () => {
         sessionDayKey: 'legs_a',
       },
       { sleepHours: 12, deepMinutes: 200, hoursAwake: 0 },
-      // v8 — onset trouble, HRV in the charge, and the stress drain.
+      // v9 — onset trouble as a wellness item, the z-signals in the charge, the load and wellness drains.
       { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, sleepOnsetTrouble: true },
       { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, sleepOnsetTrouble: false },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvMs: 90, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvMs: 30, hrvBaseline: 60 },
-      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, restingHR: 62, baselineHR: 52 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, sleepOnsetTrouble: null },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvZ: 1.5 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvZ: -2 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, rhrZ: 2 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, rhrZ: -1 },
       { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, fatigueLevel: 5 },
       { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, fatigueLevel: 1 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, domsSeverity: 2 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, acwr: 1.6 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, acwr: 0.7, strainZ: -1 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, strainZ: 1.2 },
+      // The v8 inputs must be inert: identical to the bare 8h case above.
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvMs: 30, hrvBaseline: 60, restingHR: 62, baselineHR: 52 },
       {
-        // 2026-09-01 in the rich export week: ill, HRV suppressed, RHR up, Worn.
+        // 2026-09-01 in the rich export week: ill, HRV suppressed, RHR up, Worn, a hard week.
         sleepHours: 505 / 60, deepMinutes: 55, remMinutes: 100, hoursAwake: 12,
-        restingHR: 58, baselineHR: 53, hrvMs: 39, hrvBaseline: 54.75, fatigueLevel: 3, sleepOnsetTrouble: true,
+        hrvZ: -1.4, rhrZ: 1.1, acwr: 1.45, strainZ: 0.9, fatigueLevel: 3, domsSeverity: 1.5, sleepOnsetTrouble: true,
       },
       {
-        // Everything at once, on a perfect night: 97 − 89 keeps the floor unreachable.
+        // Everything at once, on a perfect night: 100 − 93 keeps the floor unreachable.
         sleepHours: 9, deepMinutes: 120, remMinutes: 120, steps: 40000, activeCal: 3000, hoursAwake: 18,
         sessionVolumeKg: 30000, trailingAvgVolumeKg: 1000, sessionRpe: 10, sessionDayKey: 'legs_a',
-        restingHR: 90, baselineHR: 52, hrvMs: 10, hrvBaseline: 60, fatigueLevel: 5, sleepOnsetTrouble: true,
+        hrvZ: 2, rhrZ: -2, acwr: 3, strainZ: 2, fatigueLevel: 5, domsSeverity: 3, sleepOnsetTrouble: true,
       },
     ]
 
@@ -723,6 +758,17 @@ describe('golden vectors — battery', () => {
       fn: 'computeBattery',
       note: 'Drain-only. There is no recharge term, so eating breakfast can never make the battery jump.',
       cases,
+    })
+
+    emit('battery-breakdown.json', {
+      module: 'scoring/battery',
+      fn: 'batteryBreakdown',
+      note: 'Every term behind the number, for the dashboard tile and the export. The drains sum to `total`; currentPct = round(clamp(morningCharge − total, floor, 100)).',
+      cases: cases.map((c) => ({
+        name: c.name,
+        input: c.input,
+        expected: batteryBreakdown(c.input.inputs, c.input.hoursAwakeArg ?? undefined) as BatteryBreakdown,
+      })),
     })
   })
 
@@ -787,6 +833,178 @@ describe('golden vectors — readiness', () => {
       fn: 'computeReadiness',
       note: 'Sleep 40%, battery 40%, recovery 20%. >=70 train hard, >=45 train light.',
       cases,
+    })
+  })
+
+  /** A 49-day series: 42 baseline days then 7 rolling days, with an alternating jitter. */
+  const series = (baseline: number, rolling: number, jitter = 0, rollingJitter = 0): Array<number | null> => {
+    const out: Array<number | null> = []
+    for (let i = 0; i < 42; i++) out.push(baseline + (i % 2 === 0 ? jitter : -jitter))
+    for (let i = 0; i < 7; i++) out.push(rolling + (i % 2 === 0 ? rollingJitter : -rollingJitter))
+    return out
+  }
+  /** A deterministic pseudo-random walk, so a "real-looking" series is the same on every run. */
+  const drift = (n: number, start: number, step: number, seed: number): number[] => {
+    const out: number[] = []
+    let v = start
+    let x = seed
+    for (let i = 0; i < n; i++) {
+      x = (x * 1103515245 + 12345) % 2147483648
+      v += ((x / 2147483648) - 0.5) * 2 * step
+      out.push(Math.round(v * 100) / 100)
+    }
+    return out
+  }
+
+  it('exports the v9 z-signal vectors', () => {
+    const cases: Case<{ values: Array<number | null>; log: boolean }, ZSignal>[] = []
+    const grid: Array<[string, Array<number | null>, boolean]> = [
+      ['empty', [], true],
+      ['one reading', [60], true],
+      ['a flat week only', Array(7).fill(60), true],
+      ['thin baseline (13)', [...Array(29).fill(null), ...Array(13).fill(60), ...Array(7).fill(50)], true],
+      ['baseline at the minimum (14)', [...Array(28).fill(null), ...Array(14).fill(60).map((v, i) => v + (i % 2 ? 2 : -2)), ...Array(7).fill(50)], true],
+      ['thin rolling (2)', [...series(60, 50, 4).slice(0, 42), null, null, null, null, null, 50, 50], true],
+      ['rolling at the minimum (3)', [...series(60, 50, 4).slice(0, 42), null, null, null, null, 50, 50, 50], true],
+      ['steady — inside the SWC', series(60, 61, 4), true],
+      ['just outside the SWC', series(60, 57, 4), false],
+      ['just inside the SWC', series(60, 58.5, 4), false],
+      ['suppressed one SD', series(60, 55, 4), false],
+      ['suppressed beyond the clamp', series(60, 5, 4), false],
+      ['raised beyond the clamp', series(60, 200, 4), false],
+      ['flat baseline (SD 0)', series(60, 55, 0), false],
+      ['non-positive reading under the log is missing', [...series(60, 60, 4).slice(0, 48), 0], true],
+      ['negative reading under the log is missing', [...series(60, 60, 4).slice(0, 48), -5], true],
+      ['a longer series still reads the last seven as the window', [...Array(20).fill(50), ...series(60, 50, 4)], false],
+      ['a 60-day HRV drift', drift(60, 55, 3, 7), true],
+      ['a 49-day RHR drift with a rise at the end', [...drift(42, 52, 1, 11), ...drift(7, 58, 1, 13)], false],
+      ['HRV with gaps', series(60, 48, 5).map((v, i) => (i % 5 === 0 ? null : v)), true],
+      ['jittered rolling window', series(60, 50, 4, 3), true],
+    ]
+    for (const [name, values, log] of grid) {
+      cases.push({ name, input: { values, log }, expected: zSignal(values, { log }) })
+    }
+    emit('readiness-z.json', {
+      module: 'scoring/readiness',
+      fn: 'zSignal',
+      note: 'The last 7 entries are the rolling window, everything before them the baseline. Minimum 3 rolling and 14 baseline readings; SWC = 0.5·SD; |delta| < SWC → z 0; else delta/SD clamped ±2; SD 0 → null. `log` takes ln first (non-positive → missing).',
+      cases,
+    })
+  })
+
+  it('exports the v9 sRPE load vectors', () => {
+    const sessionCases: Array<{ sessionRpe: number | null; durationMin: number | null }> = []
+    for (const sessionRpe of [null, 0, -1, 3, 5, 7, 8.5, 10, 12]) {
+      for (const durationMin of [null, 0, -10, 2, 45, 60, 92]) sessionCases.push({ sessionRpe, durationMin })
+    }
+    emit('readiness-session-load.json', {
+      module: 'scoring/readiness',
+      fn: 'sessionLoad',
+      note: 'CR-10 × minutes (Foster). Unrated → 7 (the battery default); no positive duration → 0; RPE clamped 0..10.',
+      cases: sessionCases.map((c) => ({ name: JSON.stringify(c), input: c, expected: sessionLoad(c) })),
+    })
+    const cardioCases: Array<{ effort: number | null; durationMin: number | null }> = []
+    for (const effort of [null, 0, 2, 3, 4, 7, 11]) {
+      for (const durationMin of [null, 0, 20, 45.5]) cardioCases.push({ effort, durationMin })
+    }
+    emit('readiness-cardio-load.json', {
+      module: 'scoring/readiness',
+      fn: 'cardioLoad',
+      note: 'Effort × minutes. An unrated bout carries NO load; effort clamped 0..10.',
+      cases: cardioCases.map((c) => ({ name: JSON.stringify(c), input: c, expected: cardioLoad(c) })),
+    })
+    const dates = ['2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31', '2026-09-01', '2026-09-02', '2026-09-03']
+    const sessions = [
+      { date: '2026-08-28', sessionRpe: 7, durationMin: 62 },
+      { date: '2026-08-29', sessionRpe: null, durationMin: 55 },
+      { date: '2026-08-31', sessionRpe: 8.5, durationMin: 70 },
+      { date: '2026-08-31', sessionRpe: 5, durationMin: 20 },
+      { date: '2026-09-02', sessionRpe: 9, durationMin: null },
+      { date: '2026-09-09', sessionRpe: 9, durationMin: 60 },
+    ]
+    const cardio = [
+      { date: '2026-08-29', effort: 3, durationMin: 40 },
+      { date: '2026-09-01', effort: null, durationMin: 30 },
+      { date: '2026-09-03', effort: 4, durationMin: 25.5 },
+    ]
+    emit('readiness-daily-loads.json', {
+      module: 'scoring/readiness',
+      fn: 'dailyLoads',
+      note: 'One load per calendar date, sessions and cardio summed; a date with nothing is a real zero; rows outside the calendar are ignored.',
+      cases: [
+        { name: 'a week with doubles, an unrated session, an unrated walk and a stray row', input: { dates, sessions, cardio }, expected: dailyLoads(dates, sessions, cardio) },
+        { name: 'no calendar', input: { dates: [], sessions, cardio }, expected: dailyLoads([], sessions, cardio) },
+        { name: 'no rows', input: { dates, sessions: [], cardio: [] }, expected: dailyLoads(dates, [], []) },
+      ],
+    })
+  })
+
+  it('exports the v9 load-signal vectors', () => {
+    const calm: number[] = []
+    for (let i = 0; i < 42; i++) calm.push(i % 2 === 0 ? 400 : 200)
+    const programme: number[] = []
+    // A 49-day Onyx-5 week shape: five sessions, two rests, drifting up.
+    for (let w = 0; w < 7; w++) {
+      const base = 380 + w * 20
+      programme.push(base, 0, base + 60, base - 40, 0, base + 120, base - 60)
+    }
+    const grid: Array<[string, number[]]> = [
+      ['empty', []],
+      ['one day', [420]],
+      ['three days', [400, 200, 400]],
+      ['six days', [400, 200, 400, 200, 400, 200]],
+      ['exactly seven days', [400, 200, 400, 200, 400, 200, 400]],
+      ['eight days', [400, 200, 400, 200, 400, 200, 400, 600]],
+      ['steady 400', Array(49).fill(400)],
+      ['all rest', Array(49).fill(0)],
+      ['spike in the last week', [...Array(42).fill(300), ...Array(7).fill(900)]],
+      ['taper in the last week', [...Array(42).fill(600), ...Array(7).fill(100)]],
+      ['alternating calm', [...calm, 400, 200, 400, 200, 400, 200, 400]],
+      ['alternating calm then a heavy week', [...calm, 1400, 1300, 1400, 1300, 1400, 1300, 1400]],
+      ['alternating calm then a monotone week', [...calm, 300, 300, 300, 300, 300, 300, 300]],
+      ['the programme shape', programme],
+      ['the programme shape with a missed week', [...programme.slice(0, 35), 0, 0, 0, 0, 0, 0, 0, ...programme.slice(42)]],
+      ['a 60-day drift', drift(60, 400, 120, 3).map((v) => Math.max(0, v))],
+      ['fewer prior strains than the minimum (20 days)', [...calm.slice(0, 13), 400, 200, 400, 200, 400, 200, 400]],
+      ['first session after six quiet weeks — no chronic side, no ratio', [...Array(42).fill(0), 663, 0, 0, 0, 0, 0, 0]],
+      ['two loaded days before the window — still no ratio', [...Array(40).fill(0), 400, 400, 663, 0, 0, 0, 0, 0, 0]],
+      ['three loaded days before the window — the ratio answers', [...Array(39).fill(0), 400, 400, 400, 663, 0, 0, 0, 0, 0, 0]],
+    ]
+    const cases: Case<{ loads: number[] }, LoadSignal>[] = grid.map(([name, loads]) => ({
+      name, input: { loads }, expected: loadSignal(loads),
+    }))
+    emit('readiness-load.json', {
+      module: 'scoring/readiness',
+      fn: 'loadSignal',
+      note: 'EWMA λ 2/8 acute, 2/29 chronic, seeded with the first week’s mean and run from day 8; ACWR null without a positive chronic or fewer than 3 loaded days before the window. Monotony = mean/SD (n−1) of the last 7; strain = weekly load × monotony; strain z against every rolling 7-day strain ending before today (min 14), clamped ±2.',
+      cases,
+    })
+  })
+
+  it('exports the v9 composite vectors', () => {
+    const histories: Array<[string, { hrv: Array<number | null>; rhr: Array<number | null>; loads: number[] }]> = [
+      ['empty', { hrv: [], rhr: [], loads: [] }],
+      ['a suppressed week under a spike', {
+        hrv: series(60, 45, 4), rhr: series(52, 58, 2), loads: [...Array(42).fill(300), ...Array(7).fill(900)],
+      }],
+      ['a good week', {
+        hrv: series(60, 68, 4), rhr: series(52, 49, 2), loads: [...Array(42).fill(400), ...Array(7).fill(380)],
+      }],
+      ['the drifts', {
+        hrv: drift(49, 55, 3, 7), rhr: drift(49, 52, 1, 11), loads: drift(49, 400, 120, 3).map((v) => Math.max(0, v)),
+      }],
+    ]
+    emit('readiness-signals.json', {
+      module: 'scoring/readiness',
+      fn: 'computeReadinessSignals',
+      note: 'The three series through one door: HRV under the log, RHR raw, loads through the EWMA.',
+      cases: histories.map(([name, h]) => ({ name, input: h, expected: computeReadinessSignals(h) as ReadinessSignals })),
+    })
+    emit('readiness-constants.json', {
+      module: 'scoring/readiness',
+      fn: 'READINESS',
+      note: 'The v9 constants the port must not drift from.',
+      cases: [{ name: 'constants', input: {}, expected: { ...READINESS } }],
     })
   })
 })
@@ -4367,6 +4585,7 @@ describe('golden vectors — weekly export', () => {
       sleepMin: 551, deepMin: 62, remMin: 118, coreMin: 350, awakeMin: 21, bedTime: '2026-08-29T23:10:00', wakeTime: '2026-08-30T08:21:00', sleepOnsetTrouble: false,
       restingHr: 52, hrvMs: 61.5, wristTempDeltaC: 0.2, bloodOxygenPct: 97, avgHr: 71, respiratoryRate: 14.5, vo2max: 46.1, daylightMin: 42, exerciseMin: 31, standHours: 12, standMin: 58,
       restingHrBaseline: 53.4, hrvBaseline: 55.2, batteryPct: 74,
+      readiness: { hrvZ: 0.6, rhrZ: -0.4, load: 0, acute: 355.2, chronic: 402.7, acwr: 0.882, weeklyLoad: 2210, monotony: 1.42, strain: 3138.2, strainZ: -0.3 },
       weightKg: 64.9, bmrKcal: 1516, calories: 2151, proteinG: 172, carbsG: 244, fatG: 55, waterMl: 3100, steps: 7842, distanceM: 6120, activeKcal: 412,
       supplementsTaken: 6, supplementsPlanned: 7, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'd3k2', time: '07:00' }, { key: 'omega3', time: '12:30' }, { key: 'magnesium', time: '22:00' }, { key: 'glycine', time: '22:00' }, { key: 'theanine', time: null }],
       supplementsSkipped: ['Caffeine'],
@@ -4378,6 +4597,7 @@ describe('golden vectors — weekly export', () => {
       sleepMin: 470, deepMin: 40, remMin: 95, coreMin: 320, awakeMin: 15, bedTime: '2026-08-30T23:50:00', wakeTime: '2026-08-31T07:55:00', sleepOnsetTrouble: true,
       restingHr: 54, hrvMs: 48, wristTempDeltaC: -0.1, bloodOxygenPct: 96, avgHr: 84, respiratoryRate: 15.1, vo2max: 46.1, daylightMin: 12, exerciseMin: 78, standHours: 14, standMin: 40,
       restingHrBaseline: 53.1, hrvBaseline: 56, batteryPct: 41,
+      readiness: { hrvZ: -1.1, rhrZ: 0.9, load: 546, acute: 402.9, chronic: 412.6, acwr: 0.9765, weeklyLoad: 2756, monotony: 1.61, strain: 4437.2, strainZ: 0.4 },
       weightKg: 64.6, bmrKcal: 1514, calories: 2160, proteinG: 175, carbsG: 250, fatG: 52, waterMl: 3500, steps: 11204, distanceM: 8900, trainingMin: 78, activeKcal: 688,
       supplementsTaken: 7, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'citrulline', time: '11:45' }, { key: 'caffeine', time: '11:45' }],
       nutrientsFood: { fiber: 28, protein: 175, sodium: 3100, potassium: 3000, calcium: 3074, iron: 9, magnesium: 300, vitaminC: 80, satFat: 24, sugar: 45 },
@@ -4387,6 +4607,7 @@ describe('golden vectors — weekly export', () => {
       isTrainingDay: true, nutritionException: 'Illness',
       sleepMin: 505, deepMin: 55, remMin: 100, coreMin: 335, awakeMin: 15, restingHr: 58, hrvMs: 39, wristTempDeltaC: 0.6, bloodOxygenPct: 95,
       restingHrBaseline: 53, hrvBaseline: 54.75, batteryPct: 33, sleepOnsetTrouble: true,
+      readiness: { hrvZ: -2, rhrZ: 2, load: 630, acute: 459.7, chronic: 427.6, acwr: 1.0751, weeklyLoad: 3386, monotony: 2.3, strain: 7787.8, strainZ: 1.7 },
       weightKg: null, weighInSkipReason: 'Sick', calories: 1800, proteinG: 150, carbsG: 200, fatG: 45, waterMl: 2000, steps: 4100, activeKcal: 210,
       supplementsTaken: null, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }],
       nutrientsFood: { fiber: 20, protein: 150 }, nutrientsStack: {},

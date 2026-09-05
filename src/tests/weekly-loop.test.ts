@@ -341,7 +341,7 @@ describe('buildWeeklyExport', () => {
     expect(raw).not.toMatch(/battery/i)
     expect(raw).not.toMatch(/\bscore\b/i)
     // Below the fence, and only there, the battery's inputs are stated.
-    expect(out).toMatch(/### Battery \(v8/)
+    expect(out).toMatch(/### Battery \(v9/)
     expect(out.indexOf('### Battery')).toBeGreaterThan(out.indexOf('## Derived'))
   })
 

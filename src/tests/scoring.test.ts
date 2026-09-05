@@ -12,7 +12,7 @@ import {
 import { computeHydrationScore } from '@/lib/scoring/score'
 import {
   computeMorningCharge, computeBattery, computeSleepQuality, timeDrain, BATTERY, MAX_TOTAL_DRAIN,
-  sleepQualityParts, stressParts, stressDrain,
+  sleepQualityParts, wellnessParts, loadParts,
   WORKOUT_MAX_BY_DAY, WORKOUT_MAX_DEFAULT, workoutMaxFor, workoutDrain,
 } from '@/lib/scoring/battery'
 import { computeReadiness } from '@/lib/scoring/readiness'
@@ -584,8 +584,8 @@ describe('workout drain is ceilinged per programme day', () => {
    */
   it('leaves the drain budget invariant intact', () => {
     expect(Math.max(...Object.values(WORKOUT_MAX_BY_DAY))).toBe(BATTERY.workoutMax)
-    // v8: timeMax 35 + activityCap 12 + workoutMax 32 + stressCap 10.
-    expect(MAX_TOTAL_DRAIN).toBe(89)
+    // v9: timeMax 35 + activityCap 12 + workoutMax 32 + loadCap 8 + wellnessCap 6.
+    expect(MAX_TOTAL_DRAIN).toBe(93)
     expect(MAX_TOTAL_DRAIN).toBeLessThan(100)
   })
 
@@ -634,13 +634,13 @@ describe('BATTERY constants', () => {
    * term together must stay strictly under a full charge, or the number stops
    * carrying information on exactly the days it matters most.
    */
-  it('the total drain budget stays below a full charge — v8: 35 + 12 + 32 + 10 = 89 < 100', () => {
-    expect(MAX_TOTAL_DRAIN).toBe(BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax + BATTERY.stressCap)
-    expect(MAX_TOTAL_DRAIN).toBe(89)
+  it('the total drain budget stays below a full charge — v9: 35 + 12 + 32 + 8 + 6 = 93 < 100', () => {
+    expect(MAX_TOTAL_DRAIN).toBe(BATTERY.timeMax + BATTERY.activityCap + BATTERY.workoutMax + BATTERY.loadCap + BATTERY.wellnessCap)
+    expect(MAX_TOTAL_DRAIN).toBe(93)
     expect(MAX_TOTAL_DRAIN).toBeLessThan(100)
-    // And a night with onset trouble — the lowest a perfect night can start —
-    // still leaves the floor unreachable.
-    expect(100 - BATTERY.onsetPenalty - MAX_TOTAL_DRAIN).toBeGreaterThan(BATTERY.floor)
+    // The lowest a perfect night can start is a full 100 (v9 retired the onset
+    // penalty on the charge), and the floor stays out of reach even then.
+    expect(100 - MAX_TOTAL_DRAIN).toBeGreaterThan(BATTERY.floor)
   })
 
   it('a perfect-sleep day can never reach the floor, whatever it contains', () => {
@@ -735,8 +735,8 @@ describe('timeDrain — raised cosine over the waking day', () => {
   })
 })
 
-// ─── Battery v8 — morning charge reads the night, stress drains the day ───────
-describe('battery v8 — the wake charge', () => {
+// ─── Battery v9 — the charge reads the night against your own baseline ──────
+describe('battery v9 — the wake charge', () => {
   it('reads the restorative SHARE, not deep minutes alone', () => {
     // Same 60 min deep: a 9h night with no REM scores its stages term lower
     // than a 6h night with 100 min REM, because the share is what changed.
@@ -746,54 +746,52 @@ describe('battery v8 — the wake charge', () => {
     expect(dense.stagesQ).toBe(1)   // 170 / (0.45 × 360) > 1, saturated
   })
 
-  it('HRV at baseline is neutral, above it lifts, missing is neutral too', () => {
+  it('HRV at baseline is neutral (0.75), above it lifts, missing is neutral too', () => {
     const base = { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8 }
-    expect(sleepQualityParts(base).hrvQ).toBe(0.5)
-    expect(sleepQualityParts({ ...base, hrvMs: 60, hrvBaseline: 60 }).hrvQ).toBe(0.5)
-    expect(sleepQualityParts({ ...base, hrvMs: 90, hrvBaseline: 60 }).hrvQ).toBeCloseTo(0.75, 6)
-    expect(sleepQualityParts({ ...base, hrvMs: 120, hrvBaseline: 60 }).hrvQ).toBe(1)
-    expect(sleepQualityParts({ ...base, hrvMs: 0, hrvBaseline: 60 }).hrvQ).toBe(0.5)  // JS truthiness: 0 reads as absent
+    expect(sleepQualityParts(base).hrvQ).toBe(0.75)
+    expect(sleepQualityParts({ ...base, hrvZ: 0 }).hrvQ).toBe(0.75)
+    expect(sleepQualityParts({ ...base, hrvZ: 1 }).hrvQ).toBe(1)
+    expect(sleepQualityParts({ ...base, hrvZ: -2 }).hrvQ).toBeCloseTo(0.25, 12)
+    expect(sleepQualityParts({ ...base, hrvZ: null }).hrvQ).toBe(0.75)
   })
 
-  it('onset trouble takes 3 off the rounded charge, and nothing else moves', () => {
-    expect(computeMorningCharge(1, true)).toBe(97)
-    expect(computeMorningCharge(0, true)).toBe(52)
+  it('resting HR runs the other way: a z above baseline lowers the term', () => {
+    const base = { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8 }
+    expect(sleepQualityParts({ ...base, rhrZ: 2 }).rhrQ).toBeCloseTo(0.25, 12)
+    expect(sleepQualityParts({ ...base, rhrZ: -1 }).rhrQ).toBe(1)
+  })
+
+  it('onset trouble no longer moves the wake charge — it drains as a wellness item', () => {
+    expect(computeMorningCharge(1)).toBe(100)
     const calm = computeBattery({ ...PERFECT, sleepOnsetTrouble: false }, 8)
     const hard = computeBattery({ ...PERFECT, sleepOnsetTrouble: true }, 8)
-    expect(hard.morningCharge).toBe(calm.morningCharge - 3)
-    expect(hard.currentPct).toBe(calm.currentPct - 3)
+    expect(hard.morningCharge).toBe(calm.morningCharge)
+    expect(hard.currentPct).toBeLessThan(calm.currentPct)
   })
 })
 
-describe('battery v8 — the stress drain', () => {
-  it('is zero with nothing elevated, nothing suppressed and nothing logged', () => {
-    expect(stressParts({})).toEqual({ rhrTerm: 0, hrvTerm: 0, fatigueTerm: 0, drain: 0 })
-    // A LOW resting HR or a HIGH HRV recharges nothing — floored, not signed.
-    expect(stressDrain({ restingHR: 45, baselineHR: 52, hrvMs: 90, hrvBaseline: 60 })).toBe(0)
+describe('battery v9 — the wellness and load drains', () => {
+  it('drain nothing with nothing answered and no history', () => {
+    expect(wellnessParts({ sleepHours: 0, sleepGoalHours: 8 }).drain).toBe(0)
+    expect(loadParts({}).drain).toBe(0)
+    // A LOW ratio or a light week recharges nothing — floored, not signed.
+    expect(loadParts({ acwr: 0.6, strainZ: -2 }).drain).toBe(0)
   })
 
-  it('charges 4 per 10 bpm over baseline and 3 at half the HRV baseline', () => {
-    expect(stressParts({ restingHR: 62, baselineHR: 52 }).rhrTerm).toBeCloseTo(4, 6)
-    expect(stressParts({ hrvMs: 30, hrvBaseline: 60 }).hrvTerm).toBeCloseTo(3, 6)
+  it('reads the latest fatigue reading as Fresh 0 … Empty 1', () => {
+    expect(wellnessParts({ fatigueLevel: 1, sleepHours: 0, sleepGoalHours: 8 }).fatigue).toBe(0)
+    expect(wellnessParts({ fatigueLevel: 3, sleepHours: 0, sleepGoalHours: 8 }).fatigue).toBe(0.5)
+    expect(wellnessParts({ fatigueLevel: 5, sleepHours: 0, sleepGoalHours: 8 }).fatigue).toBe(1)
+    expect(wellnessParts({ fatigueLevel: 0, sleepHours: 0, sleepGoalHours: 8 }).fatigue).toBeNull()   // off the scale reads as unlogged
   })
 
-  it('reads the latest fatigue reading as 0..4 — Fresh costs nothing, Empty costs four', () => {
-    expect(stressParts({ fatigueLevel: 1 }).fatigueTerm).toBe(0)
-    expect(stressParts({ fatigueLevel: 3 }).fatigueTerm).toBe(2)
-    expect(stressParts({ fatigueLevel: 5 }).fatigueTerm).toBe(4)
-    expect(stressParts({ fatigueLevel: null }).fatigueTerm).toBe(0)
-    expect(stressParts({ fatigueLevel: 0 }).fatigueTerm).toBe(0)   // off the scale reads as unlogged
-  })
-
-  it('is capped at 10 however bad the morning', () => {
-    const worst = stressParts({ restingHR: 90, baselineHR: 52, hrvMs: 10, hrvBaseline: 60, fatigueLevel: 5 })
-    expect(worst.rhrTerm + worst.hrvTerm + worst.fatigueTerm).toBeGreaterThan(10)
-    expect(worst.drain).toBe(BATTERY.stressCap)
-    // And it reaches the battery as a drain, never a recharge.
+  it('together they are capped at 14 however bad the morning, and reach the battery as a drain', () => {
+    const w = wellnessParts({ fatigueLevel: 5, domsSeverity: 3, sleepOnsetTrouble: true, sleepHours: 0, sleepGoalHours: 8 })
+    const l = loadParts({ acwr: 3, strainZ: 5 })
+    expect(w.drain).toBe(BATTERY.wellnessCap)
+    expect(l.drain).toBe(BATTERY.loadCap)
     const calm = computeBattery(PERFECT, 8).currentPct
-    const stressed = computeBattery({ ...PERFECT, restingHR: 90, baselineHR: 52, fatigueLevel: 5 }, 8).currentPct
-    expect(stressed).toBeLessThan(calm)
-    // The RHR also drags the wake charge (rhrQ → 0), so the gap exceeds the cap alone.
-    expect(calm - stressed).toBeGreaterThanOrEqual(BATTERY.stressCap)
+    const stressed = computeBattery({ ...PERFECT, acwr: 3, strainZ: 5, fatigueLevel: 5, domsSeverity: 3 }, 8).currentPct
+    expect(calm - stressed).toBeGreaterThanOrEqual(BATTERY.loadCap)
   })
 })
