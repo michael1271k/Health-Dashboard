@@ -1,0 +1,3460 @@
+{
+  "module": "supplements + nutrition/supplementNutrients",
+  "fn": "isArchived / activeOn / doses / creditNutrients",
+  "note": "A dose with no log row counts once its slot time has passed (a past day: all of them; a future day: none). An explicit taken=true counts at once, whatever the clock. taken=false never counts, and an archived item is not scheduled at all. Payloads are per PHYSICAL UNIT, so a counted dose (\"2 tabs\") doubles and a mass dose (\"300 mg\") does not.",
+  "cases": [
+    {
+      "name": "isArchived · never archived",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": null
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": false
+      }
+    },
+    {
+      "name": "isArchived · undefined",
+      "input": {
+        "fn": "isArchived",
+        "row": {},
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": false
+      }
+    },
+    {
+      "name": "isArchived · empty string",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": ""
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": false
+      }
+    },
+    {
+      "name": "isArchived · archived the same day, in the evening",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": "2026-09-05T21:00:00Z"
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": true
+      }
+    },
+    {
+      "name": "isArchived · archived the same day, at midnight",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": "2026-09-05T00:00:00Z"
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": true
+      }
+    },
+    {
+      "name": "isArchived · archived yesterday",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": "2026-09-04T09:00:00Z"
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": true
+      }
+    },
+    {
+      "name": "isArchived · archived tomorrow — still in force today",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": "2026-09-06T09:00:00Z"
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": false
+      }
+    },
+    {
+      "name": "isArchived · a bare date",
+      "input": {
+        "fn": "isArchived",
+        "row": {
+          "archived_at": "2026-09-05"
+        },
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "archived": true
+      }
+    },
+    {
+      "name": "activeOn · mid-window",
+      "input": {
+        "fn": "activeOn",
+        "rows": [
+          {
+            "id": "a"
+          },
+          {
+            "id": "b",
+            "archived_at": null
+          },
+          {
+            "id": "c",
+            "archived_at": "2026-09-01T10:00:00Z"
+          },
+          {
+            "id": "d",
+            "archived_at": "2026-09-09T10:00:00Z"
+          }
+        ],
+        "date": "2026-09-05"
+      },
+      "expected": {
+        "ids": [
+          "a",
+          "b",
+          "d"
+        ]
+      }
+    },
+    {
+      "name": "doses · before the first slot · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": 480,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · before the first slot · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 480,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · before the first slot · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": 480,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · before the first slot · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 480,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · before the first slot · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 480,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · between the slots · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": 780,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · between the slots · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 780,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · between the slots · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": 780,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · between the slots · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 780,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · between the slots · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 780,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · after the last slot · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · after the last slot · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · after the last slot · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · after the last slot · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · after the last slot · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · exactly on the slot · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": 630,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · exactly on the slot · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 630,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · exactly on the slot · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": 630,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · exactly on the slot · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 630,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · exactly on the slot · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": 630,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a past day · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": true
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a past day · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": true
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a past day · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": true
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a past day · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": true
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a past day · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": true
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a future day · empty log",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a future day · one skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a future day · one taken early",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "magnesium",
+            "taken": true
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a future day · taken and skipped",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "multivitamin",
+            "taken": true
+          },
+          {
+            "itemKey": "d3k2",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "taken"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "skipped"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · a future day · a key that is not scheduled",
+      "input": {
+        "fn": "doses",
+        "slots": [
+          {
+            "key": "morning",
+            "time": "10:30",
+            "label": "Morning",
+            "accent": "#3E9E7A",
+            "items": [
+              {
+                "key": "multivitamin",
+                "name": "Two Per Day Multivitamin",
+                "dose": "2 tabs"
+              },
+              {
+                "key": "d3k2",
+                "name": "Vitamin D3 + K2",
+                "dose": "125 mcg"
+              }
+            ]
+          },
+          {
+            "key": "night",
+            "time": "22:00",
+            "label": "Before Bed",
+            "accent": "#8A6FA8",
+            "items": [
+              {
+                "key": "magnesium",
+                "name": "Magnesium Glycinate",
+                "dose": "300 mg"
+              },
+              {
+                "key": "glycine",
+                "name": "Glycine",
+                "dose": "1 scoop"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "itemKey": "ghost",
+            "taken": false
+          }
+        ],
+        "clock": {
+          "nowMinutes": null,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ]
+      }
+    },
+    {
+      "name": "doses · no slots at all",
+      "input": {
+        "fn": "doses",
+        "slots": [],
+        "log": [],
+        "clock": {
+          "nowMinutes": 1350,
+          "dayIsOver": false
+        }
+      },
+      "expected": {
+        "doses": []
+      }
+    },
+    {
+      "name": "creditNutrients · nothing due yet",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {}
+      }
+    },
+    {
+      "name": "creditNutrients · morning is due",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "vitaminD": 5000
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · the whole day",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "vitaminD": 5000,
+          "magnesium": 300,
+          "glycine": 5000
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · the whole day, magnesium skipped at 21:00",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "skipped"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "vitaminD": 5000,
+          "glycine": 5000
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · taken before the slot counts at once",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "later"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "taken"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "later"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {
+          "magnesium": 300
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · a row payload overrides the table",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ],
+        "payloads": {
+          "magnesium": {
+            "magnesium": 400
+          }
+        }
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "vitaminD": 5000,
+          "magnesium": 400,
+          "glycine": 5000
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · a payload for an item that is not scheduled",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Two Per Day Multivitamin",
+            "dose": "2 tabs",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "d3k2",
+            "name": "Vitamin D3 + K2",
+            "dose": "125 mcg",
+            "slotKey": "morning",
+            "slotLabel": "Morning",
+            "slotTime": "10:30",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1 scoop",
+            "slotKey": "night",
+            "slotLabel": "Before Bed",
+            "slotTime": "22:00",
+            "state": "due"
+          }
+        ],
+        "payloads": {
+          "creatine": {
+            "creatine": 5000
+          }
+        }
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "vitaminD": 5000,
+          "magnesium": 300,
+          "glycine": 5000
+        }
+      }
+    },
+    {
+      "name": "creditNutrients · counted units vs mass doses",
+      "input": {
+        "fn": "creditNutrients",
+        "resolved": [
+          {
+            "key": "multivitamin",
+            "name": "Multi",
+            "dose": "2 tabs",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          },
+          {
+            "key": "omega3",
+            "name": "Fish oil",
+            "dose": "2 caps",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          },
+          {
+            "key": "magnesium",
+            "name": "Magnesium",
+            "dose": "300 mg",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          },
+          {
+            "key": "creatine",
+            "name": "Creatine",
+            "dose": "5 g",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          },
+          {
+            "key": "glycine",
+            "name": "Glycine",
+            "dose": "1.5 scoops",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          },
+          {
+            "key": "theanine",
+            "name": "Theanine",
+            "dose": "",
+            "slotKey": "u",
+            "slotLabel": "Units",
+            "slotTime": "00:00",
+            "state": "due"
+          }
+        ],
+        "payloads": {}
+      },
+      "expected": {
+        "micros": {
+          "vitaminB12": 600,
+          "folate": 1360,
+          "vitaminC": 940,
+          "epa": 1000,
+          "dha": 500,
+          "magnesium": 300,
+          "creatine": 5000,
+          "glycine": 7500,
+          "theanine": 200
+        }
+      }
+    },
+    {
+      "name": "nutrientPayloads · keyed by the log key, and a null payload is not a key",
+      "input": {
+        "fn": "nutrientPayloads",
+        "customs": [
+          {
+            "id": "r-mag",
+            "name": "Magnesium Glycinate",
+            "dose": "300 mg",
+            "color": null,
+            "form": null,
+            "time": "22:00",
+            "schedule": {
+              "key": "magnesium"
+            },
+            "micros": {
+              "magnesium": 400
+            }
+          },
+          {
+            "id": "r-zinc",
+            "name": "Zinc",
+            "dose": "15 mg",
+            "color": null,
+            "form": null,
+            "time": null,
+            "schedule": null,
+            "micros": null
+          }
+        ]
+      },
+      "expected": {
+        "ids": [
+          "magnesium"
+        ]
+      }
+    }
+  ]
+}

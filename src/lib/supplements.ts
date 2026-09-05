@@ -110,8 +110,50 @@ export function supplementCountForDate(isTraining: boolean, dbSlots: SupplementS
   return stackForDate(dbSlots, isTraining).reduce((n, s) => n + s.items.length, 0)
 }
 
-/** Has a slot's scheduled time ("HH:MM") passed in the DEVICE's local time? (for auto-log) */
-export function slotTimePassed(hhmm: string, now: Date = new Date()): boolean {
+/**
+ * Has a slot's scheduled time ("HH:MM") passed, given minutes since midnight?
+ *
+ * The minutes are an argument rather than a clock read so the rule is testable
+ * and so the Swift twin (`Supplements.slotTimePassed`) can be given the same
+ * number. A malformed time yields `NaN` and therefore `false` — an item whose
+ * slot cannot be read is never treated as due.
+ */
+export function slotMinutesPassed(hhmm: string, nowMinutes: number): boolean {
   const [h, m] = hhmm.split(':').map(Number)
-  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m
+  return nowMinutes >= h * 60 + m
+}
+
+/** Has a slot's scheduled time passed in the DEVICE's local time? */
+export function slotTimePassed(hhmm: string, now: Date = new Date()): boolean {
+  return slotMinutesPassed(hhmm, now.getHours() * 60 + now.getMinutes())
+}
+
+/**
+ * Whether an item had left the stack by `date` — `custom_supplements.archived_at`.
+ *
+ * ── WHY ARCHIVE AND NOT DELETE ───────────────────────────────────────────────
+ * Deleting a row takes its `schedule.key` with it, and that key is the join to
+ * every `supplement_log` row the item ever wrote. Deleting a supplement you
+ * stopped taking in June therefore rewrites June: the skips are still in the
+ * log, keyed to something no longer in the stack, and the day's credit changes
+ * under them. Archiving stops the item being scheduled from that date forward
+ * and leaves the history it already wrote alone.
+ *
+ * The comparison is on the DATE part of the instant, not the instant: archiving
+ * at 21:00 must not credit the 22:00 dose of the same evening while leaving the
+ * 10:30 one alone. An item is either in the day's protocol or it is not.
+ */
+export function isArchived(row: { archived_at?: string | null }, date: string): boolean {
+  const at = row.archived_at
+  return !!at && at.slice(0, 10) <= date
+}
+
+/** The rows still in the protocol on `date`. */
+export function activeOn<T extends { archived_at?: string | null }>(rows: readonly T[], date: string): T[] {
+  return rows.filter((r) => !isArchived(r, date))
+}
+
+/** The rows that had left it. */
+export function archivedOn<T extends { archived_at?: string | null }>(rows: readonly T[], date: string): T[] {
+  return rows.filter((r) => isArchived(r, date))
 }

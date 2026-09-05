@@ -81,12 +81,118 @@ public struct CustomSupplement: Codable, Equatable, Sendable {
     public var schedule: CustomSchedule?
     /// Micronutrient payload per UNIT of the dose; nil = contributes none.
     public var micros: [String: Double]?
+    /// When the row left the stack, as an ISO instant — `custom_supplements.
+    /// archived_at`. Nil is an item still in the protocol.
+    ///
+    /// ── WHY ARCHIVE AND NOT DELETE ──────────────────────────────────────────
+    /// The web deletes the row outright, which takes the item's `schedule.key`
+    /// with it — and that key is the join to every `supplement_log` row the
+    /// item ever wrote. Deleting a supplement you stopped taking in June
+    /// therefore rewrites June: the skips are still in the log, keyed to
+    /// something no longer in the stack, and the day's credit changes under
+    /// them. Archiving stops the item being scheduled from that date forward
+    /// and leaves the history it already wrote alone.
+    public var archivedAt: String?
+
+    /// `archived_at` is spelled the way the row spells it: the golden vectors
+    /// serialise this struct from the TypeScript side, where it is a raw
+    /// Supabase row and every other field already agrees by accident.
+    public enum CodingKeys: String, CodingKey {
+        case id, name, dose, color, form, time, schedule, micros
+        case archivedAt = "archived_at"
+    }
 
     public init(id: String, name: String, dose: String, color: String? = nil, form: String? = nil,
-                time: String? = nil, schedule: CustomSchedule? = nil, micros: [String: Double]? = nil) {
+                time: String? = nil, schedule: CustomSchedule? = nil, micros: [String: Double]? = nil,
+                archivedAt: String? = nil) {
         self.id = id; self.name = name; self.dose = dose; self.color = color
         self.form = form; self.time = time; self.schedule = schedule; self.micros = micros
+        self.archivedAt = archivedAt
     }
+}
+
+/// The row's id is its identity on a list. `sheet(item:)` wants it and the
+/// stack screen is the only caller.
+extension CustomSupplement: Identifiable {}
+
+/// What the day's log says about one item. Absence is not a state — it is the
+/// protocol, and `DoseState` resolves it against the clock.
+public struct DoseLogEntry: Codable, Equatable, Sendable {
+    public var itemKey: String
+    public var taken: Bool
+
+    public init(itemKey: String, taken: Bool) {
+        self.itemKey = itemKey
+        self.taken = taken
+    }
+}
+
+/// Where a scheduled dose stands.
+public enum DoseState: String, Codable, Equatable, Sendable {
+    /// A `taken = true` row: said explicitly, and counted the moment it is said.
+    case taken
+    /// No row, and the slot's time has come. The protocol is what happens
+    /// unless you say otherwise, so this counts.
+    case due
+    /// No row, and the slot is still ahead. Nothing has been taken yet, so
+    /// nothing is credited — a 22:00 magnesium must not appear in the day's
+    /// micros at breakfast.
+    case later
+    /// A `taken = false` row. Never counted.
+    case skipped
+}
+
+/// One scheduled dose of one day, resolved.
+public struct SupplementDose: Codable, Equatable, Sendable, Identifiable {
+    public var key: String
+    public var name: String
+    public var dose: String
+    public var slotKey: String
+    public var slotLabel: String
+    public var slotTime: String
+    public var trainingOnly: Bool?
+    public var notes: String?
+    public var customId: String?
+    public var state: DoseState
+
+    public var id: String { key }
+
+    /// Whether this dose's micronutrients count towards the day.
+    public var credited: Bool { state == .taken || state == .due }
+
+    public init(
+        key: String, name: String, dose: String, slotKey: String, slotLabel: String, slotTime: String,
+        trainingOnly: Bool? = nil, notes: String? = nil, customId: String? = nil, state: DoseState
+    ) {
+        self.key = key; self.name = name; self.dose = dose
+        self.slotKey = slotKey; self.slotLabel = slotLabel; self.slotTime = slotTime
+        self.trainingOnly = trainingOnly; self.notes = notes; self.customId = customId
+        self.state = state
+    }
+}
+
+/// Where the day sits against the clock.
+///
+/// A past day has had every slot and a future one has had none; only today
+/// needs a time of day. Modelled as two fields rather than an enum with an
+/// associated value so the golden vector is one flat object on both sides.
+public struct DayClock: Codable, Equatable, Sendable {
+    /// Minutes since local midnight — nil when the date is not today.
+    public var nowMinutes: Int?
+    /// True when the date is in the PAST. Ignored when `nowMinutes` is set.
+    public var dayIsOver: Bool
+
+    public init(nowMinutes: Int? = nil, dayIsOver: Bool = false) {
+        self.nowMinutes = nowMinutes
+        self.dayIsOver = dayIsOver
+    }
+
+    /// Today, at a time.
+    public static func today(minutes: Int) -> DayClock { DayClock(nowMinutes: minutes) }
+    /// A day that has already happened.
+    public static let past = DayClock(dayIsOver: true)
+    /// A day that has not happened yet.
+    public static let future = DayClock(dayIsOver: false)
 }
 
 public enum Supplements {
@@ -218,6 +324,69 @@ public enum Supplements {
                 }
             )
         }
+    }
+
+    // MARK: - Archive
+
+    /// Whether an item had left the stack by `date`.
+    ///
+    /// The comparison is on the DATE part of the instant, not the instant:
+    /// archiving at 21:00 must not credit the 22:00 dose of the same evening
+    /// while leaving the 10:30 one alone — the item is either in the day's
+    /// protocol or it is not.
+    public static func isArchived(_ c: CustomSupplement, on date: String) -> Bool {
+        guard let at = c.archivedAt, !at.isEmpty else { return false }
+        return String(at.prefix(10)) <= date
+    }
+
+    /// The rows still in the protocol on `date`.
+    public static func active(_ customs: [CustomSupplement], on date: String) -> [CustomSupplement] {
+        customs.filter { !isArchived($0, on: date) }
+    }
+
+    /// The rows that had left it.
+    public static func archived(_ customs: [CustomSupplement], on date: String) -> [CustomSupplement] {
+        customs.filter { isArchived($0, on: date) }
+    }
+
+    // MARK: - The day's doses
+
+    /// Every scheduled dose of the day, with where it stands.
+    ///
+    /// ── THE FOUR STATES, AND WHY `due` COUNTS ───────────────────────────────
+    /// `supplement_log` records EXCEPTIONS: a row exists to say a dose was
+    /// refused (`taken = false`) or explicitly confirmed (`taken = true`).
+    /// Absence is the protocol — you took it, because that is what the protocol
+    /// is — and the only question absence leaves open is WHEN. Crediting an
+    /// absent dose from 00:00 credited the night's magnesium at breakfast;
+    /// crediting it only on an explicit tick would have required ticking nine
+    /// items a day to make the micro totals true. So absence counts from the
+    /// slot's time, and an explicit tick counts immediately.
+    public static func doses(slots: [SupplementSlot], log: [DoseLogEntry], clock: DayClock) -> [SupplementDose] {
+        var states: [String: Bool] = [:]
+        for entry in log { states[entry.itemKey] = entry.taken }
+        return slots.flatMap { slot in
+            let passed = clock.nowMinutes.map { slotTimePassed(slot.time, nowMinutes: $0) } ?? clock.dayIsOver
+            return slot.items.map { item in
+                let state: DoseState
+                if let taken = states[item.key] {
+                    state = taken ? .taken : .skipped
+                } else {
+                    state = passed ? .due : .later
+                }
+                return SupplementDose(
+                    key: item.key, name: item.name, dose: item.dose,
+                    slotKey: slot.key, slotLabel: slot.label, slotTime: slot.time,
+                    trainingOnly: item.trainingOnly, notes: item.notes, customId: item.customId,
+                    state: state
+                )
+            }
+        }
+    }
+
+    /// The doses whose micronutrients count towards the day.
+    public static func creditedDoses(slots: [SupplementSlot], log: [DoseLogEntry], clock: DayClock) -> [SupplementDose] {
+        doses(slots: slots, log: log, clock: clock).filter(\.credited)
     }
 
     private static func timeOrder(_ a: String, _ b: String) -> Bool {

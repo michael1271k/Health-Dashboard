@@ -652,6 +652,17 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // The stack can be edited on the phone now, and an item that leaves it
+        // is ARCHIVED rather than deleted — see `SupplementEditing`. A fresh
+        // install gets the column from the regenerated mirror DDL at v9, so the
+        // guard is what stops this failing on a store that never needed it.
+        migrator.registerMigration("v13.supplementArchive") { db in
+            guard try !db.columns(in: "custom_supplements").contains(where: { $0.name == "archived_at" }) else { return }
+            try db.alter(table: "custom_supplements") { t in
+                t.add(column: "archived_at", .datetime)
+            }
+        }
+
         return migrator
     }
 }

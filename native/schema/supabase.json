@@ -102,7 +102,7 @@
         "id"
       ],
       "full": true,
-      "cols": "id:uuid,user_id:uuid,name:text,dose:text,color:text?,form:text?,time:text?,schedule:jsonb?,micros:jsonb?,created_at:timestamptz?"
+      "cols": "id:uuid,user_id:uuid,name:text,dose:text,color:text?,form:text?,time:text?,schedule:jsonb?,micros:jsonb?,created_at:timestamptz?,archived_at:timestamptz?"
     },
     "fatigue_logs": {
       "group": "daily",

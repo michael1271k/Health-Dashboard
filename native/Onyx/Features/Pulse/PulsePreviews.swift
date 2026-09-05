@@ -114,6 +114,40 @@ enum PulsePreviews {
         }
     }
 
+    /// A stack with every state on it at once: one due, one explicitly taken,
+    /// one skipped, two still ahead, and one archived.
+    ///
+    /// The clock is PINNED to 13:00 rather than read, so the Due and Later
+    /// sections hold the same rows whatever time the loop runs.
+    @MainActor
+    static func stackDay() -> DayModel {
+        let model = model { db in
+            let add = { (name: String, dose: String, time: String, key: String, micros: [String: Double]?) in
+                _ = try db.addCustomSupplement(
+                    userId: userId, name: name, dose: dose, color: nil, form: nil, time: time,
+                    schedule: CustomSchedule(key: key, slot: time == "10:30" ? "Morning" : "Before Bed"),
+                    micros: micros
+                )
+            }
+            try add("Two Per Day Multivitamin", "2 tabs", "10:30", "multivitamin", nil)
+            try add("Vitamin D3 + K2", "125 mcg", "10:30", "d3k2", nil)
+            try add("Creatine Monohydrate", "5 g", "10:30", "creatine", nil)
+            try add("Magnesium Glycinate", "300 mg", "22:00", "magnesium", nil)
+            try add("L-Theanine", "200 mg", "22:00", "theanine", nil)
+
+            let retired = try db.addCustomSupplement(
+                userId: userId, name: "Ashwagandha", dose: "600 mg", time: "22:00",
+                schedule: CustomSchedule(key: "ashwagandha")
+            )
+            try db.setCustomSupplementArchived(id: retired, userId: userId, archived: true, at: Date(timeIntervalSince1970: 1_756_000_000))
+
+            try db.markSupplement(userId: userId, date: date, itemKey: "d3k2", mark: .taken)
+            try db.markSupplement(userId: userId, date: date, itemKey: "creatine", mark: .skipped)
+        }
+        model.previewNowMinutes = 13 * 60
+        return model
+    }
+
     /// Nothing logged, but a reading three days earlier for the form to offer.
     @MainActor
     static func withHistory() -> DayModel {
@@ -144,6 +178,12 @@ enum PulsePreviews {
                 .environment(AppEnvironment.preview)
         case "day-swap":
             Presenting(model: fullDay()) { SwapDaySheet(model: $0) }
+                .environment(AppEnvironment.preview)
+        case "stack":
+            Observing(model: stackDay()) { StackView(model: $0) }
+                .environment(AppEnvironment.preview)
+        case "stack-add":
+            Presenting(model: stackDay()) { SupplementEditSheet(model: $0, editing: nil) }
                 .environment(AppEnvironment.preview)
         case "doms":
             // The tile alone, at the size it actually gets: half of what §5.7
@@ -185,6 +225,29 @@ enum PulsePreviews {
     }
 
     /// The screen with one of its sheets already up.
+    /// A screen the tab PUSHES, rendered on its own. It needs the model's
+    /// streams running — `PulseTabView` is what normally starts them, and a
+    /// pushed screen photographed without it draws the seed protocol instead of
+    /// the store's own stack.
+    private struct Observing<Content: View>: View {
+        /// `@State`, not a `let`: the harness rebuilds this view's arguments on
+        /// every pass, so a stored model would be a NEW in-memory database each
+        /// time and the streams would restart against a store the previous
+        /// render seeded. The first one wins and keeps its rows.
+        @State private var model: DayModel
+        @ViewBuilder let content: (DayModel) -> Content
+
+        init(model: DayModel, @ViewBuilder content: @escaping (DayModel) -> Content) {
+            _model = State(initialValue: model)
+            self.content = content
+        }
+
+        var body: some View {
+            NavigationStack { content(model) }
+                .task { await model.observe() }
+        }
+    }
+
     private struct Presenting<Sheet: View>: View {
         let model: DayModel
         @ViewBuilder let sheet: (DayModel) -> Sheet

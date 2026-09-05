@@ -256,39 +256,9 @@ public extension AppDatabase {
         })
     }
 
-    /// Mark a dose skipped, or undo that.
-    ///
-    /// Skipping writes the one row; undoing DELETES it rather than writing
-    /// `taken = true`, because absence is already the word for taken and two
-    /// spellings of one fact drift the first time the schedule changes under
-    /// them. `dueAt` is the slot's own time on that date, so the stamp says when
-    /// the dose was due rather than when the user got round to saying so.
-    func setSupplementSkipped(
-        userId: String, date: String, itemKey: String, skipped: Bool, dueAt: Date? = nil
-    ) throws {
-        try writer.write { db in
-            let key = ["user_id": userId, "date": date, "item_key": itemKey]
-            let scope = SupplementLogRow
-                .filter(Column("user_id") == userId && Column("date") == date && Column("item_key") == itemKey)
-            guard skipped else {
-                _ = try scope.deleteAll(db)
-                try Self.enqueueRowDelete(table: SupplementLogRow.databaseTableName, key: key, in: db)
-                return
-            }
-            var row = try scope.fetchOne(db) ?? SupplementLogRow(
-                userId: userId, date: date, itemKey: itemKey, taken: false,
-                takenAt: dueAt, updatedAt: Self.localWriteTimestamp
-            )
-            row.taken = false
-            row.takenAt = dueAt
-            try row.save(db)
-            try Self.enqueueRowUpsert(
-                table: SupplementLogRow.databaseTableName,
-                id: try Self.rowID(table: SupplementLogRow.databaseTableName, key: key, in: db),
-                in: db
-            )
-        }
-    }
+    // `setSupplementSkipped` moved to `SupplementEditing.swift`, where the
+    // log grew its third state (an explicit `taken = true`).
+
 
     // MARK: - cardio_logs
 

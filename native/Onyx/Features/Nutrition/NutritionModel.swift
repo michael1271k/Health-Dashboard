@@ -40,6 +40,10 @@ final class NutritionModel {
     private(set) var entries: [NutritionEntryRow]?
     private(set) var water: [WaterIntakeRow] = []
     private(set) var dailyTarget: DailyTargetRow?
+    /// What the supplement stack has delivered on this day. Read through
+    /// `AppDatabase.stackCredit`, which owns the one resolution of "is this a
+    /// training day" that Pulse and this tab must agree on.
+    private(set) var stack: StackCredit = .empty
     /// The selected day and the six before it, oldest first — the adherence dots
     /// and the macros-vs-goal strip. Always seven entries once loaded; a day
     /// with nothing logged is present and untracked.
@@ -109,6 +113,10 @@ final class NutritionModel {
         water = []
         dailyTarget = nil
         week = []
+        // Before the guard: the credit is a READ, not a stream, so a model that
+        // is only rendered — a preview, the shot loop — still shows the right
+        // number rather than an empty stack.
+        reloadStack()
         guard isObserving else { return }
         let date = self.date
         let weekStart = ISODate.addDays(date, -6) ?? date
@@ -118,7 +126,17 @@ final class NutritionModel {
             track(database.waterIntakeStream(userId: userId, date: date)) { [weak self] in self?.water = $0 },
             track(database.dailyTargetStream(userId: userId, date: date)) { [weak self] in self?.dailyTarget = $0 },
             track(database.nutritionWeekStream(userId: userId, from: weekStart, to: date)) { [weak self] in self?.week = $0 },
+            // The two tables that can move the stack's contribution within a
+            // day. The credit itself is re-read rather than derived here, so
+            // this tab and Pulse cannot disagree about the same date.
+            track(database.customSupplementsStream(userId: userId)) { [weak self] _ in self?.reloadStack() },
+            track(database.supplementLogStream(userId: userId, date: date)) { [weak self] _ in self?.reloadStack() },
         ]
+    }
+
+    /// Re-read the day's stack credit. Cheap: one pass over five small tables.
+    private func reloadStack() {
+        stack = (try? database.stackCredit(userId: userId, date: date, today: today)) ?? .empty
     }
 
     private func cancelDateTasks() {

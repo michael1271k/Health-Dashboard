@@ -162,7 +162,9 @@ struct DayScreen: View {
         .onChange(of: environment.scaleEntryRequests) { _, _ in
             if model.isToday { entering = true }
         }
-        .sheet(isPresented: $showStack) { StackSheet(model: model) }
+        // A push, not a sheet: the stack has sections, an editor and an
+        // archive, and a modal is for one decision (§W6).
+        .navigationDestination(isPresented: $showStack) { StackView(model: model) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 model.refreshToday()
