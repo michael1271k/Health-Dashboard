@@ -17,7 +17,7 @@ import HelixCore
 /// muscle belongs to everywhere else in the app, so the sections use the same
 /// mapping: the colour of the header is the colour that muscle draws in.
 struct VolumeTargetsView: View {
-    let model: YouModel
+    let model: SettingsModel
 
     var body: some View {
         Form {
@@ -86,7 +86,7 @@ struct VolumeTargetsView: View {
 #if DEBUG
 #Preview("Volume targets") {
     NavigationStack {
-        VolumeTargetsView(model: YouModel(
+        VolumeTargetsView(model: SettingsModel(
             database: try! .inMemory(deviceId: "preview"), userId: "preview"
         ))
     }

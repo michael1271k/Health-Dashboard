@@ -97,7 +97,7 @@ struct TodayTabView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 NavigationLink {
-                    SessionHistoryView()
+                    HistoryView()
                 } label: {
                     Image(systemName: "calendar")
                 }

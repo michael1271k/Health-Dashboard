@@ -68,7 +68,7 @@ private struct SignedInTabs: View {
                 NavigationStack { PulseTabView() }
             }
             SwiftUI.Tab("Settings", systemImage: "gearshape", value: Tab.you) {
-                NavigationStack { YouTabView() }
+                NavigationStack { SettingsTabView() }
             }
         }
         // `helix://open?path=…` from a widget or the Lock Screen card. The
@@ -93,7 +93,7 @@ private struct SignedInTabs: View {
         case .fuel: return .fuel
         // ponytail: the date is dropped — PulseTabView has no date initialiser yet; thread it through when Body grows a date route.
         case .body: return .body
-        // ponytail: Reports is a value-less NavigationLink inside YouTabView; landing on You is as deep as the shell can push today.
+        // ponytail: Reports is a value-less NavigationLink inside SettingsTabView; landing on You is as deep as the shell can push today.
         case .you, .reports: return .you
         }
     }

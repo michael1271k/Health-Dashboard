@@ -106,7 +106,7 @@ struct WorkoutTabView: View {
                     Label("Exercises", systemImage: "books.vertical")
                 }
                 NavigationLink {
-                    SessionHistoryView()
+                    HistoryView()
                 } label: {
                     Label("History", systemImage: "clock")
                 }

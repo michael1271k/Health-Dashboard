@@ -13,7 +13,7 @@ import HelixCore
 /// and that overusing it teaches people to tap through; this screen is the one
 /// place in the tab that earns it.
 struct PlanView: View {
-    let model: YouModel
+    let model: SettingsModel
 
     @State private var previewPlanId: String?
     @State private var previewPhase: ProgramPhase?
@@ -239,7 +239,7 @@ private struct RoutineDayView: View {
 #if DEBUG
 #Preview("Plan") {
     NavigationStack {
-        PlanView(model: YouModel(
+        PlanView(model: SettingsModel(
             database: try! .inMemory(deviceId: "preview"), userId: "preview"
         ))
     }

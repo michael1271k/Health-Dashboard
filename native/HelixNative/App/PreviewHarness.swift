@@ -32,7 +32,7 @@ enum PreviewHarness {
     /// show the user's own numbers — the state with the most controls visible,
     /// which is the one worth photographing.
     @MainActor
-    static func seededModel() -> YouModel {
+    static func seededModel() -> SettingsModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
         let userId = "00000000-0000-0000-0000-000000000001"
         try? database.editUserGoals(userId: userId) { row in
@@ -62,7 +62,7 @@ enum PreviewHarness {
             row.stepsGoal = 10000
             row.targetWeightKg = 62
         }
-        return YouModel(database: database, userId: userId)
+        return SettingsModel(database: database, userId: userId)
     }
 
     /// A week of real movements, one per display group, so the library shot
@@ -97,12 +97,14 @@ enum PreviewHarness {
         case "backfill":
             BackfillSheet(model: .preview).environment(AppEnvironment.preview)
         case "you":
-            NavigationStack { YouTabView(seeded: model) }.environment(AppEnvironment.preview)
+            NavigationStack { SettingsTabView(seeded: model) }.environment(AppEnvironment.preview)
         case "train":
             // Seeded from the history store: the This-week panel and the
             // Ready-to-progress box are both reads over the ledger, so an empty
             // database photographs the empty states rather than the screen.
             HistoryPreviews.view("train")
+        case "sync-status":
+            NavigationStack { SyncStatusView(seeded: .preview) }.environment(AppEnvironment.preview)
         case "levers":
             NavigationStack { LeversView(model: model) }
         case "plan":
@@ -134,14 +136,12 @@ enum PreviewHarness {
             LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals":
             TodayPreviews.view(screen)
-        case "history", "session", "session-ledger", "exercise-history":
+        case "history", "history-week", "session", "session-ledger", "exercise-history":
             HistoryPreviews.view(screen)
         case "trends", "trends-empty":
             TrendsPreviews.view(screen)
         case "body-trends", "body-trends-empty":
             BodyTrendsPreviews.view(screen)
-        case "pathfinder", "pathfinder-empty":
-            PathfinderPreviews.view(screen)
         case let s where s.hasPrefix("widgets"):
             WidgetPreviews.view(s)
         default:

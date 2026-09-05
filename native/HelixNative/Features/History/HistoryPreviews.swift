@@ -52,8 +52,16 @@ enum HistoryPreviews {
         case "library":
             NavigationStack { ExerciseLibraryView(seeded: PreviewHarness.sampleExercises) }
                 .environment(environment())
+        case "history-week":
+            // The seeded block's last full week — the one holding both the
+            // Tuesday cardio and the Wednesday swap, so the day rows show a
+            // logged day, a swapped day and a rest day in one photograph.
+            NavigationStack {
+                WeekDaysView(window: WeekWindow(containing: "2026-09-02", startDay: 0))
+            }
+            .environment(environment())
         default:
-            NavigationStack { SessionHistoryView() }.environment(environment())
+            NavigationStack { HistoryView() }.environment(environment())
         }
     }
 
@@ -108,6 +116,22 @@ enum HistoryPreviews {
                 try set("ex-raise", i + 1, w, r - 1, side: "right", pair: pair)
             }
             for i in 0..<2 { try set("ex-hkr", i + 1, 0, 12 + i + n / 2, rpe: 6) }
+        }
+
+        // ── ONE PPL-ERA SESSION ─────────────────────────────────────────────
+        // 8 July 2026 is inside the Thailand deload, which `Phases` tags `.ppl`
+        // — so History has two eras in it and the era filter is a control with
+        // something to do rather than one that can only empty the list. Its day
+        // key is not one of Helix-5's, which is the point: the schedule cannot
+        // speak for a week before Week 0, and this week must therefore draw no
+        // missed days at all.
+        let ppl = "s-2026-07-08"
+        let pplStart = LogicalDay.date(fromISO: "2026-07-08")!.addingTimeInterval(17 * 3600)
+        try WorkoutSession(id: ppl, userId: userId, dayKey: "push", date: "2026-07-08", startedAt: pplStart,
+                           endedAt: pplStart.addingTimeInterval(52 * 60), durationMin: 52, sessionRpe: 7).insert(db)
+        for (i, (w, r)) in [(32.0, 12), (32.0, 11), (32.0, 10)].enumerated() {
+            try WorkoutSet(id: "\(ppl)-incline-\(i)", sessionId: ppl, exerciseId: "ex-incline", setIndex: i + 1,
+                           weightKg: w, reps: r, est1rmKg: Epley.oneRepMax(weight: w, reps: Double(r)), rpe: 7, foldOrder: i).insert(db)
         }
 
         // One leg day, so the list has a second colour and Hack Squat a ledger.
