@@ -36,8 +36,12 @@ enum HistoryPreviews {
             NavigationStack { SessionDetailView(sessionId: lastSession, startAtLedger: true) }
                 .environment(environment())
         case "exercise-history":
-            NavigationStack { ExerciseDetailView(entry: incline, siblings: PreviewHarness.sampleExercises) }
-                .environment(environment())
+            // The HISTORY segment — the two-column set grid §W7 rebuilt. The
+            // Summary segment is `exercise`.
+            NavigationStack {
+                ExerciseDetailView(entry: incline, siblings: PreviewHarness.sampleExercises, startOnHistory: true)
+            }
+            .environment(environment())
         case "train":
             // ── WHY THE DATE IS PINNED ──────────────────────────────────────
             // The This-week panel is a picture of a WEEK, so a shot taken on a

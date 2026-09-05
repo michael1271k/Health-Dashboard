@@ -81,7 +81,9 @@ struct StackPushTests {
         #expect(try await self.drain(db, archive).pushed == 1)
         let archived = await archive.sent
         #expect(archived[0].json.contains("\"archived_at\""))
-        #expect(archived[0].nulls.isEmpty)
+        // The row carries a date now, so `archived_at` is NOT among the columns
+        // being cleared — the others are nil on this row and always were.
+        #expect(!archived[0].nulls.contains("archived_at"))
 
         // A merge upsert drops a nil rather than writing one, so the row would
         // stay archived on the server for ever without the explicit null.
@@ -89,7 +91,37 @@ struct StackPushTests {
         let restore = RecordingPush()
         #expect(try await self.drain(db, restore).pushed == 1)
         let restored = await restore.sent
-        #expect(restored[0].nulls == ["archived_at"])
+        #expect(restored[0].nulls.contains("archived_at"))
+    }
+
+    @Test("clearing a supplement's time reaches the server as a null")
+    func clearedColumnsAreNamed() async throws {
+        let db = try store()
+        let id = try db.addCustomSupplement(
+            userId: user, name: "Zinc", dose: "15 mg", color: "#8E9AAC", form: "tablet", time: "22:00",
+            schedule: CustomSchedule(key: "zinc"), micros: ["zinc": 15]
+        )
+        let created = RecordingPush()
+        try await drain(db, created)
+        // An INSERT has nothing to clear: there is no server row yet holding a
+        // stale value, so naming columns would be noise.
+        let onCreate = await created.sent
+        #expect(onCreate[0].nulls.isEmpty)
+
+        try db.editCustomSupplement(id: id, userId: user) { row in
+            row.time = nil
+            row.color = nil
+        }
+        let edited = RecordingPush()
+        #expect(try await self.drain(db, edited).pushed == 1)
+        let sentOnEdit = await edited.sent
+        let nulls = sentOnEdit[0].nulls
+        // A merge upsert omits a nil, so an unnamed cleared column would keep
+        // its old value on the server and come back on the next pull.
+        #expect(nulls.contains("time"))
+        #expect(nulls.contains("color"))
+        #expect(!nulls.contains("form"))
+        #expect(!nulls.contains("micros"))
     }
 
     @Test("deleting uploads a delete keyed on the id")
