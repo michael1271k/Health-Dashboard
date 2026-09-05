@@ -73,12 +73,19 @@ struct DayScreen: View {
     private func list(scroller: ScrollViewProxy) -> some View {
         List {
             if let failure = model.failure {
-                Label(failure, systemImage: "exclamationmark.triangle.fill")
-                    .onyxType(.caption)
-                    .foregroundStyle(Color.onyx.danger)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(OnyxSpace.m)
-                    .onyxGlass(.tile)
+                OnyxBanner(tone: .failure, title: "Not saved locally", message: failure).plainRow()
+            }
+
+            // The scale synced through Health and the InBody numbers it cannot
+            // know are still blank. Only on today — a past day's blanks are
+            // history, not a task.
+            if environment.weighInPending, model.isToday {
+                OnyxBanner(
+                    tone: .notice,
+                    title: "Finish the InBody reading",
+                    message: "Weight is in from Health. Muscle and water are still blank.",
+                    actionLabel: "Enter"
+                ) { entering = true }
                     .plainRow()
             }
 
@@ -151,6 +158,10 @@ struct DayScreen: View {
         }
         .sheet(isPresented: $ratingFatigue) { FatigueSheet(model: model) }
         .sheet(isPresented: $entering) { InBodyEntryView(model: model) }
+        // Today's banner switched to this tab and asked for the form.
+        .onChange(of: environment.scaleEntryRequests) { _, _ in
+            if model.isToday { entering = true }
+        }
         .sheet(isPresented: $showStack) { StackSheet(model: model) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

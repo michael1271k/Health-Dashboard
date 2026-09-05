@@ -669,35 +669,6 @@ struct DayColumn: View {
   }
 }
 
-// MARK: - Brand
-
-// ── WHY THE MARK IS DRAWN AND NOT SHIPPED AS AN IMAGE ────────────────────────
-// This sits at 12–16pt in a widget corner. A 1024px render with a glow
-// downsamples to about four grey pixels and a smudge — every feature that makes
-// it recognisable is smaller than a pixel at the size it would actually appear.
-// And iOS 18's accented rendering mode flattens an image to a single colour, so
-// an asset comes out as one flat blob that reads as a rendering fault.
-//
-// A stroked ring survives both: it reads small because it is a line rather than
-// a surface, and it takes the accented mode's ink for free. The shape itself is
-// `OnyxMark`, in `Brand/` — the faces only decide WHERE it goes.
-
-/// The mark, placed. Top-trailing, out of the way, never in the tap path.
-///
-/// Which faces carry it is each call site's decision, not this view's; it only
-/// knows how to draw it once that decision is made. Small faces pass a smaller
-/// `size` rather than opting out, since 150pt is short of surface but not short
-/// enough to be worth being the one widget family with no mark on it.
-struct OnyxBrand: View {
-  var monochrome = false
-  var size: CGFloat = 16
-
-  var body: some View {
-    OnyxMark(size: size, monochrome: monochrome)
-      .allowsHitTesting(false)
-  }
-}
-
 // MARK: - Type
 //
 // ── THE WIDGET SCALE IS NOT THE APP SCALE ────────────────────────────────────

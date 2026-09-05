@@ -370,23 +370,8 @@ struct LiveLoggerView: View {
     /// the failure being invisible — a set that looks logged and is not is the
     /// one outcome this whole data layer exists to prevent.
     private func banner(_ message: String) -> some View {
-        Label {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Not saved locally").onyxType(.secondary).fontWeight(.semibold)
-                Text(message)
-                    .onyxType(.caption)
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    .lineLimit(3)
-            }
-        } icon: {
-            Image(systemName: "exclamationmark.triangle.fill")
-        }
-        .foregroundStyle(Color.onyx.danger)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(OnyxSpace.m)
-        .onyxGlass(.row)
-        .padding(.horizontal, OnyxSpace.l)
-        .textSelection(.enabled)
+        OnyxBanner(tone: .failure, title: "Not saved locally", message: message)
+            .padding(.horizontal, OnyxSpace.l)
     }
 
     /// Stamp the session finished and take the card off the Lock Screen.

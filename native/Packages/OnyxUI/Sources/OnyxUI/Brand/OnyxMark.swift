@@ -109,6 +109,43 @@ public struct OnyxWordmark: View {
     }
 }
 
+// MARK: - The one seam
+
+public extension OnyxMark {
+    /// The room the corner mark needs, for a header row whose content runs to
+    /// the trailing edge. Most do not — they end in a `Spacer` — and the ones
+    /// that do reserve this rather than being drawn on.
+    static let faceInset: CGFloat = 24
+}
+
+
+public extension View {
+    /// The mark, placed — top-trailing, out of the way, never in the tap path.
+    ///
+    /// ── ONE OVERLAY, NOT THIRTY-SIX INLINE COPIES ───────────────────────────
+    /// Every face used to draw its own `OnyxBrand` inside whichever caption row
+    /// it happened to have, which is why the mark sat mid-tile on eleven of them
+    /// and inside a split column on six more: the corner is a property of the
+    /// FACE, and a view drawn inside a row cannot know where the face's corner
+    /// is. An overlay on the container knows exactly, at every family and every
+    /// size, and there is one of it.
+    ///
+    /// ── AND WHY STALENESS TAKES THE CORNER ──────────────────────────────────
+    /// The corner is one slot. A face whose data is hours old has something more
+    /// useful to say there than whose app it is, and `StaleTag` was already
+    /// drawn at the trailing edge of the same caption row — so the mark stands
+    /// down while the tag is up rather than being drawn on top of it.
+    func onyxMarked(monochrome: Bool = false, size: CGFloat = 12, hidden: Bool = false) -> some View {
+        overlay(alignment: .topTrailing) {
+            if !hidden {
+                OnyxMark(size: size, monochrome: monochrome)
+                    .padding(OnyxSpace.s)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+}
+
 #if DEBUG
 #Preview("Onyx mark") {
     VStack(spacing: OnyxSpace.xl) {

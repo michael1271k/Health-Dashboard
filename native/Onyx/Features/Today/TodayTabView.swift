@@ -53,6 +53,17 @@ struct TodayTabView: View {
         @Bindable var model = model
         return ScrollView {
             VStack(spacing: OnyxSpace.m) {
+                if environment.weighInPending {
+                    OnyxBanner(
+                        tone: .notice,
+                        title: "Weigh-in landed",
+                        message: "Health has today's weight. Muscle and water are still blank.",
+                        actionLabel: "Enter"
+                    ) {
+                        environment.requestScaleEntry()
+                        onOpenPulse()
+                    }
+                }
                 NowStrip(
                     score: model.feed?.snapshot.score,
                     battery: model.feed?.snapshot.battery,
@@ -66,11 +77,11 @@ struct TodayTabView: View {
                 DashboardGrid(model: model) { open($0, model) }
                 if model.editing { WidgetGallery(model: model) }
                 if let feed = model.feed {
-                    InsightCoachView(readiness: feed.readiness, insights: feed.insights)
+                    GoalBoardRow(board: feed.goalBoard)
                     WeekSoFarView(week: feed.weekSoFar)
                 }
                 if let failure = model.failure {
-                    Text(failure).onyxType(.caption).foregroundStyle(Color.onyx.danger)
+                    OnyxBanner(tone: .failure, title: "Today could not be built", message: failure)
                 }
             }
             .padding(OnyxSpace.l)

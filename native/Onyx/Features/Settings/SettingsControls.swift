@@ -34,6 +34,20 @@ extension View {
             .onyxScreen(domain)
             .tint(domain.accent)
     }
+
+    /// The neutral ground — a screen that belongs to no domain (§W5.2).
+    ///
+    /// Settings is about all four and therefore about none: painting it Ion
+    /// would say the tab is a training screen, and painting it a fifth colour
+    /// would add an accent that means nothing. The mesh goes grey; the controls
+    /// keep the app's own accent so a toggle still reads as Onyx's.
+    func onyxFormBackground() -> some View {
+        self
+            .scrollContentBackground(.hidden)
+            .listRowBackground(Rectangle().fill(.ultraThinMaterial))
+            .onyxScreen()
+            .tint(OnyxDomain.train.accent)
+    }
 }
 
 /// A section header in the screen's accent.

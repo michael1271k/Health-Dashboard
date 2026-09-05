@@ -32,7 +32,6 @@ struct CardioFocusFace: View {
         Caption("CARDIO", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       if let last = c?.last {
@@ -68,7 +67,6 @@ struct CardioLedgerFace: View {
         Caption("CARDIO", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 15)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -120,7 +118,6 @@ struct CardioLargeFace: View {
         Caption("CARDIO", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
 
       Register(title: "THIS WEEK", accent: mono ? .white : accent) {

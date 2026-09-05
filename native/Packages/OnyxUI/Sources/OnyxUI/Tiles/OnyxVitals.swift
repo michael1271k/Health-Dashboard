@@ -52,6 +52,7 @@ public struct VitalsView: View {
         face
       }
     }
+    .onyxMarked(monochrome: mono, hidden: entry.isStale)
     .containerBackground(Color.onyx.base, for: .widget)
     .widgetURL(focus.link(entry.snapshot?.date))
   }
@@ -220,7 +221,6 @@ struct VitalLeadFace: View {
         Caption(spec.label, color: mono ? .white : spec.color)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       BigValue(value: OnyxSnapshot.fixed(vital?.value, decimals: spec.decimals), size: 28, color: .white)
@@ -267,7 +267,6 @@ struct VitalPairFace: View {
         Caption("VITALS", color: mono ? .white : OnyxDomain.recover.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 15)
       }
 
       ForEach(Array(specs.enumerated()), id: \.offset) { _, spec in
@@ -302,7 +301,6 @@ struct VitalsPanelFace: View {
         Caption("VITALS", color: mono ? .white : OnyxDomain.recover.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: large ? 16 : 15)
       }
 
       if s?.vitals == nil {

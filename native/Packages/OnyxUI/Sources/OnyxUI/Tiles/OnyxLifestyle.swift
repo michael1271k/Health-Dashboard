@@ -167,6 +167,7 @@ public struct FuelView: View {
         face
       }
     }
+    .onyxMarked(monochrome: mono, hidden: entry.isStale)
     .containerBackground(Color.onyx.base, for: .widget)
     // ── EXACTLY ONE widgetURL, AT THE ROOT ────────────────────────────────────
     // `widgetURL` is a per-widget property, not a per-view one: declaring it on
@@ -239,6 +240,7 @@ public struct BodyView: View {
         face
       }
     }
+    .onyxMarked(monochrome: mono, hidden: entry.isStale)
     .containerBackground(Color.onyx.base, for: .widget)
     .widgetURL(focus.link(entry.snapshot?.date))
   }
@@ -289,7 +291,6 @@ struct FocusFace: View {
         Caption(spec.caption, color: accent)
         Spacer(minLength: 0)
         if stale { StaleTag(age: age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
       BigValue(value: spec.hero, size: 30, color: .white)
       if let sub = spec.sub {
@@ -334,7 +335,6 @@ struct CalorieLedgerFace: View {
       HStack(spacing: 4) {
         Caption("KCAL LEFT", color: tint(OnyxDomain.fuel.accent))
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
       BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 30, color: .white)
       Rail(progress: OnyxSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -408,7 +408,6 @@ struct WaterLedgerFace: View {
       HStack(spacing: 4) {
         Caption("WATER", color: tint(Color.onyx.water))
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
       Spacer(minLength: 0)
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -512,7 +511,6 @@ struct SleepArcFace: View {
         Caption("SLEEP", color: mono ? .white : OnyxDomain.recover.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       DepthArc(segments: sleepSegments(s), minutes: s?.sleep.minutes,
@@ -558,8 +556,9 @@ struct SleepDepthFace: View {
           Text("score \(score)").font(OnyxWidgetType.face(9, weight: .semibold)).foregroundStyle(.white)
         }
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
+      // The corner belongs to the mark; this row's content runs to the edge.
+      .padding(.trailing, OnyxMark.faceInset)
 
       HStack(spacing: 12) {
         DepthArc(segments: segments, minutes: s?.sleep.minutes,
@@ -651,7 +650,6 @@ struct SleepLargeFace: View {
             }
             Spacer(minLength: 0)
             if entry.isStale { StaleTag(age: entry.age) }
-            OnyxBrand(monochrome: mono)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -750,7 +748,6 @@ struct WeightFocusFace: View {
         Caption("WEIGHT", color: accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -799,8 +796,9 @@ struct WeightTrendFace: View {
           Text(measured).font(OnyxWidgetType.face(9)).foregroundStyle(Color.onyx.textSecondary)
         }
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
+      // The corner belongs to the mark; this row's content runs to the edge.
+      .padding(.trailing, OnyxMark.faceInset)
 
       HStack(alignment: .firstTextBaseline, spacing: 6) {
         BigValue(value: s?.weight.kg.map { String(format: "%.1f", $0) }, size: 28, color: .white)
@@ -878,7 +876,6 @@ struct WeightLargeFace: View {
           DeltaChip(delta: s?.weight.deltaKg, decimals: 1, upIsGood: false, monochrome: mono)
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
           if let measured = OnyxSnapshot.relativeDay(s?.weight.measuredOn) {
             Text(measured).font(OnyxWidgetType.face(9)).foregroundStyle(Color.onyx.textSecondary)
           }
@@ -989,7 +986,6 @@ struct CalorieDayFace: View {
           }
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: OnyxSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -1179,7 +1175,6 @@ struct MacroFocusFace: View {
         ContextChip(context: s?.context, monochrome: mono)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 22, color: .white)
@@ -1220,8 +1215,9 @@ struct MacroFace: View {
         BigValue(value: s?.caloriesRemaining.map { "\($0)" }, size: 20, color: .white)
         Text("kcal left").font(OnyxWidgetType.face(9)).foregroundStyle(Color.onyx.textSecondary)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
       }
+      // The corner belongs to the mark; this row's content runs to the edge.
+      .padding(.trailing, OnyxMark.faceInset)
 
       Rail(progress: OnyxSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
            color: tint(OnyxDomain.fuel.accent), height: 4)
@@ -1320,7 +1316,6 @@ struct MacroLargeFace: View {
           Text("kcal left").font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary)
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: OnyxSnapshot.progress(s?.macros.kcal, s?.macros.kcalGoal),
@@ -1488,7 +1483,6 @@ struct WaterLargeFace: View {
           }
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
           BatteryRing(pct: s?.battery, size: 38, lineWidth: 5, monochrome: mono)
         }
         Rail(progress: OnyxSnapshot.progress(s?.water.ml, s?.water.goalMl),
@@ -1578,7 +1572,6 @@ struct WellbeingLedgerFace: View {
         HStack(spacing: 4) {
           Caption("SCORE", color: mono ? .white : OnyxDomain.recover.accent)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
         }
         Spacer(minLength: 0)
         BigValue(value: s?.score.map { "\($0)" }, size: 34, color: .white)
@@ -1629,9 +1622,10 @@ struct WellbeingFace: View {
         Caption("WELL-BEING", color: tint(OnyxDomain.recover.accent))
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono)
         BatteryRing(pct: s?.battery, size: 40, lineWidth: 5, monochrome: mono)
       }
+      // The corner belongs to the mark; this row's content runs to the edge.
+      .padding(.trailing, OnyxMark.faceInset)
 
       HStack(alignment: .bottom, spacing: 8) {
         BigValue(value: s?.score.map { "\($0)" }, size: 40, color: .white)

@@ -51,6 +51,7 @@ public struct TrainingView: View {
         face
       }
     }
+    .onyxMarked(monochrome: mono, hidden: entry.isStale)
     .containerBackground(Color.onyx.base, for: .widget)
     .widgetURL(focus.link(entry.snapshot?.date))
   }
@@ -290,7 +291,6 @@ private struct TodayHeader: View {
       // Every size, sized to the room it has. It used to be Medium-and-up
       // only, so the Small Today face — the most-installed widget in the set —
       // was the one that never said whose it was.
-      OnyxBrand(monochrome: mono, size: branded ? 15 : 12)
     }
   }
 
@@ -572,7 +572,6 @@ struct CalendarFace: View {
         // The mark, at every size. Small pays for it by dropping the streak
         // flame below — of the two, the one that has to survive is the one that
         // says whose widget this is; the streak is on the Today face as well.
-        OnyxBrand(monochrome: mono, size: compact ? 12 : 15)
         if !compact, let streak = s?.streak, streak.current > 0 {
           HStack(spacing: 3) {
             Image(systemName: "flame.fill")
@@ -806,7 +805,6 @@ struct VolumeFocusFace: View {
         Caption("VOLUME", color: mono ? .white : OnyxDomain.train.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
       BigValue(value: OnyxSnapshot.tonnes(s?.week.volumeKg), size: 28, color: .white)
       HStack(spacing: 5) {
@@ -895,7 +893,6 @@ struct VolumeLargeFace: View {
           DeltaChip(delta: volumeDeltaTonnes(s), decimals: 1, suffix: " t", monochrome: mono)
           Spacer(minLength: 0)
           if entry.isStale { StaleTag(age: entry.age) }
-          OnyxBrand(monochrome: mono)
         }
         HStack(spacing: 0) {
           Stat(value: sessionsText(s), label: "SESSIONS", color: .white)
@@ -987,7 +984,6 @@ struct StreakFace: View {
         Caption("PROGRAM DAY", color: mono ? .white : OnyxDomain.train.accent)
         Spacer(minLength: 0)
         if entry.isStale { StaleTag(age: entry.age) }
-        OnyxBrand(monochrome: mono, size: 12)
       }
 
       Spacer(minLength: 0)

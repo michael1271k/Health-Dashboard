@@ -16,7 +16,8 @@ public struct TodayFeed: Sendable, Equatable {
     public var snapshot: OnyxSnapshot
     /// The coach headline — scored readiness made aware of the plan.
     public var readiness: ReadinessResult?
-    public var insights: [Insight]
+    /// The phase, as three numbers: the rate, the arrival and the week's ledger.
+    public var goalBoard: GoalBoard
     public var weekSoFar: WeekSoFarSummary
     /// The week-complete CTA fires on the first day of a new week, once every
     /// training day the previous week asked for was logged.
@@ -24,10 +25,10 @@ public struct TodayFeed: Sendable, Equatable {
     /// Last week's start, for the CTA's destination.
     public var lastWeekStart: String
 
-    public init(snapshot: OnyxSnapshot, readiness: ReadinessResult?, insights: [Insight], weekSoFar: WeekSoFarSummary, weeklySummaryReady: Bool, lastWeekStart: String) {
+    public init(snapshot: OnyxSnapshot, readiness: ReadinessResult?, goalBoard: GoalBoard, weekSoFar: WeekSoFarSummary, weeklySummaryReady: Bool, lastWeekStart: String) {
         self.snapshot = snapshot
         self.readiness = readiness
-        self.insights = insights
+        self.goalBoard = goalBoard
         self.weekSoFar = weekSoFar
         self.weeklySummaryReady = weeklySummaryReady
         self.lastWeekStart = lastWeekStart
@@ -60,8 +61,11 @@ public struct TodayFeedBuilder: Sendable {
     public let userId: String
     public let timeZone: TimeZone
 
-    /// The Fuel→Force correlator wants two months.
-    static let insightDays = 60
+    /// Four weeks: long enough that the weight regression has twenty-odd
+    /// readings to fit, short enough that a rate is about THIS phase. The
+    /// Insight Coach wanted two months for its correlations; it is gone (§W5.3)
+    /// and so is the read.
+    static let windowDays = 28
 
     public init(database: AppDatabase, userId: String, timeZone: TimeZone = .current) {
         self.database = database
@@ -89,45 +93,46 @@ public struct TodayFeedBuilder: Sendable {
         let weekStart = WeekWindow(containing: today, startDay: Week.startDay(fromEndDay: goals?.weekEndDay), today: today).start
         let lastWeekStart = ISODate.addDays(weekStart, -7) ?? weekStart
         let lastWeekEnd = ISODate.addDays(weekStart, -1) ?? weekStart
-        let insightsFrom = ISODate.addDays(today, -Self.insightDays) ?? today
+        let windowFrom = ISODate.addDays(today, -Self.windowDays) ?? today
 
         let user = Column("user_id") == userId
-        let (days, sessionPoints, weekCur, weekPrev, lastWeekLogged) = try database.writer.read { db in
-            let logs = try DailyLogRow.filter(user && Column("date") >= insightsFrom && Column("date") <= today)
+        let (readings, energy, phaseGoalRow, weekCur, weekPrev, lastWeekLogged) = try database.writer.read { db in
+            let logs = try DailyLogRow.filter(user && Column("date") >= windowFrom && Column("date") <= today)
                 .order(Column("date")).fetchAll(db)
-            let meals = try NutritionEntryRow.filter(user && Column("meal_type") == "daily" && Column("date") >= insightsFrom && Column("date") <= today)
+            let meals = try NutritionEntryRow.filter(user && Column("meal_type") == "daily" && Column("date") >= windowFrom && Column("date") <= today)
                 .fetchAll(db)
-            var calories: [String: Double] = [:], carbs: [String: Double] = [:]
-            for m in meals { calories[m.date] = m.calories; carbs[m.date] = m.carbsG }
-            let calorieGoal = goals?.calorieGoal.map(Double.init)
-            let days = logs.map { l in
-                DayPoint(
+            var calories: [String: Double] = [:]
+            for m in meals { calories[m.date] = m.calories }
+
+            // The scale, over the whole window. `validWeight` is what stops a
+            // carried-forward zero entering the regression.
+            let readings = logs.map { GoalBoard.Reading(date: $0.date, weightKg: Format.validWeight($0.weightKg)) }
+
+            // The ledger, over THIS week only. `Energy.tdee` is all-or-nothing
+            // by design, so a day missing its active energy contributes nothing
+            // rather than a deficit ~400 kcal too large.
+            let energy = logs.filter { $0.date >= weekStart }.map { l in
+                GoalBoard.EnergyDay(
                     date: l.date,
-                    sleepMin: l.sleepMinutes.map(Double.init),
-                    restHr: (l.avgRestHeartRate ?? l.avgHeartRate).map(Double.init),
-                    respiratory: l.respiratoryRate,
-                    weightKg: Format.validWeight(l.weightKg),
-                    calories: calories[l.date],
-                    calorieGoal: calorieGoal,
-                    carbsG: carbs[l.date],
-                    steps: l.steps.map(Double.init),
-                    waterMl: l.waterMl,
-                    exception: l.nutritionException
+                    intakeKcal: calories[l.date],
+                    tdeeKcal: Energy.tdee(bmr: l.bmr, active: l.activeEnergy, intakeKcal: calories[l.date])
                 )
             }
 
+            // The phase's own targets, when the user has edited them; the
+            // plan's preset otherwise.
+            let phaseGoalRow = try PlanPhaseGoalRow
+                .filter(user && Column("plan_id") == programId && Column("phase") == schedule.phase.rawValue)
+                .fetchOne(db)
+
             // Sessions with their volume, the same way the snapshot totals them.
-            let sessions = try WorkoutSession.filter(user && Column("date") >= insightsFrom && Column("date") <= today)
+            let sessions = try WorkoutSession.filter(user && Column("date") >= windowFrom && Column("date") <= today)
                 .order(Column("date")).fetchAll(db)
             let ids = sessions.map(\.id)
             let sets = ids.isEmpty ? [] : try WorkoutSet.filter(ids.contains(Column("session_id"))).fetchAll(db)
             var setsBySession: [String: [WorkoutSet]] = [:]
             for s in sets { setsBySession[s.sessionId, default: []].append(s) }
             let volumes = sessions.map { ($0, WidgetSnapshotBuilder.volume(setsBySession[$0.id] ?? [])) }
-            let points = volumes
-                .filter { !($0.0.notes ?? "").hasPrefix("__seed_") }
-                .map { SessionPoint(date: $0.0.date, volumeKg: $0.1) }
-
             let nights = try SleepSessionRow.filter(user).order(Column("start_time").desc).limit(30).fetchAll(db)
             let scores = try DailyScoreRow.filter(user && Column("date") >= lastWeekStart && Column("date") <= today).fetchAll(db)
             func totals(_ from: String, _ to: String) -> WeekTotals {
@@ -140,7 +145,7 @@ public struct TodayFeedBuilder: Sendable {
                 return WeekTotals(volumeKg: wk.reduce(0) { $0 + $1.1 }, sessions: wk.count, sleepMin: mean(sl), score: mean(sc))
             }
             let logged = Set(sessions.filter { $0.date >= lastWeekStart && $0.date <= lastWeekEnd }.map(\.date))
-            return (days, points, totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged)
+            return (readings, energy, phaseGoalRow, totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged)
         }
 
         let base = snapshot.readiness.flatMap { r in
@@ -152,7 +157,16 @@ public struct TodayFeedBuilder: Sendable {
             contextMode: goals?.contextMode ?? "normal",
             reentry: ScheduleReadiness.isReentryWeek(today)
         ))
-        let insights = Insights.compute(days: days, sessions: sessionPoints, contextMode: goals?.contextMode, todayISO: today)
+
+        let preset = Programs.goals(planId: programId, phase: schedule.phase)
+        let goalBoard = GoalBoard.build(
+            readings: readings,
+            energy: energy,
+            targetWeightKg: phaseGoalRow?.targetWeightKg ?? preset.targetWeightKg,
+            rateMinKgWk: phaseGoalRow?.rateMinKgWk ?? preset.rateMinKgWk,
+            rateMaxKgWk: phaseGoalRow?.rateMaxKgWk ?? preset.rateMaxKgWk,
+            today: today
+        )
 
         let weekSoFar = WeekSoFarSummary(
             weekStart: weekStart,
@@ -170,7 +184,7 @@ public struct TodayFeedBuilder: Sendable {
             }
 
         return TodayFeed(
-            snapshot: snapshot, readiness: readiness, insights: insights,
+            snapshot: snapshot, readiness: readiness, goalBoard: goalBoard,
             weekSoFar: weekSoFar, weeklySummaryReady: weeklySummaryReady, lastWeekStart: lastWeekStart
         )
     }

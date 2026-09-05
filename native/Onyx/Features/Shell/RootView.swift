@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import OnyxCore
 import OnyxData
 
@@ -41,6 +42,8 @@ private struct SignedInTabs: View {
 
     @Environment(AppEnvironment.self) private var environment
     @State private var selection: Tab = Self.initialTab
+    /// 0…1. The mesh behind every screen dims with it (§W5.2).
+    @State private var battery: Double = 1
 
     /// `ONYX_START_TAB=nutrition` (DEBUG launch environment): open on a tab,
     /// for a gate that watches one tab react to a server change. A deep link
@@ -85,6 +88,18 @@ private struct SignedInTabs: View {
                 NavigationStack { SettingsTabView() }
             }
         }
+        .environment(\.onyxBatteryLevel, battery)
+        // The battery the backgrounds read. Monitoring is off by default and
+        // costs nothing to enable; an unknown level reads −1, which is the one
+        // value that must NOT become a dimmed screen — a simulator, a preview
+        // and a device that has not answered yet all report it.
+        .task {
+            UIDevice.current.isBatteryMonitoringEnabled = true
+            battery = Self.batteryLevel
+            for await _ in NotificationCenter.default.notifications(named: UIDevice.batteryLevelDidChangeNotification) {
+                battery = Self.batteryLevel
+            }
+        }
         // `onyx://open?path=…` from a widget or the Lock Screen card. The
         // allow-list runs first; an unknown path is ignored, not "home".
         .onOpenURL { url in
@@ -98,6 +113,11 @@ private struct SignedInTabs: View {
         .fullScreenCover(isPresented: Binding(get: { environment.backfill != nil }, set: { _ in })) {
             if let model = environment.backfill { BackfillSheet(model: model) }
         }
+    }
+
+    private static var batteryLevel: Double {
+        let raw = Double(UIDevice.current.batteryLevel)
+        return raw < 0 ? 1 : min(max(raw, 0), 1)
     }
 
     private static func tab(for destination: DeepLink.Destination) -> Tab {
