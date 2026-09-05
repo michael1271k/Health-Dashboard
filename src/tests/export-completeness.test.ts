@@ -353,7 +353,7 @@ describe('the derived section is fenced off from the measurements', () => {
 
   it('says out loud that nothing under it is a measurement', () => {
     const out = buildWeeklyExport(base)
-    expect(out).toMatch(/## Derived \(computed by HELIX — not measured\)/)
+    expect(out).toMatch(/## Derived \(computed by Onyx — not measured\)/)
     expect(out).toMatch(/Everything above this heading is a measurement/)
   })
 

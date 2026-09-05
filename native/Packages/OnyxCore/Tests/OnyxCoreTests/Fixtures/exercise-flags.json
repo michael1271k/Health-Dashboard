@@ -1,0 +1,6646 @@
+{
+  "module": "exercises/{bodyweight,unilateral,timed,icons,muscleMap}",
+  "fn": "isBodyweightExercise / isUnloadedExercise / isLoadableBodyweightExercise / isUnilateralExercise / isTimedExercise / exerciseIconFor().label / lookupMuscles / muscleGroupsFor / resolveMovers",
+  "note": "Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is OnyxUI's. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).",
+  "cases": [
+    {
+      "name": "Bicep Curl DB",
+      "input": {
+        "name": "Bicep Curl DB",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Butterfly Pec Deck",
+      "input": {
+        "name": "Butterfly Pec Deck",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Cable Overhead Extension",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Calf Press",
+      "input": {
+        "name": "Calf Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Chest Press (Machine)",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Chest Press Machine",
+      "input": {
+        "name": "Chest Press Machine",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Crunch Machine",
+      "input": {
+        "name": "Crunch Machine",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "DB Hammer Curl",
+      "input": {
+        "name": "DB Hammer Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DB RDL",
+      "input": {
+        "name": "DB RDL",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DB Shoulder Press",
+      "input": {
+        "name": "DB Shoulder Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Face Pull",
+      "input": {
+        "name": "Face Pull",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "groups": [
+          "rear_delts",
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hack Squat",
+      "input": {
+        "name": "Hack Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hammer Curl DB",
+      "input": {
+        "name": "Hammer Curl DB",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hanging Knee Raise",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Hanging",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Hip Adduction",
+      "input": {
+        "name": "Hip Adduction",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Hip Thrust",
+      "input": {
+        "name": "Hip Thrust",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hip Thrust (Machine)",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hollow Rock",
+      "input": {
+        "name": "Hollow Rock",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Incline DB Press",
+      "input": {
+        "name": "Incline DB Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Lat Pulldown",
+      "input": {
+        "name": "Lat Pulldown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Lateral Raise DB",
+      "input": {
+        "name": "Lateral Raise DB",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Leg Extension",
+      "input": {
+        "name": "Leg Extension",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "quadriceps"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Leg Press",
+      "input": {
+        "name": "Leg Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Lying Leg Raises",
+      "input": {
+        "name": "Lying Leg Raises",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Machine Hip Thrust",
+      "input": {
+        "name": "Machine Hip Thrust",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "groups": [
+          "glutes",
+          "hamstrings",
+          "quadriceps",
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quadriceps",
+            "adductors"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Overhead Triceps Extension",
+      "input": {
+        "name": "Overhead Triceps Extension",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Pec Deck",
+      "input": {
+        "name": "Pec Deck",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Preacher Curl",
+      "input": {
+        "name": "Preacher Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Preacher Curl (Machine)",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "RDL DB",
+      "input": {
+        "name": "RDL DB",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reverse Crunch",
+      "input": {
+        "name": "Reverse Crunch",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Reverse EZ-Bar Curl",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Romanian Deadlift (DB)",
+      "input": {
+        "name": "Romanian Deadlift (DB)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell)",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Rope Triceps Pushdown",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Russian Twist",
+      "input": {
+        "name": "Russian Twist",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Seated Cable Row",
+      "input": {
+        "name": "Seated Cable Row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Seated Cable Row (V-Grip)",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip)",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Seated DB Wrist Curl",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Seated Incline DB Curl",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Seated Leg Curl",
+      "input": {
+        "name": "Seated Leg Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "calves"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "calves"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Side Plank",
+      "input": {
+        "name": "Side Plank",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": true,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "groups": [
+          "obliques",
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "abdominals"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Single Arm Cable Crossover",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable)",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable)",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Straight Arm Pulldown",
+      "input": {
+        "name": "Straight Arm Pulldown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "lats",
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Straight-Arm Pulldown",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "lats",
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Triceps Rope Pushdown",
+      "input": {
+        "name": "Triceps Rope Pushdown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "cable lateral raise",
+      "input": {
+        "name": "cable lateral raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "chest press machine",
+      "input": {
+        "name": "chest press machine",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "close grip lat pulldown (cable)",
+      "input": {
+        "name": "close grip lat pulldown (cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "hack/smith squat",
+      "input": {
+        "name": "hack/smith squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Barbell",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "incline db bench press",
+      "input": {
+        "name": "incline db bench press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "incline dumbbell bench press",
+      "input": {
+        "name": "incline dumbbell bench press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "incline dumbbell press",
+      "input": {
+        "name": "incline dumbbell press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "lat pulldown - close grip (cable)",
+      "input": {
+        "name": "lat pulldown - close grip (cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "lat pulldown close grip (cable)",
+      "input": {
+        "name": "lat pulldown close grip (cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "leg press horizontal",
+      "input": {
+        "name": "leg press horizontal",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "leg press horizontal (machine)",
+      "input": {
+        "name": "leg press horizontal (machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "machine chest press",
+      "input": {
+        "name": "machine chest press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "groups": [
+          "chest",
+          "triceps",
+          "front_delts"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": [
+            "triceps",
+            "front_delts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "sa lateral raise",
+      "input": {
+        "name": "sa lateral raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "sa lateral raise (cable)",
+      "input": {
+        "name": "sa lateral raise (cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "seated cable row (v grip)",
+      "input": {
+        "name": "seated cable row (v grip)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "seated cable row (wide bar)",
+      "input": {
+        "name": "seated cable row (wide bar)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "seated cable row - bar wide grip",
+      "input": {
+        "name": "seated cable row - bar wide grip",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "seated cable row - v-bar",
+      "input": {
+        "name": "seated cable row - v-bar",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "seated cable row v-grip",
+      "input": {
+        "name": "seated cable row v-grip",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "single arm cable lateral raise",
+      "input": {
+        "name": "single arm cable lateral raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "smith squat",
+      "input": {
+        "name": "smith squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Barbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "wide-grip cable row",
+      "input": {
+        "name": "wide-grip cable row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hanging Leg Raises",
+      "input": {
+        "name": "Hanging Leg Raises",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Hanging",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Crunch",
+      "input": {
+        "name": "Crunch",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Crunches",
+      "input": {
+        "name": "Crunches",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Crunch (Machine)",
+      "input": {
+        "name": "Crunch (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Cable Crunch",
+      "input": {
+        "name": "Cable Crunch",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Push-Up",
+      "input": {
+        "name": "Push-Up",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Push Up",
+      "input": {
+        "name": "Push Up",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pushups",
+      "input": {
+        "name": "Pushups",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pull-Up",
+      "input": {
+        "name": "Pull-Up",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Hanging",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Chin Up",
+      "input": {
+        "name": "Chin Up",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Chinups",
+      "input": {
+        "name": "Chinups",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dips",
+      "input": {
+        "name": "Dips",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dip",
+      "input": {
+        "name": "Dip",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Assisted Dip",
+      "input": {
+        "name": "Assisted Dip",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Assisted Pull-Up (Machine)",
+      "input": {
+        "name": "Assisted Pull-Up (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Hanging",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Back Extension",
+      "input": {
+        "name": "Back Extension",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": true,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Glute Bridge",
+      "input": {
+        "name": "Glute Bridge",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Barbell Glute Bridge",
+      "input": {
+        "name": "Barbell Glute Bridge",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Barbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Mountain Climbers",
+      "input": {
+        "name": "Mountain Climbers",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bicycle Crunch",
+      "input": {
+        "name": "Bicycle Crunch",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": [
+            "obliques"
+          ]
+        },
+        "groups": [
+          "abdominals",
+          "obliques"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": [
+            "obliques"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": [
+            "obliques"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Flutter Kicks",
+      "input": {
+        "name": "Flutter Kicks",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Air Squat",
+      "input": {
+        "name": "Air Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Lateral Raise",
+      "input": {
+        "name": "Lateral Raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Front Raise",
+      "input": {
+        "name": "Front Raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Leg Raise",
+      "input": {
+        "name": "Leg Raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": true,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "abdominals"
+        ],
+        "movers": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "abdominals"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Plank",
+      "input": {
+        "name": "Plank",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hollow Hold",
+      "input": {
+        "name": "Hollow Hold",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dead Hang",
+      "input": {
+        "name": "Dead Hang",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Wall Sit",
+      "input": {
+        "name": "Wall Sit",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "L-Sit",
+      "input": {
+        "name": "L-Sit",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Farmer Carry",
+      "input": {
+        "name": "Farmer Carry",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": false,
+        "timed": true,
+        "icon": "Loaded carry",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Single Arm Cable Row",
+      "input": {
+        "name": "Single Arm Cable Row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Single-Leg Press",
+      "input": {
+        "name": "Single-Leg Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "One Arm Dumbbell Row",
+      "input": {
+        "name": "One Arm Dumbbell Row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "1-Arm Lat Pulldown",
+      "input": {
+        "name": "1-Arm Lat Pulldown",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Unilateral Leg Extension",
+      "input": {
+        "name": "Unilateral Leg Extension",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "quadriceps"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Curl per side",
+      "input": {
+        "name": "Curl per side",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Each arm curl",
+      "input": {
+        "name": "Each arm curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ea leg press",
+      "input": {
+        "name": "ea leg press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bulgarian Split Squat",
+      "input": {
+        "name": "Bulgarian Split Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Split Squat",
+      "input": {
+        "name": "Split Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Walking Lunges",
+      "input": {
+        "name": "Walking Lunges",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Lunge",
+      "input": {
+        "name": "Lunge",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Step-Up",
+      "input": {
+        "name": "Step-Up",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Step Ups",
+      "input": {
+        "name": "Step Ups",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pistol Squat",
+      "input": {
+        "name": "Pistol Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Skater Squats",
+      "input": {
+        "name": "Skater Squats",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Copenhagen Plank",
+      "input": {
+        "name": "Copenhagen Plank",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": true,
+        "timed": true,
+        "icon": "Timed hold",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Suitcase Carry",
+      "input": {
+        "name": "Suitcase Carry",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": true,
+        "loadable": false,
+        "unilateral": true,
+        "timed": true,
+        "icon": "Loaded carry",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Suitcase Deadlift",
+      "input": {
+        "name": "Suitcase Deadlift",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": true,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Double Arm Cable Row",
+      "input": {
+        "name": "Double Arm Cable Row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "upper back",
+          "lats",
+          "traps",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "upper back"
+          ],
+          "secondary": [
+            "lats",
+            "traps",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Two-Arm Lunge",
+      "input": {
+        "name": "Two-Arm Lunge",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Both Leg Press",
+      "input": {
+        "name": "Both Leg Press",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "groups": [
+          "quadriceps",
+          "glutes",
+          "hamstrings"
+        ],
+        "movers": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "quadriceps"
+          ],
+          "secondary": [
+            "glutes",
+            "hamstrings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Alternating Dumbbell Curl",
+      "input": {
+        "name": "Alternating Dumbbell Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Treadmill Walk",
+      "input": {
+        "name": "Treadmill Walk",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Treadmill",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Incline Walk",
+      "input": {
+        "name": "Incline Walk",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Treadmill",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Run",
+      "input": {
+        "name": "Run",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Treadmill",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cable Lateral Raise (Machine)",
+      "input": {
+        "name": "Cable Lateral Raise (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "side_delts"
+        ],
+        "movers": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "side_delts"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Smith Squat",
+      "input": {
+        "name": "Smith Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Barbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "BB Row",
+      "input": {
+        "name": "BB Row",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Barbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DB Fly",
+      "input": {
+        "name": "DB Fly",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Sled Push",
+      "input": {
+        "name": "Sled Push",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bodyweight Squat",
+      "input": {
+        "name": "Bodyweight Squat",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Some Unknown Movement",
+      "input": {
+        "name": "Some Unknown Movement",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "<empty>",
+      "input": {
+        "name": "",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "<blank>",
+      "input": {
+        "name": "   ",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "glutes"
+          ],
+          "secondary": [
+            "hamstrings",
+            "quads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Shoulder Press (DB)",
+      "input": {
+        "name": "Shoulder Press (DB)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "groups": [
+          "front_delts",
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "front_delts"
+          ],
+          "secondary": [
+            "triceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "lat pulldown neutral grip",
+      "input": {
+        "name": "lat pulldown neutral grip",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "lats",
+          "upper back",
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "lats"
+          ],
+          "secondary": [
+            "upper back",
+            "biceps",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Hip Adduction (Machine)",
+      "input": {
+        "name": "Hip Adduction (Machine)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Adductor Machine",
+      "input": {
+        "name": "Adductor Machine",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Machine",
+        "muscles": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "adductors"
+        ],
+        "movers": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "adductors"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Overhead Triceps Extension (Cable)",
+      "input": {
+        "name": "Overhead Triceps Extension (Cable)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "triceps"
+        ],
+        "movers": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "triceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Rope Face Pull",
+      "input": {
+        "name": "Rope Face Pull",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "groups": [
+          "rear_delts",
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "rear_delts"
+          ],
+          "secondary": [
+            "biceps"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cable Crossover",
+      "input": {
+        "name": "Cable Crossover",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Cable Fly",
+      "input": {
+        "name": "Cable Fly",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Cable",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Butterfly",
+      "input": {
+        "name": "Butterfly",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "chest"
+        ],
+        "movers": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "chest"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Romanian Deadlift",
+      "input": {
+        "name": "Romanian Deadlift",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RDL (Dumbbell)",
+      "input": {
+        "name": "RDL (Dumbbell)",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Dumbbell",
+        "muscles": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "groups": [
+          "hamstrings",
+          "glutes",
+          "lower back",
+          "upper back",
+          "lats",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "hamstrings"
+          ],
+          "secondary": [
+            "glutes",
+            "lower back",
+            "upper back",
+            "lats",
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Wrist Curl",
+      "input": {
+        "name": "Wrist Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "forearms"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Reverse Curl",
+      "input": {
+        "name": "Reverse Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "groups": [
+          "biceps",
+          "forearms"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": [
+            "forearms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Incline Curl",
+      "input": {
+        "name": "Incline Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Bicep Curl",
+      "input": {
+        "name": "Bicep Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Biceps Curl",
+      "input": {
+        "name": "Biceps Curl",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "biceps"
+        ],
+        "movers": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "biceps"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "Standing Calf Raise",
+      "input": {
+        "name": "Standing Calf Raise",
+        "stored": [
+          "glutes",
+          "hamstrings",
+          "quads"
+        ]
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Bodyweight",
+        "muscles": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "groups": [
+          "calves"
+        ],
+        "movers": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [
+            "calves"
+          ],
+          "secondary": []
+        }
+      }
+    },
+    {
+      "name": "<null>",
+      "input": {
+        "name": null,
+        "stored": []
+      },
+      "expected": {
+        "bodyweight": false,
+        "unloaded": false,
+        "loadable": false,
+        "unilateral": false,
+        "timed": false,
+        "icon": "Exercise",
+        "muscles": null,
+        "groups": null,
+        "movers": {
+          "primary": [],
+          "secondary": []
+        },
+        "moversStored": {
+          "primary": [],
+          "secondary": []
+        }
+      }
+    }
+  ]
+}

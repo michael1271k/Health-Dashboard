@@ -28,7 +28,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SCHEMA = join(ROOT, 'native/schema/supabase.json')
-const OUT = join(ROOT, 'native/Packages/HelixData/Sources/HelixData/Mirror/MirrorModels.swift')
+const OUT = join(ROOT, 'native/Packages/OnyxData/Sources/OnyxData/Mirror/MirrorModels.swift')
 
 /**
  * Postgres → Swift.

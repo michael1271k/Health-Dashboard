@@ -23,7 +23,7 @@ export function scheduleAwareReadiness(
     }
   }
   if (!ctx.dayLabel && !ctx.workoutToday) {
-    return { level: 'rest', label: 'Zone-2 / Rest', color: '#79808C', reason: 'Scheduled rest in HELIX-5 — Zone-2 cardio (150–250 kcal) or full recovery.' }
+    return { level: 'rest', label: 'Zone-2 / Rest', color: '#79808C', reason: 'Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery.' }
   }
   if (ctx.dayLabel) {
     const name = ctx.dayLabel

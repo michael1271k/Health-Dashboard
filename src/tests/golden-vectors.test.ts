@@ -220,7 +220,7 @@ import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coa
 
 const FIXTURES = join(
   process.cwd(),
-  'native/Packages/HelixCore/Tests/HelixCoreTests/Fixtures',
+  'native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures',
 )
 
 const WRITE = process.env.GOLDEN_WRITE === '1'
@@ -2706,7 +2706,7 @@ describe('golden vectors — PR engine', () => {
 //
 // Exported ahead of its place in the list because `maintenance.ts` falls back
 // to `phaseSpanFor` for the deloads that predate levers. Colours stay out: a hex
-// is a HelixUI token, not domain arithmetic.
+// is a OnyxUI token, not domain arithmetic.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const daysFrom = (start: string, count: number, step = 1): string[] =>
@@ -3561,7 +3561,7 @@ describe('golden vectors — effort', () => {
     emit('effort-tables.json', {
       module: 'training/effort',
       fn: 'CR10_ANCHORS / RPE_LADDER / EFFORT_WORDS / constants',
-      note: 'Data. Colours are not exported — a hex is a HelixUI token.',
+      note: 'Data. Colours are not exported — a hex is a OnyxUI token.',
       cases: [{
         name: 'the tables',
         input: {},
@@ -3632,7 +3632,7 @@ describe('golden vectors — set tags', () => {
     emit('set-tags-table.json', {
       module: 'training/setTags',
       fn: 'SET_TAGS / SET_QUALITY / SET_QUALITY_KEYS',
-      note: 'Data, colours stripped (HelixUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.',
+      note: 'Data, colours stripped (OnyxUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.',
       cases: [{
         name: 'the vocabularies',
         input: {},
@@ -5477,7 +5477,7 @@ describe('golden vectors — fatigue slots', () => {
 
     push('tables', { fn: 'tables' }, { tables: {
       slots: [...FATIGUE_SLOTS], rest: [...REST_SLOTS], training: [...TRAINING_SLOTS], labels: SLOT_LABEL,
-      // The colour is HelixUI's; the Swift carries value/label/hint/detail.
+      // The colour is OnyxUI's; the Swift carries value/label/hint/detail.
       levels: FATIGUE_LEVELS.map(({ value, label, hint, detail }) => ({ value, label, hint, detail })),
       forTraining: [...slotsForDay(true)], forRest: [...slotsForDay(false)],
     } })
@@ -6325,7 +6325,7 @@ describe('golden vectors — exercise flags and the muscle dictionary', () => {
     emit('exercise-flags.json', {
       module: 'exercises/{bodyweight,unilateral,timed,icons,muscleMap}',
       fn: 'isBodyweightExercise / isUnloadedExercise / isLoadableBodyweightExercise / isUnilateralExercise / isTimedExercise / exerciseIconFor().label / lookupMuscles / muscleGroupsFor / resolveMovers',
-      note: 'Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is HelixUI\'s. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).',
+      note: 'Every catalogue name (all three programs, the alias table, the PR book) plus free-typed spellings. `icon` is the rule LABEL only — the lucide glyph is OnyxUI\'s. `moversStored` passes stored = [glutes, hamstrings, quads] as the column fallback. The <null> case has muscles/groups/movers fixed by hand (the TS functions take a string).',
       cases,
     })
   })
@@ -6800,7 +6800,7 @@ describe('golden vectors — sleep debt and the realtime key map', () => {
     emit('realtime-keys.json', {
       module: 'query/realtimeKeys',
       fn: 'TABLE_KEYS / REALTIME_TABLES',
-      note: 'Extracted from RealtimeProvider. Which query keys a Supabase table change invalidates; workout_sessions and workout_sets share WORKOUT_QUERY_KEYS. HelixData owns the invalidation; this pins the fan-out.',
+      note: 'Extracted from RealtimeProvider. Which query keys a Supabase table change invalidates; workout_sessions and workout_sets share WORKOUT_QUERY_KEYS. OnyxData owns the invalidation; this pins the fan-out.',
       cases: [{ name: 'the map', input: null, expected: { tables: REALTIME_TABLES, keys: TABLE_KEYS } }],
     })
   })

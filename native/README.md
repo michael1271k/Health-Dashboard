@@ -1,7 +1,7 @@
-# HELIX Native — Wave 1 foundation
+# ONYX Native — Wave 1 foundation
 
 A second, parallel iOS app. It installs **alongside** the Capacitor app rather
-than over it (`app.helix.health.michael.native` vs `app.helix.health.michael`),
+than over it (`app.onyx.health.michael.native` vs `app.onyx.health.michael`),
 reads the same Supabase, and is built screen by screen while the web app stays
 your daily driver. Nothing about this migration requires a day where neither app
 works.
@@ -12,24 +12,24 @@ works.
 native/
 ├── project.yml                  XcodeGen spec — the project file is GENERATED
 ├── Packages/
-│   ├── HelixCore/               pure domain. Foundation only. No SwiftUI, no GRDB.
+│   ├── OnyxCore/               pure domain. Foundation only. No SwiftUI, no GRDB.
 │   │   └── Tests/.../Fixtures/  golden vectors, exported from the TypeScript
-│   ├── HelixData/               GRDB store + outbox + Keychain + Supabase session
-│   └── HelixUI/                 design system, the generated atlas, the widget tiles
-├── HelixNative/                 the SwiftUI app target (views + entry point)
-├── HelixNativeWidgets/          widget extension: five families + Lock + Live Activity
-└── Shared/                      HelixWorkoutAttributes — in both native targets
+│   ├── OnyxData/               GRDB store + outbox + Keychain + Supabase session
+│   └── OnyxUI/                 design system, the generated atlas, the widget tiles
+├── Onyx/                 the SwiftUI app target (views + entry point)
+├── OnyxWidgets/          widget extension: five families + Lock + Live Activity
+└── Shared/                      OnyxWorkoutAttributes — in both native targets
 ```
 
-The split is deliberate. `HelixCore` and `HelixData` **build and test for macOS
+The split is deliberate. `OnyxCore` and `OnyxData` **build and test for macOS
 from the command line**, so almost all of the app stays verifiable without Xcode,
 a device or a signing certificate — which matters on a free Apple team, where the
 app itself expires every seven days. What is left in the Xcode target is views.
 
-`HelixData` and `HelixUI` depend on `HelixCore`. Never the other way round: the
-domain does not know a database or a view exists, and `HelixUI` never imports
-`HelixData` — a tile draws a `HelixSnapshot`, it does not fetch one. The widget
-extension reads the App Group database (`group.app.helix.health`) read-only and
+`OnyxData` and `OnyxUI` depend on `OnyxCore`. Never the other way round: the
+domain does not know a database or a view exists, and `OnyxUI` never imports
+`OnyxData` — a tile draws a `OnyxSnapshot`, it does not fetch one. The widget
+extension reads the App Group database (`group.app.onyx.health`) read-only and
 builds the snapshot itself; the app reloads the timelines after every commit.
 
 ## First run
@@ -38,10 +38,10 @@ builds the snapshot itself; the app reloads the timelines after every commit.
 brew install xcodegen                       # once
 
 cd native
-cp HelixNative/Support/Secrets.example.xcconfig HelixNative/Support/Secrets.xcconfig
-$EDITOR HelixNative/Support/Secrets.xcconfig   # fill in URL + anon key
+cp Onyx/Support/Secrets.example.xcconfig Onyx/Support/Secrets.xcconfig
+$EDITOR Onyx/Support/Secrets.xcconfig   # fill in URL + anon key
 xcodegen generate
-open HelixNative.xcodeproj
+open Onyx.xcodeproj
 ```
 
 In Xcode: select your iPhone, then Product → Run.
@@ -50,7 +50,7 @@ In Xcode: select your iPhone, then Product → Run.
 > the start of a comment, so the scheme truncates the value. Store the host only;
 > `SupabaseConfig.fromBundle` glues the scheme back on.
 
-If the app launches to "HELIX could not start", the message names the missing
+If the app launches to "ONYX could not start", the message names the missing
 setting. That screen exists because forgetting to copy the xcconfig is the one
 mistake everybody makes, and a `fatalError` would tell you nothing.
 
@@ -64,7 +64,7 @@ npm test               # includes the golden-vector staleness check
 ```
 
 > **Use the npm scripts, not a bare `swift test`.** They pass `--scratch-path`
-> into `~/Library/Caches/helix-swift/`, which keeps SwiftPM's `.build` directory
+> into `~/Library/Caches/onyx-swift/`, which keeps SwiftPM's `.build` directory
 > out of the repository. Left in place it is ~2 GB of vendored dependency source
 > that `graphify update .` walks and indexes: it once made **74 % of the code
 > graph** GRDB and supabase-swift internals, and a query for the workout logger
@@ -77,7 +77,7 @@ reason the domain port is trustworthy at all.
 
 `src/tests/golden-vectors.test.ts` runs the **shipping TypeScript** over a fixed
 set of inputs and writes `{ input, expected }` pairs into
-`Packages/HelixCore/Tests/HelixCoreTests/Fixtures/`. `swift test` replays every
+`Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/`. `swift test` replays every
 one of them against the Swift port. Currently **1,849 cases** across Epley, TEF,
 TDEE, the whole battery model and readiness.
 
@@ -134,7 +134,7 @@ gain the paid features by adding an entitlement rather than by being restructure
 
 ## Conventions
 
-- **Never edit `HelixNative.xcodeproj`.** Edit `project.yml` and regenerate. The
+- **Never edit `Onyx.xcodeproj`.** Edit `project.yml` and regenerate. The
   project file is gitignored.
 - **Migrations are append-only.** Never edit a registered migration; add another.
   An edited migration runs on a fresh install and not on yours.

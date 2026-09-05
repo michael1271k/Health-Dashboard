@@ -1,0 +1,65 @@
+{
+  "module": "training/setTags",
+  "fn": "SET_TAGS / SET_QUALITY / SET_QUALITY_KEYS",
+  "note": "Data, colours stripped (OnyxUI tokens). SET_QUALITY_KEYS is the render order and matches the DB CHECK.",
+  "cases": [
+    {
+      "name": "the vocabularies",
+      "input": {},
+      "expected": {
+        "tags": {
+          "warmup": {
+            "label": "W",
+            "full": "Warm-up"
+          },
+          "failure": {
+            "label": "F",
+            "full": "Taken to failure"
+          },
+          "dropset": {
+            "label": "D",
+            "full": "Drop set"
+          },
+          "ghost": {
+            "label": "G",
+            "full": "Ghost set — logged, not counted"
+          }
+        },
+        "quality": {
+          "momentum": {
+            "label": "Momentum",
+            "full": "Used body English to move the load"
+          },
+          "partial_rom": {
+            "label": "Short ROM",
+            "full": "Cut the range short to finish the set"
+          },
+          "form_breakdown": {
+            "label": "Form broke",
+            "full": "The last reps lost position"
+          },
+          "needed_warmup": {
+            "label": "Cold",
+            "full": "The first reps were poor — needed a longer warm-up"
+          },
+          "assisted": {
+            "label": "Assisted",
+            "full": "A spotter or the other arm helped"
+          },
+          "cut_short": {
+            "label": "Cut short",
+            "full": "Stopped before the target for a reason other than failure"
+          }
+        },
+        "qualityKeys": [
+          "momentum",
+          "partial_rom",
+          "form_breakdown",
+          "needed_warmup",
+          "assisted",
+          "cut_short"
+        ]
+      }
+    }
+  ]
+}

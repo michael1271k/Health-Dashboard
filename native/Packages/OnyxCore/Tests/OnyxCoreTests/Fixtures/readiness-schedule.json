@@ -1,0 +1,1389 @@
+{
+  "module": "coach/scheduleReadiness",
+  "fn": "scheduleAwareReadiness",
+  "note": "Travel first; a scheduled rest day with no session says so; a scheduled day never reads Rest — it goes light instead.",
+  "cases": [
+    {
+      "name": "base=0 day=null logged=false mode=normal reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=0 day=null logged=false mode=normal reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=0 day=null logged=false mode=travel reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=null logged=false mode=travel reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=null logged=true mode=normal reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "base=0 day=null logged=true mode=normal reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "base=0 day=null logged=true mode=travel reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=null logged=true mode=travel reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=false mode=normal reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Upper A",
+        "color": "#3E9E7A",
+        "reason": "Scheduled Upper A — recovery looks strong, train hard."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=false mode=normal reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=false mode=travel reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=false mode=travel reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=true mode=normal reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Upper A",
+        "color": "#3E9E7A",
+        "reason": "Scheduled Upper A — recovery looks strong, train hard."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=true mode=normal reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=true mode=travel reentry=false",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=0 day=Upper A logged=true mode=travel reentry=true",
+      "input": {
+        "base": null,
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Train Hard",
+        "color": "#3E9E7A",
+        "reason": "Sleep, battery, and recovery are all strong today."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=null logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Upper A",
+        "color": "#3E9E7A",
+        "reason": "Scheduled Upper A — recovery looks strong, train hard."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_hard",
+        "label": "Upper A",
+        "color": "#3E9E7A",
+        "reason": "Scheduled Upper A — recovery looks strong, train hard."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=1 day=Upper A logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_hard",
+          "label": "Train Hard",
+          "color": "#3E9E7A",
+          "reason": "Sleep, battery, and recovery are all strong today."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Train Light",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=null logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A",
+        "color": "#D4AF37",
+        "reason": "Moderate readiness — a lighter session will serve you well."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=2 day=Upper A logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "train_light",
+          "label": "Train Light",
+          "color": "#D4AF37",
+          "reason": "Moderate readiness — a lighter session will serve you well."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Zone-2 / Rest",
+        "color": "#79808C",
+        "reason": "Scheduled rest in Onyx-5 — Zone-2 cardio (150–250 kcal) or full recovery."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "rest",
+        "label": "Rest Today",
+        "color": "#C4514E",
+        "reason": "Recovery indicators are low — prioritize rest and nutrition."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=null logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": null,
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=false mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Go Light",
+        "color": "#D4AF37",
+        "reason": "Scheduled Upper A, but recovery is low — keep it light and technical."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=false mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=false mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=false mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": false,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=true mode=normal reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Go Light",
+        "color": "#D4AF37",
+        "reason": "Scheduled Upper A, but recovery is low — keep it light and technical."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=true mode=normal reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "normal",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Upper A · Re-Entry",
+        "color": "#3D7AB8",
+        "reason": "Re-entry week: ~90% loads, RPE cap 7–8. No PRs — groove the movements."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=true mode=travel reentry=false",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": false
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    },
+    {
+      "name": "base=3 day=Upper A logged=true mode=travel reentry=true",
+      "input": {
+        "base": {
+          "level": "rest",
+          "label": "Rest Today",
+          "color": "#C4514E",
+          "reason": "Recovery indicators are low — prioritize rest and nutrition."
+        },
+        "ctx": {
+          "dayLabel": "Upper A",
+          "workoutToday": true,
+          "contextMode": "travel",
+          "reentry": true
+        }
+      },
+      "expected": {
+        "level": "train_light",
+        "label": "Travel Mode 🌴",
+        "color": "#8E9AAC",
+        "reason": "Vacation protocol — 2–3 short maintenance sessions this week is plenty. Prioritize rest, sun, and enjoying the trip."
+      }
+    }
+  ]
+}
