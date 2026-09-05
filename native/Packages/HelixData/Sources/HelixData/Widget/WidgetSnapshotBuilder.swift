@@ -77,7 +77,8 @@ public struct WidgetSnapshotBuilder: Sendable {
         let goals = rows.goals
 
         let weekStartDay = Week.startDay(fromEndDay: goals?.weekEndDay)
-        let weekStart = Week.start(of: date, startDay: weekStartDay)
+        let week = WeekWindow(containing: date, startDay: weekStartDay, today: date)
+        let weekStart = week.start
         let prevWeekStart = ISODate.addDays(weekStart, -7) ?? weekStart
 
         // ── The plan the user is ACTUALLY running ─────────────────────────
@@ -98,20 +99,9 @@ public struct WidgetSnapshotBuilder: Sendable {
         }
 
         // ── The targets this day is graded against ────────────────────────
-        let lever = Levers.leverForDate(date, stored: goals?.activeLever, today: date, releaseEndsOn: goals?.maintenanceUntil)
-        let resolvedGoals = DailyTargets.apply(
-            Levers.applyLever(
-                LeverGoals(
-                    calorie: Double(goals?.calorieGoal ?? 0),
-                    protein: goals?.proteinGoalG.map(Double.init),
-                    carbs: goals?.carbsGoalG.map(Double.init),
-                    fat: goals?.fatGoalG.map(Double.init),
-                    steps: goals?.stepsGoal.map(Double.init)
-                ),
-                lever?.rawValue
-            ),
-            rows.dayTarget.map(Self.dailyTarget)
-        )
+        let resolved = TargetSnapshot(goals: goals, dailyTargets: rows.dayTarget.map { [$0.date: $0] } ?? [:], overrides: rows.overrides)
+            .targets(for: date, today: date)
+        let resolvedGoals = resolved.goals
 
         // ── Today, picked out of the week ─────────────────────────────────
         let log = rows.logs.first { $0.date == date }
@@ -530,14 +520,6 @@ public struct WidgetSnapshotBuilder: Sendable {
             if let p = s.pairId, !p.isEmpty { pairs.insert(p) } else { solo += 1 }
         }
         return solo + pairs.count
-    }
-
-    static func dailyTarget(_ r: DailyTargetRow) -> DailyTarget {
-        DailyTarget(
-            date: r.date, kcal: r.kcal.map(Double.init), proteinG: r.proteinG.map(Double.init),
-            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init), stepsGoal: r.stepsGoal.map(Double.init),
-            note: r.note, profileKey: r.profileKey, trackCarbs: r.trackCarbs, trackFat: r.trackFat
-        )
     }
 
     static func points(_ trend: [TrendPoint]) -> [HelixSnapshot.Point] {

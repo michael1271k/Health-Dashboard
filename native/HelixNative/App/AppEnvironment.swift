@@ -48,11 +48,26 @@ public final class AppEnvironment {
     /// Non-nil while the first-launch backfill sheet is up (§7.2). The sheet
     /// binds to this; `runBackfill` clears it when the history has landed.
     var backfill: BackfillModel?
+    /// What every gauge, widget snapshot and score input is graded against
+    /// (§6.2): one observation over `user_goals`, `daily_targets`,
+    /// `target_profiles` and `schedule_overrides`. A lever pulled in Settings
+    /// is one outbox row and one tick here; no view keeps a copy. Nil while
+    /// signed out.
+    private(set) var targets: TargetResolver?
+
+    /// The logical day, republished at local midnight (§6.4). A model that
+    /// holds its own `today` re-reads it on change; nothing is written for a
+    /// rollover, and a `WeekWindow` cut from this re-cuts itself on the first
+    /// weekday without a second timer.
+    private(set) var today: String = LogicalDay.today()
+    /// Bumped with `today`, for a view that only needs to know a day passed.
+    private(set) var dayTick = 0
     #if HELIX_ADP
     private var observers: HealthObservers?
     #endif
 
     private var authTask: Task<Void, Never>?
+    private var midnight: Task<Void, Never>?
     /// The commit observer, held for the life of the app (GRDB stops observing
     /// when it is deallocated). Untyped so the app target need not import GRDB.
     private var commitObserver: AnyObject?
@@ -82,6 +97,7 @@ public final class AppEnvironment {
     /// disagrees with.
     public func start() {
         guard authTask == nil else { return }
+        startMidnightClock()
         // Every local write — a set, a day edit, a mirror pull — reloads the
         // widgets, debounced: a pull commits per table and a session logs a
         // set every minute, and each reload is a full snapshot build.
@@ -186,9 +202,12 @@ public final class AppEnvironment {
         guard coordinator == nil else { return }
         let coordinator = SyncCoordinator(
             database: database, client: supabase, userId: userID.uuidString,
-            health: HealthSync(database: database, reader: HealthKitReader(), userId: userID.uuidString)
+            health: HealthSync(database: database, reader: Self.healthReader, userId: userID.uuidString)
         )
         self.coordinator = coordinator
+        let targets = TargetResolver(database: database, userId: userID.uuidString)
+        targets.start()
+        self.targets = targets
         Task {
             // A user this device has never synced gets the whole history
             // behind the sheet; everyone else gets the ordinary launch sync.
@@ -203,6 +222,16 @@ public final class AppEnvironment {
             self.startObservers()
             #endif
         }
+    }
+
+    /// `HELIX_NO_HEALTH=1` (DEBUG launch environment) reads no HealthKit at
+    /// all, so the permission sheet — which nothing on a simulator can tap —
+    /// never covers the screen a gate is photographing.
+    private static var healthReader: any HealthReading {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["HELIX_NO_HEALTH"] != nil { return NoHealth() }
+        #endif
+        return HealthKitReader()
     }
 
     /// Settings' "Re-run backfill": the same run, the same sheet.
@@ -275,7 +304,55 @@ public final class AppEnvironment {
         observers = nil
         #endif
         backfill = nil
+        targets?.stop()
+        targets = nil
         auth = .signedOut
+    }
+
+    // MARK: - Midnight
+
+    /// Republish `today` at every local 00:00, and whenever the system says
+    /// the day changed under us — a timezone crossing, a clock correction, or
+    /// a wake from a suspension that slept through the deadline.
+    ///
+    /// ── WHY BOTH A SLEEP AND A NOTIFICATION ─────────────────────────────────
+    /// `NSCalendarDayChanged` is the platform's own midnight, but it is only
+    /// delivered while the process is running and not always promptly on a
+    /// return from suspension. The sleep is exact when the app is awake; the
+    /// notification catches the cases the sleep cannot see. `rollDay` is
+    /// idempotent — it compares before publishing — so the two racing is a
+    /// no-op, not a double tick.
+    private func startMidnightClock() {
+        guard midnight == nil else { return }
+        midnight = Task { [weak self] in
+            let center = NotificationCenter.default
+            let days = Task { [weak self] in
+                for await _ in center.notifications(named: .NSCalendarDayChanged) {
+                    await self?.rollDay()
+                }
+            }
+            defer { days.cancel() }
+            while !Task.isCancelled {
+                let now = Date()
+                let calendar = Calendar.current
+                // The next 00:00 in the device's own calendar — DST-aware, so
+                // the 23- and 25-hour nights land on the right instant.
+                let next = calendar.nextDate(
+                    after: now, matching: DateComponents(hour: 0, minute: 0, second: 0), matchingPolicy: .nextTime
+                ) ?? calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now.addingTimeInterval(3600)
+                // Continuous clock: keeps counting through a suspension, so a
+                // deadline that passed while asleep fires on the way back in.
+                try? await Task.sleep(until: .now + .seconds(next.timeIntervalSince(now) + 0.5), clock: .continuous)
+                await self?.rollDay()
+            }
+        }
+    }
+
+    private func rollDay() {
+        let day = LogicalDay.today()
+        guard day != today else { return }
+        today = day
+        dayTick += 1
     }
 
     /// The signed-in user's id as the store spells it.
@@ -303,3 +380,13 @@ public final class AppEnvironment {
         startupError = message
     }
 }
+
+#if DEBUG
+/// A device with no Health store. Every read answers "nothing here".
+private struct NoHealth: HealthReading {
+    var isAvailable: Bool { false }
+    func requestAuthorization(read: [String]) async throws -> Bool { false }
+    func quantity(_ identifier: String, reduce: HealthReduce, start: Date, end: Date) async throws -> Double? { nil }
+    func sleepSamples(start: Date, end: Date) async throws -> [SleepSample] { [] }
+}
+#endif

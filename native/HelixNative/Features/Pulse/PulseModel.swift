@@ -369,7 +369,9 @@ final class DayModel {
     /// `no-tape-measurements`' sibling rule, and `MacroEditSheet`'s long note).
     var fuelLine: String? {
         guard !entries.isEmpty || log?.waterMl != nil else { return nil }
-        let target = TargetChain.resolve(date: date, today: today, goals: goals, dayTarget: TargetChain.dayTarget(dailyTarget))
+        let target = Targets.resolve(
+            TargetSources(goals: goals, dayTarget: dailyTarget.map(DailyTarget.init), profiles: []), date: date, today: today
+        ).goals
         var parts: [String] = []
         if !entries.isEmpty {
             let kcal = entries.reduce(0) { $0 + $1.calories }

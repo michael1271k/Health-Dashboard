@@ -59,7 +59,7 @@ public struct WeeklyExportBuilder: Sendable {
                 steps: goals?.stepsGoal.map(Double.init)
             ),
             releaseEndsOn: goals?.maintenanceUntil,
-            dailyTargets: rows.dailyTargets.map(Self.dailyTarget)
+            dailyTargets: rows.dailyTargets.map(DailyTarget.init)
         )
 
         let sessionDateById = Dictionary(rows.sessions.map { ($0.id, $0.date) }, uniquingKeysWith: { _, b in b })
@@ -680,14 +680,6 @@ public struct WeeklyExportBuilder: Sendable {
             id: r.id, name: r.name, dose: r.dose, color: r.color, form: r.form, time: r.time,
             schedule: r.schedule.flatMap { try? JSONDecoder().decode(CustomSchedule.self, from: Data($0.raw.utf8)) },
             micros: r.micros.flatMap(numbers)
-        )
-    }
-
-    static func dailyTarget(_ r: DailyTargetRow) -> DailyTarget {
-        DailyTarget(
-            date: r.date, kcal: r.kcal.map(Double.init), proteinG: r.proteinG.map(Double.init),
-            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init), stepsGoal: r.stepsGoal.map(Double.init),
-            note: r.note, profileKey: r.profileKey, trackCarbs: r.trackCarbs, trackFat: r.trackFat
         )
     }
 

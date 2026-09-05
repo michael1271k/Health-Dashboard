@@ -40,7 +40,21 @@ private struct SignedInTabs: View {
     enum Tab: Hashable { case today, train, fuel, body, you }
 
     @Environment(AppEnvironment.self) private var environment
-    @State private var selection: Tab = .today
+    @State private var selection: Tab = Self.initialTab
+
+    /// `HELIX_START_TAB=nutrition` (DEBUG launch environment): open on a tab,
+    /// for a gate that watches one tab react to a server change. A deep link
+    /// from `simctl openurl` puts an "Open in Helix?" alert over the screen
+    /// that nothing can tap; a launch argument does not.
+    private static var initialTab: Tab {
+        #if DEBUG
+        if let name = ProcessInfo.processInfo.environment["HELIX_START_TAB"],
+           let destination = DeepLink.destination(forPath: name) {
+            return tab(for: destination)
+        }
+        #endif
+        return .today
+    }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -76,7 +90,7 @@ private struct SignedInTabs: View {
         .onOpenURL { url in
             guard let path = DeepLink.safePath(url.absoluteString),
                   let destination = DeepLink.destination(forPath: path) else { return }
-            selection = tab(for: destination)
+            selection = Self.tab(for: destination)
         }
         // The first-launch backfill (§7.2). A cover, not a replacement of the
         // tabs: they mount underneath, observe the store, and are already
@@ -86,7 +100,7 @@ private struct SignedInTabs: View {
         }
     }
 
-    private func tab(for destination: DeepLink.Destination) -> Tab {
+    private static func tab(for destination: DeepLink.Destination) -> Tab {
         switch destination {
         case .today: return .today
         case .train: return .train

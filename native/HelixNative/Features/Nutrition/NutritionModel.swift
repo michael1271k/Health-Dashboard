@@ -12,18 +12,21 @@ import HelixData
 /// is laid on top. This is the same chain the You tab performs for today, with
 /// the date as a parameter instead of a clock.
 ///
-/// ── SIX STREAMS, ONE MODEL ──────────────────────────────────────────────────
-/// Two are keyed on the user (goals, target profiles) and live for the tab;
-/// four are keyed on the date (the flat day row, the entries, the water ledger,
-/// the day target) and are torn down and restarted when the day changes. The
-/// values in hand belong to the previous day until the new streams' first yield,
-/// so they are cleared rather than left standing across the gap.
+/// ── FIVE STREAMS AND THE RESOLVER ───────────────────────────────────────────
+/// The goals row and the profiles come from `TargetResolver` — the one
+/// instance `AppEnvironment` holds, so a lever pulled in Settings ticks this
+/// tab through the same observation as every other reader (§6.2). Five streams
+/// are keyed on the date (the flat day row, the entries, the water ledger, the
+/// day target, the week) and are torn down and restarted when the day changes.
+/// The values in hand belong to the previous day until the new streams' first
+/// yield, so they are cleared rather than left standing across the gap.
 @MainActor
 @Observable
 final class NutritionModel {
 
     private let database: AppDatabase
     let userId: String
+    let targets: TargetResolver
 
     /// The logical day, held so one render resolves every rung the same way.
     private(set) var today: String = LogicalDay.today()
@@ -31,8 +34,6 @@ final class NutritionModel {
     /// per-date streams.
     private(set) var date: String
 
-    private(set) var goals: UserGoalRow?
-    private(set) var profileRows: [TargetProfileRow] = []
     private(set) var dailyLog: DailyLogRow?
     /// `nil` until the first yield — the loading state, which is not an empty
     /// day and must not be drawn as one.
@@ -47,17 +48,19 @@ final class NutritionModel {
     /// The last write that failed, for the one banner at the top.
     private(set) var failure: String?
 
-    init(database: AppDatabase, userId: String, date: String = LogicalDay.today()) {
+    init(database: AppDatabase, userId: String, targets: TargetResolver, date: String = LogicalDay.today()) {
         self.database = database
         self.userId = userId
+        self.targets = targets
         self.date = date
     }
+
+    /// The goals row, off the resolver — water goal and the phase stamp.
+    var goals: UserGoalRow? { targets.snapshot.goals }
 
     // MARK: - Reading
 
     private var isObserving = false
-    private var profilesTask: Task<Void, Never>?
-    private var goalsTask: Task<Void, Never>?
     private var dateTasks: [Task<Void, Never>] = []
 
     /// Subscribe. Called from `.task`, cancelled with the view. Re-entrant
@@ -66,21 +69,10 @@ final class NutritionModel {
         guard !isObserving else { return }
         isObserving = true
         defer {
-            profilesTask?.cancel()
-            profilesTask = nil
-            goalsTask?.cancel()
-            goalsTask = nil
             cancelDateTasks()
             isObserving = false
         }
         today = LogicalDay.today()
-        profilesTask = track(database.targetProfilesStream(userId: userId)) { [weak self] in self?.profileRows = $0 }
-        // ── WHY THE GOALS STREAM IS A CHILD LIKE THE REST ───────────────────
-        // It used to be consumed inline here, which made its failure the end of
-        // this function — and the `defer` above then cancelled the profiles
-        // stream and all five date streams with it. One read error and the tab
-        // went permanently stale, under a banner claiming a WRITE had failed.
-        goalsTask = track(database.userGoalsStream(userId: userId)) { [weak self] in self?.goals = $0 }
         restartDateStreams()
         // Park until the view goes away. `.task` cancels this, the `defer`
         // runs, and every child is reaped with it.
@@ -161,52 +153,47 @@ final class NutritionModel {
 
     // MARK: - The target
 
-    /// The day's override as the domain sees it, or `nil`.
-    var dayTarget: DailyTarget? { TargetChain.dayTarget(dailyTarget) }
+    /// The day's override as the domain sees it, or `nil`. The model's OWN
+    /// row rather than the resolver's: a save patches it first, so the sheet
+    /// never snaps back for the one hop the observation takes.
+    var dayTarget: DailyTarget? { dailyTarget.map(DailyTarget.init) }
+
+    /// Everything the chain reads, with this model's day override.
+    private var sources: TargetSources { targets.snapshot.sources(dayTarget: dayTarget) }
+
+    /// The whole chain for the SELECTED date: own numbers → rung on that date
+    /// → day override. Water and sleep ride along.
+    var resolved: ResolvedTargets { Targets.resolve(sources, date: date, today: today) }
 
     var hasOverride: Bool { DailyTargets.hasTarget(dayTarget) }
     var tracksCarbs: Bool { DailyTargets.tracksCarbs(dayTarget) }
     var tracksFat: Bool { DailyTargets.tracksFat(dayTarget) }
 
     /// The user's own five numbers, before any rung. Same shape as the You tab.
-    var ownGoals: LeverGoals { TargetChain.own(goals) }
+    var ownGoals: LeverGoals { sources.own }
 
     /// The rung in force on the SELECTED date.
-    var leverInForce: LeverId? { TargetChain.lever(on: date, today: today, goals: goals) }
+    var leverInForce: LeverId? { resolved.leverId }
 
     /// Non-nil when a rung holds the numbers; `custom` and no selection are nil.
     var heldBy: NutritionLever? { Levers.lever(byId: leverInForce?.rawValue) }
 
     /// The rung's (or pinned history's) numbers for the date, before the override.
-    var rungGoals: LeverGoals { TargetChain.rung(on: date, today: today, goals: goals) }
+    var rungGoals: LeverGoals { Targets.resolve(targets.snapshot.sources(dayTarget: nil), date: date, today: today).goals }
 
     /// What the day is graded against. Untracked macros resolve to `nil`.
-    var target: LeverGoals { TargetChain.resolve(date: date, today: today, goals: goals, dayTarget: dayTarget) }
+    var target: LeverGoals { resolved.goals }
 
     /// A zero calorie goal is an unset row, not a fast.
     var targetKcal: Double? { target.calorie > 0 ? target.calorie : nil }
 
     /// The user's saved profiles first, then the built-ins they have not
-    /// replaced. A stored row missing its two required figures is skipped
-    /// rather than shown as a 0 kcal day.
-    var profiles: [TargetProfile] {
-        var out: [TargetProfile] = profileRows.compactMap { r in
-            guard let kcal = r.kcal, let protein = r.proteinG else { return nil }
-            return TargetProfile(
-                key: r.key, label: r.label, summary: r.summary ?? "", sort: r.sort,
-                kcal: Double(kcal), proteinG: Double(protein),
-                carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init),
-                stepsGoal: r.stepsGoal.map(Double.init)
-            )
-        }
-        let known = Set(out.map(\.key))
-        out += TargetProfiles.builtin.filter { !known.contains($0.key) }
-        return out
-    }
+    /// replaced.
+    var profiles: [TargetProfile] { Targets.profiles(stored: sources.profiles) }
 
     /// The profile the day's figures actually MATCH — not the stamp.
     var matchedProfile: TargetProfile? {
-        profiles.first { TargetProfiles.matches(dayTarget, $0) }
+        TargetProfiles.byKey(profiles, resolved.profileKey)
     }
 
     /// Where the target came from, in one line.
@@ -303,7 +290,7 @@ final class NutritionModel {
         guard let ml = dailyLog?.waterMl, ml > 0 else { return nil }
         return ml
     }
-    var waterGoalMl: Double? { goals?.waterGoalMl.map(Double.init) }
+    var waterGoalMl: Double? { resolved.waterMl }
     var isWaterManual: Bool { water.contains { ManualEntry.isManualWater($0.hkUuid) } }
 
     /// The day's macros were entered by hand, so HealthKit will not touch this
@@ -383,7 +370,7 @@ final class NutritionModel {
         }
         var local = dailyTarget ?? DailyTargetRow(userId: userId, date: date, updatedAt: Date(), trackCarbs: true, trackFat: true)
         change(&local)
-        guard DailyTargets.hasTarget(dayTargetFrom(local)) else {
+        guard DailyTargets.hasTarget(DailyTarget(local)) else {
             clearDailyTarget()
             return
         }
@@ -394,15 +381,6 @@ final class NutritionModel {
     func clearDailyTarget() {
         dailyTarget = nil
         write { try database.clearDailyTarget(userId: userId, date: date) }
-    }
-
-    private func dayTargetFrom(_ r: DailyTargetRow) -> DailyTarget {
-        DailyTarget(
-            date: r.date, kcal: r.kcal.map(Double.init), proteinG: r.proteinG.map(Double.init),
-            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init),
-            stepsGoal: r.stepsGoal.map(Double.init), note: r.note, profileKey: r.profileKey,
-            trackCarbs: r.trackCarbs, trackFat: r.trackFat
-        )
     }
 
     /// Below `minWaterMl` the day would score as untracked rather than as a

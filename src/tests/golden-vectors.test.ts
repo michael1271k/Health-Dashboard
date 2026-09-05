@@ -115,7 +115,9 @@ import {
   type SessionClock, type ClockMode,
 } from '@/lib/sessions/sessionClock'
 import { weekStartOf } from '@/lib/utils/week'
-import { weekNumberOf, weekLabelOf } from '@/lib/reports/weekNumber'
+import { weekNumberOf, weekLabelOf, weekWindowOf } from '@/lib/reports/weekNumber'
+import { adjustMacros, atwater, type Macros, type MacroEdit } from '@/lib/nutrition/macroMath'
+import { resolveTargets, mergedProfiles, type TargetSources, type ResolvedTargets } from '@/lib/nutrition/targets'
 import {
   buildWeeklyExport, weeklySummary, trendTotals, energyBalance, sparkline, markdownTable, nutrientLine, flaggedNutrients,
   setDetail, consolidateSupplements, trendLedger, priorReportNote, fatigueLabelsFor, FATIGUE_SLOT_LABELS,
@@ -6790,6 +6792,123 @@ describe('golden vectors — deep links', () => {
         const path = safePath(raw)
         return { name, input: { raw }, expected: { path, destination: destination(path) } }
       }),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2.5 — MacroMath, the target resolver and the week window
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — macro math', () => {
+  it('exports adjustMacros over a sweep and the named cases', () => {
+    const day: Macros = { kcal: 1450, protein: 128, carbs: 140, fat: 42 }
+    const starts: Array<[string, Macros]> = [
+      ['the fixture day', day],
+      ['no carbs tracked', { kcal: 1158, protein: 150, carbs: null, fat: 62 }],
+      ['no fat tracked', { kcal: 1160, protein: 150, carbs: 140, fat: null }],
+      ['kcal only', { kcal: 1800, protein: null, carbs: null, fat: null }],
+      ['protein only', { kcal: 600, protein: 150, carbs: null, fat: null }],
+      ['empty day', { kcal: 0, protein: 0, carbs: 0, fat: 0 }],
+      ['carbs at zero', { kcal: 760, protein: 100, carbs: 0, fat: 40 }],
+      ['fat at zero', { kcal: 960, protein: 100, carbs: 140, fat: 0 }],
+      ['recorded above atwater', { kcal: 1480, protein: 128, carbs: 140, fat: 42 }],
+      ['fractional grams', { kcal: 1450, protein: 127.6, carbs: 140.4, fat: 41.5 }],
+    ]
+    const edits: Array<[string, MacroEdit]> = [
+      ['kcal 1700', { calories: 1700 }],
+      ['kcal 1250', { calories: 1250 }],
+      ['kcal 327', { calories: 327 }],
+      ['kcal 326', { calories: 326 }],
+      ['kcal 0', { calories: 0 }],
+      ['kcal 400', { calories: 400 }],
+      ['kcal 1000', { calories: 1000 }],
+      ['kcal 2000.5', { calories: 2000.5 }],
+      ['kcal same', { calories: 1450 }],
+      ['protein 140', { protein: 140 }],
+      ['protein 42.5', { protein: 42.5 }],
+      ['carbs 0', { carbs: 0 }],
+      ['carbs -3', { carbs: -3 }],
+      ['fat 60', { fat: 60 }],
+    ]
+    const cases: Case<{ current: Macros; edited: MacroEdit }, Macros>[] = []
+    for (const [sName, current] of starts) for (const [eName, edited] of edits) {
+      cases.push({ name: `${sName} · ${eName}`, input: { current, edited }, expected: adjustMacros(current, edited) })
+    }
+    // The sweep the app's property tests run: every state, coarsely, at asks
+    // the grid does not otherwise reach.
+    for (const protein of [0, 80, 200]) for (const carbs of [0, 120, 240]) for (const fat of [0, 40, 80]) {
+      const start: Macros = { kcal: atwater({ kcal: 0, protein, carbs, fat }), protein, carbs, fat }
+      for (const ask of [137, 1370, 2603]) {
+        cases.push({ name: `sweep P${protein} C${carbs} F${fat} → ${ask}`, input: { current: start, edited: { calories: ask } }, expected: adjustMacros(start, { calories: ask }) })
+      }
+    }
+    emit('macro-math.json', {
+      module: 'nutrition/macroMath',
+      fn: 'adjustMacros',
+      note: 'Calories are always the Atwater sum of the macros; a calorie edit pins protein and carbs/fat absorb the delta in c·4 : f·9 ratio, whole grams, up to four rounds; an untracked (null) macro is never handed a figure; nothing tracked keeps the figure asked for.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — resolved targets', () => {
+  it('exports resolveTargets across the chain', () => {
+    const own: LeverGoals = { calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000 }
+    const base: TargetSources = {
+      own, waterMl: 3000, sleepHours: 8, activeLever: 'custom', maintenanceUntil: null, dayTarget: null, profiles: [],
+    }
+    const stored: TargetProfile = { key: 'home', label: 'Mine', summary: '', sort: 0, kcal: 2100, proteinG: 170, carbsG: 230, fatG: 55, stepsGoal: null }
+    const sources: Array<[string, TargetSources]> = [
+      ['custom, no override', base],
+      ['no selection', { ...base, activeLever: null }],
+      ['lever 1 selected', { ...base, activeLever: 'lever-1' }],
+      ['unknown lever', { ...base, activeLever: 'lever-9' }],
+      ['maintenance until 2026-09-06', { ...base, activeLever: 'maintenance-week', maintenanceUntil: '2026-09-06' }],
+      ['maintenance, no end', { ...base, activeLever: 'maintenance-week' }],
+      ['restaurant day', { ...base, dayTarget: profileToDailyTarget(BUILTIN_PROFILES[1], '2026-09-05') }],
+      ['home day, stamped restaurant', { ...base, dayTarget: { ...profileToDailyTarget(BUILTIN_PROFILES[0], '2026-09-05'), profile_key: 'restaurant' } }],
+      ['hand override under lever 1', { ...base, activeLever: 'lever-1', dayTarget: { date: '2026-09-05', kcal: 2400, track_fat: false } }],
+      ['stored profile replaces home', { ...base, profiles: [stored], dayTarget: { date: '2026-09-05', kcal: 2100, protein_g: 170, carbs_g: 230, fat_g: 55 } }],
+      ['stored profile, builtin figures no longer match', { ...base, profiles: [stored], dayTarget: profileToDailyTarget(BUILTIN_PROFILES[0], '2026-09-05') }],
+      ['bare row', { own: { calorie: 0, protein: null, carbs: null, fat: null, steps: null }, waterMl: null, sleepHours: null, activeLever: null, maintenanceUntil: null, dayTarget: null, profiles: [] }],
+    ]
+    const dates = ['2026-07-14', '2026-08-18', '2026-08-25', '2026-09-01', '2026-09-05', '2026-09-08', '2026-09-20']
+    const cases: Case<{ sources: TargetSources; date: string; today: string }, ResolvedTargets>[] = []
+    for (const [name, s] of sources) for (const date of dates) {
+      cases.push({ name: `${name} on ${date}`, input: { sources: s, date, today: '2026-09-05' }, expected: resolveTargets(s, date, '2026-09-05') })
+    }
+    emit('resolved-targets.json', {
+      module: 'nutrition/targets',
+      fn: 'resolveTargets / mergedProfiles',
+      note: 'own numbers → rung in force on the DATE (schedule for the past, selection today+, release expiry) → daily_targets on top; water/sleep pass through; leverId is leverForDate (null before the cut); profileKey is the MATCHED profile over stored-then-builtin, not the stamp.',
+      cases,
+    })
+    emit('merged-profiles.json', {
+      module: 'nutrition/targets',
+      fn: 'mergedProfiles',
+      note: 'Stored first, then built-ins whose key is not stored.',
+      cases: [
+        { name: 'none stored', input: { stored: [] }, expected: mergedProfiles([]) },
+        { name: 'home replaced', input: { stored: [stored] }, expected: mergedProfiles([stored]) },
+        { name: 'a third profile', input: { stored: [{ ...stored, key: 'hike', label: 'Hike', sort: 5 }] }, expected: mergedProfiles([{ ...stored, key: 'hike', label: 'Hike', sort: 5 }]) },
+      ],
+    })
+  })
+})
+
+describe('golden vectors — week window', () => {
+  it('exports weekWindowOf', () => {
+    const dates = ['2026-07-11', '2026-07-12', '2026-07-15', '2026-08-30', '2026-09-05', '2026-09-06', '2026-09-07', '2026-12-31', '2027-01-01', 'garbage', '']
+    const cases: Case<{ date: string; startDay: number; today: string }, ReturnType<typeof weekWindowOf>>[] = []
+    for (const date of dates) for (const startDay of [0, 1]) for (const today of ['2026-09-05', '2026-09-06', '2026-09-07']) {
+      cases.push({ name: `${date || 'empty'} · start ${startDay} · today ${today}`, input: { date, startDay, today }, expected: weekWindowOf(date, startDay, today) })
+    }
+    emit('week-window.json', {
+      module: 'reports/weekNumber',
+      fn: 'weekWindowOf',
+      note: 'start = weekStartOf(date, startDay), seven days, end = start + 6, number = weekNumberOf(start), isCurrent = today within days; an unparseable date echoes as both bounds with no days.',
+      cases,
     })
   })
 })

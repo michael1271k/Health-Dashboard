@@ -164,6 +164,7 @@ private struct YouForm: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.refreshToday() }
         }
+        .onChange(of: environment.today) { _, _ in model.refreshToday() }
         .confirmationDialog("Sign out of HELIX?", isPresented: $isSigningOut, titleVisibility: .visible) {
             Button("Sign out", role: .destructive) {
                 Task { await environment.signOut() }

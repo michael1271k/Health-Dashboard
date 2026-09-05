@@ -37,12 +37,17 @@ struct NutritionTabView: View {
                 ProgressView().controlSize(.large)
             }
         }
-        .task {
-            if resolved == nil {
-                resolved = seeded ?? NutritionModel(database: environment.database, userId: environment.userIdString)
+        // Keyed on the resolver's presence: `.task` is not an observation
+        // scope, so a resolver that arrives after the first run must re-run it.
+        .task(id: environment.targets == nil) {
+            if resolved == nil, let targets = seeded?.targets ?? environment.targets {
+                resolved = seeded ?? NutritionModel(database: environment.database, userId: environment.userIdString, targets: targets)
             }
             await resolved?.observe()
         }
+        // Midnight (§6.4): the rung is resolved against `today`, so the day
+        // that just ended must stop counting as today.
+        .onChange(of: environment.today) { _, _ in resolved?.refreshToday() }
     }
 }
 

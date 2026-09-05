@@ -29,26 +29,15 @@ struct DayPlan {
             program.day(key: key).map { ($0.exercises(for: schedule.phase).count, max(1, $0.plannedSets(for: schedule.phase))) }
         }
 
-        let lever = Levers.leverForDate(date, stored: goals?.activeLever, today: todayISO, releaseEndsOn: goals?.maintenanceUntil)
-        let resolved = DailyTargets.apply(
-            Levers.applyLever(
-                LeverGoals(
-                    calorie: Double(goals?.calorieGoal ?? 0),
-                    protein: goals?.proteinGoalG.map(Double.init),
-                    carbs: goals?.carbsGoalG.map(Double.init),
-                    fat: goals?.fatGoalG.map(Double.init),
-                    steps: goals?.stepsGoal.map(Double.init)
-                ),
-                lever?.rawValue
-            ),
-            dayTarget.map(WidgetSnapshotBuilder.dailyTarget)
-        )
+        // One chain for the scorer, the widget and the tabs (§6.2).
+        let resolved = TargetSnapshot(goals: goals, dailyTargets: dayTarget.map { [$0.date: $0] } ?? [:], overrides: overrides)
+            .targets(for: date, today: todayISO)
         return DayPlan(
             isTraining: Schedule.isTrainingDayIn(schedule, date),
             dayKey: day?.dayKey,
             planned: planned,
             goals: ResolvedGoals(
-                calorie: resolved.calorie, protein: resolved.protein ?? 0, carbs: resolved.carbs ?? 0,
+                calorie: resolved.kcal, protein: resolved.protein ?? 0, carbs: resolved.carbs ?? 0,
                 fat: resolved.fat ?? 0, steps: resolved.steps ?? Double(goals?.stepsGoal ?? 0)
             ),
             isMaintenance: Maintenance.isMaintenanceDate(date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: todayISO)

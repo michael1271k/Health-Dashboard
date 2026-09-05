@@ -55,6 +55,7 @@ struct PulseTabView: View {
 /// One date, laid out. Named for the date rather than the tab because History
 /// pushes this same screen for a past day (§5.9).
 struct DayScreen: View {
+    @Environment(AppEnvironment.self) private var environment
     @Environment(\.scenePhase) private var scenePhase
     let model: DayModel
     /// Harness only — see `PulseTabView.startAtRows`.
@@ -156,6 +157,10 @@ struct DayScreen: View {
                 model.refreshToday()
                 model.loadWindow()
             }
+        }
+        .onChange(of: environment.today) { _, _ in
+            model.refreshToday()
+            model.loadWindow()
         }
         .task {
             guard startAtRows else { return }

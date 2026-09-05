@@ -86,7 +86,7 @@ public struct TodayFeedBuilder: Sendable {
             layout: rows.layout
         )
 
-        let weekStart = Week.start(of: today, startDay: Week.startDay(fromEndDay: goals?.weekEndDay))
+        let weekStart = WeekWindow(containing: today, startDay: Week.startDay(fromEndDay: goals?.weekEndDay), today: today).start
         let lastWeekStart = ISODate.addDays(weekStart, -7) ?? weekStart
         let lastWeekEnd = ISODate.addDays(weekStart, -1) ?? weekStart
         let insightsFrom = ISODate.addDays(today, -Self.insightDays) ?? today

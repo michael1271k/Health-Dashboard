@@ -79,7 +79,9 @@ enum NutritionPreviews {
         default:
             return nil
         }
-        return NutritionModel(database: database, userId: userId, date: date)
+        let targets = TargetResolver(database: database, userId: userId)
+        targets.start()
+        return NutritionModel(database: database, userId: userId, targets: targets, date: date)
     }
 
     /// The six days before `date`: `nil` means a day nobody logged.

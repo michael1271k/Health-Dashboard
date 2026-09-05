@@ -265,13 +265,19 @@ Every week/day number here uses `WeekWindow` (§6.4), so changing week start re-
 
 `HelixData/Targets/TargetResolver.swift` (new, `@Observable`, one instance in `AppEnvironment`). Input: `ValueObservation` over `user_goals`, `daily_targets`, `target_profiles`, `schedule_overrides`. Output: `targets(for date) -> ResolvedTargets` (kcal, P, C, F, water, steps, sleep h, lever id, profile id) via `Levers.goalsForDate` + `DailyTargets.apply`. Every gauge, widget snapshot, export and score input reads **this** and nothing else. Lever change = one outbox row + one observation tick; no view caches.
 
+> **Shipped 2026-09-05 (Wave 2.5).** The chain is `Targets.resolve` in HelixCore (`Nutrition/Targets.swift`, TS twin `src/lib/nutrition/targets.ts`, vectors `resolved-targets.json`); HelixData's `TargetSnapshot` translates the four tables and `TargetResolver` observes them in ONE `ValueObservation`, seeded synchronously on `start()`. The scorer (`DayPlan.resolve`), the widget snapshot and the Nutrition/Pulse tabs read it; the app's `TargetChain.swift` is deleted. `schedule_overrides` is observed and exposed on the snapshot but no target field depends on it — the plan's rest-day reading stays in `DayPlan`. `ResolvedTargets.profileKey` is the MATCHED profile, never the stamp.
+
 ### 6.3 MacroMath (Opus-callable, but the rules are Fable)
 
 `HelixCore/Nutrition/MacroMath.swift`: `adjust(edited: .calories(kcal))` → protein pinned, `delta = kcal − atwater(current)`, carbs/fat absorb `delta` in ratio `c·4 : f·9`, rounded to 1 g, kcal recomputed as Atwater so the sum is exact; `adjust(edited: .protein/.carbs/.fat)` → kcal = Atwater sum. Untracked macro (nil) is skipped by the ratio. Golden vectors from a TS twin in `src/lib/nutrition/macroMath.ts`.
 
+> **Shipped 2026-09-05 (Wave 2.5).** One departure: the absorb is a LOOP (≤ 4 rounds of the `c·4 : f·9` split on whole grams), not one pass — a single pass leaves up to 6 kcal of rounding residual and re-applying the same ask moves the answer; the loop is idempotent and monotonic, which `MacroMathTests` (moved from the app target into HelixCore) sweeps. `src/lib/nutrition/macroMath.ts` is the golden source (`macro-math.json`, 221 cases); the app-target stub is deleted.
+
 ### 6.4 WeekWindow — the weekly reset
 
 `HelixCore/Time/WeekWindow.swift`: `WeekWindow(containing date, startDay)` → `start`, `end`, `number` (via `Week.number`), `isCurrent`, `days`. `startDay` from `Preferences.weekStartDay`. Every "this week" read (`WeekSoFar`, This-week panel, targets, export, History) takes a `WeekWindow`, never a date arithmetic of its own. `AppEnvironment` schedules a `Timer` at the next local 00:00 of the first weekday (and every midnight for day rollover) that bumps a `dayTick` published value; views observe it. Nothing is written. Changing "Week starts on" republishes and re-cuts everything.
+
+> **Shipped 2026-09-05 (Wave 2.5).** `WeekWindow(containing:startDay:today:)` + `shifted(by:today:)`; TS twin `weekWindowOf` in `src/lib/reports/weekNumber.ts` (`week-window.json`). `TargetResolver.weekWindow(containing:today:)` cuts it on `Preferences.weekStartDay` off the same observed row, so changing "Week starts on" is one tick. `AppEnvironment.today`/`dayTick` roll at the next local 00:00 (`Task.sleep(until:clock: .continuous)` via `Calendar.nextDate`, plus `NSCalendarDayChanged` for timezone/clock changes and suspension); Nutrition, Pulse and Settings re-read `today` on change. The widget snapshot and Today feed cut their week through `WeekWindow`; the app's `WorkoutWeek` still does its own `Week.start` — Track U's 2.11.
 
 ### 6.5 Ready to progress + series builders
 

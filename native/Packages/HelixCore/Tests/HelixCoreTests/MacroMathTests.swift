@@ -1,5 +1,5 @@
 import Testing
-@testable import HelixNative
+@testable import HelixCore
 
 /// The one rule `MacroEditSheet` cannot be allowed to break: whatever moved,
 /// the calories on screen are the Atwater sum of the macros on screen.
