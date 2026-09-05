@@ -114,11 +114,22 @@ public extension AppDatabase {
             else { return }
             mutate(&row)
             try row.save(db)
-            // `archived_at` is the one column an edit ever CLEARS, and a merge
-            // upsert drops a nil rather than writing one — so un-archiving has
-            // to say the column's name out loud.
-            let nulls = row.archivedAt == nil ? ["archived_at"] : []
-            try Self.enqueueRowUpsert(table: CustomSupplementRow.databaseTableName, id: id, nulls: nulls, in: db)
+            // ── EVERY CLEARED COLUMN HAS TO SAY ITS OWN NAME ────────────────
+            // A merge upsert OMITS a nil rather than writing one, so a column
+            // the user just blanked keeps its old server value and the next
+            // pull hands it straight back. Un-archiving was the obvious case;
+            // clearing a supplement's TIME is the one that would have gone
+            // unnoticed — the item drops into the "—" bucket locally and is
+            // back at 22:00 tomorrow.
+            //
+            // The table is pulled WHOLE (`strategy: .full`), so the local row
+            // is the truth about every one of these: naming each nil one makes
+            // the server match it exactly. `created_at` is not in the list
+            // because nothing clears it and a null there would be a lie.
+            try Self.enqueueRowUpsert(
+                table: CustomSupplementRow.databaseTableName, id: id,
+                nulls: Self.clearedColumns(of: row), in: db
+            )
         }
     }
 
@@ -150,6 +161,19 @@ public extension AppDatabase {
             micros: row.micros.flatMap { try? OnyxJSON.decoder.decode([String: Double].self, from: Data($0.raw.utf8)) },
             archivedAt: row.archivedAt.map(ISO8601.string)
         )
+    }
+
+    /// The nullable columns that are nil on this row — the ones a merge upsert
+    /// would otherwise leave standing on the server.
+    private static func clearedColumns(of row: CustomSupplementRow) -> [String] {
+        var out: [String] = []
+        if row.color == nil { out.append("color") }
+        if row.form == nil { out.append("form") }
+        if row.time == nil { out.append("time") }
+        if row.schedule == nil { out.append("schedule") }
+        if row.micros == nil { out.append("micros") }
+        if row.archivedAt == nil { out.append("archived_at") }
+        return out
     }
 
     private static func json<T: Encodable>(_ value: T?) throws -> JSONText? {

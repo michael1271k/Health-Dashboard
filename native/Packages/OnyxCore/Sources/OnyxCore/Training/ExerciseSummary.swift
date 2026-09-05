@@ -127,7 +127,10 @@ public extension ExerciseSummary {
     /// A stored estimate wins; a stored 0 is missing and falls through to
     /// Epley, which is itself nil for an unloaded set.
     private static func oneRepMax(_ set: TrendSetRow) -> Double? {
-        if let est = set.est, est > 0, !est.isNaN { return est }
+        // `isFinite`, not `!isNaN`: the twin's guard is `Number.isFinite`, which
+        // rejects an infinity as well, and a rule that differs only on an
+        // unreachable input is still a rule that differs.
+        if let est = set.est, est > 0, est.isFinite { return est }
         return Epley.oneRepMax(weight: set.weightKg, reps: set.reps)
     }
 
