@@ -499,10 +499,17 @@ public struct WidgetSnapshotBuilder: Sendable {
 
     // MARK: - Helpers
 
+    /// Counts are zero when nothing happened; tonnage is NIL.
+    ///
+    /// `reduce(0)` over no sessions is 0, and the faces printed "0.0 t" for it
+    /// — on Monday morning, on a fresh install, and for the whole of the
+    /// casing bug, which hid every synced session from the query behind it.
+    /// That is this file's own rule broken at the top of the file: an invented
+    /// zero renders as a lie.
     static func totals(_ rows: [SessionTotals]) -> HelixSnapshot.WeekTotals {
         HelixSnapshot.WeekTotals(
             sessions: rows.count,
-            volumeKg: rows.reduce(0) { $0 + $1.volumeKg }.rounded(),
+            volumeKg: rows.isEmpty ? nil : rows.reduce(0) { $0 + $1.volumeKg }.rounded(),
             prs: rows.reduce(0) { $0 + $1.prs },
             sets: rows.reduce(0) { $0 + $1.sets }
         )

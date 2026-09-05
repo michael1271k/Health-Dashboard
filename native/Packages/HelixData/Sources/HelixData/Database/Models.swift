@@ -283,7 +283,7 @@ public struct OutboxItem: Codable, FetchableRecord, MutablePersistableRecord, Id
     }
 
     public init(
-        id: String = UUID().uuidString,
+        id: String = newHelixID(),
         kind: String,
         payload: Data,
         idempotencyKey: String,

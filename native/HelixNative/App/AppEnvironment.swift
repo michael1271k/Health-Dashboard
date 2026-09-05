@@ -200,12 +200,13 @@ public final class AppEnvironment {
     /// metrics render as "—" downstream.
     private func startSync(userID: UUID) {
         guard coordinator == nil else { return }
+        let userId = HelixJSON.canonicalUserID(userID)
         let coordinator = SyncCoordinator(
-            database: database, client: supabase, userId: userID.uuidString,
-            health: HealthSync(database: database, reader: Self.healthReader, userId: userID.uuidString)
+            database: database, client: supabase, userId: userId,
+            health: HealthSync(database: database, reader: Self.healthReader, userId: userId)
         )
         self.coordinator = coordinator
-        let targets = TargetResolver(database: database, userId: userID.uuidString)
+        let targets = TargetResolver(database: database, userId: userId)
         targets.start()
         self.targets = targets
         Task {
@@ -362,8 +363,12 @@ public final class AppEnvironment {
     /// supply it. Signed out, there is no session to open and nothing calls
     /// this; the empty string is the honest answer rather than a placeholder
     /// uuid that would later have to be found and corrected.
+    ///
+    /// "As the store spells it" was a lie until W1: this returned
+    /// `userID.uuidString`, which is uppercase, while every pulled row carried
+    /// Postgres's lowercase. See `HelixJSON.canonicalUserID`.
     public var userIdString: String {
-        if case .signedIn(let userID) = auth { return userID.uuidString }
+        if case .signedIn(let userID) = auth { return HelixJSON.canonicalUserID(userID) }
         return ""
     }
 

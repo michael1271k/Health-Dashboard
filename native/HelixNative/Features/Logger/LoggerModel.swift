@@ -39,7 +39,7 @@ final class LoggerModel: Identifiable {
     /// `nonisolated let` of a `Sendable` type: `Identifiable` is not isolated,
     /// so a main-actor-isolated `id` would make the conformance itself a data
     /// race the compiler refuses.
-    nonisolated let id = UUID().uuidString
+    nonisolated let id = newHelixID()
 
     // MARK: - Rows
 
@@ -86,7 +86,7 @@ final class LoggerModel: Identifiable {
         var isRecord: Bool
 
         init(
-            id: String = UUID().uuidString,
+            id: String = newHelixID(),
             weightKg: Double? = nil, reps: Int? = nil, rpe: Double? = nil,
             kind: SetKind = .normal, isDone: Bool = false,
             previous: String? = nil, isRecord: Bool = false

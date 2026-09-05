@@ -43,3 +43,34 @@ public enum HelixJSON {
 public func newHelixID() -> String {
     UUID().uuidString.lowercased()
 }
+
+extension HelixJSON {
+    /// The signed-in user's id, spelled the way every row in the store spells
+    /// it: lowercase.
+    ///
+    /// ── THE SIX SYMPTOMS THIS ONE LINE CAUSED ───────────────────────────────
+    /// `UUID.uuidString` is uppercase. A Postgres `uuid` column is not — it
+    /// accepts either spelling on the way in and renders lowercase on the way
+    /// out, so every row this device PULLED carried a lowercase `user_id`
+    /// while every row it WROTE carried an uppercase one. Both spellings sat
+    /// in the same SQLite table.
+    ///
+    /// SQLite compares TEXT byte for byte. There is no collation on any
+    /// `user_id` column, so `Column("user_id") == userId` — the filter under
+    /// the dashboard, the trends, the day page, the nutrition strip, the
+    /// vitals and thirteen Pulse streams — matched the handful of rows this
+    /// device had typed and none of the hundreds it had synced.
+    ///
+    /// The vanishing was the same bug wearing a clock: pull-to-refresh
+    /// rewrote a locally-logged session's id to the server's lowercase, the
+    /// commit hook fired, and the rebuilt feed 300 ms later could no longer
+    /// see the session it had just been showing.
+    ///
+    /// Mint the string HERE and nowhere else. The rule is enforced by
+    /// `UserIdCasingTests.noRawUuidStringOutsideThisFile`, which greps the
+    /// tree, because the failure is silent: a wrong id produces empty
+    /// screens, never an error.
+    public static func canonicalUserID(_ id: UUID) -> String {
+        id.uuidString.lowercased()
+    }
+}

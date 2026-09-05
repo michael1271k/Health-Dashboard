@@ -166,13 +166,25 @@ public struct HelixSnapshot: Codable, Sendable, Equatable {
   }
   public struct Week: Codable, Sendable, Equatable {
     public let sessions: Int
-    public let volumeKg: Double
+    /// Nil, never 0, when the week holds no sessions at all.
+    ///
+    /// This one field broke the file's own rule — "nil renders as '—'; an
+    /// invented zero renders as a lie" — for the whole of Phase 2. It was
+    /// non-optional, the builder summed an empty array, and every volume
+    /// surface read "0.0 t": on Monday morning, on a fresh install, and
+    /// throughout the casing bug that hid every synced session from the query.
+    /// "0 kg" is a claim that you lifted nothing. "—" is the truth, which is
+    /// that there is nothing to total yet.
+    ///
+    /// `sessions`, `prs` and `sets` stay non-optional on purpose: a count of
+    /// occurrences genuinely is zero when none occurred.
+    public let volumeKg: Double?
     public let prs: Int
     public let sets: Int
     /// How many training days the plan schedules — "3 sessions" needs a
     /// denominator to mean anything at a glance.
     public let sessionTarget: Int?
-    public init(sessions: Int, volumeKg: Double, prs: Int, sets: Int, sessionTarget: Int? = nil) {
+    public init(sessions: Int, volumeKg: Double?, prs: Int, sets: Int, sessionTarget: Int? = nil) {
       self.sessions = sessions
       self.volumeKg = volumeKg
       self.prs = prs
@@ -185,10 +197,11 @@ public struct HelixSnapshot: Codable, Sendable, Equatable {
   /// comparison of two different things.
   public struct WeekTotals: Codable, Sendable, Equatable {
     public let sessions: Int
-    public let volumeKg: Double
+    /// Nil, never 0, when the week holds no sessions — see `Week.volumeKg`.
+    public let volumeKg: Double?
     public let prs: Int
     public let sets: Int
-    public init(sessions: Int, volumeKg: Double, prs: Int, sets: Int) {
+    public init(sessions: Int, volumeKg: Double?, prs: Int, sets: Int) {
       self.sessions = sessions
       self.volumeKg = volumeKg
       self.prs = prs

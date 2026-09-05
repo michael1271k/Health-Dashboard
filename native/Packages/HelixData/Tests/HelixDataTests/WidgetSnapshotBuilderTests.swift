@@ -102,12 +102,25 @@ struct WidgetSnapshotBuilderTests {
 
         // Sunday-start week from 2026-08-30: Monday legs + today's Upper B.
         #expect(s.week.sessions == 2)
-        #expect(s.week.volumeKg == 1000 + 525)
+        // `Double(...)` is load-bearing, not noise. `volumeKg` is `Double?`
+        // since W1, and `#expect` binds each operand's type on its own: an
+        // integer *expression* on the right settles as `Int` and the
+        // comparison is then never true, while reporting both sides as 1525.
+        // A bare literal would infer `Double` and pass; `1000 + 525` does not.
+        #expect(s.week.volumeKg == Double(1000 + 525))
         #expect(s.week.sets == 3)
         #expect(s.week.prs == 1)
         #expect(s.week.sessionTarget == 5)
         #expect(s.weekPrev?.sessions == 1)
         #expect(s.weekPrev?.volumeKg == 450)
+
+        // A week with nothing in it has no tonnage — not a tonnage of zero.
+        // `reduce(0)` over no sessions printed "0.0 t" on Monday morning, on a
+        // fresh install, and throughout the casing bug that hid every synced
+        // session from the query. Counts stay zero: none of those DID happen.
+        let empty = WidgetSnapshotBuilder.totals([])
+        #expect(empty.volumeKg == nil)
+        #expect(empty.sessions == 0 && empty.sets == 0 && empty.prs == 0)
 
         #expect(s.workout.label == "Upper B")
         #expect(s.workout.dayKey == "cb_b")

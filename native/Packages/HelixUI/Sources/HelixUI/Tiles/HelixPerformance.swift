@@ -213,9 +213,6 @@ struct RecordGridFace: View {
       HStack(spacing: 0) {
         WeekCell(label: "SESSIONS", value: sessions,
                  delta: delta(s?.week.sessions, s?.weekPrev?.sessions), decimals: 0, mono: mono)
-        // `.map` binds to the UNWRAPPED `Double` here — `week` is the optional,
-        // `volumeKg` is not — so `s?.week.volumeKg.map { … }` does not compile.
-        // Only a leaf that is itself optional can take `.map` mid-chain.
         WeekCell(label: "VOLUME", value: HelixSnapshot.tonnes(s?.week.volumeKg),
                  delta: delta(tonnesThisWeek, tonnesLastWeek), decimals: 1, mono: mono)
         WeekCell(label: "SETS", value: s.map { "\($0.week.sets)" },
@@ -266,8 +263,8 @@ struct RecordGridFace: View {
     return "\(week.sessions)"
   }
 
-  private var tonnesThisWeek: Double? { s.map { $0.week.volumeKg / 1000 } }
-  private var tonnesLastWeek: Double? { s?.weekPrev.map { $0.volumeKg / 1000 } }
+  private var tonnesThisWeek: Double? { s?.week.volumeKg.map { $0 / 1000 } }
+  private var tonnesLastWeek: Double? { s?.weekPrev?.volumeKg.map { $0 / 1000 } }
 
   /// A delta only exists when BOTH weeks do. A first week compared against
   /// nothing is "new", not "+everything".

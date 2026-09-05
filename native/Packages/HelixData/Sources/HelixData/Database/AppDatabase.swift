@@ -547,6 +547,69 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // Every `user_id` in the store, spelled the way Postgres spells it.
+        //
+        // ── WHAT WAS IN THE STORE ───────────────────────────────────────────
+        // `AppEnvironment.userIdString` returned `UUID.uuidString`, which is
+        // uppercase; a Postgres `uuid` column renders lowercase. So a row this
+        // device WROTE and the same row PULLED BACK carried different
+        // `user_id` bytes, and SQLite compares TEXT byte for byte with no
+        // collation on any of these columns. `Column("user_id") == userId`
+        // therefore matched the handful of rows typed on this phone and none
+        // of the hundreds synced to it. Six symptoms, one cause — see
+        // `HelixJSON.canonicalUserID`.
+        //
+        // ── WHY DUPLICATES EXIST, AND ONLY IN SOME TABLES ───────────────────
+        // A table keyed on `id` never doubled: the pull found the row by its
+        // uuid and rewrote `user_id` in place. A table the device upserts by a
+        // NATURAL key did: the lookup missed the pulled row, so the write
+        // minted a second one under a fresh uuid, and now both spellings sit
+        // there. `MirrorCatalogue.conflict` is that natural key — introspected
+        // from the server's unique indexes, not guessed — so the collapse can
+        // be driven off the catalogue instead of a hand list that would fall
+        // behind the schema.
+        //
+        // ── WHICH TWIN SURVIVES ─────────────────────────────────────────────
+        // The lowercase one, always, and not because it is newer. It is a
+        // verbatim copy of a server row, and `sync_cursors` has already moved
+        // past it: delete it and it does not come back until its `updated_at`
+        // changes, which is permanent loss. The uppercase twin's content was
+        // pushed to that same server row through the same conflict target, so
+        // it is either already inside the survivor or still in the outbox and
+        // about to be — nothing is lost, at worst something is late. Today's
+        // score is the visible case, and `DailyScoreStore` recomputes it on
+        // the next tick regardless.
+        migrator.registerMigration("v12.lowercaseUserIds") { db in
+            let naturalKeys = Dictionary(
+                uniqueKeysWithValues: MirrorCatalogue.tables.map { ($0.name, $0.conflict.split(separator: ",").map(String.init)) }
+            )
+            let tables = try String.fetchAll(db, sql: """
+                SELECT name FROM sqlite_master
+                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'grdb_%'
+                 ORDER BY name
+                """)
+            for table in tables {
+                guard try db.columns(in: table).contains(where: { $0.name == "user_id" }) else { continue }
+                let name = table.quotedDatabaseIdentifier
+
+                if let key = naturalKeys[table], key.contains("user_id") {
+                    // `IS` rather than `=` so a NULL key column matches a NULL
+                    // one; every column here is NOT NULL today, and a
+                    // regenerated catalogue may not be.
+                    let rest = key.filter { $0 != "user_id" }
+                        .map { "twin.\($0.quotedDatabaseIdentifier) IS \(name).\($0.quotedDatabaseIdentifier)" }
+                    let match = (["twin.user_id = lower(\(name).user_id)"] + rest).joined(separator: " AND ")
+                    try db.execute(sql: """
+                        DELETE FROM \(name)
+                         WHERE user_id <> lower(user_id)
+                           AND EXISTS (SELECT 1 FROM \(name) AS twin WHERE \(match))
+                        """)
+                }
+
+                try db.execute(sql: "UPDATE \(name) SET user_id = lower(user_id) WHERE user_id <> lower(user_id)")
+            }
+        }
+
         return migrator
     }
 }
