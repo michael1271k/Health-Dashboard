@@ -18,10 +18,11 @@
  *   node scripts/recompute-scores.mjs 2026-07-15               # one date
  *   node scripts/recompute-scores.mjs --from 2026-07-01 --to 2026-08-04
  *
- * Needs .env.local (SUPABASE_SERVICE_ROLE_KEY for the read, NEXT_PUBLIC_APP_URL
- * or --app-url for the recompute POST). `--env <path>` points at another env
- * file, for a worktree that has none of its own. The service-role key is
- * server-only and never ships in the client bundle.
+ * Needs .env.local (SUPABASE_SERVICE_ROLE_KEY for the read and to mint the
+ * owner's token, NEXT_PUBLIC_SUPABASE_ANON_KEY to exchange it,
+ * NEXT_PUBLIC_APP_URL or --app-url for the recompute POST). `--env <path>`
+ * points at another env file, for a worktree that has none of its own. The
+ * service-role key is server-only and never ships in the client bundle.
  */
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
@@ -138,13 +139,46 @@ if (!appUrl) {
 }
 console.log(`target: ${appUrl}`)
 
+// ── A REAL TOKEN, NOT A FORGED ORIGIN ──────────────────────────────────────
+// This used to send `Origin: <appUrl>` and rely on the route treating any
+// same-origin-looking caller as the household admin. That "check" was a header
+// any client can set, so it was also how an anonymous request read the whole
+// health record; the route is JWT-only now. The service-role key can mint a
+// session for the owner, which is what a headless admin job should carry.
+const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
+if (usersError || !users?.length) {
+  console.error('cannot list users to mint a token:', usersError?.message ?? 'none found')
+  process.exit(1)
+}
+const owner = users[0]
+const { data: link, error: linkError } = await supabase.auth.admin.generateLink({
+  type: 'magiclink',
+  email: owner.email,
+})
+if (linkError || !link?.properties?.hashed_token) {
+  console.error('cannot mint a token:', linkError?.message ?? 'no hashed_token')
+  process.exit(1)
+}
+// `verifyOtp` needs the ANON client — the service-role one is not a user agent.
+const anon = createClient(url, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+const { data: session, error: otpError } = await anon.auth.verifyOtp({
+  type: 'magiclink',
+  token_hash: link.properties.hashed_token,
+})
+if (otpError || !session?.session?.access_token) {
+  console.error('cannot exchange the token:', otpError?.message ?? 'no session')
+  process.exit(1)
+}
+const accessToken = session.session.access_token
+console.log(`signed in as: ${owner.email}`)
+
 let ok = 0
 for (const date of dates) {
   try {
-    // `force` overrides the finalized seal; the route accepts same-origin callers.
+    // `force` overrides the finalized seal; the bearer token says whose days.
     const res = await fetch(`${appUrl}/api/compute-score`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: appUrl, Referer: `${appUrl}/` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({ date, force: true, isToday: date === today, backfillDays: 0 }),
     })
     if (res.ok) {

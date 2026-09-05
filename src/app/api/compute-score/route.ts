@@ -4,8 +4,7 @@ import { BATTERY } from '@/lib/scoring/battery'
 import { computeForDate, type ComputedScoreRow } from '@/lib/scoring/computeForDate'
 import { serverScheduleContext } from '@/lib/schedule/serverContext'
 import { isTrainingDayIn } from '@/lib/programs'
-import { denyIfUnauthorized } from '@/lib/auth/guard'
-import { resolveCallerUserId } from '@/lib/auth/identity'
+import { requireUserId } from '@/lib/auth/identity'
 import { logicalTodayISO, hoursAwakeToday } from '@/lib/utils/day'
 
 function todayISO(): string {
@@ -13,22 +12,16 @@ function todayISO(): string {
 }
 
 export async function POST(req: Request) {
-  const denied = denyIfUnauthorized(req)
-  if (denied) return denied
-
   const supabase = getServerSupabaseClient()
 
-  // Multi-tenant: a JWT caller gets THEIR scores computed; headless/cron calls
-  // (no JWT) sweep the whole household so every member's day stays scored.
-  const caller = await resolveCallerUserId(req, supabase)
-  let userIds: string[]
-  if (caller) {
-    userIds = [caller]
-  } else {
-    const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
-    if (usersError || !users.length) return NextResponse.json({ error: 'No user' }, { status: 401 })
-    userIds = users.map((u) => u.id)
-  }
+  // A caller gets THEIR OWN scores computed and nobody else's. The no-JWT
+  // branch this replaces swept `listUsers()` and wrote a `daily_scores` row for
+  // every account in the project — an unauthenticated write, reachable with a
+  // forged Origin header. `scripts/recompute-scores.mjs` is the one headless
+  // caller and it now mints a real user token.
+  const userId = await requireUserId(req, supabase)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const userIds = [userId]
 
   // The CLIENT knows the user's real timezone (device-local logical day + hours
   // awake) — the server cannot. Trust client-provided values when present and
@@ -75,9 +68,8 @@ export async function POST(req: Request) {
       supabase, userId, today, targetIsToday ? awake : BATTERY.maxAwake,
       { isRestDay: !isTrainingDayIn(schedule, today), todayISO: todayISO(), isToday: targetIsToday, force },
     )
-    // The JWT path resolves to exactly one caller, so this is unambiguously the
-    // requesting user's row. The headless sweep has no client waiting on it.
-    if (caller && userId === caller) computed = row
+    // Exactly one caller, always — so this is unambiguously their row.
+    computed = row
     await Promise.all(
       backfillDates.map((d) => computeForDate(
         supabase, userId, d, BATTERY.maxAwake,

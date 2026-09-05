@@ -1,10 +1,10 @@
 # ONYX — App Store 1.0
 
 Everything App Store Connect asks for, in the order it asks. Written for Wave 8
-of `NATIVE_MIGRATION_PLAN.md`, refreshed at Wave 2.12 of
-`NATIVE_PHASE_2_PLAN.md` — the wave that renamed the app. Fill the `⟨…⟩`
-placeholders in the web form; every other line is already true of the binary and
-was verified against a Release build, not asserted.
+of `NATIVE_MIGRATION_PLAN.md`, refreshed at Wave 2.12 (the rename) and re-run at
+**Wave 2.13, the Phase 2 ship gate**. Fill the `⟨…⟩` placeholders in the web
+form; every other line is already true of the binary and was verified against a
+Release build, not asserted.
 
 **The app is called Onyx.** The bundle identifiers still read `app.helix.health…`
 and they stay that way until Gate 0: renaming a bundle id before the App Group
@@ -184,11 +184,18 @@ Against `capacitor-apple-review-preflight`'s rule set. Every row answered.
 | `entitlements/unused_entitlements` | **Pass.** Two entitlements, both used: `com.apple.developer.healthkit` (`HealthSync.requestAuthorization`) and the App Group (the shared GRDB file the widgets read). No `.access`, no `.background-delivery`. |
 | `privacy/privacy_manifest` | **Pass.** `PrivacyInfo.xcprivacy` in both bundles; verified present in the Release build, not just in the repo. |
 | `privacy/unnecessary_data` | **Pass.** Health read scope is exactly `HealthCatalogue` plus sleep analysis, and every type feeds a figure on screen. No contacts, no location, no camera, no photos, no ATT. |
+| **5.1.1(v) account deletion** | **N/A, and it is the row most likely to be argued.** The guideline binds apps that *support account creation*; this one does not. `SignInView` is sign-in only — email and password against an account provisioned server-side — with no sign-up field, no OAuth, and no path in the binary that creates a user. §4's review notes say so in the first sentence, which is where a reviewer looks. **If that is ever challenged, or the moment a sign-up screen appears, this becomes a hard reject** and the fix is a `security definer` RPC that deletes the caller's rows and their `auth.users` row, called from a destructive row under Sign out. Deleting an auth user needs the service-role key, so it cannot be done from the client — it is server DDL, and server DDL in this project is pasted by hand. |
 | `metadata/accurate_metadata` | **Open** until §2 is filled in. The description must not promise the Watch app — that is 1.1. |
 | `metadata/apple_trademark` | **Pass** as long as §2 says "Apple Health" and "Home Screen", never "iOnyx", "for iPhone" in the name, or an Apple logo in a screenshot. |
 | `metadata/china_storefront` | **N/A.** No ICP filing needed; ship to all storefronts or exclude China — either is fine, nothing in the app requires a licence. |
 | `metadata/competitor_terms` | **Pass.** No competitor name in the keywords above. Keep it that way — "Hevy" and "Whoop" appear nowhere in shipping copy. |
 | `subscription/*` (3 rules) | **N/A.** No IAP, no subscription, no paywall. Nothing in the binary links StoreKit. |
+
+**Re-verified at Wave 2.13:** the whole Phase 2 diff to `native/project.yml` and
+both `Info.plist`s is the Onyx rename — **no** new entitlement, background mode,
+permission or usage string — so every verdict above still describes the binary.
+Both `PrivacyInfo.xcprivacy` files are present (the app's and the extension's;
+the required-reason check runs per Mach-O, not per app).
 
 **Security gate** (verified against `Release-iphonesimulator/HelixNative.app`):
 
@@ -201,6 +208,23 @@ Against `capacitor-apple-review-preflight`'s rule set. Every row answered.
 - **No `UIBackgroundModes` at all** — no `processing`, no `fetch`, nothing to
   register or justify. Health is pulled on foreground; the Live Activity clock
   runs without waking the app.
+- ATS is untouched: no `NSAllowsArbitraryLoads`, no exception domains, no
+  `http://` URL, and nothing overrides a certificate challenge.
+- Every debug affordance is unreachable in Release — the whole of
+  `PreviewHarness.swift` and its call site, `HELIX_START_TAB`, `HELIX_NO_HEALTH`,
+  `HELIX_SESSION_FILE` and the SQL tracer are all inside `#if DEBUG`, and only
+  the Debug configuration defines `DEBUG`. As of Wave 2.13 every `#Preview` is
+  too: two in `HelixUI` were not, and `#Preview` expands in **all**
+  configurations, so they were compiling into the shipping framework.
+- The widget extension makes **no** network request of any kind; it opens the
+  App Group database read-only.
+
+> **Not part of the binary, but found by the same review:** the Next.js web app
+> that shares this Supabase project was serving the owner's health record to
+> unauthenticated callers — the API routes authorised on an Origin header and
+> queried with the service-role key. Fixed at Wave 2.13 (JWT-only, guard
+> deleted, pinned by `src/tests/api-auth.test.ts`). The **service-role key must
+> still be rotated by hand**; it was reachable while the hole was open.
 
 **Performance gate:**
 
@@ -223,7 +247,12 @@ Against `capacitor-apple-review-preflight`'s rule set. Every row answered.
 2. **The privacy-policy page.** URL is wired into the app and the metadata; the
    page has to exist.
 3. **The demo account.** Create it, seed it, put the credentials in §4.
-4. §2 filled in, §6 run, §3 typed into the questionnaire, archive, upload.
+4. **Rotate the credentials that no commit can touch** — the Supabase
+   `service_role` key and account password, the dead Anthropic and Notion
+   tokens, and the `widget_tokens` row behind `HELIX_SNAPSHOT_TOKEN`. None is in
+   git; all are live at the provider. Tracked in the `auth-credentials-rotation`
+   memory.
+5. §2 filled in, §6 run, §3 typed into the questionnaire, archive, upload.
 
 Everything else that Wave 8 owns is done and was verified against a Release
 build: the privacy manifests, the export-compliance key, the version pair, the

@@ -689,10 +689,24 @@ private struct NumericField: View {
         return HelixFormat.kg(value)
     }
 
+    /// ── WHY THIS CLAMPS ────────────────────────────────────────────────────
+    /// `Double("99999999999999999999")` is 1e20, and the reps binding rounds
+    /// that into an `Int` — which TRAPS above `Int.max` (9.22e18). A `.numberPad`
+    /// has no length limit, so holding a finger on the `9` key crashed the app
+    /// mid-set. `Double("1e999")` is `+infinity` and traps the same way, and
+    /// `.nan` compares false against every bound, so it is rejected first.
+    ///
+    /// The bound is deliberately absurd rather than domain-tight: a real limit
+    /// belongs to the field's owner (reps and kilograms disagree about it), and
+    /// silently rewriting someone's 200 into a 20 mid-entry is worse than
+    /// letting an implausible number through. This only has to keep the cast
+    /// safe.
+    private static let limit = 100_000.0
+
     private static func parse(_ text: String) -> Double? {
         let normalised = text.replacingOccurrences(of: ",", with: ".")
-        guard !normalised.isEmpty else { return nil }
-        return Double(normalised)
+        guard !normalised.isEmpty, let value = Double(normalised), value.isFinite else { return nil }
+        return min(max(value, -limit), limit)
     }
 }
 

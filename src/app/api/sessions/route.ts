@@ -3,12 +3,12 @@ import { SaveWorkoutSchema, toWorkoutSet } from '@/lib/sessions/schema'
 import { saveSession } from '@/lib/sessions/save'
 import { resolveExercises } from '@/lib/sessions/resolveExercises'
 import { getServerSupabaseClient } from '@/lib/supabase/server'
-import { denyIfUnauthorized } from '@/lib/auth/guard'
 import { requireUserId } from '@/lib/auth/identity'
 import type { SaveWorkoutPayload, WorkoutSet } from '@/lib/types/workout'
 
 export async function POST(req: Request) {
-  // Auth: Supabase admin client — single-user app, get the sole user's ID
+  // The client is service-role and bypasses RLS, so the caller's JWT is the
+  // only thing deciding whose sets these are.
   const supabase = getServerSupabaseClient()
 
   const userId = await requireUserId(req, supabase)
@@ -88,14 +88,12 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  // Same-origin UI calls allowed; external calls require the webhook secret.
-  const denied = denyIfUnauthorized(req)
-  if (denied) return denied
-
+  // This used to read `listUsers()[0]` — it did not even look at the caller's
+  // JWT, so any request that got past the Origin check was served the first
+  // user's last 20 sessions.
   const supabase = getServerSupabaseClient()
-  const { data: { users } } = await supabase.auth.admin.listUsers()
-  const userId = users?.[0]?.id
-  if (!userId) return NextResponse.json({ sessions: [] })
+  const userId = await requireUserId(req, supabase)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data } = await supabase
     .from('workout_sessions')

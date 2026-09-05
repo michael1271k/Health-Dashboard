@@ -4,13 +4,27 @@ import type { Database } from '@/lib/supabase/types'
 type DB = SupabaseClient<Database>
 
 /**
- * Multi-tenant identity resolution for API routes.
+ * Identity resolution for API routes. A caller IS the user in their Supabase
+ * JWT, and there is no other way to be anyone.
  *
- * Every route used to hardcode `listUsers()[0]` — correct for one user, silent
- * data-corruption for a multi-user deployment. The contract now:
- *   1. A caller presenting a Supabase JWT (Authorization: Bearer) IS that user.
- *   2. No JWT → fall back to the household admin (keeps Michael's existing
- *      app + cron calls working unchanged during/after onboarding).
+ * ── WHY THERE IS NO LONGER A FALLBACK ───────────────────────────────────────
+ * There used to be one: no JWT meant "the household admin", so that Michael's
+ * app and cron calls kept working during onboarding. Combined with
+ * `denyIfUnauthorized` — which only ever compared the Origin/Referer HOST to
+ * the Host header, both of which any HTTP client sets freely — that made every
+ * route using it an unauthenticated read of the admin's health record:
+ *
+ *     curl -H 'Origin: https://<the site>' https://<the site>/api/today   → 200
+ *
+ * and the routes query with `getServerSupabaseClient()`, the SERVICE ROLE key,
+ * which bypasses RLS. So the fallback was not a convenience with an auth check
+ * in front of it; it was the whole authorisation decision, keyed on a header.
+ *
+ * Nothing legitimate depended on it. Every browser caller goes through
+ * `authedFetch`, which attaches the session's access token; the native app
+ * carries its own; `netlify/functions/keep-alive.mts` pings PostgREST directly
+ * and never touches these routes; and `scripts/recompute-scores.mjs` now mints
+ * a real user token instead of spoofing an Origin.
  */
 
 /** The user encoded in the caller's Supabase JWT, or null. */
@@ -27,18 +41,11 @@ export async function resolveCallerUserId(req: Request, db: DB): Promise<string 
   }
 }
 
-/** Household admin (profiles.role = 'admin'), falling back to the first auth user. */
-export async function defaultUserId(db: DB): Promise<string | null> {
-  try {
-    const { data, error } = await db.from('profiles').select('user_id').eq('role', 'admin').limit(1).maybeSingle()
-    if (!error && data) return (data as { user_id: string }).user_id
-  } catch { /* profiles not migrated yet — fall through */ }
-  const { data: { users }, error } = await db.auth.admin.listUsers()
-  if (error || !users.length) return null
-  return users[0].id
-}
-
-/** JWT caller if present, else the household admin. Null = no users at all. */
+/**
+ * The caller's user id, or null when they did not present a valid JWT.
+ *
+ * `null` means 401 — never "pick a user". Routes must not substitute one.
+ */
 export async function requireUserId(req: Request, db: DB): Promise<string | null> {
-  return (await resolveCallerUserId(req, db)) ?? (await defaultUserId(db))
+  return resolveCallerUserId(req, db)
 }

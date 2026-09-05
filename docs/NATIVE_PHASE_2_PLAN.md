@@ -1,6 +1,13 @@
 # ONYX — Native Phase 2: the No-Mercy UI/UX Refactor & the Great Sync
 
-**Status:** ADOPTED 2026-09-04 (founder-approved after brainstorm; 16 decisions in §1). Authority for every Phase 2 session. Execution has NOT started. `docs/NATIVE_MIGRATION_PLAN.md` stays as the Phase 1 record; its §3 Design Mandate is **superseded** by §3 here.
+**Status: COMPLETE 2026-09-05.** All fourteen waves (2.0 – 2.13) shipped on `feature/native-migration-wave-1`. Adopted 2026-09-04 (founder-approved after brainstorm; 16 decisions in §1); this file stays the authority for what Phase 2 decided and why. `docs/NATIVE_MIGRATION_PLAN.md` stays as the Phase 1 record; its §3 Design Mandate is **superseded** by §3 here.
+
+**What the ship gate found** (2.13 — the reviews, not the tests):
+- A **live unauthenticated read and write of the health record** on the Netlify web app. `/api/today`, `/api/sessions` and `/api/compute-score` authorised on an Origin/Referer header — which any HTTP client sets — then fell back to the household admin and queried with the **service-role** key, bypassing RLS. Fixed: the routes are JWT-only, `src/lib/auth/guard.ts` is deleted, and `src/tests/api-auth.test.ts` pins it. The iOS app was never affected; it talks to PostgREST under RLS.
+- A **crash on the primary logging path**: the logger's nav-bar rest capsule still built `Date()...endsAt` directly, which traps once the deadline passes. Reachable by leaving the logger mid-rest (which keeps the session running, by design) and resuming after it expires.
+- Two more that would have shipped: unbounded `Int(Double)` on the reps keypad, and the Live Activity adopting a **stale** activity, whose immutable attributes then showed yesterday's workout name over today's numbers.
+
+**Next:** Gate 0 (buy the Apple Developer Program) unblocks the App Group, on-device Health, Instruments and TestFlight. Waves 9 (retire the web app) and 10 (Watch) remain postponed. The web app deliberately keeps its **Helix** branding until Wave 9 — Onyx is the iOS app.
 **Branch:** `feature/native-migration-wave-1` (Track U) + `track-s/sync` worktree (Track E). Never main.
 **Prerequisite unchanged:** Gate 0 (Apple Developer Program) still gates App Group, background delivery, TestFlight. Everything below that does not need it is built now; the three items that do are marked `ADP`.
 

@@ -61,10 +61,22 @@ final class LiveActivityController {
         // card nothing could feed or dismiss, and the next launch requested a
         // SECOND one beside it. ActivityKit keeps the running activities; the
         // one for this type is ours by definition.
+        //
+        // ── BUT ONLY IF IT IS THIS WORKOUT ──────────────────────────────────
+        // `title` and `startedAt` are ATTRIBUTES, fixed for the activity's life
+        // — `update` can only move the ContentState. Adopting yesterday's card
+        // therefore keeps yesterday's name and start instant while today's sets
+        // and tonnage flow into it: the Lock Screen reads CHEST & BACK B with a
+        // 20-hour elapsed clock over Legs & Core A's numbers. `start()` ends the
+        // old activity when a session is live, but after a jetsam `session` is
+        // nil and nothing does. So a mismatch is ended rather than adopted.
         if let existing = Activity<HelixWorkoutAttributes>.activities.first {
-            activity = existing
-            update(model: model)
-            return
+            if existing.attributes.startedAt == model.startedAt {
+                activity = existing
+                update(model: model)
+                return
+            }
+            Task { await existing.end(nil, dismissalPolicy: .immediate) }
         }
         let attributes = HelixWorkoutAttributes(
             title: model.day.label,

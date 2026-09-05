@@ -163,6 +163,7 @@ public extension View {
     }
 }
 
+#if DEBUG
 #Preview("Glass levels") {
     ScrollView {
         VStack(spacing: HelixSpace.l) {
@@ -192,3 +193,4 @@ public extension View {
     .helixScreen(.train)
     .foregroundStyle(Color.helix.textPrimary)
 }
+#endif

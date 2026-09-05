@@ -161,9 +161,13 @@ struct LiveLoggerView: View {
     /// worth showing rather than a layout to keep stable.
     private var clockItem: some ToolbarContent {
         ToolbarItem(placement: .principal) {
-            if let endsAt = model.restEndsAt {
+            // `restCountdown`, not `model.restEndsAt` directly — the deadline
+            // outlives this view. `.task(id:)` is what clears it, and leaving
+            // the logger cancels that task, so a rest started here and left to
+            // expire on the Workout tab comes back as a date in the PAST.
+            if let countdown = restCountdown(model.restEndsAt) {
                 RestCapsule(
-                    endsAt: endsAt,
+                    countdown: countdown,
                     accent: accent,
                     onSkip: { withAnimation(HelixMotion.drawer) { model.stopRest() } },
                     onAdjust: { model.adjustRest(by: $0) }
@@ -419,8 +423,15 @@ struct LiveLoggerView: View {
 /// drifts, and worse, it is wrong after a backgrounding — iOS suspends the app
 /// between sets routinely, and a counter resumes where it stopped while a
 /// deadline is simply late.
+///
+/// ── AND WHY IT TAKES A RANGE RATHER THAN THE DEADLINE ───────────────────────
+/// `Text(timerInterval:)` traps on a range whose end is behind its start —
+/// "Fatal error: Range requires lowerBound <= upperBound" — so the check has to
+/// happen where the value is still optional, at the call site. `restCountdown`
+/// in `Shared/` is that check, and it is shared with the Lock Screen card and
+/// the Dynamic Island, which have the same problem for a different reason.
 private struct RestCapsule: View {
-    let endsAt: Date
+    let countdown: ClosedRange<Date>
     let accent: Color
     let onSkip: () -> Void
     let onAdjust: (TimeInterval) -> Void
@@ -429,7 +440,7 @@ private struct RestCapsule: View {
         Button(action: onSkip) {
             HStack(spacing: HelixSpace.xs) {
                 Image(systemName: "timer")
-                Text(timerInterval: Date()...endsAt, countsDown: true)
+                Text(timerInterval: countdown, countsDown: true)
                     .helixNumeral()
                     // Reserved, so the capsule does not resize as the digits
                     // fall from 1:00 to 59.

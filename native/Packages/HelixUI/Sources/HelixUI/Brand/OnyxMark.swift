@@ -109,6 +109,7 @@ public struct OnyxWordmark: View {
     }
 }
 
+#if DEBUG
 #Preview("Onyx mark") {
     VStack(spacing: HelixSpace.xl) {
         HStack(spacing: HelixSpace.l) {
@@ -127,3 +128,4 @@ public struct OnyxWordmark: View {
     .padding(HelixSpace.xl)
     .background(Color.helix.base)
 }
+#endif
