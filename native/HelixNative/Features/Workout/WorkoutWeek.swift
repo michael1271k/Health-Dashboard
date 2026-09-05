@@ -237,7 +237,7 @@ final class WorkoutWeek {
             let key = logged?.dayKey ?? planned?.dayKey
             return DayCell(
                 date: date,
-                initial: Self.initial(date),
+                initial: WeekWindow.initial(date),
                 dayKey: key,
                 label: logged.flatMap { SessionAnalysis.dayLabel($0.dayKey) } ?? planned?.label,
                 sessionId: logged?.id,
@@ -351,8 +351,4 @@ final class WorkoutWeek {
 
     /// "S" — the weekday's initial in the user's own locale, so a German week
     /// reads S M D M D F S rather than the English letters.
-    private nonisolated static func initial(_ iso: String) -> String {
-        guard let date = LogicalDay.date(fromISO: iso) else { return "·" }
-        return String(date.formatted(.dateTime.weekday(.narrow)).prefix(1))
-    }
 }

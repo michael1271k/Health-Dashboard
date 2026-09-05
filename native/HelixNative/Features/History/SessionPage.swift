@@ -15,7 +15,7 @@ import HelixData
 /// So the ledger is read once and every number on the screen comes out of that
 /// one snapshot.
 ///
-/// It is a few thousand rows and `SessionHistoryView` already reads all of them
+/// It is a few thousand rows and `HistoryWeeks` already reads all of them
 /// on every open. When the ledger reaches six figures this becomes a ranged
 /// query in `HelixData`, which Track E owns (plan §10).
 extension SessionAnalysis {

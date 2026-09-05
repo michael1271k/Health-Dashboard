@@ -17,42 +17,100 @@ struct BodyTrendsView: View {
 
     /// Supplied only by previews and the screenshot harness.
     var seeded: BodyVitalsSlice?
+    /// History's Body segment shows this same screen INSIDE its own navigation
+    /// (§5.9), where a second "Trends" title and a second background would both
+    /// be wrong. Only the chrome differs — the charts are one implementation.
+    var embedded = false
 
     @State private var slice: BodyVitalsSlice?
+    @State private var range: TrendRange = .quarter
 
     var body: some View {
         Group {
             if let slice {
-                BodyTrendsScreen(slice: slice)
+                BodyTrendsScreen(slice: slice, range: $range)
             } else {
                 ProgressView().controlSize(.large)
             }
         }
-        .helixScreen(.body)
-        .navigationTitle("Trends")
-        .navigationBarTitleDisplayMode(.large)
-        .task {
-            if slice == nil { slice = seeded ?? ((try? load()) ?? .empty) }
+        .modifier(BodyTrendsChrome(embedded: embedded))
+        .task(id: range) {
+            // A seeded slice is a fixed window by definition; re-reading it on
+            // a range change would replace the harness's data with an empty
+            // database's answer.
+            if let seeded {
+                slice = seeded
+            } else {
+                slice = (try? load()) ?? .empty
+            }
         }
     }
 
     private func load() throws -> BodyVitalsSlice {
         let to = LogicalDay.today()
         return try environment.database.bodyVitals(
-            userId: environment.userIdString, from: ISODate.addDays(to, -(Trend.windowDays - 1)) ?? to, to: to
+            userId: environment.userIdString, from: ISODate.addDays(to, -(range.days - 1)) ?? to, to: to
         )
+    }
+}
+
+/// How far back the scale, ledger and steps charts reach.
+///
+/// Not "All": the read is one ranged query and an unbounded one would grow with
+/// the account forever to draw a line nobody can read at that width. A year is
+/// the longest span the x-axis can label honestly on a phone.
+enum TrendRange: Int, CaseIterable, Identifiable {
+    case month = 30
+    case quarter = 90
+    case year = 365
+
+    var id: Int { rawValue }
+    var days: Int { rawValue }
+    var label: String {
+        switch self {
+        case .month: "30 days"
+        case .quarter: "90 days"
+        case .year: "Year"
+        }
+    }
+}
+
+/// The chrome the pushed screen wears and the embedded one does not.
+private struct BodyTrendsChrome: ViewModifier {
+    let embedded: Bool
+
+    func body(content: Content) -> some View {
+        if embedded {
+            content
+        } else {
+            content
+                .helixScreen(.body)
+                .navigationTitle("Trends")
+                .navigationBarTitleDisplayMode(.large)
+        }
     }
 }
 
 private struct BodyTrendsScreen: View {
     let slice: BodyVitalsSlice
+    @Binding var range: TrendRange
 
     var body: some View {
         let readings = BodyVitals.readings(ledger: slice.ledger, logs: slice.logs)
+        // The vitals cards keep their own 56-day display window. The range
+        // picker drives the three charts §5.9 names — scale, ledger, steps —
+        // and widening eight sparklines to a year alongside them would make
+        // every one of them a smear.
         let recent = ISODate.addDays(LogicalDay.today(), -55) ?? LogicalDay.today()
         let logs = slice.logs.filter { $0.date >= recent }
         ScrollView {
             VStack(alignment: .leading, spacing: HelixSpace.l) {
+                Picker("Range", selection: $range) {
+                    ForEach(TrendRange.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("Chart range")
+
                 CompositionSection(readings: readings, goals: slice.goals)
                 LedgerSection(readings: readings, goals: slice.goals)
                 StepsSection(

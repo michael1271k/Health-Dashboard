@@ -20,7 +20,7 @@ import HelixCore
 /// `maintenance_until` the selection stops being honoured and the schedule
 /// resumes, so a release closes itself whether or not anyone remembers.
 struct LeversView: View {
-    let model: YouModel
+    let model: SettingsModel
 
     @State private var draft = Draft()
     @FocusState private var focus: Field?
@@ -290,7 +290,7 @@ struct LeversView: View {
 #if DEBUG
 #Preview("Levers") {
     NavigationStack {
-        LeversView(model: YouModel(
+        LeversView(model: SettingsModel(
             database: try! .inMemory(deviceId: "preview"), userId: "preview"
         ))
     }

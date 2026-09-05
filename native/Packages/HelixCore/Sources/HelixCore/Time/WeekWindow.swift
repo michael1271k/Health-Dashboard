@@ -15,7 +15,7 @@ import Foundation
 /// An unparseable date echoes as both bounds with no days, the way
 /// `Week.start` echoes its input — a bad string draws an empty week, not a
 /// crash.
-public struct WeekWindow: Codable, Equatable, Sendable {
+public struct WeekWindow: Codable, Hashable, Identifiable, Sendable {
     /// First day, inclusive.
     public let start: String
     /// Last day, inclusive — `start + 6`.
@@ -26,6 +26,13 @@ public struct WeekWindow: Codable, Equatable, Sendable {
     public let isCurrent: Bool
     /// The seven dates, in order. Empty when the date does not parse.
     public let days: [String]
+
+    public var id: String { start }
+    /// The cut this window was made on, 0 = Sunday — read back off `start`.
+    public var startDay: Int { ISODate.weekday(start) ?? 0 }
+
+    /// Inclusive on both ends: a Saturday session belongs to THIS capsule.
+    public func contains(_ dateISO: String) -> Bool { dateISO >= start && dateISO <= end }
 
     public init(containing dateISO: String, startDay: Int, today: String) {
         let start = Week.start(of: dateISO, startDay: startDay)

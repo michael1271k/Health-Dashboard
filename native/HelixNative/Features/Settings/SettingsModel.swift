@@ -22,7 +22,7 @@ import HelixData
 /// Motion rewrote the calorie target — a real bug, reachable from a toggle.
 @MainActor
 @Observable
-final class YouModel {
+final class SettingsModel {
 
     private let database: AppDatabase
     let userId: String

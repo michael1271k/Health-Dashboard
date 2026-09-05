@@ -15,7 +15,7 @@ import HelixCore
 /// No waist, no hips, no limb girths. That has been removed from this app twice.
 /// Every number on this screen comes off the scale.
 struct BodyTargetsView: View {
-    let model: YouModel
+    let model: SettingsModel
 
     @State private var draft = Draft()
     @FocusState private var focus: Field?
@@ -105,7 +105,7 @@ struct BodyTargetsView: View {
 #if DEBUG
 #Preview("Body targets") {
     NavigationStack {
-        BodyTargetsView(model: YouModel(
+        BodyTargetsView(model: SettingsModel(
             database: try! .inMemory(deviceId: "preview"), userId: "preview"
         ))
     }

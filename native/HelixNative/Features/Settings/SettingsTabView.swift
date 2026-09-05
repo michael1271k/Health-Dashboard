@@ -3,7 +3,7 @@ import HelixUI
 import HelixCore
 import HelixData
 
-/// The You tab — the hub.
+/// The Settings tab — six `Section`s of a stock `Form` (§5.8).
 ///
 /// ── WHAT THE WEB VERSION DID THAT THIS DOES NOT ─────────────────────────────
 /// Four things, all of them WEB-SIM:
@@ -18,19 +18,26 @@ import HelixData
 ///     calorie target;
 ///   · a sixteen-field volume editor inline on the hub, with uncontrolled inputs
 ///     remounted by `key` to reset them. It is a screen of its own here.
-struct YouTabView: View {
+///
+/// ── AND WHAT WAVE 2.11 CHANGED ──────────────────────────────────────────────
+/// Pathfinder is gone — its week-by-week table was a second, worse History, and
+/// History is now a door from Today. In its place the tab grew the thing it
+/// never had: a Sync section that says, per table, what this device actually
+/// holds and when it last heard from the server. A sync you cannot inspect is a
+/// sync you have to trust, and §2.3 is a list of the times that was misplaced.
+struct SettingsTabView: View {
     @Environment(AppEnvironment.self) private var environment
 
     /// Supplied only by the screenshot harness, which needs a store it seeded
     /// rather than the signed-in user's. The app never passes one.
-    var seeded: YouModel?
+    var seeded: SettingsModel?
 
-    @State private var resolved: YouModel?
+    @State private var resolved: SettingsModel?
 
     var body: some View {
         Group {
             if let resolved {
-                YouForm(model: resolved)
+                SettingsForm(model: resolved)
             } else {
                 // One frame at most: the model needs the signed-in user id, and
                 // that is known by the time this appears.
@@ -40,17 +47,17 @@ struct YouTabView: View {
         .task {
             if resolved == nil {
                 resolved = seeded
-                    ?? YouModel(database: environment.database, userId: environment.userIdString)
+                    ?? SettingsModel(database: environment.database, userId: environment.userIdString)
             }
             await resolved?.observe()
         }
     }
 }
 
-private struct YouForm: View {
+private struct SettingsForm: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.scenePhase) private var scenePhase
-    let model: YouModel
+    let model: SettingsModel
 
     @State private var isSigningOut = false
 
@@ -71,11 +78,6 @@ private struct YouForm: View {
                 } label: {
                     LabeledContent("Training plan", value: "\(model.plan.label) · \(model.phase.label)")
                 }
-                NavigationLink {
-                    PathfinderView()
-                } label: {
-                    LabeledContent("Pathfinder", value: "Week by week")
-                }
             } header: {
                 HelixSectionHeader("Plan", .train)
             }
@@ -92,17 +94,17 @@ private struct YouForm: View {
                     LabeledContent("Weekly set volume", value: "\(model.volumeTotal) sets")
                 }
                 NavigationLink {
-                    ReportsListView()
-                } label: {
-                    LabeledContent("Reports", value: "Weekly")
-                }
-                NavigationLink {
                     BodyTargetsView(model: model)
                 } label: {
                     LabeledContent(
                         "Body targets",
                         value: model.targetWeightKg.map { "\($0.formatted(.number.precision(.fractionLength(0...1)))) kg" } ?? "—"
                     )
+                }
+                NavigationLink {
+                    ReportsListView()
+                } label: {
+                    LabeledContent("Reports", value: "Weekly")
                 }
             } header: {
                 HelixSectionHeader("Targets", .fuel)
@@ -121,13 +123,14 @@ private struct YouForm: View {
             } header: {
                 HelixSectionHeader("Units & display", .recover)
             } footer: {
-                // Says what it DOES, not what it ought to. The column is read
-                // by the web app; nothing in `HelixNative` reads it yet, and
-                // neither does anything read the system setting — the logger's
-                // springs are unconditional. Gating `HelixMotion` on both is
-                // Wave 1's unfinished re-skin, and claiming it here before then
+                // Says what each DOES, not what it ought to. Week start is now
+                // load-bearing — one `WeekWindow` cuts History, the Workout
+                // tab's This-week panel and the weekly export, so changing it
+                // re-labels every week in the app. Reduce motion is still only
+                // stored: nothing in `HelixNative` reads it, and neither does
+                // anything read the system setting, so claiming otherwise here
                 // would be a lie in a settings footer.
-                Text("Stored with your account and honoured by the web app. The native logger does not read it yet.")
+                Text("A week runs \(weekSpanLabel) — History, this week's panel and the weekly export are all cut on it. Reduce motion is stored with your account and honoured by the web app; the native app does not read it yet.")
             }
 
             Section {
@@ -139,19 +142,26 @@ private struct YouForm: View {
             }
 
             Section {
-                Link("Privacy Policy", destination: HelixLinks.privacyPolicy)
-                    .accessibilityHint("Opens in Safari")
-                LabeledContent("Version", value: HelixLinks.versionString)
+                NavigationLink {
+                    SyncStatusView()
+                } label: {
+                    LabeledContent("Sync status", value: environment.sync.caption(at: .now) ?? "Never synced")
+                }
             } header: {
-                HelixSectionHeader("About", .recover)
+                HelixSectionHeader("Sync", .body)
             } footer: {
-                Text("Health data stays on this device and in your own private HELIX account. It is never sold, and never shared with anyone else.")
+                Text("What this device holds, table by table, and anything still waiting to reach the server.")
             }
 
             Section {
-                Button("Re-run backfill") { environment.rerunBackfill() }
+                LabeledContent("App", value: "Onyx")
+                LabeledContent("Version", value: HelixLinks.versionString)
+                Link("Privacy Policy", destination: HelixLinks.privacyPolicy)
+                    .accessibilityHint("Opens in Safari")
+            } header: {
+                HelixSectionHeader("About", .recover)
             } footer: {
-                Text("Downloads your whole history again. Nothing on this device is deleted; every row is re-checked against the server.")
+                Text("Health data stays on this device and in your own private Onyx account. It is never sold, and never shared with anyone else.")
             }
 
             Section {
@@ -165,7 +175,7 @@ private struct YouForm: View {
             if phase == .active { model.refreshToday() }
         }
         .onChange(of: environment.today) { _, _ in model.refreshToday() }
-        .confirmationDialog("Sign out of HELIX?", isPresented: $isSigningOut, titleVisibility: .visible) {
+        .confirmationDialog("Sign out of Onyx?", isPresented: $isSigningOut, titleVisibility: .visible) {
             Button("Sign out", role: .destructive) {
                 Task { await environment.signOut() }
             }
@@ -181,6 +191,15 @@ private struct YouForm: View {
         return "\(held.label) · \(kcal) kcal"
     }
 
+    /// `Monday to Sunday` — the setting read back as the span it produces,
+    /// which is the thing being chosen. "Week starts on: Monday" leaves the
+    /// reader to work out which Sunday a session then belongs to.
+    private var weekSpanLabel: String {
+        let window = WeekWindow(containing: model.today, goals: model.goals)
+        let names = Calendar.current.weekdaySymbols
+        return "\(names[window.startDay]) to \(names[(window.startDay + 6) % 7])"
+    }
+
     // ── Bindings ────────────────────────────────────────────────────────────
     // Written as computed bindings rather than `@State` mirrors of the row: a
     // mirror has to be kept in step with the stream, and the moment it drifts
@@ -193,7 +212,7 @@ private struct YouForm: View {
 
     private var weekStartDay: Binding<Int> {
         Binding(
-            get: { model.goals?.weekEndDay == 0 ? 1 : 0 },
+            get: { WeekWindow.startDay(from: model.goals) },
             set: { model.setWeekStartDay($0) }
         )
     }
@@ -208,8 +227,8 @@ private struct YouForm: View {
 }
 
 #if DEBUG
-#Preview("You") {
-    NavigationStack { YouTabView() }
+#Preview("Settings") {
+    NavigationStack { SettingsTabView() }
         .environment(AppEnvironment.preview)
 }
 #endif
