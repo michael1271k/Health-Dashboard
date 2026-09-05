@@ -126,11 +126,14 @@ struct ExerciseLibraryView: View {
             // far, and a trail starts at two.
             if let trail = sparks[entry.id], trail.count >= 2 {
                 Sparkline(points: trail, color: group.domain.accent)
-                    .frame(width: 40, height: 16)
+                    .frame(width: 32, height: 12)
                     .accessibilityHidden(true)
             }
         }
-        .frame(minHeight: 44)
+        // §W7: the card loses 15 % of its height. 40 pt of CONTENT, not of tap
+        // target — the list's own row insets carry it back over 44, which is
+        // what a finger needs and what a row of text does not.
+        .frame(minHeight: 40)
         // One element, one announcement. Without this VoiceOver reads the name
         // and the subtitle as two separate stops inside a row that is one link.
         .accessibilityElement(children: .combine)

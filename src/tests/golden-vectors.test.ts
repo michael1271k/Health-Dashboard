@@ -84,6 +84,7 @@ import {
   type DayClock, type DoseLogEntry, type SupplementDose,
 } from '@/lib/nutrition/supplementNutrients'
 import { SLEEP_DEBT_WINDOW_DAYS, SLEEP_DEBT_WEEKLY_DECAY, computeSleepDebt } from '@/lib/hooks/useSleepDebt'
+import { exerciseSummary, type ExerciseSummary, type ExerciseSummarySet } from '@/lib/training/exerciseSummary'
 import { safePath } from '@/lib/native/deepLink'
 import {
   parseRepWindow, repWindowFor, holdTargetFor, clearedCeiling, loadLadder, workLoads, ladderVerdict,
@@ -5747,6 +5748,87 @@ describe('golden vectors — the stack credit rule', () => {
       cases,
     })
     expect(Object.keys(SUPPLEMENT_NUTRIENTS).length).toBe(9)
+  })
+})
+
+describe('golden vectors — the exercise summary', () => {
+  it('exports the three headline numbers and the caveat figures', () => {
+    interface In { sets: ExerciseSummarySet[]; timed?: boolean }
+    const cases: Case<In, ExerciseSummary>[] = []
+    const push = (name: string, sets: ExerciseSummarySet[], timed = false) =>
+      cases.push({ name, input: { sets, timed }, expected: exerciseSummary(sets, timed) })
+
+    const set = (
+      sessionId: string, weightKg: number, reps: number,
+      extra: Partial<ExerciseSummarySet> = {},
+    ): ExerciseSummarySet => ({ sessionId, weightKg, reps, ...extra })
+
+    push('nothing logged', [])
+    push('only warm-ups', [set('s1', 20, 12, { setType: 'warmup' }), set('s1', 20, 10, { setType: 'warmup' })])
+    push('only ghosts', [set('s1', 40, 8, { setType: 'ghost' })])
+
+    push('one bilateral session', [
+      set('s1', 20, 12, { setType: 'warmup' }),
+      set('s1', 32.5, 10),
+      set('s1', 32.5, 8),
+      set('s1', 30, 8),
+    ])
+
+    push('two sessions — the record is the bigger one', [
+      set('s1', 30, 10), set('s1', 30, 10),
+      set('s2', 32.5, 10), set('s2', 32.5, 10), set('s2', 32.5, 9),
+    ])
+
+    // A unilateral lift: three physical sets logged as six rows.
+    push('a unilateral lift collapses to physical sets', [
+      set('s1', 14, 12, { side: 'L', pairId: 'p1' }), set('s1', 14, 12, { side: 'R', pairId: 'p1' }),
+      set('s1', 14, 11, { side: 'L', pairId: 'p2' }), set('s1', 14, 12, { side: 'R', pairId: 'p2' }),
+      set('s1', 14, 10, { side: 'L', pairId: 'p3' }), set('s1', 14, 10, { side: 'R', pairId: 'p3' }),
+    ])
+
+    // The two sides differ: volume takes min × min, the count still says three.
+    push('an uneven pair', [
+      set('s1', 16, 10, { side: 'L', pairId: 'p1' }), set('s1', 18, 8, { side: 'R', pairId: 'p1' }),
+    ])
+
+    push('a pair id with no side is not a pair', [
+      set('s1', 16, 10, { pairId: 'p1' }), set('s1', 18, 8, { pairId: 'p1' }),
+    ])
+
+    push('a lone side', [set('s1', 16, 10, { side: 'L', pairId: 'p1' })])
+
+    push('unloaded work is scored on reps', [
+      set('s1', 0, 18), set('s1', 0, 15), set('s2', 0, 20),
+    ])
+
+    push('timed work has no estimate', [set('s1', 0, 60), set('s2', 0, 75)], true)
+
+    push('a stored estimate beats Epley', [
+      set('s1', 100, 5, { est: 121.4 }),
+      set('s1', 100, 5),
+    ])
+
+    push('a stored zero is missing, not an estimate of zero', [
+      set('s1', 100, 5, { est: 0 }),
+    ])
+
+    push('equal loads — the heaviest SET is the one with the most reps', [
+      set('s1', 40, 6), set('s1', 40, 9), set('s1', 35, 12),
+    ])
+
+    push('a warm-up never reaches the session record', [
+      set('s1', 60, 20, { setType: 'warmup' }),
+      set('s1', 80, 3),
+    ])
+
+    push('a single rep is its own estimate', [set('s1', 140, 1)])
+
+    emit('exercise-summary.json', {
+      module: 'training/exerciseSummary',
+      fn: 'exerciseSummary',
+      note: 'Warm-ups and ghosts are dropped before anything is counted. An L/R pair is ONE physical set — collapsePairs keeps the right side, or the higher-rep side — so the reps and the set count are what a human would say out loud, and the session record runs through sessionVolumeKg, where a genuine pair scores min(weight) × min(reps). A stored est_1rm_kg of 0 is missing and falls through to Epley; unloaded and timed work have no estimate at all.',
+      cases,
+    })
   })
 })
 

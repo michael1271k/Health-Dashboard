@@ -27,6 +27,10 @@ struct ExerciseDetailView: View {
     /// The library's own order, for the prev/next chevrons. Empty when the page
     /// was reached from somewhere with no list behind it.
     var siblings: [ExerciseCatalogEntry] = []
+    #if DEBUG
+    /// The shot loop opens the page on the segment it is photographing.
+    var startOnHistory = false
+    #endif
 
     @Environment(AppEnvironment.self) private var environment
 
@@ -34,6 +38,7 @@ struct ExerciseDetailView: View {
     @State private var segment = Segment.summary
     @State private var ledger: [HistorySetRow] = []
     @State private var loaded = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private enum Segment: String, CaseIterable, Identifiable {
         case summary = "Summary"
@@ -75,6 +80,9 @@ struct ExerciseDetailView: View {
         .toolbar { chevrons }
         .sensoryFeedback(.selection, trigger: shown.id)
         .task(id: shown.id) {
+            #if DEBUG
+            if startOnHistory { segment = .history }
+            #endif
             let database = environment.database, id = shown.id
             ledger = await Task.detached(priority: .userInitiated) {
                 (try? database.historySets(exerciseIds: [id])) ?? []
@@ -118,9 +126,9 @@ struct ExerciseDetailView: View {
         Section {
             VStack(alignment: .leading, spacing: OnyxSpace.s) {
                 HStack(spacing: OnyxSpace.grid) {
-                    stat("Heaviest", heaviest.map { "\(OnyxFormat.kg($0)) kg" } ?? "—")
+                    stat("Heaviest", stats.heaviestKg.map { "\(OnyxFormat.kg($0)) kg" } ?? "—")
                     stat(timed ? "Longest hold" : "Best 1RM", bestReading)
-                    stat("Best session", bestSessionVolume.map { "\(OnyxFormat.volume($0)) kg" } ?? "—")
+                    stat("Best session", stats.bestSessionVolumeKg.map { "\(OnyxFormat.volume($0)) kg" } ?? "—")
                 }
                 // The caveat is the difference between a headline and a lie.
                 // "Heaviest" is ONE set, not a session; the total reps beside it
@@ -128,7 +136,10 @@ struct ExerciseDetailView: View {
                 Text(caveat)
                     .onyxType(.caption).onyxNumeral()
                     .foregroundStyle(Color.onyx.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    // ONE line (§W7). At an accessibility size it may wrap —
+                    // clipping a caveat is worse than a second line there.
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                    .minimumScaleFactor(0.85)
             }
             .padding(.vertical, OnyxSpace.xs)
             .accessibilityElement(children: .contain)
@@ -197,34 +208,43 @@ struct ExerciseDetailView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var heaviest: Double? { working.map(\.weightKg).max().flatMap { $0 > 0 ? $0 : nil } }
-
-    private var bestE1rm: Double? { series.map(\.kg).max() }
+    /// The three numbers, through the shared definition (§W7 decision 4).
+    ///
+    /// It used to be three derivations written here, and the web had three more
+    /// computed by an RPC; `ExerciseSummary` is the one implementation both
+    /// clients call, with a golden vector between them.
+    private var stats: ExerciseSummary {
+        ExerciseSummary.summarize(
+            ledger.map {
+                ExerciseSummarySet(
+                    sessionId: $0.sessionId, weightKg: $0.weightKg, reps: Double($0.reps),
+                    est: $0.est1rmKg, setType: $0.setType, side: $0.side, pairId: $0.pairId
+                )
+            },
+            timed: timed
+        )
+    }
 
     private var bestReading: String {
-        if timed { return working.map { Double($0.reps) }.max().map { "\(jsIntegerString($0)) s" } ?? "—" }
-        if unloaded { return working.map { Double($0.reps) }.max().map { "\(jsIntegerString($0)) reps" } ?? "—" }
-        return bestE1rm.map { "\(jsIntegerString(jsRound1($0))) kg" } ?? "—"
+        if timed { return stats.bestReps.map { "\(jsIntegerString($0)) s" } ?? "—" }
+        if unloaded { return stats.bestReps.map { "\(jsIntegerString($0)) reps" } ?? "—" }
+        return stats.bestE1rmKg.map { "\(jsIntegerString(jsRound1($0))) kg" } ?? "—"
     }
 
-    /// The most tonnage this movement has ever carried in ONE session — the
-    /// figure a set-level record book cannot answer.
-    private var bestSessionVolume: Double? {
-        let bySession = Dictionary(grouping: working, by: \.sessionId)
-        let best = bySession.values
-            .map { SessionVolume.sessionVolumeKg($0.map(SessionAnalysis.volumeSet)) }
-            .max()
-        return (best ?? 0) > 0 ? jsRound(best ?? 0) : nil
-    }
-
+    /// ── ONE LINE, NOT TWO ───────────────────────────────────────────────────
+    /// The caveat is the difference between a headline and a lie — "Heaviest"
+    /// is one SET, and the rep count is what that number says nothing about.
+    /// It was two clauses joined by a separator and wrapped to two lines on
+    /// every phone, under a strip that is three lines tall. It says the same
+    /// two facts in one line now, and the accessibility label carries the long
+    /// form for anyone who cannot see the strip above it.
     private var caveat: String {
-        var parts: [String] = []
-        if let heaviest, let set = working.filter({ $0.weightKg == heaviest }).max(by: { $0.reps < $1.reps }) {
-            parts.append("heaviest single set \(SetFormat.format(weightKg: heaviest, reps: Double(set.reps), timed: timed))")
+        guard stats.workingSets > 0 else { return "No working sets logged yet." }
+        let top = stats.heaviestKg.map {
+            SetFormat.format(weightKg: $0, reps: stats.heaviestSetReps ?? 0, timed: timed)
         }
-        let reps = working.reduce(0) { $0 + $1.reps }
-        if reps > 0 { parts.append("\(reps) reps in \(working.count) working sets") }
-        return parts.isEmpty ? "No working sets logged yet." : parts.joined(separator: " · ").capitalizedFirst
+        let work = "\(jsIntegerString(stats.totalReps)) reps · \(stats.workingSets) sets"
+        return top.map { "Top \($0) · \(work)" } ?? work.capitalizedFirst
     }
 
     private var headline: String? {
@@ -232,13 +252,30 @@ struct ExerciseDetailView: View {
         return unloaded ? "\(jsIntegerString(last.kg)) reps" : "\(jsIntegerString(jsRound1(last.kg))) kg"
     }
 
-    /// Session-best est-1RM, or — for unloaded work, which has none — the best
-    /// rep count of the session. Same shape, so one chart draws both.
+    /// The session MEAN est-1RM — or, for unloaded work, the session's mean rep
+    /// count. Same shape, so one chart draws both.
+    ///
+    /// ── WHY THE MEAN AND NOT THE BEST ───────────────────────────────────────
+    /// This plotted `sessionBestE1rm`, a MAX over the day. Under double
+    /// progression the top set reaches the rep ceiling first and then sits
+    /// there for weeks while the later sets climb toward it, so the max freezes
+    /// and the curve goes flat through a block of genuine progress — the web hit
+    /// exactly this and moved to a day mean, and the two clients were drawing
+    /// different lines for the same lift. `E1rmSeries` is the shared builder and
+    /// its `points` are means; the max survives as `stats.bestE1rmKg`, which
+    /// is a record and is the right place for one.
     private var series: [(date: String, kg: Double)] {
-        guard unloaded else { return SessionAnalysis.sessionBestE1rm(ledger) }
-        var best: [String: Double] = [:]
-        for r in working { best[r.date] = max(best[r.date] ?? 0, Double(r.reps)) }
-        return best.keys.sorted().map { (date: $0, kg: best[$0]!) }
+        let byDate = Dictionary(grouping: working, by: \.date)
+        return byDate.keys.sorted().compactMap { date in
+            let rows = (byDate[date] ?? []).map {
+                TrendSetRow(weightKg: $0.weightKg, reps: Double($0.reps), est: $0.est1rmKg,
+                            side: $0.side, pairId: $0.pairId)
+            }
+            guard let trend = E1rmSeries.build([rows], timed: timed || unloaded, ceiling: nil),
+                  let mean = trend.points.first, mean > 0
+            else { return nil }
+            return (date: date, kg: mean)
+        }
     }
 
     /// Days between the first and last plotted point; past 90 the chart pans.
@@ -263,19 +300,44 @@ struct ExerciseDetailView: View {
         return MuscleMap.secondaryLandmarks(shown.name).uniqued().filter { !direct.contains($0) }
     }
 
+    /// ── ONE LINE OF CHIPS, NOT A WRAPPED SENTENCE ──────────────────────────
+    /// "Lats, Upper back, Rear delts, Biceps, Forearms" as trailing text wrapped
+    /// to three lines and pushed the whole Muscles section past the fold. Chips
+    /// name the same muscles in a third of the height, they read as a SET
+    /// rather than as prose, and the row scrolls sideways when there are more
+    /// than fit — which is a gesture, where a truncated sentence is a loss.
+    ///
+    /// At an accessibility size the chips are the wrong shape entirely, so the
+    /// row falls back to the sentence it used to be.
     @ViewBuilder
     private func musclesRow(_ label: String, _ muscles: [LandmarkMuscle]) -> some View {
         if !muscles.isEmpty {
-            LabeledContent {
-                Text(muscles.map(\.displayName).joined(separator: ", "))
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(Color.onyx.textPrimary)
-            } label: {
-                Text(label)
+            let spoken = muscles.map(\.displayName).joined(separator: ", ")
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                Text(label).onyxMicro()
+                if typeSize.isAccessibilitySize {
+                    Text(spoken).foregroundStyle(Color.onyx.textPrimary)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: OnyxSpace.xs) {
+                            ForEach(muscles, id: \.self) { muscle in
+                                Text(muscle.displayName)
+                                    .onyxType(.caption)
+                                    .lineLimit(1)
+                                    .padding(.horizontal, OnyxSpace.s)
+                                    .padding(.vertical, 3)
+                                    .background(group.domain.accent.opacity(0.14), in: .capsule)
+                                    .foregroundStyle(Color.onyx.textPrimary)
+                            }
+                        }
+                    }
+                    .scrollClipDisabled()
+                }
             }
-            .frame(minHeight: 44)
+            .frame(minHeight: 40)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel(label)
-            .accessibilityValue(muscles.map(\.displayName).joined(separator: ", "))
+            .accessibilityValue(spoken)
         }
     }
 
@@ -293,14 +355,22 @@ struct ExerciseDetailView: View {
 
     // MARK: - History
 
-    /// Newest session first, its sets as a grid of chips.
+    /// Newest session first, its sets as a two-column grid.
     ///
     /// ── WHY A GRID AND NOT A ROW PER SET ────────────────────────────────────
     /// A row per set is forty rows for six sessions, and every one of them
-    /// repeats the date. A session is five chips on one or two lines — you read
+    /// repeats the date. A session is a handful of chips — you read
     /// `42×10 42×9 40×12` as a shape and see the fade without parsing three
     /// rows. Warm-ups are drawn in tertiary ink rather than hidden, because a
     /// session that opened at 20 kg is part of what the session was.
+    ///
+    /// ── AND WHY A FIXED TWO COLUMNS RATHER THAN A FLOW ──────────────────────
+    /// `FlowRow` sized each chip to its own content and packed them left, so a
+    /// three-set session left a third of the row empty on the right and every
+    /// session had a different ragged edge — the eye had nothing to scan down.
+    /// Two flexible columns give every chip the same width and every session
+    /// the same shape, and a short session is centred in a full row rather than
+    /// stranded against the left margin.
     @ViewBuilder
     private var history: some View {
         if loaded, sessions.isEmpty {
@@ -312,12 +382,12 @@ struct ExerciseDetailView: View {
         }
         ForEach(sessions, id: \.id) { session in
             Section {
-                FlowRow(spacing: OnyxSpace.xs) {
+                LazyVGrid(columns: setColumns, spacing: OnyxSpace.xs) {
                     ForEach(session.sets, id: \.id) { set in
                         chip(set)
                     }
                 }
-                .frame(minHeight: 44)
+                .frame(minHeight: 40)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(session.spoken(timed: timed))
             } header: {
@@ -332,11 +402,19 @@ struct ExerciseDetailView: View {
         }
     }
 
+    /// Two across, one at an accessibility size — the same rule the session
+    /// page's metric grid follows.
+    private var setColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.xs),
+              count: typeSize.isAccessibilitySize ? 1 : 2)
+    }
+
     private func chip(_ set: HistorySetRow) -> some View {
         let work = SetTags.isWorkingSet(set.setType)
         return Text(SetFormat.format(weightKg: set.weightKg, reps: Double(set.reps), timed: timed))
             .onyxType(.caption).onyxNumeral()
             .foregroundStyle(work ? Color.onyx.textPrimary : Color.onyx.textTertiary)
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, OnyxSpace.s)
             .padding(.vertical, OnyxSpace.xs)
             .background(

@@ -4,9 +4,10 @@ import { useId } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
 } from 'recharts'
-import { TrendingUp, Activity, Info } from 'lucide-react'
+import { TrendingUp, Activity } from 'lucide-react'
 import { ChartTooltip } from '@/components/charts/ChartTooltip'
 import { useExerciseHistory } from '@/lib/hooks/useExerciseHistory'
+import { useExerciseSummary } from '@/lib/hooks/useExerciseLedger'
 import { isUnloadedExercise } from '@/lib/exercises/bodyweight'
 import { displayWeight, weightUnit } from '@/lib/utils/units'
 import { shortDate } from '@/lib/utils/day'
@@ -39,6 +40,9 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
   accent?: string
 }) {
   const { data, isPending } = useExerciseHistory(exerciseId)
+  // The three headline numbers come from the SHARED twin, not from the RPC —
+  // see `useExerciseLedger` for what the RPC could not answer.
+  const { summary } = useExerciseSummary(exerciseId, false)
   const unit = weightUnit()
   const uid = useId().replace(/:/g, '')
   const unloaded = isUnloadedExercise(exerciseName)
@@ -135,21 +139,31 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
   const strip: Array<{ label: string; value: string; unit?: string; note?: string; accent?: boolean }> = [
     {
       label: 'Heaviest',
-      value: !unloaded && r?.heaviest_weight ? `${displayWeight(r.heaviest_weight)}` : '—',
+      value: summary.heaviestKg ? `${displayWeight(summary.heaviestKg)}` : '—',
       unit,
     },
-    unloaded
-      ? { label: 'Most reps in a session', value: bestReps != null ? bestReps.toLocaleString() : '—', accent: true }
+    // `summary.unloaded` is true of an EMPTY ledger too — nothing has carried
+    // load because nothing has been logged — so it only gets a vote once there
+    // is something to read. Otherwise a barbell press with no history would
+    // report "most reps" instead of an estimate it simply does not have yet.
+    unloaded || (summary.workingSets > 0 && summary.unloaded)
+      ? {
+        label: 'Most reps in a set',
+        value: summary.bestReps != null ? summary.bestReps.toLocaleString() : '—',
+        accent: true,
+      }
       : {
         label: 'Best est-1RM',
-        value: r?.best_1rm ? `${displayWeight(r.best_1rm)}` : '—',
+        value: summary.bestE1rmKg ? `${displayWeight(summary.bestE1rmKg)}` : '—',
         unit,
         accent: true,
-        note: r?.best_1rm ? undefined : 'no estimate yet',
+        note: summary.bestE1rmKg ? undefined : 'no estimate yet',
       },
     {
       label: 'Best session vol',
-      value: r?.best_session_volume ? `${Math.round(displayWeight(r.best_session_volume) ?? 0).toLocaleString()}` : '—',
+      value: summary.bestSessionVolumeKg
+        ? `${Math.round(displayWeight(summary.bestSessionVolumeKg) ?? 0).toLocaleString()}`
+        : '—',
       unit,
     },
   ]
@@ -177,25 +191,27 @@ export function ExerciseHistoryBody({ exerciseId, exerciseName, accent = STEEL }
           ))}
         </div>
 
-        {/* The caveats, demoted. Both are real numbers, but neither is a headline:
-            one is a per-side figure that reads as a total, the other is a
-            lifetime count that only moves in one direction. */}
+        {/* The caveat, in ONE line. Both figures are real and neither is a
+            headline: the heaviest SET is not the heaviest session, and the rep
+            count is what the heaviest number says nothing about.
+
+            The disclaimer that stood here — "Unilateral lifts count each side
+            separately" — was an apology for the RPC. `exerciseSummary`
+            collapses pairs, so there is nothing left to apologise for. */}
         <p className="mt-3 pt-2.5 border-t border-white/[0.06] text-[11px] text-muted flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span>
-            <span className="uppercase tracking-wide text-[10px] font-bold">Heaviest single set</span>{' '}
+            <span className="uppercase tracking-wide text-[10px] font-bold">Heaviest set</span>{' '}
             <span className="helix-num text-text tabular-nums">
-              {r?.best_set_volume ? `${Math.round(displayWeight(r.best_set_volume) ?? 0).toLocaleString()}${unit}` : '—'}
+              {summary.heaviestKg
+                ? `${displayWeight(summary.heaviestKg)}${unit} × ${summary.heaviestSetReps ?? 0}`
+                : '—'}
             </span>
           </span>
           <span>
-            <span className="uppercase tracking-wide text-[10px] font-bold">Total reps</span>{' '}
-            <span className="helix-num text-text tabular-nums">{(r?.total_reps ?? 0).toLocaleString()}</span>
-          </span>
-          {/* The RPC does not collapse L/R pairs the way volumeCredits does, and
-              exposes no pair_id to let us. Say so rather than imply a total. */}
-          <span className="flex items-center gap-1 text-muted/70">
-            <Info className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
-            Unilateral lifts count each side separately.
+            <span className="uppercase tracking-wide text-[10px] font-bold">Working sets</span>{' '}
+            <span className="helix-num text-text tabular-nums">
+              {summary.totalReps.toLocaleString()} reps in {summary.workingSets.toLocaleString()}
+            </span>
           </span>
         </p>
       </div>

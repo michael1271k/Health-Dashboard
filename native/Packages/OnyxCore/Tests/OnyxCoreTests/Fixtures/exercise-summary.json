@@ -1,0 +1,506 @@
+{
+  "module": "training/exerciseSummary",
+  "fn": "exerciseSummary",
+  "note": "Warm-ups and ghosts are dropped before anything is counted. An L/R pair is ONE physical set — collapsePairs keeps the right side, or the higher-rep side — so the reps and the set count are what a human would say out loud, and the session record runs through sessionVolumeKg, where a genuine pair scores min(weight) × min(reps). A stored est_1rm_kg of 0 is missing and falls through to Epley; unloaded and timed work have no estimate at all.",
+  "cases": [
+    {
+      "name": "nothing logged",
+      "input": {
+        "sets": [],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": null,
+        "bestE1rmKg": null,
+        "bestSessionVolumeKg": null,
+        "bestReps": null,
+        "heaviestSetReps": null,
+        "totalReps": 0,
+        "workingSets": 0,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "only warm-ups",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 20,
+            "reps": 12,
+            "setType": "warmup"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 20,
+            "reps": 10,
+            "setType": "warmup"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": null,
+        "bestE1rmKg": null,
+        "bestSessionVolumeKg": null,
+        "bestReps": null,
+        "heaviestSetReps": null,
+        "totalReps": 0,
+        "workingSets": 0,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "only ghosts",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 40,
+            "reps": 8,
+            "setType": "ghost"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": null,
+        "bestE1rmKg": null,
+        "bestSessionVolumeKg": null,
+        "bestReps": null,
+        "heaviestSetReps": null,
+        "totalReps": 0,
+        "workingSets": 0,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "one bilateral session",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 20,
+            "reps": 12,
+            "setType": "warmup"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 32.5,
+            "reps": 10
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 32.5,
+            "reps": 8
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 30,
+            "reps": 8
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 32.5,
+        "bestE1rmKg": 43.3,
+        "bestSessionVolumeKg": 825,
+        "bestReps": 10,
+        "heaviestSetReps": 10,
+        "totalReps": 26,
+        "workingSets": 3,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "two sessions — the record is the bigger one",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 30,
+            "reps": 10
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 30,
+            "reps": 10
+          },
+          {
+            "sessionId": "s2",
+            "weightKg": 32.5,
+            "reps": 10
+          },
+          {
+            "sessionId": "s2",
+            "weightKg": 32.5,
+            "reps": 10
+          },
+          {
+            "sessionId": "s2",
+            "weightKg": 32.5,
+            "reps": 9
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 32.5,
+        "bestE1rmKg": 43.3,
+        "bestSessionVolumeKg": 943,
+        "bestReps": 10,
+        "heaviestSetReps": 10,
+        "totalReps": 49,
+        "workingSets": 5,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a unilateral lift collapses to physical sets",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 12,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p1"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 11,
+            "side": "L",
+            "pairId": "p2"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 12,
+            "side": "R",
+            "pairId": "p2"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p3"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 14,
+            "reps": 10,
+            "side": "R",
+            "pairId": "p3"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 14,
+        "bestE1rmKg": 19.6,
+        "bestSessionVolumeKg": 462,
+        "bestReps": 12,
+        "heaviestSetReps": 12,
+        "totalReps": 34,
+        "workingSets": 3,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "an uneven pair",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 16,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 18,
+            "reps": 8,
+            "side": "R",
+            "pairId": "p1"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 18,
+        "bestE1rmKg": 22.8,
+        "bestSessionVolumeKg": 128,
+        "bestReps": 8,
+        "heaviestSetReps": 8,
+        "totalReps": 8,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a pair id with no side is not a pair",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 16,
+            "reps": 10,
+            "pairId": "p1"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 18,
+            "reps": 8,
+            "pairId": "p1"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 16,
+        "bestE1rmKg": 21.3,
+        "bestSessionVolumeKg": 304,
+        "bestReps": 10,
+        "heaviestSetReps": 10,
+        "totalReps": 10,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a lone side",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 16,
+            "reps": 10,
+            "side": "L",
+            "pairId": "p1"
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 16,
+        "bestE1rmKg": 21.3,
+        "bestSessionVolumeKg": 160,
+        "bestReps": 10,
+        "heaviestSetReps": 10,
+        "totalReps": 10,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "unloaded work is scored on reps",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 0,
+            "reps": 18
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 0,
+            "reps": 15
+          },
+          {
+            "sessionId": "s2",
+            "weightKg": 0,
+            "reps": 20
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": null,
+        "bestE1rmKg": null,
+        "bestSessionVolumeKg": null,
+        "bestReps": 20,
+        "heaviestSetReps": null,
+        "totalReps": 53,
+        "workingSets": 3,
+        "unloaded": true
+      }
+    },
+    {
+      "name": "timed work has no estimate",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 0,
+            "reps": 60
+          },
+          {
+            "sessionId": "s2",
+            "weightKg": 0,
+            "reps": 75
+          }
+        ],
+        "timed": true
+      },
+      "expected": {
+        "heaviestKg": null,
+        "bestE1rmKg": null,
+        "bestSessionVolumeKg": null,
+        "bestReps": 75,
+        "heaviestSetReps": null,
+        "totalReps": 135,
+        "workingSets": 2,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a stored estimate beats Epley",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 100,
+            "reps": 5,
+            "est": 121.4
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 100,
+            "reps": 5
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 100,
+        "bestE1rmKg": 121.4,
+        "bestSessionVolumeKg": 1000,
+        "bestReps": 5,
+        "heaviestSetReps": 5,
+        "totalReps": 10,
+        "workingSets": 2,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a stored zero is missing, not an estimate of zero",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 100,
+            "reps": 5,
+            "est": 0
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 100,
+        "bestE1rmKg": 116.7,
+        "bestSessionVolumeKg": 500,
+        "bestReps": 5,
+        "heaviestSetReps": 5,
+        "totalReps": 5,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "equal loads — the heaviest SET is the one with the most reps",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 40,
+            "reps": 6
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 40,
+            "reps": 9
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 35,
+            "reps": 12
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 40,
+        "bestE1rmKg": 52,
+        "bestSessionVolumeKg": 1020,
+        "bestReps": 12,
+        "heaviestSetReps": 9,
+        "totalReps": 27,
+        "workingSets": 3,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a warm-up never reaches the session record",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 60,
+            "reps": 20,
+            "setType": "warmup"
+          },
+          {
+            "sessionId": "s1",
+            "weightKg": 80,
+            "reps": 3
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 80,
+        "bestE1rmKg": 88,
+        "bestSessionVolumeKg": 240,
+        "bestReps": 3,
+        "heaviestSetReps": 3,
+        "totalReps": 3,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    },
+    {
+      "name": "a single rep is its own estimate",
+      "input": {
+        "sets": [
+          {
+            "sessionId": "s1",
+            "weightKg": 140,
+            "reps": 1
+          }
+        ],
+        "timed": false
+      },
+      "expected": {
+        "heaviestKg": 140,
+        "bestE1rmKg": 140,
+        "bestSessionVolumeKg": 140,
+        "bestReps": 1,
+        "heaviestSetReps": 1,
+        "totalReps": 1,
+        "workingSets": 1,
+        "unloaded": false
+      }
+    }
+  ]
+}
