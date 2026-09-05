@@ -40,6 +40,11 @@ private actor FakeMirror: MirrorRemote {
         return try decode(objects)
     }
 
+    func count(table: String) async throws -> Int {
+        if let failure { throw failure }
+        return rows[table]?.count ?? 0
+    }
+
     private func decode<T: Decodable>(_ objects: [[String: Any]]) throws -> [T] {
         let data = try JSONSerialization.data(withJSONObject: objects)
         let decoder = JSONDecoder()

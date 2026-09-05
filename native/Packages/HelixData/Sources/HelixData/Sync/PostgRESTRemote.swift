@@ -164,6 +164,29 @@ public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
         return out
     }
 
+    /// `HEAD /rest/v1/<table>?select=*&user_id=eq.<id>`, `Prefer: count=exact`.
+    ///
+    /// `head: true` is what makes this affordable from a phone: the request
+    /// transfers no rows at all, and the number arrives in the `Content-Range`
+    /// header. Twenty-six of these is twenty-six empty bodies.
+    ///
+    /// `exact` rather than `planned` or `estimated`. The two cheap options ask
+    /// the query planner, which answers from `pg_class.reltuples` — a figure
+    /// that is stale between vacuums and routinely several percent out. Several
+    /// percent out is exactly the size of the discrepancy this call exists to
+    /// find, so an estimate here would be a screen that says "close enough" to
+    /// the one question it was built to answer.
+    public func count(table: String) async throws -> Int {
+        let response = try await client
+            .from(table)
+            .select("*", head: true, count: .exact)
+            .eq("user_id", value: userId)
+            .execute()
+        // Nil means PostgREST sent no `Content-Range`, which it always does
+        // under `count=exact` — including `*/0` for a table with no rows.
+        return response.count ?? 0
+    }
+
     private static func ordered(_ query: PostgrestFilterBuilder, by columns: [String]) -> PostgrestTransformBuilder {
         var q: PostgrestTransformBuilder = query
         for column in columns { q = q.order(column, ascending: true) }

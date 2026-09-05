@@ -36,6 +36,7 @@ private actor Wire: SyncRemote, MirrorPushRemote, MirrorRemote {
         log.append("pull:\(table)")
         return try decode(rows[table] ?? [])
     }
+    func count(table: String) async throws -> Int { rows[table]?.count ?? 0 }
     private func decode<T: Decodable>(_ objects: [[String: Any]]) throws -> [T] {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

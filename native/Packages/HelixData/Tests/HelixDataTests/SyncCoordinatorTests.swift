@@ -46,6 +46,13 @@ private actor Wire: SyncRemote, MirrorPushRemote, MirrorRemote {
         log.append("pull:\(table)")
         return try decode(rows[table] ?? [])
     }
+    /// Answered from the same canned table the pulls read, so "server count"
+    /// and "what a pull would land" cannot disagree by accident.
+    func count(table: String) async throws -> Int {
+        if let failure { throw failure }
+        if pullFailures.contains(table) { throw Unreachable() }
+        return rows[table]?.count ?? 0
+    }
     private func decode<T: Decodable>(_ objects: [[String: Any]]) throws -> [T] {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -169,6 +176,23 @@ struct SyncCoordinatorTests {
         #expect(last["outbox"] == now)
         // 26 catalogue tables, sessions + exercises (no sets: nothing to pull them for), the outbox.
         #expect(last.count == MirrorCatalogue.tables.count + 2 + 1)
+    }
+
+    @Test("the server counts come back per table, and a table that errors is absent")
+    func serverCounts() async throws {
+        let db = try store()
+        let wire = Wire()
+        await wire.put("daily_logs", [[:], [:], [:]])
+        await wire.failPulls(of: ["cardio_logs"])
+
+        let counts = await coordinator(db, wire).serverCounts(tables: ["daily_logs", "water_intake", "cardio_logs"])
+
+        #expect(counts["daily_logs"] == 3)
+        // Nothing canned for it: the server genuinely holds none.
+        #expect(counts["water_intake"] == 0)
+        // The Doctor draws "—" for this one, never "0" — a count that could not
+        // be taken is not a count of zero, and zero is the alarming answer.
+        #expect(counts["cardio_logs"] == nil)
     }
 
     @Test("the ledger is append-only: a second sync adds rows, and max wins")

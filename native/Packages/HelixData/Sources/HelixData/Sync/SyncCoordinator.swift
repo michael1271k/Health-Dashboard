@@ -517,4 +517,29 @@ public actor SyncCoordinator: MirrorRefreshing {
     public func lastSync() throws -> [String: Date] {
         try database.lastSync(userId: userId)
     }
+
+    /// Table → how many rows the SERVER holds. The other half of the Sync
+    /// Doctor's per-table line; the local half is a `count(*)` on the store.
+    ///
+    /// Concurrent because it is one HEAD request per table and twenty-six of
+    /// them end to end is several seconds of a screen showing dashes. Nothing
+    /// here writes, so there is no order to preserve.
+    ///
+    /// A table that errors is ABSENT from the result rather than zero — the
+    /// same rule `MirrorPuller.refresh` follows for a failed pull. A `404` from
+    /// a migration that has not run must not cost the other twenty-five their
+    /// numbers, and reporting it as `0` would invent the exact alarm this
+    /// screen exists to raise honestly.
+    public func serverCounts(tables: [String] = SyncCoordinator.backfillOrder) async -> [String: Int] {
+        await withTaskGroup(of: (String, Int?).self) { group in
+            for table in tables {
+                group.addTask { [puller] in (table, try? await puller.serverCount(table: table)) }
+            }
+            var out: [String: Int] = [:]
+            // Assigning a nil `Int?` REMOVES the key, which is the absence the
+            // doc comment above promises.
+            for await (table, count) in group { out[table] = count }
+            return out
+        }
+    }
 }

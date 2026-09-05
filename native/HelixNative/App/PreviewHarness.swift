@@ -105,6 +105,13 @@ enum PreviewHarness {
             HistoryPreviews.view("train")
         case "sync-status":
             NavigationStack { SyncStatusView(seeded: .preview) }.environment(AppEnvironment.preview)
+        // The same screen with every fault it can name — a table behind the
+        // server, one ahead, one that could not be counted, two split across
+        // user ids, and a rejected write. `sync-status` is the quiet twin, and
+        // the pair is the review: a tint means nothing without the state it is
+        // a departure from.
+        case "sync-doctor":
+            NavigationStack { SyncStatusView(seeded: .faults) }.environment(AppEnvironment.preview)
         case "levers":
             NavigationStack { LeversView(model: model) }
         case "plan":

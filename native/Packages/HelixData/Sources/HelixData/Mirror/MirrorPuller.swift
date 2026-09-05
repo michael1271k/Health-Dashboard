@@ -118,6 +118,15 @@ public protocol MirrorRemote: Sendable {
     func selectIn<T: Decodable & Sendable>(
         _ type: T.Type, table: String, column: String, values: [String]
     ) async throws -> [T]
+    /// How many rows the SERVER holds for this user in one table.
+    ///
+    /// Not part of any pull — nothing is decoded and nothing is stored. It
+    /// exists because every sync failure this app has shipped was invisible in
+    /// the same way: the device could only ever report what the device already
+    /// had. A local count next to the server's own count is the one comparison
+    /// that makes a hole visible instead of inferred, and it is what the Sync
+    /// Doctor draws.
+    func count(table: String) async throws -> Int
 }
 
 /// Pulls Postgres into the local store.
@@ -203,6 +212,15 @@ public actor MirrorPuller {
             try database.setMirrorCursor(table: table.name, to: database.maxTimestamp(table: table.name, column: column), at: now)
         }
         return count
+    }
+
+    /// The server's row count for one table, for the Sync Doctor.
+    ///
+    /// A pass-through, and it lives here only because the puller is who holds
+    /// the remote. It touches neither the store nor a cursor: asking the server
+    /// how many rows it has must never be able to move a delta forward.
+    public func serverCount(table: String) async throws -> Int {
+        try await remote.count(table: table)
     }
 
     /// Decode and store. Called by the generated catalogue, which is what knows

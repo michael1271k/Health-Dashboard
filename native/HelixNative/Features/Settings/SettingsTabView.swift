@@ -145,12 +145,12 @@ private struct SettingsForm: View {
                 NavigationLink {
                     SyncStatusView()
                 } label: {
-                    LabeledContent("Sync status", value: environment.sync.caption(at: .now) ?? "Never synced")
+                    LabeledContent("Sync doctor", value: environment.sync.caption(at: .now) ?? "Never synced")
                 }
             } header: {
                 HelixSectionHeader("Sync", .body)
             } footer: {
-                Text("What this device holds, table by table, and anything still waiting to reach the server.")
+                Text("What this device holds against what the server holds, table by table, and anything still waiting to get there.")
             }
 
             Section {
