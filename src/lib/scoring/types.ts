@@ -101,6 +101,20 @@ export interface ScoringInputs {
   hrvMs?: number              // today's HRV (SDNN ms)
   hrvBaseline?: number        // 7-day trailing average HRV
 
+  /**
+   * `daily_logs.sleep_onset_trouble` — the wearer said the night was hard to
+   * fall into. Battery v8 takes 3 off the wake charge for it; nothing else
+   * reads it. Absent/false is an ordinary night.
+   */
+  sleepOnsetTrouble?: boolean | null
+  /**
+   * The LATEST fatigue slot logged today, 1 (Fresh) .. 5 (Empty) — the same
+   * `latestFatigue` rule the tracker shows as the day's summary. Battery v8's
+   * stress drain reads it (0..4 points); the day score still does not, which is
+   * the promise `useFatigue` makes. Absent when nothing was logged.
+   */
+  fatigueLevel?: number | null
+
   // Context modifier
   contextMode?: 'normal' | 'travel' | 'illness' | 'emergency'
 

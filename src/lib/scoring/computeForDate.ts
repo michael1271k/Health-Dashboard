@@ -18,6 +18,7 @@ import {
 import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
+import { foldFatigueRows, latestFatigue } from '@/lib/recovery/fatigue'
 
 /** The goals a user with no `user_goals` row is graded against. */
 const CUT = phaseGoalsFor(DEFAULT_PROGRAM_ID, 'cut')
@@ -195,7 +196,11 @@ export async function computeForDate(
   // WHOLE select when one column is unknown, so a single fallback would have made
   // an unmigrated `nutrition_exception` cost us `hrv_ms` as well — losing a live
   // baseline to a column that isn't there yet. Normal path is still one request.
+  // `sleep_onset_trouble` is the newest column and sits in the widest tier
+  // only: battery v8 reads it, and a store without it degrades to "no night
+  // was hard" rather than losing the HRV baseline.
   const DL_COLUMN_SETS = [
+    'date, hrv_ms, avg_rest_heart_rate, nutrition_exception, sleep_onset_trouble',
     'date, hrv_ms, avg_rest_heart_rate, nutrition_exception',
     'date, hrv_ms, avg_rest_heart_rate',
     'date, avg_rest_heart_rate',
@@ -212,6 +217,7 @@ export async function computeForDate(
     hrv_ms?: number | null
     avg_rest_heart_rate: number | null
     nutrition_exception?: string | null
+    sleep_onset_trouble?: boolean | null
   }>
   const todayDl = dl.find((r) => r.date === date)
   const trail = dl.filter((r) => r.date !== date)
@@ -275,6 +281,15 @@ export async function computeForDate(
     sessionSets = working.size
     ghostSets = ghosts.size
   }
+
+  // ── THE DAY'S LATEST FATIGUE READING (battery v8) ─────────────────────────
+  // Folded the way the tracker folds it — legacy keys filed by the kind of day
+  // — and summarised by the LATEST slot, which is the tracker's own rule for
+  // the day's one figure. An un-migrated table reads as nothing logged.
+  const fatigueRes = await supabase.from('fatigue_logs').select('slot, level').eq('user_id', userId).eq('date', date)
+  const fatigueLevel = fatigueRes.error
+    ? null
+    : latestFatigue(foldFatigueRows((fatigueRes.data ?? []) as Array<{ slot: string; level: number }>, !isRestDay))?.level ?? null
 
   // isToday comes from the caller (the client knows its own timezone); derive the
   // user's local hour from hoursAwake (07:00 wake convention) instead of a fixed zone.
@@ -474,6 +489,8 @@ export async function computeForDate(
     baselineHR: rhrBaseline ?? undefined,
     hrvMs: todayDl?.hrv_ms ?? undefined,
     hrvBaseline: hrvBaseline ?? undefined,
+    sleepOnsetTrouble: todayDl?.sleep_onset_trouble === true,
+    fatigueLevel,
     contextMode: dayContext,
     isCurrentDay,
     localHour,

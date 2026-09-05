@@ -796,6 +796,20 @@ public enum WeeklyExport {
             L.append("_Shares, because the minutes are already above: 39 minutes of deep sleep is a different night after 9h than after 5h30._")
             L.append("")
 
+            L.append("### Battery (v8 — the inputs behind the number the app showed)")
+            L.append("")
+            for b in d.battery {
+                guard let app = b.appPct else {
+                    L.append("- \(b.weekdayLabel) \(b.date): \(dash) (no score row)")
+                    continue
+                }
+                let fatigue = b.fatigueLabel.map { "\($0) +\(n(b.fatigueTerm))" } ?? dash
+                L.append("- \(b.weekdayLabel) \(b.date): app \(n(app))% · wake \(n(b.morningCharge)) (sleep \(n(b.ratio, 2)) · stages \(n(b.stagesQ, 2)) · HRV \(n(b.hrvQ, 2)) · RHR \(n(b.rhrQ, 2))\(b.onsetTrouble ? " · onset −3" : "")) · stress \(n(b.stress, 1)) (RHR \(n(b.rhrTerm, 1)) · HRV \(n(b.hrvTerm, 1)) · fatigue \(fatigue))")
+            }
+            L.append("")
+            L.append("_Wake charge = 55 + 45·q, q = 0.55·sleep + 0.15·stages + 0.15·HRV + 0.15·RHR, each 0–1, minus 3 for a night that was hard to fall into. Stress drain (cap 10) = resting-HR elevation + HRV suppression + the latest fatigue reading. Baselines are the seven logged days before each date, as the scorer read them; the app figure is the stored score, computed at whatever hour the day was last synced._")
+            L.append("")
+
             if d.trainingDayKcal != nil || d.restDayKcal != nil {
                 L.append("### Intake by day type")
                 L.append("")

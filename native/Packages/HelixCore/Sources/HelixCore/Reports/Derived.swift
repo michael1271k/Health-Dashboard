@@ -37,8 +37,29 @@ public struct ExerciseProgression: Codable, Equatable, Sendable {
     public var sessions: Int
 }
 
+/// One day's battery v8 inputs, exactly as the scorer read them — `BatteryDay`.
+public struct BatteryDay: Codable, Equatable, Sendable {
+    public var date: String
+    public var weekdayLabel: String
+    /// `daily_scores.battery_pct`. Nil when the app never scored the day.
+    public var appPct: Double?
+    public var morningCharge: Double
+    public var ratio: Double
+    public var stagesQ: Double
+    public var hrvQ: Double
+    public var rhrQ: Double
+    public var onsetTrouble: Bool
+    public var stress: Double
+    public var rhrTerm: Double
+    public var hrvTerm: Double
+    public var fatigueTerm: Double
+    /// The latest fatigue reading's word, or nil when none was logged.
+    public var fatigueLabel: String?
+}
+
 public struct DerivedWeek: Codable, Equatable, Sendable {
     public var deltas: [WeekDelta]
+    public var battery: [BatteryDay]
     public var meanWorkingSetRpe: Double?
     public var ratedSets: Int
     public var workingSets: Int
@@ -121,6 +142,35 @@ public enum Derived {
         }
     }
 
+    /// `batteryDays` — the LATEST fatigue slot wins, by its position in the day.
+    static func batteryDays(_ input: WeeklyExportInput) -> [BatteryDay] {
+        func slotIndex(_ label: String) -> Int { FatigueSlot.allCases.firstIndex { $0.label == label } ?? -1 }
+        return input.days.map { d in
+            var latest: ExportFatigue?
+            for f in (input.fatigue ?? []) where f.date == d.date {
+                if latest == nil || slotIndex(f.slot) > slotIndex(latest!.slot) { latest = f }
+            }
+            let signals = ScoringInputs(
+                sleepHours: (d.sleepMin ?? 0) / 60, deepMinutes: d.deepMin ?? 0, remMinutes: d.remMin ?? 0,
+                sleepGoalHours: input.sleepGoalHours ?? 8,
+                restingHR: d.restingHr, baselineHR: d.restingHrBaseline,
+                hrvMs: d.hrvMs, hrvBaseline: d.hrvBaseline,
+                fatigueLevel: latest?.level
+            )
+            let q = Battery.sleepQualityParts(signals)
+            let st = Battery.stressParts(signals)
+            let onsetTrouble = d.sleepOnsetTrouble == true
+            return BatteryDay(
+                date: d.date, weekdayLabel: d.weekdayLabel,
+                appPct: d.batteryPct,
+                morningCharge: Battery.computeMorningCharge(sleepQuality: q.quality, onsetTrouble: onsetTrouble),
+                ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ, onsetTrouble: onsetTrouble,
+                stress: st.drain, rhrTerm: st.rhrTerm, hrvTerm: st.hrvTerm, fatigueTerm: st.fatigueTerm,
+                fatigueLabel: latest.map { Fatigue.level(Int($0.level))?.label ?? jsIntegerString($0.level) }
+            )
+        }
+    }
+
     static func intakeOn(_ days: [ExportDay], training: Bool) -> Double? {
         meanOf(days.filter { $0.isTrainingDay == training }.map(\.calories))
     }
@@ -172,6 +222,7 @@ public enum Derived {
 
         return DerivedWeek(
             deltas: deltas,
+            battery: batteryDays(input),
             meanWorkingSetRpe: meanOf(rpes),
             ratedSets: rpes.count,
             workingSets: workingSets,

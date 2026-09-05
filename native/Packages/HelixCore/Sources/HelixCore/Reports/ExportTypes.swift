@@ -53,6 +53,12 @@ public struct ExportDay: Codable, Equatable, Sendable {
     public var bedTime: String?
     public var wakeTime: String?
     public var sleepOnsetTrouble: Bool?
+    /// Battery v8's inputs the raw body cannot show — the two trailing
+    /// baselines the scorer compared against and the stored `battery_pct`.
+    /// Read only by the Derived section. Nil on a payload built before v8.
+    public var restingHrBaseline: Double?
+    public var hrvBaseline: Double?
+    public var batteryPct: Double?
     public var waterMl: Double?
     public var supplementsTaken: Double?
     public var supplementsPlanned: Double?

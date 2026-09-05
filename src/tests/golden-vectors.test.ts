@@ -9,6 +9,7 @@ import {
   BATTERY, MAX_TOTAL_DRAIN, MAINTENANCE_DRAIN_FACTOR, MAINTENANCE_REL_MIN,
   workoutMaxFor, relMinFor, computeMorningCharge, computeSleepQuality,
   timeDrain, workoutDrain, computeBattery,
+  sleepQualityParts, stressParts,
 } from '@/lib/scoring/battery'
 import type { ScoringInputs } from '@/lib/scoring/types'
 import { derivePhase, resolveDayPhase, type Phase } from '@/lib/nutrition/phase'
@@ -412,6 +413,10 @@ describe('golden vectors — battery', () => {
           maxTotalDrain: MAX_TOTAL_DRAIN,
           maintenanceDrainFactor: MAINTENANCE_DRAIN_FACTOR,
           maintenanceRelMin: MAINTENANCE_REL_MIN,
+          // v8
+          stressCap: BATTERY.stressCap,
+          onsetPenalty: BATTERY.onsetPenalty,
+          restorativeShare: BATTERY.restorativeShare,
         },
       }],
     })
@@ -449,7 +454,10 @@ describe('golden vectors — battery', () => {
   })
 
   it('exports sleep-quality and morning-charge vectors', () => {
-    const cases: Case<ScoringInputs, { quality: number; morningCharge: number }>[] = []
+    const cases: Case<ScoringInputs, {
+      quality: number; morningCharge: number
+      ratio: number; stagesQ: number; hrvQ: number; rhrQ: number; onsetCharge: number
+    }>[] = []
 
     const grid: Partial<ScoringInputs>[] = [
       { sleepHours: 0, deepMinutes: 0, sleepGoalHours: 8 },
@@ -467,6 +475,17 @@ describe('golden vectors — battery', () => {
       // the TypeScript guard is `if (inputs.restingHR && inputs.baselineHR)`.
       { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 0, baselineHR: 52 },
       { sleepHours: 7, deepMinutes: 60, sleepGoalHours: 8, restingHR: 60, baselineHR: 0 },
+      // v8 — the restorative SHARE (deep + REM over asleep), and HRV vs baseline.
+      { sleepHours: 9, deepMinutes: 60, remMinutes: 0, sleepGoalHours: 8 },
+      { sleepHours: 6, deepMinutes: 60, remMinutes: 100, sleepGoalHours: 8 },
+      { sleepHours: 8, deepMinutes: 0, remMinutes: 0, sleepGoalHours: 8 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 60, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 90, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 150, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 30, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 0, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, sleepGoalHours: 8, hrvMs: 60, hrvBaseline: 0 },
+      { sleepHours: 5.5, deepMinutes: 30, remMinutes: 40, sleepGoalHours: 8, hrvMs: 41, hrvBaseline: 58, restingHR: 57, baselineHR: 52 },
     ]
 
     for (const over of grid) {
@@ -474,19 +493,58 @@ describe('golden vectors — battery', () => {
       // requires every non-optional key to be present, and a fixture the port
       // cannot decode is a fixture that tests nothing.
       const full = inputs(over)
+      const parts = sleepQualityParts(full)
       const quality = computeSleepQuality(full)
       cases.push({
         name: JSON.stringify(over),
         input: full,
-        expected: { quality, morningCharge: computeMorningCharge(quality) },
+        expected: {
+          quality, morningCharge: computeMorningCharge(quality),
+          ratio: parts.ratio, stagesQ: parts.stagesQ, hrvQ: parts.hrvQ, rhrQ: parts.rhrQ,
+          // The same night, hard to fall into.
+          onsetCharge: computeMorningCharge(quality, true),
+        },
       })
     }
 
     emit('sleep-quality.json', {
       module: 'scoring/battery',
-      fn: 'computeSleepQuality + computeMorningCharge',
-      note: '70% duration vs goal, 15% deep sleep, 15% resting HR vs baseline. Wake charge = 55 + 45·q.',
+      fn: 'sleepQualityParts + computeMorningCharge',
+      note: 'v8: 55% duration vs goal, 15% restorative share (deep + REM over asleep, 45% = 1), 15% HRV vs baseline, 15% resting HR vs baseline. Wake charge = 55 + 45·q, minus 3 for onset trouble.',
       cases,
+    })
+  })
+
+  it('exports stress-drain vectors', () => {
+    const grid: Partial<ScoringInputs>[] = [
+      {},
+      { restingHR: 52, baselineHR: 52 },
+      { restingHR: 45, baselineHR: 52 },
+      { restingHR: 57, baselineHR: 52 },
+      { restingHR: 62, baselineHR: 52 },
+      { restingHR: 90, baselineHR: 52 },
+      { restingHR: 0, baselineHR: 52 },
+      { restingHR: 60, baselineHR: 0 },
+      { hrvMs: 60, hrvBaseline: 60 },
+      { hrvMs: 90, hrvBaseline: 60 },
+      { hrvMs: 45, hrvBaseline: 60 },
+      { hrvMs: 30, hrvBaseline: 60 },
+      { hrvMs: 10, hrvBaseline: 60 },
+      { hrvMs: 0, hrvBaseline: 60 },
+      { hrvMs: 60, hrvBaseline: 0 },
+      ...[null, 0, 1, 2, 3, 4, 5, 9].map((fatigueLevel) => ({ fatigueLevel })),
+      { restingHR: 57, baselineHR: 52, hrvMs: 41, hrvBaseline: 58, fatigueLevel: 3 },
+      // Over the cap from every direction at once.
+      { restingHR: 90, baselineHR: 52, hrvMs: 10, hrvBaseline: 60, fatigueLevel: 5 },
+    ]
+    emit('stress-drain.json', {
+      module: 'scoring/battery',
+      fn: 'stressParts',
+      note: 'v8, cap 10: 4 per 10 bpm of resting HR over baseline, 3 at half the HRV baseline, and the latest fatigue reading as 0..4. Every term floored at zero — nothing recharges.',
+      cases: grid.map((over) => {
+        const full = inputs(over)
+        return { name: JSON.stringify(over), input: full, expected: stressParts(full) }
+      }),
     })
   })
 
@@ -620,6 +678,25 @@ describe('golden vectors — battery', () => {
         sessionDayKey: 'legs_a',
       },
       { sleepHours: 12, deepMinutes: 200, hoursAwake: 0 },
+      // v8 — onset trouble, HRV in the charge, and the stress drain.
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, sleepOnsetTrouble: true },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, sleepOnsetTrouble: false },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvMs: 90, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, hrvMs: 30, hrvBaseline: 60 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, restingHR: 62, baselineHR: 52 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, fatigueLevel: 5 },
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8, fatigueLevel: 1 },
+      {
+        // 2026-09-01 in the rich export week: ill, HRV suppressed, RHR up, Worn.
+        sleepHours: 505 / 60, deepMinutes: 55, remMinutes: 100, hoursAwake: 12,
+        restingHR: 58, baselineHR: 53, hrvMs: 39, hrvBaseline: 54.75, fatigueLevel: 3, sleepOnsetTrouble: true,
+      },
+      {
+        // Everything at once, on a perfect night: 97 − 89 keeps the floor unreachable.
+        sleepHours: 9, deepMinutes: 120, remMinutes: 120, steps: 40000, activeCal: 3000, hoursAwake: 18,
+        sessionVolumeKg: 30000, trailingAvgVolumeKg: 1000, sessionRpe: 10, sessionDayKey: 'legs_a',
+        restingHR: 90, baselineHR: 52, hrvMs: 10, hrvBaseline: 60, fatigueLevel: 5, sleepOnsetTrouble: true,
+      },
     ]
 
     for (const over of grid) {
@@ -4276,6 +4353,7 @@ describe('golden vectors — weekly export', () => {
     emptyExportDay('2026-08-30', 'Sun', {
       sleepMin: 551, deepMin: 62, remMin: 118, coreMin: 350, awakeMin: 21, bedTime: '2026-08-29T23:10:00', wakeTime: '2026-08-30T08:21:00', sleepOnsetTrouble: false,
       restingHr: 52, hrvMs: 61.5, wristTempDeltaC: 0.2, bloodOxygenPct: 97, avgHr: 71, respiratoryRate: 14.5, vo2max: 46.1, daylightMin: 42, exerciseMin: 31, standHours: 12, standMin: 58,
+      restingHrBaseline: 53.4, hrvBaseline: 55.2, batteryPct: 74,
       weightKg: 64.9, bmrKcal: 1516, calories: 2151, proteinG: 172, carbsG: 244, fatG: 55, waterMl: 3100, steps: 7842, distanceM: 6120, activeKcal: 412,
       supplementsTaken: 6, supplementsPlanned: 7, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'd3k2', time: '07:00' }, { key: 'omega3', time: '12:30' }, { key: 'magnesium', time: '22:00' }, { key: 'glycine', time: '22:00' }, { key: 'theanine', time: null }],
       supplementsSkipped: ['Caffeine'],
@@ -4286,6 +4364,7 @@ describe('golden vectors — weekly export', () => {
       isTrainingDay: true,
       sleepMin: 470, deepMin: 40, remMin: 95, coreMin: 320, awakeMin: 15, bedTime: '2026-08-30T23:50:00', wakeTime: '2026-08-31T07:55:00', sleepOnsetTrouble: true,
       restingHr: 54, hrvMs: 48, wristTempDeltaC: -0.1, bloodOxygenPct: 96, avgHr: 84, respiratoryRate: 15.1, vo2max: 46.1, daylightMin: 12, exerciseMin: 78, standHours: 14, standMin: 40,
+      restingHrBaseline: 53.1, hrvBaseline: 56, batteryPct: 41,
       weightKg: 64.6, bmrKcal: 1514, calories: 2160, proteinG: 175, carbsG: 250, fatG: 52, waterMl: 3500, steps: 11204, distanceM: 8900, trainingMin: 78, activeKcal: 688,
       supplementsTaken: 7, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }, { key: 'citrulline', time: '11:45' }, { key: 'caffeine', time: '11:45' }],
       nutrientsFood: { fiber: 28, protein: 175, sodium: 3100, potassium: 3000, calcium: 3074, iron: 9, magnesium: 300, vitaminC: 80, satFat: 24, sugar: 45 },
@@ -4294,6 +4373,7 @@ describe('golden vectors — weekly export', () => {
     emptyExportDay('2026-09-01', 'Tue', {
       isTrainingDay: true, nutritionException: 'Illness',
       sleepMin: 505, deepMin: 55, remMin: 100, coreMin: 335, awakeMin: 15, restingHr: 58, hrvMs: 39, wristTempDeltaC: 0.6, bloodOxygenPct: 95,
+      restingHrBaseline: 53, hrvBaseline: 54.75, batteryPct: 33, sleepOnsetTrouble: true,
       weightKg: null, weighInSkipReason: 'Sick', calories: 1800, proteinG: 150, carbsG: 200, fatG: 45, waterMl: 2000, steps: 4100, activeKcal: 210,
       supplementsTaken: null, supplementsPlanned: 9, supplementsLog: [{ key: 'creatine', time: '07:00' }],
       nutrientsFood: { fiber: 20, protein: 150 }, nutrientsStack: {},
@@ -4301,6 +4381,8 @@ describe('golden vectors — weekly export', () => {
     emptyExportDay('2026-09-02', 'Wed', {
       nutritionException: 'Illness',
       sleepMin: 600, restingHr: 57, hrvMs: 41, weightKg: 64.4, bmrKcal: 1512, calories: 1900, proteinG: 160, carbsG: 210, fatG: 50, waterMl: 2500, steps: 3000, activeKcal: 150,
+      // Scored, but no baselines readable — the terms fall to neutral.
+      batteryPct: 58,
       supplementsTaken: 4, supplementsPlanned: 7, nutrientsStack: { vitaminD: 2000, creatine: 5000 },
     }),
     emptyExportDay('2026-09-03', 'Thu', {

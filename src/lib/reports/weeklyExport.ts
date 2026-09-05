@@ -151,6 +151,16 @@ export interface ExportDay {
    * column existed; `false` means the question was asked and answered no.
    */
   sleepOnsetTrouble?: boolean | null
+  /**
+   * Battery v8's inputs the app read for this day and the raw body cannot
+   * show: the two seven-day trailing baselines the scorer compared against,
+   * and the `daily_scores.battery_pct` it stored. Read ONLY by the Derived
+   * section, which prints them beside the arithmetic they feed. Absent on a
+   * range built before v8; `batteryPct` null when the app never scored the day.
+   */
+  restingHrBaseline?: number | null
+  hrvBaseline?: number | null
+  batteryPct?: number | null
   waterMl: number | null
   supplementsTaken: number | null
   /**
@@ -2170,6 +2180,32 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     L.push('')
     L.push('_Shares, because the minutes are already above: 39 minutes of deep sleep'
       + ' is a different night after 9h than after 5h30._')
+    L.push('')
+
+    // ── Battery ──
+    // The one HELIX opinion this document carries, and only under this fence:
+    // not the number (the app shows that) but the INPUTS behind it, so a
+    // reader sees the same figures the scorer saw and can tell a low battery
+    // that came from a short night from one that came from a suppressed HRV.
+    L.push('### Battery (v8 — the inputs behind the number the app showed)')
+    L.push('')
+    for (const b of d.battery) {
+      if (b.appPct == null) {
+        L.push(`- ${b.weekdayLabel} ${b.date}: ${DASH} (no score row)`)
+        continue
+      }
+      L.push(`- ${b.weekdayLabel} ${b.date}: app ${n(b.appPct)}%`
+        + ` · wake ${n(b.morningCharge)} (sleep ${n(b.ratio, 2)} · stages ${n(b.stagesQ, 2)}`
+        + ` · HRV ${n(b.hrvQ, 2)} · RHR ${n(b.rhrQ, 2)}${b.onsetTrouble ? ' · onset −3' : ''})`
+        + ` · stress ${n(b.stress, 1)} (RHR ${n(b.rhrTerm, 1)} · HRV ${n(b.hrvTerm, 1)}`
+        + ` · fatigue ${b.fatigueLabel == null ? DASH : `${b.fatigueLabel} +${n(b.fatigueTerm)}`})`)
+    }
+    L.push('')
+    L.push('_Wake charge = 55 + 45·q, q = 0.55·sleep + 0.15·stages + 0.15·HRV + 0.15·RHR,'
+      + ' each 0–1, minus 3 for a night that was hard to fall into. Stress drain (cap 10)'
+      + ' = resting-HR elevation + HRV suppression + the latest fatigue reading. Baselines'
+      + ' are the seven logged days before each date, as the scorer read them; the app'
+      + ' figure is the stored score, computed at whatever hour the day was last synced._')
     L.push('')
 
     // ── Intake by day type ──

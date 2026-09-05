@@ -34,8 +34,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 81
+        "morningCharge": 92,
+        "currentPct": 78
       }
     },
     {
@@ -70,8 +70,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 95
+        "morningCharge": 92,
+        "currentPct": 92
       }
     },
     {
@@ -106,8 +106,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 81
+        "morningCharge": 92,
+        "currentPct": 78
       }
     },
     {
@@ -142,8 +142,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 61
+        "morningCharge": 92,
+        "currentPct": 58
       }
     },
     {
@@ -178,8 +178,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 60
+        "morningCharge": 92,
+        "currentPct": 57
       }
     },
     {
@@ -214,8 +214,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 60
+        "morningCharge": 92,
+        "currentPct": 57
       }
     },
     {
@@ -250,8 +250,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 60
+        "morningCharge": 92,
+        "currentPct": 57
       }
     },
     {
@@ -286,8 +286,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 57
+        "morningCharge": 92,
+        "currentPct": 54
       }
     },
     {
@@ -322,8 +322,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 78,
-        "currentPct": 47
+        "morningCharge": 84,
+        "currentPct": 53
       }
     },
     {
@@ -358,8 +358,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 100,
-        "currentPct": 91
+        "morningCharge": 95,
+        "currentPct": 86
       }
     },
     {
@@ -394,8 +394,8 @@
         "hoursAwakeArg": 15
       },
       "expected": {
-        "morningCharge": 95,
-        "currentPct": 62
+        "morningCharge": 92,
+        "currentPct": 59
       }
     },
     {
@@ -432,8 +432,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 100,
-        "currentPct": 54
+        "morningCharge": 96,
+        "currentPct": 49
       }
     },
     {
@@ -471,8 +471,8 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 100,
-        "currentPct": 65
+        "morningCharge": 96,
+        "currentPct": 61
       }
     },
     {
@@ -509,7 +509,7 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 62,
+        "morningCharge": 65,
         "currentPct": 5
       }
     },
@@ -545,8 +545,356 @@
         "hoursAwakeArg": null
       },
       "expected": {
-        "morningCharge": 100,
-        "currentPct": 100
+        "morningCharge": 96,
+        "currentPct": 96
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"sleepOnsetTrouble\":true}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "sleepOnsetTrouble": true
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 92,
+        "currentPct": 78
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"sleepOnsetTrouble\":false}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "sleepOnsetTrouble": false
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 95,
+        "currentPct": 81
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"hrvMs\":90,\"hrvBaseline\":60}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "hrvMs": 90,
+          "hrvBaseline": 60
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 96,
+        "currentPct": 82
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"hrvMs\":30,\"hrvBaseline\":60}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "hrvMs": 30,
+          "hrvBaseline": 60
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 93,
+        "currentPct": 76
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"restingHR\":62,\"baselineHR\":52}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "restingHR": 62,
+          "baselineHR": 52
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 91,
+        "currentPct": 73
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"fatigueLevel\":5}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "fatigueLevel": 5
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 95,
+        "currentPct": 77
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8,\"deepMinutes\":60,\"remMinutes\":90,\"hoursAwake\":8,\"fatigueLevel\":1}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8,
+          "deepMinutes": 60,
+          "remMinutes": 90,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 8,
+          "fatigueLevel": 1
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 95,
+        "currentPct": 81
+      }
+    },
+    {
+      "name": "{\"sleepHours\":8.416666666666666,\"deepMinutes\":55,\"remMinutes\":100,\"hoursAwake\":12,\"restingHR\":58,\"baselineHR\":53,\"hrvMs\":39,\"hrvBaseline\":54.75,\"fatigueLevel\":3,\"sleepOnsetTrouble\":true}",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "restingHR": 58,
+          "baselineHR": 53,
+          "hrvMs": 39,
+          "hrvBaseline": 54.75,
+          "fatigueLevel": 3,
+          "sleepOnsetTrouble": true
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 89,
+        "currentPct": 57
+      }
+    },
+    {
+      "name": "{\"sleepHours\":9,\"deepMinutes\":120,\"remMinutes\":120,\"steps\":40000,\"activeCal\":3000,\"hoursAwake\":18,\"sessionVolumeKg\":30000,\"trailingAvgVolumeKg\":1000,\"sessionRpe\":10,\"sessionDayKey\":\"legs_a\",\"restingHR\":90,\"baselineHR\":52,\"hrvMs\":10,\"hrvBaseline\":60,\"fatigueLevel\":5,\"sleepOnsetTrouble\":true}",
+      "input": {
+        "inputs": {
+          "sleepHours": 9,
+          "deepMinutes": 120,
+          "remMinutes": 120,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 40000,
+          "activeCal": 3000,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 30000,
+          "trailingAvgVolumeKg": 1000,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 18,
+          "sessionRpe": 10,
+          "sessionDayKey": "legs_a",
+          "restingHR": 90,
+          "baselineHR": 52,
+          "hrvMs": 10,
+          "hrvBaseline": 60,
+          "fatigueLevel": 5,
+          "sleepOnsetTrouble": true
+        },
+        "hoursAwakeArg": null
+      },
+      "expected": {
+        "morningCharge": 84,
+        "currentPct": 5
       }
     }
   ]

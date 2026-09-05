@@ -26,8 +26,10 @@
  * not advise. "Tonnage +8.9%" is arithmetic. "Tonnage is up, keep going" is an
  * opinion, and opinions belong to whoever reads this, not to the exporter.
  */
-import type { WeeklyExportInput, ExportDay, ExportSession, LedgerWeek } from '@/lib/reports/weeklyExport'
+import type { WeeklyExportInput, ExportDay, ExportFatigue, ExportSession, LedgerWeek } from '@/lib/reports/weeklyExport'
 import { SET_QUALITY } from '@/lib/training/setTags'
+import { computeMorningCharge, sleepQualityParts, stressParts } from '@/lib/scoring/battery'
+import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel } from '@/lib/recovery/fatigue'
 
 /** Mean of the values that EXIST. Null when none do — never 0. */
 function mean(xs: Array<number | null | undefined>): number | null {
@@ -80,8 +82,36 @@ export interface ExerciseProgression {
   sessions: number
 }
 
+/**
+ * One day's battery v8 inputs, exactly as the scorer read them.
+ *
+ * The app shows `appPct`; this is everything behind it. The four `q` terms and
+ * the three stress terms are the scorer's own functions run on the day line's
+ * figures plus the two baselines the payload carries for the purpose — so a
+ * reader can see WHICH input moved the number, which the number cannot say.
+ */
+export interface BatteryDay {
+  date: string
+  weekdayLabel: string
+  /** `daily_scores.battery_pct`. Null when the app never scored the day. */
+  appPct: number | null
+  morningCharge: number
+  ratio: number
+  stagesQ: number
+  hrvQ: number
+  rhrQ: number
+  onsetTrouble: boolean
+  stress: number
+  rhrTerm: number
+  hrvTerm: number
+  fatigueTerm: number
+  /** The latest fatigue reading's word, or null when none was logged. */
+  fatigueLabel: string | null
+}
+
 export interface DerivedWeek {
   deltas: WeekDelta[]
+  battery: BatteryDay[]
   /** Mean effort across every RATED working set — not the session-level rating. */
   meanWorkingSetRpe: number | null
   ratedSets: number
@@ -177,6 +207,38 @@ function progressionWithin(sessions: readonly ExportSession[]): ExerciseProgress
   return out.sort((a, b) => Math.abs(b.deltaKg) - Math.abs(a.deltaKg) || a.name.localeCompare(b.name))
 }
 
+/**
+ * The battery's view of each day. The LATEST fatigue slot wins, as
+ * `latestFatigue` decides it — slots are compared by their position in the
+ * day, not by their label's alphabet.
+ */
+function batteryDays(input: WeeklyExportInput): BatteryDay[] {
+  const slotIndex = (label: string) => FATIGUE_SLOTS.findIndex((s) => SLOT_LABEL[s] === label)
+  return input.days.map((d) => {
+    const latest = (input.fatigue ?? [])
+      .filter((f) => f.date === d.date)
+      .reduce<ExportFatigue | null>((best, f) => (best == null || slotIndex(f.slot) > slotIndex(best.slot) ? f : best), null)
+    const signals = {
+      sleepHours: (d.sleepMin ?? 0) / 60, deepMinutes: d.deepMin ?? 0, remMinutes: d.remMin ?? 0,
+      sleepGoalHours: input.sleepGoalHours ?? 8,
+      restingHR: d.restingHr ?? undefined, baselineHR: d.restingHrBaseline ?? undefined,
+      hrvMs: d.hrvMs ?? undefined, hrvBaseline: d.hrvBaseline ?? undefined,
+      fatigueLevel: latest?.level ?? null,
+    }
+    const q = sleepQualityParts(signals)
+    const st = stressParts(signals)
+    const onsetTrouble = d.sleepOnsetTrouble === true
+    return {
+      date: d.date, weekdayLabel: d.weekdayLabel,
+      appPct: d.batteryPct ?? null,
+      morningCharge: computeMorningCharge(q.quality, onsetTrouble),
+      ratio: q.ratio, stagesQ: q.stagesQ, hrvQ: q.hrvQ, rhrQ: q.rhrQ, onsetTrouble,
+      stress: st.drain, rhrTerm: st.rhrTerm, hrvTerm: st.hrvTerm, fatigueTerm: st.fatigueTerm,
+      fatigueLabel: latest ? (fatigueLevel(latest.level)?.label ?? String(latest.level)) : null,
+    }
+  })
+}
+
 /** Mean intake across the days matching a training/rest predicate. */
 function intakeOn(days: readonly ExportDay[], training: boolean): number | null {
   return mean(days.filter((d) => d.isTrainingDay === training).map((d) => d.calories))
@@ -239,6 +301,7 @@ export function derivedWeek(input: WeeklyExportInput): DerivedWeek {
 
   return {
     deltas,
+    battery: batteryDays(input),
     meanWorkingSetRpe: mean(rpes),
     ratedSets: rpes.length,
     workingSets,

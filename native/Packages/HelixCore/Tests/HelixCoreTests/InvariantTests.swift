@@ -21,6 +21,32 @@ struct InvariantTests {
         #expect(Battery.maxTotalDrain < 100 - Battery.defaults.floor)
     }
 
+    @Test("v8: timeMax 35 + activityCap 12 + workoutMax 32 + stressCap 10 = 89 < 100")
+    func v8BudgetIsEightyNine() {
+        let d = Battery.defaults
+        #expect(d.timeMax == 35 && d.activityCap == 12 && d.workoutMax == 32 && d.stressCap == 10)
+        #expect(Battery.maxTotalDrain == 89)
+        #expect(Battery.maxTotalDrain < 100)
+        // The lowest a perfect night can start is 97 (onset trouble); the floor
+        // stays out of reach even then.
+        #expect(100 - d.onsetPenalty - Battery.maxTotalDrain > d.floor)
+        // The per-day ceilings are what the budget is checked against.
+        #expect(Battery.workoutMaxByDay.values.max() == d.workoutMax)
+        #expect(Battery.workoutMaxByDay["legs_a"] == 32 && Battery.workoutMaxByDay["cb_a"] == 24 && Battery.workoutMaxByDay["arms"] == 16)
+    }
+
+    @Test("the stress drain never exceeds its cap and never recharges")
+    func stressStaysInBand() {
+        let worst = Battery.stressDrain(ScoringInputs(restingHR: 120, baselineHR: 50, hrvMs: 1, hrvBaseline: 80, fatigueLevel: 5))
+        #expect(worst == Battery.defaults.stressCap)
+        let calm = Battery.stressDrain(ScoringInputs(restingHR: 40, baselineHR: 52, hrvMs: 120, hrvBaseline: 60, fatigueLevel: 1))
+        #expect(calm == 0)
+        for level in [-1.0, 0, 0.5, 1, 2, 3, 4, 5, 6, 99] {
+            let term = Battery.stressParts(ScoringInputs(fatigueLevel: level)).fatigueTerm
+            #expect(term >= 0 && term <= 4, "fatigue term out of band at level \(level)")
+        }
+    }
+
     @Test("maintenance can only ever lower a drain, never raise the worst case")
     func maintenanceOnlyLowers() {
         #expect(Battery.maintenanceDrainFactor < 1)
@@ -70,7 +96,8 @@ struct InvariantTests {
             let state = Battery.computeBattery(c.input.inputs, hoursAwake: c.input.hoursAwakeArg)
             #expect(state.currentPct >= Battery.defaults.floor, "below the floor — \(c.name)")
             #expect(state.currentPct <= 100, "above 100 — \(c.name)")
-            #expect(state.morningCharge >= Battery.defaults.wakeMin, "wake charge below wakeMin — \(c.name)")
+            // v8: onset trouble may take the charge 3 under wakeMin, never further.
+            #expect(state.morningCharge >= Battery.defaults.wakeMin - Battery.defaults.onsetPenalty, "wake charge below wakeMin − onset — \(c.name)")
             #expect(state.morningCharge <= 100, "wake charge above 100 — \(c.name)")
         }
     }

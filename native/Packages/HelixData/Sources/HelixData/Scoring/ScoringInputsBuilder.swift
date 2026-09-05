@@ -142,6 +142,16 @@ public extension AppDatabase {
             let hrvBaseline = Self.mean(trail.compactMap(\.hrvMs))
             let rhrBaseline = Self.mean(trail.compactMap { $0.avgRestHeartRate.map(Double.init) })
 
+            // ── THE DAY'S LATEST FATIGUE READING (battery v8) ───────────────
+            // Folded as the tracker folds it — legacy keys filed by the kind of
+            // day — and summarised by the LATEST slot, the tracker's own rule
+            // for the day's one figure.
+            let fatigueRows = try FatigueLogRow
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .fetchAll(db)
+                .map { FatigueRow(slot: $0.slot, level: $0.level) }
+            let fatigueLevel = Fatigue.latest(Fatigue.foldRows(fatigueRows, isTraining: !isRestDay))?.level
+
             let hasAnything = metrics != nil || sleep != nil || nutrition != nil
                 || !water.isEmpty || supplementCount > 0 || !sessions.isEmpty || todayLog != nil
             if !isToday && date != todayISO && !hasAnything { return nil }
@@ -280,6 +290,8 @@ public extension AppDatabase {
             inputs.baselineHR = rhrBaseline
             inputs.hrvMs = todayLog?.hrvMs
             inputs.hrvBaseline = hrvBaseline
+            inputs.sleepOnsetTrouble = todayLog?.sleepOnsetTrouble == true
+            inputs.fatigueLevel = fatigueLevel.map(Double.init)
 
             inputs.contextMode = Context.scoringContext(for: effectiveMode).rawValue
             inputs.isCurrentDay = isToday || date == todayISO

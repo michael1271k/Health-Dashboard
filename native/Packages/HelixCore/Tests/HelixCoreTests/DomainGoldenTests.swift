@@ -70,11 +70,14 @@ struct BatteryGoldenTests {
         let floor, wakeMin, wakeRange, timeMax, activityCap, workoutMax: Double
         let defaultRpe, relMin, relMax, maxAwake: Double
         let maxTotalDrain, maintenanceDrainFactor, maintenanceRelMin: Double
+        let stressCap, onsetPenalty, restorativeShare: Double
     }
     struct Empty: Decodable {}
     struct WorkoutMaxInput: Decodable { let dayKey: String?; let maintenance: Bool }
     struct RelMinInput: Decodable { let maintenance: Bool }
-    struct SleepQualityExpected: Decodable { let quality: Double; let morningCharge: Double }
+    struct SleepQualityExpected: Decodable {
+        let quality, morningCharge, ratio, stagesQ, hrvQ, rhrQ, onsetCharge: Double
+    }
     struct WorkoutDrainInput: Decodable {
         let sessionVolumeKg: Double
         let trailingAvgVolumeKg: Double
@@ -108,6 +111,9 @@ struct BatteryGoldenTests {
         expectClose(Battery.maxTotalDrain, e.maxTotalDrain, "maxTotalDrain")
         expectClose(Battery.maintenanceDrainFactor, e.maintenanceDrainFactor, "maintenanceDrainFactor")
         expectClose(Battery.maintenanceRelMin, e.maintenanceRelMin, "maintenanceRelMin")
+        expectClose(d.stressCap, e.stressCap, "stressCap")
+        expectClose(d.onsetPenalty, e.onsetPenalty, "onsetPenalty")
+        expectClose(d.restorativeShare, e.restorativeShare, "restorativeShare")
     }
 
     @Test("workoutMaxFor matches — keyed on the programme day, never the split")
@@ -138,13 +144,35 @@ struct BatteryGoldenTests {
     func sleepQualityMatches() throws {
         let fixture = try GoldenFixture<ScoringInputs, SleepQualityExpected>.load("sleep-quality")
         for c in fixture.cases {
+            let parts = Battery.sleepQualityParts(c.input)
             let quality = Battery.computeSleepQuality(c.input)
             expectClose(quality, c.expected.quality, "computeSleepQuality — \(c.name)")
+            expectClose(parts.ratio, c.expected.ratio, "ratio — \(c.name)")
+            expectClose(parts.stagesQ, c.expected.stagesQ, "stagesQ — \(c.name)")
+            expectClose(parts.hrvQ, c.expected.hrvQ, "hrvQ — \(c.name)")
+            expectClose(parts.rhrQ, c.expected.rhrQ, "rhrQ — \(c.name)")
             expectClose(
                 Battery.computeMorningCharge(sleepQuality: quality),
                 c.expected.morningCharge,
                 "computeMorningCharge — \(c.name)"
             )
+            expectClose(
+                Battery.computeMorningCharge(sleepQuality: quality, onsetTrouble: true),
+                c.expected.onsetCharge,
+                "computeMorningCharge(onset) — \(c.name)"
+            )
+        }
+    }
+
+    @Test("the v8 stress drain matches, term by term")
+    func stressDrainMatches() throws {
+        let fixture = try GoldenFixture<ScoringInputs, Battery.StressParts>.load("stress-drain")
+        for c in fixture.cases {
+            let parts = Battery.stressParts(c.input)
+            expectClose(parts.rhrTerm, c.expected.rhrTerm, "rhrTerm — \(c.name)")
+            expectClose(parts.hrvTerm, c.expected.hrvTerm, "hrvTerm — \(c.name)")
+            expectClose(parts.fatigueTerm, c.expected.fatigueTerm, "fatigueTerm — \(c.name)")
+            expectClose(parts.drain, c.expected.drain, "drain — \(c.name)")
         }
     }
 

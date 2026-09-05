@@ -169,8 +169,8 @@ describe('v6 battery lift drain (drain-only)', () => {
     const generic = computeBattery({ ...base, sessionVolumeKg: 8000 }, 10).currentPct
     expect(legs).toBe(generic)
   })
-  it('constants reflect the v7 calibration', () => {
-    expect(BATTERY.workoutMax).toBe(30)
+  it('constants reflect the v8 calibration', () => {
+    expect(BATTERY.workoutMax).toBe(32)
     expect(BATTERY.defaultRpe).toBe(0.7)
     expect(BATTERY.timeMax).toBe(35)
   })

@@ -25,7 +25,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30
+      "expected": 32
     },
     {
       "name": "day=legs_a maintenance=true",
@@ -33,7 +33,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 24
     },
     {
       "name": "day=legs_b maintenance=false",
@@ -41,7 +41,7 @@
         "dayKey": "legs_b",
         "maintenance": false
       },
-      "expected": 30
+      "expected": 32
     },
     {
       "name": "day=legs_b maintenance=true",
@@ -49,7 +49,7 @@
         "dayKey": "legs_b",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 24
     },
     {
       "name": "day=cb_a maintenance=false",
@@ -89,7 +89,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "day=arms maintenance=true",
@@ -97,7 +97,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 12
     },
     {
       "name": "day=unknown_day maintenance=false",

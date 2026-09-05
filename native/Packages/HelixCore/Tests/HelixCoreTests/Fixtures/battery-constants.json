@@ -12,14 +12,17 @@
         "wakeRange": 45,
         "timeMax": 35,
         "activityCap": 12,
-        "workoutMax": 30,
+        "workoutMax": 32,
         "defaultRpe": 0.7,
         "relMin": 0.6,
         "relMax": 1.4,
         "maxAwake": 18,
-        "maxTotalDrain": 77,
+        "maxTotalDrain": 89,
         "maintenanceDrainFactor": 0.75,
-        "maintenanceRelMin": 0.35
+        "maintenanceRelMin": 0.35,
+        "stressCap": 10,
+        "onsetPenalty": 3,
+        "restorativeShare": 0.45
       }
     }
   ]

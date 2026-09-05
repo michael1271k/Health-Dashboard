@@ -69,6 +69,12 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
     public var baselineHR: Double?
     public var hrvMs: Double?
     public var hrvBaseline: Double?
+    /// `daily_logs.sleep_onset_trouble`. Battery v8 takes 3 off the wake
+    /// charge for it; nothing else reads it.
+    public var sleepOnsetTrouble: Bool?
+    /// The LATEST fatigue slot logged today, 1 (Fresh) ... 5 (Empty). Battery
+    /// v8's stress drain reads it; the day score still does not.
+    public var fatigueLevel: Double?
 
     // MARK: Context
     public var contextMode: String?
@@ -114,6 +120,8 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
         baselineHR: Double? = nil,
         hrvMs: Double? = nil,
         hrvBaseline: Double? = nil,
+        sleepOnsetTrouble: Bool? = nil,
+        fatigueLevel: Double? = nil,
         contextMode: String? = nil,
         hoursAwake: Double? = nil,
         isCurrentDay: Bool? = nil,
@@ -156,6 +164,8 @@ public struct ScoringInputs: Codable, Sendable, Equatable {
         self.baselineHR = baselineHR
         self.hrvMs = hrvMs
         self.hrvBaseline = hrvBaseline
+        self.sleepOnsetTrouble = sleepOnsetTrouble
+        self.fatigueLevel = fatigueLevel
         self.contextMode = contextMode
         self.hoursAwake = hoursAwake
         self.isCurrentDay = isCurrentDay

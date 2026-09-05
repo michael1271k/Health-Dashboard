@@ -3730,7 +3730,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=1000 t=0 rpe=null day=legs_a m=true",
@@ -3741,7 +3741,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=1000 t=0 rpe=null day=cb_a m=false",
@@ -3774,7 +3774,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=1000 t=0 rpe=null day=arms m=true",
@@ -3785,7 +3785,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=1000 t=0 rpe=0 day=null m=false",
@@ -3818,7 +3818,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=1000 t=0 rpe=0 day=legs_a m=true",
@@ -3829,7 +3829,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=1000 t=0 rpe=0 day=cb_a m=false",
@@ -3862,7 +3862,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=1000 t=0 rpe=0 day=arms m=true",
@@ -3873,7 +3873,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=1000 t=0 rpe=3 day=null m=false",
@@ -3906,7 +3906,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=1000 t=0 rpe=3 day=legs_a m=true",
@@ -3917,7 +3917,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=1000 t=0 rpe=3 day=cb_a m=false",
@@ -3950,7 +3950,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=1000 t=0 rpe=3 day=arms m=true",
@@ -3961,7 +3961,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=1000 t=0 rpe=6 day=null m=false",
@@ -3994,7 +3994,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=1000 t=0 rpe=6 day=legs_a m=true",
@@ -4005,7 +4005,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=1000 t=0 rpe=6 day=cb_a m=false",
@@ -4038,7 +4038,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=1000 t=0 rpe=6 day=arms m=true",
@@ -4049,7 +4049,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=1000 t=0 rpe=7 day=null m=false",
@@ -4082,7 +4082,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=1000 t=0 rpe=7 day=legs_a m=true",
@@ -4093,7 +4093,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=1000 t=0 rpe=7 day=cb_a m=false",
@@ -4126,7 +4126,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=1000 t=0 rpe=7 day=arms m=true",
@@ -4137,7 +4137,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=1000 t=0 rpe=9 day=null m=false",
@@ -4170,7 +4170,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=1000 t=0 rpe=9 day=legs_a m=true",
@@ -4181,7 +4181,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=1000 t=0 rpe=9 day=cb_a m=false",
@@ -4214,7 +4214,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=1000 t=0 rpe=9 day=arms m=true",
@@ -4225,7 +4225,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=1000 t=0 rpe=10 day=null m=false",
@@ -4258,7 +4258,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=1000 t=0 rpe=10 day=legs_a m=true",
@@ -4269,7 +4269,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=1000 t=0 rpe=10 day=cb_a m=false",
@@ -4302,7 +4302,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=1000 t=0 rpe=10 day=arms m=true",
@@ -4313,7 +4313,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=1000 t=3400 rpe=null day=null m=false",
@@ -4346,7 +4346,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=3400 rpe=null day=legs_a m=true",
@@ -4357,7 +4357,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=3400 rpe=null day=cb_a m=false",
@@ -4390,7 +4390,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=3400 rpe=null day=arms m=true",
@@ -4401,7 +4401,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=3400 rpe=0 day=null m=false",
@@ -4434,7 +4434,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=3400 rpe=0 day=legs_a m=true",
@@ -4445,7 +4445,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=3400 rpe=0 day=cb_a m=false",
@@ -4478,7 +4478,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=3400 rpe=0 day=arms m=true",
@@ -4489,7 +4489,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=3400 rpe=3 day=null m=false",
@@ -4522,7 +4522,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 4.114285714285715
     },
     {
       "name": "v=1000 t=3400 rpe=3 day=legs_a m=true",
@@ -4533,7 +4533,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 1.6875
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=1000 t=3400 rpe=3 day=cb_a m=false",
@@ -4566,7 +4566,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 2.314285714285714
+      "expected": 2.0571428571428574
     },
     {
       "name": "v=1000 t=3400 rpe=3 day=arms m=true",
@@ -4577,7 +4577,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 1.0125
+      "expected": 0.8999999999999999
     },
     {
       "name": "v=1000 t=3400 rpe=6 day=null m=false",
@@ -4610,7 +4610,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 8.22857142857143
     },
     {
       "name": "v=1000 t=3400 rpe=6 day=legs_a m=true",
@@ -4621,7 +4621,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=1000 t=3400 rpe=6 day=cb_a m=false",
@@ -4654,7 +4654,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 4.628571428571428
+      "expected": 4.114285714285715
     },
     {
       "name": "v=1000 t=3400 rpe=6 day=arms m=true",
@@ -4665,7 +4665,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.025
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=1000 t=3400 rpe=7 day=null m=false",
@@ -4698,7 +4698,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=3400 rpe=7 day=legs_a m=true",
@@ -4709,7 +4709,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=3400 rpe=7 day=cb_a m=false",
@@ -4742,7 +4742,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=3400 rpe=7 day=arms m=true",
@@ -4753,7 +4753,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=3400 rpe=9 day=null m=false",
@@ -4786,7 +4786,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 12.342857142857145
     },
     {
       "name": "v=1000 t=3400 rpe=9 day=legs_a m=true",
@@ -4797,7 +4797,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.0625
+      "expected": 5.4
     },
     {
       "name": "v=1000 t=3400 rpe=9 day=cb_a m=false",
@@ -4830,7 +4830,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 6.942857142857142
+      "expected": 6.171428571428573
     },
     {
       "name": "v=1000 t=3400 rpe=9 day=arms m=true",
@@ -4841,7 +4841,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.0374999999999996
+      "expected": 2.7
     },
     {
       "name": "v=1000 t=3400 rpe=10 day=null m=false",
@@ -4874,7 +4874,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=1000 t=3400 rpe=10 day=legs_a m=true",
@@ -4885,7 +4885,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.625
+      "expected": 5.999999999999999
     },
     {
       "name": "v=1000 t=3400 rpe=10 day=cb_a m=false",
@@ -4918,7 +4918,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=1000 t=3400 rpe=10 day=arms m=true",
@@ -4929,7 +4929,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 2.9999999999999996
     },
     {
       "name": "v=1000 t=12712 rpe=null day=null m=false",
@@ -4962,7 +4962,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=12712 rpe=null day=legs_a m=true",
@@ -4973,7 +4973,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=12712 rpe=null day=cb_a m=false",
@@ -5006,7 +5006,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=12712 rpe=null day=arms m=true",
@@ -5017,7 +5017,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=12712 rpe=0 day=null m=false",
@@ -5050,7 +5050,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=12712 rpe=0 day=legs_a m=true",
@@ -5061,7 +5061,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=12712 rpe=0 day=cb_a m=false",
@@ -5094,7 +5094,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=12712 rpe=0 day=arms m=true",
@@ -5105,7 +5105,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=12712 rpe=3 day=null m=false",
@@ -5138,7 +5138,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 4.114285714285715
     },
     {
       "name": "v=1000 t=12712 rpe=3 day=legs_a m=true",
@@ -5149,7 +5149,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 1.6875
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=1000 t=12712 rpe=3 day=cb_a m=false",
@@ -5182,7 +5182,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 2.314285714285714
+      "expected": 2.0571428571428574
     },
     {
       "name": "v=1000 t=12712 rpe=3 day=arms m=true",
@@ -5193,7 +5193,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 1.0125
+      "expected": 0.8999999999999999
     },
     {
       "name": "v=1000 t=12712 rpe=6 day=null m=false",
@@ -5226,7 +5226,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 8.22857142857143
     },
     {
       "name": "v=1000 t=12712 rpe=6 day=legs_a m=true",
@@ -5237,7 +5237,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=1000 t=12712 rpe=6 day=cb_a m=false",
@@ -5270,7 +5270,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 4.628571428571428
+      "expected": 4.114285714285715
     },
     {
       "name": "v=1000 t=12712 rpe=6 day=arms m=true",
@@ -5281,7 +5281,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.025
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=1000 t=12712 rpe=7 day=null m=false",
@@ -5314,7 +5314,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=1000 t=12712 rpe=7 day=legs_a m=true",
@@ -5325,7 +5325,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=1000 t=12712 rpe=7 day=cb_a m=false",
@@ -5358,7 +5358,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=1000 t=12712 rpe=7 day=arms m=true",
@@ -5369,7 +5369,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=1000 t=12712 rpe=9 day=null m=false",
@@ -5402,7 +5402,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 12.342857142857145
     },
     {
       "name": "v=1000 t=12712 rpe=9 day=legs_a m=true",
@@ -5413,7 +5413,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.0625
+      "expected": 5.4
     },
     {
       "name": "v=1000 t=12712 rpe=9 day=cb_a m=false",
@@ -5446,7 +5446,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 6.942857142857142
+      "expected": 6.171428571428573
     },
     {
       "name": "v=1000 t=12712 rpe=9 day=arms m=true",
@@ -5457,7 +5457,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.0374999999999996
+      "expected": 2.7
     },
     {
       "name": "v=1000 t=12712 rpe=10 day=null m=false",
@@ -5490,7 +5490,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=1000 t=12712 rpe=10 day=legs_a m=true",
@@ -5501,7 +5501,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.625
+      "expected": 5.999999999999999
     },
     {
       "name": "v=1000 t=12712 rpe=10 day=cb_a m=false",
@@ -5534,7 +5534,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=1000 t=12712 rpe=10 day=arms m=true",
@@ -5545,7 +5545,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 2.9999999999999996
     },
     {
       "name": "v=3400 t=0 rpe=null day=null m=false",
@@ -5578,7 +5578,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=0 rpe=null day=legs_a m=true",
@@ -5589,7 +5589,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=0 rpe=null day=cb_a m=false",
@@ -5622,7 +5622,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=0 rpe=null day=arms m=true",
@@ -5633,7 +5633,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=0 rpe=0 day=null m=false",
@@ -5666,7 +5666,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=0 rpe=0 day=legs_a m=true",
@@ -5677,7 +5677,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=0 rpe=0 day=cb_a m=false",
@@ -5710,7 +5710,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=0 rpe=0 day=arms m=true",
@@ -5721,7 +5721,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=0 rpe=3 day=null m=false",
@@ -5754,7 +5754,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=3400 t=0 rpe=3 day=legs_a m=true",
@@ -5765,7 +5765,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=3400 t=0 rpe=3 day=cb_a m=false",
@@ -5798,7 +5798,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=3400 t=0 rpe=3 day=arms m=true",
@@ -5809,7 +5809,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=3400 t=0 rpe=6 day=null m=false",
@@ -5842,7 +5842,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=3400 t=0 rpe=6 day=legs_a m=true",
@@ -5853,7 +5853,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=3400 t=0 rpe=6 day=cb_a m=false",
@@ -5886,7 +5886,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=3400 t=0 rpe=6 day=arms m=true",
@@ -5897,7 +5897,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=3400 t=0 rpe=7 day=null m=false",
@@ -5930,7 +5930,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=0 rpe=7 day=legs_a m=true",
@@ -5941,7 +5941,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=0 rpe=7 day=cb_a m=false",
@@ -5974,7 +5974,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=0 rpe=7 day=arms m=true",
@@ -5985,7 +5985,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=0 rpe=9 day=null m=false",
@@ -6018,7 +6018,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=3400 t=0 rpe=9 day=legs_a m=true",
@@ -6029,7 +6029,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=3400 t=0 rpe=9 day=cb_a m=false",
@@ -6062,7 +6062,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=3400 t=0 rpe=9 day=arms m=true",
@@ -6073,7 +6073,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=3400 t=0 rpe=10 day=null m=false",
@@ -6106,7 +6106,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=3400 t=0 rpe=10 day=legs_a m=true",
@@ -6117,7 +6117,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=3400 t=0 rpe=10 day=cb_a m=false",
@@ -6150,7 +6150,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=3400 t=0 rpe=10 day=arms m=true",
@@ -6161,7 +6161,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=3400 t=3400 rpe=null day=null m=false",
@@ -6194,7 +6194,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=3400 rpe=null day=legs_a m=true",
@@ -6205,7 +6205,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=3400 rpe=null day=cb_a m=false",
@@ -6238,7 +6238,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=3400 rpe=null day=arms m=true",
@@ -6249,7 +6249,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=3400 rpe=0 day=null m=false",
@@ -6282,7 +6282,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=3400 rpe=0 day=legs_a m=true",
@@ -6293,7 +6293,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=3400 rpe=0 day=cb_a m=false",
@@ -6326,7 +6326,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=3400 rpe=0 day=arms m=true",
@@ -6337,7 +6337,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=3400 rpe=3 day=null m=false",
@@ -6370,7 +6370,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=3400 t=3400 rpe=3 day=legs_a m=true",
@@ -6381,7 +6381,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=3400 t=3400 rpe=3 day=cb_a m=false",
@@ -6414,7 +6414,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=3400 t=3400 rpe=3 day=arms m=true",
@@ -6425,7 +6425,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=3400 t=3400 rpe=6 day=null m=false",
@@ -6458,7 +6458,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=3400 t=3400 rpe=6 day=legs_a m=true",
@@ -6469,7 +6469,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=3400 t=3400 rpe=6 day=cb_a m=false",
@@ -6502,7 +6502,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=3400 t=3400 rpe=6 day=arms m=true",
@@ -6513,7 +6513,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=3400 t=3400 rpe=7 day=null m=false",
@@ -6546,7 +6546,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=3400 t=3400 rpe=7 day=legs_a m=true",
@@ -6557,7 +6557,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=3400 t=3400 rpe=7 day=cb_a m=false",
@@ -6590,7 +6590,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=3400 t=3400 rpe=7 day=arms m=true",
@@ -6601,7 +6601,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=3400 rpe=9 day=null m=false",
@@ -6634,7 +6634,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=3400 t=3400 rpe=9 day=legs_a m=true",
@@ -6645,7 +6645,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=3400 t=3400 rpe=9 day=cb_a m=false",
@@ -6678,7 +6678,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=3400 t=3400 rpe=9 day=arms m=true",
@@ -6689,7 +6689,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=3400 t=3400 rpe=10 day=null m=false",
@@ -6722,7 +6722,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=3400 t=3400 rpe=10 day=legs_a m=true",
@@ -6733,7 +6733,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=3400 t=3400 rpe=10 day=cb_a m=false",
@@ -6766,7 +6766,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=3400 t=3400 rpe=10 day=arms m=true",
@@ -6777,7 +6777,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=3400 t=12712 rpe=null day=null m=false",
@@ -6810,7 +6810,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=3400 t=12712 rpe=null day=legs_a m=true",
@@ -6821,7 +6821,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=3400 t=12712 rpe=null day=cb_a m=false",
@@ -6854,7 +6854,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=3400 t=12712 rpe=null day=arms m=true",
@@ -6865,7 +6865,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=3400 t=12712 rpe=0 day=null m=false",
@@ -6898,7 +6898,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=3400 t=12712 rpe=0 day=legs_a m=true",
@@ -6909,7 +6909,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=3400 t=12712 rpe=0 day=cb_a m=false",
@@ -6942,7 +6942,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=3400 t=12712 rpe=0 day=arms m=true",
@@ -6953,7 +6953,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=3400 t=12712 rpe=3 day=null m=false",
@@ -6986,7 +6986,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 4.114285714285715
     },
     {
       "name": "v=3400 t=12712 rpe=3 day=legs_a m=true",
@@ -6997,7 +6997,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 1.6875
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=3400 t=12712 rpe=3 day=cb_a m=false",
@@ -7030,7 +7030,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 2.314285714285714
+      "expected": 2.0571428571428574
     },
     {
       "name": "v=3400 t=12712 rpe=3 day=arms m=true",
@@ -7041,7 +7041,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 1.0125
+      "expected": 0.8999999999999999
     },
     {
       "name": "v=3400 t=12712 rpe=6 day=null m=false",
@@ -7074,7 +7074,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 8.22857142857143
     },
     {
       "name": "v=3400 t=12712 rpe=6 day=legs_a m=true",
@@ -7085,7 +7085,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=3400 t=12712 rpe=6 day=cb_a m=false",
@@ -7118,7 +7118,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 4.628571428571428
+      "expected": 4.114285714285715
     },
     {
       "name": "v=3400 t=12712 rpe=6 day=arms m=true",
@@ -7129,7 +7129,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.025
+      "expected": 1.7999999999999998
     },
     {
       "name": "v=3400 t=12712 rpe=7 day=null m=false",
@@ -7162,7 +7162,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=3400 t=12712 rpe=7 day=legs_a m=true",
@@ -7173,7 +7173,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.9374999999999996
+      "expected": 4.199999999999999
     },
     {
       "name": "v=3400 t=12712 rpe=7 day=cb_a m=false",
@@ -7206,7 +7206,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.4
+      "expected": 4.8
     },
     {
       "name": "v=3400 t=12712 rpe=7 day=arms m=true",
@@ -7217,7 +7217,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.3625
+      "expected": 2.0999999999999996
     },
     {
       "name": "v=3400 t=12712 rpe=9 day=null m=false",
@@ -7250,7 +7250,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 12.342857142857145
     },
     {
       "name": "v=3400 t=12712 rpe=9 day=legs_a m=true",
@@ -7261,7 +7261,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.0625
+      "expected": 5.4
     },
     {
       "name": "v=3400 t=12712 rpe=9 day=cb_a m=false",
@@ -7294,7 +7294,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 6.942857142857142
+      "expected": 6.171428571428573
     },
     {
       "name": "v=3400 t=12712 rpe=9 day=arms m=true",
@@ -7305,7 +7305,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.0374999999999996
+      "expected": 2.7
     },
     {
       "name": "v=3400 t=12712 rpe=10 day=null m=false",
@@ -7338,7 +7338,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=3400 t=12712 rpe=10 day=legs_a m=true",
@@ -7349,7 +7349,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 5.625
+      "expected": 5.999999999999999
     },
     {
       "name": "v=3400 t=12712 rpe=10 day=cb_a m=false",
@@ -7382,7 +7382,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=3400 t=12712 rpe=10 day=arms m=true",
@@ -7393,7 +7393,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.375
+      "expected": 2.9999999999999996
     },
     {
       "name": "v=8000 t=0 rpe=null day=null m=false",
@@ -7426,7 +7426,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=8000 t=0 rpe=null day=legs_a m=true",
@@ -7437,7 +7437,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=8000 t=0 rpe=null day=cb_a m=false",
@@ -7470,7 +7470,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=8000 t=0 rpe=null day=arms m=true",
@@ -7481,7 +7481,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=8000 t=0 rpe=0 day=null m=false",
@@ -7514,7 +7514,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=8000 t=0 rpe=0 day=legs_a m=true",
@@ -7525,7 +7525,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=8000 t=0 rpe=0 day=cb_a m=false",
@@ -7558,7 +7558,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=8000 t=0 rpe=0 day=arms m=true",
@@ -7569,7 +7569,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=8000 t=0 rpe=3 day=null m=false",
@@ -7602,7 +7602,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=8000 t=0 rpe=3 day=legs_a m=true",
@@ -7613,7 +7613,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=8000 t=0 rpe=3 day=cb_a m=false",
@@ -7646,7 +7646,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=8000 t=0 rpe=3 day=arms m=true",
@@ -7657,7 +7657,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=8000 t=0 rpe=6 day=null m=false",
@@ -7690,7 +7690,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=8000 t=0 rpe=6 day=legs_a m=true",
@@ -7701,7 +7701,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=8000 t=0 rpe=6 day=cb_a m=false",
@@ -7734,7 +7734,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=8000 t=0 rpe=6 day=arms m=true",
@@ -7745,7 +7745,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=8000 t=0 rpe=7 day=null m=false",
@@ -7778,7 +7778,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=8000 t=0 rpe=7 day=legs_a m=true",
@@ -7789,7 +7789,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=8000 t=0 rpe=7 day=cb_a m=false",
@@ -7822,7 +7822,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=8000 t=0 rpe=7 day=arms m=true",
@@ -7833,7 +7833,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=8000 t=0 rpe=9 day=null m=false",
@@ -7866,7 +7866,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=8000 t=0 rpe=9 day=legs_a m=true",
@@ -7877,7 +7877,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=8000 t=0 rpe=9 day=cb_a m=false",
@@ -7910,7 +7910,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=8000 t=0 rpe=9 day=arms m=true",
@@ -7921,7 +7921,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=8000 t=0 rpe=10 day=null m=false",
@@ -7954,7 +7954,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=8000 t=0 rpe=10 day=legs_a m=true",
@@ -7965,7 +7965,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=8000 t=0 rpe=10 day=cb_a m=false",
@@ -7998,7 +7998,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=8000 t=0 rpe=10 day=arms m=true",
@@ -8009,7 +8009,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=8000 t=3400 rpe=null day=null m=false",
@@ -8042,7 +8042,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=8000 t=3400 rpe=null day=legs_a m=true",
@@ -8053,7 +8053,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=8000 t=3400 rpe=null day=cb_a m=false",
@@ -8086,7 +8086,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=8000 t=3400 rpe=null day=arms m=true",
@@ -8097,7 +8097,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=0 day=null m=false",
@@ -8130,7 +8130,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=8000 t=3400 rpe=0 day=legs_a m=true",
@@ -8141,7 +8141,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=8000 t=3400 rpe=0 day=cb_a m=false",
@@ -8174,7 +8174,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=8000 t=3400 rpe=0 day=arms m=true",
@@ -8185,7 +8185,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=3 day=null m=false",
@@ -8218,7 +8218,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=8000 t=3400 rpe=3 day=legs_a m=true",
@@ -8229,7 +8229,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 7.199999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=3 day=cb_a m=false",
@@ -8262,7 +8262,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.3999999999999995
+      "expected": 4.8
     },
     {
       "name": "v=8000 t=3400 rpe=3 day=arms m=true",
@@ -8273,7 +8273,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.05
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=8000 t=3400 rpe=6 day=null m=false",
@@ -8306,7 +8306,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 19.2
     },
     {
       "name": "v=8000 t=3400 rpe=6 day=legs_a m=true",
@@ -8317,7 +8317,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 14.399999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=6 day=cb_a m=false",
@@ -8350,7 +8350,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 10.799999999999999
+      "expected": 9.6
     },
     {
       "name": "v=8000 t=3400 rpe=6 day=arms m=true",
@@ -8361,7 +8361,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.1
+      "expected": 7.199999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=7 day=null m=false",
@@ -8394,7 +8394,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=8000 t=3400 rpe=7 day=legs_a m=true",
@@ -8405,7 +8405,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=8000 t=3400 rpe=7 day=cb_a m=false",
@@ -8438,7 +8438,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=8000 t=3400 rpe=7 day=arms m=true",
@@ -8449,7 +8449,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=8000 t=3400 rpe=9 day=null m=false",
@@ -8482,7 +8482,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 27
+      "expected": 28.8
     },
     {
       "name": "v=8000 t=3400 rpe=9 day=legs_a m=true",
@@ -8493,7 +8493,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 20.25
+      "expected": 21.6
     },
     {
       "name": "v=8000 t=3400 rpe=9 day=cb_a m=false",
@@ -8526,7 +8526,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 16.2
+      "expected": 14.4
     },
     {
       "name": "v=8000 t=3400 rpe=9 day=arms m=true",
@@ -8537,7 +8537,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 12.149999999999999
+      "expected": 10.8
     },
     {
       "name": "v=8000 t=3400 rpe=10 day=null m=false",
@@ -8570,7 +8570,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30.000000000000004
+      "expected": 32
     },
     {
       "name": "v=8000 t=3400 rpe=10 day=legs_a m=true",
@@ -8581,7 +8581,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 23.999999999999996
     },
     {
       "name": "v=8000 t=3400 rpe=10 day=cb_a m=false",
@@ -8614,7 +8614,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "v=8000 t=3400 rpe=10 day=arms m=true",
@@ -8625,7 +8625,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 11.999999999999998
     },
     {
       "name": "v=8000 t=12712 rpe=null day=null m=false",
@@ -8658,7 +8658,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9.439899307740717
+      "expected": 10.069225928256765
     },
     {
       "name": "v=8000 t=12712 rpe=null day=legs_a m=true",
@@ -8669,7 +8669,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 7.079924480805538
+      "expected": 7.551919446192573
     },
     {
       "name": "v=8000 t=12712 rpe=null day=cb_a m=false",
@@ -8702,7 +8702,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.663939584644431
+      "expected": 5.0346129641283826
     },
     {
       "name": "v=8000 t=12712 rpe=null day=arms m=true",
@@ -8713,7 +8713,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.247954688483323
+      "expected": 3.7759597230962867
     },
     {
       "name": "v=8000 t=12712 rpe=0 day=null m=false",
@@ -8746,7 +8746,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9.439899307740717
+      "expected": 10.069225928256765
     },
     {
       "name": "v=8000 t=12712 rpe=0 day=legs_a m=true",
@@ -8757,7 +8757,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 7.079924480805538
+      "expected": 7.551919446192573
     },
     {
       "name": "v=8000 t=12712 rpe=0 day=cb_a m=false",
@@ -8790,7 +8790,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.663939584644431
+      "expected": 5.0346129641283826
     },
     {
       "name": "v=8000 t=12712 rpe=0 day=arms m=true",
@@ -8801,7 +8801,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.247954688483323
+      "expected": 3.7759597230962867
     },
     {
       "name": "v=8000 t=12712 rpe=3 day=null m=false",
@@ -8834,7 +8834,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 4.045671131888879
+      "expected": 4.315382540681471
     },
     {
       "name": "v=8000 t=12712 rpe=3 day=legs_a m=true",
@@ -8845,7 +8845,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 3.034253348916659
+      "expected": 3.2365369055111026
     },
     {
       "name": "v=8000 t=12712 rpe=3 day=cb_a m=false",
@@ -8878,7 +8878,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 2.427402679133327
+      "expected": 2.1576912703407354
     },
     {
       "name": "v=8000 t=12712 rpe=3 day=arms m=true",
@@ -8889,7 +8889,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 1.8205520093499956
+      "expected": 1.6182684527555513
     },
     {
       "name": "v=8000 t=12712 rpe=6 day=null m=false",
@@ -8922,7 +8922,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 8.091342263777758
+      "expected": 8.630765081362942
     },
     {
       "name": "v=8000 t=12712 rpe=6 day=legs_a m=true",
@@ -8933,7 +8933,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.068506697833318
+      "expected": 6.473073811022205
     },
     {
       "name": "v=8000 t=12712 rpe=6 day=cb_a m=false",
@@ -8966,7 +8966,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 4.854805358266654
+      "expected": 4.315382540681471
     },
     {
       "name": "v=8000 t=12712 rpe=6 day=arms m=true",
@@ -8977,7 +8977,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 3.6411040186999912
+      "expected": 3.2365369055111026
     },
     {
       "name": "v=8000 t=12712 rpe=7 day=null m=false",
@@ -9010,7 +9010,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9.439899307740717
+      "expected": 10.069225928256765
     },
     {
       "name": "v=8000 t=12712 rpe=7 day=legs_a m=true",
@@ -9021,7 +9021,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 7.079924480805538
+      "expected": 7.551919446192573
     },
     {
       "name": "v=8000 t=12712 rpe=7 day=cb_a m=false",
@@ -9054,7 +9054,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.663939584644431
+      "expected": 5.0346129641283826
     },
     {
       "name": "v=8000 t=12712 rpe=7 day=arms m=true",
@@ -9065,7 +9065,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.247954688483323
+      "expected": 3.7759597230962867
     },
     {
       "name": "v=8000 t=12712 rpe=9 day=null m=false",
@@ -9098,7 +9098,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.137013395666637
+      "expected": 12.946147622044414
     },
     {
       "name": "v=8000 t=12712 rpe=9 day=legs_a m=true",
@@ -9109,7 +9109,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.102760046749978
+      "expected": 9.70961071653331
     },
     {
       "name": "v=8000 t=12712 rpe=9 day=cb_a m=false",
@@ -9142,7 +9142,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.2822080373999825
+      "expected": 6.473073811022207
     },
     {
       "name": "v=8000 t=12712 rpe=9 day=arms m=true",
@@ -9153,7 +9153,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.461656028049987
+      "expected": 4.854805358266655
     },
     {
       "name": "v=8000 t=12712 rpe=10 day=null m=false",
@@ -9186,7 +9186,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 13.485570439629596
+      "expected": 14.384608468938238
     },
     {
       "name": "v=8000 t=12712 rpe=10 day=legs_a m=true",
@@ -9197,7 +9197,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 10.114177829722198
+      "expected": 10.788456351703678
     },
     {
       "name": "v=8000 t=12712 rpe=10 day=cb_a m=false",
@@ -9230,7 +9230,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 8.091342263777758
+      "expected": 7.192304234469119
     },
     {
       "name": "v=8000 t=12712 rpe=10 day=arms m=true",
@@ -9241,7 +9241,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.068506697833318
+      "expected": 5.394228175851839
     },
     {
       "name": "v=12712 t=0 rpe=null day=null m=false",
@@ -9274,7 +9274,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=0 rpe=null day=legs_a m=true",
@@ -9285,7 +9285,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=0 rpe=null day=cb_a m=false",
@@ -9318,7 +9318,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=0 rpe=null day=arms m=true",
@@ -9329,7 +9329,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=0 rpe=0 day=null m=false",
@@ -9362,7 +9362,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=0 rpe=0 day=legs_a m=true",
@@ -9373,7 +9373,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=0 rpe=0 day=cb_a m=false",
@@ -9406,7 +9406,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=0 rpe=0 day=arms m=true",
@@ -9417,7 +9417,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=0 rpe=3 day=null m=false",
@@ -9450,7 +9450,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=12712 t=0 rpe=3 day=legs_a m=true",
@@ -9461,7 +9461,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=12712 t=0 rpe=3 day=cb_a m=false",
@@ -9494,7 +9494,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=12712 t=0 rpe=3 day=arms m=true",
@@ -9505,7 +9505,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=12712 t=0 rpe=6 day=null m=false",
@@ -9538,7 +9538,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=12712 t=0 rpe=6 day=legs_a m=true",
@@ -9549,7 +9549,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=12712 t=0 rpe=6 day=cb_a m=false",
@@ -9582,7 +9582,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=12712 t=0 rpe=6 day=arms m=true",
@@ -9593,7 +9593,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=12712 t=0 rpe=7 day=null m=false",
@@ -9626,7 +9626,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=0 rpe=7 day=legs_a m=true",
@@ -9637,7 +9637,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=0 rpe=7 day=cb_a m=false",
@@ -9670,7 +9670,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=0 rpe=7 day=arms m=true",
@@ -9681,7 +9681,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=0 rpe=9 day=null m=false",
@@ -9714,7 +9714,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=12712 t=0 rpe=9 day=legs_a m=true",
@@ -9725,7 +9725,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=12712 t=0 rpe=9 day=cb_a m=false",
@@ -9758,7 +9758,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=12712 t=0 rpe=9 day=arms m=true",
@@ -9769,7 +9769,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=12712 t=0 rpe=10 day=null m=false",
@@ -9802,7 +9802,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=12712 t=0 rpe=10 day=legs_a m=true",
@@ -9813,7 +9813,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=12712 t=0 rpe=10 day=cb_a m=false",
@@ -9846,7 +9846,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=12712 t=0 rpe=10 day=arms m=true",
@@ -9857,7 +9857,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=12712 t=3400 rpe=null day=null m=false",
@@ -9890,7 +9890,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=12712 t=3400 rpe=null day=legs_a m=true",
@@ -9901,7 +9901,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=12712 t=3400 rpe=null day=cb_a m=false",
@@ -9934,7 +9934,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=12712 t=3400 rpe=null day=arms m=true",
@@ -9945,7 +9945,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=0 day=null m=false",
@@ -9978,7 +9978,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=12712 t=3400 rpe=0 day=legs_a m=true",
@@ -9989,7 +9989,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=12712 t=3400 rpe=0 day=cb_a m=false",
@@ -10022,7 +10022,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=12712 t=3400 rpe=0 day=arms m=true",
@@ -10033,7 +10033,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=3 day=null m=false",
@@ -10066,7 +10066,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=12712 t=3400 rpe=3 day=legs_a m=true",
@@ -10077,7 +10077,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 7.199999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=3 day=cb_a m=false",
@@ -10110,7 +10110,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.3999999999999995
+      "expected": 4.8
     },
     {
       "name": "v=12712 t=3400 rpe=3 day=arms m=true",
@@ -10121,7 +10121,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.05
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=12712 t=3400 rpe=6 day=null m=false",
@@ -10154,7 +10154,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 19.2
     },
     {
       "name": "v=12712 t=3400 rpe=6 day=legs_a m=true",
@@ -10165,7 +10165,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 14.399999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=6 day=cb_a m=false",
@@ -10198,7 +10198,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 10.799999999999999
+      "expected": 9.6
     },
     {
       "name": "v=12712 t=3400 rpe=6 day=arms m=true",
@@ -10209,7 +10209,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.1
+      "expected": 7.199999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=7 day=null m=false",
@@ -10242,7 +10242,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=12712 t=3400 rpe=7 day=legs_a m=true",
@@ -10253,7 +10253,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=12712 t=3400 rpe=7 day=cb_a m=false",
@@ -10286,7 +10286,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=12712 t=3400 rpe=7 day=arms m=true",
@@ -10297,7 +10297,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=12712 t=3400 rpe=9 day=null m=false",
@@ -10330,7 +10330,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 27
+      "expected": 28.8
     },
     {
       "name": "v=12712 t=3400 rpe=9 day=legs_a m=true",
@@ -10341,7 +10341,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 20.25
+      "expected": 21.6
     },
     {
       "name": "v=12712 t=3400 rpe=9 day=cb_a m=false",
@@ -10374,7 +10374,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 16.2
+      "expected": 14.4
     },
     {
       "name": "v=12712 t=3400 rpe=9 day=arms m=true",
@@ -10385,7 +10385,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 12.149999999999999
+      "expected": 10.8
     },
     {
       "name": "v=12712 t=3400 rpe=10 day=null m=false",
@@ -10418,7 +10418,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30.000000000000004
+      "expected": 32
     },
     {
       "name": "v=12712 t=3400 rpe=10 day=legs_a m=true",
@@ -10429,7 +10429,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 23.999999999999996
     },
     {
       "name": "v=12712 t=3400 rpe=10 day=cb_a m=false",
@@ -10462,7 +10462,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "v=12712 t=3400 rpe=10 day=arms m=true",
@@ -10473,7 +10473,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=12712 rpe=null day=null m=false",
@@ -10506,7 +10506,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=12712 rpe=null day=legs_a m=true",
@@ -10517,7 +10517,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=12712 rpe=null day=cb_a m=false",
@@ -10550,7 +10550,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=12712 rpe=null day=arms m=true",
@@ -10561,7 +10561,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=12712 rpe=0 day=null m=false",
@@ -10594,7 +10594,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=12712 rpe=0 day=legs_a m=true",
@@ -10605,7 +10605,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=12712 rpe=0 day=cb_a m=false",
@@ -10638,7 +10638,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=12712 rpe=0 day=arms m=true",
@@ -10649,7 +10649,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=12712 rpe=3 day=null m=false",
@@ -10682,7 +10682,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=12712 t=12712 rpe=3 day=legs_a m=true",
@@ -10693,7 +10693,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=12712 t=12712 rpe=3 day=cb_a m=false",
@@ -10726,7 +10726,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=12712 t=12712 rpe=3 day=arms m=true",
@@ -10737,7 +10737,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=12712 t=12712 rpe=6 day=null m=false",
@@ -10770,7 +10770,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=12712 t=12712 rpe=6 day=legs_a m=true",
@@ -10781,7 +10781,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=12712 t=12712 rpe=6 day=cb_a m=false",
@@ -10814,7 +10814,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=12712 t=12712 rpe=6 day=arms m=true",
@@ -10825,7 +10825,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=12712 t=12712 rpe=7 day=null m=false",
@@ -10858,7 +10858,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=12712 t=12712 rpe=7 day=legs_a m=true",
@@ -10869,7 +10869,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=12712 t=12712 rpe=7 day=cb_a m=false",
@@ -10902,7 +10902,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=12712 t=12712 rpe=7 day=arms m=true",
@@ -10913,7 +10913,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=12712 t=12712 rpe=9 day=null m=false",
@@ -10946,7 +10946,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=12712 t=12712 rpe=9 day=legs_a m=true",
@@ -10957,7 +10957,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=12712 t=12712 rpe=9 day=cb_a m=false",
@@ -10990,7 +10990,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=12712 t=12712 rpe=9 day=arms m=true",
@@ -11001,7 +11001,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=12712 t=12712 rpe=10 day=null m=false",
@@ -11034,7 +11034,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=12712 t=12712 rpe=10 day=legs_a m=true",
@@ -11045,7 +11045,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=12712 t=12712 rpe=10 day=cb_a m=false",
@@ -11078,7 +11078,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=12712 t=12712 rpe=10 day=arms m=true",
@@ -11089,7 +11089,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=13072.5 t=0 rpe=null day=null m=false",
@@ -11122,7 +11122,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=13072.5 t=0 rpe=null day=legs_a m=true",
@@ -11133,7 +11133,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=13072.5 t=0 rpe=null day=cb_a m=false",
@@ -11166,7 +11166,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=13072.5 t=0 rpe=null day=arms m=true",
@@ -11177,7 +11177,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=13072.5 t=0 rpe=0 day=null m=false",
@@ -11210,7 +11210,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=13072.5 t=0 rpe=0 day=legs_a m=true",
@@ -11221,7 +11221,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=13072.5 t=0 rpe=0 day=cb_a m=false",
@@ -11254,7 +11254,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=13072.5 t=0 rpe=0 day=arms m=true",
@@ -11265,7 +11265,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=13072.5 t=0 rpe=3 day=null m=false",
@@ -11298,7 +11298,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=13072.5 t=0 rpe=3 day=legs_a m=true",
@@ -11309,7 +11309,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=13072.5 t=0 rpe=3 day=cb_a m=false",
@@ -11342,7 +11342,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=13072.5 t=0 rpe=3 day=arms m=true",
@@ -11353,7 +11353,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=13072.5 t=0 rpe=6 day=null m=false",
@@ -11386,7 +11386,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=13072.5 t=0 rpe=6 day=legs_a m=true",
@@ -11397,7 +11397,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=13072.5 t=0 rpe=6 day=cb_a m=false",
@@ -11430,7 +11430,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=13072.5 t=0 rpe=6 day=arms m=true",
@@ -11441,7 +11441,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=13072.5 t=0 rpe=7 day=null m=false",
@@ -11474,7 +11474,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=13072.5 t=0 rpe=7 day=legs_a m=true",
@@ -11485,7 +11485,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=13072.5 t=0 rpe=7 day=cb_a m=false",
@@ -11518,7 +11518,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=13072.5 t=0 rpe=7 day=arms m=true",
@@ -11529,7 +11529,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=13072.5 t=0 rpe=9 day=null m=false",
@@ -11562,7 +11562,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=13072.5 t=0 rpe=9 day=legs_a m=true",
@@ -11573,7 +11573,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=13072.5 t=0 rpe=9 day=cb_a m=false",
@@ -11606,7 +11606,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=13072.5 t=0 rpe=9 day=arms m=true",
@@ -11617,7 +11617,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=13072.5 t=0 rpe=10 day=null m=false",
@@ -11650,7 +11650,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=13072.5 t=0 rpe=10 day=legs_a m=true",
@@ -11661,7 +11661,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=13072.5 t=0 rpe=10 day=cb_a m=false",
@@ -11694,7 +11694,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=13072.5 t=0 rpe=10 day=arms m=true",
@@ -11705,7 +11705,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=13072.5 t=3400 rpe=null day=null m=false",
@@ -11738,7 +11738,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=13072.5 t=3400 rpe=null day=legs_a m=true",
@@ -11749,7 +11749,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=13072.5 t=3400 rpe=null day=cb_a m=false",
@@ -11782,7 +11782,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=13072.5 t=3400 rpe=null day=arms m=true",
@@ -11793,7 +11793,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=0 day=null m=false",
@@ -11826,7 +11826,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=13072.5 t=3400 rpe=0 day=legs_a m=true",
@@ -11837,7 +11837,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=13072.5 t=3400 rpe=0 day=cb_a m=false",
@@ -11870,7 +11870,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=13072.5 t=3400 rpe=0 day=arms m=true",
@@ -11881,7 +11881,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=3 day=null m=false",
@@ -11914,7 +11914,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=13072.5 t=3400 rpe=3 day=legs_a m=true",
@@ -11925,7 +11925,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 7.199999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=3 day=cb_a m=false",
@@ -11958,7 +11958,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.3999999999999995
+      "expected": 4.8
     },
     {
       "name": "v=13072.5 t=3400 rpe=3 day=arms m=true",
@@ -11969,7 +11969,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.05
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=13072.5 t=3400 rpe=6 day=null m=false",
@@ -12002,7 +12002,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 19.2
     },
     {
       "name": "v=13072.5 t=3400 rpe=6 day=legs_a m=true",
@@ -12013,7 +12013,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 14.399999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=6 day=cb_a m=false",
@@ -12046,7 +12046,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 10.799999999999999
+      "expected": 9.6
     },
     {
       "name": "v=13072.5 t=3400 rpe=6 day=arms m=true",
@@ -12057,7 +12057,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.1
+      "expected": 7.199999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=7 day=null m=false",
@@ -12090,7 +12090,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=13072.5 t=3400 rpe=7 day=legs_a m=true",
@@ -12101,7 +12101,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=13072.5 t=3400 rpe=7 day=cb_a m=false",
@@ -12134,7 +12134,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=13072.5 t=3400 rpe=7 day=arms m=true",
@@ -12145,7 +12145,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=13072.5 t=3400 rpe=9 day=null m=false",
@@ -12178,7 +12178,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 27
+      "expected": 28.8
     },
     {
       "name": "v=13072.5 t=3400 rpe=9 day=legs_a m=true",
@@ -12189,7 +12189,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 20.25
+      "expected": 21.6
     },
     {
       "name": "v=13072.5 t=3400 rpe=9 day=cb_a m=false",
@@ -12222,7 +12222,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 16.2
+      "expected": 14.4
     },
     {
       "name": "v=13072.5 t=3400 rpe=9 day=arms m=true",
@@ -12233,7 +12233,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 12.149999999999999
+      "expected": 10.8
     },
     {
       "name": "v=13072.5 t=3400 rpe=10 day=null m=false",
@@ -12266,7 +12266,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30.000000000000004
+      "expected": 32
     },
     {
       "name": "v=13072.5 t=3400 rpe=10 day=legs_a m=true",
@@ -12277,7 +12277,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 23.999999999999996
     },
     {
       "name": "v=13072.5 t=3400 rpe=10 day=cb_a m=false",
@@ -12310,7 +12310,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "v=13072.5 t=3400 rpe=10 day=arms m=true",
@@ -12321,7 +12321,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 11.999999999999998
     },
     {
       "name": "v=13072.5 t=12712 rpe=null day=null m=false",
@@ -12354,7 +12354,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.425385462555067
+      "expected": 16.45374449339207
     },
     {
       "name": "v=13072.5 t=12712 rpe=null day=legs_a m=true",
@@ -12365,7 +12365,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.569039096916299
+      "expected": 12.34030837004405
     },
     {
       "name": "v=13072.5 t=12712 rpe=null day=cb_a m=false",
@@ -12398,7 +12398,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9.25523127753304
+      "expected": 8.226872246696034
     },
     {
       "name": "v=13072.5 t=12712 rpe=null day=arms m=true",
@@ -12409,7 +12409,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.941423458149778
+      "expected": 6.170154185022025
     },
     {
       "name": "v=13072.5 t=12712 rpe=0 day=null m=false",
@@ -12442,7 +12442,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.425385462555067
+      "expected": 16.45374449339207
     },
     {
       "name": "v=13072.5 t=12712 rpe=0 day=legs_a m=true",
@@ -12453,7 +12453,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.569039096916299
+      "expected": 12.34030837004405
     },
     {
       "name": "v=13072.5 t=12712 rpe=0 day=cb_a m=false",
@@ -12486,7 +12486,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9.25523127753304
+      "expected": 8.226872246696034
     },
     {
       "name": "v=13072.5 t=12712 rpe=0 day=arms m=true",
@@ -12497,7 +12497,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.941423458149778
+      "expected": 6.170154185022025
     },
     {
       "name": "v=13072.5 t=12712 rpe=3 day=null m=false",
@@ -12530,7 +12530,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.6108794839521705
+      "expected": 7.051604782882316
     },
     {
       "name": "v=13072.5 t=12712 rpe=3 day=legs_a m=true",
@@ -12541,7 +12541,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.958159612964128
+      "expected": 5.288703587161736
     },
     {
       "name": "v=13072.5 t=12712 rpe=3 day=cb_a m=false",
@@ -12574,7 +12574,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.966527690371302
+      "expected": 3.525802391441158
     },
     {
       "name": "v=13072.5 t=12712 rpe=3 day=arms m=true",
@@ -12585,7 +12585,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.9748957677784773
+      "expected": 2.644351793580868
     },
     {
       "name": "v=13072.5 t=12712 rpe=6 day=null m=false",
@@ -12618,7 +12618,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 13.221758967904341
+      "expected": 14.103209565764631
     },
     {
       "name": "v=13072.5 t=12712 rpe=6 day=legs_a m=true",
@@ -12629,7 +12629,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.916319225928255
+      "expected": 10.577407174323472
     },
     {
       "name": "v=13072.5 t=12712 rpe=6 day=cb_a m=false",
@@ -12662,7 +12662,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.933055380742604
+      "expected": 7.051604782882316
     },
     {
       "name": "v=13072.5 t=12712 rpe=6 day=arms m=true",
@@ -12673,7 +12673,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.949791535556955
+      "expected": 5.288703587161736
     },
     {
       "name": "v=13072.5 t=12712 rpe=7 day=null m=false",
@@ -12706,7 +12706,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.425385462555067
+      "expected": 16.45374449339207
     },
     {
       "name": "v=13072.5 t=12712 rpe=7 day=legs_a m=true",
@@ -12717,7 +12717,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.569039096916299
+      "expected": 12.34030837004405
     },
     {
       "name": "v=13072.5 t=12712 rpe=7 day=cb_a m=false",
@@ -12750,7 +12750,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9.25523127753304
+      "expected": 8.226872246696034
     },
     {
       "name": "v=13072.5 t=12712 rpe=7 day=arms m=true",
@@ -12761,7 +12761,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.941423458149778
+      "expected": 6.170154185022025
     },
     {
       "name": "v=13072.5 t=12712 rpe=9 day=null m=false",
@@ -12794,7 +12794,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.83263845185651
+      "expected": 21.154814348646948
     },
     {
       "name": "v=13072.5 t=12712 rpe=9 day=legs_a m=true",
@@ -12805,7 +12805,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.874478838892385
+      "expected": 15.86611076148521
     },
     {
       "name": "v=13072.5 t=12712 rpe=9 day=cb_a m=false",
@@ -12838,7 +12838,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.89958307111391
+      "expected": 10.577407174323474
     },
     {
       "name": "v=13072.5 t=12712 rpe=9 day=arms m=true",
@@ -12849,7 +12849,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.92468730333543
+      "expected": 7.933055380742605
     },
     {
       "name": "v=13072.5 t=12712 rpe=10 day=null m=false",
@@ -12882,7 +12882,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 22.036264946507238
+      "expected": 23.505349276274387
     },
     {
       "name": "v=13072.5 t=12712 rpe=10 day=legs_a m=true",
@@ -12893,7 +12893,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.527198709880427
+      "expected": 17.62901195720579
     },
     {
       "name": "v=13072.5 t=12712 rpe=10 day=cb_a m=false",
@@ -12926,7 +12926,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 13.221758967904341
+      "expected": 11.752674638137194
     },
     {
       "name": "v=13072.5 t=12712 rpe=10 day=arms m=true",
@@ -12937,7 +12937,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.916319225928255
+      "expected": 8.814505978602895
     },
     {
       "name": "v=25000 t=0 rpe=null day=null m=false",
@@ -12970,7 +12970,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=25000 t=0 rpe=null day=legs_a m=true",
@@ -12981,7 +12981,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=25000 t=0 rpe=null day=cb_a m=false",
@@ -13014,7 +13014,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=25000 t=0 rpe=null day=arms m=true",
@@ -13025,7 +13025,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=25000 t=0 rpe=0 day=null m=false",
@@ -13058,7 +13058,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=25000 t=0 rpe=0 day=legs_a m=true",
@@ -13069,7 +13069,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=25000 t=0 rpe=0 day=cb_a m=false",
@@ -13102,7 +13102,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=25000 t=0 rpe=0 day=arms m=true",
@@ -13113,7 +13113,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=25000 t=0 rpe=3 day=null m=false",
@@ -13146,7 +13146,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 6.428571428571429
+      "expected": 6.857142857142858
     },
     {
       "name": "v=25000 t=0 rpe=3 day=legs_a m=true",
@@ -13157,7 +13157,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.821428571428572
+      "expected": 5.142857142857142
     },
     {
       "name": "v=25000 t=0 rpe=3 day=cb_a m=false",
@@ -13190,7 +13190,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 3.857142857142857
+      "expected": 3.428571428571429
     },
     {
       "name": "v=25000 t=0 rpe=3 day=arms m=true",
@@ -13201,7 +13201,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 2.892857142857143
+      "expected": 2.571428571428571
     },
     {
       "name": "v=25000 t=0 rpe=6 day=null m=false",
@@ -13234,7 +13234,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 13.714285714285715
     },
     {
       "name": "v=25000 t=0 rpe=6 day=legs_a m=true",
@@ -13245,7 +13245,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 10.285714285714285
     },
     {
       "name": "v=25000 t=0 rpe=6 day=cb_a m=false",
@@ -13278,7 +13278,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 7.714285714285714
+      "expected": 6.857142857142858
     },
     {
       "name": "v=25000 t=0 rpe=6 day=arms m=true",
@@ -13289,7 +13289,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 5.785714285714286
+      "expected": 5.142857142857142
     },
     {
       "name": "v=25000 t=0 rpe=7 day=null m=false",
@@ -13322,7 +13322,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.000000000000002
+      "expected": 16
     },
     {
       "name": "v=25000 t=0 rpe=7 day=legs_a m=true",
@@ -13333,7 +13333,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 11.25
+      "expected": 11.999999999999998
     },
     {
       "name": "v=25000 t=0 rpe=7 day=cb_a m=false",
@@ -13366,7 +13366,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 8
     },
     {
       "name": "v=25000 t=0 rpe=7 day=arms m=true",
@@ -13377,7 +13377,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 5.999999999999999
     },
     {
       "name": "v=25000 t=0 rpe=9 day=null m=false",
@@ -13410,7 +13410,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 19.28571428571429
+      "expected": 20.571428571428573
     },
     {
       "name": "v=25000 t=0 rpe=9 day=legs_a m=true",
@@ -13421,7 +13421,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 14.464285714285715
+      "expected": 15.42857142857143
     },
     {
       "name": "v=25000 t=0 rpe=9 day=cb_a m=false",
@@ -13454,7 +13454,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 11.571428571428571
+      "expected": 10.285714285714286
     },
     {
       "name": "v=25000 t=0 rpe=9 day=arms m=true",
@@ -13465,7 +13465,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.678571428571429
+      "expected": 7.714285714285715
     },
     {
       "name": "v=25000 t=0 rpe=10 day=null m=false",
@@ -13498,7 +13498,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21.42857142857143
+      "expected": 22.857142857142858
     },
     {
       "name": "v=25000 t=0 rpe=10 day=legs_a m=true",
@@ -13509,7 +13509,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 16.071428571428573
+      "expected": 17.142857142857142
     },
     {
       "name": "v=25000 t=0 rpe=10 day=cb_a m=false",
@@ -13542,7 +13542,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.857142857142858
+      "expected": 11.428571428571429
     },
     {
       "name": "v=25000 t=0 rpe=10 day=arms m=true",
@@ -13553,7 +13553,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.642857142857144
+      "expected": 8.571428571428571
     },
     {
       "name": "v=25000 t=3400 rpe=null day=null m=false",
@@ -13586,7 +13586,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=3400 rpe=null day=legs_a m=true",
@@ -13597,7 +13597,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=3400 rpe=null day=cb_a m=false",
@@ -13630,7 +13630,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=3400 rpe=null day=arms m=true",
@@ -13641,7 +13641,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=0 day=null m=false",
@@ -13674,7 +13674,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=3400 rpe=0 day=legs_a m=true",
@@ -13685,7 +13685,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=3400 rpe=0 day=cb_a m=false",
@@ -13718,7 +13718,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=3400 rpe=0 day=arms m=true",
@@ -13729,7 +13729,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=3 day=null m=false",
@@ -13762,7 +13762,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=25000 t=3400 rpe=3 day=legs_a m=true",
@@ -13773,7 +13773,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 7.199999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=3 day=cb_a m=false",
@@ -13806,7 +13806,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.3999999999999995
+      "expected": 4.8
     },
     {
       "name": "v=25000 t=3400 rpe=3 day=arms m=true",
@@ -13817,7 +13817,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.05
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=25000 t=3400 rpe=6 day=null m=false",
@@ -13850,7 +13850,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 19.2
     },
     {
       "name": "v=25000 t=3400 rpe=6 day=legs_a m=true",
@@ -13861,7 +13861,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 14.399999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=6 day=cb_a m=false",
@@ -13894,7 +13894,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 10.799999999999999
+      "expected": 9.6
     },
     {
       "name": "v=25000 t=3400 rpe=6 day=arms m=true",
@@ -13905,7 +13905,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.1
+      "expected": 7.199999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=7 day=null m=false",
@@ -13938,7 +13938,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=3400 rpe=7 day=legs_a m=true",
@@ -13949,7 +13949,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=3400 rpe=7 day=cb_a m=false",
@@ -13982,7 +13982,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=3400 rpe=7 day=arms m=true",
@@ -13993,7 +13993,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=3400 rpe=9 day=null m=false",
@@ -14026,7 +14026,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 27
+      "expected": 28.8
     },
     {
       "name": "v=25000 t=3400 rpe=9 day=legs_a m=true",
@@ -14037,7 +14037,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 20.25
+      "expected": 21.6
     },
     {
       "name": "v=25000 t=3400 rpe=9 day=cb_a m=false",
@@ -14070,7 +14070,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 16.2
+      "expected": 14.4
     },
     {
       "name": "v=25000 t=3400 rpe=9 day=arms m=true",
@@ -14081,7 +14081,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 12.149999999999999
+      "expected": 10.8
     },
     {
       "name": "v=25000 t=3400 rpe=10 day=null m=false",
@@ -14114,7 +14114,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30.000000000000004
+      "expected": 32
     },
     {
       "name": "v=25000 t=3400 rpe=10 day=legs_a m=true",
@@ -14125,7 +14125,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 23.999999999999996
     },
     {
       "name": "v=25000 t=3400 rpe=10 day=cb_a m=false",
@@ -14158,7 +14158,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "v=25000 t=3400 rpe=10 day=arms m=true",
@@ -14169,7 +14169,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 11.999999999999998
     },
     {
       "name": "v=25000 t=12712 rpe=null day=null m=false",
@@ -14202,7 +14202,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=12712 rpe=null day=legs_a m=true",
@@ -14213,7 +14213,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=12712 rpe=null day=cb_a m=false",
@@ -14246,7 +14246,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=12712 rpe=null day=arms m=true",
@@ -14257,7 +14257,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=0 day=null m=false",
@@ -14290,7 +14290,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=12712 rpe=0 day=legs_a m=true",
@@ -14301,7 +14301,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=12712 rpe=0 day=cb_a m=false",
@@ -14334,7 +14334,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=12712 rpe=0 day=arms m=true",
@@ -14345,7 +14345,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=3 day=null m=false",
@@ -14378,7 +14378,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 9
+      "expected": 9.6
     },
     {
       "name": "v=25000 t=12712 rpe=3 day=legs_a m=true",
@@ -14389,7 +14389,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 6.75
+      "expected": 7.199999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=3 day=cb_a m=false",
@@ -14422,7 +14422,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 5.3999999999999995
+      "expected": 4.8
     },
     {
       "name": "v=25000 t=12712 rpe=3 day=arms m=true",
@@ -14433,7 +14433,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 4.05
+      "expected": 3.5999999999999996
     },
     {
       "name": "v=25000 t=12712 rpe=6 day=null m=false",
@@ -14466,7 +14466,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 19.2
     },
     {
       "name": "v=25000 t=12712 rpe=6 day=legs_a m=true",
@@ -14477,7 +14477,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 14.399999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=6 day=cb_a m=false",
@@ -14510,7 +14510,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 10.799999999999999
+      "expected": 9.6
     },
     {
       "name": "v=25000 t=12712 rpe=6 day=arms m=true",
@@ -14521,7 +14521,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 8.1
+      "expected": 7.199999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=7 day=null m=false",
@@ -14554,7 +14554,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 21
+      "expected": 22.4
     },
     {
       "name": "v=25000 t=12712 rpe=7 day=legs_a m=true",
@@ -14565,7 +14565,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 15.749999999999998
+      "expected": 16.799999999999997
     },
     {
       "name": "v=25000 t=12712 rpe=7 day=cb_a m=false",
@@ -14598,7 +14598,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 12.599999999999998
+      "expected": 11.2
     },
     {
       "name": "v=25000 t=12712 rpe=7 day=arms m=true",
@@ -14609,7 +14609,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 9.45
+      "expected": 8.399999999999999
     },
     {
       "name": "v=25000 t=12712 rpe=9 day=null m=false",
@@ -14642,7 +14642,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 27
+      "expected": 28.8
     },
     {
       "name": "v=25000 t=12712 rpe=9 day=legs_a m=true",
@@ -14653,7 +14653,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 20.25
+      "expected": 21.6
     },
     {
       "name": "v=25000 t=12712 rpe=9 day=cb_a m=false",
@@ -14686,7 +14686,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 16.2
+      "expected": 14.4
     },
     {
       "name": "v=25000 t=12712 rpe=9 day=arms m=true",
@@ -14697,7 +14697,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 12.149999999999999
+      "expected": 10.8
     },
     {
       "name": "v=25000 t=12712 rpe=10 day=null m=false",
@@ -14730,7 +14730,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 30.000000000000004
+      "expected": 32
     },
     {
       "name": "v=25000 t=12712 rpe=10 day=legs_a m=true",
@@ -14741,7 +14741,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 22.5
+      "expected": 23.999999999999996
     },
     {
       "name": "v=25000 t=12712 rpe=10 day=cb_a m=false",
@@ -14774,7 +14774,7 @@
         "dayKey": "arms",
         "maintenance": false
       },
-      "expected": 18
+      "expected": 16
     },
     {
       "name": "v=25000 t=12712 rpe=10 day=arms m=true",
@@ -14785,7 +14785,7 @@
         "dayKey": "arms",
         "maintenance": true
       },
-      "expected": 13.5
+      "expected": 11.999999999999998
     },
     {
       "name": "regression: 2026-08-10 legs_a is a 1.03x TYPICAL leg day, not a maximal one",
@@ -14796,7 +14796,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 15.425385462555067
+      "expected": 16.45374449339207
     },
     {
       "name": "regression: maintenance legs day at 45% of normal, RPE 6",
@@ -14807,7 +14807,7 @@
         "dayKey": "legs_a",
         "maintenance": true
       },
-      "expected": 4.339285714285715
+      "expected": 4.628571428571429
     },
     {
       "name": "regression: absent RPE falls back to defaultRpe, not to zero",
@@ -14829,7 +14829,7 @@
         "dayKey": "legs_a",
         "maintenance": false
       },
-      "expected": 17.142857142857142
+      "expected": 18.28571428571429
     }
   ]
 }

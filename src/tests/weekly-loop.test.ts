@@ -325,15 +325,24 @@ describe('buildWeeklyExport', () => {
 
   // Active Energy is HealthKit-inflated, Score/Battery are HELIX's own derived
   // opinions — none of the three belongs in a raw-data export.
+  // Battery v8 (2026-09-05) put the battery's INPUTS under the Derived fence,
+  // where the arithmetic is declared as HELIX's own. The raw body above the
+  // fence is still measurement only — which is what these two tests guard.
+  const rawBody = (out: string) => out.slice(0, out.indexOf('## Derived'))
+
   it('never emits Active Energy, Day Score or Battery', () => {
     const out = buildWeeklyExport(input)
+    const raw = rawBody(out)
     // The banned metric is Apple's ACTIVE ENERGY, not the word "active": the
     // cardio ledger's own active kcal is a measured figure and has always been
     // printed on every walk line. A bare /active/i only passed because this
     // fixture logs no cardio, and would have failed the moment one did.
-    expect(out).not.toMatch(/active energy/i)
-    expect(out).not.toMatch(/battery/i)
-    expect(out).not.toMatch(/\bscore\b/i)
+    expect(raw).not.toMatch(/active energy/i)
+    expect(raw).not.toMatch(/battery/i)
+    expect(raw).not.toMatch(/\bscore\b/i)
+    // Below the fence, and only there, the battery's inputs are stated.
+    expect(out).toMatch(/### Battery \(v8/)
+    expect(out.indexOf('### Battery')).toBeGreaterThan(out.indexOf('## Derived'))
   })
 
   it('renders line-by-line TEXT with NO markdown tables', () => {
@@ -344,7 +353,7 @@ describe('buildWeeklyExport', () => {
     // fixture logs no cardio — every walk line has always printed a distance.
     // Daily distance now prints too, on the Activity line, and it is measured
     // data like any other. What is actually banned is HELIX's own opinions.
-    expect(out).not.toMatch(/Battery|Supps/)
+    expect(rawBody(out)).not.toMatch(/Battery|Supps/)
   })
 
   /**

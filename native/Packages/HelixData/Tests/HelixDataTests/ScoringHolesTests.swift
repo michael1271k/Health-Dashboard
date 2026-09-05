@@ -111,6 +111,31 @@ struct ScoringHolesTests {
         #expect(got.nutritionException == true)
     }
 
+    @Test("v8: the night's onset flag and the LATEST fatigue slot reach the battery")
+    func onsetAndFatigue() throws {
+        let db = try store()
+        try db.writer.write { conn in
+            try DailyLogRow(id: "d1", userId: user, date: day, createdAt: Date(), updatedAt: Date(), nutritionEstimated: false, sleepOnsetTrouble: true).insert(conn)
+            // Waking Fresh, ended Heavy: the day's figure is Heavy. A legacy
+            // `evening` row files as `post` on a training day and still wins.
+            try FatigueLogRow(id: "f1", userId: user, date: day, slot: "waking", level: 1).insert(conn)
+            try FatigueLogRow(id: "f2", userId: user, date: day, slot: "evening", level: 4).insert(conn)
+        }
+        let got = try #require(try inputs(db))
+        #expect(got.sleepOnsetTrouble == true)
+        #expect(got.fatigueLevel == 4)
+        #expect(Battery.stressParts(got).fatigueTerm == 3)
+
+        // Nothing logged, nothing flagged: neutral, not a penalty.
+        let quiet = try store()
+        try quiet.writer.write { conn in
+            try DailyLogRow(id: "d1", userId: user, date: day, createdAt: Date(), updatedAt: Date(), nutritionEstimated: false, sleepOnsetTrouble: false).insert(conn)
+        }
+        let none = try #require(try inputs(quiet))
+        #expect(none.sleepOnsetTrouble == false)
+        #expect(none.fatigueLevel == nil)
+    }
+
     // MARK: The writer
 
     @Test("refreshDailyScore scores a day from the store and queues the row")

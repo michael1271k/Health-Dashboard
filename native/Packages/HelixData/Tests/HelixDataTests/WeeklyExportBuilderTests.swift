@@ -129,6 +129,10 @@ struct WeeklyExportBuilderTests {
                                 durationMin: 405, deepMin: 40, remMin: 90, coreMin: 280, awakeMin: 10, createdAt: t).insert(conn)
             try DailyTargetRow(userId: user, date: "2026-08-27", kcal: 2400, updatedAt: t, profileKey: "restaurant",
                                trackCarbs: false, trackFat: false).insert(conn)
+            // The battery the app showed on the Monday — v8's Derived block reads it.
+            var score = DailyScoreRow(id: "sc1", userId: user, date: "2026-08-24", score: 70, computedAt: t, finalized: true)
+            score.batteryPct = 41
+            try score.insert(conn)
         }
         return db
     }
@@ -188,32 +192,32 @@ struct WeeklyExportBuilderTests {
          "activeKcal": 400, "bmrKcal": 1500, "nutritionEstimated": false, "trackCarbs": true, "trackFat": true},
         {"date": "2026-08-24", "weekdayLabel": "Mon", "isTrainingDay": true,
          "calories": 1800, "proteinG": 150, "carbsG": 200, "fatG": 45, "steps": 11000, "sleepMin": 470, "deepMin": 40, "remMin": 90,
-         "coreMin": 280, "awakeMin": 10, "bedTime": "2026-08-24T00:15:00Z", "wakeTime": "2026-08-24T07:00:00Z", "sleepOnsetTrouble": true,
+         "coreMin": 280, "awakeMin": 10, "bedTime": "2026-08-24T00:15:00Z", "wakeTime": "2026-08-24T07:00:00Z", "sleepOnsetTrouble": true, "restingHrBaseline": 52, "hrvBaseline": 60, "batteryPct": 41,
          "waterMl": 1000, "supplementsTaken": 2, "supplementsPlanned": 3,
          "supplementsLog": [{"key": "creatine", "time": "15:00"}, {"key": "omega3", "time": "15:00"}],
          "supplementsSkipped": ["Caffeine"],
          "nutrientsFood": {"protein": 150}, "nutrientsStack": {"creatine": 5000, "epa": 1000, "dha": 500},
          "weighInSkipReason": "Sick", "nutritionException": "Illness", "nutritionEstimated": false, "trackCarbs": true, "trackFat": true},
         {"date": "2026-08-25", "weekdayLabel": "Tue", "isTrainingDay": true,
-         "weightKg": 64, "steps": 8000, "sleepOnsetTrouble": false, "waterMl": 2400, "supplementsTaken": 2, "supplementsPlanned": 2,
+         "weightKg": 64, "steps": 8000, "sleepOnsetTrouble": false, "restingHrBaseline": 52, "hrvBaseline": 60, "waterMl": 2400, "supplementsTaken": 2, "supplementsPlanned": 2,
          "supplementsLog": [{"key": "caffeine", "time": "11:45"}, {"key": "creatine", "time": "15:00"}], "supplementsSkipped": [],
          "nutrientsFood": {}, "nutrientsStack": {"caffeine": 200, "creatine": 5000},
          "nutritionEstimated": true, "trackCarbs": true, "trackFat": true},
         {"date": "2026-08-26", "weekdayLabel": "Wed", "isTrainingDay": false,
-         "sleepOnsetTrouble": false, "supplementsTaken": 1, "supplementsPlanned": 1,
+         "sleepOnsetTrouble": false, "restingHrBaseline": 52, "hrvBaseline": 60, "supplementsTaken": 1, "supplementsPlanned": 1,
          "supplementsLog": [{"key": "creatine", "time": "15:00"}], "supplementsSkipped": [],
          "nutrientsFood": {}, "nutrientsStack": {"creatine": 5000}, "nutritionEstimated": false, "trackCarbs": true, "trackFat": true},
         {"date": "2026-08-27", "weekdayLabel": "Thu", "isTrainingDay": false,
-         "sleepOnsetTrouble": false, "supplementsTaken": 1, "supplementsPlanned": 1,
+         "sleepOnsetTrouble": false, "restingHrBaseline": 52, "hrvBaseline": 60, "supplementsTaken": 1, "supplementsPlanned": 1,
          "supplementsLog": [{"key": "creatine", "time": "15:00"}], "supplementsSkipped": [],
          "nutrientsFood": {}, "nutrientsStack": {"creatine": 5000}, "nutritionEstimated": false,
          "targetProfile": "Restaurant", "trackCarbs": false, "trackFat": false},
         {"date": "2026-08-28", "weekdayLabel": "Fri", "isTrainingDay": true,
-         "sleepOnsetTrouble": false, "supplementsTaken": 2, "supplementsPlanned": 2,
+         "sleepOnsetTrouble": false, "restingHrBaseline": 52, "hrvBaseline": 60, "supplementsTaken": 2, "supplementsPlanned": 2,
          "supplementsLog": [{"key": "caffeine", "time": "11:45"}, {"key": "creatine", "time": "15:00"}], "supplementsSkipped": [],
          "nutrientsFood": {}, "nutrientsStack": {"caffeine": 200, "creatine": 5000}, "nutritionEstimated": false, "trackCarbs": true, "trackFat": true},
         {"date": "2026-08-29", "weekdayLabel": "Sat", "isTrainingDay": false,
-         "sleepOnsetTrouble": false, "supplementsTaken": 1, "supplementsPlanned": 1,
+         "sleepOnsetTrouble": false, "restingHrBaseline": 52, "hrvBaseline": 60, "supplementsTaken": 1, "supplementsPlanned": 1,
          "supplementsLog": [{"key": "creatine", "time": "15:00"}], "supplementsSkipped": [],
          "nutrientsFood": {}, "nutrientsStack": {"creatine": 5000}, "nutritionEstimated": false, "trackCarbs": true, "trackFat": true}
       ],

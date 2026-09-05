@@ -160,6 +160,10 @@ public struct WeeklyExportBuilder: Sendable {
         var priorSessions: Int
         var sleep: [SleepSessionRow]
         var dailyTargets: [DailyTargetRow]
+        /// Battery v8's Derived block: the stored figure and the eight days of
+        /// logs before the week for the scorer's trailing baselines.
+        var scores: [DailyScoreRow]
+        var baselineLogs: [DailyLogRow]
         var customs: [CustomSupplement]
         var volumeOverrides: [LandmarkMuscle: Double]
         /// Week 0 → the exported week, for the trend ledger.
@@ -237,6 +241,10 @@ public struct WeeklyExportBuilder: Sendable {
                     .filter(user && Column("start_time") >= sleepFrom! && Column("start_time") < sleepTo!)
                     .order(Column("start_time")).fetchAll(db),
                 dailyTargets: try DailyTargetRow.filter(inWeek).order(Column("date")).fetchAll(db),
+                scores: try DailyScoreRow.filter(inWeek).fetchAll(db),
+                baselineLogs: try DailyLogRow
+                    .filter(user && Column("date") >= (ISODate.addDays(weekStart, -8) ?? weekStart) && Column("date") <= weekEnd)
+                    .order(Column("date")).fetchAll(db),
                 customs: try CustomSupplementRow.filter(user).order(Column("created_at"), Column("id")).fetchAll(db).map(Self.custom),
                 volumeOverrides: volumeOverrides,
                 ledgerLogs: ledgerLogs, ledgerNutrition: ledgerNutrition, ledgerSessions: ledgerSessions,
@@ -268,6 +276,21 @@ public struct WeeklyExportBuilder: Sendable {
             shapeByDate[r.date] = (label, r.trackCarbs, r.trackFat)
         }
 
+        // The scorer's baselines, reproduced: the eight most recent logged days
+        // up to and including the date, minus the date, averaged over the
+        // readings that exist — `ScoringInputsBuilder`'s own window.
+        var scoreByDate: [String: DailyScoreRow] = [:]
+        for r in d.scores { scoreByDate[r.date] = r }
+        func baselineOf(_ date: String, _ pick: (DailyLogRow) -> Double?) -> Double? {
+            let trail = d.baselineLogs
+                .filter { $0.date <= date }
+                .sorted { $0.date > $1.date }
+                .prefix(8)
+                .filter { $0.date != date }
+                .compactMap(pick)
+            return trail.isEmpty ? nil : trail.reduce(0, +) / Double(trail.count)
+        }
+
         return try (0..<7).map { i in
             let date = ISODate.addDays(weekStart, i) ?? weekStart
             let l = logs[date], nt = nutri[date], sl = sleepByDate[date], shape = shapeByDate[date]
@@ -288,6 +311,9 @@ public struct WeeklyExportBuilder: Sendable {
                 // A day with no row has never been reported on: `false`, as the
                 // column's NOT NULL DEFAULT false says.
                 "sleepOnsetTrouble": l?.sleepOnsetTrouble ?? false,
+                "restingHrBaseline": j(baselineOf(date) { $0.avgRestHeartRate.map(Double.init) }),
+                "hrvBaseline": j(baselineOf(date) { $0.hrvMs }),
+                "batteryPct": j(scoreByDate[date]?.batteryPct.map(Double.init)),
                 "waterMl": j(waterByDate[date] ?? l?.waterMl),
                 "supplementsTaken": NSNull(), "supplementsLog": [] as [Any],
                 "activeKcal": j(l?.activeEnergy), "bmrKcal": j(l?.bmr),

@@ -45,7 +45,10 @@ describe('battery wake charge — "woke up to 55%" regression', () => {
 
   it('55% only happens when there is genuinely NO sleep signal', () => {
     // This is what the broken scorer window produced for every single day.
-    expect(computeMorningCharge(computeSleepQuality(night(0, 0)))).toBeLessThanOrEqual(62)
+    // v8 reads a night with nothing at all as 0.225 (HRV and RHR at their
+    // NEUTRAL values, 0.5 and 1 — unmeasured is not bad) — a 65, and that is
+    // the ceiling for "no signal". Anything real climbs from there.
+    expect(computeMorningCharge(computeSleepQuality(night(0, 0)))).toBe(65)
   })
 })
 
