@@ -255,64 +255,31 @@ final class WorkoutWeek {
                 .fetchOne(db)
         }) ?? nil
 
-        let day = out.todayKey.flatMap { (Program.byId(programId) ?? .helix5).day(key: $0) }
-
-        // ── Ready to progress, and the day's state, off one history read ────
+        // ── Ready to progress ───────────────────────────────────────────────
         //
-        // Both questions are about the SAME lifts — the ones today asks for —
-        // so the ledger is fetched once. The verdict is `Ceilings` over the last
-        // two sessions of each lift, newest last, which is the program's own
-        // double-progression rule and not a second opinion on it.
-        var byName: [String: String] = [:]   // canonical name → exercise id
-        if let day {
-            let names = Set(day.exercises(for: phase).map { ExerciseAliases.canonicalName($0.name).lowercased() })
-            let catalogue = (try? database.read { db in try Exercise.fetchAll(db) }) ?? []
-            for row in catalogue {
-                let canonical = ExerciseAliases.canonicalName(row.name)
-                if names.contains(canonical.lowercased()), byName[canonical] == nil { byName[canonical] = row.id }
-            }
-        }
-        let ledger = (try? database.historySets(exerciseIds: Array(byName.values))) ?? []
-        let byExercise = Dictionary(grouping: ledger, by: \.exerciseId)
-
-        if let day {
-            for exercise in day.exercises(for: phase) {
-                let canonical = ExerciseAliases.canonicalName(exercise.name)
-                guard let id = byName[canonical], let rows = byExercise[id] else { continue }
-                // The last two sessions of THIS lift, oldest first, working
-                // sets only — a warm-up in the ladder makes every session look
-                // like it faded.
-                let sessionIds = rows.map(\.sessionId).reduce(into: [String]()) { out, id in
-                    if out.last != id { out.append(id) }
-                }
-                let recent = sessionIds.suffix(2)
-                let ladder = recent.map { sessionId in
-                    rows.filter { $0.sessionId == sessionId && SetTags.isWorkingSet($0.setType) }
-                        .map { WorkingSet(weightKg: $0.weightKg, reps: Double($0.reps)) }
-                }.filter { !$0.isEmpty }
-                guard !ladder.isEmpty else { continue }
-
-                let timed = TimedExercise.isTimed(canonical)
-                let verdict: ProgressionVerdict = timed
-                    ? Ceilings.timedProgressionVerdict(ladder, targetSec: Ceilings.holdTarget(for: canonical, dayKey: day.key, program: Program.byId(programId) ?? .helix5, phase: phase))
-                    : Ceilings.progressionVerdict(ladder, ceiling: Ceilings.repWindow(for: canonical, dayKey: day.key, program: Program.byId(programId) ?? .helix5, phase: phase)?.ceiling)
-
-                switch verdict.state {
+        // `AppDatabase.progressionQueue` (HelixData, §6.5): the lifts today
+        // asks for, graded by `Ceilings` over their last two sessions logged
+        // UNDER TODAY'S DAY KEY — not the lift's whole history, which graded
+        // Legs A's ceiling against Legs B's sets.
+        if let key = out.todayKey {
+            let program = Program.byId(programId) ?? .helix5
+            let alerts = (try? database.progressionQueue(dayKey: key, program: program, phase: phase, today: today)) ?? []
+            out.progression = alerts.compactMap { alert in
+                switch alert.state {
                 case .ready:
-                    let top = ladder.last?.filter { $0.weightKg > 0 }.map(\.weightKg).max()
                     let detail: String
-                    if timed || verdict.suggestKg == nil {
-                        detail = timed ? "extend hold" : "add a rep"
-                    } else if let top, let next = verdict.suggestKg {
+                    if alert.timed || alert.suggestKg == nil {
+                        detail = alert.timed ? "extend hold" : "add a rep"
+                    } else if let top = alert.currentKg, let next = alert.suggestKg {
                         detail = "\(HelixFormat.kg(top)) → \(HelixFormat.kg(next)) kg"
                     } else {
-                        detail = "\(HelixFormat.kg(verdict.suggestKg ?? 0)) kg"
+                        detail = "\(HelixFormat.kg(alert.suggestKg ?? 0)) kg"
                     }
-                    out.progression.append(ProgressionRow(name: canonical, detail: detail, ready: true))
+                    return ProgressionRow(name: alert.name, detail: detail, ready: true)
                 case .oneMore:
-                    out.progression.append(ProgressionRow(name: canonical, detail: "1 more session", ready: false))
+                    return ProgressionRow(name: alert.name, detail: "1 more session", ready: false)
                 case .no:
-                    continue
+                    return nil
                 }
             }
         }
@@ -334,7 +301,8 @@ final class WorkoutWeek {
                 // session, exactly as the save path asked on the day —
                 // `personal_records` is a current-best table and would answer
                 // "none" for any session whose records have since been beaten.
-                let prior = groups.flatMap { (byExercise[$0.exerciseId] ?? []).filter { $0.sessionId != closed.id } }
+                let prior = ((try? database.historySets(exerciseIds: groups.map(\.exerciseId))) ?? [])
+                    .filter { $0.sessionId != closed.id }
                 let pr = SessionAnalysis.detect(groups: groups, prior: prior, dayKey: closed.dayKey, date: closed.date)
                 out.state = .done(
                     id: closed.id,
@@ -348,7 +316,4 @@ final class WorkoutWeek {
 
         return out
     }
-
-    /// "S" — the weekday's initial in the user's own locale, so a German week
-    /// reads S M D M D F S rather than the English letters.
 }

@@ -1,0 +1,83 @@
+{
+  "module": "charts/series",
+  "fn": "setsAtCeilingOf",
+  "note": "Sets AT THE TOP LOAD (workLoads) with reps ≥ ceiling. 0 without a ceiling or sets.",
+  "cases": [
+    {
+      "name": "top load only",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12
+          },
+          {
+            "weightKg": 40,
+            "reps": 12
+          },
+          {
+            "weightKg": 35,
+            "reps": 12
+          }
+        ],
+        "ceiling": 12
+      },
+      "expected": 2
+    },
+    {
+      "name": "short at top",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 11
+          },
+          {
+            "weightKg": 40,
+            "reps": 12
+          }
+        ],
+        "ceiling": 12
+      },
+      "expected": 1
+    },
+    {
+      "name": "bodyweight",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 15
+          },
+          {
+            "weightKg": 0,
+            "reps": 14
+          }
+        ],
+        "ceiling": 15
+      },
+      "expected": 1
+    },
+    {
+      "name": "no ceiling",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 40,
+            "reps": 12
+          }
+        ],
+        "ceiling": null
+      },
+      "expected": 0
+    },
+    {
+      "name": "empty",
+      "input": {
+        "sets": [],
+        "ceiling": 12
+      },
+      "expected": 0
+    }
+  ]
+}

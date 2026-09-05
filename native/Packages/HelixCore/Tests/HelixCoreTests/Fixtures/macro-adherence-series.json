@@ -1,0 +1,818 @@
+{
+  "module": "charts/series",
+  "fn": "macroAdherenceSeries",
+  "note": "paddedWindow over the dates; verdict: untracked (no kcal) → exception (isExceptionDay) → ungraded (no kcal target) → hit when |kcal% − 100| ≤ 10 AND (no protein target OR protein% ≥ 90) else miss. Percentages one decimal, null without both figures.",
+  "cases": [
+    {
+      "name": "a full week",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-09-05",
+        "limit": 7
+      },
+      "expected": [
+        {
+          "date": "2026-08-30",
+          "kcalPct": 96.7,
+          "proteinPct": 98.8,
+          "carbsPct": 91.3,
+          "fatPct": 94.5,
+          "estimated": false,
+          "verdict": "hit"
+        },
+        {
+          "date": "2026-08-31",
+          "kcalPct": 118.2,
+          "proteinPct": 89.4,
+          "carbsPct": 123.1,
+          "fatPct": 123.6,
+          "estimated": false,
+          "verdict": "exception"
+        },
+        {
+          "date": "2026-09-01",
+          "kcalPct": 99.2,
+          "proteinPct": 102.4,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "hit"
+        },
+        {
+          "date": "2026-09-02",
+          "kcalPct": 93.1,
+          "proteinPct": 82.4,
+          "carbsPct": 84.6,
+          "fatPct": 85.5,
+          "estimated": true,
+          "verdict": "miss"
+        },
+        {
+          "date": "2026-09-03",
+          "kcalPct": 106.3,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "hit"
+        },
+        {
+          "date": "2026-09-04",
+          "kcalPct": 97.2,
+          "proteinPct": 100,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "exception"
+        },
+        {
+          "date": "2026-09-05",
+          "kcalPct": 0,
+          "proteinPct": 0,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "untracked"
+        }
+      ]
+    },
+    {
+      "name": "three days",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-09-03",
+        "limit": 3
+      },
+      "expected": [
+        {
+          "date": "2026-09-01",
+          "kcalPct": 99.2,
+          "proteinPct": 102.4,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "hit"
+        },
+        {
+          "date": "2026-09-02",
+          "kcalPct": 93.1,
+          "proteinPct": 82.4,
+          "carbsPct": 84.6,
+          "fatPct": 85.5,
+          "estimated": true,
+          "verdict": "miss"
+        },
+        {
+          "date": "2026-09-03",
+          "kcalPct": 106.3,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "hit"
+        }
+      ]
+    },
+    {
+      "name": "ahead of the data",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-09-08",
+        "limit": 7
+      },
+      "expected": [
+        {
+          "date": "2026-09-02",
+          "kcalPct": 93.1,
+          "proteinPct": 82.4,
+          "carbsPct": 84.6,
+          "fatPct": 85.5,
+          "estimated": true,
+          "verdict": "miss"
+        },
+        {
+          "date": "2026-09-03",
+          "kcalPct": 106.3,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "hit"
+        },
+        {
+          "date": "2026-09-04",
+          "kcalPct": 97.2,
+          "proteinPct": 100,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "exception"
+        },
+        {
+          "date": "2026-09-05",
+          "kcalPct": 0,
+          "proteinPct": 0,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "untracked"
+        },
+        {
+          "date": "2026-09-06",
+          "kcalPct": null,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "ungraded"
+        },
+        {
+          "date": "2026-09-07",
+          "kcalPct": null,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "untracked"
+        },
+        {
+          "date": "2026-09-08",
+          "kcalPct": null,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "untracked"
+        }
+      ]
+    },
+    {
+      "name": "no target for the day",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-09-06",
+        "limit": 2
+      },
+      "expected": [
+        {
+          "date": "2026-09-05",
+          "kcalPct": 0,
+          "proteinPct": 0,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "untracked"
+        },
+        {
+          "date": "2026-09-06",
+          "kcalPct": null,
+          "proteinPct": null,
+          "carbsPct": null,
+          "fatPct": null,
+          "estimated": false,
+          "verdict": "ungraded"
+        }
+      ]
+    },
+    {
+      "name": "bad date",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-9-5",
+        "limit": 7
+      },
+      "expected": []
+    },
+    {
+      "name": "zero limit",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-30",
+            "kcal": 1890,
+            "proteinG": 168,
+            "carbsG": 178,
+            "fatG": 52
+          },
+          {
+            "date": "2026-08-31",
+            "kcal": 2310,
+            "proteinG": 152,
+            "carbsG": 240,
+            "fatG": 68,
+            "exception": "Event"
+          },
+          {
+            "date": "2026-09-01",
+            "kcal": 1940,
+            "proteinG": 174
+          },
+          {
+            "date": "2026-09-02",
+            "kcal": 1820,
+            "proteinG": 140,
+            "carbsG": 165,
+            "fatG": 47,
+            "estimated": true
+          },
+          {
+            "date": "2026-09-03",
+            "kcal": 2600,
+            "proteinG": 180,
+            "carbsG": 300,
+            "fatG": 90
+          },
+          {
+            "date": "2026-09-04",
+            "kcal": 1900,
+            "proteinG": 170,
+            "exception": "nonsense"
+          },
+          {
+            "date": "2026-09-05",
+            "kcal": 0,
+            "proteinG": 0
+          },
+          {
+            "date": "2026-09-06",
+            "kcal": 1955,
+            "proteinG": 170
+          }
+        ],
+        "targets": {
+          "2026-08-30": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-08-31": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-01": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-02": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-03": {
+            "kcal": 2445,
+            "protein": null,
+            "carbs": null,
+            "fat": null
+          },
+          "2026-09-04": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-05": {
+            "kcal": 1955,
+            "protein": 170,
+            "carbs": 195,
+            "fat": 55
+          },
+          "2026-09-06": null
+        },
+        "endingOn": "2026-09-05",
+        "limit": 0
+      },
+      "expected": []
+    }
+  ]
+}

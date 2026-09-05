@@ -123,12 +123,23 @@ struct DomsTile: View {
             side: view == .front ? .front : .back,
             worked: DomsMap.worked(severity),
             colors: colors,
+            values: spokenValues,
             onPick: { landmark in
                 guard let group = DomsMap.group(of: landmark) else { return }
                 rating = group
             }
         )
         .frame(maxWidth: .infinity)
+    }
+
+    /// Landmark → "Moderate", for VoiceOver's walk over the body.
+    private var spokenValues: [LandmarkMuscle: String] {
+        var out: [LandmarkMuscle: String] = [:]
+        for (group, landmarks) in DomsMap.landmarks {
+            let level = severity[group] ?? 0
+            for landmark in landmarks { out[landmark] = DomsMap.levels[min(level, DomsMap.maxSeverity)] }
+        }
+        return out
     }
 
     private func flip() {

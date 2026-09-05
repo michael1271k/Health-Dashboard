@@ -147,7 +147,7 @@ import { prevDayISO, nextDayISO, nightWindow, nightOf, fallbackBedTime, type Nig
 import { buildIntensityCalendar, type CalendarModel } from '@/lib/charts/intensityCalendar'
 import { MUSCLE_MAP, MUSCLE_GROUPS, aggregateMuscleSets, type MuscleSetRow, type MuscleAggregate } from '@/lib/charts/muscleAggregate'
 import { niceDomain, tightDomain, compactKg, axisBound, type NiceDomainOptions, type TightDomainOptions } from '@/lib/charts/scale'
-import { trendPoints, meanBetween, dailySeries, latestDelta, calendarDays, weeklyVolume, cardioBlock, topRecords, e1rmTrends, volumeByFamily, shiftISO, vitalBlock, type CalendarSession, type CardioRow as WidgetCardioRow, type LedgerRow, type SetRow as WidgetSetRow } from '@/lib/widget/derive'
+import { trendPoints, meanBetween, dailySeries, latestDelta, paddedWindow, calendarDays, weeklyVolume, cardioBlock, topRecords, e1rmTrends, volumeByFamily, shiftISO, vitalBlock, type PaddedPoint, type CalendarSession, type CardioRow as WidgetCardioRow, type LedgerRow, type SetRow as WidgetSetRow } from '@/lib/widget/derive'
 import type { TrendPoint, WidgetFamilyVolume } from '@/lib/widget/snapshot'
 import { streakFrom, programDayCount } from '@/lib/training/streak'
 import { REFRESH_SCHEDULE, FAILURE_MINUTES, refreshMinutesForHour, refreshesPerDay } from '@/lib/widget/cadence'
@@ -165,11 +165,16 @@ import { toRows, rowsWithPrev, deltaGlyph, progressionCue, exerciseStats, strong
 import type { DetailSet, DetailExercise } from '@/lib/hooks/useSessionDetail'
 import type { IntelMetric } from '@/lib/hooks/useSessionIntel'
 import { LOAD_STEP_KG } from '@/lib/training/ceilings'
-import { resolveChartSplit, SPLITS_FOR_ERA, DAY_KEY_SPLIT, splitLabel } from '@/lib/charts/volumeSplit'
+import { resolveChartSplit, SPLITS_FOR_ERA, DAY_KEY_SPLIT, splitLabel, type ChartSplit } from '@/lib/charts/volumeSplit'
 import { mergeBodyComposition, hasScaleMetrics, SCALE_METRIC_KEYS } from '@/lib/body/readings'
 import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
 import { TABLE_KEYS, REALTIME_TABLES } from '@/lib/query/realtimeKeys'
 import { scopeToDay } from '@/lib/training/scopeToDay'
+import {
+  exerciseTrend, setsAtCeilingOf, sessionVolumeSeries, macroAdherenceSeries, vitalSeries,
+  type TrendSetRow, type VolumeSession, type AdherenceDayIn, type AdherenceTargets, type AdherenceDay, type VitalSeries,
+} from '@/lib/charts/series'
+import { progressionAlerts, type ProgressionAlert, type ProgressionSetRow, type ProgressionTarget } from '@/lib/training/progressionQueue'
 import { debtBand, type SleepDebt } from '@/lib/sleep/debt'
 import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
 import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coach/scheduleReadiness'
@@ -6908,6 +6913,229 @@ describe('golden vectors — week window', () => {
       module: 'reports/weekNumber',
       fn: 'weekWindowOf',
       note: 'start = weekStartOf(date, startDay), seven days, end = start + 6, number = weekNumberOf(start), isCurrent = today within days; an unparseable date echoes as both bounds with no days.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — series builders', () => {
+  const S = (weightKg: number, reps: number, extra: Partial<TrendSetRow> = {}): TrendSetRow => ({ weightKg, reps, ...extra })
+
+  it('exports the exercise trend and the sets-at-ceiling count', () => {
+    const ladder: TrendSetRow[][] = [
+      [S(20, 12), S(20, 10), S(18, 9)],
+      [S(20, 12), S(20, 10), S(18, 10)],
+      [S(20, 12), S(20, 11), S(18, 11)],
+      [S(20, 12), S(20, 12), S(18, 12)],
+    ]
+    const stored: TrendSetRow[][] = [[S(60, 8, { est: 76 }), S(60, 8, { est: 0 })], [S(62.5, 8, { est: 79.2 }), S(62.5, 8)]]
+    const pairs: TrendSetRow[][] = [
+      [S(12, 12, { side: 'L', pairId: 'a' }), S(14, 12, { side: 'R', pairId: 'a' }), S(12, 10, { side: 'L', pairId: 'b' }), S(12, 11, { side: 'R', pairId: 'b' })],
+      [S(14, 12, { side: 'L', pairId: 'c' }), S(14, 12, { side: 'R', pairId: 'c' }), S(14, 12, { side: 'L', pairId: 'd' }), S(14, 12, { side: 'R', pairId: 'd' })],
+    ]
+    const unpairedSides: TrendSetRow[][] = [[S(10, 12, { side: 'L' }), S(10, 9, { side: 'R' })]]
+    const unloaded: TrendSetRow[][] = [[S(0, 15), S(0, 14)], [S(0, 17), S(0, 16), S(0, 15)]]
+    const laterLoaded: TrendSetRow[][] = [[S(0, 15), S(0, 15)], [S(5, 12), S(5, 12)]]
+    const hold: TrendSetRow[][] = [[S(0, 45), S(0, 40)], [S(0, 60), S(0, 58)], [S(0, 60), S(0, 60)]]
+    const clean: TrendSetRow[][] = [[S(35, 12), S(35, 12), S(35, 12)], [S(35, 12), S(35, 12), S(35, 12)]]
+    const fade: TrendSetRow[][] = [[S(35, 12), S(35, 12), S(35, 12)], [S(35, 12), S(35, 12), S(35, 8)]]
+    const sessions: Array<[string, TrendSetRow[][], boolean, number | null]> = [
+      ['ladder @12', ladder, false, 12],
+      ['ladder @15', ladder, false, 15],
+      ['ladder unprogrammed', ladder, false, null],
+      ['first session only', [ladder[0]], false, 12],
+      ['stored est beats Epley, stored 0 is missing', stored, false, 8],
+      ['a unilateral pair is one set, right side leads', pairs, false, 12],
+      ['a lone side is not a pair', unpairedSides, false, 12],
+      ['unloaded work is scored on reps', unloaded, false, 15],
+      ['a lift loaded later is scored on est-1RM throughout', laterLoaded, false, 12],
+      ['a timed hold is seconds', hold, true, 55],
+      ['a timed hold with no target', hold, true, null],
+      ['clean twice — ready', clean, false, 12],
+      ['a fade breaks the chain', fade, false, 12],
+      ['empty session inside', [ladder[0], []], false, 12],
+      ['no sessions', [], false, 12],
+    ]
+    emit('e1rm-series.json', {
+      module: 'charts/series',
+      fn: 'exerciseTrend',
+      note: 'Sessions oldest FIRST, working sets only. points = per-session MEAN headline (est-1RM kg loaded via stored est || Epley; reps when no session ever carried load; seconds when timed), one decimal; pairs collapse to one set (R leads); best = best SET; tonnage via sessionVolumeKg (or Σ reps when byReps); progression over the last two. Null with no sessions.',
+      cases: sessions.map(([name, sess, timed, ceiling]) => ({ name, input: { sessions: sess, timed, ceiling }, expected: exerciseTrend(sess, timed, ceiling) })),
+    })
+
+    const chips: Array<[string, WorkingSet[], number | null]> = [
+      ['top load only', [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 12 }, { weightKg: 35, reps: 12 }], 12],
+      ['short at top', [{ weightKg: 40, reps: 11 }, { weightKg: 40, reps: 12 }], 12],
+      ['bodyweight', [{ weightKg: 0, reps: 15 }, { weightKg: 0, reps: 14 }], 15],
+      ['no ceiling', [{ weightKg: 40, reps: 12 }], null],
+      ['empty', [], 12],
+    ]
+    emit('sets-at-ceiling.json', {
+      module: 'charts/series',
+      fn: 'setsAtCeilingOf',
+      note: 'Sets AT THE TOP LOAD (workLoads) with reps ≥ ceiling. 0 without a ceiling or sets.',
+      cases: chips.map(([name, sets, ceiling]) => ({ name, input: { sets, ceiling }, expected: setsAtCeilingOf(sets, ceiling) })),
+    })
+  })
+
+  it('exports the session volume series by split', () => {
+    const sessions: VolumeSession[] = [
+      { date: '2026-08-24', dayKey: 'cb_a', volumeKg: 8100 },
+      { date: '2026-08-25', dayKey: 'legs_a', volumeKg: 12400 },
+      { date: '2026-08-26', dayKey: 'arms', volumeKg: 5600 },
+      { date: '2026-08-27', dayKey: 'cb_b', volumeKg: 7900 },
+      { date: '2026-08-28', dayKey: 'legs_b', volumeKg: 11800 },
+      { date: '2026-08-28', dayKey: 'legs_b', volumeKg: 400 },
+      { date: '2026-08-31', dayKey: 'cb_a', volumeKg: 8300 },
+      { date: '2026-09-01', dayKey: null, split: 'legs', volumeKg: 12000 },
+      { date: '2026-09-02', dayKey: '', split: 'upper', volumeKg: 6000 },
+      { date: '2026-09-03', dayKey: 'cb_b', volumeKg: null },
+      { date: '2026-06-01', dayKey: 'ppl_push_sun', volumeKg: 7000 },
+      { date: '2026-06-02', dayKey: null, split: 'pull', volumeKg: 6500 },
+      { date: '2026-06-03', dayKey: null, split: 'lower', volumeKg: 9000 },
+    ]
+    const splits: Array<ChartSplit | null> = [null, 'upper_a', 'upper_b', 'arms', 'legs_a', 'legs_b', 'push', 'pull', 'legs']
+    const cases: Case<{ sessions: VolumeSession[]; splitDay: ChartSplit | null; era: 'all' | 'ppl' | 'axis'; limit: number }, TrendPoint[]>[] = []
+    for (const era of ['all', 'ppl', 'axis'] as const) for (const splitDay of splits) for (const limit of [10, 2]) {
+      cases.push({ name: `${splitDay ?? 'all'} · ${era} · limit ${limit}`, input: { sessions, splitDay, era, limit }, expected: sessionVolumeSeries(sessions, splitDay, era, limit) })
+    }
+    cases.push({ name: 'empty', input: { sessions: [], splitDay: null, era: 'all', limit: 5 }, expected: sessionVolumeSeries([], null, 'all', 5) })
+    emit('session-volume-series.json', {
+      module: 'charts/series',
+      fn: 'sessionVolumeSeries',
+      note: 'Sessions bucketed by resolveChartSplit(date, split ?? "", era, dayKey); null splitDay keeps all. Then dailySeries(sum, limit): same-day sessions add, null volume is skipped, empty days omitted.',
+      cases,
+    })
+  })
+
+  it('exports the macro adherence dots', () => {
+    const days: AdherenceDayIn[] = [
+      { date: '2026-08-30', kcal: 1890, proteinG: 168, carbsG: 178, fatG: 52 },
+      { date: '2026-08-31', kcal: 2310, proteinG: 152, carbsG: 240, fatG: 68, exception: 'Event' },
+      { date: '2026-09-01', kcal: 1940, proteinG: 174 },
+      { date: '2026-09-02', kcal: 1820, proteinG: 140, carbsG: 165, fatG: 47, estimated: true },
+      { date: '2026-09-03', kcal: 2600, proteinG: 180, carbsG: 300, fatG: 90 },
+      { date: '2026-09-04', kcal: 1900, proteinG: 170, exception: 'nonsense' },
+      { date: '2026-09-05', kcal: 0, proteinG: 0 },
+      { date: '2026-09-06', kcal: 1955, proteinG: 170 },
+    ]
+    const cut: AdherenceTargets = { kcal: 1955, protein: 170, carbs: 195, fat: 55 }
+    const bulk: AdherenceTargets = { kcal: 2445, protein: null, carbs: null, fat: null }
+    const targets: Record<string, AdherenceTargets | null> = {
+      '2026-08-30': cut, '2026-08-31': cut, '2026-09-01': cut, '2026-09-02': cut, '2026-09-03': bulk, '2026-09-04': cut,
+      '2026-09-05': cut, '2026-09-06': null,
+    }
+    const cases: Case<{ days: AdherenceDayIn[]; targets: Record<string, AdherenceTargets | null>; endingOn: string; limit: number }, AdherenceDay[]>[] = [
+      ['a full week', '2026-09-05', 7], ['three days', '2026-09-03', 3], ['ahead of the data', '2026-09-08', 7],
+      ['no target for the day', '2026-09-06', 2], ['bad date', '2026-9-5', 7], ['zero limit', '2026-09-05', 0],
+    ].map(([name, endingOn, limit]) => ({
+      name: name as string,
+      input: { days, targets, endingOn: endingOn as string, limit: limit as number },
+      expected: macroAdherenceSeries(days, targets, endingOn as string, limit as number),
+    }))
+    emit('macro-adherence-series.json', {
+      module: 'charts/series',
+      fn: 'macroAdherenceSeries',
+      note: 'paddedWindow over the dates; verdict: untracked (no kcal) → exception (isExceptionDay) → ungraded (no kcal target) → hit when |kcal% − 100| ≤ 10 AND (no protein target OR protein% ≥ 90) else miss. Percentages one decimal, null without both figures.',
+      cases,
+    })
+  })
+
+  it('exports the vital series and the padded window', () => {
+    const rows = [
+      { date: '2026-08-07', value: 41 }, { date: '2026-08-20', value: 44 }, { date: '2026-08-28', value: 47 },
+      { date: '2026-08-30', value: 45 }, { date: '2026-08-30', value: 52 }, { date: '2026-09-01', value: 48 },
+      { date: '2026-09-02', value: null }, { date: '2026-09-03', value: 48 }, { date: '2026-09-04', value: 48.02 },
+      { date: '2026-09-05', value: 51 }, { date: '2026-09-06', value: 99 }, { date: '2026-09-07', value: Number.NaN },
+    ]
+    const cases: Case<{ rows: typeof rows; days: number; endingOn: string; combine: 'max' | 'sum' }, VitalSeries>[] = []
+    for (const days of [7, 30]) for (const combine of ['max', 'sum'] as const) {
+      cases.push({ name: `${days} days · ${combine}`, input: { rows, days, endingOn: '2026-09-05', combine }, expected: vitalSeries(rows, days, '2026-09-05', combine) })
+    }
+    cases.push({ name: 'nothing in the window', input: { rows, days: 7, endingOn: '2026-07-01', combine: 'max' }, expected: vitalSeries(rows, 7, '2026-07-01', 'max') })
+    cases.push({ name: 'a single reading has no delta', input: { rows: [rows[0]], days: 7, endingOn: '2026-08-07', combine: 'max' }, expected: vitalSeries([rows[0]], 7, '2026-08-07', 'max') })
+    cases.push({ name: 'bad date', input: { rows, days: 7, endingOn: 'today', combine: 'max' }, expected: vitalSeries(rows, 7, 'today', 'max') })
+    emit('vital-series.json', {
+      module: 'charts/series',
+      fn: 'vitalSeries',
+      note: 'dailySeries(combine, no clamp) then paddedWindow(endingOn, days). latest = newest reading in the window; delta vs the newest that differs by ≥ 0.05 (two decimals); mean one decimal; coverage = readings in the window. NaN and null are absent readings.',
+      cases,
+    })
+
+    const series: TrendPoint[] = [{ d: '2026-09-01', v: 1 }, { d: '2026-09-03', v: 3 }, { d: '2026-09-03', v: 4 }, { d: '2026-09-06', v: 6 }, { d: '2026-08-01', v: 0.5 }]
+    const windows: Array<[string, string, number]> = [
+      ['a week', '2026-09-05', 7], ['one day', '2026-09-03', 1], ['month end', '2026-09-01', 3], ['leap-year February', '2028-03-01', 3],
+      ['zero limit', '2026-09-05', 0], ['negative limit', '2026-09-05', -3], ['bad date', '2026-9-5', 7], ['not a date', 'today', 7], ['month 13', '2026-13-01', 2],
+    ]
+    emit('padded-window.json', {
+      module: 'widget/derive',
+      fn: 'paddedWindow',
+      note: 'Exactly `limit` buckets ending on endingOn, oldest first, value null where no point; duplicates last-wins; out-of-window points dropped. Empty for limit ≤ 0 or a non-ISO endingOn.',
+      cases: windows.map(([name, endingOn, limit]) => ({ name, input: { series, endingOn, limit }, expected: paddedWindow(series, endingOn, limit) as PaddedPoint[] })),
+    })
+  })
+})
+
+describe('golden vectors — progression queue', () => {
+  it('exports the queue over a routine-scoped history', () => {
+    const cases: Case<{ phase: ProgramPhase; targets: ProgressionTarget[]; rows: ProgressionSetRow[] }, ProgressionAlert[]>[] = []
+    for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
+      withPhase(phase, () => {
+        const prog = activeProgram(HELIX5_ID, phase)
+        const slug = (name: string) => `ex-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+        const targets: ProgressionTarget[] = []
+        for (const d of prog.days) for (const e of d.exercises) {
+          if (targets.some((t) => t.id === slug(e.name) && t.dayKey === d.key)) continue
+          targets.push({ id: slug(e.name), name: e.name, dayKey: d.key, dayLabel: d.label, color: d.color })
+        }
+        const row = (t: ProgressionTarget, dayKey: string | null, at: string, weightKg: number, reps: number, setType: string | null = null): ProgressionSetRow => ({
+          exercise_id: t.id, weight_kg: weightKg, reps, set_type: setType, workout_sessions: { started_at: at, day_key: dayKey },
+        })
+        const at = (n: number) => `2026-08-${String(n).padStart(2, '0')}T09:00:00Z`
+        const loaded = targets.filter((t) => !isTimedExercise(t.name))
+        const timed = targets.filter((t) => isTimedExercise(t.name))
+        // A lift programmed on two days, if the deck has one.
+        const twice = loaded.find((t) => loaded.some((o) => o.id === t.id && o.dayKey !== t.dayKey))
+        const rows: ProgressionSetRow[] = []
+        const ceilingOf = (t: ProgressionTarget) => repWindowFor(t.name, t.dayKey, HELIX5_ID)?.ceiling ?? 12
+        // Target 0: cleared twice on its own day → ready.
+        const a = loaded[0]
+        rows.push(row(a, a.dayKey, at(3), 40, ceilingOf(a)), row(a, a.dayKey, at(3), 40, ceilingOf(a)), row(a, a.dayKey, at(3), 20, 8, 'warmup'))
+        rows.push(row(a, a.dayKey, at(10), 40, ceilingOf(a)), row(a, a.dayKey, at(10), 40, ceilingOf(a)))
+        // Target 1: cleared once → one-more; the earlier session faded.
+        const b = loaded[1]
+        rows.push(row(b, b.dayKey, at(3), 30, ceilingOf(b)), row(b, b.dayKey, at(3), 30, ceilingOf(b) - 2))
+        rows.push(row(b, b.dayKey, at(10), 30, ceilingOf(b)), row(b, b.dayKey, at(10), 30, ceilingOf(b)))
+        // Target 2: three sessions — only the last two count, and the newest broke the chain.
+        const c = loaded[2]
+        rows.push(row(c, c.dayKey, at(1), 50, ceilingOf(c)), row(c, c.dayKey, at(1), 50, ceilingOf(c)))
+        rows.push(row(c, c.dayKey, at(8), 50, ceilingOf(c)), row(c, c.dayKey, at(8), 50, ceilingOf(c)))
+        rows.push(row(c, c.dayKey, at(15), 52.5, ceilingOf(c) - 3), row(c, c.dayKey, at(15), 52.5, ceilingOf(c) - 4))
+        // Target 3: rows with no day key are dropped, not pooled.
+        const d = loaded[3]
+        rows.push(row(d, null, at(3), 40, 20), row(d, null, at(3), 40, 20), row(d, null, at(10), 40, 20), row(d, null, at(10), 40, 20))
+        // Target 4: bodyweight cleared twice → ready, no kg to suggest.
+        const e = loaded[4]
+        rows.push(row(e, e.dayKey, at(3), 0, ceilingOf(e) + 2), row(e, e.dayKey, at(3), 0, ceilingOf(e)), row(e, e.dayKey, at(10), 0, ceilingOf(e)), row(e, e.dayKey, at(10), 0, ceilingOf(e)))
+        // A lift on two days: cleared on the OTHER day's ceiling only.
+        if (twice) {
+          const other = loaded.find((o) => o.id === twice.id && o.dayKey !== twice.dayKey)!
+          rows.push(row(twice, other.dayKey, at(4), 72.5, 13), row(twice, other.dayKey, at(4), 72.5, 13), row(twice, other.dayKey, at(11), 72.5, 13), row(twice, other.dayKey, at(11), 72.5, 13))
+        }
+        // A timed hold, held past target twice → ready, never a kg.
+        if (timed[0]) {
+          const t = timed[0]
+          const target = holdTargetFor(t.name, t.dayKey, HELIX5_ID) ?? 45
+          rows.push(row(t, t.dayKey, at(3), 0, target + 5), row(t, t.dayKey, at(3), 0, target), row(t, t.dayKey, at(10), 0, target + 10), row(t, t.dayKey, at(10), 0, target))
+        }
+        cases.push({ name: `deck · ${phase}`, input: { phase, targets, rows }, expected: progressionAlerts(targets, rows, HELIX5_ID) })
+        cases.push({ name: `no history · ${phase}`, input: { phase, targets, rows: [] }, expected: progressionAlerts(targets, [], HELIX5_ID) })
+      })
+    }
+    emit('progression-queue.json', {
+      module: 'training/progressionQueue',
+      fn: 'progressionAlerts',
+      note: 'Targets walked in order; rows bucketed by (day_key, exercise) → started_at (sorted) → working sets (warm-ups/ghosts dropped, null day_key dropped); last two sessions graded by progressionVerdict / timedProgressionVerdict against the programmed ceiling on THAT day; ready and one-more surface, currentKg = top load of the latest session.',
       cases,
     })
   })

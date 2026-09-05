@@ -1,0 +1,776 @@
+{
+  "module": "charts/series",
+  "fn": "vitalSeries",
+  "note": "dailySeries(combine, no clamp) then paddedWindow(endingOn, days). latest = newest reading in the window; delta vs the newest that differs by ≥ 0.05 (two decimals); mean one decimal; coverage = readings in the window. NaN and null are absent readings.",
+  "cases": [
+    {
+      "name": "7 days · max",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 7,
+        "endingOn": "2026-09-05",
+        "combine": "max"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-08-31",
+            "value": null
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          }
+        ],
+        "latest": 51,
+        "delta": 2.98,
+        "mean": 49.4,
+        "coverage": 5
+      }
+    },
+    {
+      "name": "7 days · sum",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 7,
+        "endingOn": "2026-09-05",
+        "combine": "sum"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-08-30",
+            "value": 97
+          },
+          {
+            "date": "2026-08-31",
+            "value": null
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          }
+        ],
+        "latest": 51,
+        "delta": 2.98,
+        "mean": 58.4,
+        "coverage": 5
+      }
+    },
+    {
+      "name": "30 days · max",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 30,
+        "endingOn": "2026-09-05",
+        "combine": "max"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-08",
+            "value": null
+          },
+          {
+            "date": "2026-08-09",
+            "value": null
+          },
+          {
+            "date": "2026-08-10",
+            "value": null
+          },
+          {
+            "date": "2026-08-11",
+            "value": null
+          },
+          {
+            "date": "2026-08-12",
+            "value": null
+          },
+          {
+            "date": "2026-08-13",
+            "value": null
+          },
+          {
+            "date": "2026-08-14",
+            "value": null
+          },
+          {
+            "date": "2026-08-15",
+            "value": null
+          },
+          {
+            "date": "2026-08-16",
+            "value": null
+          },
+          {
+            "date": "2026-08-17",
+            "value": null
+          },
+          {
+            "date": "2026-08-18",
+            "value": null
+          },
+          {
+            "date": "2026-08-19",
+            "value": null
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-21",
+            "value": null
+          },
+          {
+            "date": "2026-08-22",
+            "value": null
+          },
+          {
+            "date": "2026-08-23",
+            "value": null
+          },
+          {
+            "date": "2026-08-24",
+            "value": null
+          },
+          {
+            "date": "2026-08-25",
+            "value": null
+          },
+          {
+            "date": "2026-08-26",
+            "value": null
+          },
+          {
+            "date": "2026-08-27",
+            "value": null
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-29",
+            "value": null
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-08-31",
+            "value": null
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          }
+        ],
+        "latest": 51,
+        "delta": 2.98,
+        "mean": 47.4,
+        "coverage": 8
+      }
+    },
+    {
+      "name": "30 days · sum",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 30,
+        "endingOn": "2026-09-05",
+        "combine": "sum"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-08",
+            "value": null
+          },
+          {
+            "date": "2026-08-09",
+            "value": null
+          },
+          {
+            "date": "2026-08-10",
+            "value": null
+          },
+          {
+            "date": "2026-08-11",
+            "value": null
+          },
+          {
+            "date": "2026-08-12",
+            "value": null
+          },
+          {
+            "date": "2026-08-13",
+            "value": null
+          },
+          {
+            "date": "2026-08-14",
+            "value": null
+          },
+          {
+            "date": "2026-08-15",
+            "value": null
+          },
+          {
+            "date": "2026-08-16",
+            "value": null
+          },
+          {
+            "date": "2026-08-17",
+            "value": null
+          },
+          {
+            "date": "2026-08-18",
+            "value": null
+          },
+          {
+            "date": "2026-08-19",
+            "value": null
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-21",
+            "value": null
+          },
+          {
+            "date": "2026-08-22",
+            "value": null
+          },
+          {
+            "date": "2026-08-23",
+            "value": null
+          },
+          {
+            "date": "2026-08-24",
+            "value": null
+          },
+          {
+            "date": "2026-08-25",
+            "value": null
+          },
+          {
+            "date": "2026-08-26",
+            "value": null
+          },
+          {
+            "date": "2026-08-27",
+            "value": null
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-29",
+            "value": null
+          },
+          {
+            "date": "2026-08-30",
+            "value": 97
+          },
+          {
+            "date": "2026-08-31",
+            "value": null
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          }
+        ],
+        "latest": 51,
+        "delta": 2.98,
+        "mean": 53,
+        "coverage": 8
+      }
+    },
+    {
+      "name": "nothing in the window",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 7,
+        "endingOn": "2026-07-01",
+        "combine": "max"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-06-25",
+            "value": null
+          },
+          {
+            "date": "2026-06-26",
+            "value": null
+          },
+          {
+            "date": "2026-06-27",
+            "value": null
+          },
+          {
+            "date": "2026-06-28",
+            "value": null
+          },
+          {
+            "date": "2026-06-29",
+            "value": null
+          },
+          {
+            "date": "2026-06-30",
+            "value": null
+          },
+          {
+            "date": "2026-07-01",
+            "value": null
+          }
+        ],
+        "latest": null,
+        "delta": null,
+        "mean": null,
+        "coverage": 0
+      }
+    },
+    {
+      "name": "a single reading has no delta",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          }
+        ],
+        "days": 7,
+        "endingOn": "2026-08-07",
+        "combine": "max"
+      },
+      "expected": {
+        "points": [
+          {
+            "date": "2026-08-01",
+            "value": null
+          },
+          {
+            "date": "2026-08-02",
+            "value": null
+          },
+          {
+            "date": "2026-08-03",
+            "value": null
+          },
+          {
+            "date": "2026-08-04",
+            "value": null
+          },
+          {
+            "date": "2026-08-05",
+            "value": null
+          },
+          {
+            "date": "2026-08-06",
+            "value": null
+          },
+          {
+            "date": "2026-08-07",
+            "value": 41
+          }
+        ],
+        "latest": 41,
+        "delta": null,
+        "mean": 41,
+        "coverage": 1
+      }
+    },
+    {
+      "name": "bad date",
+      "input": {
+        "rows": [
+          {
+            "date": "2026-08-07",
+            "value": 41
+          },
+          {
+            "date": "2026-08-20",
+            "value": 44
+          },
+          {
+            "date": "2026-08-28",
+            "value": 47
+          },
+          {
+            "date": "2026-08-30",
+            "value": 45
+          },
+          {
+            "date": "2026-08-30",
+            "value": 52
+          },
+          {
+            "date": "2026-09-01",
+            "value": 48
+          },
+          {
+            "date": "2026-09-02",
+            "value": null
+          },
+          {
+            "date": "2026-09-03",
+            "value": 48
+          },
+          {
+            "date": "2026-09-04",
+            "value": 48.02
+          },
+          {
+            "date": "2026-09-05",
+            "value": 51
+          },
+          {
+            "date": "2026-09-06",
+            "value": 99
+          },
+          {
+            "date": "2026-09-07",
+            "value": null
+          }
+        ],
+        "days": 7,
+        "endingOn": "today",
+        "combine": "max"
+      },
+      "expected": {
+        "points": [],
+        "latest": null,
+        "delta": null,
+        "mean": null,
+        "coverage": 0
+      }
+    }
+  ]
+}

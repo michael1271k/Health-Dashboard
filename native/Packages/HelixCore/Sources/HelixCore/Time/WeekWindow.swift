@@ -48,6 +48,6 @@ public struct WeekWindow: Codable, Hashable, Identifiable, Sendable {
     /// days to step from.
     public func shifted(by weeks: Int, today: String) -> WeekWindow? {
         guard let date = ISODate.addDays(start, weeks * 7), !days.isEmpty else { return nil }
-        return WeekWindow(containing: date, startDay: ISODate.weekday(start) ?? 0, today: today)
+        return WeekWindow(containing: date, startDay: startDay, today: today)
     }
 }

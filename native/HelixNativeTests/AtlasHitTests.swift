@@ -50,6 +50,62 @@ struct HelixAtlasHitTests {
         #expect(HelixAtlas.muscle(at: CGPoint(x: 2, y: 2), in: rect, side: .front) == nil)
     }
 
+    /// The gate table (§9, Wave 2.7): every landmark × both sides.
+    ///
+    /// For a landmark the side DRAWS, at least one point inside one of its
+    /// paths must answer with that landmark — no muscle is fully buried under
+    /// another — and EVERY sampled point inside the figure must answer with
+    /// the LAST path covering it, which is what the eye sees. For a landmark
+    /// the side does not draw, no sampled point on that side may answer with
+    /// it. Points are sampled on a grid over each path's bounds, filtered by
+    /// the path itself, so the probes are the drawing's own and never a
+    /// hand-tuned coordinate that goes stale when the atlas is regenerated.
+    @Test("the 16 × 2 table: every landmark, both sides", arguments: LandmarkMuscle.allCases, [HelixAtlasView.front, .back])
+    func table(_ muscle: LandmarkMuscle, _ side: HelixAtlasView) {
+        let entries = HelixAtlas.muscles.filter { $0.view == side }
+        let paths: [(muscle: String, path: Path)] = entries.map {
+            var path = Path()
+            $0.build(rect, &path)
+            return ($0.muscle, path)
+        }
+        /// The last painted path covering `point`, by a forward scan — a
+        /// regression guard on the reversed walk, over the same `contains`.
+        func painted(_ point: CGPoint) -> String? {
+            paths.last { $0.path.contains(point) }?.muscle
+        }
+        func probes(_ path: Path) -> [CGPoint] {
+            let box = path.boundingRect
+            var out: [CGPoint] = []
+            for i in 0..<8 { for j in 0..<8 {
+                let point = CGPoint(x: box.minX + box.width * (CGFloat(i) + 0.5) / 8, y: box.minY + box.height * (CGFloat(j) + 0.5) / 8)
+                if path.contains(point) { out.append(point) }
+            } }
+            return out
+        }
+
+        let own = paths.filter { $0.muscle == muscle.rawValue }
+        if own.isEmpty {
+            #expect(!HelixAtlas.landmarks(on: side).contains(muscle), "\(muscle) is not drawn on the \(side.rawValue)")
+            return
+        }
+
+        // Reachability is asserted over the UNION of a landmark's paths: a
+        // thin diagonal sliver can miss every cell centre of its own box and
+        // still be reachable through its sibling.
+        var reachable = false
+        var probed = 0
+        for p in own {
+            for point in probes(p.path) {
+                probed += 1
+                let answer = HelixAtlas.muscle(at: point, in: rect, side: side)
+                #expect(answer?.rawValue == painted(point), "\(muscle) \(side.rawValue) at \(point): hit \(String(describing: answer)), painted \(String(describing: painted(point)))")
+                if answer == muscle { reachable = true }
+            }
+        }
+        #expect(probed > 0, "\(muscle) \(side.rawValue): no path has an interior")
+        #expect(reachable, "\(muscle) is drawn on the \(side.rawValue) but no point of it survives the z-order")
+    }
+
     @Test("overlapping paths answer with the one drawn on top")
     func zOrder() {
         // Delts are emitted before the chest sweep and after it in places; what

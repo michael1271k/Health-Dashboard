@@ -170,7 +170,7 @@ struct HistoryWeeksTests {
     /// writes `user_goals.active_lever` and queues it in the same write, and
     /// `userGoalsStream` — which is what `NutritionModel` binds to — yields the
     /// new row. Asserted end to end, through the same model the radio row
-    /// calls, and then run through `TargetChain` so the claim is about the
+    /// calls, and then run through `TargetSnapshot` (the resolver's value) so the claim is about the
     /// NUMBER on the gauge rather than about a column having changed.
     @Test("Picking a lever republishes the targets through GRDB")
     func leverChangeRepublishes() async throws {
@@ -185,7 +185,7 @@ struct HistoryWeeksTests {
         var iterator = database.userGoalsStream(userId: Self.userId).makeAsyncIterator()
         let before = try #require(try await iterator.next() ?? nil)
         #expect(before.activeLever == LeverId.custom.rawValue)
-        let ownKcal = TargetChain.rung(on: "2026-09-05", today: "2026-09-05", goals: before).calorie
+        let ownKcal = TargetSnapshot(goals: before).targets(for: "2026-09-05", today: "2026-09-05").kcal
         #expect(ownKcal == 1955)
 
         model.pickLever(.lever1)
@@ -196,9 +196,9 @@ struct HistoryWeeksTests {
         #expect(after.activeLever == LeverId.lever1.rawValue)
 
         let held = try #require(Levers.lever(byId: LeverId.lever1.rawValue))
-        let republished = TargetChain.rung(on: "2026-09-05", today: "2026-09-05", goals: after)
-        #expect(republished.calorie == held.calorieGoal)
-        #expect(republished.calorie != ownKcal)
+        let republished = TargetSnapshot(goals: after).targets(for: "2026-09-05", today: "2026-09-05")
+        #expect(republished.kcal == held.calorieGoal)
+        #expect(republished.kcal != ownKcal)
 
         // And it is queued, so the choice survives the phone as well as the
         // screen. A rung that only ever exists locally is a rung the web app
