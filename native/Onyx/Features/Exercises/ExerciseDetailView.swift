@@ -253,29 +253,10 @@ struct ExerciseDetailView: View {
     }
 
     /// The session MEAN est-1RM — or, for unloaded work, the session's mean rep
-    /// count. Same shape, so one chart draws both.
-    ///
-    /// ── WHY THE MEAN AND NOT THE BEST ───────────────────────────────────────
-    /// This plotted `sessionBestE1rm`, a MAX over the day. Under double
-    /// progression the top set reaches the rep ceiling first and then sits
-    /// there for weeks while the later sets climb toward it, so the max freezes
-    /// and the curve goes flat through a block of genuine progress — the web hit
-    /// exactly this and moved to a day mean, and the two clients were drawing
-    /// different lines for the same lift. `E1rmSeries` is the shared builder and
-    /// its `points` are means; the max survives as `stats.bestE1rmKg`, which
-    /// is a record and is the right place for one.
+    /// count. Same shape, so one chart draws both. `SessionAnalysis` owns the
+    /// rule and says why the mean beats the max.
     private var series: [(date: String, kg: Double)] {
-        let byDate = Dictionary(grouping: working, by: \.date)
-        return byDate.keys.sorted().compactMap { date in
-            let rows = (byDate[date] ?? []).map {
-                TrendSetRow(weightKg: $0.weightKg, reps: Double($0.reps), est: $0.est1rmKg,
-                            side: $0.side, pairId: $0.pairId)
-            }
-            guard let trend = E1rmSeries.build([rows], timed: timed || unloaded, ceiling: nil),
-                  let mean = trend.points.first, mean > 0
-            else { return nil }
-            return (date: date, kg: mean)
-        }
+        SessionAnalysis.sessionMeanE1rm(ledger, timed: timed)
     }
 
     /// Days between the first and last plotted point; past 90 the chart pans.

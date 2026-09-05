@@ -182,7 +182,7 @@ enum SessionAnalysis {
                 prevDate: prevRows.first?.date,
                 cue: cue, stats: SessionDetail.exerciseStats(detail), window: window,
                 atCeiling: atCeiling,
-                spark: sessionBestE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg)
+                spark: sessionMeanE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg)
             ))
         }
 
@@ -214,18 +214,34 @@ enum SessionAnalysis {
 
     // MARK: - Exercise history
 
-    /// Session-best estimated 1RM per day, oldest first, over WORKING sets —
-    /// `useCharts.collapseToSessionBest`. A stored 0 is "missing" (`||`), and a
-    /// row without a stored value is estimated; an unloaded set has none and
-    /// simply does not plot.
-    static func sessionBestE1rm(_ rows: [HistorySetRow]) -> [(date: String, kg: Double)] {
-        var best: [String: Double] = [:]
-        for r in rows where SetTags.isWorkingSet(r.setType) {
-            let stored = r.est1rmKg.flatMap { $0 > 0 ? $0 : nil }
-            guard let kg = stored ?? Epley.oneRepMax(weight: r.weightKg, reps: Double(r.reps)) else { continue }
-            best[r.date] = max(best[r.date] ?? 0, kg)
+    /// Session-MEAN estimated 1RM per day, oldest first, over WORKING sets.
+    ///
+    /// ── WHY THE MEAN AND NOT THE SESSION'S BEST ─────────────────────────────
+    /// This was `sessionBestE1rm`, a max over the day. Under double progression
+    /// the top set reaches the rep ceiling first and then sits there for weeks
+    /// while the later sets climb toward it, so the max freezes and every curve
+    /// in the app goes flat through a block of genuine progress. The web hit
+    /// exactly this and moved to a day mean; §W7 brings the phone with it, and
+    /// `E1rmSeries` — which collapses L/R pairs before averaging — is the one
+    /// builder both now use. The max survives where a max belongs:
+    /// `ExerciseSummary.bestE1rmKg`, a record.
+    ///
+    /// A stored 0 is "missing" (`||`) and falls through to Epley; unloaded work
+    /// is scored on reps, which is the same shape and draws on the same chart.
+    static func sessionMeanE1rm(_ rows: [HistorySetRow], timed: Bool = false) -> [(date: String, kg: Double)] {
+        let working = rows.filter { SetTags.isWorkingSet($0.setType) }
+        let unloaded = !timed && working.allSatisfy { $0.weightKg <= 0 }
+        let byDate = Dictionary(grouping: working, by: \.date)
+        return byDate.keys.sorted().compactMap { date in
+            let sets = (byDate[date] ?? []).map {
+                TrendSetRow(weightKg: $0.weightKg, reps: Double($0.reps), est: $0.est1rmKg,
+                            side: $0.side, pairId: $0.pairId)
+            }
+            guard let trend = E1rmSeries.build([sets], timed: timed || unloaded, ceiling: nil),
+                  let mean = trend.points.first, mean > 0
+            else { return nil }
+            return (date: date, kg: mean)
         }
-        return best.keys.sorted().map { (date: $0, kg: best[$0]!) }
     }
 
     // MARK: - Row selection

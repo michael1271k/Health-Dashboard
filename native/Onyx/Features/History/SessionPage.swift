@@ -137,6 +137,6 @@ extension SessionAnalysis {
     /// Returns the values only: a sparkline has no axis, so the dates are not
     /// wanted and carrying them would invite somebody to label one.
     static func sparkline(_ rows: [HistorySetRow]) -> [Double] {
-        sessionBestE1rm(rows).map(\.kg)
+        sessionMeanE1rm(rows).map(\.kg)
     }
 }
