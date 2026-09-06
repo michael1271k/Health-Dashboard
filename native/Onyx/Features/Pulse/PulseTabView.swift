@@ -199,6 +199,14 @@ struct DayScreen: View {
             model.refreshToday()
             model.loadWindow()
         }
+        // Every door into this screen — the Pulse tab, a week in History, the
+        // calendar jump — has to open the day's streams, or the tiles draw
+        // their initial empty values and stay that way. `observe()` guards
+        // re-entry, so the Pulse tab's own call is harmless; a `.task` of its
+        // own so the streams stop when the screen goes, keyed on the model so
+        // a parent that rebuilds its `DayModel` inline (History, the calendar
+        // jump) hands the new one a running observer too.
+        .task(id: ObjectIdentifier(model)) { await model.observe() }
         .task {
             guard startAtRows else { return }
             // The same 400 ms the ledger shot needs (Wave 2.8): a `List` picks

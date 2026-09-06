@@ -207,6 +207,36 @@ struct HistoryWeeksTests {
         #expect(queued.contains { $0.idempotencyKey.contains("user_goals") || $0.kind.contains("user_goals") })
     }
 
+    // MARK: - A day opened from a week
+
+    /// The empty-boxes bug (Phase 3, F12): a day pushed from a week list built a
+    /// `DayModel` and never asked it to observe, so every per-date stream sat at
+    /// its initial value and `window.loaded` stayed false — the tiles drew "—"
+    /// for a day that had rows. `DayScreen` now opens the streams itself, on
+    /// every door in. This cannot see the view — it pins the MODEL half of the
+    /// contract: one `observe()` on a past date lands the day's row and loads
+    /// its window. The view half is the `day-past` shot in the loop.
+    @Test("A day opened from a week has its row and a loaded window")
+    func dayOpenedFromWeekLoads() async throws {
+        let database = try store()
+        try seedWeight(database, date: "2026-08-31", kg: 72.4)
+
+        let model = DayModel(database: database, userId: Self.userId, date: "2026-08-31")
+        #expect(model.log == nil)
+        #expect(!model.window.loaded)
+
+        let observing = Task { await model.observe() }
+        defer { observing.cancel() }
+
+        let deadline = ContinuousClock.now + .seconds(5)
+        while (model.log == nil || !model.window.loaded), ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        #expect(model.date == "2026-08-31")
+        #expect(model.log?.weightKg == 72.4)
+        #expect(model.window.loaded)
+    }
+
     // MARK: - Seeds
 
     private func seedSession(
