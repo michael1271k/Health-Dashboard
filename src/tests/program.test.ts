@@ -56,8 +56,10 @@ describe('HELIX-5 split', () => {
   it('derives per-phase set counts from the (bulk/cut) plan data', () => {
     const totals = (phase: 'bulk' | 'cut') =>
       Object.fromEntries(activeProgram('onyx5', phase).days.map((d) => [d.key, d.exercises.reduce((n, e) => n + e.sets, 0)]))
-    expect(totals('bulk')).toEqual({ cb_a: 19, legs_a: 23, arms: 23, cb_b: 20, legs_b: 22 })
-    expect(totals('cut')).toEqual({ cb_a: 16, legs_a: 19, arms: 18, cb_b: 17, legs_b: 18 })
+    // Cut counts are Week 6's logged shape (Phase 3, E0): what was actually
+    // performed on 2026-08-23 → 08-29, pairs counted once, warm-ups excluded.
+    expect(totals('bulk')).toEqual({ cb_a: 20, legs_a: 23, arms: 23, cb_b: 21, legs_b: 22 })
+    expect(totals('cut')).toEqual({ cb_a: 18, legs_a: 20, arms: 20, cb_b: 18, legs_b: 18 })
     // The two bulk-only lifts (cutSets:0 — Wrist Curl, Hip Adduction) drop out on a cut.
     const exCount = (phase: 'bulk' | 'cut', key: string) =>
       activeProgram('onyx5', phase).days.find((d) => d.key === key)!.exercises.length

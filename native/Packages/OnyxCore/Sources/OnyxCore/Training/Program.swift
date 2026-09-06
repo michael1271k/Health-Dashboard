@@ -206,8 +206,8 @@ public extension Program {
                     ProgramExercise("Chest Press (Machine)", sets: 3, cutSets: 2, wk1Kg: 34, reps: "10–12", restSec: 135, compound: true),
                     ProgramExercise("Seated Cable Row (V-Grip)", sets: 3, cutSets: 2, wk1Kg: 38.5, reps: "10–12", restSec: 120, compound: true, note: "V-grip"),
                     ProgramExercise("Pec Deck", sets: 2, cutSets: 2, wk1Kg: 47.5, reps: "12–15", restSec: 120),
-                    ProgramExercise("Straight-Arm Pulldown", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 105),
-                    ProgramExercise("Face Pull", sets: 3, cutSets: 2, wk1Kg: 13.75, reps: "12–15", restSec: 105),
+                    ProgramExercise("Straight-Arm Pulldown", sets: 3, cutSets: 3, wk1Kg: 15, reps: "12–15", restSec: 105),
+                    ProgramExercise("Face Pull", sets: 3, cutSets: 3, wk1Kg: 13.75, reps: "12–15", restSec: 105),
                 ]
             ),
             ProgramDay(
@@ -220,7 +220,7 @@ public extension Program {
                     ProgramExercise("Seated Leg Curl", sets: 3, cutSets: 3, wk1Kg: 40, reps: "10–15", restSec: 105),
                     ProgramExercise("Calf Press", sets: 4, cutSets: 3, wk1Kg: 65, reps: "10–15", restSec: 90),
                     ProgramExercise("Crunch Machine", sets: 3, cutSets: 3, wk1Kg: 52.5, reps: "10–12", restSec: 90),
-                    ProgramExercise("Reverse Crunch", sets: 3, cutSets: 2, wk1Kg: nil, reps: "12–15", restSec: 75),
+                    ProgramExercise("Reverse Crunch", sets: 3, cutSets: 3, wk1Kg: nil, reps: "12–15", restSec: 75),
                 ]
             ),
             ProgramDay(
@@ -230,8 +230,8 @@ public extension Program {
                     ProgramExercise("DB Shoulder Press", sets: 3, cutSets: 3, wk1Kg: 28, reps: "8–10", restSec: 105, compound: true),
                     ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 5, cutSets: 4, wk1Kg: 5, reps: "12–20", restSec: 105, note: "per side"),
                     ProgramExercise("Seated Incline DB Curl", sets: 3, cutSets: 3, wk1Kg: 14, reps: "8–12", restSec: 105),
-                    ProgramExercise("Cable Overhead Extension", sets: 3, cutSets: 2, wk1Kg: 9, reps: "10–15", restSec: 90),
-                    ProgramExercise("DB Hammer Curl", sets: 3, cutSets: 2, wk1Kg: 16, reps: "10–12", restSec: 105),
+                    ProgramExercise("Cable Overhead Extension", sets: 3, cutSets: 3, wk1Kg: 9, reps: "10–15", restSec: 90),
+                    ProgramExercise("DB Hammer Curl", sets: 3, cutSets: 3, wk1Kg: 16, reps: "10–12", restSec: 105),
                     ProgramExercise("Rope Triceps Pushdown", sets: 2, cutSets: 2, wk1Kg: 13.5, reps: "12–15", restSec: 90),
                     ProgramExercise("Reverse EZ-Bar Curl", sets: 2, cutSets: 2, wk1Kg: 15, reps: "12–15", restSec: 90),
                     ProgramExercise("Seated DB Wrist Curl", sets: 2, cutSets: 0, wk1Kg: 16, reps: "15–20", restSec: 90),
@@ -247,7 +247,7 @@ public extension Program {
                     ProgramExercise("Seated Cable Row (Wide Grip)", sets: 3, cutSets: 2, wk1Kg: 35, reps: "10–12", restSec: 120, compound: true, note: "wide bar"),
                     ProgramExercise("Single Arm Lateral Raise (Cable)", sets: 4, cutSets: 3, wk1Kg: 3.75, reps: "15–20", restSec: 90, note: "per side"),
                     ProgramExercise("Preacher Curl (Machine)", sets: 3, cutSets: 3, wk1Kg: 15, reps: "8–12", restSec: 105),
-                    ProgramExercise("Single Arm Triceps Pushdown (Cable)", sets: 2, cutSets: 2, wk1Kg: 5, reps: "12–15", restSec: 90, note: "per arm"),
+                    ProgramExercise("Single Arm Triceps Pushdown (Cable)", sets: 3, cutSets: 3, wk1Kg: 5, reps: "12–15", restSec: 90, note: "per arm"),
                 ]
             ),
             ProgramDay(

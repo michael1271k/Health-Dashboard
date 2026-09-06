@@ -424,14 +424,14 @@
       },
       "expected": [
         {
-          "leverId": "custom",
-          "label": "Custom",
+          "leverId": "baseline-2",
+          "label": "Baseline 2",
           "goals": {
-            "calorie": 2400,
-            "protein": 100,
-            "carbs": 300,
-            "fat": 80,
-            "steps": 6000
+            "calorie": 1935,
+            "protein": 170,
+            "carbs": 190,
+            "fat": 55,
+            "steps": 10000
           },
           "dates": [
             "2026-09-06",
@@ -1016,14 +1016,14 @@
       },
       "expected": [
         {
-          "leverId": "custom",
-          "label": "Custom",
+          "leverId": "baseline-2",
+          "label": "Baseline 2",
           "goals": {
-            "calorie": 2400,
-            "protein": 100,
-            "carbs": 300,
-            "fat": 80,
-            "steps": 6000
+            "calorie": 1935,
+            "protein": 170,
+            "carbs": 190,
+            "fat": 55,
+            "steps": 10000
           },
           "dates": [
             "2026-09-06",
@@ -1031,28 +1031,28 @@
           ]
         },
         {
-          "leverId": "custom",
-          "label": "Custom",
+          "leverId": "baseline-2",
+          "label": "Baseline 2",
           "goals": {
             "calorie": 2200,
             "protein": 180,
-            "carbs": 300,
-            "fat": 80,
-            "steps": 6000
+            "carbs": 190,
+            "fat": 55,
+            "steps": 10000
           },
           "dates": [
             "2026-09-08"
           ]
         },
         {
-          "leverId": "custom",
-          "label": "Custom",
+          "leverId": "baseline-2",
+          "label": "Baseline 2",
           "goals": {
-            "calorie": 2400,
-            "protein": 100,
-            "carbs": 300,
-            "fat": 80,
-            "steps": 6000
+            "calorie": 1935,
+            "protein": 170,
+            "carbs": 190,
+            "fat": 55,
+            "steps": 10000
           },
           "dates": [
             "2026-09-09",

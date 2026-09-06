@@ -166,12 +166,15 @@ public extension Color.onyx {
 /// the callout never re-derives data.
 public struct OnyxCallout: View {
     public struct Line: Identifiable {
-        public let id: String
+        /// Its own identity, never the label: two lines with the same (or an
+        /// empty) label collided in `ForEach`, which drew the first twice and
+        /// dropped the second — the volume callout on a PR session.
+        public let id = UUID()
         public let label: String
         public let value: String
         public let color: Color?
         public init(_ label: String, _ value: String, color: Color? = nil) {
-            self.id = label; self.label = label; self.value = value; self.color = color
+            self.label = label; self.value = value; self.color = color
         }
     }
 

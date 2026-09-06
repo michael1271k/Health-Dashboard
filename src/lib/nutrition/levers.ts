@@ -33,7 +33,7 @@
 // erased at build, so this is a one-way runtime edge and not a cycle.
 import { applyDailyTarget, type DailyTarget } from './dailyTargets'
 
-export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
+export type LeverId = 'baseline' | 'baseline-2' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
 
 export interface NutritionLever {
   id: LeverId
@@ -78,6 +78,20 @@ export const LEVERS: NutritionLever[] = [
     // the WHOLE cut from 2026-07-15, every day of it was graded that way.
     summary: 'The plan as written — full carbs, 10k steps.',
     calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55,
+    stepsGoal: 10000,
+  },
+  {
+    // ── BASELINE 2 (2026-09-06, Week 8) ──
+    // The cut resumes after the maintenance week on a re-based baseline: 20 kcal
+    // under the original, all of it carbs, no lever pulled. A rung and not a
+    // `custom` row because the past belongs to the schedule — a `custom` stretch
+    // reads the LIVE `user_goals` row, so the next edit to that row would have
+    // re-graded every day from 6 Sep. 1,935 = 170·4 + 190·4 + 55·9.
+    id: 'baseline-2',
+    kind: 'deficit',
+    label: 'Baseline 2',
+    summary: 'The Week 8 re-base — 190 g carbs, 10k steps, no lever.',
+    calorieGoal: 1935, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 55,
     stepsGoal: 10000,
   },
   {
@@ -275,8 +289,11 @@ export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   // would be graded against maintenance targets for the rest of the block.
   // A release must always be followed by the rung that resumes.
   { from: '2026-08-30', leverId: 'maintenance-week' },
-  // Open stretch — no `goals`, so it answers with the live `user_goals` row.
-  { from: '2026-09-06', leverId: 'custom' },
+  // The cut resumes on its re-based rung (Phase 3, E0). This WAS an open
+  // `custom` stretch, which answers with the live `user_goals` row — fine until
+  // that row is next edited, at which point every day since 6 Sep would have
+  // been re-graded. A rung pins the numbers the way the 20 Aug row does.
+  { from: '2026-09-06', leverId: 'baseline-2' },
 ]
 
 /** The schedule row covering a date, or null before the cut opened. */

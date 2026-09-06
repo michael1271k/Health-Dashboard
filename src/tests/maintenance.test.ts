@@ -46,8 +46,8 @@ describe('is this date a deload?', () => {
     const until = '2026-09-05'
     expect(leverForDate('2026-09-01', 'maintenance-week', MAINT, until)).toBe('maintenance-week')
     // Past the end date the SELECTION stops being honoured and the schedule —
-    // which resumes `custom` on 2026-09-06 — answers instead.
-    expect(leverForDate('2026-09-10', 'maintenance-week', MAINT, until)).toBe('custom')
+    // which resumes the cut on `baseline-2` on 2026-09-06 — answers instead.
+    expect(leverForDate('2026-09-10', 'maintenance-week', MAINT, until)).toBe('baseline-2')
   })
 
   it('an absent end date changes nothing, which is how every deficit rung behaves', () => {

@@ -421,14 +421,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -454,14 +454,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -883,14 +883,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -916,14 +916,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -1114,14 +1114,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -1147,14 +1147,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 1999,
+        "kcal": 1935,
         "protein": 170,
-        "carbs": 206,
+        "carbs": 190,
         "fat": 55,
         "steps": 10000,
         "waterMl": 3000,
         "sleepHours": 8,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -3200,14 +3200,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 0,
-        "protein": null,
-        "carbs": null,
-        "fat": null,
-        "steps": null,
+        "kcal": 1935,
+        "protein": 170,
+        "carbs": 190,
+        "fat": 55,
+        "steps": 10000,
         "waterMl": null,
         "sleepHours": null,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     },
@@ -3233,14 +3233,14 @@
         "today": "2026-09-05"
       },
       "expected": {
-        "kcal": 0,
-        "protein": null,
-        "carbs": null,
-        "fat": null,
-        "steps": null,
+        "kcal": 1935,
+        "protein": 170,
+        "carbs": 190,
+        "fat": 55,
+        "steps": 10000,
         "waterMl": null,
         "sleepHours": null,
-        "leverId": "custom",
+        "leverId": "baseline-2",
         "profileKey": null
       }
     }

@@ -53,14 +53,14 @@
               },
               {
                 "name": "Straight-Arm Pulldown",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 105,
                 "wk1Kg": 15
               },
               {
                 "name": "Face Pull",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 105,
                 "wk1Kg": 13.75
@@ -116,7 +116,7 @@
               },
               {
                 "name": "Reverse Crunch",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 75,
                 "wk1Kg": null
@@ -151,14 +151,14 @@
               },
               {
                 "name": "Cable Overhead Extension",
-                "sets": 2,
+                "sets": 3,
                 "reps": "10–15",
                 "restSec": 90,
                 "wk1Kg": 9
               },
               {
                 "name": "DB Hammer Curl",
-                "sets": 2,
+                "sets": 3,
                 "reps": "10–12",
                 "restSec": 105,
                 "wk1Kg": 16
@@ -228,7 +228,7 @@
               },
               {
                 "name": "Single Arm Triceps Pushdown (Cable)",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 90,
                 "wk1Kg": 5
@@ -344,7 +344,7 @@
               },
               {
                 "name": "Straight-Arm Pulldown",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 105,
                 "wk1Kg": 15
@@ -526,7 +526,7 @@
               },
               {
                 "name": "Single Arm Triceps Pushdown (Cable)",
-                "sets": 2,
+                "sets": 3,
                 "reps": "12–15",
                 "restSec": 90,
                 "wk1Kg": 5

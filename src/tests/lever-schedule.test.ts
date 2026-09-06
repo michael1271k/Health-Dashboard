@@ -61,8 +61,8 @@ describe('the schedule', () => {
   it('closes the maintenance week rather than leaving it running', () => {
     expect(scheduledLeverOn('2026-08-30')).toBe('maintenance-week')   // opens
     expect(scheduledLeverOn('2026-09-05')).toBe('maintenance-week')   // last day
-    expect(scheduledLeverOn('2026-09-06')).toBe('custom')             // cut resumes
-    expect(scheduledLeverOn('2026-12-01')).toBe('custom')             // and stays resumed
+    expect(scheduledLeverOn('2026-09-06')).toBe('baseline-2')         // cut resumes, re-based
+    expect(scheduledLeverOn('2026-12-01')).toBe('baseline-2')         // and stays resumed
   })
 
   /**
