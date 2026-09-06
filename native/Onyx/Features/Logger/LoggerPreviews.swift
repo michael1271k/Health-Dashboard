@@ -1,6 +1,7 @@
 #if DEBUG
 import SwiftUI
 import OnyxCore
+import OnyxUI
 
 /// Seeded logger screens for `scripts/native-shot.sh`.
 ///
@@ -60,9 +61,33 @@ enum LoggerPreviews {
             }
             .environment(AppEnvironment.preview)
             .preferredColorScheme(.dark)
+        case "logger-stats":
+            // The second face. Shot with a session mid-flight for the same
+            // reason the first is: an empty Live Stats page is five cards of
+            // empty states, which photographs the fallbacks and calls it the
+            // design.
+            NavigationStack {
+                LiveLoggerView(model: .previewUpperB(logged: true), face: .stats)
+            }
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
+        case "logger-paused":
+            // A stopped clock — the one state on this screen where the hero's
+            // timer is a string rather than a system timer, and the state the
+            // Lock Screen has to agree with. Built here rather than reached by a
+            // debug flag inside the view, for the same reason the finish sheet
+            // is presented by the harness.
+            let clock = LoggerClock(startedAt: Date().addingTimeInterval(-22 * 60))
+            let _ = clock.pause()
+            NavigationStack {
+                LiveLoggerView(model: .previewUpperB(logged: true, resting: true), clock: clock)
+            }
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
         default:
-            // Resting, so the shot carries the nav-bar capsule — the one piece
-            // of this screen that only exists between sets.
+            // Resting, so the shot carries the rest capsule and the contextual
+            // "Skip rest" chip — the two pieces of this screen that only exist
+            // between sets.
             NavigationStack {
                 LiveLoggerView(model: .previewUpperB(logged: true, resting: true))
             }

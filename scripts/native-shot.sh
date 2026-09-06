@@ -84,7 +84,7 @@ read -ra SCREENS <<< "$SCREEN"
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-weighin today-board train train-empty logger logger-finish logger-options day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
+  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish logger-options day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a
