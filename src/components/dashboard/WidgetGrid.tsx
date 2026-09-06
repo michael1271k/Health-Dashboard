@@ -25,6 +25,46 @@ import { useDashboardSurface } from '@/lib/hooks/useDashboardSurface'
 import { fetchRemoteLayout, pushRemoteLayout, pickLayout, PUSH_DEBOUNCE_MS } from '@/lib/dashboard/layoutSync'
 
 /**
+ * Catalogue ids the WEB has no face for yet.
+ *
+ * ── THIS IS `WidgetId.isNative`'S TWIN ──────────────────────────────────────
+ * `WIDGET_IDS` is one catalogue shared with the phone, and the phone does not
+ * draw all of it either — `OnyxTile.native` is `Dashboard.widgetIds.filter(
+ * \.isNative)`. This is the same filter pointing the other way, and it exists
+ * because the catalogue is shared and the two clients are not.
+ *
+ * `trajectory` shipped in Wave 12 for the app grid and WidgetKit. Its band and
+ * its ETA come from the phase's target weight and rate range, which the web
+ * does not plumb; a web tile drawing the smoothed line with neither would be a
+ * worse answer than the `body` tile already gives. So `renderWidget` has no
+ * case for it — and without this filter `reconcile`, which APPENDS every
+ * catalogue id a stored layout predates, would put a blank 172 px slot on
+ * every dashboard that has ever been arranged, with a working remove button
+ * and nothing in it.
+ *
+ * When the web grows the tile: delete the id from this set and add its `case`.
+ * `dashboard-web-parity.test.ts` fails until both happen.
+ */
+export const NOT_ON_WEB: ReadonlySet<WidgetId> = new Set<WidgetId>(['trajectory'])
+
+/** The tray offers what the web can actually draw. */
+const WEB_WIDGET_IDS = WIDGET_IDS.filter((id) => !NOT_ON_WEB.has(id))
+
+/**
+ * Every layout entering state passes through here, so a catalogue id the web
+ * cannot draw is never a hole. A slot left with no faces is dropped whole.
+ */
+function webLayout(l: DashboardLayout): DashboardLayout {
+  if (!l.slots.some((s) => s.items.some((i) => NOT_ON_WEB.has(i)))) return l
+  return {
+    ...l,
+    slots: l.slots
+      .map((s) => ({ ...s, items: s.items.filter((i) => !NOT_ON_WEB.has(i)) }))
+      .filter((s) => s.items.length > 0),
+  }
+}
+
+/**
  * How long a face stays up before a stack turns itself over.
  *
  * 12s was slow enough that a stack read as static — you had to sit and watch a
@@ -126,8 +166,8 @@ export function WidgetGrid({ children }: {
 
   // Read AFTER mount. `readLayout` touches localStorage, so seeding state from
   // it directly would render different markup on the server and hydrate wrong.
-  const [layout, setLayout] = useState<DashboardLayout>(() => defaultLayout())
-  useEffect(() => { setLayout(readLayout(surface)) }, [surface])
+  const [layout, setLayout] = useState<DashboardLayout>(() => webLayout(defaultLayout()))
+  useEffect(() => { setLayout(webLayout(readLayout(surface))) }, [surface])
 
   /**
    * ── THE CLOUD COPY ─────────────────────────────────────────────────────────
@@ -146,7 +186,7 @@ export function WidgetGrid({ children }: {
     void fetchRemoteLayout(surface).then((remote) => {
       if (!alive || !remote) return
       setLayout((local) => {
-        const winner = pickLayout(local, remote)
+        const winner = webLayout(pickLayout(local, remote))
         // Only touch localStorage when the remote actually won. Writing the
         // local copy back over itself would be a no-op with a side effect.
         if (winner !== local) writeLayout(winner, surface)
@@ -573,7 +613,7 @@ export function WidgetGrid({ children }: {
 
               {galleryOpen && (
                 <div className="flex flex-wrap gap-1.5 pt-2">
-                  {WIDGET_IDS.map((id) => {
+                  {WEB_WIDGET_IDS.map((id) => {
                     const meta = WIDGET_META[id]
                     const Icon = meta.icon
                     // How many are already on the grid. Shown rather than

@@ -201,6 +201,43 @@ struct WidgetSnapshotBuilderTests {
         #expect(s.calendar == nil && s.cardio == nil && s.records == nil && s.vitals == nil && s.volumeTrend == nil && s.steps.trend == nil)
     }
 
+    /// The bug W13 found: `rows.weights` is `limit(30)` with NO date filter,
+    /// because the Weight face needs the latest reading however old it is.
+    /// Handing those same rows to a least-squares fit is a different thing —
+    /// weigh-ins are sparse by protocol, so thirty of them reach back months,
+    /// and a distant point has enormous leverage on the rate, the pace verdict
+    /// and the ETA that print on BOTH the Today Goal Board row and the
+    /// Trajectory tile.
+    ///
+    /// A reading from before `historyStart` must therefore change nothing. The
+    /// scale face must still see it, which is the other half of the rule.
+    @Test("a weigh-in older than the window moves the trajectory not at all")
+    func trajectoryIsBounded() throws {
+        let db = try seeded()
+        let before = try #require(try build(db, .body).trajectory)
+
+        // Six months back and eleven kilos heavier: unbounded, this drags the
+        // rate towards zero and the arrival date out by months.
+        try db.writer.write { conn in
+            try BodyCompositionRow(
+                id: "bc-ancient", userId: user, measuredAt: now, date: "2026-03-10",
+                weightKg: 95, bodyFatPct: 26, createdAt: now, skeletalMuscleMassKg: 27
+            ).insert(conn)
+        }
+        let after = try #require(try build(db, .body).trajectory)
+
+        #expect(after.points.count == before.points.count, "an out-of-window reading is not a point on the line")
+        #expect(after.board.ratePerWeekKg == before.board.ratePerWeekKg)
+        #expect(after.board.etaISO == before.board.etaISO)
+        #expect(after.board.pace == before.board.pace)
+        #expect(after.latestEwmaKg == before.latestEwmaKg)
+
+        // …and the face that reads the ledger directly still sees it, because
+        // the bound is on the fit and not on the fetch.
+        let weight = try build(db, .body).weight
+        #expect(weight.kg != nil, "the scale face still has a reading")
+    }
+
     @Test("an empty store still answers, with nil where the route sent null")
     func emptyStore() throws {
         let db = try AppDatabase.inMemory()

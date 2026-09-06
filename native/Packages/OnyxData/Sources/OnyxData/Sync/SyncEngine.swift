@@ -120,7 +120,9 @@ public actor SyncEngine {
         // engine instance — three call sites each building their own is an easy
         // mistake — would otherwise release rows this one is still uploading.
         var claimed: [String] = []
-        defer { try? database.returnToQueue(ids: claimed) }
+        // `_ =` because the return is the row count and a `defer` has nobody to
+        // report it to; the throw is deliberately swallowed — see above.
+        defer { _ = try? database.returnToQueue(ids: claimed) }
 
         let batch = try database.claimOutbox(limit: limit, now: now)
         guard !batch.isEmpty else { return DrainReport() }

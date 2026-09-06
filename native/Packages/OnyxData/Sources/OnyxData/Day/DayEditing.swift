@@ -389,7 +389,7 @@ public extension AppDatabase {
             let amount = max(0, ml.rounded())
             _ = try Self.patchDailyLog(db, userId: userId, date: date, now: now, clearing: []) { $0.waterMl = amount }
             try Self.deleteWater(db, userId: userId, date: date)
-            var row = WaterIntakeRow(
+            let row = WaterIntakeRow(
                 id: newOnyxID(), userId: userId, hkUuid: "manual-water-\(date)",
                 loggedAt: Self.utcInstant(date, hour: 12) ?? now, date: date, amountMl: amount, createdAt: now
             )

@@ -110,6 +110,12 @@ public enum OnyxTile {
     public static let native: [WidgetId] = Dashboard.widgetIds.filter(\.isNative)
 
     /// The face for one widget. The caller sets `onyxTileFamily`.
+    ///
+    /// `@MainActor` because every arm builds a SwiftUI `View` whose initialiser
+    /// is main-actor isolated. Without it the switch warned sixteen times, once
+    /// per arm, for a fact that was never in doubt: all three call sites
+    /// (`DashboardGrid`, `DomainSheets`, `SmartStackView`) are inside a `body`.
+    @MainActor
     @ViewBuilder
     public static func face(_ id: WidgetId, entry: OnyxTileEntry) -> some View {
         switch id {

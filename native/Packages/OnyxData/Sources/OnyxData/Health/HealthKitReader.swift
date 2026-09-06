@@ -43,7 +43,7 @@ public struct HealthKitReader: HealthReading {
         switch reduce {
         case .sum: options = .cumulativeSum
         case .average: options = .discreteAverage
-        case .latest: options = .discreteMostRecent
+        case .latest: options = .mostRecent
         }
         // Half-open, so a sample at exactly midnight belongs to one day and not
         // to both. `.strictStartDate` is what makes the bound exclusive rather

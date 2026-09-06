@@ -6,9 +6,45 @@ of `NATIVE_MIGRATION_PLAN.md`, refreshed at Wave 2.12 (the rename) and re-run at
 form; every other line is already true of the binary and was verified against a
 Release build, not asserted.
 
-**The app is called Onyx.** The bundle identifiers still read `app.helix.health…`
-and they stay that way until Gate 0: renaming a bundle id before the App Group
-is provisioned means re-provisioning it, and the id is never shown to anyone.
+**The app is called Onyx, and so are the identifiers.** Phase 2.5's Wave 2 did
+the rename all the way down, ahead of Gate 0 rather than after it — which was
+free precisely because the App Group had never been provisioned, so there was
+nothing to re-provision. Register `app.onyx.health.michael` in the developer
+portal, not `app.helix.*`; the values in §1 are read from `native/project.yml`,
+which is the source of truth (`native/Onyx.xcodeproj` is generated from it and
+must never be hand-edited).
+
+The `.native` suffix is a deliberate leftover of installing beside the retired
+Capacitor build. It is never shown to anyone — but it is permanent once the App
+ID is registered, so if you would rather ship `app.onyx.health.michael`, change
+`native/project.yml` BEFORE the portal, not after.
+
+---
+
+## 0. Blockers — nothing below matters until these are done
+
+Found by the Wave 13 preflight (2026-09-06). The first two are the ones a
+reviewer hits before they ever open the app.
+
+| # | What | Guideline | Where |
+|---|---|---|---|
+| 1 | **The privacy-policy URL 404s.** `https://helix-health-fitness.netlify.app/privacy` is not a page — there is no `/privacy` route in `src/app/` and nothing in `public/`. Every app carrying the HealthKit entitlement gets this URL opened. | 5.1.1(i) | `SettingsTabView.swift:242` + the ASC field below |
+| 2 | **The support URL 404s** the same way. | 1.5 | the ASC field below |
+| 3 | **No demo account.** The app is a hard login wall with no in-app sign-up, so a reviewer cannot get past the first screen. Create and seed one, and put it in App Review Information. | 2.1 | §"App Review Information" |
+| 4 | **The metadata is still `⟨…⟩` placeholders** — subtitle, promotional text, description, keywords. | 2.1 | §2 |
+| 5 | **Apple Developer Program membership.** A free personal team cannot sign the App Group entitlement or upload. | — | §"Gate 0" |
+
+Two more that are decisions rather than defects:
+
+- **The policy would live on a differently-branded domain.** `helix-health-fitness.netlify.app` serves a product called HELIX. Either publish both pages there and accept that, or stand up an Onyx domain and change `SettingsTabView.swift:242` and both ASC fields in one commit.
+- **"Onyx is a single-user personal training log"** (§"App Review Information") must never appear in the metadata or the review notes — Apple rejects apps positioned for one person (4.2/4.3). If it genuinely is one, TestFlight avoids review entirely.
+
+Verified clean at the same pass, with values: bundle ids and the extension's
+parentage, matching versions across both targets, the App Group in all four
+places, entitlements (nothing unused, nothing missing), both `PrivacyInfo.xcprivacy`
+manifests, the HealthKit usage strings, no iCloud health data, no tracking SDK,
+no placeholder or dead UI, the icon's alpha channel, and `Secrets.xcconfig`
+untracked.
 
 ---
 
@@ -16,8 +52,8 @@ is provisioned means re-provisioning it, and the id is never shown to anyone.
 
 | Field | Value |
 |---|---|
-| Bundle ID | `app.helix.health.michael.native` |
-| Widget extension | `app.helix.health.michael.native.widgets` |
+| Bundle ID | `app.onyx.health.michael.native` (`native/project.yml:169`) |
+| Widget extension | `app.onyx.health.michael.native.widgets` (`native/project.yml:234`) |
 | Version (`CFBundleShortVersionString`) | `1.0` |
 | Build (`CFBundleVersion`) | `1` |
 | Team | `W9UMPV973P` |
@@ -26,7 +62,7 @@ is provisioned means re-provisioning it, and the id is never shown to anyone.
 | Primary category | Health & Fitness |
 | Secondary category | *(leave empty)* |
 | Age rating | 4+ — no user-generated content, no web view of arbitrary URLs, no ads |
-| App icon | `native/HelixNative/Resources/Assets.xcassets/AppIcon.appiconset` — one 1024 × 1024, no alpha: the black onyx squircle with the broken lavender→indigo ring (§8 of the Phase 2 plan). The same ring `OnyxMark` draws in the app, so the Home Screen and the nav bar show one object. Verified compiled into `Assets.car`. |
+| App icon | `native/Onyx/Resources/Assets.xcassets/AppIcon.appiconset` — one 1024 × 1024, no alpha: the black onyx squircle with the broken lavender→indigo ring (§8 of the Phase 2 plan). The same ring `OnyxMark` draws in the app, so the Home Screen and the nav bar show one object. Verified compiled into `Assets.car`. |
 
 The app and the widget extension carry the **same** marketing and build numbers.
 App Store Connect rejects an extension whose version differs from its host, and
@@ -82,7 +118,7 @@ the two icons still tell themselves apart while both are installed.
 > **This page must exist and return 200 before you submit.** App Review opens it
 > for every app carrying the HealthKit entitlement, and a 404 is an instant
 > rejection under 5.1.1. The same URL is linked in-app from **Settings → About**
-> (`HelixLinks.privacyPolicy`) — change it in one place.
+> (`OnyxLinks.privacyPolicy`, `native/Onyx/Features/Settings/SettingsTabView.swift:242`) — change it in one place.
 >
 > It has to say, in plain language: what is collected (Health data, email),
 > why (to compute the scores the app displays), where it goes (this device and
@@ -103,18 +139,18 @@ manifest is its own rejection.
 | Contact Info → Email Address | Collected · **Linked** · not tracking · App Functionality |
 | Any other category | **No** |
 | Used for tracking? | **No** — `NSPrivacyTracking` is `false`, `NSPrivacyTrackingDomains` is empty |
-| Third-party SDKs | GRDB and swift-crypto, both bundled with their own manifests; neither collects |
+| Third-party SDKs | GRDB, supabase-swift and swift-crypto, all bundled with their own manifests; none collects |
 
 **Required-reason APIs declared** (app and extension both):
 
 | API category | Reason | Why |
 |---|---|---|
 | `UserDefaults` | `CA92.1` | App Group suite, read by the app and the timeline provider; never leaves the device |
-| `FileTimestamp` | `C617.1` | GRDB stats `helix.sqlite` and its `-wal` when it opens them |
+| `FileTimestamp` | `C617.1` | GRDB stats `onyx.sqlite` and its `-wal` when it opens them |
 | `DiskSpace` | `E174.1` | SQLite checks free space before a write |
 
 The extension carries its **own** manifest: the required-reason check runs per
-Mach-O binary at upload, so the app's does not cover `HelixNativeWidgets.appex`.
+Mach-O binary at upload, so the app's does not cover `OnyxWidgets.appex`.
 
 ---
 
@@ -166,7 +202,7 @@ Writes `native/__store__/6.9in/` (1320 × 2868, **required**) and
 `native/__store__/6.3in/` (1206 × 2622) — six screens each: Today, Workout,
 Nutrition, Pulse, Body trends, History, in that order. That is the app's own tab
 order, then the two screens that show it has history. Deterministic: the
-`--helix-screen` harness seeds in-memory data, so no account and no network are
+`--onyx-screen` harness seeds in-memory data, so no account and no network are
 involved and the same command produces the same PNGs tomorrow.
 
 The output is gitignored. Regenerate, upload, move on.
@@ -197,7 +233,7 @@ permission or usage string — so every verdict above still describes the binary
 Both `PrivacyInfo.xcprivacy` files are present (the app's and the extension's;
 the required-reason check runs per Mach-O, not per app).
 
-**Security gate** (verified against `Release-iphonesimulator/HelixNative.app`):
+**Security gate** (verified against `Release-iphonesimulator/Onyx.app`):
 
 - The only credential in the bundle is the Supabase **anon** JWT — the role
   claim was decoded and read `anon`. RLS is what protects the data.
@@ -211,10 +247,12 @@ the required-reason check runs per Mach-O, not per app).
 - ATS is untouched: no `NSAllowsArbitraryLoads`, no exception domains, no
   `http://` URL, and nothing overrides a certificate challenge.
 - Every debug affordance is unreachable in Release — the whole of
-  `PreviewHarness.swift` and its call site, `HELIX_START_TAB`, `HELIX_NO_HEALTH`,
-  `HELIX_SESSION_FILE` and the SQL tracer are all inside `#if DEBUG`, and only
+  `PreviewHarness.swift` and its call site, `ONYX_START_TAB`, `ONYX_NO_HEALTH`,
+  `ONYX_SESSION_FILE` and the SQL tracer are all inside `#if DEBUG` (the tracer
+  is `#if DEBUG && targetEnvironment(simulator)` since W13 — it prints bound
+  values, and a free-team device build IS a Debug build), and only
   the Debug configuration defines `DEBUG`. As of Wave 2.13 every `#Preview` is
-  too: two in `HelixUI` were not, and `#Preview` expands in **all**
+  too: two in `OnyxUI` were not, and `#Preview` expands in **all**
   configurations, so they were compiling into the shipping framework.
 - The widget extension makes **no** network request of any kind; it opens the
   App Group database read-only.
@@ -228,7 +266,7 @@ the required-reason check runs per Mach-O, not per app).
 
 **Performance gate:**
 
-- Launch path audited: `HelixNativeApp` draws a `ProgressView` and does the
+- Launch path audited: `OnyxApp` draws a `ProgressView` and does the
   database open and Keychain read inside a `.task`; `AppEnvironment.start()` is
   async; the Health pull is a detached task on foreground, never on launch. No
   synchronous network and no blocking work before the first frame.

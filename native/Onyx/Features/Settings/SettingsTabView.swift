@@ -161,7 +161,15 @@ private struct SettingsForm: View {
             } header: {
                 OnyxSectionHeader("About", .recover)
             } footer: {
-                Text("Health data stays on this device and in your own private Onyx account. It is never sold, and never shared with anyone else.")
+                // The medical sentence is FIRST because it is the one App Review
+                // looks for (guideline 1.4.1). Onyx reads HRV, resting heart
+                // rate, SpO₂ and respiratory rate out of HealthKit and tells
+                // you what it thinks they mean — "an early fatigue or
+                // under-recovery signal" — which is interpretation, and
+                // interpretation without this line is what the guideline is
+                // about. It measures nothing itself; that is the half of 1.4.1
+                // that would be a hard reject.
+                Text("Onyx is a training and recovery log, not a medical device. It does not diagnose, treat or monitor any condition — talk to a doctor before making a health decision.\n\nHealth data stays on this device and in your own private Onyx account. It is never sold, and never shared with anyone else.")
             }
 
             Section {

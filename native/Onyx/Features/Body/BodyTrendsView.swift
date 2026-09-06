@@ -93,11 +93,17 @@ private struct BodyTrendsScreen: View {
         // every one of them a smear.
         let recent = ISODate.addDays(LogicalDay.today(), -55) ?? LogicalDay.today()
         let logs = slice.logs.filter { $0.date >= recent }
+        // The chart's scroll span is the window the picker resolved, not a
+        // constant. W11 replaced this screen's 30/90/365 control with
+        // `EraWindow`; two strings under it went on saying 90 days, so a
+        // reader who chose "30 d" was told "No weigh-ins in the last 90 days"
+        // about a window they had not asked for.
+        let resolved = window.resolve(input)
         ScrollView {
             VStack(alignment: .leading, spacing: OnyxSpace.l) {
                 EraWindowPicker(selection: $window, input: input)
 
-                CompositionSection(readings: readings, goals: slice.goals)
+                CompositionSection(readings: readings, goals: slice.goals, windowDays: resolved.days)
                 LedgerSection(readings: readings, goals: slice.goals)
                 StepsSection(
                     steps: BodyVitals.steps(metrics: slice.metrics.filter { $0.date >= recent }, logs: logs),
@@ -114,6 +120,7 @@ private struct BodyTrendsScreen: View {
 
 /// A row that stacks at accessibility sizes: an `HStack` of a header and a
 /// picker, or a date and a number, is three one-word columns at AX5.
+@MainActor
 @ViewBuilder
 private func accessibleRow<Content: View>(spacing: CGFloat = 8, @ViewBuilder _ content: () -> Content) -> some View {
     AccessibleRow(spacing: spacing, content: content())
@@ -137,9 +144,6 @@ private struct AccessibleRow<Content: View>: View {
 /// app: which point the finger is nearest, where a line must break, and how
 /// tight the y-axis sits on the data.
 enum Trend {
-    /// How far back the one read goes.
-    static let windowDays = 90
-
     struct Run { let point: TrendPoint; let run: Int }
 
     /// A gap in the dates is a gap in the line: consecutive days share a run,
@@ -227,6 +231,8 @@ private enum BodyPlot: String, CaseIterable, Identifiable {
 private struct CompositionSection: View {
     let readings: [BodyReading]
     let goals: UserGoalRow?
+    /// The resolved window's span, so the scroll domain matches the picker.
+    let windowDays: Int
 
     @State private var plot: BodyPlot = .weight
     @State private var selected: Date?
@@ -296,7 +302,7 @@ private struct CompositionSection: View {
         }
         .chartYScale(domain: Trend.domain(series.map { Optional($0.v) } + [target]))
         .chartXSelection(value: $selected)
-        .onyxScrollable(days: 90)
+        .onyxScrollable(days: windowDays)
         .onyxChart(.body)
     }
 }
@@ -334,7 +340,7 @@ private struct LedgerSection: View {
             OnyxSectionHeader("Ledger", .body)
             VStack(spacing: 0) {
                 if entries.isEmpty {
-                    Text("No weigh-ins in the last \(Trend.windowDays) days.")
+                    Text("No weigh-ins in this window.")
                         .font(.footnote)
                         .foregroundStyle(Color.onyx.textSecondary)
                         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

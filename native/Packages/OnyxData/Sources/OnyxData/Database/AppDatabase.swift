@@ -52,10 +52,19 @@ public final class AppDatabase: Sendable {
     ///
     /// In practice the App Group half is dead code today: the entitlement has
     /// never been signed (it needs the paid Developer Program — Gate 0), so
-    /// every store that exists is the Application Support fallback. It is here
-    /// because the day the group IS provisioned is the day this would
-    /// otherwise silently lose a device's history, and by then nobody would
-    /// connect the two.
+    /// every store that exists is the Application Support fallback.
+    ///
+    /// ── AND IT STAYS DEAD AFTER GATE 0 UNLESS THE ENTITLEMENT SAYS SO ───────
+    /// `containerURL(forSecurityApplicationGroupIdentifier:)` returns non-nil
+    /// only for a group id listed in the BINARY's entitlements, and
+    /// `Onyx.entitlements` lists `group.app.onyx.health` alone. So provisioning
+    /// the new group does not wake this branch: it returns nil, the `if let` is
+    /// skipped, and nothing is adopted or lost — there is simply nothing there
+    /// to adopt, because no build ever wrote to the legacy group either.
+    ///
+    /// Do not read this as a safety net. If a build ever DOES ship having
+    /// written to `group.app.helix.health`, that id has to go into the
+    /// entitlements array in the same commit, or this cannot see it.
     static let legacyAppGroupID = "group.app.helix.health"
     static let legacyFolderName = "Helix"
     static let legacyFileName = "helix.sqlite"
@@ -131,9 +140,17 @@ public final class AppDatabase: Sendable {
 
         var config = Configuration()
         config.foreignKeysEnabled = true
-        #if DEBUG
+        #if DEBUG && targetEnvironment(simulator)
         // Every statement, in the console, during development. The single most
         // useful thing when a query returns fewer rows than it should.
+        //
+        // ── SIMULATOR, NOT `DEBUG` — the same reason `migrator` gives ────────
+        // GRDB's `TraceEvent` description is `expandedSQL`: the parameters are
+        // substituted in, so this prints every weight, body-fat percentage,
+        // sleep figure and the user's UUID, not just the statement text. This
+        // project signs with a free Apple team, so the build running on the
+        // PHONE is a Debug build — gated on `DEBUG` alone, a real body's
+        // measurements go to the device system log and into any sysdiagnose.
         config.prepareDatabase { db in
             db.trace { print("[SQL] \($0)") }
         }

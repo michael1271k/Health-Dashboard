@@ -678,7 +678,7 @@ struct SetRow: View {
 
     private var axes: [String] {
         var out: [String] = []
-        for a in [row.row.set, row.row.left, row.row.right].compactMap { $0?.prAxes }.flatMap({ $0 }) {
+        for a in [row.row.set, row.row.left, row.row.right].compactMap({ $0?.prAxes }).flatMap({ $0 }) {
             let label = PrAxis(rawValue: a).map { PrEngine.axisLabel($0, timed: timed) } ?? a
             if !out.contains(label) { out.append(label) }
         }

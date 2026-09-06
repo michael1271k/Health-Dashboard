@@ -240,7 +240,25 @@ public struct WidgetSnapshotBuilder: Sendable {
         // the line, and fitting without them is a rate computed from a third of
         // the data. Both series come from here so the tile, the Goal Board row
         // and the Body screens cannot report three different rates.
-        let bodyReadings = wantsBody ? BodyVitals.readings(ledger: rows.weights, logs: rows.ledgerLogs) : []
+        //
+        // ── AND THE WINDOW IS THE LEDGER'S, NOT "THE LAST 30 ROWS" ──────
+        // `rows.weights` is `limit(30)` with no date bound, because the Weight
+        // face needs the latest reading however old it is. A REGRESSION fitted
+        // over the same rows is a different thing: weigh-ins are sparse by
+        // protocol — every second or third morning, none on a trip — so thirty
+        // scans can reach back six months and straddle two phases. Least
+        // squares gives those distant points enormous leverage, and the rate,
+        // the pace verdict and the ETA that come out of it print on the Today
+        // Goal Board row AND the Trajectory tile: one number, consistently
+        // wrong, which is worse than two that disagree.
+        //
+        // `TodayFeedBuilder` bounded its own fit to 28 days for exactly this
+        // reason before W12 rebound it here. The bound is `historyStart` now —
+        // the same eight weeks `ledgerLogs`, the deficit ledger and the
+        // consistency grid already walk — so every W12 series reads one window.
+        let bodyReadings = wantsBody
+            ? BodyVitals.readings(ledger: rows.weights, logs: rows.ledgerLogs).filter { $0.date >= historyStart }
+            : []
         let trajectory: Trajectory? = wantsBody
             ? {
                 let preset = Programs.goals(planId: programId, phase: schedule.phase)
@@ -579,7 +597,20 @@ public struct WidgetSnapshotBuilder: Sendable {
                 userId: userId, date: d, hoursAwake: hoursAwake, isRestDay: !plan.isTraining,
                 todayISO: date, isToday: d == date, supplements: plan.supplements
             )
-            let breakdown = inputs.map { Battery.breakdown($0, hoursAwake: hoursAwake) }
+            // ── AN UNSCORED DAY DRAWS NOTHING, NOT A NEUTRAL BATTERY ──────
+            // `Battery.breakdown` degrades every missing term to its NEUTRAL
+            // value rather than to nil, so empty inputs still return a morning
+            // charge near 55 and a clock drain — a real-looking column for a
+            // day `daily_scores` has no row for, on a tile sitting beside faces
+            // that render the same day as "—". `scoringInputs` only returns nil
+            // for a PAST day with nothing at all, so a travel day carrying one
+            // hand-entered weight was enough to invent one.
+            //
+            // Gate on the condition the snapshot's own battery uses (see
+            // `liveScore`, and `refreshDailyScore` before it): a day is scored
+            // everywhere or nowhere.
+            let scored = inputs.flatMap { Score.daily($0).totalScore == nil ? nil : $0 }
+            let breakdown = scored.map { Battery.breakdown($0, hoursAwake: hoursAwake) }
             days.append(BatteryStackDayIn(
                 date: d,
                 batteryPct: breakdown.map { jsRound($0.currentPct) },

@@ -1,8 +1,26 @@
 # ONYX — Phase 2.5: Polish, Parity & Bug Fixes
 
-**Status: ADOPTED 2026-09-05, not yet executing.** Founder-approved after a brainstorm (14 decisions in §Decisions). Supersedes nothing: `docs/NATIVE_PHASE_2_PLAN.md` stays the record of what Phase 2 decided. Written by Track E (Fable) from four read-only code sweeps + a live Supabase introspection on 2026-09-05.
+**Status: COMPLETE 2026-09-06.** W0 through W13 are merged to `main`. Founder-approved after a brainstorm (14 decisions in §Decisions). Supersedes nothing: `docs/NATIVE_PHASE_2_PLAN.md` stays the record of what Phase 2 decided. Written by Track E (Fable) from four read-only code sweeps + a live Supabase introspection on 2026-09-05.
 
-First action when execution starts: W0 (this file is already on disk; memory `phase-2-5-plan` is written). Scope: iOS native app (Onyx). Web (Helix) is edited **only** for sync/parity: realtime fan-out keys, the exercise-summary twin, the supplement-credit twin, the plan-id rename, and the already-written API auth fix reaching production.
+Scope as executed: iOS native app (Onyx). Web (Helix) was edited **only** for sync/parity: realtime fan-out keys, the exercise-summary twin, the supplement-credit twin, the plan-id rename, and the already-written API auth fix reaching production.
+
+### W13's ship gate, as measured (2026-09-06)
+
+| Gate | Result |
+|---|---|
+| `npm test` | green |
+| `npm run swift:core` · `swift:data` | green |
+| `npm run golden` | regenerates to a zero diff — no staleness |
+| `npm run check:atlas` · `check:mirror` · `check:swift` | green |
+| Release build, `CODE_SIGNING_ALLOWED=NO`, simulator destination | **BUILD SUCCEEDED**, 0 errors |
+| `rg -i helix native --type swift` | only the wire constants and historical comments W2 allowed — `helix5-` slugs, `era = "helix"`, `helix.week/1`, the `helix_active_*` web keys, the legacy store/App-Group ids behind the one-time migration, and the `helix://` twin the deep-link vector is generated from |
+| `graphify update .` | 12,062 nodes · 31,200 edges · 1,293 communities at `258e050`; every `source_file` resolves on disk |
+
+The audits ran on `e491ef5..HEAD` (795 files). What they found and what was done
+about it is in the W13 commit; the items that are **not** code — a privacy-policy
+and support URL that 404, a missing demo account, the Netlify `NEXT_PUBLIC_DEV_*`
+keys and the Supabase password rotation — are in §"By-hand list for the founder"
+and in `docs/APP_STORE.md` §0.
 
 ## Context
 
@@ -121,9 +139,9 @@ Skills: `schema`. Agents: `schema-truth-checker`, `invariant-auditor` (plan reso
 ### W4 — Bidirectional sync completion (Track E, 2 d)
 1. **PR ledger from native**: `LoggerModel.finish` → `PrEngine.buildBaselines` (from local `workout_sets` + seed book `PrTruth`) → `detectSessionPrs` → `recordSets` → `personal_records` rows in the same transaction as sets → outbox (conflict key = the server's unique index; introspect). Memory rules: `pr-count-reconcile-rule` (pr_count only raised), `pr-seed-record-book`, `pr-engine-invariants`, `reentry-week-pr-policy`. One-off: recompute PRs for every native-logged session (idempotent, like the web backfill script).
 2. Push paths for `custom_supplements` (create/edit/archive/delete), custom `exercises` (insert; `exerciseCatalogue()` stays select), `target_profiles`, `program_day_layout` — `npm run mirror` regen; drop `supplement_dose_overrides` from the catalogue + `native/schema/supabase.json` (server drop-SQL proposed).
-3. **Realtime 13 → 29**: paste-SQL `alter publication supabase_realtime add table cardio_logs, fatigue_logs, doms_logs, daily_targets, custom_supplements, personal_records, dashboard_layouts, target_profiles, program_day_layout, plan_phase_goals, plan_phase_volume, routine_templates, plans, exercises, profiles, widget_tokens;` + extend `src/lib/query/realtimeKeys.ts` with the matching query keys (`useCardio`, `useFatigue`, `useRecovery`, `useCustomSupplements`, PR hooks, targets). The one web edit of the wave.
+3. **Realtime 13 → 29**: paste-SQL `alter publication supabase_realtime add table cardio_logs, fatigue_logs, doms_logs, daily_targets, custom_supplements, personal_records, dashboard_layouts, target_profiles, program_day_layout, plan_phase_goals, plan_phase_volume, routine_templates, plans, exercises, profiles;` + extend `src/lib/query/realtimeKeys.ts` with the matching query keys (`useCardio`, `useFatigue`, `useRecovery`, `useCustomSupplements`, PR hooks, targets). The one web edit of the wave.
 4. Natural-key unique indexes (paste-SQL after a duplicate check): `fatigue_logs (user_id,date,slot)`, `doms_logs (user_id,date,muscle_group)`; native upserts switch to them.
-5. `widget_tokens` policy (paste-SQL) so the snapshot endpoint's table is reachable; optional Notion/`_bak` drops.
+5. ~~`widget_tokens` policy so the snapshot endpoint's table is reachable~~ — **struck 2026-09-06 (W13), do not run it.** `widget_tokens` holds long-lived read-only BEARER TOKENS for `/api/widget/snapshot`, and that endpoint, its Swift client and all its plumbing were deleted inside this phase. The table's current state is the safe one — RLS on, zero policies, unreachable via PostgREST — so a policy whose stated purpose is "make it reachable" turns dead secrets into anon-readable ones, and the publication line above would additionally have streamed them over Realtime (`widget_tokens` is struck there too). The correct step is `drop table widget_tokens;`, already queued in `docs/NATIVE_MIGRATION_PLAN.md`. Optional Notion/`_bak` drops stand.
 6. `SyncRoundTripTests` (env-gated live, pattern `BackfillLiveTests`): each mirrored table write → server → second store.
 Skills: `schema`, `supabase-postgres-best-practices`, `capacitor-offline-first`. Agents: `swift-expert`, `schema-truth-checker`, `supabase-realtime-optimizer`, `invariant-auditor`. Gate: phone logs cardio / water / fatigue / DOMS / supplement skip / weigh-in / PR → web shows each without reload; web logs weight / sleep onset / nutrition / lever change → phone within one tick; Sync Doctor equal.
 
@@ -185,9 +203,25 @@ E ≈ 9.5 d · U ≈ 13 d. U waves binding an E result (W5 Goal Board, W6u, W7u,
 
 ## By-hand list for the founder (nothing here is in git)
 - **Now**: approve W0's push to `main` (deploys the auth fix). Still outstanding from memory: delete `NEXT_PUBLIC_DEV_*` on Netlify, rotate the Supabase password.
-- Paste-SQL (each proposed in chat at its wave, introspected first): W3 plan-id updates; W4 publication add-tables, natural-key unique indexes, `widget_tokens` policy, optional drops (`supplement_dose_overrides`, `notion_*`, `_bak_20260723`); W6 `custom_supplements.archived_at`; optional `(select auth.uid())` policy rewrite.
+- Paste-SQL (each proposed in chat at its wave, introspected first): W3 plan-id updates; W4 publication add-tables, natural-key unique indexes, optional drops (`supplement_dose_overrides`, `notion_*`, `_bak_20260723`); W6 `custom_supplements.archived_at`; optional `(select auth.uid())` policy rewrite. **The `widget_tokens` policy is struck — see W4 step 5. Run `drop table widget_tokens;` instead.**
 - After W2: sign in once more on the simulator/device (Keychain service changed); `Secrets.xcconfig` keys renamed by hand (gitignored).
 - GitHub: delete `origin/feature/native-migration-wave-1` one week after W0.
+
+### Added by W13's audits (2026-09-06) — none of it is code, all of it blocks something
+
+**Before an App Store submission** (detail and guideline numbers in `docs/APP_STORE.md` §0):
+- **Publish `/privacy` and `/support`.** Both 404 today. `SettingsTabView.swift:242` links the first, and App Review opens it for every app carrying the HealthKit entitlement — a 404 there is an instant 5.1.1 rejection. Decide at the same time whether they live on `helix-health-fitness.netlify.app` (a differently-branded domain, which reviewers do notice) or on an Onyx domain; if the domain moves, `SettingsTabView.swift:242` and both App Store Connect fields change in one commit.
+- **Create and seed a demo account**, and put it in App Review Information. The app is a login wall with no in-app sign-up, so without one a reviewer never sees the second screen.
+- **Fill the `⟨…⟩` metadata** and answer the App Privacy questionnaire to match `PrivacyInfo.xcprivacy` exactly (Health · Fitness · Email Address, each Collected · Linked · not tracking · App Functionality). A questionnaire that disagrees with the manifest is its own rejection.
+- **Register `app.onyx.health.michael`**, not `app.helix.*`. The runbook said the old prefix until W13 corrected it.
+- Swap `native/__store__/6.9in/reports.png` for a History screen — it is ~70 % empty and 2.3.3 asks for the app in use.
+
+**Security, in priority order** (each found on `e491ef5..HEAD`, none a live remote exploit):
+- **`npm i next@15.5.25`.** `next@15.5.19` carries eight advisories, all fixed by a non-major patch. The live one for this app is the response-body cache confusion — a CDN-fronted app whose API routes return the whole health record. Left undone deliberately: bumping a framework on a push to `main` deploys it, and that is the founder's call, not the gate's. Same pass: move `sharp` to `devDependencies` (its only import is `scripts/generate-icons.mjs`).
+- **`signOut()` does not wipe the local store.** `AppEnvironment.swift:325` clears the session and leaves `onyx.sqlite` in the shared container, so the widget extension — which opens the file independently of auth and asks `knownUserId()` whose data it is — keeps rendering the signed-out account's weight, sleep and macros on the Lock Screen indefinitely. Signing in as a second user mixes both users' rows in one file, and `MirrorStore`'s delta cursor (`max(updated_at)` with no user filter) then steps over the new user's older rows permanently. Not done here because erasing a store with an undrained `outbox` loses unsynced sets: the fix is drain-then-erase plus `reloadAllTimelines()`, and it wants its own wave and its own test.
+- **`PostgRESTRemote.deleteRow` relies on RLS alone.** Every `select` belts-and-braces it with `.eq("user_id", userId)`; the delete builds filters from the local primary key only, which for five of six paths is `id` alone. Safe today, destructive the moment one policy is written `USING (true)` — and this project already carries 20 duplicate permissive policies. One line to fix, but it needs a per-table check for the column, so it belongs with the paste-SQL pass.
+- **`AppDatabase.sharedFolder()` moves files from the read-only widget path.** `readOnly(folderURL:)` is documented as never mutating, but it is handed `sharedFolder()`, which calls `adoptLegacyStore` and `moveStoreIfNeeded`; both land in three separate `moveItem` calls behind one TOCTOU guard. Two processes can interleave them and pair a `.sqlite` from one move with a `-wal` from the other. Dead until the App Group is provisioned — which is Gate 0, so fix it before then: `sharedFolder()` becomes pure path resolution and the adoption moves to an explicit app-launch call.
+- **`public/.well-known/apple-app-site-association`** still vouches for `W9UMPV973P.app.helix.health.michael` and not the app being submitted. Add the new id (and the `associated-domains` entitlement, which the native app does not have) or the Password AutoFill one-tap the auth page's comment promises is not true of the shipping build.
 
 ## Verification (end-to-end)
 1. Production: unauthenticated `/api/today` → 401.

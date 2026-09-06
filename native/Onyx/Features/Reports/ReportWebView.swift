@@ -95,7 +95,7 @@ struct ReportWebView: UIViewRepresentable {
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationAction: WKNavigationAction,
-            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+            decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
         ) {
             let url = navigationAction.request.url
             if url == allowed || navigationAction.navigationType == .other, url?.isFileURL == true {

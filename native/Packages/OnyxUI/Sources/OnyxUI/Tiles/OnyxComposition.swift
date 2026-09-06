@@ -63,7 +63,11 @@ struct CompositionFocusFace: View {
         Text("%").font(OnyxWidgetType.face(12)).foregroundStyle(Color.onyx.textSecondary)
         Spacer(minLength: 0)
         // Down is good here, and only here on this face.
-        DeltaChip(delta: fat?.delta ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
+        //
+        // `fat.map(\.delta)`, not `fat?.delta`: see the header. A metric that
+        // exists but has one reading reports no delta, and must not borrow the
+        // legacy one — that is a different window.
+        DeltaChip(delta: fat.map(\.delta) ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
 
       // The span the delta above actually covers, when the series knows it —
@@ -95,6 +99,9 @@ struct CompositionFace: View {
   private var b: OnyxSnapshot.Body? { s?.body }
   private var accent: Color { mono ? .white : OnyxDomain.body.accent }
   private var fat: BodyCompMetric? { s?.metric(.fat) }
+  private var lst: BodyCompMetric? { s?.metric(.lst) }
+  private var smm: BodyCompMetric? { s?.metric(.smm) }
+  private var ffm: BodyCompMetric? { s?.metric(.ffm) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: large ? 10 : 8) {
@@ -112,7 +119,7 @@ struct CompositionFace: View {
         if let span = OnyxSnapshot.spanCaption(fat) {
           Text(span).font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary).lineLimit(1)
         }
-        DeltaChip(delta: fat?.delta ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
+        DeltaChip(delta: fat.map(\.delta) ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
 
       Hairline()
@@ -139,18 +146,18 @@ struct CompositionFace: View {
         // all three of these, and that is a statement about the metric, not
         // about the sign of the number.
         CompositionRow(label: "LEAN SOFT TISSUE",
-                       value: s?.metric(.lst)?.latest ?? b?.muscleKg,
-                       delta: s?.metric(.lst)?.delta ?? b?.muscleKgDelta,
+                       value: lst?.latest ?? b?.muscleKg,
+                       delta: lst.map(\.delta) ?? b?.muscleKgDelta,
                        unit: "kg", color: mono ? .white : OnyxDomain.body.end, mono: mono,
                        upIsGood: true, compact: !large)
         CompositionRow(label: "SKELETAL MUSCLE",
-                       value: s?.metric(.smm)?.latest ?? b?.smmKg,
-                       delta: s?.metric(.smm)?.delta ?? b?.smmKgDelta,
+                       value: smm?.latest ?? b?.smmKg,
+                       delta: smm.map(\.delta) ?? b?.smmKgDelta,
                        unit: "kg", color: mono ? .white : OnyxDomain.body.at(0.25), mono: mono,
                        upIsGood: true, compact: !large)
         CompositionRow(label: "FAT-FREE MASS",
-                       value: s?.metric(.ffm)?.latest ?? b?.ffmKg,
-                       delta: s?.metric(.ffm)?.delta ?? b?.ffmKgDelta,
+                       value: ffm?.latest ?? b?.ffmKg,
+                       delta: ffm.map(\.delta) ?? b?.ffmKgDelta,
                        unit: "kg", color: mono ? .white : Color.onyx.textSecondary, mono: mono,
                        upIsGood: true, compact: !large)
       }

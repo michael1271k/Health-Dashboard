@@ -391,7 +391,7 @@ public final class AppEnvironment {
             let center = NotificationCenter.default
             let days = Task { [weak self] in
                 for await _ in center.notifications(named: .NSCalendarDayChanged) {
-                    await self?.rollDay()
+                    self?.rollDay()
                 }
             }
             defer { days.cancel() }
@@ -406,7 +406,7 @@ public final class AppEnvironment {
                 // Continuous clock: keeps counting through a suspension, so a
                 // deadline that passed while asleep fires on the way back in.
                 try? await Task.sleep(until: .now + .seconds(next.timeIntervalSince(now) + 0.5), clock: .continuous)
-                await self?.rollDay()
+                self?.rollDay()
             }
         }
     }

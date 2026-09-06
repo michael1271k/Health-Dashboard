@@ -36,6 +36,25 @@ struct DeepLinkGoldenTests {
         }
     }
 
+    /// The one case `rescheme` cannot test, because it rewrites it first.
+    ///
+    /// Every fixture arrives here as `onyx://` — including the case named
+    /// "upper-case scheme", which therefore proves case-insensitive ACCEPTANCE
+    /// and not the scheme rejection the suite's doc comment claims. The old
+    /// scheme is live in the Capacitor app on the same device, so a `helix://`
+    /// URL reaching this parser is a real thing that must be refused, and
+    /// nothing in the vector says so.
+    @Test("a foreign scheme is refused, `helix://` included")
+    func foreignSchemesRejected() {
+        for raw in ["helix://open?path=/nutrition", "HELIX://open?path=/nutrition",
+                    "https://onyx.example/open?path=/nutrition",
+                    "javascript:alert(1)", "capacitor://open?path=/nutrition"] {
+            #expect(DeepLink.safePath(raw) == nil, "\(raw) was not refused")
+        }
+        // The control: the same path under the app's own scheme still passes.
+        #expect(DeepLink.safePath("onyx://open?path=/nutrition") == "/nutrition")
+    }
+
     /// Swap the SCHEME, and only the scheme, on the way in.
     ///
     /// The fixture is generated from `src/lib/native/deepLink.ts`, which still

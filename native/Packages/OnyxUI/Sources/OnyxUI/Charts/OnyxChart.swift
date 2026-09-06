@@ -102,7 +102,9 @@ public enum OnyxChart {
 
     /// Read once per draw; a chart has no ambient motion, so this only decides
     /// whether a data change cross-fades or cuts.
-    static var reduceMotion: Bool { UIAccessibility.isReduceMotionEnabled }
+    static var reduceMotion: Bool {
+        MainActor.assumeIsolated { UIAccessibility.isReduceMotionEnabled }
+    }
 
     /// A short date for an x-axis or a callout: "4 Sep".
     public static func shortDate(_ date: Date) -> String {
