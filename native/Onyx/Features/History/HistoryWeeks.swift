@@ -60,6 +60,20 @@ enum HistoryWeeks {
         let era: PhaseEra?
         /// `Cut W7`, when the week sits inside a defined phase.
         let phaseLabel: String?
+        /// Was this week eaten at maintenance?
+        ///
+        /// ── THE LEVER AXIS, NOT `Maintenance.isMaintenanceDate` ─────────────
+        /// That helper falls back to the PHASE when no lever claims the day,
+        /// which would tag the Thailand and Transition weeks too — and those
+        /// already say so in the pill beside this one ("Trans W1"). What is
+        /// worth a second tag is the week the training did NOT change and the
+        /// food did, which is exactly `Levers.leverForDate == .maintenanceWeek`
+        /// (§W11: "Maintenance (from `Levers.leverForDate`)").
+        ///
+        /// A majority of the week, not any day of it: the schedule's rows are
+        /// inclusive lower bounds and a rung that turns over mid-week would
+        /// otherwise tag both weeks it touches.
+        let isMaintenance: Bool
     }
 
     /// One row of `WeekDaysView`.
@@ -110,7 +124,11 @@ enum HistoryWeeks {
         database: AppDatabase, today: String = LogicalDay.today()
     ) -> [Capsule] {
         let context = scheduleContext(database: database)
-        let startDay = WeekWindow.startDay(from: context.goals)
+        let goals = context.goals
+        let startDay = WeekWindow.startDay(from: goals)
+        // An empty string is not a selection — the same read `WeeklyExportBuilder`
+        // makes, because `isLeverId("")` would say otherwise.
+        let storedLever = (goals?.activeLever?.isEmpty == false) ? goals?.activeLever : nil
 
         let sessions = (try? database.sessionHistory()) ?? []
         let ledger = (try? database.historySets()) ?? []
@@ -158,6 +176,13 @@ enum HistoryWeeks {
             let delta = (weight != nil && previousWeight != nil) ? weight! - previousWeight! : nil
             if let weight { previousWeight = weight }
 
+            // The rung in force on each day, on the LEVER axis. `today` is a
+            // parameter to `leverForDate` and never a clock, so a capsule
+            // built for a screenshot says the same thing every run.
+            let maintenanceDays = dates.filter {
+                Maintenance.leverOn($0, stored: storedLever, until: goals?.maintenanceUntil, today: today)
+            }.count
+
             let phase = window.phase
             out.append(Capsule(
                 window: window,
@@ -168,7 +193,8 @@ enum HistoryWeeks {
                 prCount: weekSummaries.reduce(0) { $0 + $1.prCount },
                 weightDeltaKg: delta,
                 era: phase?.era,
-                phaseLabel: phase?.short
+                phaseLabel: phase?.short,
+                isMaintenance: maintenanceDays * 2 > dates.count
             ))
             guard let next = window.offset(byWeeks: 1) else { break }
             window = next

@@ -119,19 +119,35 @@ struct SleepTile: View {
         }
     }
 
-    /// The 2×2 the arc cannot draw: each stage's SHARE of the night, which is
-    /// the number you compare between nights, beside the minutes behind it.
+    /// What the arc cannot draw: each stage's SHARE of the night, which is the
+    /// number you compare between nights, beside the minutes behind it.
+    ///
+    /// ── ONE ROW, NOT TWO (§W11) ─────────────────────────────────────────────
+    /// It was a 2×2, which is 92 pt for four readings that are two lines each
+    /// — and this tile is the tallest thing on a screen the wave is trying to
+    /// fit into a screen and a half. Four columns is the same argument
+    /// `VitalsGrid` makes one section below: four readings of ONE kind, scanned
+    /// rather than read, and a column each is what lets the four be compared at
+    /// a glance instead of down a page.
+    ///
+    /// `StageCell` already carries its own `ViewThatFits`, so at a quarter of
+    /// the tile it stacks the name over the numbers by itself; at the
+    /// accessibility sizes the grid drops to one column and they are four rows
+    /// again.
     private var stageGrid: some View {
         LazyVGrid(
             columns: Array(
-                repeating: GridItem(.flexible(), spacing: OnyxSpace.m),
-                count: typeSize.isAccessibilitySize ? 1 : 2
+                repeating: GridItem(.flexible(), spacing: OnyxSpace.s),
+                count: typeSize.isAccessibilitySize ? 1 : 4
             ),
             spacing: OnyxSpace.xs
         ) {
             ForEach(OnyxSleepStage.allCases, id: \.self) { stage in
                 let minutes = segments.first(where: { $0.0 == stage })?.1
-                StageCell(stage: stage, minutes: minutes, share: share(minutes))
+                StageCell(
+                    stage: stage, minutes: minutes, share: share(minutes),
+                    compact: !typeSize.isAccessibilitySize
+                )
             }
         }
     }
@@ -167,17 +183,34 @@ struct SleepTile: View {
     }
 
     /// The one fact on this tile that comes from you rather than from the
-    /// watch, so it is the one control: a 44 pt toggle row, not a tile.
+    /// watch, so it is the one control.
+    ///
+    /// ── 32 PT, AND WHY THAT IS NOT A TAP-TARGET VIOLATION ───────────────────
+    /// §3.1's floor of 44 pt is about the TARGET, and the target here is the
+    /// switch, which keeps its own hit rectangle whatever the row around it
+    /// measures — a `Toggle` extends its target beyond its drawn bounds, and
+    /// the label is part of it. What 44 pt was buying was a band of empty glass
+    /// under a control that is looked at once a night, on the screen §W11 is
+    /// trying to fit into a screen and a half. `.mini` takes the switch down
+    /// with the row so a full-size control does not sit in a short one.
+    ///
+    /// `.mini` is a REQUEST — iOS draws its switch at one size and ignores it,
+    /// while a future platform or a Mac build honours it. It costs nothing and
+    /// it states the intent; the 32 pt is what actually does the work.
+    ///
+    /// It still GROWS: the frame is a minimum, and at the accessibility sizes
+    /// the label wraps and takes the row with it.
     private var onsetRow: some View {
         Toggle(isOn: Binding(
             get: { model.log?.sleepOnsetTrouble ?? false },
             set: { model.setSleepOnsetTrouble($0) }
         )) {
-            Text("Trouble falling asleep").onyxType(.body)
+            Text("Trouble falling asleep").onyxType(.caption)
         }
+        .controlSize(.mini)
         .tint(accent)
         .padding(.horizontal, OnyxSpace.m)
-        .frame(minHeight: 44)
+        .frame(minHeight: 32)
         .onyxGlass(.row)
     }
 }

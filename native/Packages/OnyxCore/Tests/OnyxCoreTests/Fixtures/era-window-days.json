@@ -1,0 +1,71 @@
+{
+  "module": "era/eraWindow",
+  "fn": "windowDays",
+  "note": "Inclusive, floored at 1. A backwards range and an unparseable date both answer 1 — the window still draws one day rather than a negative axis.",
+  "cases": [
+    {
+      "name": "2026-09-06 → 2026-09-06",
+      "input": {
+        "from": "2026-09-06",
+        "to": "2026-09-06"
+      },
+      "expected": 1
+    },
+    {
+      "name": "2026-09-01 → 2026-09-06",
+      "input": {
+        "from": "2026-09-01",
+        "to": "2026-09-06"
+      },
+      "expected": 6
+    },
+    {
+      "name": "2026-01-01 → 2026-12-31",
+      "input": {
+        "from": "2026-01-01",
+        "to": "2026-12-31"
+      },
+      "expected": 365
+    },
+    {
+      "name": "2028-02-01 → 2028-03-01",
+      "input": {
+        "from": "2028-02-01",
+        "to": "2028-03-01"
+      },
+      "expected": 30
+    },
+    {
+      "name": "2026-09-06 → 2026-09-01",
+      "input": {
+        "from": "2026-09-06",
+        "to": "2026-09-01"
+      },
+      "expected": 1
+    },
+    {
+      "name": "2026-9-6 → 2026-09-06",
+      "input": {
+        "from": "2026-9-6",
+        "to": "2026-09-06"
+      },
+      "expected": 1
+    },
+    {
+      "name": "today → 2026-09-06",
+      "input": {
+        "from": "today",
+        "to": "2026-09-06"
+      },
+      "expected": 1
+    },
+    {
+      "name": "2026-09-06 → tomorrow",
+      "input": {
+        "from": "2026-09-06",
+        "to": "tomorrow"
+      },
+      "expected": 1
+    }
+  ]
+}

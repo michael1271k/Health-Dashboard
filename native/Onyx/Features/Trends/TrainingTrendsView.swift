@@ -20,21 +20,25 @@ struct TrainingTrendsView: View {
     var seeded: [TrendSession]?
 
     @State private var sessions: [TrendSession]?
-    @State private var era: EraFilter = .all
+    @State private var window: EraWindow = .default
+    @State private var input: EraWindowInput?
 
     private let today = LogicalDay.today()
 
     var body: some View {
         ScrollView {
             VStack(spacing: OnyxSpace.l) {
-                Picker("Era", selection: $era) {
-                    ForEach(EraFilter.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-
-                if let sessions {
-                    let visible = sessions.filter(era.includes)
-                    VolumeStreamCard(sessions: visible, era: era, today: today)
+                if let sessions, let input {
+                    let resolved = window.resolve(input)
+                    EraWindowPicker(selection: $window, input: input)
+                    // The window decides which sessions EXIST for this screen;
+                    // each card still owns its own display span (the intensity
+                    // grid is twelve weeks, the muscle bars four). Widening a
+                    // heat grid to a year would draw a smear, and narrowing it
+                    // to the window would make two cards answer the same
+                    // question at two scales.
+                    let visible = sessions.filter { resolved.contains($0.date) }
+                    VolumeStreamCard(sessions: visible, era: resolved.era, today: today)
                     IntensityCard(sessions: visible, today: today)
                     StrengthTrendsCard(sessions: visible, today: today)
                     MuscleFocusCard(sessions: visible, today: today)
@@ -52,32 +56,17 @@ struct TrainingTrendsView: View {
             guard sessions == nil else { return }
             // ponytail: the whole history in one read (~5k sets today); page by
             // era/year when the table is ten times that.
-            sessions = seeded ?? ((try? environment.database.trainingTrendSessions(
+            let loaded = seeded ?? ((try? environment.database.trainingTrendSessions(
                 userId: environment.userIdString, from: "2000-01-01", to: today
             )) ?? [])
+            sessions = loaded
+            // "All" means this screen's own oldest session, not a floor
+            // invented for it — which is exactly what `firstDataISO` is for.
+            input = EraWindowSource.input(
+                database: environment.database, today: today,
+                firstDataISO: loaded.map(\.date).min()
+            )
         }
-    }
-}
-
-// MARK: - Era
-
-/// The Continuum eras as a filter; `rawValue` is what `VolumeSplit` and
-/// `Era.forDate` speak, so nothing translates.
-enum EraFilter: String, CaseIterable, Identifiable {
-    case all, ppl, axis
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .all: "All"
-        case .ppl: "PPL"
-        case .axis: "Axis"
-        }
-    }
-
-    func includes(_ session: TrendSession) -> Bool {
-        self == .all || Era.forDate(session.date).rawValue == rawValue
     }
 }
 
@@ -90,7 +79,10 @@ enum EraFilter: String, CaseIterable, Identifiable {
 private struct VolumeStreamCard: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     let sessions: [TrendSession]
-    let era: EraFilter
+    /// `ResolvedEraWindow.era` — `"ppl"`, `"axis"` or `"all"`, which is what
+    /// `VolumeSplit.splits(forEra:)` speaks. A window spanning the cut start
+    /// spans both programmes and gets both pill sets.
+    let era: String
     let today: String
 
     /// `nil` is every split, stacked.
@@ -104,7 +96,7 @@ private struct VolumeStreamCard: View {
         let kg: Double
     }
 
-    private var splits: [String] { VolumeSplit.splits(forEra: era.rawValue) }
+    private var splits: [String] { VolumeSplit.splits(forEra: era) }
 
     /// The picked split, or all of them when the pick belongs to another era.
     private var activeSplit: String? { split.flatMap { splits.contains($0) ? $0 : nil } }
@@ -146,7 +138,7 @@ private struct VolumeStreamCard: View {
                 .tint(Color.onyx.textSecondary)
 
                 if bars.isEmpty {
-                    OnyxChartEmpty("No sessions in this era.")
+                    OnyxChartEmpty("No sessions in this window.")
                 } else {
                     Chart(bars) { bar in
                         // `x:` with a unit, not xStart/xEnd: only the former

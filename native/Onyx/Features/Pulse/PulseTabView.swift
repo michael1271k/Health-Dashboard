@@ -65,6 +65,11 @@ struct DayScreen: View {
     @State private var ratingFatigue = false
     @State private var entering = false
     @State private var showStack = false
+    @State private var showSoreness = false
+    /// The session the Workout summary card was tapped on. `item:` rather than
+    /// `isPresented:` because a day can hold two sessions and each card has to
+    /// push its own.
+    @State private var openSession: DayModel.WorkoutSummary?
 
     var body: some View {
         ScrollViewReader { scroller in list(scroller: scroller) }
@@ -93,25 +98,42 @@ struct DayScreen: View {
             SleepTile(model: model).plainRow()
 
             Section {
-                VitalRows(model: model)
+                VitalsGrid(model: model)
             } header: {
                 OnyxSectionHeader("Vitals", .body)
             }
 
-            Section {
-                FatigueSummaryRow(model: model) { ratingFatigue = true }
+            // Whatever was trained on this date, and the door to the page that
+            // reads it properly. §W11 asks for it on a PAST day; it is drawn
+            // whenever the day HAS a finished session, because a card that
+            // appears at midnight for the session you finished at six is a
+            // worse rule than one that appears when the session does.
+            ForEach(model.window.sessions) { session in
+                WorkoutSummaryCard(session: session) { openSession = session }.plainRow()
             }
-            .id(Self.rowsAnchor)
 
-            DomsTile(model: model).plainRow()
-
+            // ── WHY THESE FOUR ARE ONE SECTION ──────────────────────────────
+            // Four 44 pt rows that each state an answer and open a sheet. They
+            // were three sections and a 300 pt tile between them, which is
+            // most of why this screen ran to four phone-heights.
+            //
+            // The scale leads (§W11): what you weigh is the reading the other
+            // three are context for, and it was under a body map you had to
+            // scroll past to reach it.
             Section {
                 ScaleRow(model: model) { entering = true }
+                FatigueSummaryRow(model: model) { ratingFatigue = true }
+                SorenessRow(model: model) { showSoreness = true }
                 StackRow(model: model) { showStack = true }
             }
+            .id(Self.rowsAnchor)
         }
         .listStyle(.plain)
-        .listSectionSpacing(OnyxSpace.l)
+        // `m`, not `l`: every section on this screen is now either a tile with
+        // its own 12 pt of padding or a run of 44 pt rows, so a 16 pt trench
+        // between them is a gap between two gaps. Four of those is 16 pt of the
+        // screen and a half this wave is aiming at.
+        .listSectionSpacing(OnyxSpace.m)
         .scrollContentBackground(.hidden)
         .onyxScreen(.body)
         .navigationTitle("Pulse")
@@ -157,6 +179,8 @@ struct DayScreen: View {
             }
         }
         .sheet(isPresented: $ratingFatigue) { FatigueSheet(model: model) }
+        .sheet(isPresented: $showSoreness) { SorenessSheet(model: model) }
+        .navigationDestination(item: $openSession) { SessionDetailView(sessionId: $0.id) }
         .sheet(isPresented: $entering) { InBodyEntryView(model: model) }
         // Today's banner switched to this tab and asked for the form.
         .onChange(of: environment.scaleEntryRequests) { _, _ in
@@ -185,9 +209,9 @@ struct DayScreen: View {
         }
     }
 
-    /// The anchor the harness scrolls to: the fatigue row, which puts the three
-    /// rows and the body on one screen. The vitals above it are `MetricRow`,
-    /// the same component the Today sheet already photographs.
+    /// The anchor the harness scrolls to: the four-row section, which is the
+    /// half of the screen that sits below the fold on a phone. The vitals above
+    /// it are `VitalsGrid`, which the default `day` shot already photographs.
     private static let rowsAnchor = "pulse.rows"
 
 
@@ -475,15 +499,22 @@ struct DaySheet<Content: View>: View {
     let title: String
     let domain: OnyxDomain
     var glass = true
+    /// Half height and full, which is right for a form and wrong for a body:
+    /// the soreness atlas is 280 pt before its caption and a medium detent
+    /// opens onto a figure cropped at the ribs. A sheet whose content has a
+    /// natural size passes its own.
+    var detents: Set<PresentationDetent> = [.medium, .large]
     var primary: Primary?
     @ViewBuilder var content: () -> Content
     @Environment(\.dismiss) private var dismiss
 
-    init(_ title: String, domain: OnyxDomain, glass: Bool = true, primary: Primary? = nil,
+    init(_ title: String, domain: OnyxDomain, glass: Bool = true,
+         detents: Set<PresentationDetent> = [.medium, .large], primary: Primary? = nil,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.domain = domain
         self.glass = glass
+        self.detents = detents
         self.primary = primary
         self.content = content
     }
@@ -526,7 +557,7 @@ struct DaySheet<Content: View>: View {
             }
         }
         .tint(domain.accent)
-        .presentationDetents([.medium, .large])
+        .presentationDetents(detents)
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.onyx.base)
         .preferredColorScheme(.dark)

@@ -23,55 +23,44 @@ struct BodyTrendsView: View {
     var embedded = false
 
     @State private var slice: BodyVitalsSlice?
-    @State private var range: TrendRange = .quarter
+    @State private var window: EraWindow = .default
+    @State private var input: EraWindowInput?
 
     var body: some View {
         Group {
-            if let slice {
-                BodyTrendsScreen(slice: slice, range: $range)
+            if let slice, let input {
+                BodyTrendsScreen(slice: slice, window: $window, input: input)
             } else {
                 ProgressView().controlSize(.large)
             }
         }
         .modifier(BodyTrendsChrome(embedded: embedded))
-        .task(id: range) {
+        .task(id: window) {
+            let resolved = EraWindowSource.input(database: environment.database)
+            input = resolved
             // A seeded slice is a fixed window by definition; re-reading it on
-            // a range change would replace the harness's data with an empty
+            // a window change would replace the harness's data with an empty
             // database's answer.
             if let seeded {
                 slice = seeded
             } else {
-                slice = (try? load()) ?? .empty
+                slice = (try? load(window.resolve(resolved))) ?? .empty
             }
         }
     }
 
-    private func load() throws -> BodyVitalsSlice {
-        let to = LogicalDay.today()
-        return try environment.database.bodyVitals(
-            userId: environment.userIdString, from: ISODate.addDays(to, -(range.days - 1)) ?? to, to: to
+    /// ── WHY "ALL" IS SAFE HERE NOW ──────────────────────────────────────────
+    /// This read is RANGED, and the range picker used to stop at a year for
+    /// exactly that reason: an unbounded query grows with the account forever
+    /// to draw a line nobody can read at a phone's width. `EraWindow.all`
+    /// resolves against `EraWindowSource.programStart` — the first day any
+    /// phase covers — which is a real date from the phase table rather than a
+    /// floor invented for this screen, and is a bound the account cannot have
+    /// data before.
+    private func load(_ resolved: ResolvedEraWindow) throws -> BodyVitalsSlice {
+        try environment.database.bodyVitals(
+            userId: environment.userIdString, from: resolved.startISO, to: resolved.endISO
         )
-    }
-}
-
-/// How far back the scale, ledger and steps charts reach.
-///
-/// Not "All": the read is one ranged query and an unbounded one would grow with
-/// the account forever to draw a line nobody can read at that width. A year is
-/// the longest span the x-axis can label honestly on a phone.
-enum TrendRange: Int, CaseIterable, Identifiable {
-    case month = 30
-    case quarter = 90
-    case year = 365
-
-    var id: Int { rawValue }
-    var days: Int { rawValue }
-    var label: String {
-        switch self {
-        case .month: "30 days"
-        case .quarter: "90 days"
-        case .year: "Year"
-        }
     }
 }
 
@@ -93,11 +82,12 @@ private struct BodyTrendsChrome: ViewModifier {
 
 private struct BodyTrendsScreen: View {
     let slice: BodyVitalsSlice
-    @Binding var range: TrendRange
+    @Binding var window: EraWindow
+    let input: EraWindowInput
 
     var body: some View {
         let readings = BodyVitals.readings(ledger: slice.ledger, logs: slice.logs)
-        // The vitals cards keep their own 56-day display window. The range
+        // The vitals cards keep their own 56-day display window. The window
         // picker drives the three charts §5.9 names — scale, ledger, steps —
         // and widening eight sparklines to a year alongside them would make
         // every one of them a smear.
@@ -105,11 +95,7 @@ private struct BodyTrendsScreen: View {
         let logs = slice.logs.filter { $0.date >= recent }
         ScrollView {
             VStack(alignment: .leading, spacing: OnyxSpace.l) {
-                Picker("Range", selection: $range) {
-                    ForEach(TrendRange.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("Chart range")
+                EraWindowPicker(selection: $window, input: input)
 
                 CompositionSection(readings: readings, goals: slice.goals)
                 LedgerSection(readings: readings, goals: slice.goals)

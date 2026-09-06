@@ -50,6 +50,10 @@ import {
   atwaterKcal, applyLever, goalsForDate, leverKindOn, leverPeriods,
   type LeverGoals, type LeverId, type NutritionLever, type TargetPeriod,
 } from '@/lib/nutrition/levers'
+import {
+  ERA_WINDOW_MODES, DEFAULT_ERA_WINDOW, resolveEraWindow, eraWindowKey, eraWindowFromKey, eraForWindow,
+  windowDays, type EraWindowMode, type EraWindowInput,
+} from '@/lib/era/eraWindow'
 import { maintenanceLeverOn, isMaintenanceDate, maintenanceSpanFor, maintenanceBands } from '@/lib/nutrition/maintenance'
 import {
   CONTEXT_MODES, CONTEXT_META, isRangeMode, contextFromDayLabel, contextFromSetting, scoringContextFor,
@@ -7660,5 +7664,131 @@ describe('golden vectors — progression queue', () => {
       note: 'Targets walked in order; rows bucketed by (day_key, exercise) → started_at (sorted) → working sets (warm-ups/ghosts dropped, null day_key dropped); last two sessions graded by progressionVerdict / timedProgressionVerdict against the programmed ceiling on THAT day; ready and one-more surface, currentKg = top load of the latest session.',
       cases,
     })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Era windows (W11)
+//
+// Six pills, and the two that are not arithmetic — the phase and the lever —
+// read their name and their anchor out of a table. Every phase boundary is a
+// case, because "Current phase" on the last day of a block and on the first day
+// of the next are the two answers a reader would notice being wrong.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — era windows', () => {
+  it('exports the resolved window for every mode', () => {
+    interface WindowInput { mode: EraWindowMode; input: EraWindowInput }
+    const cases: Case<WindowInput, Record<string, unknown>>[] = []
+
+    const base: EraWindowInput = {
+      today: '2026-09-06',
+      planLabel: 'Onyx-5',
+      storedLever: null,
+      releaseEndsOn: null,
+      firstDataISO: '2026-03-08',
+    }
+
+    const add = (name: string, mode: EraWindowMode, input: EraWindowInput) => {
+      const window = resolveEraWindow(mode, input)
+      cases.push({ name, input: { mode, input }, expected: { ...window, era: eraForWindow(window) } })
+    }
+
+    // Every mode on one ordinary day inside the Onyx cut.
+    for (const mode of ERA_WINDOW_MODES) add(`today · ${eraWindowKey(mode)}`, mode, base)
+
+    // One day per phase, plus each phase's first and last day — the boundaries
+    // are where a window that reads the wrong row shows it.
+    const phaseDays = [
+      ['PPL bulk, first', '2026-03-08'], ['PPL bulk, mid', '2026-04-01'], ['PPL bulk, last', '2026-05-09'],
+      ['PPL cut, first', '2026-05-10'], ['PPL cut, last', '2026-06-20'],
+      ['PPL peak', '2026-06-24'],
+      ['Thailand deload, first', '2026-06-28'], ['Thailand deload, last', '2026-07-11'],
+      ['Week 0', '2026-07-14'],
+      ['Onyx cut, first', '2026-07-19'], ['Onyx cut, mid', '2026-09-06'], ['Onyx cut, last', '2026-10-17'],
+      ['Transition, first', '2026-10-18'], ['Lean bulk, first', '2026-11-01'], ['Lean bulk, last', '2027-01-16'],
+      // Outside every phase, both ends. There is no phase to name, so the plan
+      // names it, and the anchor falls back to the caller's oldest data.
+      ['before every phase', '2026-02-01'], ['after every phase', '2027-02-01'],
+    ] as const
+    for (const [name, today] of phaseDays) {
+      add(`phase · ${name}`, { kind: 'currentPhase' }, { ...base, today })
+    }
+
+    // The lever run. The rows are 2026-07-15 baseline, 08-16 lever-1, 08-20
+    // custom (pinned), 08-30 maintenance-week, 09-06 custom.
+    const leverDays: Array<[string, EraWindowInput]> = [
+      ['inside baseline', { ...base, today: '2026-08-01' }],
+      ['first day of lever 1', { ...base, today: '2026-08-16' }],
+      ['inside lever 1', { ...base, today: '2026-08-18' }],
+      ['inside the pinned custom stretch', { ...base, today: '2026-08-25' }],
+      ['inside the maintenance week', { ...base, today: '2026-09-03' }],
+      ['first day back on custom', { ...base, today: '2026-09-06' }],
+      // A rung pulled this morning that the schedule does not know about: the
+      // run is one day, not the fortnight the schedule row would claim.
+      ['stored rung overrides the schedule', { ...base, today: '2026-09-06', storedLever: 'lever-2' }],
+      ['stored rung agreeing with the schedule', { ...base, today: '2026-08-18', storedLever: 'lever-1' }],
+      ['a release that has expired', { ...base, today: '2026-09-06', storedLever: 'maintenance-week', releaseEndsOn: '2026-09-05' }],
+      ['a release still running', { ...base, today: '2026-09-03', storedLever: 'maintenance-week', releaseEndsOn: '2026-09-30' }],
+      ['an unknown stored id', { ...base, today: '2026-08-18', storedLever: 'lever-9' }],
+      // Before the schedule's first row nothing names a rung, and the walk has
+      // a floor, so the window is the single day it can honestly claim.
+      ['before the cut opened', { ...base, today: '2026-05-12' }],
+    ]
+    for (const [name, input] of leverDays) add(`lever · ${name}`, { kind: 'currentLever' }, input)
+
+    // `days` clamps its own length; 0 and a negative both draw today alone.
+    for (const n of [1, 7, 30, 90, 180, 400, 0, -5]) {
+      add(`days · ${n}`, { kind: 'days', n }, base)
+    }
+
+    // Since the cut, from both sides of the anchor.
+    add('cut · after the anchor', { kind: 'sinceCutStart' }, base)
+    add('cut · on the anchor', { kind: 'sinceCutStart' }, { ...base, today: '2026-07-15' })
+    add('cut · before the anchor', { kind: 'sinceCutStart' }, { ...base, today: '2026-05-01' })
+
+    // "All" is the caller's oldest date and nothing else.
+    add('all · with history', { kind: 'all' }, base)
+    add('all · no history', { kind: 'all' }, { ...base, firstDataISO: null })
+    add('all · history newer than today', { kind: 'all' }, { ...base, firstDataISO: '2026-12-01' })
+    add('all · PPL only', { kind: 'all' }, { ...base, today: '2026-06-01' })
+
+    emit('era-window.json', {
+      module: 'era/eraWindow',
+      fn: 'resolveEraWindow',
+      note: 'Six trailing windows ending on `today`. currentPhase takes the phase table\'s start and eraTag (plan label when no phase covers the day); currentLever walks back while leverForDate agrees, floored at the schedule\'s first row; sinceCutStart is HELIX_CUT_START; days clamps its length to at least 1; all is firstDataISO. A start after today clamps to today. `era` is eraForWindow of the same result.',
+      cases,
+    })
+  })
+
+  it('exports the key round-trip', () => {
+    const keys = [
+      ...ERA_WINDOW_MODES.map(eraWindowKey),
+      'days:1', 'days:365', 'days:0', 'days:-3', 'days:x', 'days:', 'currentphase', '', 'nonsense',
+    ]
+    emit('era-window-keys.json', {
+      module: 'era/eraWindow',
+      fn: 'eraWindowFromKey',
+      note: 'A picker binds to the key, so a stored key that no longer names a mode must read as null rather than as the default — the caller decides the fallback.',
+      cases: keys.map((key) => ({ name: key || '(empty)', input: { key }, expected: eraWindowFromKey(key) })),
+    })
+  })
+
+  it('exports the inclusive day count', () => {
+    const pairs: Array<[string, string]> = [
+      ['2026-09-06', '2026-09-06'], ['2026-09-01', '2026-09-06'], ['2026-01-01', '2026-12-31'],
+      ['2028-02-01', '2028-03-01'], ['2026-09-06', '2026-09-01'], ['2026-9-6', '2026-09-06'],
+      ['today', '2026-09-06'], ['2026-09-06', 'tomorrow'],
+    ]
+    emit('era-window-days.json', {
+      module: 'era/eraWindow',
+      fn: 'windowDays',
+      note: 'Inclusive, floored at 1. A backwards range and an unparseable date both answer 1 — the window still draws one day rather than a negative axis.',
+      cases: pairs.map(([from, to]) => ({ name: `${from} → ${to}`, input: { from, to }, expected: windowDays(from, to) })),
+    })
+  })
+
+  it('names a default that is one of the modes', () => {
+    expect(ERA_WINDOW_MODES.map(eraWindowKey)).toContain(eraWindowKey(DEFAULT_ERA_WINDOW))
   })
 })

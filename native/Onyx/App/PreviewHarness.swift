@@ -135,7 +135,7 @@ enum PreviewHarness {
                 ReportReaderView(report: PreviewReport.rows[0], seededBody: PreviewReport.body)
             }
             .environment(AppEnvironment.preview)
-        case "day", "day-rows", "day-empty", "day-inbody", "day-swap", "doms", "stack", "stack-add":
+        case "day", "day-rows", "day-past", "day-empty", "scale", "scale-first", "day-swap", "doms", "stack", "stack-add":
             PulsePreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)

@@ -1,0 +1,1117 @@
+{
+  "module": "era/eraWindow",
+  "fn": "resolveEraWindow",
+  "note": "Six trailing windows ending on `today`. currentPhase takes the phase table's start and eraTag (plan label when no phase covers the day); currentLever walks back while leverForDate agrees, floored at the schedule's first row; sinceCutStart is HELIX_CUT_START; days clamps its length to at least 1; all is firstDataISO. A start after today clamps to today. `era` is eraForWindow of the same result.",
+  "cases": [
+    {
+      "name": "today · currentPhase",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Helix Cut",
+        "startISO": "2026-07-19",
+        "endISO": "2026-09-06",
+        "days": 50,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "today · currentLever",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Custom",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "today · sinceCutStart",
+      "input": {
+        "mode": {
+          "kind": "sinceCutStart"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Since cut",
+        "startISO": "2026-07-15",
+        "endISO": "2026-09-06",
+        "days": 54,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "today · days:30",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 30
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "30 d",
+        "startISO": "2026-08-08",
+        "endISO": "2026-09-06",
+        "days": 30,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "today · days:90",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 90
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "90 d",
+        "startISO": "2026-06-09",
+        "endISO": "2026-09-06",
+        "days": 90,
+        "era": "all"
+      }
+    },
+    {
+      "name": "today · all",
+      "input": {
+        "mode": {
+          "kind": "all"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "All",
+        "startISO": "2026-03-08",
+        "endISO": "2026-09-06",
+        "days": 183,
+        "era": "all"
+      }
+    },
+    {
+      "name": "phase · PPL bulk, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-03-08",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Bulk",
+        "startISO": "2026-03-08",
+        "endISO": "2026-03-08",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · PPL bulk, mid",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-04-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Bulk",
+        "startISO": "2026-03-08",
+        "endISO": "2026-04-01",
+        "days": 25,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · PPL bulk, last",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-05-09",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Bulk",
+        "startISO": "2026-03-08",
+        "endISO": "2026-05-09",
+        "days": 63,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · PPL cut, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-05-10",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Cut",
+        "startISO": "2026-05-10",
+        "endISO": "2026-05-10",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · PPL cut, last",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-06-20",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Cut",
+        "startISO": "2026-05-10",
+        "endISO": "2026-06-20",
+        "days": 42,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · PPL peak",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-06-24",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "PPL Peak",
+        "startISO": "2026-06-21",
+        "endISO": "2026-06-24",
+        "days": 4,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · Thailand deload, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-06-28",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Thailand Vacation (Deload)",
+        "startISO": "2026-06-28",
+        "endISO": "2026-06-28",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · Thailand deload, last",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-07-11",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Thailand Vacation (Deload)",
+        "startISO": "2026-06-28",
+        "endISO": "2026-07-11",
+        "days": 14,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · Week 0",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-07-14",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "HELIX · Week 0",
+        "startISO": "2026-07-12",
+        "endISO": "2026-07-14",
+        "days": 3,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · Onyx cut, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-07-19",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Helix Cut",
+        "startISO": "2026-07-19",
+        "endISO": "2026-07-19",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · Onyx cut, mid",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Helix Cut",
+        "startISO": "2026-07-19",
+        "endISO": "2026-09-06",
+        "days": 50,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · Onyx cut, last",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-10-17",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Helix Cut",
+        "startISO": "2026-07-19",
+        "endISO": "2026-10-17",
+        "days": 91,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · Transition, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-10-18",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "HELIX Transition",
+        "startISO": "2026-10-18",
+        "endISO": "2026-10-18",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · Lean bulk, first",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-11-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "HELIX Lean Bulk",
+        "startISO": "2026-11-01",
+        "endISO": "2026-11-01",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · Lean bulk, last",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2027-01-16",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "HELIX Lean Bulk",
+        "startISO": "2026-11-01",
+        "endISO": "2027-01-16",
+        "days": 77,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "phase · before every phase",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2026-02-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Onyx-5 Era",
+        "startISO": "2026-02-01",
+        "endISO": "2026-02-01",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "phase · after every phase",
+      "input": {
+        "mode": {
+          "kind": "currentPhase"
+        },
+        "input": {
+          "today": "2027-02-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Onyx-5 Era",
+        "startISO": "2026-03-08",
+        "endISO": "2027-02-01",
+        "days": 331,
+        "era": "all"
+      }
+    },
+    {
+      "name": "lever · inside baseline",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Baseline",
+        "startISO": "2026-07-15",
+        "endISO": "2026-08-01",
+        "days": 18,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · first day of lever 1",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-16",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Lever 1",
+        "startISO": "2026-08-16",
+        "endISO": "2026-08-16",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · inside lever 1",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-18",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Lever 1",
+        "startISO": "2026-08-16",
+        "endISO": "2026-08-18",
+        "days": 3,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · inside the pinned custom stretch",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-25",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Custom",
+        "startISO": "2026-08-20",
+        "endISO": "2026-08-25",
+        "days": 6,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · inside the maintenance week",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-03",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Maintenance Week",
+        "startISO": "2026-08-30",
+        "endISO": "2026-09-03",
+        "days": 5,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · first day back on custom",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Custom",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · stored rung overrides the schedule",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": "lever-2",
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Lever 2",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · stored rung agreeing with the schedule",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-18",
+          "planLabel": "Onyx-5",
+          "storedLever": "lever-1",
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Lever 1",
+        "startISO": "2026-08-16",
+        "endISO": "2026-08-18",
+        "days": 3,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · a release that has expired",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": "maintenance-week",
+          "releaseEndsOn": "2026-09-05",
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Custom",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · a release still running",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-09-03",
+          "planLabel": "Onyx-5",
+          "storedLever": "maintenance-week",
+          "releaseEndsOn": "2026-09-30",
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Maintenance Week",
+        "startISO": "2026-08-30",
+        "endISO": "2026-09-03",
+        "days": 5,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · an unknown stored id",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-08-18",
+          "planLabel": "Onyx-5",
+          "storedLever": "lever-9",
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Lever 1",
+        "startISO": "2026-08-16",
+        "endISO": "2026-08-18",
+        "days": 3,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "lever · before the cut opened",
+      "input": {
+        "mode": {
+          "kind": "currentLever"
+        },
+        "input": {
+          "today": "2026-05-12",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Custom",
+        "startISO": "2026-05-12",
+        "endISO": "2026-05-12",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "days · 1",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 1
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "1 d",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "days · 7",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 7
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "7 d",
+        "startISO": "2026-08-31",
+        "endISO": "2026-09-06",
+        "days": 7,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "days · 30",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 30
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "30 d",
+        "startISO": "2026-08-08",
+        "endISO": "2026-09-06",
+        "days": 30,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "days · 90",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 90
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "90 d",
+        "startISO": "2026-06-09",
+        "endISO": "2026-09-06",
+        "days": 90,
+        "era": "all"
+      }
+    },
+    {
+      "name": "days · 180",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 180
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "180 d",
+        "startISO": "2026-03-11",
+        "endISO": "2026-09-06",
+        "days": 180,
+        "era": "all"
+      }
+    },
+    {
+      "name": "days · 400",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 400
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "400 d",
+        "startISO": "2025-08-03",
+        "endISO": "2026-09-06",
+        "days": 400,
+        "era": "all"
+      }
+    },
+    {
+      "name": "days · 0",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": 0
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "1 d",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "days · -5",
+      "input": {
+        "mode": {
+          "kind": "days",
+          "n": -5
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "1 d",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "cut · after the anchor",
+      "input": {
+        "mode": {
+          "kind": "sinceCutStart"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Since cut",
+        "startISO": "2026-07-15",
+        "endISO": "2026-09-06",
+        "days": 54,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "cut · on the anchor",
+      "input": {
+        "mode": {
+          "kind": "sinceCutStart"
+        },
+        "input": {
+          "today": "2026-07-15",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Since cut",
+        "startISO": "2026-07-15",
+        "endISO": "2026-07-15",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "cut · before the anchor",
+      "input": {
+        "mode": {
+          "kind": "sinceCutStart"
+        },
+        "input": {
+          "today": "2026-05-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Since cut",
+        "startISO": "2026-05-01",
+        "endISO": "2026-05-01",
+        "days": 1,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "all · with history",
+      "input": {
+        "mode": {
+          "kind": "all"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "All",
+        "startISO": "2026-03-08",
+        "endISO": "2026-09-06",
+        "days": 183,
+        "era": "all"
+      }
+    },
+    {
+      "name": "all · no history",
+      "input": {
+        "mode": {
+          "kind": "all"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": null
+        }
+      },
+      "expected": {
+        "label": "All",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "all · history newer than today",
+      "input": {
+        "mode": {
+          "kind": "all"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-12-01"
+        }
+      },
+      "expected": {
+        "label": "All",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "all · PPL only",
+      "input": {
+        "mode": {
+          "kind": "all"
+        },
+        "input": {
+          "today": "2026-06-01",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "All",
+        "startISO": "2026-03-08",
+        "endISO": "2026-06-01",
+        "days": 86,
+        "era": "ppl"
+      }
+    }
+  ]
+}

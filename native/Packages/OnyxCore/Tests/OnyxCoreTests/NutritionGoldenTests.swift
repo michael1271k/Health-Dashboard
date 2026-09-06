@@ -19,7 +19,9 @@ private struct DateIn: Decodable { let date: String }
 /// suffix with it — the expectation is put through the same rename the app
 /// applied. Everything else is still compared character for character, and a
 /// tag that differs by anything more than the brand still fails.
-private func rebranded(_ s: String) -> String {
+/// Internal rather than file-private since W11: `EraWindowGoldenTests` compares
+/// the same era tags through the same rename.
+func rebranded(_ s: String) -> String {
     s.replacingOccurrences(of: "HELIX", with: "Onyx").replacingOccurrences(of: "Helix", with: "Onyx")
 }
 private func rebranded(_ d: PhaseDef) -> PhaseDef { var c = d; c.eraTag = c.eraTag.map(rebranded); return c }

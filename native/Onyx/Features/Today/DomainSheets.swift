@@ -261,13 +261,32 @@ struct StageCell: View {
     let stage: OnyxSleepStage
     let minutes: Int?
     let share: String
+    /// Draw the narrowest layout unconditionally.
+    ///
+    /// ── WHY THIS IS NOT LEFT TO `ViewThatFits` ──────────────────────────────
+    /// A grid of four gives every cell the same width, but not the same
+    /// CONTENT: "Awake · 5% · 20m" fits a line that "Core · 56% · 3h 55m" does
+    /// not. Left to itself each cell picks its own best layout and the row
+    /// comes out with three stacked cells and one two-line one sitting at a
+    /// different height — which reads as a rendering fault rather than as a
+    /// fit. A row of four is one shape, chosen by the caller that knows it is a
+    /// row of four.
+    var compact = false
 
     private var dot: some View { Circle().fill(stage.color).frame(width: 8, height: 8) }
+
+    /// ── WHY EVERY LINE HERE IS `lineLimit(1)` ───────────────────────────────
+    /// `ViewThatFits` chooses by asking each candidate whether it fits, and a
+    /// `Text` that is allowed to wrap always answers yes — it just gets taller.
+    /// Without the limit the widest layout "fits" a quarter-width cell by
+    /// breaking "1h 15m" across two lines, which is both the wrong layout and a
+    /// duration rendered as two numbers. The limit is what makes the fallbacks
+    /// below reachable.
     private var name: some View {
-        Text(stage.title).onyxType(.secondary).foregroundStyle(Color.onyx.textPrimary)
+        Text(stage.title).onyxType(.secondary).lineLimit(1).foregroundStyle(Color.onyx.textPrimary)
     }
     private var percent: some View {
-        Text(share).onyxType(.caption).onyxNumeral().foregroundStyle(Color.onyx.textTertiary)
+        Text(share).onyxType(.caption).onyxNumeral().lineLimit(1).foregroundStyle(Color.onyx.textTertiary)
     }
     /// `Format.sleep(0)` answers "—", which is what it also says for a stage
     /// the watch never reported. A measured zero is a different fact from an
@@ -278,25 +297,48 @@ struct StageCell: View {
 
     private var duration: some View {
         Text(durationText)
-            .onyxType(.secondary).onyxNumeral().foregroundStyle(Color.onyx.textSecondary)
+            .onyxType(.secondary).onyxNumeral().lineLimit(1).foregroundStyle(Color.onyx.textSecondary)
     }
 
+    /// Three layouts, widest first: one line, two, then three.
+    ///
+    /// The third is what a QUARTER of a tile can hold — the Pulse sleep tile
+    /// draws these four across rather than two-by-two since §W11, and at 85 pt
+    /// a share and a duration do not share a line. The duration leads the
+    /// numbers there because it is the reading; the share is the context.
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: OnyxSpace.s) {
-                dot; name
-                Spacer(minLength: OnyxSpace.s)
-                percent; duration
-            }
-            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                HStack(spacing: OnyxSpace.s) { dot; name }
-                HStack(spacing: OnyxSpace.s) { percent; duration }
+        Group {
+            if compact {
+                stacked
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: OnyxSpace.s) {
+                        dot; name
+                        Spacer(minLength: OnyxSpace.s)
+                        percent; duration
+                    }
+                    VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                        HStack(spacing: OnyxSpace.s) { dot; name }
+                        HStack(spacing: OnyxSpace.s) { percent; duration }
+                    }
+                    stacked
+                }
             }
         }
-        .frame(minHeight: 44)
+        .frame(minHeight: compact ? 0 : 44)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(stage.title), \(share), \(durationText)")
+    }
+
+    /// What a quarter of a tile can hold. The duration leads the numbers
+    /// because it is the reading; the share is the context for it.
+    private var stacked: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: OnyxSpace.xs) { dot; name }
+            duration
+            percent
+        }
     }
 }
 
