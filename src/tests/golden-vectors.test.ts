@@ -130,6 +130,12 @@ import {
   type SessionClock, type ClockMode,
 } from '@/lib/sessions/sessionClock'
 import { weekStartOf } from '@/lib/utils/week'
+import { consistencySeries, type Consistency, type ConsistencyDayIn } from '@/lib/charts/consistency'
+import { deficitLedgerSeries, type DeficitLedger, type DeficitDayIn } from '@/lib/charts/deficitLedger'
+import { goalBoard, type GoalBoard as GoalBoardOut, type GoalEnergyDay, type GoalReading } from '@/lib/charts/goalBoard'
+import { trajectorySeries, weightEwma, type Trajectory, type TrajectoryPoint } from '@/lib/charts/trajectory'
+import { batteryStackSeries, type BatteryStackDay, type BatteryStackDayIn } from '@/lib/charts/batteryStack'
+import { bodyCompSeries, type BodyCompMetric, type BodyCompReadingIn } from '@/lib/charts/bodyComp'
 import { weekNumberOf, weekLabelOf, weekWindowOf } from '@/lib/reports/weekNumber'
 import { adjustMacros, atwater, type Macros, type MacroEdit } from '@/lib/nutrition/macroMath'
 import { resolveTargets, mergedProfiles, type TargetSources, type ResolvedTargets } from '@/lib/nutrition/targets'
@@ -7790,5 +7796,326 @@ describe('golden vectors — era windows', () => {
 
   it('names a default that is one of the modes', () => {
     expect(ERA_WINDOW_MODES.map(eraWindowKey)).toContain(eraWindowKey(DEFAULT_ERA_WINDOW))
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The dashboard series (W12)
+//
+// Five builders behind six new tile faces. Each is a pure function of rows the
+// widget snapshot already carries, and each is the kind of arithmetic this file
+// exists for: a weekly sum that is 3 % wrong renders as a number nobody
+// questions.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — consistency', () => {
+  it('exports planned against done over eight weeks', () => {
+    // Onyx-5 trains Sun/Mon/Tue/Thu/Fri. Weekdays 0,1,2,4,5.
+    const TRAINS = [0, 1, 2, 4, 5]
+    const DAY_KEYS: Record<number, string> = { 0: 'cb_a', 1: 'legs_a', 2: 'arms', 4: 'cb_b', 5: 'legs_b' }
+    const weekday = (iso: string) => new Date(`${iso}T12:00:00Z`).getUTCDay()
+
+    /** `logged` is decided by the caller so a case can miss, skip or add days. */
+    const build = (endingOn: string, span: number, logged: (iso: string, scheduled: boolean) => boolean): ConsistencyDayIn[] =>
+      Array.from({ length: span }, (_, i) => {
+        const date = isoAddDays(endingOn, -(span - 1 - i))
+        const w = weekday(date)
+        const scheduled = TRAINS.includes(w)
+        return { date, dayKey: scheduled ? DAY_KEYS[w] : null, scheduled, logged: logged(date, scheduled) }
+      })
+
+    const endingOn = '2026-09-06'
+    const cases: Case<{ days: ConsistencyDayIn[]; endingOn: string; weeks: number; startDay: number }, Consistency>[] = []
+    const add = (name: string, days: ConsistencyDayIn[], weeks = 8, startDay = 0, on = endingOn) => {
+      cases.push({ name, input: { days, endingOn: on, weeks, startDay }, expected: consistencySeries(days, { endingOn: on, weeks, startDay }) })
+    }
+
+    add('perfect, eight weeks', build(endingOn, 63, (_, s) => s))
+    add('nothing logged', build(endingOn, 63, () => false))
+    add('every other session missed', build(endingOn, 63, (iso, s) => s && weekday(iso) % 2 === 0))
+    // Trained on a Wednesday: an extra, which counts as done and is not planned.
+    add('extras on rest days', build(endingOn, 63, (iso, s) => s || weekday(iso) === 3))
+    // A window that reaches past the data it has — the weeks before it are all rest.
+    add('four weeks of history in an eight-week window', build(endingOn, 28, (_, s) => s))
+    add('empty input', [])
+    add('one week', build(endingOn, 63, (_, s) => s), 1)
+    add('twelve weeks', build(endingOn, 90, (_, s) => s), 12)
+    // A Monday-anchored week re-cuts every capsule.
+    add('Monday start', build(endingOn, 63, (_, s) => s), 8, 1)
+    // Mid-week: the current week's later days are `planned`, not `missed`.
+    add('mid-week today', build('2026-09-02', 63, (_, s) => s), 8, 0, '2026-09-02')
+    add('mid-week, Monday start', build('2026-09-02', 63, (_, s) => s), 8, 1, '2026-09-02')
+
+    emit('consistency-series.json', {
+      module: 'charts/consistency',
+      fn: 'consistencySeries',
+      note: 'Exactly `weeks` weeks of seven cells, oldest first. rest = nothing asked · done = asked and delivered · extra = delivered unasked · missed = asked, not delivered, day over · planned = asked, day not yet happened. `planned` counts the asked days (extras excluded); `done` counts every session, so adherence may exceed 100.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — deficit ledger', () => {
+  it('exports the weekly balance against the scale', () => {
+    const endingOn = '2026-09-06'
+
+    /** A deterministic block: 1,950 kcal in, a BMR near 1,540, active energy
+     *  wobbling with the weekday, and a weigh-in every third morning. */
+    const block = (span: number, over: Partial<Record<number, Partial<DeficitDayIn>>> = {}): DeficitDayIn[] =>
+      Array.from({ length: span }, (_, i) => {
+        const date = isoAddDays(endingOn, -(span - 1 - i))
+        const t = i
+        const day: DeficitDayIn = {
+          date,
+          intakeKcal: 1950 + ((t * 37) % 180) - 90,
+          bmrKcal: 1540 - Math.floor(t / 14),
+          activeKcal: 520 + ((t * 53) % 260),
+          weightKg: t % 3 === 0 ? Math.round((66.4 - t * 0.021) * 10) / 10 : null,
+        }
+        return { ...day, ...(over[i] ?? {}) }
+      })
+
+    const cases: Case<{ days: DeficitDayIn[]; endingOn: string; weeks: number; startDay: number }, DeficitLedger>[] = []
+    const add = (name: string, days: DeficitDayIn[], weeks = 8, startDay = 0) => {
+      cases.push({ name, input: { days, endingOn, weeks, startDay }, expected: deficitLedgerSeries(days, { endingOn, weeks, startDay }) })
+    }
+
+    add('eight complete weeks', block(56))
+    add('empty input', [])
+    // A day with no active-energy sync contributes NOTHING — the whole reason
+    // `tdeeKcal` is all-or-nothing.
+    add('holes in the active energy', block(56, { 3: { activeKcal: null }, 10: { activeKcal: null }, 40: { activeKcal: null } }))
+    add('holes in the intake', block(56, { 5: { intakeKcal: null }, 6: { intakeKcal: null } }))
+    add('no BMR at all', block(56).map((d) => ({ ...d, bmrKcal: null })))
+    // A fortnight with no weigh-in: those weeks have no measured delta and must
+    // not borrow the one before them.
+    add('a fortnight off the scale', block(56).map((d, i) => (i >= 20 && i < 34 ? { ...d, weightKg: null } : d)))
+    add('one weigh-in only', block(56).map((d, i) => (i === 55 ? d : { ...d, weightKg: null })))
+    add('a surplus', block(56).map((d) => ({ ...d, intakeKcal: (d.intakeKcal ?? 0) + 900 })))
+    add('four weeks', block(56), 4)
+    add('Monday start', block(56), 8, 1)
+    add('history shorter than the window', block(17))
+
+    emit('deficit-ledger.json', {
+      module: 'charts/deficitLedger',
+      fn: 'deficitLedgerSeries',
+      note: 'Σ(intake − TDEE) per week over the days that have BOTH sides; expected kg = balance ÷ 7700; measured kg = the last reading of the week against the last reading of the newest earlier week that had one. `gapKg` = measured − expected, positive when the scale moved less than the ledger predicted.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — goal board', () => {
+  it('exports the rate, the arrival and the week ledger', () => {
+    const readings = (days: number, from: string, start: number, perDay: number, every = 1): GoalReading[] =>
+      Array.from({ length: days }, (_, i) => ({
+        date: isoAddDays(from, i),
+        weightKg: i % every === 0 ? Math.round((start + perDay * i) * 100) / 100 : null,
+      }))
+
+    const energy = (days: number, from: string, balance: number, holes: number[] = []): GoalEnergyDay[] =>
+      Array.from({ length: days }, (_, i) => ({
+        date: isoAddDays(from, i),
+        intakeKcal: holes.includes(i) ? null : 1950,
+        tdeeKcal: holes.includes(i) ? null : 1950 - balance,
+      }))
+
+    const cases: Case<{
+      readings: GoalReading[]; energy: GoalEnergyDay[]
+      targetWeightKg: number | null; rateMinKgWk: number | null; rateMaxKgWk: number | null; today: string
+    }, GoalBoardOut>[] = []
+    const add = (
+      name: string, r: GoalReading[], e: GoalEnergyDay[],
+      target: number | null, lo: number | null, hi: number | null, today = '2026-09-21',
+    ) => {
+      const input = { readings: r, energy: e, targetWeightKg: target, rateMinKgWk: lo, rateMaxKgWk: hi, today }
+      cases.push({ name, input, expected: goalBoard(input) })
+    }
+
+    const cut = readings(21, '2026-09-01', 70, -0.5 / 7)
+    add('a cut on pace', cut, energy(5, '2026-09-16', 500), 62, -0.5, -0.4)
+    add('a cut under pace', readings(21, '2026-09-01', 70, -0.15 / 7), energy(5, '2026-09-16', 150), 62, -0.5, -0.4)
+    add('a cut over pace', readings(21, '2026-09-01', 70, -0.9 / 7), energy(5, '2026-09-16', 900), 62, -0.5, -0.4)
+    add('a cut going the wrong way', readings(21, '2026-09-01', 70, 0.2 / 7), energy(5, '2026-09-16', -200), 62, -0.5, -0.4)
+    add('a bulk on pace', readings(21, '2026-09-01', 70, 0.22 / 7), energy(5, '2026-09-16', -250), 76, 0.2, 0.25)
+    add('a bulk going the wrong way', readings(21, '2026-09-01', 70, -0.3 / 7), energy(5, '2026-09-16', 300), 76, 0.2, 0.25)
+    add('flat', readings(21, '2026-09-01', 70, 0), energy(5, '2026-09-16', 0), 62, -0.5, -0.4)
+    add('two readings — no line', readings(2, '2026-09-01', 70, -0.5 / 7), energy(5, '2026-09-16', 500), 62, -0.5, -0.4)
+    add('three readings — the minimum', readings(3, '2026-09-01', 70, -0.5 / 7), energy(3, '2026-09-19', 500), 62, -0.5, -0.4)
+    add('a weigh-in every third day', readings(30, '2026-09-01', 70, -0.5 / 7, 3), energy(5, '2026-09-16', 500), 62, -0.5, -0.4, '2026-09-30')
+    add('no target', cut, energy(5, '2026-09-16', 500), null, -0.5, -0.4)
+    add('no band', cut, energy(5, '2026-09-16', 500), 62, null, null)
+    add('the band inverted', cut, energy(5, '2026-09-16', 500), 62, -0.4, -0.5)
+    add('already at target', cut, energy(5, '2026-09-16', 500), 68.57, -0.5, -0.4)
+    add('no energy days', cut, [], 62, -0.5, -0.4)
+    add('every energy day holed', cut, energy(5, '2026-09-16', 500, [0, 1, 2, 3, 4]), 62, -0.5, -0.4)
+    add('some energy days holed', cut, energy(7, '2026-09-14', 500, [1, 4]), 62, -0.5, -0.4)
+    add('no readings at all', [], energy(5, '2026-09-16', 500), 62, -0.5, -0.4)
+
+    emit('goal-board.json', {
+      module: 'charts/goalBoard',
+      fn: 'goalBoard',
+      note: 'Least-squares slope in kg/week (null under three readings); the ETA is measured from the FITTED weight on `today`, and only when the line points at the target. `pace` reads the SIGNED band, so "over" is faster in the band\'s own direction. The week ledger sums only days with both intake and TDEE.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — trajectory', () => {
+  it('exports the smoothed line and the board behind it', () => {
+    const readings = (days: number, from: string, start: number, perDay: number, every = 1, noise = 0): GoalReading[] =>
+      Array.from({ length: days }, (_, i) => ({
+        date: isoAddDays(from, i),
+        weightKg: i % every === 0
+          ? Math.round((start + perDay * i + noise * Math.sin(i / 2.3)) * 100) / 100
+          : null,
+      }))
+
+    const ewmaCases: Case<{ readings: GoalReading[]; halfLifeDays: number }, TrajectoryPoint[]>[] = []
+    const addEwma = (name: string, r: GoalReading[], halfLifeDays = 10) => {
+      ewmaCases.push({ name, input: { readings: r, halfLifeDays }, expected: weightEwma(r, halfLifeDays) })
+    }
+    addEwma('daily, clean', readings(30, '2026-08-08', 70, -0.5 / 7))
+    addEwma('daily, noisy', readings(30, '2026-08-08', 70, -0.5 / 7, 1, 0.6))
+    addEwma('every third day', readings(30, '2026-08-08', 70, -0.5 / 7, 3, 0.6))
+    // A fortnight's gap must not count like a morning's — the whole reason the
+    // weight is time-based rather than per-reading.
+    addEwma('a fortnight off the scale', readings(30, '2026-08-08', 70, -0.5 / 7, 1, 0.6).map((r, i) => (i >= 8 && i < 22 ? { ...r, weightKg: null } : r)))
+    addEwma('out of order', readings(20, '2026-08-18', 70, -0.5 / 7, 1, 0.4).slice().reverse())
+    addEwma('duplicate dates', [
+      { date: '2026-09-01', weightKg: 70 }, { date: '2026-09-01', weightKg: 71 },
+      { date: '2026-09-02', weightKg: 69.8 },
+    ])
+    addEwma('one reading', readings(1, '2026-09-06', 70, 0))
+    addEwma('none', [])
+    addEwma('nulls only', [{ date: '2026-09-01', weightKg: null }, { date: '2026-09-02', weightKg: null }])
+    addEwma('a bad date', [{ date: 'yesterday', weightKg: 70 }, { date: '2026-09-02', weightKg: 69.8 }])
+    addEwma('half-life 3', readings(30, '2026-08-08', 70, -0.5 / 7, 1, 0.6), 3)
+    addEwma('half-life 21', readings(30, '2026-08-08', 70, -0.5 / 7, 1, 0.6), 21)
+    addEwma('half-life 0 falls back', readings(10, '2026-08-28', 70, -0.5 / 7), 0)
+
+    emit('weight-ewma.json', {
+      module: 'charts/trajectory',
+      fn: 'weightEwma',
+      note: 'Time-weighted: the previous state keeps weight 2^(−Δdays / halfLife), so a reading after a fortnight\'s gap barely inherits. Readings are sorted, nulls and unparseable dates dropped, a duplicate date keeps the LAST value seen (a Map set twice) at the position the FIRST occurrence claimed. Only the output is rounded; the state carries full precision.',
+      cases: ewmaCases,
+    })
+
+    const cases: Case<{
+      readings: GoalReading[]; today: string; targetWeightKg: number | null
+      rateMinKgWk: number | null; rateMaxKgWk: number | null; energy: GoalEnergyDay[]; halfLifeDays: number
+    }, Trajectory>[] = []
+    const add = (name: string, r: GoalReading[], today: string, target: number | null, lo: number | null, hi: number | null) => {
+      const input = { readings: r, today, targetWeightKg: target, rateMinKgWk: lo, rateMaxKgWk: hi, energy: [], halfLifeDays: 10 }
+      cases.push({ name, input, expected: trajectorySeries(r, input) })
+    }
+    // One case per phase kind, because the title flips on it.
+    add('inside the Onyx cut', readings(30, '2026-08-08', 70, -0.5 / 7, 1, 0.5), '2026-09-06', 62, -0.5, -0.4)
+    add('inside the lean bulk', readings(30, '2026-10-20', 64, 0.22 / 7, 1, 0.5), '2026-11-18', 70, 0.2, 0.25)
+    add('inside the transition deload', readings(30, '2026-09-25', 64, -0.1 / 7, 1, 0.5), '2026-10-24', 62, -0.2, -0.1)
+    add('inside PPL peak week', readings(30, '2026-05-30', 72, -0.4 / 7, 1, 0.5), '2026-06-24', 68, -0.5, -0.4)
+    add('outside every phase', readings(30, '2027-01-10', 70, 0, 1, 0.5), '2027-02-08', null, null, null)
+    add('nothing on the scale', [], '2026-09-06', 62, -0.5, -0.4)
+
+    emit('trajectory-series.json', {
+      module: 'charts/trajectory',
+      fn: 'trajectorySeries',
+      note: 'The EWMA is the LINE and the regression is the RATE — the tile draws the first and prints the second, and the second is `goalBoard`\'s so the tile and the Goal Board row cannot disagree. `phaseKind` is what the title flips on and is null between phases.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — battery stack', () => {
+  it('exports the charge line and the five drains under it', () => {
+    const endingOn = '2026-09-06'
+    const grid: Array<Partial<ScoringInputs> & { hoursAwake?: number }> = [
+      { sleepHours: 8, deepMinutes: 60, remMinutes: 90, hoursAwake: 8 },
+      { sleepHours: 5, deepMinutes: 20, remMinutes: 30, hoursAwake: 16, fatigueLevel: 4, domsSeverity: 2 },
+      { sleepHours: 7, deepMinutes: 55, remMinutes: 100, hoursAwake: 12, acwr: 1.6, strainZ: 1.2 },
+      { sleepHours: 6.5, deepMinutes: 40, remMinutes: 70, hoursAwake: 14, steps: 18000, activeCal: 1200 },
+      { sleepHours: 9, deepMinutes: 120, remMinutes: 120, hoursAwake: 18, steps: 40000, activeCal: 3000, sessionVolumeKg: 30000, trailingAvgVolumeKg: 1000, sessionRpe: 10, sessionDayKey: 'legs_a', hrvZ: 2, rhrZ: -2, acwr: 3, strainZ: 2, fatigueLevel: 5, domsSeverity: 3, sleepOnsetTrouble: true },
+      { sleepHours: 7.5, deepMinutes: 70, remMinutes: 95, hoursAwake: 10, hrvZ: -1.4, rhrZ: 1.1 },
+      { sleepHours: 8.5, deepMinutes: 90, remMinutes: 110, hoursAwake: 9, workoutLogged: true, sessionRpe: 7, sessionVolumeKg: 9000, trailingAvgVolumeKg: 8000 },
+    ]
+    const scored: BatteryStackDayIn[] = grid.map((over, i) => {
+      const { hoursAwake, ...fields } = over
+      const full = inputs({ ...fields, hoursAwake } as Partial<ScoringInputs>)
+      const breakdown = batteryBreakdown(full, hoursAwake)
+      return { date: isoAddDays(endingOn, -(grid.length - 1 - i)), batteryPct: breakdown.currentPct, breakdown }
+    })
+
+    const cases: Case<{ days: BatteryStackDayIn[]; endingOn: string; limit: number }, BatteryStackDay[]>[] = []
+    const add = (name: string, days: BatteryStackDayIn[], limit = 14) => {
+      cases.push({ name, input: { days, endingOn, limit }, expected: batteryStackSeries(days, { endingOn, limit }) })
+    }
+
+    add('seven scored days in a fortnight window', scored)
+    add('exactly the window', scored, 7)
+    add('a shorter window than the data', scored, 3)
+    // A day the scorer never reached: present, empty, and never a zero stack.
+    add('a hole in the middle', scored.filter((_, i) => i !== 3))
+    // A stored reading with no breakdown — a day scored before v9.
+    add('a v8 day with no breakdown', scored.map((d, i) => (i === 2 ? { date: d.date, batteryPct: 61, breakdown: null } : d)))
+    add('nothing scored at all', [])
+    add('zero limit', scored, 0)
+    add('negative limit', scored, -4)
+
+    emit('battery-stack.json', {
+      module: 'charts/batteryStack',
+      fn: 'batteryStackSeries',
+      note: 'Exactly `limit` days ending on endingOn, oldest first; a day with no breakdown is present and empty rather than closed up. Drains are floored at zero and stacked time · activity · workout · load · wellness. `totalDrain` is raw — on a floored day the stack is taller than the gap it explains, which is the day saying the model ran out of room.',
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — body composition', () => {
+  it('exports the four metrics and their own spans', () => {
+    const endingOn = '2026-09-06'
+    const reading = (i: number, span: number, over: Partial<BodyCompReadingIn> = {}): BodyCompReadingIn => {
+      const weight = Math.round((66.4 - i * 0.021) * 10) / 10
+      const fat = Math.round((16.8 - i * 0.02) * 10) / 10
+      return {
+        date: isoAddDays(endingOn, -(span - 1 - i)),
+        weightKg: weight,
+        fatPct: fat,
+        skeletalMuscleKg: Math.round((27.0 + i * 0.004) * 10) / 10,
+        leanSoftTissueKg: Math.round((weight * (100 - fat)) / 100 * 10) / 10,
+        fatFreeMassKg: Math.round((weight - (weight * fat) / 100) * 100) / 100,
+        ...over,
+      }
+    }
+    const block = (span: number, every = 3, over: Record<number, Partial<BodyCompReadingIn>> = {}): BodyCompReadingIn[] =>
+      Array.from({ length: span }, (_, i) => i)
+        .filter((i) => i % every === 0)
+        .map((i) => reading(i, span, over[i] ?? {}))
+
+    const cases: Case<{ readings: BodyCompReadingIn[]; endingOn: string; days: number }, BodyCompMetric[]>[] = []
+    const add = (name: string, readings: BodyCompReadingIn[], days = 30) => {
+      cases.push({ name, input: { readings, endingOn, days }, expected: bodyCompSeries(readings, { endingOn, days }) })
+    }
+
+    add('a month of weigh-ins', block(30))
+    add('every morning', block(30, 1))
+    add('nine days of history in a 30-day window', block(9, 1))
+    add('one reading', block(1, 1))
+    add('nothing', [])
+    // The scale reports SMM on some mornings and not others: each metric walks
+    // its own points, so a hole in one is not a hole in all four.
+    add('holes in skeletal muscle', block(30, 3, { 0: { skeletalMuscleKg: null }, 9: { skeletalMuscleKg: null }, 18: { skeletalMuscleKg: null } }))
+    add('no fat percentage at all', block(30, 3).map((r) => ({ ...r, fatPct: null })))
+    // A zero is not a body measurement — it is a scale that failed to read.
+    add('zeroes for readings', block(30, 3).map((r, i) => (i % 2 === 0 ? { ...r, skeletalMuscleKg: 0, fatPct: 0 } : r)))
+    add('readings older than the window', block(60, 3))
+    add('a seven-day window', block(30, 3), 7)
+    add('a one-day window', block(30, 1), 1)
+
+    emit('body-comp-series.json', {
+      module: 'charts/bodyComp',
+      fn: 'bodyCompSeries',
+      note: 'Four metrics — skeletal muscle, lean soft tissue, fat-free mass, body fat % — each walking its OWN readings inside the window, so a hole in one is not a hole in the others. The delta is the newest against the oldest reading present and `deltaDays` is the span it actually covers; a zero or a negative is a failed read, not a measurement.',
+      cases,
+    })
   })
 })

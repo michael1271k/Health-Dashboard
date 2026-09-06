@@ -1,0 +1,2196 @@
+{
+  "module": "charts/goalBoard",
+  "fn": "goalBoard",
+  "note": "Least-squares slope in kg/week (null under three readings); the ETA is measured from the FITTED weight on `today`, and only when the line points at the target. `pace` reads the SIGNED band, so \"over\" is faster in the band's own direction. The week ledger sums only days with both intake and TDEE.",
+  "cases": [
+    {
+      "name": "a cut on pace",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "a cut under pace",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.98
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.96
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.94
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.91
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.89
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.87
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.85
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.83
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.81
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.76
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.74
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.72
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69.7
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 69.68
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 69.66
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 69.61
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 69.59
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 69.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1800
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1800
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1800
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1800
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1800
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.15,
+        "trendWeightKg": 69.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 50.7,
+        "etaISO": "2027-09-11",
+        "weekBalanceKcal": 750,
+        "weekDaysCounted": 5,
+        "pace": "under"
+      }
+    },
+    {
+      "name": "a cut over pace",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.87
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.74
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.61
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.49
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.23
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.1
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 68.97
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 68.84
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 68.59
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 68.46
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 68.33
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 68.2
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.07
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 67.94
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 67.81
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 67.69
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 67.56
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 67.43
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1050
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1050
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1050
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1050
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1050
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.9,
+        "trendWeightKg": 67.4,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 6,
+        "etaISO": "2026-11-02",
+        "weekBalanceKcal": 4500,
+        "weekDaysCounted": 5,
+        "pace": "over"
+      }
+    },
+    {
+      "name": "a cut going the wrong way",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 70.03
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 70.06
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 70.09
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 70.11
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 70.14
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 70.17
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 70.2
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 70.23
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 70.26
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 70.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 70.31
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 70.34
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 70.37
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 70.4
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 70.43
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 70.46
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 70.49
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 70.51
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 70.54
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 70.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2150
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2150
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2150
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2150
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2150
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": 0.2,
+        "trendWeightKg": 70.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": -1000,
+        "weekDaysCounted": 5,
+        "pace": "reversed"
+      }
+    },
+    {
+      "name": "a bulk on pace",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 70.03
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 70.06
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 70.09
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 70.13
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 70.16
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 70.19
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 70.22
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 70.25
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 70.28
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 70.31
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 70.35
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 70.38
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 70.41
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 70.44
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 70.47
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 70.5
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 70.53
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 70.57
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 70.6
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 70.63
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2200
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2200
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2200
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2200
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 2200
+          }
+        ],
+        "targetWeightKg": 76,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": 0.22,
+        "trendWeightKg": 70.6,
+        "targetRateMinKgWk": 0.2,
+        "targetRateMaxKgWk": 0.25,
+        "targetWeightKg": 76,
+        "weeksToTarget": 24.5,
+        "etaISO": "2027-03-12",
+        "weekBalanceKcal": -1250,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "a bulk going the wrong way",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.96
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.91
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.87
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.83
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.74
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.7
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.66
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.61
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.53
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.49
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.44
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69.4
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 69.31
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 69.27
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 69.23
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 69.19
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 69.14
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1650
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1650
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1650
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1650
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1650
+          }
+        ],
+        "targetWeightKg": 76,
+        "rateMinKgWk": 0.2,
+        "rateMaxKgWk": 0.25,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.3,
+        "trendWeightKg": 69.1,
+        "targetRateMinKgWk": 0.2,
+        "targetRateMaxKgWk": 0.25,
+        "targetWeightKg": 76,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": 1500,
+        "weekDaysCounted": 5,
+        "pace": "reversed"
+      }
+    },
+    {
+      "name": "flat",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 70
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1950
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1950
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1950
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1950
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1950
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": 0,
+        "trendWeightKg": 70,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": 0,
+        "weekDaysCounted": 5,
+        "pace": "under"
+      }
+    },
+    {
+      "name": "two readings — no line",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": null,
+        "trendWeightKg": null,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "unknown"
+      }
+    },
+    {
+      "name": "three readings — the minimum",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-21",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.49,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.5,
+        "etaISO": "2026-12-24",
+        "weekBalanceKcal": 1500,
+        "weekDaysCounted": 3,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "a weigh-in every third day",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-22",
+            "weightKg": 68.5
+          },
+          {
+            "date": "2026-09-23",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-24",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-25",
+            "weightKg": 68.29
+          },
+          {
+            "date": "2026-09-26",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-27",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-28",
+            "weightKg": 68.07
+          },
+          {
+            "date": "2026-09-29",
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-30",
+            "weightKg": null
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-30"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 67.9,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 11.8,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "no target",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": null,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": null,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "no band",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": null,
+        "rateMaxKgWk": null,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": null,
+        "targetRateMaxKgWk": null,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "unknown"
+      }
+    },
+    {
+      "name": "the band inverted",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.4,
+        "rateMaxKgWk": -0.5,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.4,
+        "targetRateMaxKgWk": -0.5,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "already at target",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 68.57,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 68.57,
+        "weeksToTarget": 0.1,
+        "etaISO": "2026-09-21",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "no energy days",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": null,
+        "weekDaysCounted": 0,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "every energy day holed",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": null,
+        "weekDaysCounted": 0,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "some energy days holed",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-01",
+            "weightKg": 70
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 69.93
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 69.86
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 69.79
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 69.71
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 69.64
+          },
+          {
+            "date": "2026-09-07",
+            "weightKg": 69.57
+          },
+          {
+            "date": "2026-09-08",
+            "weightKg": 69.5
+          },
+          {
+            "date": "2026-09-09",
+            "weightKg": 69.43
+          },
+          {
+            "date": "2026-09-10",
+            "weightKg": 69.36
+          },
+          {
+            "date": "2026-09-11",
+            "weightKg": 69.29
+          },
+          {
+            "date": "2026-09-12",
+            "weightKg": 69.21
+          },
+          {
+            "date": "2026-09-13",
+            "weightKg": 69.14
+          },
+          {
+            "date": "2026-09-14",
+            "weightKg": 69.07
+          },
+          {
+            "date": "2026-09-15",
+            "weightKg": 69
+          },
+          {
+            "date": "2026-09-16",
+            "weightKg": 68.93
+          },
+          {
+            "date": "2026-09-17",
+            "weightKg": 68.86
+          },
+          {
+            "date": "2026-09-18",
+            "weightKg": 68.79
+          },
+          {
+            "date": "2026-09-19",
+            "weightKg": 68.71
+          },
+          {
+            "date": "2026-09-20",
+            "weightKg": 68.64
+          },
+          {
+            "date": "2026-09-21",
+            "weightKg": 68.57
+          }
+        ],
+        "energy": [
+          {
+            "date": "2026-09-14",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-15",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": null,
+            "tdeeKcal": null
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": -0.5,
+        "trendWeightKg": 68.6,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": 13.2,
+        "etaISO": "2026-12-22",
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "onTrack"
+      }
+    },
+    {
+      "name": "no readings at all",
+      "input": {
+        "readings": [],
+        "energy": [
+          {
+            "date": "2026-09-16",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-17",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-18",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-19",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          },
+          {
+            "date": "2026-09-20",
+            "intakeKcal": 1950,
+            "tdeeKcal": 1450
+          }
+        ],
+        "targetWeightKg": 62,
+        "rateMinKgWk": -0.5,
+        "rateMaxKgWk": -0.4,
+        "today": "2026-09-21"
+      },
+      "expected": {
+        "ratePerWeekKg": null,
+        "trendWeightKg": null,
+        "targetRateMinKgWk": -0.5,
+        "targetRateMaxKgWk": -0.4,
+        "targetWeightKg": 62,
+        "weeksToTarget": null,
+        "etaISO": null,
+        "weekBalanceKcal": 2500,
+        "weekDaysCounted": 5,
+        "pace": "unknown"
+      }
+    }
+  ]
+}

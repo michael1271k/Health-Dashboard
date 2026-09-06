@@ -312,6 +312,32 @@
       ]
     },
     {
+      "name": "trajectory @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "surface": "phone"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
+      "name": "trajectory @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "surface": "desktop"
+      },
+      "expected": [
+        "s",
+        "m"
+      ]
+    },
+    {
       "name": "muscle @phone",
       "input": {
         "items": [

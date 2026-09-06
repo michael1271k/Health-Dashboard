@@ -108,6 +108,22 @@ enum VitalsFocusOption: String, AppEnum {
   var focus: VitalsFocus { VitalsFocus(rawValue: rawValue)! }
 }
 
+enum ProgressFocusOption: String, AppEnum {
+  case trajectory, consistency, deficit, fatigue
+
+  static let typeDisplayRepresentation: TypeDisplayRepresentation = "Show"
+  static let caseDisplayRepresentations: [ProgressFocusOption: DisplayRepresentation] = [
+    .trajectory:  DisplayRepresentation(title: "Trajectory", subtitle: "The smoothed weight line, the target band and the arrival date"),
+    .consistency: DisplayRepresentation(title: "Consistency", subtitle: "Eight weeks of planned against done"),
+    .deficit:     DisplayRepresentation(title: "Deficit Ledger", subtitle: "What the energy ledger predicted against what the scale did"),
+    .fatigue:     DisplayRepresentation(title: "Fatigue Stack", subtitle: "Where the battery went, day by day"),
+  ]
+
+  /// The tile's own enum. Same raw values by construction; a case added on one
+  /// side without the other is a crash here, on the first render, loudly.
+  var focus: ProgressFocus { ProgressFocus(rawValue: rawValue)! }
+}
+
 enum LockFocusOption: String, AppEnum {
   case battery, calories, steps, workout
 
@@ -178,6 +194,34 @@ struct TrainingConfiguration: WidgetConfigurationIntent, OnyxScoped {
 
   static func recommendation(_ focus: TrainingFocusOption) -> TrainingConfiguration {
     let intent = TrainingConfiguration()
+    intent.focus = focus
+    return intent
+  }
+}
+
+struct ProgressConfiguration: WidgetConfigurationIntent, OnyxScoped {
+  static var title: LocalizedStringResource { "Onyx Progress" }
+  static var description: IntentDescription {
+    IntentDescription("Is the block working — the trajectory, the record, the ledger and the cost.")
+  }
+
+  @Parameter(title: "Show", default: .trajectory)
+  var focus: ProgressFocusOption
+
+  /// Each face needs a different slice, so the scope follows the FOCUS — the
+  /// same rule `TrainingConfiguration` uses, and for the same reason.
+  var scope: OnyxScope { focus.focus.scope }
+  var onyxFocus: OnyxFocus { .progress(focus.focus) }
+
+  static var galleryOptions: [(intent: ProgressConfiguration, title: LocalizedStringResource)] {
+    [(recommendation(.trajectory), "Trajectory"),
+     (recommendation(.consistency), "Consistency"),
+     (recommendation(.deficit), "Deficit Ledger"),
+     (recommendation(.fatigue), "Fatigue Stack")]
+  }
+
+  static func recommendation(_ focus: ProgressFocusOption) -> ProgressConfiguration {
+    let intent = ProgressConfiguration()
     intent.focus = focus
     return intent
   }

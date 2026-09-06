@@ -79,6 +79,13 @@
               ]
             },
             {
+              "id": "sl-trajectory",
+              "size": "m",
+              "items": [
+                "trajectory"
+              ]
+            },
+            {
               "id": "sl-muscle",
               "size": "s",
               "items": [
@@ -151,6 +158,7 @@
           "train",
           "bar",
           "body",
+          "trajectory",
           "muscle",
           "volume",
           "pr",
@@ -239,6 +247,13 @@
               ]
             },
             {
+              "id": "sl-trajectory",
+              "size": "m",
+              "items": [
+                "trajectory"
+              ]
+            },
+            {
               "id": "sl-muscle",
               "size": "l",
               "items": [
@@ -311,6 +326,7 @@
           "train",
           "bar",
           "body",
+          "trajectory",
           "muscle",
           "volume",
           "pr",
@@ -393,6 +409,13 @@
               ]
             },
             {
+              "id": "sl-trajectory",
+              "size": "m",
+              "items": [
+                "trajectory"
+              ]
+            },
+            {
               "id": "sl-muscle",
               "size": "s",
               "items": [
@@ -467,6 +490,7 @@
           "deficit",
           "bar",
           "body",
+          "trajectory",
           "muscle",
           "volume",
           "pr",
@@ -551,6 +575,13 @@
               ]
             },
             {
+              "id": "sl-trajectory",
+              "size": "m",
+              "items": [
+                "trajectory"
+              ]
+            },
+            {
               "id": "sl-muscle",
               "size": "s",
               "items": [
@@ -627,6 +658,7 @@
           "deficit",
           "bar",
           "body",
+          "trajectory",
           "muscle",
           "volume",
           "pr",

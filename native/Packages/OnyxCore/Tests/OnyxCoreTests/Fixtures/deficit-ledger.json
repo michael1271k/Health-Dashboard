@@ -1,0 +1,4450 @@
+{
+  "module": "charts/deficitLedger",
+  "fn": "deficitLedgerSeries",
+  "note": "Σ(intake − TDEE) per week over the days that have BOTH sides; expected kg = balance ÷ 7700; measured kg = the last reading of the week against the last reading of the newest earlier week that had one. `gapKg` = measured − expected, positive when the scale moved less than the ledger predicted.",
+  "cases": [
+    {
+      "name": "eight complete weeks",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 7,
+            "balanceKcal": -3030,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": -3110,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": -2994,
+            "expectedKg": -0.39,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": -3072,
+            "expectedKg": -0.4,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": -3219,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 50,
+        "totalBalanceKcal": -22202,
+        "expectedKg": -2.88,
+        "measuredKg": -1,
+        "gapKg": 1.88
+      }
+    },
+    {
+      "name": "empty input",
+      "input": {
+        "days": [],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 0,
+        "totalBalanceKcal": null,
+        "expectedKg": null,
+        "measuredKg": null,
+        "gapKg": null
+      }
+    },
+    {
+      "name": "holes in the active energy",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": null,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": null,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": null,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 6,
+            "balanceKcal": -2634,
+            "expectedKg": -0.34,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": -3110,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": -2994,
+            "expectedKg": -0.39,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": -3072,
+            "expectedKg": -0.4,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 6,
+            "balanceKcal": -2822,
+            "expectedKg": -0.37,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 48,
+        "totalBalanceKcal": -21409,
+        "expectedKg": -2.78,
+        "measuredKg": -1,
+        "gapKg": 1.78
+      }
+    },
+    {
+      "name": "holes in the intake",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": null,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": null,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 6,
+            "balanceKcal": -2614,
+            "expectedKg": -0.34,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": -3110,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": -2994,
+            "expectedKg": -0.39,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": -3072,
+            "expectedKg": -0.4,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": -3219,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 49,
+        "totalBalanceKcal": -21786,
+        "expectedKg": -2.83,
+        "measuredKg": -1,
+        "gapKg": 1.83
+      }
+    },
+    {
+      "name": "no BMR at all",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": null,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": null,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": null,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": null,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": null,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": null,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": null,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": null,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": null,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": null,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": null,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": null,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": null,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": null,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": null,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": null,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": null,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": null,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": null,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": null,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": null,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": null,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": null,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": null,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": null,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": null,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": null,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": null,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": null,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": null,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": null,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": null,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": null,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": null,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": null,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": null,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": null,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": null,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": null,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": null,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": null,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": null,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": null,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": null,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": null,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": null,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": null,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": null,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": null,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": null,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": null,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": null,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": null,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": null,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": null,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": null,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 0,
+        "totalBalanceKcal": null,
+        "expectedKg": null,
+        "measuredKg": -1,
+        "gapKg": null
+      }
+    },
+    {
+      "name": "a fortnight off the scale",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 7,
+            "balanceKcal": -3030,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": -3110,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": -2994,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": -3072,
+            "expectedKg": -0.4,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": -3219,
+            "expectedKg": -0.42,
+            "measuredKg": -0.4
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 50,
+        "totalBalanceKcal": -22202,
+        "expectedKg": -2.88,
+        "measuredKg": -1,
+        "gapKg": 1.88
+      }
+    },
+    {
+      "name": "one weigh-in only",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 7,
+            "balanceKcal": -3030,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": -3110,
+            "expectedKg": -0.4,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": -2994,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": -3072,
+            "expectedKg": -0.4,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": -3219,
+            "expectedKg": -0.42,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 50,
+        "totalBalanceKcal": -22202,
+        "expectedKg": -2.88,
+        "measuredKg": null,
+        "gapKg": null
+      }
+    },
+    {
+      "name": "a surplus",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 2760,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 2797,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 2834,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 2871,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2908,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 2765,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 2802,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 2839,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 2876,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2913,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 2770,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 2807,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 2844,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 2881,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2918,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 2775,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 2812,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 2849,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 2886,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2923,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 2780,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 2817,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 2854,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 2891,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2928,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 2785,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 2822,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 2859,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 2896,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2933,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 2790,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 2827,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 2864,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2901,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2938,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 2795,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 2832,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 2869,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2906,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 2763,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 2800,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 2837,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 2874,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2911,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 2768,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 2805,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 2842,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 2879,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2916,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 2773,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 2810,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 2847,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 2884,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2921,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 2778,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 2815,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 7,
+            "balanceKcal": 2607,
+            "expectedKg": 0.34,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 7,
+            "balanceKcal": 2530,
+            "expectedKg": 0.33,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 7,
+            "balanceKcal": 2644,
+            "expectedKg": 0.34,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 7,
+            "balanceKcal": 2565,
+            "expectedKg": 0.33,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": 2422,
+            "expectedKg": 0.31,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": 2440,
+            "expectedKg": 0.32,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": 2456,
+            "expectedKg": 0.32,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": 407,
+            "expectedKg": 0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 50,
+        "totalBalanceKcal": 18071,
+        "expectedKg": 2.35,
+        "measuredKg": -1,
+        "gapKg": -3.35
+      }
+    },
+    {
+      "name": "four weeks",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 4,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 7,
+            "balanceKcal": -3219,
+            "expectedKg": -0.42,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3197,
+            "expectedKg": -0.42,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3182,
+            "expectedKg": -0.41,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -398,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 22,
+        "totalBalanceKcal": -9996,
+        "expectedKg": -1.3,
+        "measuredKg": -0.3,
+        "gapKg": 1
+      }
+    },
+    {
+      "name": "Monday start",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-13",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-07-14",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-15",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-16",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-17",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-18",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-19",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-07-20",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-21",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-22",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-07-23",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-24",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-25",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-26",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-27",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-28",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-07-29",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-30",
+            "intakeKcal": 1949,
+            "bmrKcal": 1539,
+            "activeKcal": 641,
+            "weightKg": null
+          },
+          {
+            "date": "2026-07-31",
+            "intakeKcal": 1986,
+            "bmrKcal": 1539,
+            "activeKcal": 694,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-01",
+            "intakeKcal": 2023,
+            "bmrKcal": 1539,
+            "activeKcal": 747,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-02",
+            "intakeKcal": 1880,
+            "bmrKcal": 1539,
+            "activeKcal": 540,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-03",
+            "intakeKcal": 1917,
+            "bmrKcal": 1539,
+            "activeKcal": 593,
+            "weightKg": 66
+          },
+          {
+            "date": "2026-08-04",
+            "intakeKcal": 1954,
+            "bmrKcal": 1539,
+            "activeKcal": 646,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-05",
+            "intakeKcal": 1991,
+            "bmrKcal": 1539,
+            "activeKcal": 699,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-06",
+            "intakeKcal": 2028,
+            "bmrKcal": 1539,
+            "activeKcal": 752,
+            "weightKg": 65.9
+          },
+          {
+            "date": "2026-08-07",
+            "intakeKcal": 1885,
+            "bmrKcal": 1539,
+            "activeKcal": 545,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-08",
+            "intakeKcal": 1922,
+            "bmrKcal": 1539,
+            "activeKcal": 598,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-09",
+            "intakeKcal": 1959,
+            "bmrKcal": 1539,
+            "activeKcal": 651,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-10",
+            "intakeKcal": 1996,
+            "bmrKcal": 1538,
+            "activeKcal": 704,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-11",
+            "intakeKcal": 2033,
+            "bmrKcal": 1538,
+            "activeKcal": 757,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-12",
+            "intakeKcal": 1890,
+            "bmrKcal": 1538,
+            "activeKcal": 550,
+            "weightKg": 65.8
+          },
+          {
+            "date": "2026-08-13",
+            "intakeKcal": 1927,
+            "bmrKcal": 1538,
+            "activeKcal": 603,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-14",
+            "intakeKcal": 1964,
+            "bmrKcal": 1538,
+            "activeKcal": 656,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-15",
+            "intakeKcal": 2001,
+            "bmrKcal": 1538,
+            "activeKcal": 709,
+            "weightKg": 65.7
+          },
+          {
+            "date": "2026-08-16",
+            "intakeKcal": 2038,
+            "bmrKcal": 1538,
+            "activeKcal": 762,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-17",
+            "intakeKcal": 1895,
+            "bmrKcal": 1538,
+            "activeKcal": 555,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-18",
+            "intakeKcal": 1932,
+            "bmrKcal": 1538,
+            "activeKcal": 608,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-19",
+            "intakeKcal": 1969,
+            "bmrKcal": 1538,
+            "activeKcal": 661,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-20",
+            "intakeKcal": 2006,
+            "bmrKcal": 1538,
+            "activeKcal": 714,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1863,
+            "bmrKcal": 1538,
+            "activeKcal": 767,
+            "weightKg": 65.6
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1900,
+            "bmrKcal": 1538,
+            "activeKcal": 560,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1937,
+            "bmrKcal": 1538,
+            "activeKcal": 613,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1974,
+            "bmrKcal": 1537,
+            "activeKcal": 666,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2011,
+            "bmrKcal": 1537,
+            "activeKcal": 719,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1868,
+            "bmrKcal": 1537,
+            "activeKcal": 772,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1905,
+            "bmrKcal": 1537,
+            "activeKcal": 565,
+            "weightKg": 65.5
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1942,
+            "bmrKcal": 1537,
+            "activeKcal": 618,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1979,
+            "bmrKcal": 1537,
+            "activeKcal": 671,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2016,
+            "bmrKcal": 1537,
+            "activeKcal": 724,
+            "weightKg": 65.4
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1873,
+            "bmrKcal": 1537,
+            "activeKcal": 777,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1910,
+            "bmrKcal": 1537,
+            "activeKcal": 570,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1947,
+            "bmrKcal": 1537,
+            "activeKcal": 623,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1984,
+            "bmrKcal": 1537,
+            "activeKcal": 676,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2021,
+            "bmrKcal": 1537,
+            "activeKcal": 729,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1878,
+            "bmrKcal": 1537,
+            "activeKcal": 522,
+            "weightKg": 65.3
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1915,
+            "bmrKcal": 1537,
+            "activeKcal": 575,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 1
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-13",
+            "daysCounted": 7,
+            "balanceKcal": -2987,
+            "expectedKg": -0.39,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-20",
+            "daysCounted": 7,
+            "balanceKcal": -3070,
+            "expectedKg": -0.4,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-07-27",
+            "daysCounted": 7,
+            "balanceKcal": -3050,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-03",
+            "daysCounted": 7,
+            "balanceKcal": -3035,
+            "expectedKg": -0.39,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-10",
+            "daysCounted": 7,
+            "balanceKcal": -3111,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-17",
+            "daysCounted": 7,
+            "balanceKcal": -3160,
+            "expectedKg": -0.41,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-24",
+            "daysCounted": 7,
+            "balanceKcal": -3237,
+            "expectedKg": -0.42,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-08-31",
+            "daysCounted": 7,
+            "balanceKcal": -3123,
+            "expectedKg": -0.41,
+            "measuredKg": -0.1
+          }
+        ],
+        "daysCounted": 56,
+        "totalBalanceKcal": -24773,
+        "expectedKg": -3.22,
+        "measuredKg": -1.1,
+        "gapKg": 2.12
+      }
+    },
+    {
+      "name": "history shorter than the window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-21",
+            "intakeKcal": 1860,
+            "bmrKcal": 1540,
+            "activeKcal": 520,
+            "weightKg": 66.4
+          },
+          {
+            "date": "2026-08-22",
+            "intakeKcal": 1897,
+            "bmrKcal": 1540,
+            "activeKcal": 573,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-23",
+            "intakeKcal": 1934,
+            "bmrKcal": 1540,
+            "activeKcal": 626,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-24",
+            "intakeKcal": 1971,
+            "bmrKcal": 1540,
+            "activeKcal": 679,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-08-25",
+            "intakeKcal": 2008,
+            "bmrKcal": 1540,
+            "activeKcal": 732,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-26",
+            "intakeKcal": 1865,
+            "bmrKcal": 1540,
+            "activeKcal": 525,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-27",
+            "intakeKcal": 1902,
+            "bmrKcal": 1540,
+            "activeKcal": 578,
+            "weightKg": 66.3
+          },
+          {
+            "date": "2026-08-28",
+            "intakeKcal": 1939,
+            "bmrKcal": 1540,
+            "activeKcal": 631,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-29",
+            "intakeKcal": 1976,
+            "bmrKcal": 1540,
+            "activeKcal": 684,
+            "weightKg": null
+          },
+          {
+            "date": "2026-08-30",
+            "intakeKcal": 2013,
+            "bmrKcal": 1540,
+            "activeKcal": 737,
+            "weightKg": 66.2
+          },
+          {
+            "date": "2026-08-31",
+            "intakeKcal": 1870,
+            "bmrKcal": 1540,
+            "activeKcal": 530,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-01",
+            "intakeKcal": 1907,
+            "bmrKcal": 1540,
+            "activeKcal": 583,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-02",
+            "intakeKcal": 1944,
+            "bmrKcal": 1540,
+            "activeKcal": 636,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-09-03",
+            "intakeKcal": 1981,
+            "bmrKcal": 1540,
+            "activeKcal": 689,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-04",
+            "intakeKcal": 2018,
+            "bmrKcal": 1539,
+            "activeKcal": 742,
+            "weightKg": null
+          },
+          {
+            "date": "2026-09-05",
+            "intakeKcal": 1875,
+            "bmrKcal": 1539,
+            "activeKcal": 535,
+            "weightKg": 66.1
+          },
+          {
+            "date": "2026-09-06",
+            "intakeKcal": 1912,
+            "bmrKcal": 1539,
+            "activeKcal": 588,
+            "weightKg": null
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-07-26",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-02",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-09",
+            "daysCounted": 0,
+            "balanceKcal": null,
+            "expectedKg": null,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-16",
+            "daysCounted": 2,
+            "balanceKcal": -810,
+            "expectedKg": -0.11,
+            "measuredKg": null
+          },
+          {
+            "weekStart": "2026-08-23",
+            "daysCounted": 7,
+            "balanceKcal": -3068,
+            "expectedKg": -0.4,
+            "measuredKg": -0.1
+          },
+          {
+            "weekStart": "2026-08-30",
+            "daysCounted": 7,
+            "balanceKcal": -3050,
+            "expectedKg": -0.4,
+            "measuredKg": -0.2
+          },
+          {
+            "weekStart": "2026-09-06",
+            "daysCounted": 1,
+            "balanceKcal": -416,
+            "expectedKg": -0.05,
+            "measuredKg": null
+          }
+        ],
+        "daysCounted": 17,
+        "totalBalanceKcal": -7344,
+        "expectedKg": -0.95,
+        "measuredKg": -0.3,
+        "gapKg": 0.65
+      }
+    }
+  ]
+}

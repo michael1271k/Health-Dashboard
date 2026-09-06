@@ -29,6 +29,16 @@ import OnyxCore
 // The muscle ATLAS figure is deliberately absent: `src/lib/body/atlas.ts` does
 // not exist yet (it is Wave C), and the Swift generator reads from it. This face
 // ships the numbers; the figure lands when the atlas does.
+//
+// ── THE DELTAS BECAME 30-DAY IN W12 ─────────────────────────────────────────
+// `snapshot.body`'s deltas are "since the previous DIFFERENT reading", which is
+// the right rule for a table that carries values forward and the wrong window
+// for a body: two weigh-ins four days apart on a cut differ by water, and the
+// chip reported that as the month's news. `BodyCompSeries` measures each metric
+// against the oldest reading in a 30-day window and reports the span it
+// actually covered, so a body weighed twice this month says "over 9 d" rather
+// than implying a month it does not have. The old deltas remain the fallback
+// for a payload written before the series existed.
 
 /// Small · body fat, its movement, and the fortnight behind it.
 struct CompositionFocusFace: View {
@@ -38,6 +48,7 @@ struct CompositionFocusFace: View {
   private var s: OnyxSnapshot? { entry.snapshot }
   private var b: OnyxSnapshot.Body? { s?.body }
   private var accent: Color { mono ? .white : OnyxDomain.body.accent }
+  private var fat: BodyCompMetric? { s?.metric(.fat) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -48,17 +59,18 @@ struct CompositionFocusFace: View {
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 4) {
-        BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) }, size: 30, color: .white)
+        BigValue(value: (fat?.latest ?? b?.fatPct).map { String(format: "%.1f", $0) }, size: 30, color: .white)
         Text("%").font(OnyxWidgetType.face(12)).foregroundStyle(Color.onyx.textSecondary)
         Spacer(minLength: 0)
         // Down is good here, and only here on this face.
-        DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
+        DeltaChip(delta: fat?.delta ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
 
-      if let measured = OnyxSnapshot.relativeDay(s?.weight.measuredOn) {
-        Text("measured \(measured)")
-          .font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary).lineLimit(1)
-      }
+      // The span the delta above actually covers, when the series knows it —
+      // "over 9 d" beside a chip is what stops the reader reading a month into
+      // a fortnight's worth of readings.
+      Text(OnyxSnapshot.spanCaption(fat) ?? OnyxSnapshot.relativeDay(s?.weight.measuredOn).map { "measured \($0)" } ?? "")
+        .font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary).lineLimit(1)
 
       Spacer(minLength: 0)
 
@@ -82,6 +94,7 @@ struct CompositionFace: View {
   private var s: OnyxSnapshot? { entry.snapshot }
   private var b: OnyxSnapshot.Body? { s?.body }
   private var accent: Color { mono ? .white : OnyxDomain.body.accent }
+  private var fat: BodyCompMetric? { s?.metric(.fat) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: large ? 10 : 8) {
@@ -92,11 +105,14 @@ struct CompositionFace: View {
       }
 
       HStack(alignment: .firstTextBaseline, spacing: 6) {
-        BigValue(value: b?.fatPct.map { String(format: "%.1f", $0) },
+        BigValue(value: (fat?.latest ?? b?.fatPct).map { String(format: "%.1f", $0) },
                  size: large ? 38 : 30, color: .white)
         Text("% fat").font(OnyxWidgetType.face(large ? 13 : 11)).foregroundStyle(Color.onyx.textSecondary)
         Spacer(minLength: 0)
-        DeltaChip(delta: b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
+        if let span = OnyxSnapshot.spanCaption(fat) {
+          Text(span).font(OnyxWidgetType.face(10)).foregroundStyle(Color.onyx.textSecondary).lineLimit(1)
+        }
+        DeltaChip(delta: fat?.delta ?? b?.fatPctDelta, decimals: 1, upIsGood: false, monochrome: mono)
       }
 
       Hairline()
@@ -109,7 +125,7 @@ struct CompositionFace: View {
       // tissue drawn on a body reads as a proportion in a way "46.2 kg" never
       // will on a 2×2 tile.
       HStack(alignment: .top, spacing: 10) {
-        if large, let lean = b?.muscleKg, let weight = s?.weight.kg, weight > 0 {
+        if large, let lean = s?.metric(.lst)?.latest ?? b?.muscleKg, let weight = s?.weight.kg, weight > 0 {
           OnyxAtlasFigure(
             side: .both,
             worked: OnyxAtlasFigure.uniform(min(max(lean / weight, 0), 1)),
@@ -122,13 +138,19 @@ struct CompositionFace: View {
         // "Lean Soft Tissue", never "muscle" — see the header. Up IS good for
         // all three of these, and that is a statement about the metric, not
         // about the sign of the number.
-        CompositionRow(label: "LEAN SOFT TISSUE", value: b?.muscleKg, delta: b?.muscleKgDelta,
+        CompositionRow(label: "LEAN SOFT TISSUE",
+                       value: s?.metric(.lst)?.latest ?? b?.muscleKg,
+                       delta: s?.metric(.lst)?.delta ?? b?.muscleKgDelta,
                        unit: "kg", color: mono ? .white : OnyxDomain.body.end, mono: mono,
                        upIsGood: true, compact: !large)
-        CompositionRow(label: "SKELETAL MUSCLE", value: b?.smmKg, delta: b?.smmKgDelta,
+        CompositionRow(label: "SKELETAL MUSCLE",
+                       value: s?.metric(.smm)?.latest ?? b?.smmKg,
+                       delta: s?.metric(.smm)?.delta ?? b?.smmKgDelta,
                        unit: "kg", color: mono ? .white : OnyxDomain.body.at(0.25), mono: mono,
                        upIsGood: true, compact: !large)
-        CompositionRow(label: "FAT-FREE MASS", value: b?.ffmKg, delta: b?.ffmKgDelta,
+        CompositionRow(label: "FAT-FREE MASS",
+                       value: s?.metric(.ffm)?.latest ?? b?.ffmKg,
+                       delta: s?.metric(.ffm)?.delta ?? b?.ffmKgDelta,
                        unit: "kg", color: mono ? .white : Color.onyx.textSecondary, mono: mono,
                        upIsGood: true, compact: !large)
       }

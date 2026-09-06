@@ -32,6 +32,8 @@ enum WidgetPreviews {
     }
 
     static let entry = OnyxTileEntry(date: OnyxSnapshot.sampleDate, snapshot: .sample)
+    /// The same date with every W12 series absent — the first-week state.
+    static let emptyEntry = OnyxTileEntry(date: OnyxSnapshot.sampleDate, snapshot: .sampleEmptySeries)
 
     static let cells: [Cell] = {
         let home: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
@@ -45,6 +47,26 @@ enum WidgetPreviews {
         for fam in home { for f in TrainingFocus.allCases { add("training-\(f.rawValue)", fam, TrainingView(entry: entry, focus: f)) } }
         for fam in home { for f in BodyFocus.allCases { add("body-\(f.rawValue)", fam, BodyView(entry: entry, focus: f)) } }
         for fam in home { for f in VitalsFocus.allCases { add("vitals-\(f.rawValue)", fam, VitalsView(entry: entry, focus: f)) } }
+        // ── The W12 tiles ────────────────────────────────────────────────
+        // Not focuses of a family, so they are enumerated by hand — and each
+        // one twice: populated, then with its series gone. §W12's gate asks for
+        // both, because the empty state is the one that ships unreviewed.
+        let grid: [WidgetFamily] = [.systemSmall, .systemMedium]
+        for fam in grid {
+            add("trajectory", fam, TrajectoryView(entry: entry))
+            add("consistency", fam, ConsistencyView(entry: entry))
+            add("deficit", fam, DeficitLedgerView(entry: entry))
+            add("fatigue", fam, FatigueStackView(entry: entry))
+            add("muscle", fam, MuscleView(entry: entry))
+        }
+        for fam in grid {
+            add("trajectory-empty", fam, TrajectoryView(entry: emptyEntry))
+            add("consistency-empty", fam, ConsistencyView(entry: emptyEntry))
+            add("deficit-empty", fam, DeficitLedgerView(entry: emptyEntry))
+            add("fatigue-empty", fam, FatigueStackView(entry: emptyEntry))
+            add("muscle-empty", fam, MuscleView(entry: emptyEntry))
+            add("body-empty", fam, BodyView(entry: emptyEntry, focus: .composition))
+        }
         // Large only — the widget declares `.systemLarge` alone (see OnyxDaily).
         add("daily", .systemLarge, DailyView(entry: entry))
         for f in LockFocus.allCases {

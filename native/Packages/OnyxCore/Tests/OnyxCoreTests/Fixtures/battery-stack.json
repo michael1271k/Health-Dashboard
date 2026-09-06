@@ -1,0 +1,2807 @@
+{
+  "module": "charts/batteryStack",
+  "fn": "batteryStackSeries",
+  "note": "Exactly `limit` days ending on endingOn, oldest first; a day with no breakdown is present and empty rather than closed up. Drains are floored at zero and stacked time · activity · workout · load · wellness. `totalDrain` is raw — on a floored day the stack is taller than the gap it explains, which is the day saying the model ran out of room.",
+  "cases": [
+    {
+      "name": "seven scored days in a fortnight window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "charge": 93,
+          "drains": {
+            "time": 14.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 14.5,
+          "batteryPct": 79,
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "charge": 84,
+          "drains": {
+            "time": 33.9,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 3.6
+          },
+          "totalDrain": 37.5,
+          "batteryPct": 46,
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "charge": 92,
+          "drains": {
+            "time": 26.2,
+            "activity": 0,
+            "workout": 0,
+            "load": 3.9,
+            "wellness": 0.8
+          },
+          "totalDrain": 30.9,
+          "batteryPct": 61,
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "charge": 89,
+          "drains": {
+            "time": 30.9,
+            "activity": 12,
+            "workout": 0,
+            "load": 0,
+            "wellness": 1.1
+          },
+          "totalDrain": 44,
+          "batteryPct": 45,
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "charge": 100,
+          "drains": {
+            "time": 35,
+            "activity": 12,
+            "workout": 32,
+            "load": 8,
+            "wellness": 4.5
+          },
+          "totalDrain": 91.5,
+          "batteryPct": 9,
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "charge": 87,
+          "drains": {
+            "time": 20.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0.4
+          },
+          "totalDrain": 20.9,
+          "batteryPct": 66,
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "charge": 95,
+          "drains": {
+            "time": 17.5,
+            "activity": 0,
+            "workout": 13.5,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 31,
+          "batteryPct": 64,
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "exactly the window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 7
+      },
+      "expected": [
+        {
+          "d": "2026-08-31",
+          "charge": 93,
+          "drains": {
+            "time": 14.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 14.5,
+          "batteryPct": 79,
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "charge": 84,
+          "drains": {
+            "time": 33.9,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 3.6
+          },
+          "totalDrain": 37.5,
+          "batteryPct": 46,
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "charge": 92,
+          "drains": {
+            "time": 26.2,
+            "activity": 0,
+            "workout": 0,
+            "load": 3.9,
+            "wellness": 0.8
+          },
+          "totalDrain": 30.9,
+          "batteryPct": 61,
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "charge": 89,
+          "drains": {
+            "time": 30.9,
+            "activity": 12,
+            "workout": 0,
+            "load": 0,
+            "wellness": 1.1
+          },
+          "totalDrain": 44,
+          "batteryPct": 45,
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "charge": 100,
+          "drains": {
+            "time": 35,
+            "activity": 12,
+            "workout": 32,
+            "load": 8,
+            "wellness": 4.5
+          },
+          "totalDrain": 91.5,
+          "batteryPct": 9,
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "charge": 87,
+          "drains": {
+            "time": 20.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0.4
+          },
+          "totalDrain": 20.9,
+          "batteryPct": 66,
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "charge": 95,
+          "drains": {
+            "time": 17.5,
+            "activity": 0,
+            "workout": 13.5,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 31,
+          "batteryPct": 64,
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a shorter window than the data",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 3
+      },
+      "expected": [
+        {
+          "d": "2026-09-04",
+          "charge": 100,
+          "drains": {
+            "time": 35,
+            "activity": 12,
+            "workout": 32,
+            "load": 8,
+            "wellness": 4.5
+          },
+          "totalDrain": 91.5,
+          "batteryPct": 9,
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "charge": 87,
+          "drains": {
+            "time": 20.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0.4
+          },
+          "totalDrain": 20.9,
+          "batteryPct": 66,
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "charge": 95,
+          "drains": {
+            "time": 17.5,
+            "activity": 0,
+            "workout": 13.5,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 31,
+          "batteryPct": 64,
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a hole in the middle",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "charge": 93,
+          "drains": {
+            "time": 14.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 14.5,
+          "batteryPct": 79,
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "charge": 84,
+          "drains": {
+            "time": 33.9,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 3.6
+          },
+          "totalDrain": 37.5,
+          "batteryPct": 46,
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "charge": 92,
+          "drains": {
+            "time": 26.2,
+            "activity": 0,
+            "workout": 0,
+            "load": 3.9,
+            "wellness": 0.8
+          },
+          "totalDrain": 30.9,
+          "batteryPct": 61,
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-04",
+          "charge": 100,
+          "drains": {
+            "time": 35,
+            "activity": 12,
+            "workout": 32,
+            "load": 8,
+            "wellness": 4.5
+          },
+          "totalDrain": 91.5,
+          "batteryPct": 9,
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "charge": 87,
+          "drains": {
+            "time": 20.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0.4
+          },
+          "totalDrain": 20.9,
+          "batteryPct": 66,
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "charge": 95,
+          "drains": {
+            "time": 17.5,
+            "activity": 0,
+            "workout": 13.5,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 31,
+          "batteryPct": 64,
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a v8 day with no breakdown",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": null
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "charge": 93,
+          "drains": {
+            "time": 14.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 14.5,
+          "batteryPct": 79,
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "charge": 84,
+          "drains": {
+            "time": 33.9,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 3.6
+          },
+          "totalDrain": 37.5,
+          "batteryPct": 46,
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": 61,
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "charge": 89,
+          "drains": {
+            "time": 30.9,
+            "activity": 12,
+            "workout": 0,
+            "load": 0,
+            "wellness": 1.1
+          },
+          "totalDrain": 44,
+          "batteryPct": 45,
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "charge": 100,
+          "drains": {
+            "time": 35,
+            "activity": 12,
+            "workout": 32,
+            "load": 8,
+            "wellness": 4.5
+          },
+          "totalDrain": 91.5,
+          "batteryPct": 9,
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "charge": 87,
+          "drains": {
+            "time": 20.5,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0.4
+          },
+          "totalDrain": 20.9,
+          "batteryPct": 66,
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "charge": 95,
+          "drains": {
+            "time": 17.5,
+            "activity": 0,
+            "workout": 13.5,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": 31,
+          "batteryPct": 64,
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "nothing scored at all",
+      "input": {
+        "days": [],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-01",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-02",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-03",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-04",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-05",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        },
+        {
+          "d": "2026-09-06",
+          "charge": null,
+          "drains": {
+            "time": 0,
+            "activity": 0,
+            "workout": 0,
+            "load": 0,
+            "wellness": 0
+          },
+          "totalDrain": null,
+          "batteryPct": null,
+          "empty": true
+        }
+      ]
+    },
+    {
+      "name": "zero limit",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 0
+      },
+      "expected": []
+    },
+    {
+      "name": "negative limit",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "batteryPct": 79,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 8,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.6944444444444444,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8541666666666667,
+                "morningCharge": 93
+              },
+              "drains": {
+                "time": 14.461156890828718,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0,
+                "total": 14.461156890828718
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 79
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "batteryPct": 46,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 16,
+              "charge": {
+                "ratio": 0.625,
+                "stagesQ": 0.37037037037037035,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.6368055555555556,
+                "morningCharge": 84
+              },
+              "drains": {
+                "time": 33.9446208637534,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 3.583333333333333,
+                "total": 37.527954197086736
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": 0.75,
+                "soreness": 0.6666666666666666,
+                "onset": null,
+                "sleep": 0.375,
+                "index": 0.5972222222222222,
+                "drain": 3.583333333333333
+              },
+              "currentPct": 46
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "batteryPct": 61,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 12,
+              "charge": {
+                "ratio": 0.875,
+                "stagesQ": 0.8201058201058201,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.8167658730158729,
+                "morningCharge": 92
+              },
+              "drains": {
+                "time": 26.249999999999996,
+                "activity": 0,
+                "workout": 0,
+                "load": 3.942857142857143,
+                "wellness": 0.75,
+                "total": 30.94285714285714
+              },
+              "loadParts": {
+                "acwrTerm": 2.1428571428571432,
+                "strainTerm": 1.7999999999999998,
+                "drain": 3.942857142857143
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.125,
+                "index": 0.125,
+                "drain": 0.75
+              },
+              "currentPct": 61
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "batteryPct": 45,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 14,
+              "charge": {
+                "ratio": 0.8125,
+                "stagesQ": 0.6267806267806267,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.759642094017094,
+                "morningCharge": 89
+              },
+              "drains": {
+                "time": 30.905777754582115,
+                "activity": 12,
+                "workout": 0,
+                "load": 0,
+                "wellness": 1.125,
+                "total": 44.03077775458212
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.1875,
+                "index": 0.1875,
+                "drain": 1.125
+              },
+              "currentPct": 45
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "batteryPct": 9,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 18,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.9876543209876543,
+                "hrvQ": 1,
+                "rhrQ": 1,
+                "quality": 0.9981481481481481,
+                "morningCharge": 100
+              },
+              "drains": {
+                "time": 35,
+                "activity": 12,
+                "workout": 32,
+                "load": 8,
+                "wellness": 4.5,
+                "total": 91.5
+              },
+              "loadParts": {
+                "acwrTerm": 5,
+                "strainTerm": 3,
+                "drain": 8
+              },
+              "wellnessParts": {
+                "fatigue": 1,
+                "soreness": 1,
+                "onset": 1,
+                "sleep": 0,
+                "index": 0.75,
+                "drain": 4.5
+              },
+              "currentPct": 9
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "batteryPct": 66,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 10,
+              "charge": {
+                "ratio": 0.9375,
+                "stagesQ": 0.8148148148148148,
+                "hrvQ": 0.4,
+                "rhrQ": 0.475,
+                "quality": 0.7153472222222222,
+                "morningCharge": 87
+              },
+              "drains": {
+                "time": 20.53884310917128,
+                "activity": 0,
+                "workout": 0,
+                "load": 0,
+                "wellness": 0.375,
+                "total": 20.91384310917128
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0.0625,
+                "index": 0.0625,
+                "drain": 0.375
+              },
+              "currentPct": 66
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "batteryPct": 64,
+            "breakdown": {
+              "version": 9,
+              "hoursAwake": 9,
+              "charge": {
+                "ratio": 1,
+                "stagesQ": 0.8714596949891068,
+                "hrvQ": 0.75,
+                "rhrQ": 0.75,
+                "quality": 0.880718954248366,
+                "morningCharge": 95
+              },
+              "drains": {
+                "time": 17.499999999999996,
+                "activity": 0,
+                "workout": 13.5,
+                "load": 0,
+                "wellness": 0,
+                "total": 30.999999999999996
+              },
+              "loadParts": {
+                "acwrTerm": 0,
+                "strainTerm": 0,
+                "drain": 0
+              },
+              "wellnessParts": {
+                "fatigue": null,
+                "soreness": null,
+                "onset": null,
+                "sleep": 0,
+                "index": 0,
+                "drain": 0
+              },
+              "currentPct": 64
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": -4
+      },
+      "expected": []
+    }
+  ]
+}

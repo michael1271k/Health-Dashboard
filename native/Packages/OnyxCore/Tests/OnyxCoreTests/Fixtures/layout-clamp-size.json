@@ -1194,6 +1194,116 @@
       "expected": "xl"
     },
     {
+      "name": "trajectory want=s @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "s",
+        "surface": "phone"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "trajectory want=s @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "s",
+        "surface": "desktop"
+      },
+      "expected": "s"
+    },
+    {
+      "name": "trajectory want=m @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "m",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=m @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "m",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=l @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "l",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=l @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "l",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=w @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "w",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=w @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "w",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=xl @phone",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "xl",
+        "surface": "phone"
+      },
+      "expected": "m"
+    },
+    {
+      "name": "trajectory want=xl @desktop",
+      "input": {
+        "items": [
+          "trajectory"
+        ],
+        "want": "xl",
+        "surface": "desktop"
+      },
+      "expected": "m"
+    },
+    {
       "name": "muscle want=s @phone",
       "input": {
         "items": [

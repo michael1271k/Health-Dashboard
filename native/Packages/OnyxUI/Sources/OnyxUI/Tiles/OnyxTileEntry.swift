@@ -26,6 +26,7 @@ public enum OnyxFocus: Sendable, Equatable {
   case body(BodyFocus)
   case vitals(VitalsFocus)
   case lock(LockFocus)
+  case progress(ProgressFocus)
 }
 
 public struct OnyxTileEntry: Sendable {
@@ -87,6 +88,10 @@ public struct OnyxTileEntry: Sendable {
   public var lockFocus: LockFocus {
     if case .lock(let f) = focus { return f }
     return .battery
+  }
+  public var progressFocus: ProgressFocus {
+    if case .progress(let f) = focus { return f }
+    return .trajectory
   }
 
   public static func placeholder(_ date: Date = Date()) -> OnyxTileEntry {
@@ -209,6 +214,42 @@ public enum VitalsFocus: String, CaseIterable, Sendable {
   /// where trends live, which is a different question from "what happened".
   public func link(_ date: String?) -> URL? {
     date.flatMap { OnyxLink.day($0) } ?? OnyxLink.progress
+  }
+}
+
+/// The block, at four angles — W12's family.
+///
+/// ── WHY A FIFTH FAMILY AND NOT FOUR MORE FOCUSES ────────────────────────────
+/// Fuel, Training, Body and Lock each answer one QUESTION at several
+/// granularities, and none of them asks this one. "Am I arriving", "am I
+/// showing up", "does the ledger match the scale", "where did the battery go"
+/// are four angles on a single question — is the block working — which is
+/// exactly the shape a family is. Bolting them onto the existing four would
+/// have put a weekly reconciliation behind a picker labelled "Fuel".
+public enum ProgressFocus: String, CaseIterable, Sendable {
+  case trajectory, consistency, deficit, fatigue
+
+  /// The payload slice each face needs. An extension pays for every field it
+  /// decodes in time and in resident memory, against a hard cap.
+  public var scope: OnyxScope {
+    switch self {
+    case .trajectory, .fatigue: .body
+    case .consistency:          .training
+    case .deficit:              .lifestyle
+    }
+  }
+
+  /// See `FuelFocus.link(_:)` for why this takes the payload's date.
+  public func link(_ date: String?) -> URL? {
+    switch self {
+    // The trajectory and the ledger are the Goal Board's two numbers, and the
+    // Goal Board is on Today.
+    case .trajectory, .deficit: return OnyxLink.home
+    case .consistency:          return OnyxLink.progress
+    // Where the battery went is a recovery question, and it is asked about a
+    // DAY — the fatigue and soreness rows that feed it live there.
+    case .fatigue:              return date.flatMap { OnyxLink.day($0) } ?? OnyxLink.progress
+    }
   }
 }
 

@@ -81,6 +81,13 @@
             ]
           },
           {
+            "id": "sl-trajectory",
+            "size": "m",
+            "items": [
+              "trajectory"
+            ]
+          },
+          {
             "id": "sl-muscle",
             "size": "s",
             "items": [
@@ -216,6 +223,13 @@
             "size": "w",
             "items": [
               "body"
+            ]
+          },
+          {
+            "id": "sl-trajectory",
+            "size": "m",
+            "items": [
+              "trajectory"
             ]
           },
           {

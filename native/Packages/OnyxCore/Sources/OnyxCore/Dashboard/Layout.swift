@@ -42,7 +42,11 @@ public enum DashboardSurface: String, Codable, Sendable {
 /// carries, and `reconcile` appends in this order.
 public enum WidgetId: String, Codable, Sendable, CaseIterable {
     case recovery, sleep, vitals, fuel, water, micros, deficit, train, bar
-    case body, muscle, volume, pr, consistency, steps, cardio, stack, fatigue
+    // `trajectory` is W12's, and it sits beside `body` because it is the same
+    // question asked over time. Declaration order IS the catalogue order that
+    // `reconcile` appends in, so a new id lands where it reads rather than at
+    // the end of the grid.
+    case body, trajectory, muscle, volume, pr, consistency, steps, cardio, stack, fatigue
 }
 
 /// One position on the grid. `items` is ordered and MAY repeat a widget.
@@ -93,6 +97,10 @@ public enum Dashboard {
         .train: [.s, .m, .l],
         .bar: [.s, .m, .l],
         .body: [.s, .m, .l, .w, .xl],
+        // Small is the rate and the arrival; medium adds the line and the
+        // target band. No large — a weight curve is one series, and a taller
+        // plot of one series is a stretched medium.
+        .trajectory: [.s, .m],
         .muscle: [.s, .m, .l],
         .volume: [.s, .m, .l],
         .pr: [.s, .m],
@@ -106,7 +114,7 @@ public enum Dashboard {
     static let defaultSizePhone: [WidgetId: WidgetSize] = [
         .recovery: .l,
         .sleep: .m, .vitals: .m, .fuel: .m, .water: .s, .micros: .s, .deficit: .m,
-        .train: .m, .bar: .s, .body: .m, .muscle: .s, .volume: .s,
+        .train: .m, .bar: .s, .body: .m, .trajectory: .m, .muscle: .s, .volume: .s,
         .pr: .s, .consistency: .s, .steps: .s, .cardio: .s, .stack: .s,
         .fatigue: .s,
     ]
@@ -117,7 +125,7 @@ public enum Dashboard {
         .body: .w,
         .vitals: .l, .fuel: .l, .deficit: .l, .train: .l, .muscle: .l, .volume: .l,
         .micros: .m, .bar: .m, .consistency: .m, .steps: .m,
-        .water: .m, .pr: .m, .cardio: .m, .stack: .m, .fatigue: .m,
+        .water: .m, .pr: .m, .cardio: .m, .stack: .m, .fatigue: .m, .trajectory: .m,
     ]) { _, new in new }
 
     /// The size a widget lands at when it is added back from the tray.
