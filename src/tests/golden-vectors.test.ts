@@ -3062,7 +3062,9 @@ describe('golden vectors — nutrition levers', () => {
       '2026-08-15', '2026-08-16', '2026-08-19', '2026-08-20', '2026-08-29', '2026-08-30', '2026-09-03', '2026-09-05',
       '2026-09-06', '2026-09-10', '2026-10-18', '2026-10-31', '2026-11-01', '2026-12-01', '2027-01-01',
     ]
-    const storeds: Array<string | null> = [null, 'baseline', 'lever-1', 'lever-2', 'maintenance-week', 'custom', 'lever-9']
+    // Every rung the table knows, so a new one is exercised as a STORED
+    // selection on both sides without anyone remembering to list it.
+    const storeds: Array<string | null> = [null, ...LEVERS.map((l) => l.id), 'custom', 'lever-9']
     const todays = ['2026-08-19', '2026-09-03']
     const ends: Array<string | null> = [null, '2026-09-05']
     for (const today of todays) for (const releaseEndsOn of ends) for (const stored of storeds) for (const date of dates) {

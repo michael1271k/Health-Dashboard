@@ -40,7 +40,7 @@
         }
       },
       "expected": {
-        "label": "Custom",
+        "label": "Baseline 2",
         "startISO": "2026-09-06",
         "endISO": "2026-09-06",
         "days": 1,
@@ -636,7 +636,7 @@
         }
       },
       "expected": {
-        "label": "Custom",
+        "label": "Baseline 2",
         "startISO": "2026-09-06",
         "endISO": "2026-09-06",
         "days": 1,
@@ -702,7 +702,7 @@
         }
       },
       "expected": {
-        "label": "Custom",
+        "label": "Baseline 2",
         "startISO": "2026-09-06",
         "endISO": "2026-09-06",
         "days": 1,

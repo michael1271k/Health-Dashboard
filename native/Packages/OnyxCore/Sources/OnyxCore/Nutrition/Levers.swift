@@ -22,6 +22,7 @@ import Foundation
 
 public enum LeverId: String, Codable, Sendable, CaseIterable {
     case baseline
+    case baseline2 = "baseline-2"
     case lever1 = "lever-1"
     case lever2 = "lever-2"
     case maintenanceWeek = "maintenance-week"
@@ -85,6 +86,13 @@ public enum Levers {
         NutritionLever(id: .baseline, kind: .deficit, label: "Baseline",
                        summary: "The plan as written — full carbs, 10k steps.",
                        calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55, stepsGoal: 10000),
+        // The Week 8 re-base (2026-09-06): 20 kcal under the original, all carbs,
+        // no lever pulled. A rung rather than a `custom` row so the schedule pins
+        // it — a `custom` stretch reads the live `user_goals` row and the next
+        // edit would re-grade every day since. 1,935 = 170·4 + 190·4 + 55·9.
+        NutritionLever(id: .baseline2, kind: .deficit, label: "Baseline 2",
+                       summary: "The Week 8 re-base — 190 g carbs, 10k steps, no lever.",
+                       calorieGoal: 1935, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 55, stepsGoal: 10000),
         NutritionLever(id: .lever1, kind: .deficit, label: "Lever 1",
                        summary: "−70 kcal off carbs and fat, steps to 10k.",
                        calorieGoal: 1885, proteinGoalG: 170, carbsGoalG: 182, fatGoalG: 53, stepsGoal: 10000),
@@ -114,8 +122,9 @@ public enum Levers {
         LeverPeriod(from: "2026-08-20", leverId: .custom, goals: LeverGoals(calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000)),
         // The scheduled maintenance week, and its end. The second row is not optional.
         LeverPeriod(from: "2026-08-30", leverId: .maintenanceWeek),
-        // Open stretch — no goals, so it answers with the live `user_goals` row.
-        LeverPeriod(from: "2026-09-06", leverId: .custom),
+        // The cut resumes on its re-based rung (Phase 3, E0) — pinned, not an
+        // open `custom` stretch that would move with the next `user_goals` edit.
+        LeverPeriod(from: "2026-09-06", leverId: .baseline2),
     ]
 
     /// The schedule row covering a date, or nil before the cut opened.
