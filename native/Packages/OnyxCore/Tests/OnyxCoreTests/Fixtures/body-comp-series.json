@@ -1,0 +1,3166 @@
+{
+  "module": "charts/bodyComp",
+  "fn": "bodyCompSeries",
+  "note": "Four metrics — skeletal muscle, lean soft tissue, fat-free mass, body fat % — each walking its OWN readings inside the window, so a hole in one is not a hole in the others. The delta is the newest against the oldest reading present and `deltaDays` is the span it actually covers; a zero or a negative is a failed read, not a measurement.",
+  "cases": [
+    {
+      "name": "a month of weigh-ins",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-04",
+          "delta": 0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 27
+            },
+            {
+              "d": "2026-08-11",
+              "v": 27
+            },
+            {
+              "d": "2026-08-14",
+              "v": 27
+            },
+            {
+              "d": "2026-08-17",
+              "v": 27
+            },
+            {
+              "d": "2026-08-20",
+              "v": 27
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-26",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.07,
+          "latestOn": "2026-09-04",
+          "delta": -0.17,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.13
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.18
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.3,
+          "latestOn": "2026-09-04",
+          "delta": -0.5,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-11",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-14",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-17",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-20",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-23",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-26",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-29",
+              "v": 16.4
+            },
+            {
+              "d": "2026-09-01",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "every morning",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-09",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-10",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-12",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-13",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-15",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-16",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-18",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-19",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-21",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-22",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-24",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-25",
+            "weightKg": 66,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.11
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-27",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-28",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-30",
+            "weightKg": 65.9,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.09
+          },
+          {
+            "date": "2026-08-31",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 65.8,
+            "fatPct": 16.2,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.14
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 65.8,
+            "fatPct": 16.2,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.14
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-06",
+          "delta": 0.1,
+          "deltaDays": 29,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 27
+            },
+            {
+              "d": "2026-08-09",
+              "v": 27
+            },
+            {
+              "d": "2026-08-10",
+              "v": 27
+            },
+            {
+              "d": "2026-08-11",
+              "v": 27
+            },
+            {
+              "d": "2026-08-12",
+              "v": 27
+            },
+            {
+              "d": "2026-08-13",
+              "v": 27
+            },
+            {
+              "d": "2026-08-14",
+              "v": 27
+            },
+            {
+              "d": "2026-08-15",
+              "v": 27
+            },
+            {
+              "d": "2026-08-16",
+              "v": 27
+            },
+            {
+              "d": "2026-08-17",
+              "v": 27
+            },
+            {
+              "d": "2026-08-18",
+              "v": 27
+            },
+            {
+              "d": "2026-08-19",
+              "v": 27
+            },
+            {
+              "d": "2026-08-20",
+              "v": 27
+            },
+            {
+              "d": "2026-08-21",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-22",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-24",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-25",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-26",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-27",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-28",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-30",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-31",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-02",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-03",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-05",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-06",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-06",
+          "delta": -0.1,
+          "deltaDays": 29,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-09",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-10",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-12",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-13",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-15",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-16",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-18",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-19",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-21",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-22",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-24",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-25",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-27",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-28",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-30",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-31",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-02",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-03",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            },
+            {
+              "d": "2026-09-05",
+              "v": 55.1
+            },
+            {
+              "d": "2026-09-06",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.14,
+          "latestOn": "2026-09-06",
+          "delta": -0.1,
+          "deltaDays": 29,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-09",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-10",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-12",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-13",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-15",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-16",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-18",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-19",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.13
+            },
+            {
+              "d": "2026-08-21",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-22",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-24",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-25",
+              "v": 55.11
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-27",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-28",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-30",
+              "v": 55.09
+            },
+            {
+              "d": "2026-08-31",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-02",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-03",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            },
+            {
+              "d": "2026-09-05",
+              "v": 55.14
+            },
+            {
+              "d": "2026-09-06",
+              "v": 55.14
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.2,
+          "latestOn": "2026-09-06",
+          "delta": -0.6,
+          "deltaDays": 29,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-09",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-10",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-11",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-12",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-13",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-14",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-15",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-16",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-17",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-18",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-19",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-20",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-21",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-22",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-23",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-24",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-25",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-26",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-27",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-28",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-29",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-30",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-31",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-01",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-02",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-03",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-05",
+              "v": 16.2
+            },
+            {
+              "d": "2026-09-06",
+              "v": 16.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "nine days of history in a 30-day window",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-29",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-30",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-31",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27,
+          "latestOn": "2026-09-06",
+          "delta": 0,
+          "deltaDays": 8,
+          "points": [
+            {
+              "d": "2026-08-29",
+              "v": 27
+            },
+            {
+              "d": "2026-08-30",
+              "v": 27
+            },
+            {
+              "d": "2026-08-31",
+              "v": 27
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27
+            },
+            {
+              "d": "2026-09-02",
+              "v": 27
+            },
+            {
+              "d": "2026-09-03",
+              "v": 27
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27
+            },
+            {
+              "d": "2026-09-05",
+              "v": 27
+            },
+            {
+              "d": "2026-09-06",
+              "v": 27
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.2,
+          "latestOn": "2026-09-06",
+          "delta": 0,
+          "deltaDays": 8,
+          "points": [
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-30",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-31",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-02",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-03",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-05",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-06",
+              "v": 55.2
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.21,
+          "latestOn": "2026-09-06",
+          "delta": -0.03,
+          "deltaDays": 8,
+          "points": [
+            {
+              "d": "2026-08-29",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-30",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-31",
+              "v": 55.24
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.23
+            },
+            {
+              "d": "2026-09-02",
+              "v": 55.23
+            },
+            {
+              "d": "2026-09-03",
+              "v": 55.23
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.23
+            },
+            {
+              "d": "2026-09-05",
+              "v": 55.23
+            },
+            {
+              "d": "2026-09-06",
+              "v": 55.21
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.6,
+          "latestOn": "2026-09-06",
+          "delta": -0.2,
+          "deltaDays": 8,
+          "points": [
+            {
+              "d": "2026-08-29",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-30",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-31",
+              "v": 16.8
+            },
+            {
+              "d": "2026-09-01",
+              "v": 16.7
+            },
+            {
+              "d": "2026-09-02",
+              "v": 16.7
+            },
+            {
+              "d": "2026-09-03",
+              "v": 16.7
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.7
+            },
+            {
+              "d": "2026-09-05",
+              "v": 16.7
+            },
+            {
+              "d": "2026-09-06",
+              "v": 16.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "one reading",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-09-06",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 27
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.2,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 55.2
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.24,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 55.24
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.8,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 16.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "nothing",
+      "input": {
+        "readings": [],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": null,
+          "latestOn": null,
+          "delta": null,
+          "deltaDays": null,
+          "points": []
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": null,
+          "latestOn": null,
+          "delta": null,
+          "deltaDays": null,
+          "points": []
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": null,
+          "latestOn": null,
+          "delta": null,
+          "deltaDays": null,
+          "points": []
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": null,
+          "latestOn": null,
+          "delta": null,
+          "deltaDays": null,
+          "points": []
+        }
+      ]
+    },
+    {
+      "name": "holes in skeletal muscle",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": null,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": null,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": null,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-04",
+          "delta": 0.1,
+          "deltaDays": 24,
+          "points": [
+            {
+              "d": "2026-08-11",
+              "v": 27
+            },
+            {
+              "d": "2026-08-14",
+              "v": 27
+            },
+            {
+              "d": "2026-08-20",
+              "v": 27
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.07,
+          "latestOn": "2026-09-04",
+          "delta": -0.17,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.13
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.18
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.3,
+          "latestOn": "2026-09-04",
+          "delta": -0.5,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 16.8
+            },
+            {
+              "d": "2026-08-11",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-14",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-17",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-20",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-23",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-26",
+              "v": 16.4
+            },
+            {
+              "d": "2026-08-29",
+              "v": 16.4
+            },
+            {
+              "d": "2026-09-01",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no fat percentage at all",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": null,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": null,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": null,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": null,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": null,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": null,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": null,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": null,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": null,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": null,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-04",
+          "delta": 0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 27
+            },
+            {
+              "d": "2026-08-11",
+              "v": 27
+            },
+            {
+              "d": "2026-08-14",
+              "v": 27
+            },
+            {
+              "d": "2026-08-17",
+              "v": 27
+            },
+            {
+              "d": "2026-08-20",
+              "v": 27
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-26",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.07,
+          "latestOn": "2026-09-04",
+          "delta": -0.17,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.13
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.18
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": null,
+          "latestOn": null,
+          "delta": null,
+          "deltaDays": null,
+          "points": []
+        }
+      ]
+    },
+    {
+      "name": "zeroes for readings",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 0,
+            "skeletalMuscleKg": 0,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 0,
+            "skeletalMuscleKg": 0,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 0,
+            "skeletalMuscleKg": 0,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 0,
+            "skeletalMuscleKg": 0,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 0,
+            "skeletalMuscleKg": 0,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-04",
+          "delta": 0.1,
+          "deltaDays": 24,
+          "points": [
+            {
+              "d": "2026-08-11",
+              "v": 27
+            },
+            {
+              "d": "2026-08-17",
+              "v": 27
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.07,
+          "latestOn": "2026-09-04",
+          "delta": -0.17,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.24
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.23
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.21
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.13
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.19
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.18
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55.18
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.3,
+          "latestOn": "2026-09-04",
+          "delta": -0.4,
+          "deltaDays": 24,
+          "points": [
+            {
+              "d": "2026-08-11",
+              "v": 16.7
+            },
+            {
+              "d": "2026-08-17",
+              "v": 16.6
+            },
+            {
+              "d": "2026-08-23",
+              "v": 16.5
+            },
+            {
+              "d": "2026-08-29",
+              "v": 16.4
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "readings older than the window",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-07-09",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-07-12",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-07-15",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-07-18",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-07-21",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-07-24",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-07-27",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-07-30",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-02",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-08-05",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          },
+          {
+            "date": "2026-08-08",
+            "weightKg": 65.8,
+            "fatPct": 16.2,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.14
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 65.7,
+            "fatPct": 16.1,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.12
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 65.6,
+            "fatPct": 16.1,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55,
+            "fatFreeMassKg": 55.04
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 65.6,
+            "fatPct": 16,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.1
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 65.5,
+            "fatPct": 16,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55,
+            "fatFreeMassKg": 55.02
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 65.5,
+            "fatPct": 15.9,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.09
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 65.4,
+            "fatPct": 15.8,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 65.3,
+            "fatPct": 15.8,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55,
+            "fatFreeMassKg": 54.98
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.3,
+            "fatPct": 15.7,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55,
+            "fatFreeMassKg": 55.05
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.2,
+            "fatPct": 15.7,
+            "skeletalMuscleKg": 27.2,
+            "leanSoftTissueKg": 55,
+            "fatFreeMassKg": 54.96
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 30
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.2,
+          "latestOn": "2026-09-04",
+          "delta": 0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-11",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-14",
+              "v": 27.1
+            },
+            {
+              "d": "2026-08-17",
+              "v": 27.2
+            },
+            {
+              "d": "2026-08-20",
+              "v": 27.2
+            },
+            {
+              "d": "2026-08-23",
+              "v": 27.2
+            },
+            {
+              "d": "2026-08-26",
+              "v": 27.2
+            },
+            {
+              "d": "2026-08-29",
+              "v": 27.2
+            },
+            {
+              "d": "2026-09-01",
+              "v": 27.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.2
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-29",
+              "v": 55
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 54.96,
+          "latestOn": "2026-09-04",
+          "delta": -0.18,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 55.14
+            },
+            {
+              "d": "2026-08-11",
+              "v": 55.12
+            },
+            {
+              "d": "2026-08-14",
+              "v": 55.04
+            },
+            {
+              "d": "2026-08-17",
+              "v": 55.1
+            },
+            {
+              "d": "2026-08-20",
+              "v": 55.02
+            },
+            {
+              "d": "2026-08-23",
+              "v": 55.09
+            },
+            {
+              "d": "2026-08-26",
+              "v": 55.07
+            },
+            {
+              "d": "2026-08-29",
+              "v": 54.98
+            },
+            {
+              "d": "2026-09-01",
+              "v": 55.05
+            },
+            {
+              "d": "2026-09-04",
+              "v": 54.96
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 15.7,
+          "latestOn": "2026-09-04",
+          "delta": -0.5,
+          "deltaDays": 27,
+          "points": [
+            {
+              "d": "2026-08-08",
+              "v": 16.2
+            },
+            {
+              "d": "2026-08-11",
+              "v": 16.1
+            },
+            {
+              "d": "2026-08-14",
+              "v": 16.1
+            },
+            {
+              "d": "2026-08-17",
+              "v": 16
+            },
+            {
+              "d": "2026-08-20",
+              "v": 16
+            },
+            {
+              "d": "2026-08-23",
+              "v": 15.9
+            },
+            {
+              "d": "2026-08-26",
+              "v": 15.8
+            },
+            {
+              "d": "2026-08-29",
+              "v": 15.8
+            },
+            {
+              "d": "2026-09-01",
+              "v": 15.7
+            },
+            {
+              "d": "2026-09-04",
+              "v": 15.7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a seven-day window",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 7
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-04",
+          "delta": 0,
+          "deltaDays": 3,
+          "points": [
+            {
+              "d": "2026-09-01",
+              "v": 27.1
+            },
+            {
+              "d": "2026-09-04",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-04",
+          "delta": -0.1,
+          "deltaDays": 3,
+          "points": [
+            {
+              "d": "2026-09-01",
+              "v": 55.2
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.07,
+          "latestOn": "2026-09-04",
+          "delta": -0.09,
+          "deltaDays": 3,
+          "points": [
+            {
+              "d": "2026-09-01",
+              "v": 55.16
+            },
+            {
+              "d": "2026-09-04",
+              "v": 55.07
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.3,
+          "latestOn": "2026-09-04",
+          "delta": 0,
+          "deltaDays": 3,
+          "points": [
+            {
+              "d": "2026-09-01",
+              "v": 16.3
+            },
+            {
+              "d": "2026-09-04",
+              "v": 16.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a one-day window",
+      "input": {
+        "readings": [
+          {
+            "date": "2026-08-08",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-09",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-10",
+            "weightKg": 66.4,
+            "fatPct": 16.8,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.24
+          },
+          {
+            "date": "2026-08-11",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-12",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-13",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-14",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-15",
+            "weightKg": 66.3,
+            "fatPct": 16.7,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.23
+          },
+          {
+            "date": "2026-08-16",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-17",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-18",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-19",
+            "weightKg": 66.2,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.21
+          },
+          {
+            "date": "2026-08-20",
+            "weightKg": 66.1,
+            "fatPct": 16.6,
+            "skeletalMuscleKg": 27,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.13
+          },
+          {
+            "date": "2026-08-21",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-22",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-23",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-24",
+            "weightKg": 66.1,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.19
+          },
+          {
+            "date": "2026-08-25",
+            "weightKg": 66,
+            "fatPct": 16.5,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.11
+          },
+          {
+            "date": "2026-08-26",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-27",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-28",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-29",
+            "weightKg": 66,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.18
+          },
+          {
+            "date": "2026-08-30",
+            "weightKg": 65.9,
+            "fatPct": 16.4,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.09
+          },
+          {
+            "date": "2026-08-31",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-01",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-02",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-03",
+            "weightKg": 65.9,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.2,
+            "fatFreeMassKg": 55.16
+          },
+          {
+            "date": "2026-09-04",
+            "weightKg": 65.8,
+            "fatPct": 16.3,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.07
+          },
+          {
+            "date": "2026-09-05",
+            "weightKg": 65.8,
+            "fatPct": 16.2,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.14
+          },
+          {
+            "date": "2026-09-06",
+            "weightKg": 65.8,
+            "fatPct": 16.2,
+            "skeletalMuscleKg": 27.1,
+            "leanSoftTissueKg": 55.1,
+            "fatFreeMassKg": 55.14
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "days": 1
+      },
+      "expected": [
+        {
+          "key": "smm",
+          "label": "Skeletal",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 27.1,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 27.1
+            }
+          ]
+        },
+        {
+          "key": "lst",
+          "label": "Lean",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.1,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 55.1
+            }
+          ]
+        },
+        {
+          "key": "ffm",
+          "label": "Fat-free",
+          "unit": "kg",
+          "upIsGood": true,
+          "latest": 55.14,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 55.14
+            }
+          ]
+        },
+        {
+          "key": "fat",
+          "label": "Body fat",
+          "unit": "%",
+          "upIsGood": false,
+          "latest": 16.2,
+          "latestOn": "2026-09-06",
+          "delta": null,
+          "deltaDays": null,
+          "points": [
+            {
+              "d": "2026-09-06",
+              "v": 16.2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

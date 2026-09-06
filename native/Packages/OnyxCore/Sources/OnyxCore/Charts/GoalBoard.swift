@@ -10,6 +10,14 @@ import Foundation
 /// the phase asked for, and when does it arrive — and nothing on Today answered
 /// it.
 ///
+/// ── THE TYPESCRIPT TWIN ARRIVED A WAVE LATE ─────────────────────────────────
+/// This shipped in W5 with hand-written Swift tests and no TypeScript behind
+/// it, because the row it feeds is native-only. W12 rebinds that row to
+/// `TrajectorySeries` and puts the same rate and the same arrival date on a
+/// widget face, so the two now have to agree to the digit in a snapshot built
+/// by a different builder. `src/lib/charts/goalBoard.ts` is the definition and
+/// `goal-board.json` is the proof; nothing about the arithmetic changed.
+///
 /// ── THE RATE IS A REGRESSION, NOT A DIFFERENCE ──────────────────────────────
 /// Ported from `weeklyRateKg` in `src/lib/hooks/useEnergyBalance.ts`, and for
 /// the reason stated there: two readings a fortnight apart can differ by a kilo
@@ -23,7 +31,13 @@ import Foundation
 /// a fixed one; dividing a smoothed rate into a raw distance makes the ETA jump
 /// by weeks whenever the morning's reading is a bad one. The line already knows
 /// where today sits, so the ETA asks it.
-public struct GoalBoard: Sendable, Equatable {
+/// ── CODABLE SINCE W12 ───────────────────────────────────────────────────────
+/// `TrajectorySeries` carries one of these onto a widget face, and the golden
+/// vector that pins the two together (`goal-board.json`) decodes it directly.
+/// The keys are the property names and match `src/lib/charts/goalBoard.ts`
+/// field for field, which is what makes the fixture a comparison rather than a
+/// translation.
+public struct GoalBoard: Codable, Sendable, Equatable {
     /// Least-squares kg per week over the trailing window. Nil under three
     /// readings.
     public var ratePerWeekKg: Double?
@@ -47,7 +61,7 @@ public struct GoalBoard: Sendable, Equatable {
     public var pace: Pace
 
     /// Where the measured rate sits against the phase's band.
-    public enum Pace: String, Sendable, Equatable {
+    public enum Pace: String, Codable, Sendable, Equatable {
         /// Inside the band, or near enough that the band contains it.
         case onTrack
         /// Moving the right way, slower than asked — or not moving at all.
@@ -84,7 +98,7 @@ public extension GoalBoard {
     /// One day's scale reading. A nil weight is a day with no weigh-in and is
     /// dropped, never carried forward — a carried weight would flatten the
     /// slope towards zero for free.
-    struct Reading: Sendable, Equatable {
+    struct Reading: Codable, Sendable, Equatable {
         public var date: String
         public var weightKg: Double?
         public init(date: String, weightKg: Double?) {
@@ -97,7 +111,7 @@ public extension GoalBoard {
     /// unless BMR, active energy and intake are ALL present — see the ledger
     /// note in `useEnergyBalance`: a day with a hole contributes nothing rather
     /// than a deficit that is 400 kcal too large.
-    struct EnergyDay: Sendable, Equatable {
+    struct EnergyDay: Codable, Sendable, Equatable {
         public var date: String
         public var intakeKcal: Double?
         public var tdeeKcal: Double?

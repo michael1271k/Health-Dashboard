@@ -39,6 +39,101 @@ public extension OnyxSnapshot {
         volumeKg: logged ? 6200 + Double((41 - back) * 37 % 900) : nil)
     }
 
+    // ── The W12 series ──────────────────────────────────────────────────────
+    //
+    // Built by CALLING the builders rather than by hand-writing their output.
+    // A fixture typed out as a literal is a second implementation of the thing
+    // it is meant to photograph — and the one place a tile's arithmetic could
+    // be wrong without any vector noticing, because the fixture would be wrong
+    // in the same way.
+
+    // Eight weeks of the same rotation the calendar draws, so the dot grid and
+    // the month grid tell one story. Every ninth scheduled day is missed, which
+    // is what puts hollow rings on the tile.
+    let consistencyDays: [ConsistencyDayIn] = (0..<56).reversed().map { back in
+      let slot = rotation[(55 - back) % 7]
+      return ConsistencyDayIn(
+        date: days(back), dayKey: slot?.0,
+        scheduled: slot != nil,
+        logged: slot != nil && back > 0 && back % 9 != 4)
+    }
+    let consistency = ConsistencySeries.build(consistencyDays, endingOn: today, weeks: 8)
+
+    // A cut that is working, with two days a week the sync missed — which is
+    // what makes `daysCounted` worth printing.
+    let ledgerDays: [DeficitDayIn] = (0..<56).reversed().map { back in
+      let t = 55 - back
+      let holed = t % 11 == 3
+      return DeficitDayIn(
+        date: days(back),
+        intakeKcal: holed ? nil : 1950 + Double((t * 37) % 180) - 90,
+        bmrKcal: 1540,
+        activeKcal: holed ? nil : 520 + Double((t * 53) % 260),
+        weightKg: t % 3 == 0 ? (66.4 - Double(t) * 0.021 * 10).rounded() / 10 : nil)
+    }
+    let deficit = DeficitLedgerSeries.build(ledgerDays, endingOn: today, weeks: 8)
+
+    // Thirty mornings on the scale, every second one, drifting down through a
+    // half-kilo of water noise — the shape the EWMA exists to see through.
+    let scale: [GoalBoard.Reading] = (0..<30).reversed().map { back in
+      let t = Double(29 - back)
+      return GoalBoard.Reading(
+        date: days(back),
+        weightKg: back % 2 == 0 ? ((66.0 - t * 0.07 + 0.35 * sin(t / 2.3)) * 100).rounded() / 100 : nil)
+    }
+    let trajectory = TrajectorySeries.build(
+      scale, today: today, targetWeightKg: 62, rateMinKgWk: -0.5, rateMaxKgWk: -0.4)
+
+    // A fortnight of batteries: a good night, a short one, a heavy leg day, a
+    // week with the load catching up, and one day the scorer never reached.
+    let stackDays: [BatteryStackDayIn] = (0..<14).reversed().map { back in
+      let t = 13 - back
+      guard t != 6 else { return BatteryStackDayIn(date: days(back)) }
+      // Every term annotated and hoisted: one `ScoringInputs(...)` literal of
+      // thirty ternaries defeats the type checker outright.
+      let hard: Bool = t % 5 == 0
+      let day = Double(t)
+      let sleepHours: Double = hard ? 6.1 : 7.4 + Double(t % 3) * 0.3
+      let steps: Double = 8_200 + Double((t * 613) % 4_200)
+      let activeCal: Double = 480 + Double((t * 137) % 380)
+      var inputs = ScoringInputs(
+        sleepHours: sleepHours,
+        deepMinutes: hard ? 42 : 66,
+        remMinutes: hard ? 61 : 94,
+        steps: steps,
+        activeCal: activeCal,
+        workoutLogged: hard,
+        isRestDay: !hard,
+        sessionVolumeKg: hard ? 11_800 : 0,
+        trailingAvgVolumeKg: 9_100)
+      inputs.sessionRpe = hard ? 8.5 : nil
+      inputs.sessionDayKey = hard ? "legs_a" : nil
+      inputs.hrvZ = hard ? -0.9 : 0.4
+      inputs.rhrZ = hard ? 0.8 : -0.3
+      inputs.acwr = 1.05 + day * 0.03
+      inputs.strainZ = day * 0.08 - 0.3
+      inputs.fatigueLevel = hard ? 4 : 2
+      inputs.domsSeverity = hard ? 2 : 0.5
+      inputs.sleepOnsetTrouble = t % 7 == 2
+      let breakdown = Battery.breakdown(inputs, hoursAwake: Battery.defaults.maxAwake)
+      return BatteryStackDayIn(date: days(back), batteryPct: jsRound(breakdown.currentPct), breakdown: breakdown)
+    }
+    let batteryStack = BatteryStackSeries.build(stackDays, endingOn: today, limit: 14)
+
+    // The scale's own composition columns, on the mornings it reported them.
+    let compReadings: [BodyCompReadingIn] = (0..<30).reversed().compactMap { back in
+      let t = Double(29 - back)
+      guard back % 3 == 0 else { return nil }
+      let weight = ((66.0 - t * 0.07) * 10).rounded() / 10
+      let fat = ((16.4 - t * 0.035) * 10).rounded() / 10
+      return BodyCompReadingIn(
+        date: days(back), weightKg: weight, fatPct: fat,
+        skeletalMuscleKg: ((26.6 + t * 0.006) * 10).rounded() / 10,
+        leanSoftTissueKg: ((weight * (100 - fat) / 100) * 10).rounded() / 10,
+        fatFreeMassKg: ((weight - weight * fat / 100) * 100).rounded() / 100)
+    }
+    let bodyComp = BodyCompSeries.build(compReadings, endingOn: today, days: 30)
+
     return OnyxSnapshot(
       date: today,
       generatedAt: "2026-09-03T08:15:00.000Z",
@@ -102,6 +197,32 @@ public extension OnyxSnapshot {
         restingBpm: Vital(value: 52, baseline: 55, trend: series([56, 55, 57, 54, 55, 53, 52])),
         wristTempDeltaC: Vital(value: 0.12, baseline: -0.05, trend: series([-0.1, 0.0, -0.05, -0.08, 0.02, 0.05, 0.12])),
         bloodOxygenPct: Vital(value: 97.4, baseline: 97.1, trend: series([97.0, 97.3, 96.9, 97.2, 97.0, 97.5, 97.4])),
-        respiratoryRate: Vital(value: 14.2, baseline: 14.6, trend: series([14.8, 14.5, 14.9, 14.4, 14.6, 14.3, 14.2]))))
+        respiratoryRate: Vital(value: 14.2, baseline: 14.6, trend: series([14.8, 14.5, 14.9, 14.4, 14.6, 14.3, 14.2]))),
+      consistency: consistency,
+      deficit: deficit,
+      trajectory: trajectory,
+      batteryStack: batteryStack,
+      bodyComp: bodyComp)
+  }()
+
+  /// The same fixture with every W12 series removed, and the muscle split with
+  /// it.
+  ///
+  /// ── WHY AN EMPTY FIXTURE IS PART OF THE GATE ────────────────────────────
+  /// A tile is reviewed twice: once for what it draws with data, and once for
+  /// what it draws without. The second is the state a new device is in for its
+  /// first week, and it is the one that goes unphotographed and ships as a
+  /// stack of zeroes — which is the bug `OnyxChartEmpty` and the "nil is not
+  /// zero" rule exist to prevent. Both shots, every tile (§W12's gate).
+  static let sampleEmptySeries: OnyxSnapshot = {
+    let s = sample
+    return OnyxSnapshot(
+      date: s.date, generatedAt: s.generatedAt, scope: s.scope, battery: s.battery, score: s.score,
+      sleep: s.sleep, weight: s.weight, macros: s.macros, water: s.water, steps: s.steps,
+      workout: s.workout, week: s.week, weekPrev: s.weekPrev, records: s.records, e1rm: s.e1rm,
+      volumeByFamily: [], today: s.today, streak: nil, context: s.context, cardio: s.cardio,
+      calendar: s.calendar, volumeTrend: s.volumeTrend, body: nil, scores: s.scores,
+      readiness: s.readiness, vitals: s.vitals,
+      consistency: nil, deficit: nil, trajectory: nil, batteryStack: nil, bodyComp: nil)
   }()
 }

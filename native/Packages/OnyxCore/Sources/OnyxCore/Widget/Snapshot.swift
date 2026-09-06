@@ -518,7 +518,32 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
   /// Lifestyle scope. Absent on an older deployment; every face treats that as
   /// "no readings", which is the same thing it renders for a night off-wrist.
   public let vitals: Vitals?
-  public init(date: String, generatedAt: String, scope: String? = nil, battery: Int? = nil, score: Int? = nil, sleep: Sleep, weight: Weight, macros: Macros, water: Water, steps: Steps, workout: Workout, week: Week, weekPrev: WeekTotals? = nil, records: [Record]? = nil, e1rm: [E1rm]? = nil, volumeByFamily: [FamilyVolume]? = nil, today: Today? = nil, streak: Streak? = nil, context: DayContext? = nil, cardio: Cardio? = nil, calendar: [CalendarDay]? = nil, volumeTrend: [Point]? = nil, body: Body? = nil, scores: Scores? = nil, readiness: Readiness? = nil, vitals: Vitals? = nil) {
+
+  // ── The W12 series ─────────────────────────────────────────────────────────
+  //
+  // Five blocks, each the whole output of one builder in `OnyxCore/Charts`
+  // rather than a flattened handful of numbers. The flattening is what the
+  // faces would otherwise do twice — once in `WidgetSnapshotBuilder` for the
+  // Home Screen and once in the app's own model for the Today grid — and two
+  // flattenings of one series is how a tile and a screen come to disagree.
+  //
+  // Optional like everything else here: a build talking to a payload written
+  // before them decodes, and the faces draw `OnyxChartEmpty` rather than a
+  // zero. `Charts` is a peer module of `Widget` inside OnyxCore, so this costs
+  // no new dependency.
+
+  /// Training scope. Planned against done, eight weeks.
+  public let consistency: Consistency?
+  /// Lifestyle scope. The energy ledger against the scale.
+  public let deficit: DeficitLedger?
+  /// Body scope. The smoothed weight line and the board behind it.
+  public let trajectory: Trajectory?
+  /// Body scope. The v9 battery, taken apart, a fortnight of it.
+  public let batteryStack: [BatteryStackDay]?
+  /// Body scope. Four composition metrics and their own spans.
+  public let bodyComp: [BodyCompMetric]?
+
+  public init(date: String, generatedAt: String, scope: String? = nil, battery: Int? = nil, score: Int? = nil, sleep: Sleep, weight: Weight, macros: Macros, water: Water, steps: Steps, workout: Workout, week: Week, weekPrev: WeekTotals? = nil, records: [Record]? = nil, e1rm: [E1rm]? = nil, volumeByFamily: [FamilyVolume]? = nil, today: Today? = nil, streak: Streak? = nil, context: DayContext? = nil, cardio: Cardio? = nil, calendar: [CalendarDay]? = nil, volumeTrend: [Point]? = nil, body: Body? = nil, scores: Scores? = nil, readiness: Readiness? = nil, vitals: Vitals? = nil, consistency: Consistency? = nil, deficit: DeficitLedger? = nil, trajectory: Trajectory? = nil, batteryStack: [BatteryStackDay]? = nil, bodyComp: [BodyCompMetric]? = nil) {
     self.date = date
     self.generatedAt = generatedAt
     self.scope = scope
@@ -545,10 +570,32 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
     self.scores = scores
     self.readiness = readiness
     self.vitals = vitals
+    self.consistency = consistency
+    self.deficit = deficit
+    self.trajectory = trajectory
+    self.batteryStack = batteryStack
+    self.bodyComp = bodyComp
   }
 }
 
 extension OnyxSnapshot {
+  /// One composition metric out of the W12 series, or nil when the payload
+  /// predates it. Every face reads it through here so a missing series is one
+  /// `nil` rather than four spellings of the same lookup.
+  public func metric(_ key: BodyMetricKey) -> BodyCompMetric? {
+    bodyComp?.first { $0.key == key }
+  }
+
+  /// "over 24 d" — the span a delta ACTUALLY covers, when the series knows it.
+  ///
+  /// A face that captions its chip with the window's nominal length is claiming
+  /// a month for two readings nine days apart. Nil when there is no delta to
+  /// caption, which is also when there is nothing to overstate.
+  public static func spanCaption(_ metric: BodyCompMetric?) -> String? {
+    guard let days = metric?.deltaDays, days > 0, metric?.delta != nil else { return nil }
+    return "over \(days) d"
+  }
+
   /// kcal left against the goal — the small widget's headline. Nil when unknown.
   public var caloriesRemaining: Int? {
     guard let kcal = macros.kcal, let goal = macros.kcalGoal else { return nil }

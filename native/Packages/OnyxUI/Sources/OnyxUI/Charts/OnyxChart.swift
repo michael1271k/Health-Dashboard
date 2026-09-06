@@ -280,15 +280,48 @@ public struct OnyxChartCard<Content: View>: View {
 
 /// What a chart shows when the series is empty. Stock, so it looks like every
 /// other empty state on the device.
+///
+/// ── AND WHY IT HAS A COMPACT FORM ───────────────────────────────────────────
+/// W12 put charts on WIDGET faces, where a `ContentUnavailableView` at a 180 pt
+/// minimum is three times the height of the tile it is meant to fill. The
+/// alternative was a second empty state written per face, which is how a
+/// dashboard ends up with six different ways of saying "no data" — so the
+/// compact form lives here instead, with the same words and the same glyph at a
+/// size a 158 pt tile can hold.
 public struct OnyxChartEmpty: View {
     let message: String
-    public init(_ message: String = "Nothing logged yet.") { self.message = message }
+    /// Widget-face sizing: no minimum height, the widget type scale, and no
+    /// `ContentUnavailableView` — which reserves space for a title, a
+    /// description and an action a tile has no room for.
+    let compact: Bool
+
+    public init(_ message: String = "Nothing logged yet.", compact: Bool = false) {
+        self.message = message
+        self.compact = compact
+    }
+
     public var body: some View {
-        ContentUnavailableView {
-            Label("No data", systemImage: "chart.xyaxis.line")
-        } description: {
-            Text(message)
+        if compact {
+            VStack(alignment: .leading, spacing: 4) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(OnyxWidgetType.face(14))
+                    .foregroundStyle(Color.onyx.textTertiary)
+                Text(message)
+                    .font(OnyxWidgetType.face(10))
+                    .foregroundStyle(Color.onyx.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("No data. \(message)")
+        } else {
+            ContentUnavailableView {
+                Label("No data", systemImage: "chart.xyaxis.line")
+            } description: {
+                Text(message)
+            }
+            .frame(maxWidth: .infinity, minHeight: OnyxChart.plotHeight)
         }
-        .frame(maxWidth: .infinity, minHeight: OnyxChart.plotHeight)
     }
 }

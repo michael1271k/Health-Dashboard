@@ -88,10 +88,13 @@ if [ "$SCREEN" = "all" ]; then
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a
-# scroll view screenshots its first screen only. Page count = WidgetPreviews.pages.
+# scroll view screenshots its first screen only. Page count = WidgetPreviews.pages,
+# which packs rows to 372pt and pages to 760pt — 23 since W12 added the Progress
+# family and its empty states. A page number past the end renders the whole
+# scroll view instead, so this bound is not free to be generous.
 if [ "$SCREEN" = "widgets" ] || [ "$SCREEN" = "all" ]; then
   SCREENS=("${SCREENS[@]/widgets}")
-  for i in $(seq 0 17); do SCREENS+=("widgets-$i"); done
+  for i in $(seq 0 22); do SCREENS+=("widgets-$i"); done
   SCREENS+=("widgets-activity")
 fi
 

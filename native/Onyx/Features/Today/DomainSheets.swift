@@ -61,7 +61,12 @@ struct DomainSheet: View {
     private var stack: some View {
         ScrollView {
             VStack(spacing: OnyxSpace.m) {
-                face(id, focus: nil)
+                // Not every widget HAS a large. W12's Trajectory tops out at
+                // medium on purpose (a weight curve is one series, and a taller
+                // plot of one series is the stretched medium `layout.ts` warns
+                // about) — asking for a large draws the medium body in a
+                // 354 pt box, which is that warning made real.
+                face(id, focus: nil, family: Dashboard.sizesFor([id]).contains(.l) ? .systemLarge : .systemMedium)
                 extras
             }
             .padding(OnyxSpace.l)
@@ -79,7 +84,14 @@ struct DomainSheet: View {
             face(.fuel, focus: .fuel(.macros))
             face(.water, focus: .fuel(.water), family: .systemMedium)
         case .train: startButton
-        case .body: face(.body, focus: .body(.composition))
+        // The scale under the composition, not the composition twice: since
+        // W12 the tile's own face IS the composition strip, and the extra was
+        // the same face a second time.
+        case .body: face(.body, focus: .body(.weight), family: .systemMedium)
+        // The two halves of "is the block working" that the tapped tile does
+        // not draw. Medium each — neither has a large body.
+        case .trajectory: face(.deficit, focus: .progress(.deficit), family: .systemMedium)
+        case .deficit: face(.trajectory, focus: .progress(.trajectory), family: .systemMedium)
         default: EmptyView()
         }
     }
@@ -94,6 +106,7 @@ struct DomainSheet: View {
             case .body(let f): BodyView(entry: e, focus: f)
             case .vitals(let f): VitalsView(entry: e, focus: f)
             case .training(let f): TrainingView(entry: e, focus: f)
+            case .progress(let f): ProgressTileView(entry: e, focus: f)
             case .lock, .none: OnyxTile.face(id, entry: e)
             }
         }

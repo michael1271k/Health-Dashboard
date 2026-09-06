@@ -1,0 +1,7495 @@
+{
+  "module": "charts/consistency",
+  "fn": "consistencySeries",
+  "note": "Exactly `weeks` weeks of seven cells, oldest first. rest = nothing asked · done = asked and delivered · extra = delivered unasked · missed = asked, not delivered, day over · planned = asked, day not yet happened. `planned` counts the asked days (extras excluded); `done` counts every session, so adherence may exceed 100.",
+  "cases": [
+    {
+      "name": "perfect, eight weeks",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 36,
+        "done": 36,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "nothing logged",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": false
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 36,
+        "done": 0,
+        "adherencePct": 0
+      }
+    },
+    {
+      "name": "every other session missed",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": false
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "missed"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 36,
+        "done": 22,
+        "adherencePct": 61.1
+      }
+    },
+    {
+      "name": "extras on rest days",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": true
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 6,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "extra"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 36,
+        "done": 43,
+        "adherencePct": 119.4
+      }
+    },
+    {
+      "name": "four weeks of history in an eight-week window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 4,
+            "done": 4,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 20,
+        "done": 20,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "empty input",
+      "input": {
+        "days": [],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-19",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 0,
+            "done": 0,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 0,
+        "done": 0,
+        "adherencePct": null
+      }
+    },
+    {
+      "name": "one week",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 1,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 1,
+        "done": 1,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "twelve weeks",
+      "input": {
+        "days": [
+          {
+            "date": "2026-06-09",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-10",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-11",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-12",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-13",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-14",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-15",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-16",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-17",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-18",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-19",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-20",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-21",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-22",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-23",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-24",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-25",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-26",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-27",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-06-28",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-29",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-06-30",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-02",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-03",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-04",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-05",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 12,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-06-21",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-06-21",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-22",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-23",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-24",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-06-25",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-26",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-27",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-06-28",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-06-28",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-29",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-06-30",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-01",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-02",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-03",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-04",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-05",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-05",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-06",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-07",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-09",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-10",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-11",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-12",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-12",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-13",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-14",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-16",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-17",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-18",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-09-06",
+            "planned": 1,
+            "done": 1,
+            "cells": [
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-07",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-09",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-10",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-11",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-12",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 56,
+        "done": 56,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "Monday start",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-03",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-04",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-09-06",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "weeks": 8,
+        "startDay": 1
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-13",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-13",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-14",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-16",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-17",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-18",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-20",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-27",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-03",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-10",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-17",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-24",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-31",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-06",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          }
+        ],
+        "planned": 40,
+        "done": 40,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "mid-week today",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-02",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-03",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-04",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-05",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          }
+        ],
+        "endingOn": "2026-09-02",
+        "weeks": 8,
+        "startDay": 0
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-12",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-12",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-13",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-14",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-16",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-17",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-18",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-19",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-26",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-02",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-09",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-16",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-23",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-30",
+            "planned": 3,
+            "done": 3,
+            "cells": [
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 38,
+        "done": 38,
+        "adherencePct": 100
+      }
+    },
+    {
+      "name": "mid-week, Monday start",
+      "input": {
+        "days": [
+          {
+            "date": "2026-07-02",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-03",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-04",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-05",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-06",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-07",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-09",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-10",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-11",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-12",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-13",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-14",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-16",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-17",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-18",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-19",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-20",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-21",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-23",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-24",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-25",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-26",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-27",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-28",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-07-30",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-07-31",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-01",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-02",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-03",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-04",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-05",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-06",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-07",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-08",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-09",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-10",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-11",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-12",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-13",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-14",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-15",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-16",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-17",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-18",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-19",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-20",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-21",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-22",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-23",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-24",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-25",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-26",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-27",
+            "dayKey": "cb_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-28",
+            "dayKey": "legs_b",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-29",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          },
+          {
+            "date": "2026-08-30",
+            "dayKey": "cb_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-08-31",
+            "dayKey": "legs_a",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-01",
+            "dayKey": "arms",
+            "scheduled": true,
+            "logged": true
+          },
+          {
+            "date": "2026-09-02",
+            "dayKey": null,
+            "scheduled": false,
+            "logged": false
+          }
+        ],
+        "endingOn": "2026-09-02",
+        "weeks": 8,
+        "startDay": 1
+      },
+      "expected": {
+        "weeks": [
+          {
+            "weekStart": "2026-07-13",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-13",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-14",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-16",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-17",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-18",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-19",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-20",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-20",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-21",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-23",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-24",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-25",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-26",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-07-27",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-07-27",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-28",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-07-30",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-07-31",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-01",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-02",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-03",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-03",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-04",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-06",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-07",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-08",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-09",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-10",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-10",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-11",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-12",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-13",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-14",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-15",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-16",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-17",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-17",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-18",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-19",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-20",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-21",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-22",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-23",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-24",
+            "planned": 5,
+            "done": 5,
+            "cells": [
+              {
+                "date": "2026-08-24",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-25",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-26",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-27",
+                "dayKey": "cb_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-28",
+                "dayKey": "legs_b",
+                "state": "done"
+              },
+              {
+                "date": "2026-08-29",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-08-30",
+                "dayKey": "cb_a",
+                "state": "done"
+              }
+            ]
+          },
+          {
+            "weekStart": "2026-08-31",
+            "planned": 2,
+            "done": 2,
+            "cells": [
+              {
+                "date": "2026-08-31",
+                "dayKey": "legs_a",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-01",
+                "dayKey": "arms",
+                "state": "done"
+              },
+              {
+                "date": "2026-09-02",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-03",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-04",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-05",
+                "dayKey": null,
+                "state": "rest"
+              },
+              {
+                "date": "2026-09-06",
+                "dayKey": null,
+                "state": "rest"
+              }
+            ]
+          }
+        ],
+        "planned": 37,
+        "done": 37,
+        "adherencePct": 100
+      }
+    }
+  ]
+}

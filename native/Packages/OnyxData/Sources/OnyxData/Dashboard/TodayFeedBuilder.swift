@@ -17,6 +17,14 @@ public struct TodayFeed: Sendable, Equatable {
     /// The coach headline — scored readiness made aware of the plan.
     public var readiness: ReadinessResult?
     /// The phase, as three numbers: the rate, the arrival and the week's ledger.
+    ///
+    /// ── REBOUND IN W12 ──────────────────────────────────────────────────────
+    /// This used to be built here from a 28-day read of `daily_logs.weight_kg`,
+    /// while the widget snapshot built its own weight series from the
+    /// `body_composition` ledger — two regressions over two different sets of
+    /// readings, printing one rate each, on the same screen the moment the
+    /// Trajectory tile landed. It is now `snapshot.trajectory.board`: one fit,
+    /// one arrival date, one pace, drawn by the row and by the tile.
     public var goalBoard: GoalBoard
     public var weekSoFar: WeekSoFarSummary
     /// The week-complete CTA fires on the first day of a new week, once every
@@ -96,35 +104,7 @@ public struct TodayFeedBuilder: Sendable {
         let windowFrom = ISODate.addDays(today, -Self.windowDays) ?? today
 
         let user = Column("user_id") == userId
-        let (readings, energy, phaseGoalRow, weekCur, weekPrev, lastWeekLogged) = try database.writer.read { db in
-            let logs = try DailyLogRow.filter(user && Column("date") >= windowFrom && Column("date") <= today)
-                .order(Column("date")).fetchAll(db)
-            let meals = try NutritionEntryRow.filter(user && Column("meal_type") == "daily" && Column("date") >= windowFrom && Column("date") <= today)
-                .fetchAll(db)
-            var calories: [String: Double] = [:]
-            for m in meals { calories[m.date] = m.calories }
-
-            // The scale, over the whole window. `validWeight` is what stops a
-            // carried-forward zero entering the regression.
-            let readings = logs.map { GoalBoard.Reading(date: $0.date, weightKg: Format.validWeight($0.weightKg)) }
-
-            // The ledger, over THIS week only. `Energy.tdee` is all-or-nothing
-            // by design, so a day missing its active energy contributes nothing
-            // rather than a deficit ~400 kcal too large.
-            let energy = logs.filter { $0.date >= weekStart }.map { l in
-                GoalBoard.EnergyDay(
-                    date: l.date,
-                    intakeKcal: calories[l.date],
-                    tdeeKcal: Energy.tdee(bmr: l.bmr, active: l.activeEnergy, intakeKcal: calories[l.date])
-                )
-            }
-
-            // The phase's own targets, when the user has edited them; the
-            // plan's preset otherwise.
-            let phaseGoalRow = try PlanPhaseGoalRow
-                .filter(user && Column("plan_id") == programId && Column("phase") == schedule.phase.rawValue)
-                .fetchOne(db)
-
+        let (weekCur, weekPrev, lastWeekLogged) = try database.writer.read { db in
             // Sessions with their volume, the same way the snapshot totals them.
             let sessions = try WorkoutSession.filter(user && Column("date") >= windowFrom && Column("date") <= today)
                 .order(Column("date")).fetchAll(db)
@@ -145,7 +125,7 @@ public struct TodayFeedBuilder: Sendable {
                 return WeekTotals(volumeKg: wk.reduce(0) { $0 + $1.1 }, sessions: wk.count, sleepMin: mean(sl), score: mean(sc))
             }
             let logged = Set(sessions.filter { $0.date >= lastWeekStart && $0.date <= lastWeekEnd }.map(\.date))
-            return (readings, energy, phaseGoalRow, totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged)
+            return (totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged)
         }
 
         let base = snapshot.readiness.flatMap { r in
@@ -158,15 +138,10 @@ public struct TodayFeedBuilder: Sendable {
             reentry: ScheduleReadiness.isReentryWeek(today)
         ))
 
-        let preset = Programs.goals(planId: programId, phase: schedule.phase)
-        let goalBoard = GoalBoard.build(
-            readings: readings,
-            energy: energy,
-            targetWeightKg: phaseGoalRow?.targetWeightKg ?? preset.targetWeightKg,
-            rateMinKgWk: phaseGoalRow?.rateMinKgWk ?? preset.rateMinKgWk,
-            rateMaxKgWk: phaseGoalRow?.rateMaxKgWk ?? preset.rateMaxKgWk,
-            today: today
-        )
+        // The snapshot is built at `.full` scope above, so the trajectory is
+        // always there; the empty board is the shape a build with no readings
+        // and no phase goals would produce anyway.
+        let goalBoard = snapshot.trajectory?.board ?? GoalBoard()
 
         let weekSoFar = WeekSoFarSummary(
             weekStart: weekStart,

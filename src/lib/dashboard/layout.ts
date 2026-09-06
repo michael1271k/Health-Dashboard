@@ -104,6 +104,9 @@ export type WidgetId =
   | 'cardio' | 'stack' | 'vitals' | 'water'
   | 'muscle' | 'pr' | 'volume'
   | 'deficit' | 'bar' | 'consistency' | 'fatigue'
+  // W12. New ids are appended to the union and slotted into `WIDGET_IDS` where
+  // they read; `reconcile` puts them on every stored layout that predates them.
+  | 'trajectory'
 
 /**
  * Every widget the dashboard knows how to render, in first-run order.
@@ -139,7 +142,7 @@ export type WidgetId =
  */
 export const WIDGET_IDS: readonly WidgetId[] = [
   'recovery', 'sleep', 'vitals', 'fuel', 'water', 'micros', 'deficit', 'train', 'bar',
-  'body', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack', 'fatigue',
+  'body', 'trajectory', 'muscle', 'volume', 'pr', 'consistency', 'steps', 'cardio', 'stack', 'fatigue',
 ] as const
 
 /**
@@ -180,6 +183,10 @@ export const WIDGET_SIZES: Record<WidgetId, readonly WidgetSize[]> = {
   train: ['s', 'm', 'l'],
   bar: ['s', 'm', 'l'],
   body: ['s', 'm', 'l', 'w', 'xl'],
+  // Small is the rate and the arrival; medium adds the line and the target
+  // band. There is no large: a weight curve is one series, and a taller plot of
+  // one series is the stretched medium this file warns about.
+  trajectory: ['s', 'm'],
   muscle: ['s', 'm', 'l'],
   volume: ['s', 'm', 'l'],
   pr: ['s', 'm'],
@@ -220,7 +227,9 @@ const DEFAULT_SIZE: Record<WidgetId, WidgetSize> = {
   // would be a demotion dressed as a purge.
   recovery: 'l',
   sleep: 'm', vitals: 'm', fuel: 'm', water: 's', micros: 's', deficit: 'm',
-  train: 'm', bar: 's', body: 'm', muscle: 's', volume: 's',
+  // Medium: the point of this tile is the SHAPE of the line, and a small draws
+  // the two numbers without it.
+  train: 'm', bar: 's', body: 'm', trajectory: 'm', muscle: 's', volume: 's',
   pr: 's', consistency: 's', steps: 's', cardio: 's', stack: 's',
   // Small by default: four readings a day is a glance, not a study. The medium
   // face exists for when the week's drift is the question.
@@ -245,7 +254,7 @@ const DEFAULT_SIZE_DESKTOP: Record<WidgetId, WidgetSize> = {
   // reads as a toolbar, and these are the domains with history worth drawing.
   vitals: 'l', fuel: 'l', deficit: 'l', train: 'l', muscle: 'l', volume: 'l',
   micros: 'm', bar: 'm', consistency: 'm', steps: 'm',
-  water: 'm', pr: 'm', cardio: 'm', stack: 'm', fatigue: 'm',
+  water: 'm', pr: 'm', cardio: 'm', stack: 'm', fatigue: 'm', trajectory: 'm',
 }
 
 /** The default size a widget lands at when it is added back from the tray. */
@@ -910,6 +919,9 @@ export const WIDGET_META: Record<WidgetId, WidgetMeta> = {
   train: { label: 'Workout', icon: Dumbbell, accent: EMERALD },
   bar: { label: 'Bar to Beat', icon: Target, accent: GOLD },
   body: { label: 'Body', icon: Scale, accent: EMBER },
+  // The scale over TIME, which is a different tile from the scale: `body` is
+  // what the kilos are made of and this is where they are going.
+  trajectory: { label: 'Trajectory', icon: TrendingDown, accent: SAPPHIRE },
   muscle: { label: 'Muscle Focus', icon: Target, accent: AMETHYST },
   volume: { label: 'Tonnage', icon: BarChart3, accent: STEEL },
   pr: { label: 'Latest PR', icon: Trophy, accent: GOLD },

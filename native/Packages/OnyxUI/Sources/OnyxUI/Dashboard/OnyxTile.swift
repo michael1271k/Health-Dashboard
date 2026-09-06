@@ -11,13 +11,17 @@ import OnyxCore
 // a focus, the slot's size names a `WidgetFamily`, and the face that draws is
 // the one the Home Screen already draws. Nothing on the grid is new drawing.
 //
-// ── THE FIVE THAT HAVE NO FACE YET ───────────────────────────────────────────
-// `deficit`, `bar`, `micros`, `stack` and `fatigue` have no widget face and no
-// snapshot field to draw from. They stay in the catalogue — the layout algebra
-// and its vectors are the web's — but the phone PROJECTS them out of a slot at
-// draw time (`OnyxTile.isNative`) and never offers them in the gallery. The
-// stored layout is untouched, so the web keeps them; when Wave 7 gives them a
-// face they reappear on the phone in whatever slot they always held.
+// ── THE THREE THAT HAVE NO FACE YET ──────────────────────────────────────────
+// `bar`, `micros` and `stack` have no widget face and no snapshot field to draw
+// from. They stay in the catalogue — the layout algebra and its vectors are the
+// web's — but the phone PROJECTS them out of a slot at draw time
+// (`OnyxTile.isNative`) and never offers them in the gallery. The stored layout
+// is untouched, so the web keeps them; when a wave gives them a face they
+// reappear in whatever slot they always held.
+//
+// `deficit` and `fatigue` were on that list until W12, which gave them the
+// series they were waiting for. They draw now, and a device that has been
+// carrying them in a stored layout since Wave 5 gets them back in place.
 
 public extension WidgetId {
     /// What the tile is called in the gallery and on a sheet — `WIDGET_META`.
@@ -33,6 +37,7 @@ public extension WidgetId {
         case .train: "Workout"
         case .bar: "Bar to Beat"
         case .body: "Body"
+        case .trajectory: "Trajectory"
         case .muscle: "Muscle Focus"
         case .volume: "Tonnage"
         case .pr: "Latest PR"
@@ -51,7 +56,7 @@ public extension WidgetId {
         case .recovery, .sleep, .vitals, .fatigue: .recover
         case .fuel, .water, .micros, .deficit, .stack: .fuel
         case .train, .bar, .muscle, .volume, .pr, .consistency: .train
-        case .body, .steps, .cardio: .body
+        case .body, .steps, .cardio, .trajectory: .body
         }
     }
 
@@ -67,6 +72,7 @@ public extension WidgetId {
         case .train: "dumbbell.fill"
         case .bar: "target"
         case .body: "scalemass.fill"
+        case .trajectory: "chart.line.downtrend.xyaxis"
         case .muscle: "figure.arms.open"
         case .volume: "chart.bar.fill"
         case .pr: "trophy.fill"
@@ -81,7 +87,7 @@ public extension WidgetId {
     /// Whether the phone has a face for it. See the header.
     var isNative: Bool {
         switch self {
-        case .deficit, .bar, .micros, .stack, .fatigue: false
+        case .bar, .micros, .stack: false
         default: true
         }
     }
@@ -113,15 +119,25 @@ public enum OnyxTile {
         case .fuel: FuelView(entry: entry, focus: .calories)
         case .water: FuelView(entry: entry, focus: .water)
         case .train: TrainingView(entry: entry, focus: .today)
-        case .body: BodyView(entry: entry, focus: .weight)
+        // ── WHY `body` IS THE COMPOSITION FACE AND NOT THE SCALE ────────
+        // The scale weight, its target and its trend are the whole of the
+        // Trajectory tile now, and drawing them twice on one grid is two tiles
+        // answering one question. What "Body" means once the weight has its own
+        // tile is what the kilos are MADE of, which is the Composition focus —
+        // the same face the Body family widget offers, so the grid is still
+        // composed from widget faces rather than from drawing of its own.
+        case .body: BodyView(entry: entry, focus: .composition)
+        case .trajectory: TrajectoryView(entry: entry)
         case .muscle: MuscleView(entry: entry)
         case .volume: TrainingView(entry: entry, focus: .volume)
         case .pr: TrainingView(entry: entry, focus: .records)
-        case .consistency: TrainingView(entry: entry, focus: .calendar)
+        case .consistency: ConsistencyView(entry: entry)
         case .steps: StepsView(entry: entry)
         case .cardio: TrainingView(entry: entry, focus: .cardio)
-        case .deficit, .bar, .micros, .stack, .fatigue:
-            TileNote(caption: id.title.uppercased(), text: "Arrives with the charts in Wave 7.")
+        case .deficit: DeficitLedgerView(entry: entry)
+        case .fatigue: FatigueStackView(entry: entry)
+        case .bar, .micros, .stack:
+            TileNote(caption: id.title.uppercased(), text: "No face for this one yet.")
         }
     }
 }
@@ -187,6 +203,14 @@ public struct StepsView: View {
 // The week's sets on the body. `volumeByFamily` is per FAMILY, so every muscle
 // in a family wears the same intensity — the tile says where the week went,
 // not which head of the delt.
+//
+// ── WHY THE FIGURE IS 56 PT AND NOT AS BIG AS IT FITS ───────────────────────
+// It was `maxWidth: .infinity`, which on a medium tile is half the width for a
+// shape whose whole job is "roughly here". The body is a KEY to the bars beside
+// it, not the reading — the reading is "Legs 34, Back 21, Chest 18", and at
+// full width those three were a column of numbers with no bar to compare them
+// against. 56 pt is the smallest figure whose quads are still distinguishable
+// from its calves, and the rest of the tile pays for the ranking (§W12).
 
 public struct MuscleView: View {
     let entry: OnyxTileEntry
@@ -200,6 +224,29 @@ public struct MuscleView: View {
 
     private var families: [OnyxSnapshot.FamilyVolume] {
         (entry.snapshot?.volumeByFamily ?? []).sorted { $0.sets > $1.sets }
+    }
+
+    /// One family: its name, a bar against the week's busiest, and the count.
+    ///
+    /// The bar is relative to the TOP family rather than to a volume landmark,
+    /// because the question this tile answers is "where did the week go", which
+    /// is a comparison between the bars and not between a bar and a target.
+    @ViewBuilder private func bar(_ f: OnyxSnapshot.FamilyVolume) -> some View {
+        let top = families.first?.sets ?? 0
+        let tint = mono ? Color.white : OnyxDomain.forFamily(f.family).accent
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Text(f.family)
+                    .font(OnyxWidgetType.face(10, weight: .semibold))
+                    .foregroundStyle(Color.onyx.textPrimary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Text("\(Int(f.sets.rounded()))")
+                    .font(OnyxWidgetType.figure(10))
+                    .foregroundStyle(tint)
+            }
+            Rail(progress: top > 0 ? min(1, f.sets / top) : nil, color: tint, height: 3)
+        }
     }
 
     private var worked: [String: Double] {
@@ -228,25 +275,20 @@ public struct MuscleView: View {
                 if entry.isStale { StaleTag(age: entry.age) }
             }
             if families.isEmpty {
-                Text("No sets logged this week.").font(OnyxWidgetType.face(11)).foregroundStyle(Color.onyx.textSecondary)
-                Spacer(minLength: 0)
+                OnyxChartEmpty("No sets logged this week.", compact: true)
             } else {
                 HStack(alignment: .top, spacing: 10) {
-                    OnyxAtlasFigure(side: size == .small ? .front : .both, worked: worked, color: accent, monochrome: mono)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    OnyxAtlasFigure(side: .front, worked: worked, color: accent, monochrome: mono)
+                        .frame(width: 56)
+                        .frame(maxHeight: .infinity)
                     if size != .small {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 5) {
                             ForEach(families.prefix(size == .large ? 6 : 3)) { f in
-                                HStack {
-                                    Text(f.family).font(OnyxWidgetType.face(11, weight: .semibold)).foregroundStyle(Color.onyx.textPrimary)
-                                    Spacer(minLength: 4)
-                                    Text("\(Int(f.sets.rounded()))")
-                                        .font(OnyxWidgetType.face(11, weight: .bold, design: .rounded).monospacedDigit())
-                                        .foregroundStyle(mono ? .white : OnyxDomain.forFamily(f.family).accent)
-                                }
+                                bar(f)
                             }
+                            Spacer(minLength: 0)
                         }
-                        .frame(width: size == .large ? 120 : 96)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }

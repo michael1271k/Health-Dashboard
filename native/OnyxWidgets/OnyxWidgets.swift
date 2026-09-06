@@ -25,6 +25,7 @@ struct OnyxWidgets: WidgetBundle {
         OnyxFuelWidget()
         OnyxTrainingWidget()
         OnyxBodyWidget()
+        OnyxProgressWidget()
         OnyxDailyWidget()
         OnyxVitalsWidget()
         OnyxWorkoutActivityWidget()
@@ -64,6 +65,22 @@ struct OnyxBodyWidget: Widget {
         .configurationDisplayName("Body")
         .description("Weight, sleep and the daily score. Tap through to Pulse.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+/// The fifth family, and the only one whose faces are all SERIES.
+///
+/// Small and Medium only: every one of these is a shape over time, and the
+/// large that would exist is the medium with more axis — the "stretched medium"
+/// `layout.ts` warns about, four times as tall.
+struct OnyxProgressWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "OnyxProgressFamily", intent: ProgressConfiguration.self, provider: OnyxIntentProvider<ProgressConfiguration>()) { entry in
+            ProgressTileView(entry: entry.tile, focus: entry.tile.progressFocus)
+        }
+        .configurationDisplayName("Progress")
+        .description("Is the block working — the trajectory, the record, the ledger and the cost.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 

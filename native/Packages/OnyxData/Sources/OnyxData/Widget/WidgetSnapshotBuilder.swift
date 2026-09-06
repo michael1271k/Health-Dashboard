@@ -32,6 +32,10 @@ public struct WidgetSnapshotBuilder: Sendable {
     static let vitalsBaselineDays = 14
     static let performanceHistoryDays = 35
     static let ledgerLimit = 40
+    /// How far the Body tile's deltas reach back.
+    static let bodyCompDays = 30
+    /// How many days the fatigue stack draws.
+    static let batteryStackDays = 14
 
     /// One session with the figures the route read off `workout_sessions`
     /// columns; the local table has none, so they come from the sets.
@@ -60,6 +64,18 @@ public struct WidgetSnapshotBuilder: Sendable {
         var exerciseNames: [String: String]
         var ledger: [PersonalRecordRow]
         var cardio: [CardioLogRow]
+        // ── The W12 window ──────────────────────────────────────────────────
+        // Eight weeks of logs and meals, read SEPARATELY from `logs` and
+        // `nutrition` rather than by widening those. `vitalsSlice` reads every
+        // row it is handed to build a fortnight's baseline, so widening the
+        // shared array would silently re-baseline every vital on the Home
+        // Screen against two months. Two extra reads of ~56 small rows is the
+        // cheaper mistake.
+        var ledgerLogs: [DailyLogRow]
+        var ledgerNutrition: [NutritionEntryRow]
+        /// The phase's own rate band and target weight, when the athlete has
+        /// edited them; `Programs.goals` is the fallback.
+        var phaseGoals: PlanPhaseGoalRow?
     }
 
     public func build(scope: OnyxScope, now: Date = Date()) throws -> OnyxSnapshot {
@@ -199,6 +215,66 @@ public struct WidgetSnapshotBuilder: Sendable {
             return OnyxSnapshot.Readiness(level: r.level.rawValue, label: r.label, color: r.color, reason: r.reason)
         }()
 
+        // ── The W12 series ────────────────────────────────────────────────
+        // Each is the whole output of one `OnyxCore/Charts` builder. The tile
+        // draws it and the app's Today grid draws the same object, so a face on
+        // the Home Screen and a face in the app cannot report different weeks.
+        let historyStart = ISODate.addDays(weekStart, -7 * (Self.volumeWeeks - 1)) ?? weekStart
+        let consistency: Consistency? = wantsTraining
+            ? ConsistencySeries.build(
+                consistencyDays(from: historyStart, to: date, schedule: schedule, sessions: allSessions),
+                endingOn: date, weeks: Self.volumeWeeks, startDay: weekStartDay
+            )
+            : nil
+        let deficit: DeficitLedger? = wantsLifestyle
+            ? DeficitLedgerSeries.build(
+                ledgerDays(rows), endingOn: date, weeks: Self.volumeWeeks, startDay: weekStartDay
+            )
+            : nil
+        // ── ONE SET OF READINGS ─────────────────────────────────────────
+        // `BodyVitals.readings` is what Pulse, Body trends and the History
+        // capsules already merge: `daily_logs` first, the deliberate weigh-in
+        // ledger over the top. The Weight face's own `trend` reads the ledger
+        // alone, which is right for a face that says "what the scale said" and
+        // wrong for a REGRESSION — a month of Health-synced mornings is most of
+        // the line, and fitting without them is a rate computed from a third of
+        // the data. Both series come from here so the tile, the Goal Board row
+        // and the Body screens cannot report three different rates.
+        let bodyReadings = wantsBody ? BodyVitals.readings(ledger: rows.weights, logs: rows.ledgerLogs) : []
+        let trajectory: Trajectory? = wantsBody
+            ? {
+                let preset = Programs.goals(planId: programId, phase: schedule.phase)
+                return TrajectorySeries.build(
+                    bodyReadings.map { GoalBoard.Reading(date: $0.date, weightKg: $0.weight) },
+                    today: date,
+                    targetWeightKg: rows.phaseGoals?.targetWeightKg ?? preset.targetWeightKg,
+                    rateMinKgWk: rows.phaseGoals?.rateMinKgWk ?? preset.rateMinKgWk,
+                    rateMaxKgWk: rows.phaseGoals?.rateMaxKgWk ?? preset.rateMaxKgWk,
+                    energy: ledgerDays(rows).filter { $0.date >= weekStart }.map {
+                        GoalBoard.EnergyDay(
+                            date: $0.date, intakeKcal: $0.intakeKcal,
+                            tdeeKcal: Energy.tdee(bmr: $0.bmrKcal, active: $0.activeKcal, intakeKcal: $0.intakeKcal)
+                        )
+                    }
+                )
+            }()
+            : nil
+        let batteryStack: [BatteryStackDay]? = wantsBody
+            ? try batteryStackSlice(rows, date: date, now: now, calendar: calendar)
+            : nil
+        let bodyComp: [BodyCompMetric]? = wantsBody
+            ? BodyCompSeries.build(
+                bodyReadings.map {
+                    BodyCompReadingIn(
+                        date: $0.date, weightKg: $0.weight, fatPct: $0.fatPct,
+                        skeletalMuscleKg: $0.skeletalMuscle, leanSoftTissueKg: $0.leanSoftTissue,
+                        fatFreeMassKg: $0.fatFreeMass
+                    )
+                },
+                endingOn: date, days: Self.bodyCompDays
+            )
+            : nil
+
         return OnyxSnapshot(
             date: date,
             generatedAt: Self.iso(now),
@@ -287,7 +363,12 @@ public struct WidgetSnapshotBuilder: Sendable {
             body: body,
             scores: wantsBody ? scores : nil,
             readiness: readiness,
-            vitals: vitals
+            vitals: vitals,
+            consistency: consistency,
+            deficit: deficit,
+            trajectory: trajectory,
+            batteryStack: batteryStack,
+            bodyComp: bodyComp
         )
     }
 
@@ -307,6 +388,11 @@ public struct WidgetSnapshotBuilder: Sendable {
             let calendarStart = ISODate.addDays(date, -(Self.calendarDays - 1)) ?? date
             let sessionsFrom = min(historyStart, calendarStart)
             let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
+            // The SAME expression `build` puts on its `ScheduleContext`, off the
+            // same `goals` row. Named rather than repeated a third time: spelled
+            // out twice it reads as two different phases, and the row the phase
+            // goals are keyed on has to be the phase the preset falls back for.
+            let phase = ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset)
 
             var overrides: [String: String] = [:]
             for r in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[r.date] = r.dayKey }
@@ -332,6 +418,10 @@ public struct WidgetSnapshotBuilder: Sendable {
             let sleepFrom = NightWindow.range(trendFrom)?.from
             let sleepTo = NightWindow.range(date)?.to
             let cardioFrom = ISODate.addDays(date, -13) ?? date
+            // The ledger and the consistency grid both walk `volumeWeeks` weeks
+            // back from the start of this week — the same span the volume trend
+            // already reads sessions over.
+            let ledgerFrom = historyStart
 
             return Rows(
                 goals: goals,
@@ -357,7 +447,18 @@ public struct WidgetSnapshotBuilder: Sendable {
                 cardio: try CardioLogRow
                     .filter(user && Column("date") >= cardioFrom && Column("date") <= date)
                     .order(Column("created_at").asc)
-                    .fetchAll(db)
+                    .fetchAll(db),
+                ledgerLogs: try DailyLogRow
+                    .filter(user && Column("date") >= ledgerFrom && Column("date") <= date)
+                    .order(Column("date"))
+                    .fetchAll(db),
+                ledgerNutrition: try NutritionEntryRow
+                    .filter(user && Column("date") >= ledgerFrom && Column("date") <= date && Column("meal_type") == "daily")
+                    .fetchAll(db),
+                phaseGoals: try PlanPhaseGoalRow
+                    .filter(user && Column("plan_id") == programId
+                            && Column("phase") == phase.rawValue)
+                    .fetchOne(db)
             )
         }
     }
@@ -399,6 +500,95 @@ public struct WidgetSnapshotBuilder: Sendable {
         guard let total = components.totalScore else { return nil }
         let battery = Battery.computeBattery(inputs, hoursAwake: hoursAwake)
         return LiveScore(total: Int(total.rounded()), battery: Int(battery.currentPct.rounded()), components: components)
+    }
+
+    // MARK: - The W12 series
+
+    /// One row per day of the consistency window: what the plan asked for, and
+    /// whether a session landed.
+    ///
+    /// ── WHY THE SCHEDULE IS ONLY CONSULTED FROM WEEK 0 ────────────────────
+    /// `Schedule.scheduleDayIn` answers with the ACTIVE programme's layout and
+    /// has no memory of what was running last spring. Before Week 0 the block
+    /// was PPL — six days, different splits, none of them in the current plan —
+    /// and asking today's schedule about those weeks does not fail, it answers
+    /// confidently and wrongly. The strip would fill with missed days that were
+    /// never scheduled. `HistoryWeeks.isPlannable` draws the same line.
+    func consistencyDays(
+        from: String, to: String, schedule: ScheduleContext, sessions: [SessionTotals]
+    ) -> [ConsistencyDayIn] {
+        let logged = Set(sessions.map(\.date))
+        var out: [ConsistencyDayIn] = []
+        var d = from
+        while d <= to {
+            let plannable = d >= Week.week0Start
+            let day = plannable ? Schedule.scheduleDayIn(schedule, d) : nil
+            out.append(ConsistencyDayIn(
+                date: d,
+                dayKey: day?.dayKey,
+                scheduled: plannable && Schedule.isTrainingDayIn(schedule, d),
+                logged: logged.contains(d)
+            ))
+            guard let next = ISODate.addDays(d, 1) else { break }
+            d = next
+        }
+        return out
+    }
+
+    /// The ledger window's days, intake joined onto expenditure by date.
+    func ledgerDays(_ rows: Rows) -> [DeficitDayIn] {
+        var calories: [String: Double] = [:]
+        for m in rows.ledgerNutrition { calories[m.date] = m.calories }
+        return rows.ledgerLogs.map { l in
+            DeficitDayIn(
+                date: l.date,
+                intakeKcal: calories[l.date],
+                bmrKcal: l.bmr,
+                activeKcal: l.activeEnergy,
+                // `validWeight` is what stops a carried-forward zero entering
+                // the reconciliation as a fourteen-kilo overnight loss.
+                weightKg: Format.validWeight(l.weightKg)
+            )
+        }
+    }
+
+    /// A fortnight of battery breakdowns.
+    ///
+    /// ── WHY THIS RE-SCORES RATHER THAN READING A COLUMN ───────────────────
+    /// `daily_scores` stores `battery_pct` and nothing behind it: the five
+    /// drains are computed at render time and thrown away. Recomputing them is
+    /// the only way to draw the stack at all, and it is the same call
+    /// `refreshDailyScore` makes — including its rule that a FINISHED day is
+    /// scored as a finished day (`hoursAwake` pinned to `maxAwake`), so a
+    /// fortnight of bands does not shift under the wall clock.
+    ///
+    /// ponytail: fourteen `scoringInputs` reads per snapshot. If the extension
+    /// ever runs short of its memory or time budget, the fix is a
+    /// `battery_breakdown` jsonb column written by `DailyScoreWriter`, not a
+    /// cache here.
+    func batteryStackSlice(_ rows: Rows, date: String, now: Date, calendar: Calendar) throws -> [BatteryStackDay] {
+        var days: [BatteryStackDayIn] = []
+        var d = ISODate.addDays(date, -(Self.batteryStackDays - 1)) ?? date
+        while d <= date {
+            let plan = DayPlan.resolve(
+                goals: rows.goals, overrides: rows.overrides, layout: rows.layout,
+                dayTarget: d == date ? rows.dayTarget : nil, date: d, todayISO: date
+            )
+            let hoursAwake = d == date ? Battery.hoursAwake(at: now, calendar: calendar) : Battery.defaults.maxAwake
+            let inputs = try database.scoringInputs(
+                userId: userId, date: d, hoursAwake: hoursAwake, isRestDay: !plan.isTraining,
+                todayISO: date, isToday: d == date, supplements: plan.supplements
+            )
+            let breakdown = inputs.map { Battery.breakdown($0, hoursAwake: hoursAwake) }
+            days.append(BatteryStackDayIn(
+                date: d,
+                batteryPct: breakdown.map { jsRound($0.currentPct) },
+                breakdown: breakdown
+            ))
+            guard let next = ISODate.addDays(d, 1) else { break }
+            d = next
+        }
+        return BatteryStackSeries.build(days, endingOn: date, limit: Self.batteryStackDays)
     }
 
     // MARK: - Slices
