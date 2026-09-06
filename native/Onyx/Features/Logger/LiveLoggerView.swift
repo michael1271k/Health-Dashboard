@@ -33,21 +33,26 @@ struct LiveLoggerView: View {
     @State private var showDistribution = false
     @State private var showPhase = false
     @State private var showFinish = false
+    @State private var confirmCancel = false
     /// Bumped when the rest clock reaches zero of its own accord — never when
     /// it is skipped or dragged into the past, both of which cancel the task
     /// below before it fires. §3.4 gives `.success` to "session finished"; a
     /// rest period that has run out is the same kind of event and it is the one
     /// the phone is in your pocket for.
     @State private var restExpiries = 0
-    /// Which card the deck is on. Bound to `.scrollPosition`, so writing it
-    /// scrolls and scrolling writes it.
+    /// The movement you are WORKING ON — not the scroll offset.
     ///
-    /// ── SEEDED IN `init`, NOT IN `onAppear` ─────────────────────────────────
-    /// Writing it after the first layout asks a `LazyHStack` to scroll to a
-    /// page it has not built yet, and what `viewAligned` then settles on is a
-    /// position part way between two cards — the deck opened with the current
-    /// movement hanging off the leading edge and the next one over the top of
-    /// it. Seeded here, the first layout already knows where it is going.
+    /// ── WHY THOSE ARE DIFFERENT THINGS NOW ──────────────────────────────────
+    /// It used to be bound to `.scrollPosition` of a horizontal pager, so the
+    /// two were the same fact by construction: the card on screen was the card
+    /// you were on. A vertical list has no such identity — you scroll down to
+    /// check what is coming and scroll back, and neither of those is a
+    /// statement about which set you are standing in front of.
+    ///
+    /// So this is the logger's own cursor. Nothing writes it but `init` and
+    /// `advanceIfFinished`, and the scroll follows it rather than the reverse.
+    /// The one behaviour that depends on it — moving on when a movement is
+    /// finished — then cannot be defeated by having scrolled somewhere.
     @State private var focus: String?
 
     /// `@State`, emphatically not `let`.
@@ -105,6 +110,23 @@ struct LiveLoggerView: View {
         .sheet(isPresented: $showFinish) {
             FinishSheet(model: model, onFinish: finish)
         }
+        // ── WHY A CONFIRMATION AND NOT AN UNDO ──────────────────────────────
+        // §3.4 prefers undo to a prompt, and this is the exception the rule
+        // has: the sets are gone from the log, the projection and the queue in
+        // one transaction, and an undo would have to reconstruct events that
+        // were deliberately destroyed. One dialog, and the message says exactly
+        // what is at stake — which is nothing at all on the session this button
+        // is mostly for.
+        .confirmationDialog(
+            model.completedSets > 0 ? "Discard this workout?" : "Cancel this workout?",
+            isPresented: $confirmCancel,
+            titleVisibility: .visible
+        ) {
+            Button(cancelActionTitle, role: .destructive) { cancelWorkout() }
+            Button("Keep logging", role: .cancel) {}
+        } message: {
+            Text(cancelMessage)
+        }
         .onAppear {
             model.attach()
             activity.start(model: model)
@@ -146,10 +168,25 @@ struct LiveLoggerView: View {
     /// Leave the logger with the session still live — the rest timer keeps
     /// counting and the Lock Screen card stays, because the workout is not over.
     private var leaveItem: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItemGroup(placement: .topBarLeading) {
             Button { dismiss() } label: { Image(systemName: "chevron.down") }
                 .accessibilityLabel("Leave workout")
                 .accessibilityHint("The session keeps running. Resume it from the Workout tab.")
+
+            // ── AND WHY LEAVING NEEDED A SIBLING ────────────────────────────
+            // The chevron was the only way out, and it leaves the session
+            // RUNNING — which is right, and which meant a logger opened on the
+            // wrong day, or by a pocket, had no exit that did not end in a
+            // workout. Opening the screen still costs nothing (`attach` looks a
+            // session up and never creates one), so the button mostly just
+            // closes a door; when a set HAS been logged it is the only control
+            // in the app that can take it back.
+            Button(role: .destructive) { confirmCancel = true } label: {
+                Image(systemName: "trash")
+            }
+            .tint(Color.onyx.danger)
+            .accessibilityLabel("Cancel workout")
+            .accessibilityHint("Ends the session and discards anything logged in it.")
         }
     }
 
@@ -292,60 +329,78 @@ struct LiveLoggerView: View {
 
     // MARK: - The deck
 
-    /// One movement at a time.
+    /// Every movement, on one page, scrolled vertically.
     ///
-    /// `scrollTargetBehavior(.viewAligned)` is the whole paging mechanism: no
-    /// `TabView`, no page index to keep in step with a model, no gesture code.
-    /// The 0.96 on the neighbours is `scrollTransition`, which reads the card's
-    /// live position during the drag rather than snapping between two states —
-    /// so the card you are pulling in grows under your thumb the whole way,
-    /// which is the difference between a deck and a slideshow.
+    /// ── WHY THE PAGER WENT ──────────────────────────────────────────────────
+    /// It was a horizontal deck, one movement per page, snapped with
+    /// `.viewAligned`. It reads beautifully and it is the wrong shape for this
+    /// screen. A workout is not a slideshow you advance through once: you look
+    /// ahead at what is coming to decide how hard to go now, you drop back to
+    /// the movement before to fix a load you mistyped, and you want to see that
+    /// the session is eleven movements long without counting "3 of 11" eleven
+    /// times. Every one of those is a scroll in a list and a page-flick hunt in
+    /// a deck.
+    ///
+    /// It also cost the rows a gesture. The card's set rows are swiped
+    /// horizontally to log, and a horizontal pager under them meant the two were
+    /// competing for the same drag on every row of every card — which is why the
+    /// row's own swipe has to abandon itself the moment the finger goes
+    /// vertical. Vertical scrolling and horizontal rows do not overlap at all.
+    ///
+    /// ── AND WHY THE SCROLL FOLLOWS `focus` RATHER THAN REPORTING IT ─────────
+    /// `.scrollPosition(id:)` is a two-way binding, which was exactly right when
+    /// the position and the current movement were the same fact. They are not
+    /// here — see `focus` — so this is a `ScrollViewReader` and a one-way
+    /// `scrollTo`. Scrolling to read never moves the cursor, and finishing a
+    /// movement still takes you to the next one.
     private var deck: some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(Array(model.exercises.enumerated()), id: \.element.id) { index, exercise in
-                    ScrollView(.vertical) {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                LazyVStack(spacing: OnyxSpace.m) {
+                    ForEach(Array(model.exercises.enumerated()), id: \.element.id) { index, exercise in
                         ExerciseCardView(
                             exercise: exercise, model: model,
                             position: (index, model.exercises.count)
                         )
                         .frame(maxWidth: .infinity)
+                        .id(exercise.id)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .scrollIndicators(.hidden)
-                    // ── THE GUTTER IS THE PAGE'S, NOT THE CONTAINER'S ───────
-                    // Neither `safeAreaPadding` nor `contentMargins` works
-                    // here: both inset the container while `.scrollPosition`
-                    // aligns to the scroll view's own BOUNDS, so every card the
-                    // deck moved to landed 16 pt off its leading edge with the
-                    // next one over the top of it. Padding the PAGE and then
-                    // sizing the padded result to the container leaves nothing
-                    // that can disagree — and it has to be out here rather than
-                    // on the card, or the `fixedSize` chips inside push
-                    // straight back through it.
-                    .padding(.horizontal, OnyxSpace.l)
-                    .containerRelativeFrame(.horizontal)
-                    .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                        content
-                            .scaleEffect(phase.isIdentity ? 1 : 0.96)
-                            .opacity(phase.isIdentity ? 1 : 0.8)
-                    }
-                    .id(exercise.id)
                 }
+                // 12 rather than the 16 the rest of the app uses. The set row
+                // inside these cards is within a few points of the width of a
+                // phone (see `ExerciseCardView.sets`), and a gutter the row
+                // cannot afford is not a gutter — it is an overflow that draws
+                // the cards edge to edge and looks like no gutter was asked for.
+                .padding(.horizontal, OnyxSpace.m)
+                // The last card has to be able to reach the middle of the
+                // screen, or finishing the session means logging its final set
+                // with the keyboard over it.
+                .padding(.bottom, OnyxSpace.xl)
             }
-            .scrollTargetLayout()
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: focus) { _, next in
+                guard let next else { return }
+                withAnimation(OnyxMotion.move) { proxy.scrollTo(next, anchor: .top) }
+            }
+            // Resuming mid-session opens on the set you stopped at, not at the
+            // top of a workout that is half done. Unanimated on purpose: this is
+            // where the screen STARTS, and a scroll you did not ask for on the
+            // first frame reads as the app losing its place.
+            .task { proxy.scrollTo(focus, anchor: .top) }
         }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollPosition(id: $focus)
-        .scrollIndicators(.hidden)
     }
 
     /// Move to the next unfinished movement once this one is done.
     ///
     /// The deck is ordered and the session is ordered, so the card you want
-    /// after the last set of an exercise is never ambiguous. Doing it by hand
-    /// means a horizontal drag between every movement, which is the one gesture
-    /// the set rows have taken over.
+    /// after the last set of an exercise is never ambiguous — and scrolling to
+    /// it by hand, past a card you have just filled in, is the one piece of
+    /// navigation the screen genuinely knows how to do for you.
+    ///
+    /// It moves `focus`, which the scroll follows; it never reads where the
+    /// scroll happens to BE. Having scrolled down to look at what is coming
+    /// must not change what finishing this movement does.
     private func advanceIfFinished() {
         guard let index = model.exercises.firstIndex(where: { $0.id == focus }),
               model.exercises[index].isComplete
@@ -382,6 +437,35 @@ struct LiveLoggerView: View {
     /// and dismissing anyway left the session row open forever, the tab reading
     /// it back as live, and the failure reported to a screen that no longer
     /// existed. Now the sheet stays up and the banner has somewhere to appear.
+    /// What the confirmation offers, and what it warns about.
+    ///
+    /// The two states are genuinely different actions and the dialog says so: a
+    /// session with nothing in it has nothing to discard, and telling someone
+    /// their sets are about to be deleted when there are none is how a dialog
+    /// stops being read.
+    private var cancelActionTitle: String {
+        model.completedSets > 0 ? "Discard \(model.completedSets) sets" : "Cancel workout"
+    }
+
+    private var cancelMessage: String {
+        model.completedSets > 0
+            ? "The sets logged in this session are deleted here and on the server. This cannot be undone."
+            : "Nothing has been logged, so nothing is saved. The session closes and no workout is recorded."
+    }
+
+    /// Discard the session and leave.
+    ///
+    /// The store failing keeps the screen up: `model.cancel` puts the reason in
+    /// `storeError`, the banner is already rendering it, and dismissing anyway
+    /// would leave the session live with the failure reported to a screen that
+    /// no longer exists — the same rule `finish` follows.
+    private func cancelWorkout() {
+        guard model.cancel() else { return }
+        model.stopRest()
+        activity.end()
+        dismiss()
+    }
+
     private func finish(sessionRpe: Double?) -> Bool {
         guard model.finish(sessionRpe: sessionRpe) else { return false }
         model.stopRest()

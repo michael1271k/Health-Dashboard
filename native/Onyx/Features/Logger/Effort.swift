@@ -1,0 +1,213 @@
+import Foundation
+
+/// Effort, in words — the vocabulary the logger and the finish sheet share.
+///
+/// ── PORTED, NOT INVENTED ────────────────────────────────────────────────────
+/// Every value here comes from `src/lib/training/effort.ts` and
+/// `src/lib/training/setTags.ts` in the web app, unchanged. That matters more
+/// than it looks: `workout_sets.rpe` is `numeric(3,1)` and holds 2,190 rows
+/// rated on THAT ladder, `workout_sessions.session_rpe` holds the CR-10 the
+/// battery reads, and `workout_sets.quality` has a CHECK constraint listing
+/// exactly the six keys below. A second, prettier vocabulary on this side would
+/// not be a redesign; it would be rows the two apps disagree about the meaning
+/// of.
+///
+/// ── AND WHY THERE ARE THREE SCALES AND NOT ONE ──────────────────────────────
+/// They answer different questions and the numbers say so.
+///
+///   · `RpeLadder`  — per SET, reps-in-reserve. Clusters at 8–9.5 on any
+///     hypertrophy block, which is what makes its eight stops worth having.
+///   · `Cr10`       — per SESSION, Borg's ratio scale. Its own anchors, because
+///     "how hard was that set" and "how hard was the whole session" are not the
+///     same question: across this athlete's log the mean per-set rating is 8.86
+///     and the mean session rating 7.16.
+///   · `SetQuality` — HOW it went, not how hard. A second axis on purpose: a
+///     warm-up can be sloppy, and folding technique into `set_type` would give
+///     every consumer of "is this a working set" an opinion about form.
+enum RpeLadder {
+
+    /// One rung. `value` is what lands in `workout_sets.rpe`.
+    struct Stop: Identifiable, Hashable, Sendable {
+        let value: Double
+        let label: String
+        /// Reps-in-reserve gloss — the question you can actually answer.
+        let hint: String
+
+        var id: Double { value }
+    }
+
+    /// The eight stops, hardest last.
+    ///
+    /// All already on the 0.5 grid the column stores, so this needed no
+    /// migration and no backfill: a row holding a bare 8 lights the fourth rung
+    /// and reads "Challenging" rather than borrowing CR-10's "Very hard". The
+    /// stored number does not move.
+    ///
+    /// 8.0 exists because the seven-rung ladder was widest exactly where a
+    /// hypertrophy block spends most of its sets — Medium 7.5 to Hard 8.5 was a
+    /// full point, while the top crammed four rungs into the 1.5 above it. A
+    /// set with three clean reps left and one with two are different sets.
+    static let stops: [Stop] = [
+        Stop(value: 5,   label: "Very Easy",  hint: "5+ reps left"),
+        Stop(value: 6.5, label: "Easy",       hint: "~4 left"),
+        Stop(value: 7.5, label: "Medium",     hint: "3 left"),
+        Stop(value: 8,   label: "Challenging", hint: "2–3 left"),
+        Stop(value: 8.5, label: "Hard",       hint: "2 left"),
+        Stop(value: 9,   label: "Very Hard",  hint: "1 left"),
+        Stop(value: 9.5, label: "Max Effort", hint: "0 left, form held"),
+        Stop(value: 10,  label: "Failure",    hint: "missed or form broke"),
+    ]
+
+    /// The rung a stored value sits on, or nil for one between rungs.
+    ///
+    /// Off-ladder values are load-bearing, not an edge case: rows written before
+    /// the ladder existed hold 6, 7 and 9.5-less halves, and none of them may
+    /// render as a dash.
+    static func stop(for value: Double?) -> Stop? {
+        guard let value else { return nil }
+        return stops.first { $0.value == value }
+    }
+
+    /// A word for every rating: the exact rung where there is one, the CR-10
+    /// anchor otherwise.
+    static func label(_ value: Double?) -> String? {
+        guard let value else { return nil }
+        return stop(for: value)?.label ?? Cr10.label(value)
+    }
+
+    /// `9 · Very Hard`, which is what the row prints. The number alone means
+    /// nothing to anyone who has not memorised the ladder, and the word alone
+    /// loses the half-steps.
+    static func readout(_ value: Double?) -> String? {
+        guard let value, let label = label(value) else { return nil }
+        return "\(OnyxFormat.rpe(value)) · \(label)"
+    }
+}
+
+// MARK: - CR-10
+
+/// Borg CR-10 — the SESSION scale, shared with `cardio_logs.effort`.
+enum Cr10 {
+
+    static let min = 1.0
+    static let max = 10.0
+
+    /// Verbal anchors. Only the canonical CR-10 points are named; everything
+    /// between them takes the nearest anchor at or BELOW it, so every rating
+    /// gets a word and none of them overstates.
+    static let anchors: [(value: Double, label: String)] = [
+        (1, "Very light"),
+        (2, "Light"),
+        (3, "Moderate"),
+        (4, "Somewhat hard"),
+        (5, "Hard"),
+        (7, "Very hard"),
+        (9, "Extremely hard"),
+        (10, "Maximal"),
+    ]
+
+    static func label(_ value: Double?) -> String? {
+        guard let value, value.isFinite else { return nil }
+        var out = anchors[0].label
+        for anchor in anchors where value >= anchor.value { out = anchor.label }
+        return out
+    }
+
+    /// Clamp and snap to the 0.5 grid the column stores.
+    static func normalise(_ value: Double) -> Double {
+        Swift.min(max, Swift.max(min, (value * 2).rounded() / 2))
+    }
+}
+
+// MARK: - Set quality
+
+/// A set's TECHNIQUE, when it was worth recording.
+///
+/// ── WHY NULL IS "CLEAN" ─────────────────────────────────────────────────────
+/// Storing a default would make every set ever logged carry a claim about its
+/// form that nobody made. Absence means "not reported", which is the truth —
+/// the same rule as `weighin_skip_reason`, resolved on read.
+///
+/// A closed vocabulary because counting is the entire point: "swung the last
+/// few" and "used a bit of body english" are the same observation and would
+/// never group. The six below are the six the database's CHECK constraint
+/// holds, in its order.
+enum SetQuality: String, CaseIterable, Identifiable, Sendable {
+    case momentum
+    case partialRom = "partial_rom"
+    case formBreakdown = "form_breakdown"
+    case neededWarmup = "needed_warmup"
+    case assisted
+    case cutShort = "cut_short"
+
+    var id: String { rawValue }
+
+    /// Shown on the row and on the chip. Kept to two words.
+    var label: String {
+        switch self {
+        case .momentum:      "Momentum"
+        case .partialRom:    "Short ROM"
+        case .formBreakdown: "Form broke"
+        case .neededWarmup:  "Cold"
+        case .assisted:      "Assisted"
+        case .cutShort:      "Cut short"
+        }
+    }
+
+    /// The whole sentence, for the sheet's hint line and for VoiceOver.
+    var full: String {
+        switch self {
+        case .momentum:      "Used body English to move the load"
+        case .partialRom:    "Cut the range short to finish the set"
+        case .formBreakdown: "The last reps lost position"
+        case .neededWarmup:  "The first reps were poor — needed a longer warm-up"
+        case .assisted:      "A spotter or the other arm helped"
+        case .cutShort:      "Stopped before the target for a reason other than failure"
+        }
+    }
+}
+
+// MARK: - Session effort, in words
+
+/// How hard the SESSION was, as five words.
+///
+/// ── WHY WORDS, AND WHY THIS IS NOT A SCALE CONVERSION ───────────────────────
+/// Per-set RPE is reps-in-reserve and clusters at 8–9.5 on a hypertrophy block;
+/// session CR-10 asks a different question and this athlete has never rated a
+/// session above 8. Averaging one into the other proposed roughly 8.9 against
+/// an answer of roughly 7.2, every single session — and `battery.ts` reads the
+/// result as `sessionRpe / 10`, so the over-proposal was a measurably larger
+/// drain. A number invites that comparison; a word does not.
+///
+/// The NUMBER IS STILL WHAT IS STORED. Each word carries a canonical `cr10`,
+/// written to `session_rpe` exactly as before, so the battery, the score, the
+/// weekly export and the widget snapshot all keep reading one numeric column.
+struct EffortWord: Identifiable, Hashable, Sendable {
+    let key: String
+    let label: String
+    /// What lands in `session_rpe`.
+    let cr10: Double
+    let hint: String
+
+    var id: String { key }
+}
+
+enum EffortWords {
+
+    static let all: [EffortWord] = [
+        EffortWord(key: "easy",       label: "Easy",       cr10: 5,   hint: "lighter than usual — plenty left"),
+        EffortWord(key: "solid",      label: "Solid",      cr10: 6.5, hint: "a normal working session"),
+        EffortWord(key: "hard",       label: "Hard",       cr10: 8,   hint: "the session you planned, in full"),
+        EffortWord(key: "brutal",     label: "Brutal",     cr10: 9,   hint: "harder than this day usually is"),
+        EffortWord(key: "everything", label: "Everything", cr10: 10,  hint: "nothing left in the tank"),
+    ]
+
+    /// The word a stored `session_rpe` reads back as — NEAREST rung, never a
+    /// range. The historical rows are 6, 7 and 8, which land on Solid, Solid and
+    /// Hard; inventing a sixth word to preserve a distinction the athlete was
+    /// not reliably drawing would be inventing data.
+    static func word(for cr10: Double?) -> EffortWord? {
+        guard let cr10, cr10.isFinite else { return nil }
+        return all.min { abs($0.cr10 - cr10) < abs($1.cr10 - cr10) }
+    }
+}

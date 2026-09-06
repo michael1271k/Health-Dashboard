@@ -398,6 +398,47 @@ public extension AppDatabase {
         }
     }
 
+    /// One glass, added to the day.
+    ///
+    /// ── WHY THIS IS NOT `setWaterOverride` WITH ARITHMETIC IN THE CALLER ────
+    /// It was, and that is the whole of the "Apple Health water never reaches
+    /// the Nutrition page" bug. Tapping the water row read the day's figure,
+    /// added 250, and called `setWaterOverride` — which REPLACES the ledger
+    /// with one row carrying `manual-water-<date>`, the sentinel that makes
+    /// `ingest` decline that date's water in both stores, silently, forever.
+    /// One stray tap on the tab's most-tapped control disconnected the day from
+    /// Apple Health, and the only way back was a long press into a sheet whose
+    /// escape hatch is only drawn once you are already locked out.
+    ///
+    /// A glass is an ADDITION to a day Apple is still measuring, so it is its
+    /// own row under its own prefix. `ingest` adds the glasses to HealthKit's
+    /// reading rather than choosing between them, the ledger the scorer sums
+    /// stays the sum of both, and the sheet keeps its override — which is a
+    /// different verb and still says so in its own footer.
+    func addWaterGlass(userId: String, date: String, ml: Double, now: Date = Date()) throws {
+        try writer.write { db in
+            let amount = max(0, ml.rounded())
+            guard amount > 0 else { return }
+            let row = WaterIntakeRow(
+                id: newOnyxID(), userId: userId, hkUuid: ManualEntry.glassSentinel(date),
+                loggedAt: now, date: date, amountMl: amount, createdAt: now
+            )
+            try row.save(db)
+            try Self.enqueueRowUpsert(table: WaterIntakeRow.databaseTableName, id: row.id, in: db)
+            // The flat row carries the LEDGER's sum — Apple's row, the glasses,
+            // and an override if one is standing. Re-read rather than
+            // incremented: `daily_logs.water_ml` is a projection of the ledger
+            // and a second running total is a second thing to keep in step.
+            let total = try WaterIntakeRow
+                .filter(Column("user_id") == userId && Column("date") == date)
+                .fetchAll(db)
+                .reduce(0) { $0 + $1.amountMl }
+            _ = try Self.patchDailyLog(db, userId: userId, date: date, now: now, clearing: []) {
+                $0.waterMl = total
+            }
+        }
+    }
+
     /// Hand the day back to Apple Health.
     ///
     /// Clears BOTH stores rather than restoring the synced value — it is not

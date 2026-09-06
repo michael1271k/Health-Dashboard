@@ -357,8 +357,14 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     ///     `false` would be a claim, and it would overwrite a record flagged by
     ///     the web app. An omitted column is left untouched by an upsert.
     ///   · `exercise_order` — the local store does not track it.
-    ///   · `quality` — likewise; and the web app already treats a missing
-    ///     quality as "the question was never asked", which is the truth here.
+    ///   · `quality` — the local store DOES hold it now (`v14.setQuality`), and
+    ///     it is still not sent. PostgREST wants an identical key set across
+    ///     every object of a bulk upsert, so sending it means sending NULL for
+    ///     every set nobody was asked about — which would wipe the quality the
+    ///     web app recorded on any set the phone later corrects. Same trade as
+    ///     `is_pr`, same decision: an omitted column is left untouched. When
+    ///     this axis earns a round trip it wants a single-row patch of its own,
+    ///     not a column bolted onto the batch.
     ///   · `created_at` — `NOT NULL DEFAULT now()`, and the server's clock is
     ///     the better one for a row's arrival time.
     public func encode(to encoder: any Encoder) throws {

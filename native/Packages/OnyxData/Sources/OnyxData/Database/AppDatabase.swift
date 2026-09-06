@@ -680,6 +680,29 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v14 ─────────────────────────────────────────────────────────────
+        // How a set went, as opposed to how hard it was.
+        //
+        // Postgres has carried `workout_sets.quality` all along, with a CHECK
+        // constraint holding the same six keys `SetQuality` lists; the local
+        // store did not, so the logger's set-options sheet had nowhere to put
+        // the answer. Exactly the shape of `v7.setRpe`, and safe for the same
+        // reason: `SetSnapshot` gains the field at the same time, a new build
+        // decoding an old event sees the key absent and gets `nil` — which is
+        // the correct reading of a set logged before the question was asked —
+        // and an old build decoding a new event ignores it. Neither loses a set.
+        //
+        // `nil` is not a value here. It means the question was never put, which
+        // is why there is no "Clean" chip in the sheet: clean is the absence of
+        // a claim, and a chip for it would write an assertion that the set was
+        // inspected and passed.
+        migrator.registerMigration("v14.setQuality") { db in
+            guard try !db.columns(in: "workout_sets").contains(where: { $0.name == "quality" }) else { return }
+            try db.alter(table: "workout_sets") { t in
+                t.add(column: "quality", .text)
+            }
+        }
+
         return migrator
     }
 }
@@ -852,6 +875,85 @@ extension AppDatabase {
                 db, sessionId: id, userId: session.userId, dayKey: session.dayKey, date: session.date
             )
             return session
+        }
+    }
+
+    /// Throw a session away — the workout did not happen.
+    ///
+    /// ── WHY THIS IS A DELETE AND NOT A CLOSE ────────────────────────────────
+    /// `attach` deliberately does not create a session row, so opening the
+    /// logger and leaving costs nothing and needs none of this. What this is for
+    /// is the session you started, logged a set into, and then realised was the
+    /// wrong day — where closing it would leave a one-set workout in the history,
+    /// in the trends, in the week's volume and in the PR ledger, and voiding
+    /// every set would leave an empty session row that is indistinguishable
+    /// later from a workout somebody abandoned.
+    ///
+    /// ── AND WHY THE QUEUE IS SWEPT BEFORE THE ROW GOES ──────────────────────
+    /// The session may already have been pushed — the drain runs on every
+    /// foreground — so the server is told to delete it too. Any outbox item
+    /// still naming this session would put it straight back: the session upsert
+    /// re-creates the row, and a queued set event re-creates the set. Both are
+    /// removed in the SAME transaction as the delete, or a process killed in
+    /// between resurrects exactly the workout the user just discarded.
+    ///
+    /// Locally it is one statement: `set_events`, `live_sessions` and
+    /// `workout_sets` all cascade from `workout_sessions`.
+    @discardableResult
+    public func discardSession(id: String) throws -> Bool {
+        try writer.write { db in
+            guard try WorkoutSession.fetchOne(db, key: id) != nil else { return false }
+
+            // Server-side deletes, queued while the ids are still readable.
+            for set in try WorkoutSet.filter(Column("session_id") == id).fetchAll(db) {
+                try Self.enqueueRowDelete(table: WorkoutSet.databaseTableName, key: ["id": set.id], in: db)
+            }
+            try Self.enqueueRowDelete(table: WorkoutSession.databaseTableName, key: ["id": id], in: db)
+
+            // Anything still queued that would bring it back.
+            try db.execute(
+                sql: "DELETE FROM outbox WHERE idempotency_key = ?", arguments: ["session:\(id)"]
+            )
+            for item in try OutboxItem.fetchAll(db)
+            where item.kind.hasPrefix(SyncKind.setEventPrefix) {
+                guard let event = try? OnyxJSON.decoder.decode(SetEvent.self, from: item.payload),
+                      event.sessionId == id
+                else { continue }
+                try item.delete(db)
+            }
+
+            try db.execute(sql: "DELETE FROM workout_sessions WHERE id = ?", arguments: [id])
+            return true
+        }
+    }
+
+    /// The two figures the athlete knows and the watch might not.
+    ///
+    /// ── WHY A HAND-ENTERED FIGURE IS STAMPED `estimated = false` ────────────
+    /// `sessionsNeedingMetrics` revisits a session for fourteen days looking for
+    /// an `HKWorkout` to measure, and it selects rows whose figures are absent
+    /// OR estimated. A number you typed is neither: stamping it measured is what
+    /// takes the session out of that query, so a later sync cannot quietly
+    /// replace what you said with what the phone inferred. Same rule as the
+    /// hand-corrected day in `ingest` — a correction wins.
+    ///
+    /// `nil` leaves a figure alone rather than clearing it; clearing one is not
+    /// a thing the finish sheet can ask for and inventing the distinction here
+    /// would be a fourth state nothing reads.
+    public func setSessionMetrics(id: String, avgBpm: Int? = nil, caloriesBurned: Int? = nil) throws {
+        guard avgBpm != nil || caloriesBurned != nil else { return }
+        try writer.write { db in
+            guard var session = try WorkoutSession.fetchOne(db, key: id) else { return }
+            if let avgBpm {
+                session.avgBpm = avgBpm
+                session.avgBpmEstimated = false
+            }
+            if let caloriesBurned {
+                session.caloriesBurned = caloriesBurned
+                session.caloriesEstimated = false
+            }
+            try session.update(db)
+            try Self.enqueueSessionUpsert(sessionId: id, in: db)
         }
     }
 }

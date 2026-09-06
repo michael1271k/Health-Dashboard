@@ -46,16 +46,52 @@ final class LoggerModel: Identifiable {
     /// How a set counts. `ghost` is work you marked as NOT done and it counts
     /// for nothing, anywhere — which is the one thing that separates it from a
     /// warm-up, which counts everywhere the body is asked about.
-    enum SetKind: String, CaseIterable, Sendable {
+    enum SetKind: String, CaseIterable, Identifiable, Sendable {
         case normal, warmup, failure, dropset, ghost
 
+        var id: String { rawValue }
+
+        /// The single character the row wears in place of its ordinal.
+        ///
+        /// A letter, not a word: "Warmup" is eight characters on the one row
+        /// that has no spare width, and "Dropset" and "Failure" are seven each.
+        /// The full word lives in the options sheet and in the weekly export,
+        /// which is what a coach actually reads.
+        ///
+        /// Ghost is `G`, matching the web's badge and its export. It used to be
+        /// an em dash here — a glyph that reads as "nothing" in a column where
+        /// every other value is an identity, and which said something different
+        /// in the sheet that sets it from what the row then drew.
         var badge: String? {
             switch self {
             case .normal:  nil
             case .warmup:  "W"
             case .failure: "F"
             case .dropset: "D"
-            case .ghost:   "—"
+            case .ghost:   "G"
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .normal:  "Normal"
+            case .warmup:  "Warm-up"
+            case .failure: "Failure"
+            case .dropset: "Drop"
+            case .ghost:   "Ghost"
+            }
+        }
+
+        /// What choosing it MEANS, in four words. The sheet keeps one of these
+        /// on screen at all times: five hints stacked under five chips would put
+        /// the height straight back, and a tooltip is not reachable by thumb.
+        var hint: String {
+            switch self {
+            case .normal:  "Counts as work"
+            case .warmup:  "Before the work"
+            case .failure: "Taken to failure"
+            case .dropset: "No record from it"
+            case .ghost:   "Logged, counts for nothing"
             }
         }
     }
@@ -70,6 +106,10 @@ final class LoggerModel: Identifiable {
         /// tell apart from "rated easy".
         var rpe: Double?
         var kind: SetKind
+        /// HOW the set went, as opposed to how hard — the second axis the set
+        /// options sheet asks about. `nil` is "not reported", never "clean":
+        /// see `SetQuality`.
+        var quality: SetQuality?
         var isDone: Bool
         /// What this set number was last time, pre-formatted: `"47kg × 12"`.
         /// Empty when the movement is new — a Lock Screen has no room to say
@@ -88,7 +128,7 @@ final class LoggerModel: Identifiable {
         init(
             id: String = newOnyxID(),
             weightKg: Double? = nil, reps: Int? = nil, rpe: Double? = nil,
-            kind: SetKind = .normal, isDone: Bool = false,
+            kind: SetKind = .normal, quality: SetQuality? = nil, isDone: Bool = false,
             previous: String? = nil, isRecord: Bool = false
         ) {
             self.id = id
@@ -96,6 +136,7 @@ final class LoggerModel: Identifiable {
             self.reps = reps
             self.rpe = rpe
             self.kind = kind
+            self.quality = quality
             self.isDone = isDone
             self.previous = previous
             self.isRecord = isRecord
@@ -332,7 +373,7 @@ final class LoggerModel: Identifiable {
         exercise.rows.insert(
             SetRow(
                 weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
-                kind: row.kind, isDone: false, previous: row.previous
+                kind: row.kind, quality: row.quality, isDone: false, previous: row.previous
             ),
             at: index + 1
         )
@@ -361,6 +402,14 @@ final class LoggerModel: Identifiable {
 
     func setKind(_ kind: SetKind, on row: SetRow, in exercise: ExerciseState) {
         row.kind = kind
+        if row.isDone { amendInStore(row, in: exercise) }
+    }
+
+    /// Passing the value the set already carries WITHDRAWS it — the same rule
+    /// the RPE ladder follows, and for the same reason: a claim about your form
+    /// that you cannot take back is a claim you stop making.
+    func setQuality(_ quality: SetQuality?, on row: SetRow, in exercise: ExerciseState) {
+        row.quality = row.quality == quality ? nil : quality
         if row.isDone { amendInStore(row, in: exercise) }
     }
 
@@ -469,6 +518,69 @@ final class LoggerModel: Identifiable {
         }
     }
 
+    /// Throw the session away — this workout did not happen.
+    ///
+    /// The common case costs nothing and touches nothing: `attach` looks a
+    /// session up but never creates one, and `ensureSession` mints the row on
+    /// the FIRST APPEND, so a logger opened by accident has no row, no events
+    /// and no outbox items to clean up. `sessionId == nil` is exactly that
+    /// state, and cancelling out of it is just leaving.
+    ///
+    /// Once a set has been logged there IS something to discard, and it is
+    /// discarded rather than closed — see `AppDatabase.discardSession` for why
+    /// an empty-but-finished session row is the worse outcome.
+    @discardableResult
+    func cancel() -> Bool {
+        guard let store, let sessionId else { return true }
+        do {
+            try store.discardSession(id: sessionId)
+            self.sessionId = nil
+            // The deck goes back to its prescription. Leaving the ticks on
+            // screen after the events behind them are gone is the projection
+            // and the log disagreeing, which is the one thing this layer exists
+            // to prevent.
+            for exercise in exercises {
+                for row in exercise.rows {
+                    row.isDone = false
+                    row.isRecord = false
+                }
+            }
+            storeError = nil
+            return true
+        } catch {
+            storeError = String(describing: error)
+            return false
+        }
+    }
+
+    // MARK: - Session metadata
+
+    /// What the store holds about this session, re-read rather than cached.
+    ///
+    /// Average heart rate and active energy are filled by `syncSessionMetrics`
+    /// from the watch's own `HKWorkout` — which can arrive a day late — so the
+    /// honest thing for the finish sheet to show is whatever is on disk at the
+    /// moment it is drawn, and "—" when nothing is yet.
+    var sessionRow: WorkoutSession? {
+        guard let store, let sessionId else { return nil }
+        return try? store.session(id: sessionId)
+    }
+
+    /// The two figures you can supply when the watch did not.
+    ///
+    /// Stamped MEASURED rather than estimated, so the next Health sync does not
+    /// replace what you typed with what the phone inferred — see
+    /// `AppDatabase.setSessionMetrics`.
+    func setMetrics(avgBpm: Int? = nil, calories: Int? = nil) {
+        guard let store, let sessionId else { return }
+        do {
+            try store.setSessionMetrics(id: sessionId, avgBpm: avgBpm, caloriesBurned: calories)
+            storeError = nil
+        } catch {
+            storeError = String(describing: error)
+        }
+    }
+
     // MARK: - The store
 
     /// Make sure a session row exists, and remember its id.
@@ -518,6 +630,7 @@ final class LoggerModel: Identifiable {
                     reps: set.reps,
                     rpe: set.rpe,
                     kind: SetKind(rawValue: set.setType) ?? .normal,
+                    quality: set.quality.flatMap(SetQuality.init(rawValue:)),
                     isDone: true,
                     previous: Self.previousLabel(exercise.plan),
                     isRecord: false
@@ -559,7 +672,8 @@ final class LoggerModel: Identifiable {
             reps: row.reps ?? 0,
             setType: row.kind.rawValue,
             est1rmKg: row.estimated1RM,
-            rpe: row.rpe
+            rpe: row.rpe,
+            quality: row.quality?.rawValue
         )
     }
 
@@ -599,7 +713,11 @@ final class LoggerModel: Identifiable {
         do {
             try store.amendSet(sessionId: sessionId, setId: row.id, SetPatch(
                 setIndex: next.setIndex, weightKg: next.weightKg, reps: next.reps,
-                setType: next.setType, est1rmKg: next.est1rmKg, rpe: next.rpe
+                setType: next.setType, est1rmKg: next.est1rmKg, rpe: next.rpe,
+                // The sentinel, not nil: `nil` in a patch means UNCHANGED, so
+                // withdrawing a quality would otherwise be the one edit the
+                // amend could not express. See `SetPatch.clearedQuality`.
+                quality: next.quality ?? SetPatch.clearedQuality
             ))
             storeError = nil
         } catch EventStoreError.emptyPatch {

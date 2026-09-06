@@ -87,4 +87,35 @@ public enum ManualEntry {
     public static func isManualWater(_ hkUuid: String?) -> Bool {
         hkUuid?.hasPrefix("manual-water-") ?? false
     }
+
+    // MARK: - A glass is not an override
+
+    /// One tapped glass, in the day's ledger.
+    ///
+    /// ── WHY THIS IS NOT `waterSentinel` ─────────────────────────────────────
+    /// It was. Tapping the water row called `setWaterOverride`, which replaces
+    /// the whole day's ledger with one hand-entered figure carrying
+    /// `manual-water-<date>` — and that sentinel is a ONE-WAY DOOR: `ingest`
+    /// declines the day's water from then on, in both stores, silently and
+    /// forever. So a single stray tap on the most-tapped control on the tab
+    /// permanently disconnected that date from Apple Health, and the only way
+    /// back was a long press, a sheet, and a button that is only rendered once
+    /// you are already locked out.
+    ///
+    /// The two actions were never the same verb. The SHEET says "the day was
+    /// this much" — a correction, which should win over anything Apple reports
+    /// and whose footer says exactly that. A TAP says "and one more glass",
+    /// which is an addition to a day Apple is still measuring. Giving the glass
+    /// its own prefix is what lets `ingest` keep writing HealthKit's reading
+    /// and add the glasses to it, rather than choosing between them.
+    ///
+    /// Unique per row, not per day: `water_intake.hk_uuid` carries a UNIQUE
+    /// index and a day holds as many glasses as you drink.
+    public static func glassSentinel(_ date: String, id: String = newOnyxID()) -> String {
+        "glass-\(date)-\(id)"
+    }
+
+    public static func isGlass(_ hkUuid: String?) -> Bool {
+        hkUuid?.hasPrefix("glass-") ?? false
+    }
 }

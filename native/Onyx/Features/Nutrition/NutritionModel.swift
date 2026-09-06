@@ -417,8 +417,18 @@ final class NutritionModel {
     /// repeated action here and it should cost one tap.
     static let glassMl: Double = 250
 
+    /// ── A TAP ADDS; ONLY THE SHEET REPLACES ─────────────────────────────────
+    /// This called `setWater`, which is the OVERRIDE — it replaced the day's
+    /// ledger with one row carrying the manual sentinel, and that sentinel makes
+    /// every later HealthKit sync decline the date's water without saying so.
+    /// So one tap here, on the control the tab is designed around, permanently
+    /// stopped Apple Health water from reaching this screen for that day.
+    ///
+    /// A glass is its own row in the ledger now, and the ingest adds the glasses
+    /// to what Apple reports. See `AppDatabase.addWaterGlass`.
     func addWater(_ ml: Double = NutritionModel.glassMl) {
-        setWater(ml: (waterMl ?? 0) + ml)
+        dailyLog?.waterMl = (waterMl ?? 0) + ml
+        write { try database.addWaterGlass(userId: userId, date: date, ml: ml) }
     }
 
     func clearWater() {

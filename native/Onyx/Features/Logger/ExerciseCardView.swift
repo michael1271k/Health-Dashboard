@@ -11,13 +11,17 @@ import OnyxCore
 /// PREVIOUS, KG, REPS, RPE, ✓, each one narrower than a thumb. The data
 /// hierarchy is right and the layout is a spreadsheet.
 ///
-/// ── AND WHAT WAVE 2.4 CHANGED ───────────────────────────────────────────────
+/// ── ONE VERTICAL SCROLL, AND NO CHEVRONS ────────────────────────────────────
 /// Wave 1 stacked every movement in one vertical scroll, each card with its own
 /// expand chevron — so the screen you logged into was a list of eleven
 /// accordions and the set in front of you was wherever you last left the
-/// scroll. A workout is not a list you browse, it is ONE movement at a time, so
-/// the cards are a deck: one page per movement, its position printed in the
-/// header, and no chevrons because a page of a deck is never collapsed.
+/// scroll. Wave 2.4 answered that by making the cards a horizontal DECK, one
+/// page per movement, which fixed the accordions and cost the ability to look
+/// ahead; §U puts the vertical scroll back and leaves the chevrons out, because
+/// it was never the scrolling that was wrong. See `LiveLoggerView.deck`.
+///
+/// A card is therefore always open, always full height, and prints its position
+/// in the header — `3 of 11` is what a scroll bar cannot say.
 ///
 /// The row is the other half. It is 44 pt — the platform's own minimum, not a
 /// number chosen here — and the tick button is gone: you log a set by pushing
@@ -184,6 +188,7 @@ struct ExerciseCardView: View {
     /// two is two rows tall.
     private var sets: some View {
         VStack(spacing: OnyxSpace.xs) {
+                columnHeaders
                 ForEach(Array(exercise.rows.enumerated()), id: \.element.id) { index, row in
                     SetRowView(
                         row: row,
@@ -192,6 +197,7 @@ struct ExerciseCardView: View {
                         onLog: { model.toggleDone(row, in: exercise) },
                         onCommit: { model.commitEdit(row, in: exercise) },
                         onKind: { model.setKind($0, on: row, in: exercise) },
+                        onQuality: { model.setQuality($0, on: row, in: exercise) },
                         onDuplicate: { withAnimation(OnyxMotion.move) { model.duplicate(row, in: exercise) } },
                         onNote: { noteDraft = exercise.note; editingNote = true },
                         onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } }
@@ -209,9 +215,98 @@ struct ExerciseCardView: View {
                 }
                 .onyxPress(scale: 0.98)
             }
-        .padding(.horizontal, OnyxSpace.s)
+        // ── WHY THE GUTTER IS 4 AND NOT 8 ───────────────────────────────
+        // A set row is a badge, two steppers and an effort word, and their
+        // MINIMUM widths add up to within a few points of a 402 pt screen. Every
+        // point of padding between the card's edge and the row is a point the
+        // row takes back by overflowing — which it did, silently: the deck's own
+        // 16 pt inset vanished and the cards drew edge to edge, because a
+        // `ScrollView` does not clip an over-wide child, it just lets it win.
+        // The gutters are the cheapest thing in that budget and the tap targets
+        // are the most expensive, so the gutters pay.
+        .padding(.horizontal, OnyxSpace.xs)
         .padding(.bottom, OnyxSpace.m)
     }
+
+    /// What the columns are.
+    ///
+    /// The rows carried no header at all: a bare `47`, a `×` and a `12`, with
+    /// the load's unit printed once per row and the rep count's not printed
+    /// anywhere. It reads as an equation rather than as a table, and which
+    /// number is which is something you infer from their size.
+    ///
+    /// The header does that work once, at the top of the card, in the register
+    /// the read-only ledger already uses — so the row can keep printing bare
+    /// numerals and stop repeating a unit the reader has been told.
+    ///
+    /// ── AND WHY IT IS ABSENT AT AN ACCESSIBILITY SIZE ───────────────────────
+    /// There the row stacks the load OVER the reps, so there are no columns for
+    /// a header to name; four labels over a two-line row would be a caption on
+    /// a photograph of itself. The fields keep their own spoken labels, which is
+    /// the thing that was actually load-bearing.
+    @ViewBuilder
+    private var columnHeaders: some View {
+        if !typeSize.isAccessibilitySize {
+            HStack(spacing: OnyxSpace.s) {
+                head("Set").frame(width: SetColumn.badge)
+                // Over the NUMERAL, not over the whole stepper. A label centred
+                // on a control group sits between the field and the `+`, which
+                // is nine points off the thing it names — and nine points is
+                // exactly enough to make a reader check.
+                head("kg")
+                    .frame(width: SetColumn.weightField)
+                    .padding(.horizontal, SetColumn.step)
+                head("Reps")
+                    .frame(width: SetColumn.repsField)
+                    .padding(.horizontal, SetColumn.step)
+                Spacer(minLength: 0)
+                head("Effort").frame(width: SetColumn.effort, alignment: .trailing)
+            }
+            .padding(.horizontal, OnyxSpace.xs)
+            .padding(.top, OnyxSpace.xs)
+            .accessibilityHidden(true)
+        }
+    }
+
+    /// `fixedSize` because the column it names is narrower than the word:
+    /// `Reps` over a 32 pt rep field truncated to `RE…`, which is a header that
+    /// has stopped being one. A label wider than its track overflows into the
+    /// stepper's own padding either side and stays centred on the value, which
+    /// is the only property that mattered.
+    private func head(_ text: String) -> some View {
+        Text(text)
+            .onyxMicro()
+            .lineLimit(1)
+            .fixedSize()
+            .multilineTextAlignment(.center)
+    }
+}
+
+// MARK: - The columns
+
+/// ── ONE SET OF WIDTHS, DECLARED ONCE ────────────────────────────────────────
+/// The header and the rows under it are different views, and the only thing
+/// that makes them a table is that they agree about their columns. Spelling the
+/// widths twice is how they stop agreeing — a header reading `kg` over a column
+/// of rep counts is worse than no header at all, and nothing in the type system
+/// notices. The web app's `setGrid.ts` exists for exactly this reason and says
+/// exactly this; this is its half.
+private enum SetColumn {
+    /// The badge: the platform's minimum target, and the row's identity.
+    static let badge: CGFloat = 44
+    /// A stepper end. 34 rather than 44 because four of them, a badge, two
+    /// fields and an effort chip share 358 pt, and adjacent targets in a control
+    /// GROUP are the one place the HIG lets a 44 pt square breathe sideways.
+    static let step: CGFloat = 34
+    static let weightField: CGFloat = 50
+    static let repsField: CGFloat = 32
+    /// The printed `kg`. Framed rather than left to size itself, or the header
+    /// above it drifts by however wide the glyphs happen to render.
+    static let unit: CGFloat = 18
+    static let effort: CGFloat = 68
+
+    static let weight: CGFloat = step * 2 + weightField + unit
+    static let reps: CGFloat = step * 2 + repsField
 }
 
 // MARK: - One set
@@ -238,6 +333,7 @@ private struct SetRowView: View {
     let onLog: () -> Bool
     let onCommit: () -> Void
     let onKind: (LoggerModel.SetKind) -> Void
+    let onQuality: (SetQuality?) -> Void
     let onDuplicate: () -> Void
     let onNote: () -> Void
     let onDelete: () -> Void
@@ -246,6 +342,9 @@ private struct SetRowView: View {
     @State private var armed = false
     @State private var justLogged = false
     @State private var showOptions = false
+    /// The badge's own press state. It is not a `Button` any more — see `badge`
+    /// — so the press scale a `buttonStyle` used to give it is driven from here.
+    @State private var badgeDown = false
     /// Three separate counters because `.sensoryFeedback` fires on a CHANGE and
     /// the three events are independent — a rigid tap at the threshold must not
     /// be swallowed by a soft one that happens to land in the same frame.
@@ -306,15 +405,12 @@ private struct SetRowView: View {
         .sensoryFeedback(.success, trigger: recordTicks)
         .sensoryFeedback(.impact(flexibility: .soft), trigger: duplicateTicks)
         .sensoryFeedback(.selection, trigger: stepTicks)
-        .confirmationDialog("Set \(ordinal)", isPresented: $showOptions, titleVisibility: .visible) {
-            Button("Note this exercise") { onNote() }
-            Button("Duplicate set") { onDuplicate() }
-            Divider()
-            ForEach(LoggerModel.SetKind.allCases, id: \.self) { kind in
-                if kind != row.kind { Button(Self.name(kind)) { onKind(kind) } }
-            }
-            Divider()
-            Button("Delete set", role: .destructive) { onDelete() }
+        .sheet(isPresented: $showOptions) {
+            SetOptionsSheet(
+                ordinal: ordinal, row: row,
+                onKind: onKind, onQuality: onQuality, onNote: onNote,
+                onDuplicate: onDuplicate, onDelete: onDelete
+            )
         }
         .accessibilityElement(children: .contain)
     }
@@ -329,23 +425,32 @@ private struct SetRowView: View {
             // row that truncates its own numbers is worse than one that is two
             // lines tall (§3.1 allows exactly that, and only that).
             if typeSize.isAccessibilitySize {
+                // THE EFFORT COMES DOWN HERE TOO. It is a word now, and the
+                // widest of them — "Challenging" — cannot share a line with an
+                // AX5 load and its two steppers: pinned to the 68 pt column it
+                // wears at a shipping size, it rendered as "Ch…", which is a
+                // rating that has stopped being a rating. A third line costs
+                // this row 30 pt at a size where it is already 120 tall.
                 VStack(alignment: .leading, spacing: OnyxSpace.xs) {
                     weightField
                     repsField
+                    rpe
                 }
                 .padding(.vertical, OnyxSpace.s)
+                Spacer(minLength: 0)
             } else {
+                // No `×` between them any more. It was the row's way of saying
+                // which number was which, and the column headers say it better
+                // and once — where this said it on all forty rows, in the 26 pt
+                // that the effort word now uses to say something.
                 weightField
-                Text("×")
-                    .onyxType(.caption)
-                    .foregroundStyle(Color.onyx.textTertiary)
                 repsField
+                Spacer(minLength: 0)
+                if row.isRecord && row.isDone { record }
+                rpe
             }
-            Spacer(minLength: 0)
-            if row.isRecord && row.isDone && !typeSize.isAccessibilitySize { record }
-            rpe
         }
-        .padding(.horizontal, OnyxSpace.s)
+        .padding(.horizontal, OnyxSpace.xs)
         .frame(minHeight: 44)
         .frame(maxWidth: .infinity)
     }
@@ -357,30 +462,61 @@ private struct SetRowView: View {
     /// is a logger somebody with a tremor cannot use, and the state has to be
     /// drawn somewhere anyway.
     private var badge: some View {
-        Button { log() } label: {
-            ZStack {
-                RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
-                    .fill(row.isDone ? rail : Color.onyx.hairline)
-                if row.isDone && row.kind == .normal {
-                    Image(systemName: "checkmark")
-                        .onyxType(.caption).fontWeight(.heavy)
-                        .foregroundStyle(Color.onyx.base)
-                } else {
-                    Text(row.kind.badge ?? "\(ordinal)")
-                        .onyxType(.caption).fontWeight(.bold).onyxNumeral()
-                        .foregroundStyle(row.isDone ? Color.onyx.base : Color.onyx.textSecondary)
-                }
+        ZStack {
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .fill(row.isDone ? rail : Color.onyx.hairline)
+            if row.isDone && row.kind == .normal {
+                Image(systemName: "checkmark")
+                    .onyxType(.caption).fontWeight(.heavy)
+                    .foregroundStyle(Color.onyx.base)
+            } else {
+                Text(row.kind.badge ?? "\(ordinal)")
+                    .onyxType(.caption).fontWeight(.bold).onyxNumeral()
+                    .foregroundStyle(row.isDone ? Color.onyx.base : Color.onyx.textSecondary)
             }
-            .frame(width: 32, height: 32)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
         }
-        .onyxPress(scale: 0.9)
-        .disabled(!canLog && !row.isDone)
+        .frame(width: 32, height: 32)
+        // A set carrying a technique note says so, or the second axis is data
+        // you can only see by opening the sheet that wrote it. A dot rather
+        // than a chip: the row has no width for a sixth thing, and what the
+        // note SAYS is a question, not a glance.
+        .overlay(alignment: .topTrailing) {
+            if row.quality != nil {
+                Circle()
+                    .fill(Color.onyx.accent(.train))
+                    .frame(width: 6, height: 6)
+                    .offset(x: 3, y: -3)
+            }
+        }
+        .frame(width: SetColumn.badge, height: SetColumn.badge)
+        .contentShape(Rectangle())
+        .scaleEffect(badgeDown ? 0.9 : 1)
+        .animation(OnyxMotion.flick, value: badgeDown)
+        // ── WHY THIS IS NOT A `Button` ANY MORE ─────────────────────────────
+        // It needs two gestures on one target: a tap that logs the set and a
+        // hold that opens the set's options. A `Button` with a long press
+        // attached is the arrangement `WaterRow` documents at length and does
+        // not use — the two contend for the same touch sequence, and the two
+        // outcomes are "the hold never fires" and "both fire", which here would
+        // mean opening the options sheet on top of a set you just logged by
+        // accident. So: a plain surface with both gestures, the press scale a
+        // `buttonStyle` was giving it driven from `pressing:`, and the button
+        // trait and default action put back by hand for VoiceOver.
+        .onTapGesture { log() }
+        .onLongPressGesture(
+            minimumDuration: 0.45,
+            pressing: { badgeDown = $0 },
+            perform: { showOptions = true }
+        )
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(
             (row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged")
+            + (row.kind == .normal ? "" : ", \(row.kind.label)")
+            + (row.quality.map { ", \($0.label)" } ?? "")
             + (row.isRecord && row.isDone ? ". Personal record." : "")
         )
+        .accessibilityHint("Tap to log. Hold for set options.")
+        .accessibilityAction { log() }
         // The actions hang off the BADGE, not off the row.
         //
         // `.accessibilityElement(children: .contain)` makes the row a
@@ -396,11 +532,20 @@ private struct SetRowView: View {
 
     private var weightField: some View {
         stepper(
-            unit: "kg", showsUnit: true,
+            // ── THE UNIT MOVED UP ONE ROW ───────────────────────────────────
+            // The header says `kg` once per card; printing it again on every
+            // row is the same word forty times, in the width the effort rating
+            // needs to be a word rather than a number. At an accessibility size
+            // there IS no header — the row stacks and the columns stop existing
+            // — so that is exactly where the unit is still worth its space.
+            unit: "kg", showsUnit: typeSize.isAccessibilitySize,
             decrement: { row.weightKg = max(0, (row.weightKg ?? 0) - 2.5); step() },
             increment: { row.weightKg = (row.weightKg ?? 0) + 2.5; step() }
         ) {
-            NumericField(value: $row.weightKg, unit: "kilograms", decimals: true, width: 50, onCommit: onCommit)
+            NumericField(
+                value: $row.weightKg, unit: "kilograms", decimals: true,
+                width: SetColumn.weightField, prominent: true, onCommit: onCommit
+            )
         }
     }
 
@@ -417,7 +562,8 @@ private struct SetRowView: View {
                     get: { row.reps.map(Double.init) },
                     set: { row.reps = $0.map { Int($0.rounded()) } }
                 ),
-                unit: "reps", decimals: false, width: 32, onCommit: onCommit
+                unit: "reps", decimals: false,
+                width: SetColumn.repsField, prominent: false, onCommit: onCommit
             )
         }
     }
@@ -441,10 +587,18 @@ private struct SetRowView: View {
         HStack(spacing: 0) {
             stepButton("minus", decrement)
             field()
-            if showsUnit, !typeSize.isAccessibilitySize {
+            if showsUnit {
                 Text(unit)
                     .onyxType(.micro)
                     .foregroundStyle(Color.onyx.textTertiary)
+                    // `fixedSize` before the track: at AX5 `kg` in an 18 pt box
+                    // wrapped to a `k` over a `g`, which is not a unit, it is a
+                    // decoration. The track only exists to hold the column
+                    // steady under its header, and at an accessibility size
+                    // there is no header to hold it under.
+                    .lineLimit(1)
+                    .fixedSize()
+                    .frame(width: typeSize.isAccessibilitySize ? nil : SetColumn.unit)
                     .accessibilityHidden(true)
             }
             stepButton("plus", increment)
@@ -457,11 +611,9 @@ private struct SetRowView: View {
             Image(systemName: symbol)
                 .onyxType(.caption).fontWeight(.bold)
                 .foregroundStyle(Color.onyx.textSecondary)
-                // 34 rather than 44: four of these, a badge, two fields and an
-                // effort chip share 358 pt, and adjacent targets in a control
-                // GROUP are the one place the HIG lets a 44 pt square breathe
-                // sideways. The full 44 is kept vertically.
-                .frame(width: 34, height: 44)
+                // See `SetColumn.step` for why 34 and not 44 — the full 44 is
+                // kept vertically.
+                .frame(width: SetColumn.step, height: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -469,24 +621,65 @@ private struct SetRowView: View {
         .accessibilityLabel(symbol == "plus" ? "Increase" : "Decrease")
     }
 
-    /// Effort, on the CR-10 ladder. A `Menu` rather than a hand-built picker: it
-    /// is chosen far less often than the load, and the system's own menu is
-    /// already interruptible, accessible and familiar.
+    /// Effort, in WORDS.
+    ///
+    /// ── WHY THE NUMBER IS NO LONGER THE CONTROL ─────────────────────────────
+    /// It was nine menu entries reading `10`, `9.5`, `9`, `8.5` … down to `6`.
+    /// A number on a ten-point scale means nothing to anyone who has not
+    /// memorised the scale, and the question being asked — how close to failure
+    /// was that — has an answer everyone can give in words and almost nobody can
+    /// give in decimals. `RPE_LADDER` in the web app answered it eight ways and
+    /// this is the same eight, the same stored values, so a set rated here and a
+    /// set rated there are the same row: see `RpeLadder`.
+    ///
+    /// The reps-in-reserve gloss rides along as each entry's subtitle, because
+    /// "2 left" is the thing you can actually count.
+    ///
+    /// A `Menu` rather than a hand-built picker: effort is chosen far less often
+    /// than the load, and the system's own menu is already interruptible,
+    /// accessible and familiar. The stored value is untouched — a row holding a
+    /// legacy 7 still renders through `RpeLadder.label`'s CR-10 fallback rather
+    /// than as a dash.
     private var rpe: some View {
         Menu {
-            Button("Not rated") { row.rpe = nil; stepTicks += 1; onCommit() }
-            ForEach(Array(stride(from: 10.0, through: 6.0, by: -0.5)), id: \.self) { value in
-                Button(OnyxFormat.rpe(value)) { row.rpe = value; stepTicks += 1; onCommit() }
+            // Hardest first: the ladder's top is where a working set lands, and
+            // a menu you have to run to the bottom of to say "Failure" is a menu
+            // that costs more the harder the set was.
+            ForEach(RpeLadder.stops.reversed()) { stop in
+                Button {
+                    row.rpe = stop.value
+                    stepTicks += 1
+                    onCommit()
+                } label: {
+                    Text(stop.label)
+                    Text(stop.hint)
+                }
             }
+            Divider()
+            Button("Not rated", role: .destructive) { row.rpe = nil; stepTicks += 1; onCommit() }
         } label: {
-            Text(row.rpe.map(OnyxFormat.rpe) ?? "RPE")
-                .onyxType(.caption).fontWeight(.bold).onyxNumeral()
+            Text(RpeLadder.label(row.rpe) ?? "Effort")
+                .onyxType(.caption).fontWeight(.bold)
                 .foregroundStyle(row.rpe.map(Color.onyx.effort) ?? Color.onyx.textTertiary)
-                .frame(minWidth: 44, minHeight: 44)
+                // One line, always. "Max Effort" is the longest rung and the
+                // column is sized for it; a rating that wraps takes the row's
+                // height with it, and forty of those is a card you scroll past
+                // the set you are standing in front of.
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
+                // A fixed track only where there is a header over it to line up
+                // with. On the stacked accessibility row there are no columns,
+                // so the word takes the width it needs.
+                .frame(
+                    width: typeSize.isAccessibilitySize ? nil : SetColumn.effort,
+                    alignment: typeSize.isAccessibilitySize ? .leading : .trailing
+                )
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }
         .accessibilityLabel("Effort")
-        .accessibilityValue(row.rpe.map { "RPE \(OnyxFormat.rpe($0))" } ?? "Not rated")
+        .accessibilityValue(RpeLadder.readout(row.rpe) ?? "Not rated")
     }
 
     /// A record, stated in gold and nowhere else.
@@ -600,6 +793,13 @@ private struct SetRowView: View {
     }
 
     private func log() {
+        // The badge used to be a `Button` and carried `.disabled(!canLog &&
+        // !row.isDone)`. It is not one any more — a disabled view takes no
+        // gestures at all, which would have taken the HOLD with it, and setting
+        // a set to be a warm-up before you perform it is exactly the moment you
+        // want the options. So the refusal moved here, where it only stops the
+        // tap: no event, and no haptic claiming one was written.
+        guard canLog || row.isDone else { return }
         let wasRecord = row.isRecord
         let became = onLog()
         commitTicks += 1
@@ -612,15 +812,6 @@ private struct SetRowView: View {
         }
     }
 
-    private static func name(_ kind: LoggerModel.SetKind) -> String {
-        switch kind {
-        case .normal:  "Working set"
-        case .warmup:  "Warm-up"
-        case .failure: "To failure"
-        case .dropset: "Drop set"
-        case .ghost:   "Skipped"
-        }
-    }
 }
 
 // MARK: - Numeric entry
@@ -644,6 +835,12 @@ private struct NumericField: View {
     let unit: String
     let decimals: Bool
     let width: CGFloat
+    /// The load is the number you decide; the rep count is the number you
+    /// achieve. Same size, different weight — enough that a glance at a row
+    /// lands on the load first, and not so much that the reps read as a caption
+    /// on it. With the column headers above them, that is all the distinction
+    /// this needs: it used to be no distinction at all.
+    let prominent: Bool
     let onCommit: () -> Void
 
     @State private var text: String = ""
@@ -653,7 +850,7 @@ private struct NumericField: View {
         TextField("—", text: $text)
             .keyboardType(decimals ? .decimalPad : .numberPad)
             .multilineTextAlignment(.center)
-            .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+            .onyxType(.body).fontWeight(prominent ? .semibold : .regular).onyxNumeral()
             .foregroundStyle(value == nil ? Color.onyx.textTertiary : Color.onyx.textPrimary)
             .frame(minWidth: width)
             .fixedSize(horizontal: true, vertical: false)

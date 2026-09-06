@@ -11,8 +11,9 @@ import GRDB
 ///
 ///   · `workout_sets` — ours says `set_index`, Postgres says **`set_number`**.
 ///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL),
-///     `exercise_order`, `is_pr` and `quality`, none of which are here.
-///     (`rpe` WAS in that list; `v7.setRpe` added it locally.) Its
+///     `exercise_order` and `is_pr`, neither of which is here. (`rpe` WAS in
+///     that list; `v7.setRpe` added it. `quality` was too; `v14.setQuality`
+///     added it — locally only, see `SyncTranslation.RemoteSetRow`.) Its
 ///     `exercise_id` is a uuid with a live foreign key; ours is a slug.
 ///   · `workout_sessions` — our `date` column **does not exist** server-side
 ///     (there is `started_at` and `day_key`). Postgres requires `split_day`
@@ -182,6 +183,14 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// CR-10, half-point steps. `nil` is UNRATED, never "easy" — see the same
     /// note on `SetSnapshot.rpe`.
     public var rpe: Double?
+    /// HOW the set went, as opposed to how hard: one of the six keys the
+    /// Postgres CHECK holds (`momentum`, `partial_rom`, `form_breakdown`,
+    /// `needed_warmup`, `assisted`, `cut_short`). `nil` is "the question was
+    /// never asked", which is what every set logged before this column meant —
+    /// storing a default would make 2,190 historical rows assert a cleanliness
+    /// nobody claimed. Added locally in `v14`; Postgres has carried it all
+    /// along. See `SetQuality` in the app target for the vocabulary.
+    public var quality: String?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -200,6 +209,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case rpe
+        case quality
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -208,7 +218,8 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         id: String, sessionId: String, exerciseId: String, setIndex: Int,
         weightKg: Double, reps: Int, setType: String = "normal",
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
-        rpe: Double? = nil, isPendingSync: Bool = false, foldOrder: Int = 0
+        rpe: Double? = nil, quality: String? = nil,
+        isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -221,6 +232,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.pairId = pairId
         self.est1rmKg = est1rmKg
         self.rpe = rpe
+        self.quality = quality
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

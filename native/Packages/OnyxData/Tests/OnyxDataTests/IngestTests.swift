@@ -122,6 +122,52 @@ struct IngestTests {
         #expect(report.declined.contains { $0.contains("water") })
     }
 
+    @Test("a tapped glass ADDS to Apple's water instead of vetoing it")
+    func glassesAddRatherThanOverride() throws {
+        let db = try store()
+        // What the tab's water row does now: two taps, two glasses.
+        try db.addWaterGlass(userId: user, date: day, ml: 250)
+        try db.addWaterGlass(userId: user, date: day, ml: 250)
+        #expect(try dailyLog(db)?.waterMl == 500)
+
+        let report = try db.ingest(payload([.water: 1100, .steps: 100]), userId: user)
+
+        // The whole of the bug: this used to read nil forever after the first
+        // tap, because a glass wrote the manual sentinel and the ingest then
+        // declined the day in BOTH stores without saying so anywhere on screen.
+        #expect(try dailyLog(db)?.waterMl == 1600)
+        #expect(!report.declined.contains { $0.contains("water") })
+
+        // The ledger keeps the two sources apart — Apple's row is the one with
+        // no `hk_uuid`, so a re-sync corrects it without touching the glasses —
+        // and the score, which sums the ledger, sees the same 1,600.
+        let rows = try db.writer.read { conn in try WaterIntakeRow.fetchAll(conn) }
+        #expect(rows.count == 3)
+        #expect(rows.filter { ManualEntry.isGlass($0.hkUuid) }.count == 2)
+        #expect(rows.reduce(0) { $0 + $1.amountMl } == 1600)
+
+        // A second sync corrects Apple's row alone; the glasses are not doubled.
+        try db.ingest(payload([.water: 1500]), userId: user)
+        #expect(try dailyLog(db)?.waterMl == 2000)
+    }
+
+    @Test("the sheet's override still wins, glasses included")
+    func overrideStillReplacesTheDay() throws {
+        let db = try store()
+        try db.addWaterGlass(userId: user, date: day, ml: 250)
+        // The sheet says "the day was this much" and means it: one row, the
+        // manual sentinel, and Apple locked out from here on. That verb still
+        // works — it is the TAP that had no business borrowing it.
+        try db.setWaterOverride(userId: user, date: day, ml: 3200)
+
+        let report = try db.ingest(payload([.water: 1100]), userId: user)
+
+        #expect(try dailyLog(db)?.waterMl == 3200)
+        #expect(report.declined.contains { $0.contains("water") })
+        let rows = try db.writer.read { conn in try WaterIntakeRow.fetchAll(conn) }
+        #expect(rows.count == 1)
+    }
+
     @Test("re-syncing water reuses the day's row instead of stacking another")
     func waterIsNotDoubled() throws {
         let db = try store()

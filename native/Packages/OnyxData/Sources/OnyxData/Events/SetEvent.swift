@@ -170,6 +170,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case rpe
+        case quality
     }
 
     public var exerciseId: String
@@ -196,6 +197,18 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     /// Postgres has carried `workout_sets.rpe` all along; the local store did
     /// not, which is why it is added in `v7` rather than in `v1`.
     public var rpe: Double?
+    /// How the set WENT — one of the six keys in `SetQuality`, or nil.
+    ///
+    /// A second axis, not a sixth `setType`. "Warm-up" and "form broke" are
+    /// both true of the same set, so they cannot share a control — and folding
+    /// technique into `set_type` would give every consumer of "is this a working
+    /// set" an opinion about form, which none of them should have. It changes no
+    /// arithmetic anywhere: a momentum-assisted set still counts its tonnage,
+    /// because it happened.
+    ///
+    /// Same story as `rpe`: Postgres has held the column all along, the local
+    /// store gains it in `v14`.
+    public var quality: String?
 
     public init(
         exerciseId: String,
@@ -206,7 +219,8 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         side: String? = nil,
         pairId: String? = nil,
         est1rmKg: Double? = nil,
-        rpe: Double? = nil
+        rpe: Double? = nil,
+        quality: String? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -217,6 +231,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.pairId = pairId
         self.est1rmKg = est1rmKg
         self.rpe = rpe
+        self.quality = quality
     }
 }
 
@@ -243,6 +258,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case rpe
+        case quality
     }
 
     public var setIndex: Int?
@@ -257,6 +273,25 @@ public struct SetPatch: Codable, Sendable, Equatable {
     /// type, for the same reason `side` is: void and re-append is the honest
     /// way to say "that never happened".
     public var rpe: Double?
+    /// The technique note, or `SetPatch.clearedQuality` to take it back off.
+    ///
+    /// ── THE ONE FIELD HERE THAT CAN BE CLEARED, AND WHY ─────────────────────
+    /// Every other field in this type reads `nil` as UNCHANGED and has no way
+    /// to say "back to null" — which is right for `side` and `pairId`, where
+    /// clearing means two rows becoming one and belongs in a void-and-append.
+    /// Quality is not like that. Tapping the chosen chip withdraws it, exactly
+    /// as tapping the lit RPE pip does, and a claim about your form that you
+    /// cannot take back is a claim you stop making at all.
+    ///
+    /// So the empty string is the sentinel for "cleared". A sentinel rather
+    /// than a `String??`, because a double optional does not survive
+    /// `encodeIfPresent` round-tripping in a way anyone reading this file later
+    /// would trust, and "" is not a legal quality — the database's CHECK holds
+    /// six keys and none of them is empty.
+    public var quality: String?
+
+    /// Pass as `quality` to take an existing note off a set.
+    public static let clearedQuality = ""
 
     public init(
         setIndex: Int? = nil,
@@ -266,7 +301,8 @@ public struct SetPatch: Codable, Sendable, Equatable {
         side: String? = nil,
         pairId: String? = nil,
         est1rmKg: Double? = nil,
-        rpe: Double? = nil
+        rpe: Double? = nil,
+        quality: String? = nil
     ) {
         self.setIndex = setIndex
         self.weightKg = weightKg
@@ -276,6 +312,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         self.pairId = pairId
         self.est1rmKg = est1rmKg
         self.rpe = rpe
+        self.quality = quality
     }
 
     /// True when the patch would change nothing. Used to reject empty amends
@@ -283,6 +320,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
     public var isEmpty: Bool {
         setIndex == nil && weightKg == nil && reps == nil && setType == nil
             && side == nil && pairId == nil && est1rmKg == nil && rpe == nil
+            && quality == nil
     }
 
     /// Apply to a snapshot, leaving `nil` fields alone.
@@ -296,6 +334,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         if let pairId { next.pairId = pairId }
         if let est1rmKg { next.est1rmKg = est1rmKg }
         if let rpe { next.rpe = rpe }
+        if let quality { next.quality = quality == Self.clearedQuality ? nil : quality }
         return next
     }
 }

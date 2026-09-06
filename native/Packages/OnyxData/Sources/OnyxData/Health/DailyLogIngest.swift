@@ -67,9 +67,19 @@ public extension AppDatabase {
                 && Self.hasManualWater(db, userId: userId, date: date)
             if manualWater { report.declined.append("water — manual override present") }
 
+            // ── A GLASS IS NOT AN OVERRIDE ──────────────────────────────────
+            // Glasses tapped on the Nutrition tab live in the same ledger under
+            // their own prefix, and they ADD to whatever Apple reports rather
+            // than replacing it — see `ManualEntry.glassSentinel` for the
+            // one-way door that made them a replacement, and what that cost.
+            // `writeWater` owns the row holding HealthKit's own total, so the
+            // two never collide in `water_intake`; the flat row has to carry
+            // their SUM, because it is the one figure every surface renders.
+            let glassesMl = manualWater ? 0 : try Self.glassTotal(db, userId: userId, date: date)
+
             try Self.writeDailyLog(
                 db, payload: payload, userId: userId, weight: weight,
-                manualWater: manualWater, now: now, report: &report
+                manualWater: manualWater, glassesMl: glassesMl, now: now, report: &report
             )
             try Self.writeDailyMetrics(db, payload: payload, userId: userId, now: now, report: &report)
             try Self.writeNutrition(db, payload: payload, userId: userId, now: now, report: &report)
@@ -100,7 +110,7 @@ extension AppDatabase {
     /// reading it knows nothing about.
     static func writeDailyLog(
         _ db: Database, payload: HealthPayload, userId: String, weight: Double?,
-        manualWater: Bool, now: Date, report: inout IngestReport
+        manualWater: Bool, glassesMl: Double = 0, now: Date, report: inout IngestReport
     ) throws {
         var row = try existingDailyLog(db, userId: userId, date: payload.date, now: now)
         var touched = false
@@ -117,7 +127,12 @@ extension AppDatabase {
 
         setInt(\.steps, payload[.steps])
         set(\.distanceM, payload[.distanceM])
-        if !manualWater { set(\.waterMl, payload[.water]) }
+        // Apple's total PLUS the glasses tapped on the tab. Adding them here
+        // and not in `writeWater` is deliberate: the ledger keeps the two
+        // sources as separate rows (which is what lets either be corrected on
+        // its own), and only the flat row — the one every surface renders —
+        // holds the sum.
+        if !manualWater { set(\.waterMl, payload[.water].map { $0 + glassesMl }) }
         set(\.carbsG, payload[.carbs])
         set(\.proteinG, payload[.protein])
         set(\.fatsG, payload[.fats])
@@ -413,5 +428,14 @@ private extension AppDatabase {
             .filter(Column("user_id") == userId && Column("date") == date)
             .fetchAll(db)
             .contains { ManualEntry.isManualWater($0.hkUuid) }
+    }
+
+    /// What the glasses tapped on the tab add up to on this day.
+    static func glassTotal(_ db: Database, userId: String, date: String) throws -> Double {
+        try WaterIntakeRow
+            .filter(Column("user_id") == userId && Column("date") == date)
+            .fetchAll(db)
+            .filter { ManualEntry.isGlass($0.hkUuid) }
+            .reduce(0) { $0 + $1.amountMl }
     }
 }

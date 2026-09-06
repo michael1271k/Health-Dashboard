@@ -464,7 +464,17 @@ public struct DepthArc: View {
       // the bowl beneath it. Height is 0.72 of that square because nothing is
       // ever drawn in the bottom quarter, and reserving it is how a gauge ends up
       // with an inch of nothing under it.
-      let d = min(geo.size.width, geo.size.height / 0.72)
+      //
+      // ── THE STROKE IS NOT INSIDE THE CIRCLE ─────────────────────────────
+      // A `lineWidth` stroke is centred ON the path, so the two ends of the
+      // semicircle — which sit exactly on the horizontal diameter, at x = 0 and
+      // x = d — put half a line width of ink OUTSIDE the square either side.
+      // Sizing the square to the full available width therefore clipped the
+      // first stage's cap against the leading edge and pushed the last one into
+      // whatever sat to the right of the gauge. Reserving the line width is what
+      // makes the drawn gauge, rather than its construction circle, the thing
+      // that is centred in the space it was given.
+      let d = min(max(0, geo.size.width - lineWidth), geo.size.height / 0.72)
       ZStack {
         Circle()
           .trim(from: 0, to: 0.5)

@@ -560,10 +560,22 @@ struct SleepDepthFace: View {
       // The corner belongs to the mark; this row's content runs to the edge.
       .padding(.trailing, OnyxMark.faceInset)
 
-      HStack(spacing: 12) {
+      // ── THE GAUGE NEEDS ROOM ON BOTH SIDES OF ITSELF ────────────────────
+      // At 108 pt the arc was the full width of its column, so its first cap
+      // sat on the tile's leading edge and its last one ran into the stage
+      // rows. `DepthArc` now reserves its own line width, and the four rows
+      // give back the fourteen points that buys: the name, minutes and share
+      // columns were each sized for a longer string than any of them holds
+      // ("AWAKE", "251m", "57%"), and the rail — the only elastic thing in the
+      // row — was paying for all three.
+      HStack(spacing: 10) {
         DepthArc(segments: segments, minutes: s?.sleep.minutes,
                  goalMin: s?.sleep.goalMin, lineWidth: 10, monochrome: mono)
-          .frame(width: 108)
+          .frame(width: 120)
+          // The caption above ends where the arc begins, and a gauge that
+          // starts on the same line as the text over it reads as cramped
+          // rather than as the tile's subject.
+          .padding(.top, 4)
 
         VStack(spacing: 5) {
           ForEach(OnyxSleepStage.allCases, id: \.self) { stage in
@@ -587,23 +599,32 @@ private struct StageRow: View {
   let mono: Bool
 
   var body: some View {
-    HStack(spacing: 6) {
+    // Each fixed column is sized to the longest string it can actually hold —
+    // "AWAKE", "251m", "57%" — rather than to a round number. The fourteen
+    // points that frees go to the gauge beside it, which had none.
+    HStack(spacing: 5) {
       Circle()
         .fill(mono ? Color.white : stage.color)
         .frame(width: 6, height: 6)
       Text(stage.label)
         .font(OnyxWidgetType.face(9, weight: .bold))
         .foregroundStyle(Color.onyx.textSecondary)
-        .frame(width: 40, alignment: .leading)
+        // 38, which is what "AWAKE" measures — and then pinned to one line
+        // anyway. A stage name that wraps takes the row's height with it and
+        // pushes the fourth row out of the tile, which is a worse failure than
+        // the two points it was saving.
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
+        .frame(width: 38, alignment: .leading)
       Rail(progress: share, color: mono ? .white : stage.color, height: 4)
       Text(minutes.map { "\($0)m" } ?? "—")
         .font(OnyxWidgetType.face(10, weight: .semibold, design: .monospaced))
         .foregroundStyle(.white)
-        .frame(width: 34, alignment: .trailing)
+        .frame(width: 30, alignment: .trailing)
       Text(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "")
         .font(OnyxWidgetType.face(9))
         .foregroundStyle(Color.onyx.textSecondary)
-        .frame(width: 26, alignment: .trailing)
+        .frame(width: 22, alignment: .trailing)
     }
   }
 
