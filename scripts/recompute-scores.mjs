@@ -59,6 +59,10 @@ const env = Object.fromEntries(
 )
 
 const DRY = flag('dry-run')
+if (!DRY && process.env.HELIX_APPLY !== '1') {
+  console.error('pass --dry-run, or set HELIX_APPLY=1 to write')
+  process.exit(1)
+}
 // Bare dates only — a date that is the VALUE of --from / --to is a range bound,
 // not a request for that one day (the original filtered every date-shaped
 // argument, so `--from X --to Y` recomputed exactly X and Y).
