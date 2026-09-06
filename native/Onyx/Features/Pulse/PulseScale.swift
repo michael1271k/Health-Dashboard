@@ -72,24 +72,65 @@ struct ScaleRow: View {
 
 /// The eleven numbers the scale reports, and the five masses derived from them.
 ///
+/// ── WHAT W11 CHANGED, AND WHY ───────────────────────────────────────────────
+/// It was one flat section of eleven `LabeledContent` rows, followed by five
+/// more for the derived masses — 484 pt of form for a reading taken twice a
+/// week, most of it whitespace between a two-word label on the left and a
+/// four-character number on the right, and no signal at all that "Muscle" and
+/// "Skeletal muscle" are two different measurements of the same thing.
+///
+/// The scale reports the eleven in three groups that belong together, so the
+/// form does too: what you weigh, what is muscle, what is water and mineral.
+/// Three fields fit across a phone at the shipping type size and the grid
+/// collapses to one column at the accessibility sizes (`OnyxFieldCell`).
+///
+/// ── THE THREE RULES THAT DID NOT CHANGE ─────────────────────────────────────
 /// Derived masses are SHOWN, never entered — weight × % is the one place the
-/// app does arithmetic on a body, and it does it here in front of the user. The
-/// previous reading is offered as context beside each empty field and filled
-/// into the edit buffer on request; nothing is written until Save.
+/// app does arithmetic on a body, and it does it in front of the user. Blank
+/// stays blank: a reading the scale did not give is not zero. And nothing is
+/// written until Save.
+///
+/// The derived five are now behind a disclosure, closed: they are an ANSWER,
+/// and an answer that occupies a third of the form you are still filling in is
+/// five rows of em dashes for as long as it takes to type the first percentage.
 struct InBodyEntryView: View {
     let model: DayModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft: [Field: Double] = [:]
     @State private var last: DailyLogRow?
+    @State private var showDerived = false
     @FocusState private var focus: Field?
+
+    /// Three fields across a 393 pt phone, one at AX5. `@ScaledMetric` is what
+    /// makes the second half true without a type-size breakpoint: the minimum
+    /// grows with the text and `adaptive` fits what it can.
+    @ScaledMetric(relativeTo: .body) private var cellMin: CGFloat = 104
 
     enum Field: Hashable, CaseIterable {
         case weight, bmi, bodyFat, muscle, water, protein, bone, visceral, bmr, skeletal, whr
     }
 
+    /// What the scale is measuring. The names are the plan's (§W11: "Weight &
+    /// Fat · Muscle · Water"); every field it reports lands under the one it
+    /// belongs to, and the odds and ends — the metabolic rate, the ratio — sit
+    /// with water rather than in a fourth group of two.
+    private enum FieldGroup: String, CaseIterable, Identifiable {
+        case weightFat, muscle, water
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .weightFat: "Weight & fat"
+            case .muscle:    "Muscle"
+            case .water:     "Water & the rest"
+            }
+        }
+    }
+
     private struct Spec {
         let field: Field
+        let group: FieldGroup
         let label: String
         let unit: String?
         let fraction: Int
@@ -98,18 +139,20 @@ struct InBodyEntryView: View {
     }
 
     private static let specs: [Spec] = [
-        Spec(field: .weight, label: "Weight", unit: "kg", fraction: 1, range: 0...300, key: \.weightKg),
-        Spec(field: .bmi, label: "BMI", unit: nil, fraction: 1, range: 0...80, key: \.bmi),
-        Spec(field: .bodyFat, label: "Body fat", unit: "%", fraction: 1, range: 0...70, key: \.bodyFatPct),
-        Spec(field: .muscle, label: "Muscle", unit: "%", fraction: 1, range: 0...100, key: \.musclePercent),
-        Spec(field: .water, label: "Water", unit: "%", fraction: 1, range: 0...100, key: \.waterPercent),
-        Spec(field: .protein, label: "Protein", unit: "%", fraction: 1, range: 0...50, key: \.proteinPercent),
-        Spec(field: .bone, label: "Bone mineral", unit: "%", fraction: 2, range: 0...20, key: \.boneMineral),
-        Spec(field: .visceral, label: "Visceral fat", unit: "level", fraction: 0, range: 0...60, key: \.visceralFat),
-        Spec(field: .bmr, label: "BMR", unit: "kcal", fraction: 0, range: 0...5000, key: \.bmr),
-        Spec(field: .skeletal, label: "Skeletal muscle", unit: "kg", fraction: 1, range: 0...100, key: \.skeletalMuscleMassKg),
-        Spec(field: .whr, label: "W:H ratio", unit: nil, fraction: 2, range: 0...2, key: \.estimatedWaistToHipRatio),
+        Spec(field: .weight, group: .weightFat, label: "Weight", unit: "kg", fraction: 1, range: 0...300, key: \.weightKg),
+        Spec(field: .bodyFat, group: .weightFat, label: "Body fat", unit: "%", fraction: 1, range: 0...70, key: \.bodyFatPct),
+        Spec(field: .bmi, group: .weightFat, label: "BMI", unit: nil, fraction: 1, range: 0...80, key: \.bmi),
+        Spec(field: .visceral, group: .weightFat, label: "Visceral fat", unit: nil, fraction: 0, range: 0...60, key: \.visceralFat),
+        Spec(field: .muscle, group: .muscle, label: "Muscle", unit: "%", fraction: 1, range: 0...100, key: \.musclePercent),
+        Spec(field: .skeletal, group: .muscle, label: "Skeletal muscle", unit: "kg", fraction: 1, range: 0...100, key: \.skeletalMuscleMassKg),
+        Spec(field: .protein, group: .muscle, label: "Protein", unit: "%", fraction: 1, range: 0...50, key: \.proteinPercent),
+        Spec(field: .water, group: .water, label: "Water", unit: "%", fraction: 1, range: 0...100, key: \.waterPercent),
+        Spec(field: .bone, group: .water, label: "Bone mineral", unit: "%", fraction: 2, range: 0...20, key: \.boneMineral),
+        Spec(field: .bmr, group: .water, label: "BMR", unit: "kcal", fraction: 0, range: 0...5000, key: \.bmr),
+        Spec(field: .whr, group: .water, label: "W:H ratio", unit: nil, fraction: 2, range: 0...2, key: \.estimatedWaistToHipRatio),
     ]
+
+    private static func specs(in group: FieldGroup) -> [Spec] { specs.filter { $0.group == group } }
 
     private func stored(_ spec: Spec) -> Double? { model.log?[keyPath: spec.key] }
 
@@ -132,55 +175,130 @@ struct InBodyEntryView: View {
     }
 
     var body: some View {
-        DaySheet("InBody reading", domain: .body, glass: false, primary: ("Save", !edits.isEmpty, save)) {
+        // `.large` alone: eleven fields in three groups and a disclosure do
+        // not fit a medium detent, and a form that opens half-height is a form
+        // whose first act is a drag.
+        DaySheet("InBody reading", domain: .body, glass: false, detents: [.large],
+                 primary: ("Save", !edits.isEmpty, save)) {
             Form {
-                if !fillable.isEmpty, let lastDate = last?.date {
+                fillSection
+                ForEach(FieldGroup.allCases) { group in
                     Section {
-                        Button {
-                            for spec in fillable { draft[spec.field] = last?[keyPath: spec.key] }
-                        } label: {
-                            Label(
-                                "Fill \(fillable.count) empty \(fillable.count == 1 ? "field" : "fields") from \(Swap.shortDayLabel(lastDate))",
-                                systemImage: "clock.arrow.circlepath"
-                            )
-                        }
-                        .accessibilityHint("Fills the form only. Nothing is saved until you press Save.")
+                        grid(group)
+                    } header: {
+                        OnyxSectionHeader(group.title, .body)
                     }
                 }
-
                 Section {
-                    ForEach(Self.specs, id: \.field) { spec in
-                        OnyxNumberRow(
-                            label: carried(spec).map { "\(spec.label) · last \(DayFormat.number($0, fraction: spec.fraction))" } ?? spec.label,
-                            value: Binding(get: { draft[spec.field] }, set: { draft[spec.field] = $0 }),
-                            field: spec.field, focus: $focus,
-                            unit: spec.unit, range: spec.range, fractionLength: spec.fraction
-                        )
-                    }
-                } header: {
-                    OnyxSectionHeader("From the scale", .body)
-                } footer: {
                     Text("Blank stays blank — a reading the scale did not give is not zero. Skeletal muscle and the W:H ratio are the scale's own figures; neither can be derived.")
+                        .onyxType(.caption)
+                        .foregroundStyle(Color.onyx.textSecondary)
                 }
-
-                Section {
-                    derivedRow("Lean soft tissue", derived.muscleMassKg)
-                    derivedRow("Fat mass", derived.fatMassKg)
-                    derivedRow("Water mass", derived.waterMassKg)
-                    derivedRow("Protein mass", derived.proteinMassKg)
-                    derivedRow("Fat-free mass", derived.fatFreeMassKg)
-                } header: {
-                    OnyxSectionHeader("Composition", .body)
-                } footer: {
-                    Text("Weight × percentage, computed as you type and saved with the reading. Lean soft tissue is not skeletal muscle.")
-                }
+                derivedSection
             }
             .toolbar { OnyxKeyboardDone { focus = nil } }
         }
         .onAppear {
             for spec in Self.specs { draft[spec.field] = stored(spec) }
+            // `try?` on purpose: a day with no earlier reading — the first
+            // weigh-in ever, or a store that has not finished pulling — is not
+            // an error, it is a form with nothing to offer. Everything below
+            // reads `last` as an optional and draws the plain form when it is
+            // nil, which is why "Fill from last time" can be disabled rather
+            // than dangerous.
             last = try? model.latestBodyReading()
         }
+    }
+
+    // MARK: The fields
+
+    private func grid(_ group: FieldGroup) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: cellMin), spacing: OnyxSpace.m, alignment: .leading)],
+            alignment: .leading,
+            spacing: OnyxSpace.s
+        ) {
+            ForEach(Self.specs(in: group), id: \.field) { spec in
+                OnyxFieldCell(
+                    label: spec.label,
+                    hint: carried(spec).map { "last \(DayFormat.number($0, fraction: spec.fraction))" },
+                    value: Binding(get: { draft[spec.field] }, set: { draft[spec.field] = $0 }),
+                    field: spec.field, focus: $focus,
+                    unit: spec.unit, range: spec.range, fractionLength: spec.fraction
+                )
+            }
+        }
+        .padding(.vertical, OnyxSpace.xs)
+    }
+
+    // MARK: Fill from last time
+
+    /// One button, always present once there is a form to fill.
+    ///
+    /// Disabled rather than hidden when there is nothing to fill: a control
+    /// that appears and disappears with the store is a control the user cannot
+    /// learn, and the two cases it is absent for — no earlier reading at all,
+    /// and every field already typed — are worth stating rather than
+    /// disappearing. `last` is optional the whole way down, so the nil case is
+    /// a disabled button and a sentence, never a crash.
+    @ViewBuilder
+    private var fillSection: some View {
+        Section {
+            Button {
+                for spec in fillable { draft[spec.field] = last?[keyPath: spec.key] }
+            } label: {
+                Label("Fill from last time", systemImage: "clock.arrow.circlepath")
+            }
+            .disabled(fillable.isEmpty)
+            .accessibilityHint("Fills the empty fields only. Nothing is saved until you press Save.")
+        } footer: {
+            Text(fillFooter)
+        }
+    }
+
+    private var fillFooter: String {
+        guard let lastDate = last?.date else {
+            return "No earlier reading on this device yet — the first weigh-in has nothing to copy from."
+        }
+        if fillable.isEmpty {
+            return "Every field already has a value. The last reading was \(Swap.shortDayLabel(lastDate))."
+        }
+        return "Copies \(fillable.count) empty \(fillable.count == 1 ? "field" : "fields") from \(Swap.shortDayLabel(lastDate)). Nothing is saved until you press Save."
+    }
+
+    // MARK: The derived five
+
+    private var derivedSection: some View {
+        Section {
+            DisclosureGroup(isExpanded: $showDerived) {
+                derivedRow("Lean soft tissue", derived.muscleMassKg)
+                derivedRow("Fat mass", derived.fatMassKg)
+                derivedRow("Water mass", derived.waterMassKg)
+                derivedRow("Protein mass", derived.proteinMassKg)
+                derivedRow("Fat-free mass", derived.fatFreeMassKg)
+            } label: {
+                HStack(spacing: OnyxSpace.s) {
+                    Text("Composition")
+                    Spacer(minLength: OnyxSpace.s)
+                    Text(derivedSummary)
+                        .onyxType(.caption).onyxNumeral()
+                        .foregroundStyle(Color.onyx.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+        } footer: {
+            Text("Weight × percentage, computed as you type and saved with the reading. Lean soft tissue is not skeletal muscle.")
+        }
+    }
+
+    /// What the closed disclosure says. The count, not a figure: five masses do
+    /// not have one headline between them, and "50.3 kg" beside the word
+    /// "Composition" would read as the whole answer.
+    private var derivedSummary: String {
+        let masses = derived
+        let have = [masses.muscleMassKg, masses.fatMassKg, masses.waterMassKg, masses.proteinMassKg, masses.fatFreeMassKg]
+            .compactMap { $0 }.count
+        return have == 0 ? "—" : "\(have) of 5"
     }
 
     private func derivedRow(_ label: String, _ value: Double?) -> some View {

@@ -103,7 +103,16 @@ struct OnyxSectionHeader: View {
 /// and on a `Form` that means tapping a control you did not mean to touch. The
 /// screen therefore owns one focus value for all its fields, which also gives it
 /// the one moment a commit should happen: the field losing it.
-struct OnyxNumberRow<Field: Hashable>: View {
+/// The editable figure itself — the parse, the clamp and the commit, with no
+/// opinion about where the label goes.
+///
+/// Extracted from `OnyxNumberRow` in W11, when the InBody form stopped being
+/// eleven full-width rows and became three grids of cells. Everything below the
+/// layout is the part that is hard to get right — see the four notes on
+/// `OnyxNumberRow` — and a second copy of it in a cell would have been a second
+/// place for a typed half-kilo to go missing.
+struct OnyxNumberField<Field: Hashable>: View {
+    /// VoiceOver's name for the field. The visible label is the wrapper's.
     let label: String
     @Binding var value: Double?
     let field: Field
@@ -113,6 +122,20 @@ struct OnyxNumberRow<Field: Hashable>: View {
     /// with no code behind it is how the web version accepts a typed −5.
     var range: ClosedRange<Double> = 0...100_000
     var fractionLength: Int = 0
+    var alignment: TextAlignment = .trailing
+    /// An empty field is one em dash wide. A right-aligned field in a
+    /// `LabeledContent` is a ~10 pt target without this.
+    var width: CGFloat = 90
+    /// Take exactly `width` rather than at least it.
+    ///
+    /// ── WHY A CELL NEEDS THIS AND A ROW DOES NOT ────────────────────────────
+    /// A `TextField` is greedy: given slack in an `HStack` it takes all of it,
+    /// and a `Spacer` beside it collapses to nothing. In a `LabeledContent`
+    /// that is exactly right — the label is on the left and the field fills the
+    /// rest. In a grid cell it puts the unit against the far edge, six
+    /// characters away from the number it belongs to, reading as a column of
+    /// its own. A fixed width lets the unit sit where a suffix sits.
+    var fixedWidth = false
     /// Fired when this field loses focus AND its value actually changed.
     var onCommit: () -> Void = {}
 
@@ -124,33 +147,21 @@ struct OnyxNumberRow<Field: Hashable>: View {
     @State private var committed: Double??
 
     var body: some View {
-        LabeledContent {
-            HStack(spacing: 6) {
-                TextField("—", text: $text)
-                    .keyboardType(fractionLength > 0 ? .decimalPad : .numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .focused($focus, equals: field)
-                    .onyxNumeral()
-                    // An empty field is one em dash wide. Right-aligned in a
-                    // `LabeledContent` that is a ~10 pt target, and the row's
-                    // whitespace does not focus it.
-                    .frame(minWidth: 90, alignment: .trailing)
-                    .contentShape(.rect)
-                    .accessibilityLabel(unit == nil ? label : "\(label), \(unit!)")
-                    .accessibilityValue(value == nil ? "Not set" : text)
-                    .onChange(of: text) { _, new in value = Self.parse(new) }
+        HStack(spacing: 6) {
+            field(sized: fixedWidth)
 
-                if let unit {
-                    Text(unit)
-                        .foregroundStyle(Color.onyx.textTertiary)
-                        // The unit is decoration beside a value VoiceOver
-                        // already reads with its label; announcing "kilograms"
-                        // twice is worse than not announcing it.
-                        .accessibilityHidden(true)
-                }
+            if let unit {
+                Text(unit)
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    // The unit is decoration beside a value VoiceOver already
+                    // reads with its label; announcing "kilograms" twice is
+                    // worse than not announcing it.
+                    .accessibilityHidden(true)
             }
-        } label: {
-            Text(label)
+            // The cell stretches this stack so the underline spans it; the
+            // field itself is fixed, so the slack lands here rather than
+            // between the number and its unit.
+            if fixedWidth { Spacer(minLength: 0) }
         }
         .onAppear {
             text = Self.format(value, fractionLength)
@@ -174,6 +185,24 @@ struct OnyxNumberRow<Field: Hashable>: View {
         }
     }
 
+    @ViewBuilder
+    private func field(sized fixed: Bool) -> some View {
+        let box = TextField("—", text: $text)
+            .keyboardType(fractionLength > 0 ? .decimalPad : .numberPad)
+            .multilineTextAlignment(alignment)
+            .focused($focus, equals: field)
+            .onyxNumeral()
+            .contentShape(.rect)
+            .accessibilityLabel(unit == nil ? label : "\(label), \(unit!)")
+            .accessibilityValue(value == nil ? "Not set" : text)
+            .onChange(of: text) { _, new in value = Self.parse(new) }
+        if fixed {
+            box.frame(width: width, alignment: .leading)
+        } else {
+            box.frame(minWidth: width, alignment: alignment == .trailing ? .trailing : .leading)
+        }
+    }
+
     /// Empty is `nil`, and a comma is a decimal point. A decimal pad on a
     /// German or Hebrew keyboard emits `,` — `Double(",5")` is nil, so a typed
     /// half kilo would silently clear the field.
@@ -186,6 +215,112 @@ struct OnyxNumberRow<Field: Hashable>: View {
     private static func format(_ value: Double?, _ fractionLength: Int) -> String {
         guard let value else { return "" }
         return value.formatted(.number.precision(.fractionLength(0...fractionLength)).grouping(.never))
+    }
+}
+
+/// One editable figure, or none — label leading, field trailing.
+///
+/// ── EMPTY IS `nil`, AND `nil` IS NOT ZERO ───────────────────────────────────
+/// A blank body-fat target means "I have not set one", and the placeholder is an
+/// em dash to say so. Storing it as 0 would mean "my target is zero percent body
+/// fat", which every downstream gauge would then draw. This is the single most
+/// repeated rule in the codebase and it is enforced in `OnyxNumberField` rather
+/// than in each of the eleven callers.
+///
+/// ── AND WHY THE FOCUS STATE IS THE CALLER'S ─────────────────────────────────
+/// `.focused()` binds the field it is applied TO. A row that owned its own
+/// `@FocusState` would leave the screen unable to dismiss the keyboard — and a
+/// decimal pad has no return key, so "tap elsewhere" is the only other way out
+/// and on a `Form` that means tapping a control you did not mean to touch. The
+/// screen therefore owns one focus value for all its fields, which also gives it
+/// the one moment a commit should happen: the field losing it.
+struct OnyxNumberRow<Field: Hashable>: View {
+    let label: String
+    @Binding var value: Double?
+    let field: Field
+    @FocusState.Binding var focus: Field?
+    var unit: String?
+    var range: ClosedRange<Double> = 0...100_000
+    var fractionLength: Int = 0
+    var onCommit: () -> Void = {}
+
+    var body: some View {
+        LabeledContent {
+            OnyxNumberField(
+                label: label, value: $value, field: field, focus: $focus,
+                unit: unit, range: range, fractionLength: fractionLength, onCommit: onCommit
+            )
+        } label: {
+            Text(label)
+        }
+    }
+}
+
+/// The same figure as a GRID CELL: its name above it, and a hairline under it
+/// so a bare number still reads as something you can type in.
+///
+/// ── WHY A FORM GREW A GRID ──────────────────────────────────────────────────
+/// Eleven `LabeledContent` rows is 484 pt of form to enter a weigh-in, most of
+/// it the whitespace between a two-word label on the left and a four-character
+/// number on the right. The scale reports the eleven in three groups that
+/// belong together — what you weigh, what is muscle, what is water — and three
+/// fields fit across a phone at the shipping type size. §W11: two to three
+/// fields a row.
+///
+/// At the accessibility sizes the grid's own `adaptive` minimum grows with the
+/// type and the three columns become one, which is the same escape every other
+/// compaction in this app takes.
+struct OnyxFieldCell<Field: Hashable>: View {
+    let label: String
+    /// "last 65.1" — the previous reading, offered while this one is blank.
+    /// Nil once the field has a value of its own; a hint under a filled field
+    /// is a second number competing with the one you just typed.
+    var hint: String?
+    @Binding var value: Double?
+    let field: Field
+    @FocusState.Binding var focus: Field?
+    var unit: String?
+    var range: ClosedRange<Double> = 0...100_000
+    var fractionLength: Int = 0
+
+    /// Wide enough for "10000" at the shipping size, and it grows with the
+    /// type — a fixed 54 pt at AX5 is a five-digit BMR in a two-digit box.
+    @ScaledMetric(relativeTo: .body) private var fieldWidth: CGFloat = 54
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .onyxMicro()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            OnyxNumberField(
+                label: label, value: $value, field: field, focus: $focus,
+                unit: unit, range: range, fractionLength: fractionLength,
+                alignment: .leading, width: fieldWidth, fixedWidth: true
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 3)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(focus == field ? Color.onyx.accent(.body) : Color.onyx.hairline)
+                    .frame(height: focus == field ? 1.5 : 1)
+            }
+            // A reserved line, so a group where one field has history and the
+            // next does not still lays out as a grid.
+            Text(hint ?? " ")
+                .onyxType(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(Color.onyx.textTertiary)
+                .accessibilityHidden(hint == nil)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // An empty field is one em dash wide and the cell around it is 104.
+        // Tapping the label, the hint or the whitespace focuses the field —
+        // otherwise three quarters of a cell that looks like a control is not
+        // one.
+        .contentShape(.rect)
+        .onTapGesture { focus = field }
     }
 }
 

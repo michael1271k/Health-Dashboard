@@ -184,9 +184,36 @@ final class DayModel {
         var standHours: VitalBlock?
         var activeKcal: VitalBlock?
         var score: DailyScoreRow?
+        /// The day's FINISHED sessions, newest first. Here rather than on a
+        /// stream of its own because it moves for exactly the same reasons the
+        /// vitals do — the date changed, or the store did — and a tenth stream
+        /// would be a tenth thing to keep in step with the other nine.
+        var sessions: [WorkoutSummary] = []
         /// False until the first read lands, so the rows can say "—" honestly
         /// rather than draw a zero they have not read yet.
         var loaded = false
+    }
+
+    /// One finished session, as the day page needs it.
+    ///
+    /// ── WHY THERE IS NO PR COUNT ────────────────────────────────────────────
+    /// A PR is only knowable by replaying the WHOLE ledger in order — a record
+    /// beaten last month still belongs to the session that set it, and
+    /// `personal_records` is a current-best table that would say otherwise
+    /// (`SessionAnalysis.summaries`). That walk costs the entire history and
+    /// this card is a door: it names the session and hands the reader to
+    /// `SessionDetailView`, which does the replay properly and is where the
+    /// trophies are drawn. A count computed from one day's rows alone would be
+    /// every set in the session, which is worse than no count at all.
+    struct WorkoutSummary: Identifiable, Sendable, Hashable {
+        let id: String
+        let dayKey: String?
+        /// "Legs & Core A", or nil for a session logged without a day key.
+        let label: String?
+        /// Working sets, a unilateral pair counted once.
+        let sets: Int
+        let tonnageKg: Double
+        let durationMin: Double?
     }
 
     /// One detached read of `daily_logs` over the fortnight, plus the day's
@@ -235,6 +262,27 @@ final class DayModel {
             try DailyScoreRow.filter(Column("date") == to).fetchOne(db)
         }) ?? nil
 
+        // `sessionHistory()` is one query over a few hundred rows and is what
+        // every other history read in the app already uses; a per-date query
+        // would be a second spelling of "which sessions are on this day" to
+        // keep in step with `HistoryWeeks`. Unfinished sessions are excluded:
+        // an abandoned draft has no summary worth a card, and its ledger row
+        // is the logger's business.
+        let sessions = ((try? database.sessionHistory()) ?? [])
+            .filter { $0.date == to && $0.endedAt != nil }
+            .map { session -> WorkoutSummary in
+                let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
+                    .filter { SetTags.isWorkingSet($0.setType) }
+                return WorkoutSummary(
+                    id: session.id,
+                    dayKey: session.dayKey,
+                    label: SessionAnalysis.dayLabel(session.dayKey),
+                    sets: SessionDetail.toRows(rows.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
+                    tonnageKg: SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet)),
+                    durationMin: session.durationMin
+                )
+            }
+
         func block(_ pick: (DailyLogRow) -> Double?) -> VitalBlock {
             WidgetDerive.vitalBlock(
                 logs.map { DatedValue(date: $0.date, value: pick($0)) },
@@ -261,6 +309,7 @@ final class DayModel {
             standHours: block { $0.standHours.map(Double.init) },
             activeKcal: block { $0.activeEnergy },
             score: score,
+            sessions: sessions,
             loaded: true
         )
     }

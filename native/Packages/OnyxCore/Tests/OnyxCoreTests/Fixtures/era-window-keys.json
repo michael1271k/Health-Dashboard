@@ -1,0 +1,132 @@
+{
+  "module": "era/eraWindow",
+  "fn": "eraWindowFromKey",
+  "note": "A picker binds to the key, so a stored key that no longer names a mode must read as null rather than as the default — the caller decides the fallback.",
+  "cases": [
+    {
+      "name": "currentPhase",
+      "input": {
+        "key": "currentPhase"
+      },
+      "expected": {
+        "kind": "currentPhase"
+      }
+    },
+    {
+      "name": "currentLever",
+      "input": {
+        "key": "currentLever"
+      },
+      "expected": {
+        "kind": "currentLever"
+      }
+    },
+    {
+      "name": "sinceCutStart",
+      "input": {
+        "key": "sinceCutStart"
+      },
+      "expected": {
+        "kind": "sinceCutStart"
+      }
+    },
+    {
+      "name": "days:30",
+      "input": {
+        "key": "days:30"
+      },
+      "expected": {
+        "kind": "days",
+        "n": 30
+      }
+    },
+    {
+      "name": "days:90",
+      "input": {
+        "key": "days:90"
+      },
+      "expected": {
+        "kind": "days",
+        "n": 90
+      }
+    },
+    {
+      "name": "all",
+      "input": {
+        "key": "all"
+      },
+      "expected": {
+        "kind": "all"
+      }
+    },
+    {
+      "name": "days:1",
+      "input": {
+        "key": "days:1"
+      },
+      "expected": {
+        "kind": "days",
+        "n": 1
+      }
+    },
+    {
+      "name": "days:365",
+      "input": {
+        "key": "days:365"
+      },
+      "expected": {
+        "kind": "days",
+        "n": 365
+      }
+    },
+    {
+      "name": "days:0",
+      "input": {
+        "key": "days:0"
+      },
+      "expected": null
+    },
+    {
+      "name": "days:-3",
+      "input": {
+        "key": "days:-3"
+      },
+      "expected": null
+    },
+    {
+      "name": "days:x",
+      "input": {
+        "key": "days:x"
+      },
+      "expected": null
+    },
+    {
+      "name": "days:",
+      "input": {
+        "key": "days:"
+      },
+      "expected": null
+    },
+    {
+      "name": "currentphase",
+      "input": {
+        "key": "currentphase"
+      },
+      "expected": null
+    },
+    {
+      "name": "(empty)",
+      "input": {
+        "key": ""
+      },
+      "expected": null
+    },
+    {
+      "name": "nonsense",
+      "input": {
+        "key": "nonsense"
+      },
+      "expected": null
+    }
+  ]
+}

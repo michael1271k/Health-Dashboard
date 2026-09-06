@@ -32,9 +32,15 @@ enum PulsePreviews {
     }
 
     /// A full training day.
+    ///
+    /// `withSession` adds the workout that was actually performed, which is
+    /// what separates the `day` shot from `day-past`: the Workout summary card
+    /// only exists when the day HAS a finished session, and a shot of the
+    /// screen without one would never photograph it.
     @MainActor
-    static func fullDay() -> DayModel {
+    static func fullDay(withSession: Bool = false) -> DayModel {
         model { db in
+            if withSession { try seedSession(db) }
             // Nine nights ending on the date: 3.2 h of decayed debt.
             for (i, minutes) in [400, 420, 500, 430, 480, 510, 460, 440, 490].enumerated() {
                 let d = ISODate.addDays(date, -i) ?? date
@@ -114,6 +120,46 @@ enum PulsePreviews {
         }
     }
 
+    /// One finished Legs & Core A, on the seeded date.
+    ///
+    /// Written as raw rows rather than through the logger: the card reads
+    /// `workout_sessions` and `workout_sets` and nothing else, and a seed that
+    /// drove the whole logger would be photographing the logger.
+    private static func seedSession(_ db: AppDatabase) throws {
+        let lifts: [(name: String, kg: Double, reps: Int)] = [
+            ("Leg Press", 92, 10), ("Hack Squat", 60, 10), ("Leg Extension", 45, 12),
+            ("Seated Leg Curl", 45, 12), ("Calf Press", 67.5, 15),
+        ]
+        try db.seedRows { db in
+            let sessionId = newOnyxID()
+            let noon = LogicalDay.date(fromISO: date)!
+            try WorkoutSession(
+                id: sessionId, userId: userId, dayKey: "legs_a", date: date,
+                startedAt: noon.addingTimeInterval(-3 * 3600),
+                endedAt: noon.addingTimeInterval(-3 * 3600 + 68 * 60),
+                durationMin: 68, sessionRpe: 8
+            ).insert(db)
+            var index = 0
+            for lift in lifts {
+                let exerciseId = newOnyxID()
+                try Exercise(id: exerciseId, name: lift.name).insert(db)
+                // A warm-up and three working sets: the warm-up is what proves
+                // the card counts working sets rather than rows.
+                for set in 0..<4 {
+                    let load = set == 0 ? lift.kg * 0.6 : lift.kg
+                    try WorkoutSet(
+                        id: newOnyxID(), sessionId: sessionId, exerciseId: exerciseId,
+                        setIndex: index, weightKg: load, reps: lift.reps,
+                        setType: set == 0 ? "warmup" : "normal", side: nil, pairId: nil,
+                        est1rmKg: Epley.oneRepMax(weight: load, reps: Double(lift.reps)),
+                        foldOrder: index
+                    ).insert(db)
+                    index += 1
+                }
+            }
+        }
+    }
+
     /// A stack with every state on it at once: one due, one explicitly taken,
     /// one skipped, two still ahead, and one archived.
     ///
@@ -170,11 +216,26 @@ enum PulsePreviews {
         case "day-rows":
             NavigationStack { PulseTabView(seeded: fullDay(), startAtRows: true) }
                 .environment(AppEnvironment.preview)
+        // A day with the session on it, parked on the bottom half — which is
+        // where the Workout summary card and the four rows are. The rows
+        // section is the last content on the screen, so scrolling to it clamps
+        // to the end and the card comes with it.
+        case "day-past":
+            NavigationStack { PulseTabView(seeded: fullDay(withSession: true), startAtRows: true) }
+                .environment(AppEnvironment.preview)
         case "day-empty":
             NavigationStack { PulseTabView(seeded: model()) }
                 .environment(AppEnvironment.preview)
-        case "day-inbody":
+        // Named for what it is rather than for where it opens from: the shot
+        // list called this `day-inbody` and the plan's gate calls it `scale`,
+        // and two names for one screen is the drift this file exists to stop.
+        case "scale":
             Presenting(model: withHistory()) { InBodyEntryView(model: $0) }
+                .environment(AppEnvironment.preview)
+        // The same form with nothing behind it — the nil-history path, where
+        // "Fill from last time" has nothing to copy and says so.
+        case "scale-first":
+            Presenting(model: model()) { InBodyEntryView(model: $0) }
                 .environment(AppEnvironment.preview)
         case "day-swap":
             Presenting(model: fullDay()) { SwapDaySheet(model: $0) }
@@ -261,7 +322,8 @@ enum PulsePreviews {
 }
 
 #Preview("Pulse — full") { PulsePreviews.view("day") }
+#Preview("Pulse — past") { PulsePreviews.view("day-past") }
 #Preview("Pulse — empty") { PulsePreviews.view("day-empty") }
-#Preview("Pulse — InBody") { PulsePreviews.view("day-inbody") }
+#Preview("Pulse — InBody") { PulsePreviews.view("scale") }
 #Preview("Pulse — swap") { PulsePreviews.view("day-swap") }
 #endif

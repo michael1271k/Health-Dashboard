@@ -26,7 +26,8 @@ struct HistoryView: View {
 
     @State private var capsules: [HistoryWeeks.Capsule]?
     @State private var segment: Segment = .weeks
-    @State private var era: EraFilter = .all
+    @State private var window: EraWindow = .default
+    @State private var input: EraWindowInput?
     @State private var jumping = false
     @State private var jumpTo: JumpDate?
 
@@ -34,25 +35,6 @@ struct HistoryView: View {
         case weeks = "Weeks"
         case body = "Body"
         var id: Self { self }
-    }
-
-    /// The block has run under two programmes, and their numbers are not
-    /// comparable — PPL was six days of higher-frequency lower-volume work.
-    /// `Phases` already tags every week with the era it belongs to, so the
-    /// filter is a read of that rather than a date the user has to remember.
-    enum EraFilter: String, CaseIterable, Identifiable {
-        case all = "All"
-        case onyx = "Onyx"
-        case ppl = "PPL"
-        var id: Self { self }
-
-        func matches(_ capsule: HistoryWeeks.Capsule) -> Bool {
-            switch self {
-            case .all: true
-            case .onyx: capsule.era == .onyx
-            case .ppl: capsule.era == .ppl
-            }
-        }
     }
 
     /// `navigationDestination(item:)` needs an `Identifiable`, and a bare date
@@ -108,12 +90,23 @@ struct HistoryView: View {
             guard capsules == nil else { return }
             if let seeded {
                 capsules = seeded
+                input = EraWindowSource.input(
+                    database: environment.database,
+                    firstDataISO: seeded.map(\.window.start).min()
+                )
                 return
             }
             let database = environment.database
-            capsules = await Task.detached(priority: .userInitiated) {
+            let built = await Task.detached(priority: .userInitiated) {
                 HistoryWeeks.capsules(database: database)
             }.value
+            capsules = built
+            // "All" is this list's own oldest week — the capsules are already
+            // built from the first day anything was recorded.
+            input = EraWindowSource.input(
+                database: environment.database,
+                firstDataISO: built.map(\.window.start).min()
+            )
         }
     }
 
@@ -121,17 +114,13 @@ struct HistoryView: View {
 
     @ViewBuilder
     private var weeks: some View {
-        // The era filter scrolls WITH the list rather than pinning under the
-        // nav bar: two stacked segmented controls in fixed chrome leave a
-        // 96 pt band of controls above the first row, and at AX5 the second one
-        // wraps into three lines of it.
-        if (capsules?.count ?? 0) > 0, hasBothEras {
+        // The window scrolls WITH the list rather than pinning under the nav
+        // bar: two stacked controls in fixed chrome leave a 96 pt band above
+        // the first row, and at AX5 the second one wraps into three lines of
+        // it.
+        if let input, (capsules?.count ?? 0) > 0 {
             Section {
-                Picker("Era", selection: $era) {
-                    ForEach(EraFilter.allCases) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("Filter by programme")
+                EraWindowPicker(selection: $window, input: input)
             }
             .listRowBackground(Color.clear)
             .listRowInsets(.init(top: 0, leading: OnyxSpace.l, bottom: OnyxSpace.s, trailing: OnyxSpace.l))
@@ -150,15 +139,20 @@ struct HistoryView: View {
         }
     }
 
-    /// The filter only appears when there is something to filter. One programme
-    /// in the history means the control can only ever empty the list.
-    private var hasBothEras: Bool {
-        let eras = Set((capsules ?? []).compactMap(\.era))
-        return eras.count > 1
-    }
+    /// The window's own bounds, or nil before the goals row has been read.
+    private var resolved: ResolvedEraWindow? { input.map { window.resolve($0) } }
 
+    /// Every capsule the window TOUCHES, not only the ones inside it.
+    ///
+    /// A week is seven days and a window has two ends; a "30 d" window opening
+    /// on a Wednesday would otherwise drop the week it starts in — five days of
+    /// which are in the window — and the list would begin mid-block with no
+    /// explanation. Overlap is the honest test for a range against a range.
     private var filtered: [HistoryWeeks.Capsule] {
-        (capsules ?? []).filter(era.matches)
+        guard let resolved else { return capsules ?? [] }
+        return (capsules ?? []).filter {
+            $0.window.end >= resolved.startISO && $0.window.start <= resolved.endISO
+        }
     }
 
     // MARK: - Body
@@ -187,9 +181,9 @@ struct HistoryView: View {
             )
         } else if segment == .weeks, filtered.isEmpty {
             ContentUnavailableView(
-                "No \(era.rawValue) weeks",
+                "No weeks in \(resolved?.label ?? "this window")",
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: Text("Nothing in the history was logged under that programme.")
+                description: Text("Nothing was logged in that timeframe. Widen it and the weeks come back.")
             )
         }
     }
@@ -214,15 +208,29 @@ struct WeekCapsuleRow: View {
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: OnyxSpace.xs) {
                     title
-                    phaseTag
+                    tags
                     range
                 }
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-                    title
-                    phaseTag
-                    Spacer(minLength: OnyxSpace.xs)
-                    range
+                // Up to three pills now share the line with a title and a date
+                // range, and "Maintenance" beside "Active" is 130 pt of it.
+                // `ViewThatFits` asks the layout system rather than guessing:
+                // one line while one fits, tags on their own line when not.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                        title
+                        tags
+                        Spacer(minLength: OnyxSpace.xs)
+                        range
+                    }
+                    VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                        HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                            title
+                            Spacer(minLength: OnyxSpace.xs)
+                            range
+                        }
+                        tags
+                    }
                 }
             }
 
@@ -236,7 +244,35 @@ struct WeekCapsuleRow: View {
         }
         .padding(.vertical, OnyxSpace.xs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(capsule.window.label), \(capsule.window.rangeLabel). \(meta)")
+        .accessibilityLabel("\(capsule.window.label), \(capsule.window.rangeLabel).\(spokenTags) \(meta)")
+    }
+
+    /// What the week WAS, in at most three pills: which phase, whether the food
+    /// was at maintenance, and whether it is the week you are standing in.
+    private var tags: some View {
+        HStack(spacing: OnyxSpace.xs) {
+            if let phase = capsule.phaseLabel {
+                pill(phase, OnyxDomain.train.accent, ink: Color.onyx.textSecondary)
+            }
+            // A nutrition rung, so it wears the food domain — the training
+            // programme did not change and the pill should not claim it did.
+            if capsule.isMaintenance {
+                pill("Maintenance", OnyxDomain.fuel.accent)
+            }
+            // Not "This week": the list is scanned, and the reader wants to
+            // know which row is live, not to be told the definition of one.
+            if capsule.window.isCurrent {
+                pill("Active", Color.onyx.good)
+            }
+        }
+    }
+
+    private var spokenTags: String {
+        var parts: [String] = []
+        if let phase = capsule.phaseLabel { parts.append(phase) }
+        if capsule.isMaintenance { parts.append("maintenance week") }
+        if capsule.window.isCurrent { parts.append("the current week") }
+        return parts.isEmpty ? "" : " \(parts.joined(separator: ", "))."
     }
 
     private var title: some View {
@@ -248,17 +284,15 @@ struct WeekCapsuleRow: View {
 
     /// One line, always. Wrapped over two, the `Capsule` behind it stops being
     /// a pill and becomes an ellipse the width of the longest word.
-    @ViewBuilder
-    private var phaseTag: some View {
-        if let phase = capsule.phaseLabel {
-            Text(phase)
-                .onyxType(.micro)
-                .lineLimit(1)
-                .foregroundStyle(Color.onyx.textSecondary)
-                .padding(.horizontal, OnyxSpace.s)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(OnyxDomain.train.accent.opacity(0.16)))
-        }
+    private func pill(_ text: String, _ tint: Color, ink: Color? = nil) -> some View {
+        Text(text)
+            .onyxType(.micro)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .foregroundStyle(ink ?? tint)
+            .padding(.horizontal, OnyxSpace.s)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(tint.opacity(0.16)))
     }
 
     private var range: some View {

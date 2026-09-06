@@ -1,0 +1,250 @@
+import Foundation
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The six windows a chart can be asked to draw — a port of
+// `src/lib/era/eraWindow.ts` (decision 12).
+//
+// ── WHAT THIS REPLACES ───────────────────────────────────────────────────────
+// Two segmented controls that answered two different questions and called
+// themselves the same thing. Trends had `EraFilter { all, ppl, axis }`, whose
+// middle pill rendered the string "Axis" — a product name two renames out of
+// date, kept because the rawValue was load-bearing for
+// `VolumeSplit.splits(forEra:)`. History had its own `EraFilter { all, onyx,
+// ppl }`, which spelled the same era "Onyx". Neither was a TIME window: both
+// were programme filters, so "the last 30 days" was not askable anywhere and
+// "this phase" was not either.
+//
+// A window is a range and a name for it. The name comes from the phase table,
+// the lever schedule or the plan catalogue — never from a `switch` in a view,
+// which is how the two spellings got there.
+//
+// ── EVERY WINDOW ENDS TODAY ──────────────────────────────────────────────────
+// These are trailing windows. A range running past today would reserve axis
+// space for days that do not exist, drawing every live phase as though it were
+// tailing off.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Which window. `days` carries its own length so 30 and 90 are one case.
+public enum EraWindow: Sendable, Equatable, Hashable {
+    /// The programme phase covering today — "Onyx Cut", "Lean Bulk".
+    case currentPhase
+    /// The run of days ending today that share today's nutrition rung.
+    case currentLever
+    /// From the day the cut block opened.
+    case sinceCutStart
+    /// A trailing count of days, today included.
+    case days(Int)
+    /// Everything the caller holds.
+    case all
+
+    /// Display order; `first` is the default (decision 12).
+    public static let modes: [EraWindow] = [
+        .currentPhase, .currentLever, .sinceCutStart, .days(30), .days(90), .all,
+    ]
+
+    public static let `default`: EraWindow = .currentPhase
+
+    /// A stable key — what a `Picker` binds to, and what a preference stores.
+    ///
+    /// The span is CLAMPED the same way `resolve` clamps it, so the key names
+    /// the window that would actually be drawn. Without that, `.days(0)` writes
+    /// `days:0`, which `fromKey` refuses — and a preference that serializes but
+    /// cannot be read back is a preference that silently reverts to the default.
+    public var key: String {
+        switch self {
+        case .currentPhase: "currentPhase"
+        case .currentLever: "currentLever"
+        case .sinceCutStart: "sinceCutStart"
+        case .days(let n): "days:\(Swift.max(1, n))"
+        case .all: "all"
+        }
+    }
+
+    /// The window a key names, or nil.
+    public static func fromKey(_ key: String) -> EraWindow? {
+        if key.hasPrefix("days:") {
+            guard let n = Int(key.dropFirst(5)), n > 0 else { return nil }
+            return .days(n)
+        }
+        return modes.first { $0.key == key }
+    }
+}
+
+/// `{ "kind": "days", "n": 30 }` — the shape the golden vector carries. Written
+/// out rather than synthesised because the synthesised form for an enum with an
+/// associated value is `{"days":{"_0":30}}`, which no TypeScript would emit.
+extension EraWindow: Codable {
+    private enum CodingKeys: String, CodingKey { case kind, n }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let kind = try c.decode(String.self, forKey: .kind)
+        switch kind {
+        case "currentPhase": self = .currentPhase
+        case "currentLever": self = .currentLever
+        case "sinceCutStart": self = .sinceCutStart
+        case "all": self = .all
+        case "days": self = .days(try c.decode(Int.self, forKey: .n))
+        default:
+            throw DecodingError.dataCorruptedError(
+                forKey: .kind, in: c, debugDescription: "Unknown era window kind \"\(kind)\""
+            )
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .days(let n):
+            try c.encode("days", forKey: .kind)
+            try c.encode(n, forKey: .n)
+        default:
+            try c.encode(key, forKey: .kind)
+        }
+    }
+}
+
+/// What the caller knows that the window cannot derive.
+public struct EraWindowInput: Codable, Sendable, Equatable {
+    /// The logical day the window ends on.
+    public var today: String
+    /// The active plan's display name — `Programs.plan(id:)?.label`.
+    public var planLabel: String
+    /// `user_goals.active_lever`, verbatim.
+    public var storedLever: String?
+    /// `user_goals.maintenance_until` — a release that closes itself.
+    public var releaseEndsOn: String?
+    /// The oldest date the caller has anything for, and the whole of what
+    /// "All" can honestly mean. Without it "All" would need an invented floor,
+    /// and every candidate is either months of empty axis or the cut start —
+    /// which is what "Since cut" already says.
+    public var firstDataISO: String?
+
+    public init(
+        today: String, planLabel: String, storedLever: String? = nil,
+        releaseEndsOn: String? = nil, firstDataISO: String? = nil
+    ) {
+        self.today = today
+        self.planLabel = planLabel
+        self.storedLever = storedLever
+        self.releaseEndsOn = releaseEndsOn
+        self.firstDataISO = firstDataISO
+    }
+}
+
+/// A window, resolved: the range and the words that name it.
+public struct ResolvedEraWindow: Codable, Sendable, Equatable, Hashable {
+    /// The pill's text, and the chart caption's.
+    public var label: String
+    /// First day, inclusive.
+    public var startISO: String
+    /// Last day, inclusive — always the input's `today`.
+    public var endISO: String
+    /// Inclusive day count, floored at 1.
+    public var days: Int
+
+    public init(label: String, startISO: String, endISO: String, days: Int) {
+        self.label = label
+        self.startISO = startISO
+        self.endISO = endISO
+        self.days = days
+    }
+
+    /// Is this date inside the window? Both ends inclusive, string compare —
+    /// the same test every other dated read in this package uses.
+    public func contains(_ dateISO: String) -> Bool {
+        dateISO >= startISO && dateISO <= endISO
+    }
+}
+
+public extension EraWindow {
+
+    /// Inclusive day count between two ISO dates, floored at 1.
+    static func dayCount(from: String, to: String) -> Int {
+        guard let a = ISODate.dayNumber(from), let b = ISODate.dayNumber(to) else { return 1 }
+        return Swift.max(1, b - a + 1)
+    }
+
+    /// How far back the lever walk may go: the first row of the schedule.
+    /// Before it there was no rung and every day answers the same nil, so an
+    /// unfloored walk would step to the epoch one day at a time.
+    static var leverFloor: String { Levers.schedule.first?.from ?? Era.onyxCutStart }
+
+    /// The first day of the run ending on `today` that shares today's rung.
+    ///
+    /// A walk, not a lookup in `Levers.schedule`, and deliberately: the rung in
+    /// force is `leverForDate`, which is the SCHEDULE for past days and the
+    /// STORED selection from today onward. When those disagree — a rung pulled
+    /// this morning that the schedule does not know about — the run genuinely
+    /// is one day long, and reading the schedule's `from` would claim a
+    /// fortnight had been eaten under a rung chosen at breakfast.
+    static func leverRunStart(_ input: EraWindowInput) -> String {
+        let today = input.today
+        let id = Levers.leverForDate(today, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn)
+        let floor = leverFloor
+        var start = today
+        while let prev = ISODate.addDays(start, -1), prev >= floor {
+            guard Levers.leverForDate(prev, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn) == id
+            else { break }
+            start = prev
+        }
+        return start
+    }
+
+    /// The window this mode names, on a given day.
+    ///
+    /// A start after `today` is clamped to `today`, so the worst a bad anchor
+    /// can do is draw a single day.
+    func resolve(_ input: EraWindowInput) -> ResolvedEraWindow {
+        let today = input.today
+        func clamp(_ startISO: String, _ label: String) -> ResolvedEraWindow {
+            let start = startISO > today ? today : startISO
+            return ResolvedEraWindow(
+                label: label, startISO: start, endISO: today,
+                days: EraWindow.dayCount(from: start, to: today)
+            )
+        }
+
+        switch self {
+        case .currentPhase:
+            // No phase covers the day — the gap around the Thailand trip is a
+            // real one. The plan is still a true name for what is running.
+            guard let span = Phases.span(for: today) else {
+                return clamp(input.firstDataISO ?? today, "\(input.planLabel) Era")
+            }
+            return clamp(span.start, span.def.eraTag ?? span.def.name)
+
+        case .currentLever:
+            let id = Levers.leverForDate(
+                today, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn
+            )
+            // `lever(byId:)` is nil for `custom` and for a day before the cut
+            // opened, which is the point: it names the ABSENCE of a rung.
+            return clamp(EraWindow.leverRunStart(input), Levers.lever(byId: id?.rawValue)?.label ?? "Custom")
+
+        case .sinceCutStart:
+            return clamp(Era.onyxCutStart, "Since cut")
+
+        case .days(let n):
+            let span = Swift.max(1, n)
+            return clamp(ISODate.addDays(today, -(span - 1)) ?? today, "\(span) d")
+
+        case .all:
+            return clamp(input.firstDataISO ?? today, "All")
+        }
+    }
+}
+
+public extension ResolvedEraWindow {
+    /// Which ERA's splits this window's charts should offer.
+    ///
+    /// The volume chart keys its split pills off this, and the two eras bucket
+    /// sessions differently — a PPL week has Push/Pull/Legs and an Onyx week
+    /// has none of them. A window that starts before the cut and ends today
+    /// spans both, so it gets both.
+    var era: String {
+        if startISO >= Era.onyxCutStart { return Era.axis.rawValue }
+        if endISO < Era.onyxCutStart { return Era.ppl.rawValue }
+        return "all"
+    }
+}
