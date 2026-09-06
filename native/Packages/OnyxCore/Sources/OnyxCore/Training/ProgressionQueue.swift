@@ -44,14 +44,23 @@ public enum ProgressionQueue {
         public var weightKg: Double
         public var reps: Double
         public var setType: String?
+        /// Nullable, and most of the history is null — `Ceilings
+        /// .underEffortCeiling` treats an unrated set as making no claim.
+        /// Carried so the RPE ≤ 8.5 half of the progression rule is not dead
+        /// code in the one place that grades it.
+        public var rpe: Double?
         public var startedAt: String
         public var dayKey: String?
 
-        public init(exerciseId: String, weightKg: Double, reps: Double, setType: String?, startedAt: String, dayKey: String?) {
+        public init(
+            exerciseId: String, weightKg: Double, reps: Double, setType: String?,
+            rpe: Double? = nil, startedAt: String, dayKey: String?
+        ) {
             self.exerciseId = exerciseId
             self.weightKg = weightKg
             self.reps = reps
             self.setType = setType
+            self.rpe = rpe
             self.startedAt = startedAt
             self.dayKey = dayKey
         }
@@ -80,7 +89,7 @@ public enum ProgressionQueue {
         var out: [String: [String: [WorkingSet]]] = [:]
         for r in rows {
             guard SetTags.isWorkingSet(r.setType), let dk = r.dayKey, !dk.isEmpty else { continue }
-            out[key(dk, r.exerciseId), default: [:]][r.startedAt, default: []].append(WorkingSet(weightKg: r.weightKg, reps: r.reps))
+            out[key(dk, r.exerciseId), default: [:]][r.startedAt, default: []].append(WorkingSet(weightKg: r.weightKg, reps: r.reps, rpe: r.rpe))
         }
         return out
     }

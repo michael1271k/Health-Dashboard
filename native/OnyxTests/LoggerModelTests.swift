@@ -49,8 +49,11 @@ struct LoggerModelTests {
         #expect(survivor != nil, "a lift with logged sets must not vanish with the prescription")
         #expect(survivor?.rows.count == 2)
         #expect(survivor?.rows.allSatisfy(\.isDone) == true)
-        // ...and the blanks it no longer prescribes are gone.
-        #expect(model.exercises.first { $0.name == "Cable Overhead Extension" }?.rows.count == 2)
+        // ...and the blanks it no longer prescribes are gone. `Single Arm
+        // Lateral Raise (Cable)` is the arms lift the cut actually trims (5 → 4);
+        // Cable Overhead Extension used to be one and stopped being one in
+        // `ca9bcfa`, when Week 6's real set counts became the program's.
+        #expect(model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }?.rows.count == 4)
     }
 
     @Test("a dropped lift with NO logged work does leave")
@@ -64,22 +67,24 @@ struct LoggerModelTests {
     @Test("trimming sets does not reorder the ones already logged")
     func rebuildPreservesRowOrder() {
         let model = armsBulk()
-        // Bulk prescribes 3 of these; cut prescribes 2. Tick the LAST one only,
-        // so a rebuild that sorts ticked rows to the top is visible.
-        let exercise = model.exercises.first { $0.name == "DB Hammer Curl" }!
-        #expect(exercise.rows.count == 3)
+        // Bulk prescribes 5 of these; cut prescribes 4. Tick the LAST one only,
+        // so a rebuild that sorts ticked rows to the top is visible. (DB Hammer
+        // Curl was this test's lift until `ca9bcfa` made its cut count equal
+        // its bulk count — a deck that trims nothing cannot show a reorder.)
+        let exercise = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
+        #expect(exercise.rows.count == 5)
         let ids = exercise.rows.map(\.id)
-        let third = exercise.rows[2]
-        third.weightKg = 16
-        third.reps = 10
-        model.toggleDone(third, in: exercise)
+        let last = exercise.rows[4]
+        last.weightKg = 5
+        last.reps = 15
+        model.toggleDone(last, in: exercise)
 
         model.phase = .cut
 
-        let rebuilt = model.exercises.first { $0.name == "DB Hammer Curl" }!
-        #expect(rebuilt.rows.count == 2)
+        let rebuilt = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
+        #expect(rebuilt.rows.count == 4)
         // The logged row is still LAST, not promoted to the front.
-        #expect(rebuilt.rows.last?.id == ids[2])
+        #expect(rebuilt.rows.last?.id == ids[4])
         #expect(rebuilt.rows.first?.id == ids[0])
     }
 

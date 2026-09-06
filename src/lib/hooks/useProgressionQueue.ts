@@ -60,7 +60,7 @@ export function useProgressionQueue() {
       const era = eraForDate(eraDate)
       let q = supabase
         .from('workout_sets')
-        .select('exercise_id, weight_kg, reps, set_type, workout_sessions!inner(started_at, day_key)')
+        .select('exercise_id, weight_kg, reps, set_type, rpe, workout_sessions!inner(started_at, day_key)')
         .in('exercise_id', ids)
         .in('workout_sessions.day_key', dayKeys)
       q = era === 'axis'

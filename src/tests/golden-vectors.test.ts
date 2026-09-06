@@ -185,7 +185,9 @@ import { mean as tileMean, vsBaseline, nutrientRisk, consistencyWindow, daysAgo,
 import { toRows, rowsWithPrev, deltaGlyph, progressionCue, exerciseStats, strongestOf, highlightsOf, pctOf } from '@/lib/sessions/detail'
 import type { DetailSet, DetailExercise } from '@/lib/hooks/useSessionDetail'
 import type { IntelMetric } from '@/lib/hooks/useSessionIntel'
-import { LOAD_STEP_KG } from '@/lib/training/ceilings'
+import {
+  LOAD_STEP_KG, LOAD_STEPS_KG, LOAD_STEP_FINE_KG, PROGRESSION_MAX_RPE, roundToStep, underEffortCeiling,
+} from '@/lib/training/ceilings'
 import { resolveChartSplit, SPLITS_FOR_ERA, DAY_KEY_SPLIT, splitLabel, type ChartSplit } from '@/lib/charts/volumeSplit'
 import { mergeBodyComposition, hasScaleMetrics, SCALE_METRIC_KEYS } from '@/lib/body/readings'
 import type { BodyTrendRow, BodyDetailRow } from '@/lib/hooks/useCharts'
@@ -196,6 +198,14 @@ import {
   type TrendSetRow, type VolumeSession, type AdherenceDayIn, type AdherenceTargets, type AdherenceDay, type VitalSeries,
 } from '@/lib/charts/series'
 import { progressionAlerts, type ProgressionAlert, type ProgressionSetRow, type ProgressionTarget } from '@/lib/training/progressionQueue'
+import {
+  buildSessionSeed, sessionsForSeed,
+  type SeedInput, type SeedSession, type SeedSet, type SessionSeed,
+} from '@/lib/sessions/sessionSeed'
+import type { RoutineTemplate } from '@/lib/sessions/routineTemplate'
+import {
+  sessionDuration, LONG_IDLE_MIN, DEFAULT_REST_TARGET_SEC, type SessionDurationResult,
+} from '@/lib/sessions/sessionDuration'
 import { debtBand, type SleepDebt } from '@/lib/sleep/debt'
 import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
 import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coach/scheduleReadiness'
@@ -3773,10 +3783,35 @@ describe('golden vectors — ceilings', () => {
     push('three sessions, last two clean', [sessions[8][1], sessions[4][1], sessions[4][1]], 12)
     push('bodyweight ready suggests no load', [sessions[11][1], sessions[11][1]], 15)
     push('fractional top load rounds to one decimal', [[S(5.25, 20), S(5.25, 20)], [S(5.25, 20), S(5.25, 20)]], 20)
+
+    // ── THE EFFORT HALF OF THE RULE (P3 E4) ──────────────────────────────────
+    // "all work sets at the ceiling AT RPE ≤ 8.5". Null is UNRATED and passes;
+    // 8.5 is inclusive; one rated 9 anywhere in either session blocks it.
+    const R = (weightKg: number, reps: number, rpe: number | null): WorkingSet => ({ weightKg, reps, rpe })
+    const rated: Array<[string, WorkingSet[]]> = [
+      ['unrated', [R(65, 15, null), R(65, 15, null)]],
+      ['easy', [R(65, 15, 7), R(65, 15, 8)]],
+      ['at the ceiling', [R(65, 15, 8.5), R(65, 15, 8.5)]],
+      ['one over', [R(65, 15, 8), R(65, 15, 9)]],
+      ['all over', [R(65, 15, 9.5), R(65, 15, 10)]],
+      ['half rated, half over', [R(65, 15, null), R(65, 15, 9)]],
+      ['half rated, under', [R(65, 15, null), R(65, 15, 8)]],
+    ]
+    for (const [na, a] of rated) for (const [nb, b] of rated) push(`rpe ${na} then ${nb} @15`, [a, b], 15)
+    for (const [na, a] of rated) push(`rpe ${na} alone @15`, [a], 15)
+    // A rated 0 kg set: the effort gate applies to bodyweight work too.
+    push('bodyweight rated over the ceiling', [[R(0, 16, 9), R(0, 16, 9)], [R(0, 16, 9), R(0, 16, 9)]], 15)
+    // `workLoads` drops the 0 kg rows once any set carried load, so a rated
+    // warm-up-shaped row cannot block a loaded session's verdict.
+    push('a 0 kg row beside loaded work is not graded', [
+      [R(0, 20, 10), R(65, 15, 8), R(65, 15, 8)],
+      [R(0, 20, 10), R(65, 15, 8), R(65, 15, 8)],
+    ], 15)
+
     emit('progression-verdict.json', {
       module: 'training/ceilings',
       fn: 'progressionVerdict',
-      note: 'Newest LAST. Both of the last two cleared (topLoadCleared) → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no.',
+      note: 'Newest LAST. Both of the last two cleared → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no. Cleared = topLoadCleared AND underEffortCeiling: one load, ≥ 2 working sets, all at the rep ceiling, and no set RATED above 8.5 — an unrated set (rpe null/absent) passes, and workLoads drops 0 kg rows once any set carried load.',
       cases,
     })
 
@@ -7610,6 +7645,108 @@ describe('golden vectors — series builders', () => {
   })
 })
 
+describe('golden vectors — session duration', () => {
+  it('exports the rule and its long-idle guard', () => {
+    interface DurIn {
+      startedAt: string; endedAt: string
+      pausedSec: number; lastSetAt: string | null; restTargetSec: number | null
+    }
+    const cases: Case<DurIn, SessionDurationResult>[] = []
+    const at = (hhmm: string, day = '06') => `2026-09-${day}T${hhmm}:00.000Z`
+    const push = (name: string, i: DurIn) => cases.push({
+      name,
+      input: i,
+      expected: sessionDuration({
+        startedAt: i.startedAt, endedAt: i.endedAt, pausedMs: i.pausedSec * 1000,
+        lastSetAt: i.lastSetAt, restTargetSec: i.restTargetSec,
+      }),
+    })
+    const grid: Array<[string, string, string]> = [
+      ['an hour', at('10:46'), at('11:46')],
+      ['the Sept 6 span', at('10:46'), at('17:12')],
+      ['a minute', at('10:46'), at('10:47')],
+      ['instant', at('10:46'), at('10:46')],
+      ['backwards', at('11:46'), at('10:46')],
+      ['across midnight', at('22:30'), at('00:15', '07')],
+    ]
+    const pauses = [0, 60, 5 * 60, 30 * 60, 325 * 60, 24 * 3600]
+    const lasts: Array<[string, string | null]> = [
+      ['no last set', null],
+      ['last set at 11:46', at('11:46')],
+      ['last set at the start', at('10:46')],
+      ['last set at the finish', at('17:12')],
+      ['last set before the start', at('09:00')],
+      ['last set after the finish', at('23:00')],
+    ]
+    for (const [gn, startedAt, endedAt] of grid) {
+      for (const pausedSec of pauses) {
+        for (const [ln, lastSetAt] of lasts) {
+          push(`${gn} · paused ${pausedSec}s · ${ln}`, { startedAt, endedAt, pausedSec, lastSetAt, restTargetSec: null })
+        }
+      }
+    }
+    for (const restTargetSec of [0, 75, 105, 135, 300, 3600, -30]) {
+      push(`rest target ${restTargetSec}`, {
+        startedAt: at('10:46'), endedAt: at('17:12'), pausedSec: 0, lastSetAt: at('11:46'), restTargetSec,
+      })
+    }
+    // The threshold itself, from both sides.
+    push('idle exactly 20', { startedAt: at('10:00'), endedAt: at('11:20'), pausedSec: 0, lastSetAt: at('11:00'), restTargetSec: null })
+    push('idle 21', { startedAt: at('10:00'), endedAt: at('11:21'), pausedSec: 0, lastSetAt: at('11:00'), restTargetSec: 0 })
+    push('unparseable start', { startedAt: 'nope', endedAt: at('11:00'), pausedSec: 0, lastSetAt: null, restTargetSec: null })
+    push('unparseable end', { startedAt: at('10:00'), endedAt: '', pausedSec: 0, lastSetAt: null, restTargetSec: null })
+
+    emit('session-duration.json', {
+      module: 'sessions/sessionDuration',
+      fn: 'sessionDuration',
+      note: `duration_min = ended − started − paused, never negative, rounded to whole minutes; null for an unparseable instant or a finish before the start. LONG-IDLE GUARD: a last set more than ${LONG_IDLE_MIN} minutes before the finish (strictly more — 20 is still training) means the tail was not training, and the answer becomes the work plus one rest (the movement's restTargetSec, else ${DEFAULT_REST_TARGET_SEC}s), never longer than the uncapped answer. A last set outside [started, ended] is ignored. This is what the 385-minute Sept 6 session was missing on both clients.`,
+      cases,
+    })
+  })
+})
+
+describe('golden vectors — load steps and the effort ceiling', () => {
+  it('exports the stepper steps, the effort ceiling and the snap', () => {
+    interface StepIn { kg: number; step: number | null }
+    const cases: Case<StepIn, number>[] = []
+    // No NaN in the grid: `JSON.stringify` writes it as null, which is this
+    // vector's own "use the default step" — the guard against a non-finite
+    // input is asserted in the unit tests on each side instead.
+    for (const step of [2.5, 1.25, 0.5, 5, 0, -1]) {
+      for (const kg of [0, 1.24, 1.25, 1.875, 2.5, 13.75, 13.8, 47, 49.5, 62.4999, -3.1]) {
+        cases.push({ name: `${kg} @ ${step}`, input: { kg, step }, expected: roundToStep(kg, step) })
+      }
+    }
+    for (const kg of [13.8, 47.4, 0]) cases.push({ name: `${kg} default step`, input: { kg, step: null }, expected: roundToStep(kg) })
+    emit('load-steps.json', {
+      module: 'training/ceilings',
+      fn: 'LOAD_STEPS_KG / PROGRESSION_MAX_RPE / roundToStep',
+      note: `The stepper's two steps are ${JSON.stringify(LOAD_STEPS_KG)} — coarse first, and the first IS the progression jump (${LOAD_STEP_KG}). roundToStep snaps to the FINEST step by default (${LOAD_STEP_FINE_KG}) and keeps two decimals; a non-finite or non-positive step hands the value back untouched. The effort ceiling a progression may be earned at is ${PROGRESSION_MAX_RPE}, and an unrated set passes it.`,
+      cases,
+    })
+  })
+
+  it('exports the effort gate on its own', () => {
+    const cases: Case<{ sets: WorkingSet[] }, boolean>[] = []
+    const add = (name: string, sets: WorkingSet[]) =>
+      cases.push({ name, input: { sets }, expected: underEffortCeiling(sets) })
+    add('empty', [])
+    add('unrated', [{ weightKg: 60, reps: 12 }])
+    add('null rated', [{ weightKg: 60, reps: 12, rpe: null }])
+    add('at the ceiling', [{ weightKg: 60, reps: 12, rpe: 8.5 }])
+    add('just over', [{ weightKg: 60, reps: 12, rpe: 8.6 }])
+    add('one over among many', [{ weightKg: 60, reps: 12, rpe: 7 }, { weightKg: 60, reps: 12, rpe: 9 }])
+    add('bodyweight over', [{ weightKg: 0, reps: 16, rpe: 9 }])
+    add('a 0 kg row beside loaded work', [{ weightKg: 0, reps: 20, rpe: 10 }, { weightKg: 60, reps: 12, rpe: 8 }])
+    emit('effort-ceiling.json', {
+      module: 'training/ceilings',
+      fn: 'underEffortCeiling',
+      note: 'True when no RATED working set is above 8.5. An unrated set (null, absent or non-finite) passes — most of the history is unrated and treating that as "too hard" would turn the cue off everywhere. Graded over workLoads, so a 0 kg row beside loaded work is dropped first.',
+      cases,
+    })
+  })
+})
+
 describe('golden vectors — progression queue', () => {
   it('exports the queue over a routine-scoped history', () => {
     const cases: Case<{ phase: ProgramPhase; targets: ProgressionTarget[]; rows: ProgressionSetRow[] }, ProgressionAlert[]>[] = []
@@ -7670,6 +7807,188 @@ describe('golden vectors — progression queue', () => {
       module: 'training/progressionQueue',
       fn: 'progressionAlerts',
       note: 'Targets walked in order; rows bucketed by (day_key, exercise) → started_at (sorted) → working sets (warm-ups/ghosts dropped, null day_key dropped); last two sessions graded by progressionVerdict / timedProgressionVerdict against the programmed ceiling on THAT day; ready and one-more surface, currentKg = top load of the latest session.',
+      cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The session seed (P3 E4)
+//
+// What a day's deck OPENS with, and which of the three tiers each number came
+// from. The rule the phone and the web now share — the phone used to seed every
+// row from `wk1Kg` and print that as "Previous".
+//
+// The program is passed by id and phase rather than embedded: both sides
+// already hold `ONYX5` byte-identically and `program-onyx5.json` holds them to
+// it, so repeating the deck in here would be a second copy to keep in step.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — session seed', () => {
+  it('exports the seed for every tier', () => {
+    const TODAY = '2026-09-13'
+    const cases: Case<SeedInput, SessionSeed>[] = []
+    const push = (name: string, over: Partial<SeedInput>) => {
+      const input: SeedInput = {
+        dayKey: 'cb_a', today: TODAY, phase: 'cut', programId: HELIX5_ID,
+        sessions: [], sets: [], template: null, ready: [], ...over,
+      }
+      cases.push({ name, input, expected: buildSessionSeed(input) })
+    }
+    const sess = (id: string, date: string, over: Partial<SeedSession> = {}): SeedSession => ({
+      id, dayKey: 'cb_a', date, startedAt: `${date}T09:00:00Z`, maintenance: false, ...over,
+    })
+    const st = (sessionId: string, exerciseName: string, order: number, weightKg: number, reps: number, over: Partial<SeedSet> = {}): SeedSet =>
+      ({ sessionId, exerciseName, order, weightKg, reps, ...over })
+
+    // Cold start: every day, every phase. The deck's own shape is the case.
+    for (const phase of ['cut', 'bulk'] as ProgramPhase[]) {
+      for (const dayKey of ['cb_a', 'legs_a', 'arms', 'cb_b', 'legs_b']) {
+        push(`cold · ${dayKey} · ${phase}`, { dayKey, phase })
+      }
+    }
+    push('unknown day', { dayKey: 'nope' })
+
+    // Sept 6's Upper A, as the web logged it: 18 working sets, name-matched.
+    const sept6 = sess('sept6', '2026-09-06')
+    const upperA: SeedSet[] = []
+    let o = 0
+    const day = [
+      ['Incline DB Press', 36, 10, 3], ['Lat Pulldown', 50, 11, 3],
+      ['Chest Press (Machine)', 40, 12, 2], ['Seated Cable Row (V-Grip)', 42.5, 12, 2],
+      ['Pec Deck', 52.5, 14, 2], ['Straight-Arm Pulldown', 17.5, 15, 3],
+      ['Face Pull', 16.25, 15, 3],
+    ] as const
+    for (const [name, kg, reps, count] of day) {
+      for (let i = 0; i < count; i += 1) upperA.push(st('sept6', name, (o += 1), kg, reps - i))
+    }
+    push('Sept 6 Upper A, web-logged', { sessions: [sept6], sets: upperA })
+    push('Sept 6 Upper A · bulk asks for more sets', { sessions: [sept6], sets: upperA, phase: 'bulk' })
+
+    // The three filters, one case each.
+    push('other day key', { sessions: [sess('x', '2026-09-06', { dayKey: 'legs_a' })], sets: [st('x', 'Face Pull', 1, 15, 15)] })
+    push('no day key', { sessions: [sess('x', '2026-09-06', { dayKey: null })], sets: [st('x', 'Face Pull', 1, 15, 15)] })
+    push('previous era', { sessions: [sess('x', '2026-06-01')], sets: [st('x', 'Face Pull', 1, 15, 15)] })
+    push('maintenance week', { sessions: [sess('x', '2026-09-06', { maintenance: true })], sets: [st('x', 'Face Pull', 1, 15, 15)] })
+    push('walks back past a session that skipped it', {
+      sessions: [sess('new', '2026-09-06'), sess('old', '2026-08-30')],
+      sets: [st('old', 'Face Pull', 1, 14, 15)],
+    })
+    push('same day, two sessions — the later one wins', {
+      sessions: [
+        sess('early', '2026-09-06', { startedAt: '2026-09-06T08:00:00Z' }),
+        sess('late', '2026-09-06', { startedAt: '2026-09-06T18:00:00Z' }),
+      ],
+      sets: [st('early', 'Face Pull', 1, 10, 15), st('late', 'Face Pull', 1, 20, 15)],
+    })
+
+    // Shape: short, long, warm-ups, pairs, ghosts, aliases.
+    push('history shorter than the program', {
+      sessions: [sept6], sets: [st('sept6', 'Face Pull', 1, 15, 15), st('sept6', 'Face Pull', 2, 15, 13)],
+    })
+    push('history longer than the program', {
+      sessions: [sept6], sets: [1, 2, 3, 4, 5].map((i) => st('sept6', 'Face Pull', i, 15, 15)),
+    })
+    push('warm-up carried', {
+      sessions: [sept6],
+      sets: [st('sept6', 'Face Pull', 1, 5, 15, { setType: 'warmup' }), st('sept6', 'Face Pull', 2, 15, 15)],
+    })
+    push('ghost dropped', {
+      sessions: [sept6],
+      sets: [st('sept6', 'Face Pull', 1, 15, 15, { setType: 'ghost' }), st('sept6', 'Face Pull', 2, 15, 13)],
+    })
+    push('failure tag does not survive into the seed', {
+      sessions: [sept6], sets: [st('sept6', 'Face Pull', 1, 15, 15, { setType: 'failure' })],
+    })
+    push('L/R pair collapses to the weaker side', {
+      dayKey: 'cb_b',
+      sessions: [sess('p', '2026-09-06', { dayKey: 'cb_b' })],
+      sets: [
+        st('p', 'Single Arm Triceps Pushdown (Cable)', 1, 7.5, 14, { side: 'L', pairId: 'p1' }),
+        st('p', 'Single Arm Triceps Pushdown (Cable)', 2, 7.5, 12, { side: 'R', pairId: 'p1' }),
+        st('p', 'Single Arm Triceps Pushdown (Cable)', 3, 7.5, 13, { side: 'L', pairId: 'p2' }),
+        st('p', 'Single Arm Triceps Pushdown (Cable)', 4, 6.25, 13, { side: 'R', pairId: 'p2' }),
+      ],
+    })
+    push('a lone side stays a row', {
+      dayKey: 'cb_b',
+      sessions: [sess('p', '2026-09-06', { dayKey: 'cb_b' })],
+      sets: [st('p', 'Single Arm Triceps Pushdown (Cable)', 1, 5, 15, { side: 'L', pairId: 'p1' })],
+    })
+    push('alias resolves to the canonical name', {
+      sessions: [sept6], sets: [st('sept6', 'Incline Dumbbell Press', 1, 36, 9)],
+    })
+    push('timed hold repeats what was held', {
+      dayKey: 'legs_b',
+      sessions: [sess('t', '2026-09-06', { dayKey: 'legs_b' })],
+      sets: [st('t', 'Side Plank', 1, 0, 60)],
+    })
+
+    // RPE memory.
+    const rated = [
+      st('sept6', 'Face Pull', 1, 15, 15, { rpe: 8 }),
+      st('sept6', 'Face Pull', 2, 15, 15, { rpe: 8.5 }),
+      st('sept6', 'Face Pull', 3, 15, 15, { rpe: 9 }),
+    ]
+    push('ratings carried when the work is unchanged', { sessions: [sept6], sets: rated })
+    push('a warm-up never seeds a rating', {
+      sessions: [sept6],
+      sets: [st('sept6', 'Face Pull', 1, 5, 15, { rpe: 6, setType: 'warmup' }), st('sept6', 'Face Pull', 2, 15, 15, { rpe: 8 })],
+    })
+
+    // Progression.
+    push('ready pre-fills suggestKg at the floor and goes stale', {
+      sessions: [sept6], sets: rated, ready: [{ name: 'Face Pull', suggestKg: 17.5 }],
+    })
+    push('a bodyweight ready adds nothing', {
+      sessions: [sept6], sets: rated, ready: [{ name: 'Face Pull', suggestKg: null }],
+    })
+    push('ready on a cold start', { ready: [{ name: 'Face Pull', suggestKg: 17.5 }] })
+
+    // Template.
+    const template: RoutineTemplate = {
+      version: 1,
+      exercises: [
+        { name: 'Face Pull', order: 0, sets: [{ weightKg: 20, reps: 14, rpe: 8 }, { weightKg: 20, reps: 13 }] },
+        { name: 'Pec Deck', order: 1, sets: [{ weightKg: 5, reps: 15, setType: 'warmup' }, { weightKg: 55, reps: 13 }] },
+      ],
+    }
+    push('template when history has nothing', { template })
+    push('history outranks the template', { sessions: [sept6], sets: [st('sept6', 'Face Pull', 1, 15, 15)], template })
+    push('ready bumps a template row too', { template, ready: [{ name: 'Face Pull', suggestKg: 22.5 }] })
+
+    emit('session-seed.json', {
+      module: 'sessions/sessionSeed',
+      fn: 'buildSessionSeed',
+      note: 'Deck = the phase-resolved program day, in program order. Tier 1 history: the newest session with day_key == dayKey, the same era as `today`, NOT maintenance, that logged this movement by CANONICAL NAME — pairs folded to min(weight) × min(reps), ghosts dropped, warm-ups carried as warm-up rows, working rows filled by index (short → last load at the rep floor, long → truncated). Tier 2 the stored template (no date, so no Previous). Tier 3 wk1Kg at the floor. A `ready` verdict with a load rewrites every working row to it at the floor, sets progressed, and the remembered rating goes stale.',
+      cases,
+    })
+  })
+
+  it('exports the session list a seed may look at', () => {
+    interface ListInput { sessions: SeedSession[]; dayKey: string; today: string }
+    const pool: SeedSession[] = [
+      { id: 'a', dayKey: 'cb_a', date: '2026-09-06', startedAt: '2026-09-06T09:00:00Z', maintenance: false },
+      { id: 'b', dayKey: 'cb_a', date: '2026-08-30', startedAt: '2026-08-30T09:00:00Z', maintenance: false },
+      { id: 'c', dayKey: 'legs_a', date: '2026-09-05', startedAt: '2026-09-05T09:00:00Z', maintenance: false },
+      { id: 'd', dayKey: null, date: '2026-09-04', startedAt: '2026-09-04T09:00:00Z', maintenance: false },
+      { id: 'e', dayKey: 'cb_a', date: '2026-06-01', startedAt: '2026-06-01T09:00:00Z', maintenance: false },
+      { id: 'f', dayKey: 'cb_a', date: '2026-09-02', startedAt: '2026-09-02T09:00:00Z', maintenance: true },
+      { id: 'h', dayKey: 'cb_a', date: '2026-09-06', startedAt: '2026-09-06T18:00:00Z', maintenance: false },
+      { id: 'g', dayKey: 'cb_a', date: '2026-09-06', startedAt: '2026-09-06T18:00:00Z', maintenance: false },
+    ]
+    const cases: Case<ListInput, SeedSession[]>[] = []
+    for (const dayKey of ['cb_a', 'legs_a', 'nope']) {
+      for (const today of ['2026-09-13', '2026-06-15']) {
+        const input = { sessions: pool, dayKey, today }
+        cases.push({ name: `${dayKey} on ${today}`, input, expected: sessionsForSeed(pool, dayKey, today) })
+      }
+    }
+    cases.push({ name: 'empty', input: { sessions: [], dayKey: 'cb_a', today: '2026-09-13' }, expected: [] })
+    emit('sessions-for-seed.json', {
+      module: 'sessions/sessionSeed',
+      fn: 'sessionsForSeed',
+      note: 'Same day_key, same era as `today`, not a maintenance week; newest first, ties broken on started_at then id ascending. Shared with ProgressionQueue so the verdict and the seed can never be about different sessions.',
       cases,
     })
   })

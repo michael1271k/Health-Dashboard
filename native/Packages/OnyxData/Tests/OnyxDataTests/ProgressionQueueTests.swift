@@ -4,12 +4,20 @@ import GRDB
 import OnyxCore
 @testable import OnyxData
 
-/// "Ready to progress" off the local ledger — scoped to one day key and one
-/// era, in plan order.
+/// "Ready to progress" off the local ledger — scoped to one day key, one era
+/// and the non-maintenance weeks, in plan order.
+///
+/// The three filters are `SessionSeedBuilder.sessionsForSeed`'s, shared with
+/// the deck seed since P3 E4: grading a chain that includes a deliberately
+/// lighter week and then pre-filling the deck from a list that excludes it
+/// would put a `ready` chip on a load the seed never proposed.
+///
+/// The dates matter. `Levers.schedule` puts a maintenance week on
+/// 2026-08-30 … 09-05, so the sessions here sit either side of it deliberately.
 @Suite("Progression queue")
 struct ProgressionQueueTests {
     private let user = "u1"
-    private let today = "2026-09-05"
+    private let today = "2026-09-13"
 
     private var lift: (name: String, ceiling: Double, dayKey: String) {
         let day = Program.onyx5.day(key: "legs_a")!
@@ -30,8 +38,8 @@ struct ProgressionQueueTests {
         let l = lift
         try db.writer.write { conn in
             try Exercise(id: "ex-1", name: l.name).insert(conn)
-            try session(conn, id: "a", date: "2026-08-24", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
-            try session(conn, id: "b", date: "2026-08-31", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "a", date: "2026-08-17", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "b", date: "2026-08-24", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
             // A warm-up opener in the newest session is not evidence.
             try WorkoutSet(id: "b-w", sessionId: "b", exerciseId: "ex-1", setIndex: 0, weightKg: 20, reps: 8, setType: "warmup").insert(conn)
         }
@@ -52,13 +60,44 @@ struct ProgressionQueueTests {
         try db.writer.write { conn in
             try Exercise(id: "ex-1", name: l.name).insert(conn)
             // Cleared twice — but once under Legs B, and once before the cut.
-            try session(conn, id: "a", date: "2026-08-24", dayKey: "legs_b", weight: 40, reps: l.ceiling)
+            try session(conn, id: "a", date: "2026-08-17", dayKey: "legs_b", weight: 40, reps: l.ceiling)
             try session(conn, id: "p", date: "2026-06-01", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
-            try session(conn, id: "b", date: "2026-08-31", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "b", date: "2026-08-24", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
         }
         let queue = try db.progressionQueue(dayKey: l.dayKey, program: .onyx5, phase: .cut, today: today)
         #expect(queue.map(\.state) == [.oneMore], "one clean session on its own key in this era")
         #expect(try db.progressionQueue(dayKey: "cb_a", program: .onyx5, phase: .cut, today: today).isEmpty)
         #expect(try db.progressionQueue(dayKey: "nope", program: .onyx5, phase: .cut, today: today).isEmpty)
+    }
+
+    @Test("a maintenance week breaks the chain rather than extending it")
+    func maintenanceIsNotEvidence() throws {
+        let db = try AppDatabase.inMemory(deviceId: "d")
+        let l = lift
+        try db.writer.write { conn in
+            try Exercise(id: "ex-1", name: l.name).insert(conn)
+            // One clean session before the maintenance week, one inside it.
+            // Two cleared sessions is `ready` — but only one of these counts.
+            try session(conn, id: "a", date: "2026-08-24", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "m", date: "2026-08-31", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+        }
+        #expect(
+            try db.progressionQueue(dayKey: l.dayKey, program: .onyx5, phase: .cut, today: today).map(\.state) == [.oneMore],
+            "2026-08-31 is inside the scheduled maintenance week and is not evidence about a ceiling"
+        )
+    }
+
+    @Test("the seed and the verdict read the same sessions")
+    func seedAndVerdictAgree() throws {
+        let db = try AppDatabase.inMemory(deviceId: "d")
+        let l = lift
+        try db.writer.write { conn in
+            try Exercise(id: "ex-1", name: l.name).insert(conn)
+            try session(conn, id: "a", date: "2026-08-24", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "m", date: "2026-08-31", dayKey: l.dayKey, weight: 40, reps: l.ceiling)
+            try session(conn, id: "other", date: "2026-08-25", dayKey: "legs_b", weight: 40, reps: l.ceiling)
+        }
+        let seen = try db.sessionsForSeed(dayKey: l.dayKey, today: today).sessions.map(\.id)
+        #expect(seen == ["a"], "the maintenance week and the other day are both out")
     }
 }

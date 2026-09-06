@@ -16,6 +16,7 @@ import { isTimedExercise } from '@/lib/exercises/timed'
 import { buildBaselines, detectSessionPrs, recordSets, type PrAxis } from '@/lib/training/prEngine'
 import { prFloorFor } from '@/lib/training/prTruth'
 import { repWindowFor } from '@/lib/training/ceilings'
+import { sessionDuration } from '@/lib/sessions/sessionDuration'
 import { normalizeCr10 } from '@/lib/training/effort'
 import { deriveSessionRpe } from '@/lib/training/rpeMemory'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
@@ -196,9 +197,20 @@ export async function saveSession(
     isPr: prResult.perSet[i].axes.length > 0,
   }))
 
-  const computedDuration =
-    Math.max(0, Math.round((new Date(payload.endedAt).getTime() - new Date(payload.startedAt).getTime()) / 60000)) || null
-  const durationMin = metrics.durationMin ?? computedDuration
+  // ── THE FALLBACK SUBTRACTS THE PAUSE (P3 E4, decision 9) ──────────────────
+  // It used to be `Math.round((ended − started) / 60000)`, and that is the whole
+  // of 2026-09-06's `duration_min = 385` for an hour of work: `endedAt` is wall
+  // clock and `buildCommitPayload` adds the pause INTO it on purpose, so reading
+  // the span back as a duration counts the pause twice over. The sheet supplies
+  // nothing once the deck has been open more than six hours — `sessionElapsedSec`
+  // correctly refuses that span — so the case the fallback exists for was the
+  // case it was most wrong in. One rule now, shared with the phone.
+  const computed = sessionDuration({
+    startedAt: payload.startedAt,
+    endedAt: payload.endedAt,
+    pausedMs: (payload.pausedMin ?? 0) * 60_000,
+  })
+  const durationMin = metrics.durationMin ?? computed.minutes
 
   // ── Calories + heart rate, when the session carries neither ────────────────
   // Only ever fills a GAP — a measured figure is kept untouched — and anything

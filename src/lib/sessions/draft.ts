@@ -652,6 +652,9 @@ export function buildCommitPayload(draft: SessionDraft): SaveWorkoutInput {
     nextSessionFlag: draft.nextSessionFlag,
     sessionRpe: draft.sessionRpe,
     reportMd: draft.coachInsight,
+    // What the server cannot derive: `endedAt` above already has the pause
+    // added back on, so `save.ts` needs it stated to take it off again.
+    pausedMin,
     metrics: draft.stats ? {
       durationMin: draft.stats.duration_min,
       avgBpm: draft.stats.avg_hr_bpm,

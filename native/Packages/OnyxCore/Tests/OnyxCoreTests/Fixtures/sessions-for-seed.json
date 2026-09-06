@@ -1,0 +1,457 @@
+{
+  "module": "sessions/sessionSeed",
+  "fn": "sessionsForSeed",
+  "note": "Same day_key, same era as `today`, not a maintenance week; newest first, ties broken on started_at then id ascending. Shared with ProgressionQueue so the verdict and the seed can never be about different sessions.",
+  "cases": [
+    {
+      "name": "cb_a on 2026-09-13",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "cb_a",
+        "today": "2026-09-13"
+      },
+      "expected": [
+        {
+          "id": "g",
+          "dayKey": "cb_a",
+          "date": "2026-09-06",
+          "startedAt": "2026-09-06T18:00:00Z",
+          "maintenance": false
+        },
+        {
+          "id": "h",
+          "dayKey": "cb_a",
+          "date": "2026-09-06",
+          "startedAt": "2026-09-06T18:00:00Z",
+          "maintenance": false
+        },
+        {
+          "id": "a",
+          "dayKey": "cb_a",
+          "date": "2026-09-06",
+          "startedAt": "2026-09-06T09:00:00Z",
+          "maintenance": false
+        },
+        {
+          "id": "b",
+          "dayKey": "cb_a",
+          "date": "2026-08-30",
+          "startedAt": "2026-08-30T09:00:00Z",
+          "maintenance": false
+        }
+      ]
+    },
+    {
+      "name": "cb_a on 2026-06-15",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "cb_a",
+        "today": "2026-06-15"
+      },
+      "expected": [
+        {
+          "id": "e",
+          "dayKey": "cb_a",
+          "date": "2026-06-01",
+          "startedAt": "2026-06-01T09:00:00Z",
+          "maintenance": false
+        }
+      ]
+    },
+    {
+      "name": "legs_a on 2026-09-13",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "legs_a",
+        "today": "2026-09-13"
+      },
+      "expected": [
+        {
+          "id": "c",
+          "dayKey": "legs_a",
+          "date": "2026-09-05",
+          "startedAt": "2026-09-05T09:00:00Z",
+          "maintenance": false
+        }
+      ]
+    },
+    {
+      "name": "legs_a on 2026-06-15",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "legs_a",
+        "today": "2026-06-15"
+      },
+      "expected": []
+    },
+    {
+      "name": "nope on 2026-09-13",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "nope",
+        "today": "2026-09-13"
+      },
+      "expected": []
+    },
+    {
+      "name": "nope on 2026-06-15",
+      "input": {
+        "sessions": [
+          {
+            "id": "a",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "b",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "c",
+            "dayKey": "legs_a",
+            "date": "2026-09-05",
+            "startedAt": "2026-09-05T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "d",
+            "dayKey": null,
+            "date": "2026-09-04",
+            "startedAt": "2026-09-04T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "e",
+            "dayKey": "cb_a",
+            "date": "2026-06-01",
+            "startedAt": "2026-06-01T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "f",
+            "dayKey": "cb_a",
+            "date": "2026-09-02",
+            "startedAt": "2026-09-02T09:00:00Z",
+            "maintenance": true
+          },
+          {
+            "id": "h",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "g",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T18:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "dayKey": "nope",
+        "today": "2026-06-15"
+      },
+      "expected": []
+    },
+    {
+      "name": "empty",
+      "input": {
+        "sessions": [],
+        "dayKey": "cb_a",
+        "today": "2026-09-13"
+      },
+      "expected": []
+    }
+  ]
+}

@@ -151,6 +151,35 @@ struct IngestTests {
         #expect(try dailyLog(db)?.waterMl == 2000)
     }
 
+    /// ── THE DAY THAT HAS NO ROW YET ────────────────────────────────────────
+    /// The "today's water stays 0" bug (P3 E4, decision 8) lived in the view —
+    /// `WaterRow.add()` opened with `guard model.dailyLog != nil`, and
+    /// `dailyLogStream` yields nil for a date nothing has written. `ingest`
+    /// returns at `guard !payload.isEmpty` when HealthKit has nothing yet, so
+    /// every morning before the first foreground sync, and every day on a phone
+    /// where the read is denied, the tap was a silent no-op.
+    ///
+    /// The guard is gone, and this is the contract that makes deleting it safe:
+    /// `addWaterGlass` mints the day's row itself and re-reads the ledger sum
+    /// inside its own transaction, so it needs nothing to have run before it.
+    @Test("a glass lands on a day HealthKit has never written")
+    func glassMintsTheDay() throws {
+        let db = try store()
+        #expect(try dailyLog(db) == nil, "precondition: nothing has written this day")
+
+        try db.addWaterGlass(userId: user, date: day, ml: 250)
+
+        #expect(try dailyLog(db)?.waterMl == 250)
+        let rows = try db.writer.read { conn in try WaterIntakeRow.fetchAll(conn) }
+        #expect(rows.count == 1)
+        #expect(ManualEntry.isGlass(rows[0].hkUuid))
+
+        // And Apple still lands on top of it when the day finally reports.
+        let report = try db.ingest(payload([.water: 1100, .steps: 100]), userId: user)
+        #expect(try dailyLog(db)?.waterMl == 1350)
+        #expect(!report.declined.contains { $0.contains("water") })
+    }
+
     @Test("the sheet's override still wins, glasses included")
     func overrideStillReplacesTheDay() throws {
         let db = try store()

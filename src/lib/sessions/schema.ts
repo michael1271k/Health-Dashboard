@@ -87,6 +87,23 @@ export const SaveWorkoutSchema = z.object({
   // this is not an int.
   sessionRpe: z.number().min(1).max(10).optional(),
   reportMd: z.string().max(2000).optional(),              // coach_insight (no LLM call on JSON ingests)
+  /**
+   * Minutes the session spent PAUSED.
+   *
+   * ── WHY THE PAYLOAD HAS TO CARRY THESE ─────────────────────────────────────
+   * `ended_at` is wall clock and `buildCommitPayload` pushes it forward by the
+   * pause deliberately, so the server cannot derive `duration_min` from
+   * `ended − started` without counting the pause it just added — which is the
+   * whole of the 385-minute Sept 6 session. It is not recoverable server-side:
+   * the pause lives in the draft. See `sessionDuration`.
+   *
+   * The long-idle guard's other input, the last set's instant, is deliberately
+   * NOT here: a committed set carries no timestamp of its own, and with the
+   * pause stated the web's own arithmetic already lands on the right answer
+   * (`buildCommitPayload` builds `endedAt` from the duration it is reporting).
+   * The phone has real per-event timestamps and applies the guard itself.
+   */
+  pausedMin: z.number().min(0).max(24 * 60).optional(),
   metrics: z.object({
     durationMin: z.number().nullable().optional(),
     avgBpm: z.number().nullable().optional(),

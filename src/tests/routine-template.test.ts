@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { PROGRAMS } from '@/lib/programs'
+import { PROGRAMS, activeProgram } from '@/lib/programs'
+import { buildTemplateDraft } from '@/lib/sessions/templateDraft'
 import {
   payloadToTemplate, templateToDraft, parseTemplate,
   type TemplateSourceSet, type RoutineTemplate,
@@ -225,5 +226,50 @@ describe('cardio blocks keep their place in the template', () => {
   it('survives a missing deckOrder by landing at the end', () => {
     const t = payloadToTemplate(strength, [{ name: 'Treadmill', distanceKm: 1 }])!
     expect(t.exercises[t.exercises.length - 1].name).toBe('Treadmill')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The tier order (P3 E4) — history outranks the template, and the template
+// still owns the deck.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('buildTemplateDraft — history outranks the stored template', () => {
+  const day = activeProgram('onyx5', 'cut').days.find((d) => d.key === 'cb_a')!
+  const stored: RoutineTemplate = {
+    version: 1,
+    exercises: [
+      { name: 'Face Pull', order: 0, sets: [{ weightKg: 10, reps: 12 }] },
+      { name: 'Lat Pulldown', order: 1, sets: [{ weightKg: 40, reps: 10 }, { weightKg: 40, reps: 9 }] },
+    ],
+  }
+  const history = new Map([
+    ['Face Pull', { date: '2026-09-06', sets: [{ weightKg: 16.25, reps: 15 }, { weightKg: 16.25, reps: 14 }] }],
+  ])
+
+  it('replaces a templated exercise’s sets with what was actually logged', () => {
+    const d = buildTemplateDraft(day, '2026-09-13', history, stored)
+    const face = d.exercises.find((e) => e.name === 'Face Pull')!
+    expect(face.sets.map((s) => [s.weightKg, s.reps])).toEqual([[16.25, 15], [16.25, 14]])
+    expect(face.seededFrom).toBe('2026-09-06')
+    expect(face.sets.every((s) => s.done === false)).toBe(true)
+  })
+
+  it('leaves an exercise history says nothing about on the template’s numbers', () => {
+    const d = buildTemplateDraft(day, '2026-09-13', history, stored)
+    const lat = d.exercises.find((e) => e.name === 'Lat Pulldown')!
+    expect(lat.sets.map((s) => [s.weightKg, s.reps])).toEqual([[40, 10], [40, 9]])
+    expect(lat.seededFrom).toBeUndefined()
+  })
+
+  it('keeps the template’s deck and its order — the one thing only it carries', () => {
+    const d = buildTemplateDraft(day, '2026-09-13', history, stored)
+    expect(d.exercises.filter((e) => e.kind !== 'cardio').map((e) => e.name))
+      .toEqual(['Face Pull', 'Lat Pulldown'])
+  })
+
+  it('still opens the deck with the Treadmill warm-up', () => {
+    const d = buildTemplateDraft(day, '2026-09-13', history, stored)
+    expect(d.exercises[0].kind).toBe('cardio')
   })
 })

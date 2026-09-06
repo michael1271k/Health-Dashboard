@@ -560,11 +560,6 @@ private struct WaterRow: View {
 
     @State private var glasses = 0
 
-    /// The day's row has arrived. `setWaterOverride` REPLACES the ledger, so a
-    /// tap before the first yield reads `waterMl` as nil and writes 250 ml over
-    /// a day that already had 2,400.
-    private var loaded: Bool { model.dailyLog != nil }
-
     var body: some View {
         HStack(spacing: OnyxSpace.s) {
             Image(systemName: "drop.fill")
@@ -602,8 +597,25 @@ private struct WaterRow: View {
         .accessibilityAction(named: "Set the day's water", onEdit)
     }
 
+    /// ── NO "HAS THE DAY LOADED YET" GUARD ──────────────────────────────────
+    /// There was one — `guard model.dailyLog != nil` — and it is the whole of
+    /// the "today's water stays 0" bug. `dailyLogStream` yields nil for a date
+    /// with no `daily_logs` row, and a day has no row until something writes
+    /// one: `ingest` returns at `guard !payload.isEmpty` when HealthKit has
+    /// nothing yet, which is every morning before the first foreground sync and
+    /// every day on a phone where the read was denied. So the tap on the tab's
+    /// most-repeated control did nothing at all, silently, on exactly the days
+    /// you would most want to log a glass — and the guard was self-locking,
+    /// because the write it blocked is the one that would have minted the row.
+    ///
+    /// The guard was protecting against `setWaterOverride` reading a stale
+    /// `waterMl` and replacing the day with 250 ml. `addWater` stopped calling
+    /// that in `0a12e99`: `addWaterGlass` appends its own ledger row and
+    /// re-reads the SUM inside its own transaction, so there is no stale read
+    /// left to protect, and it mints the day's row itself
+    /// (`patchDailyLog` → `existingDailyLog`, the same minting HealthKit uses).
+    /// The comment outlived the call it was about.
     private func add() {
-        guard loaded else { return }
         model.addWater()
         glasses += 1
     }

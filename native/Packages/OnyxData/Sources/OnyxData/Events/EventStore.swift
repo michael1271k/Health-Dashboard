@@ -103,6 +103,85 @@ extension AppDatabase {
         return try record(sessionId: sessionId, setId: setId, body: .amend(patch))
     }
 
+    /// Stop the session clock, and start it again.
+    ///
+    /// Idempotent in the only way that matters: pausing an already-paused
+    /// session appends a second `pause`, and `pausedSeconds` counts from the
+    /// FIRST of a run — so a double tap, or two devices pausing at once, cannot
+    /// bank the same minutes twice.
+    @discardableResult
+    public func pauseSession(_ sessionId: String) throws -> SetEvent {
+        try record(sessionId: sessionId, setId: sessionId, body: .pause)
+    }
+
+    @discardableResult
+    public func resumeSession(_ sessionId: String) throws -> SetEvent {
+        try record(sessionId: sessionId, setId: sessionId, body: .resume)
+    }
+
+    /// True when the session's clock is currently stopped.
+    public func isPaused(sessionId: String) throws -> Bool {
+        try Self.isPaused(setEvents(sessionId: sessionId))
+    }
+
+    /// How long the session has been paused for, in seconds, as of `now`.
+    ///
+    /// ── ORDERED BY THE LAMPORT CLOCK, MEASURED BY THE WALL CLOCK ────────────
+    /// `SetEvent` is emphatic that `createdAt` is for display and must never be
+    /// sorted by, and this does not sort by it: the order is `(seq, deviceId,
+    /// id)` like every other fold. But a Lamport clock has no duration, so the
+    /// LENGTH of a pause can only come from the wall clock, and the difference
+    /// between two stamps written by the same device minutes apart is the one
+    /// thing it is reliable for. A pair that comes out negative (an NTP step
+    /// mid-pause) contributes zero rather than shortening the session.
+    public func pausedSeconds(sessionId: String, now: Date = Date()) throws -> TimeInterval {
+        try Self.pausedSeconds(setEvents(sessionId: sessionId), now: now)
+    }
+
+    static func isPaused(_ events: [SetEvent]) -> Bool {
+        var paused = false
+        for event in ordered(events) where event.kind.isClock { paused = event.kind == .pause }
+        return paused
+    }
+
+    static func pausedSeconds(_ events: [SetEvent], now: Date) -> TimeInterval {
+        var total: TimeInterval = 0
+        var openedAt: Date?
+        for event in ordered(events) where event.kind.isClock {
+            switch event.kind {
+            case .pause:
+                // Only the FIRST pause of a run opens the interval.
+                if openedAt == nil { openedAt = event.createdAt }
+            case .resume:
+                if let start = openedAt { total += max(0, event.createdAt.timeIntervalSince(start)) }
+                openedAt = nil
+            default:
+                break
+            }
+        }
+        if let start = openedAt { total += max(0, now.timeIntervalSince(start)) }
+        return total
+    }
+
+    /// The total order the fold uses — `(seq, deviceId, id)`, never wall time.
+    private static func ordered(_ events: [SetEvent]) -> [SetEvent] {
+        events.sorted { lhs, rhs in
+            if lhs.seq != rhs.seq { return lhs.seq < rhs.seq }
+            if lhs.deviceId != rhs.deviceId { return lhs.deviceId < rhs.deviceId }
+            return lhs.id < rhs.id
+        }
+    }
+
+    /// The instant of the last event that added or changed a SET — the
+    /// long-idle guard's "last completed set". A void does not count: undoing a
+    /// set is not doing one.
+    public func lastSetActivity(sessionId: String) throws -> Date? {
+        try setEvents(sessionId: sessionId)
+            .filter { $0.kind == .append || $0.kind == .amend }
+            .map(\.createdAt)
+            .max()
+    }
+
     /// Delete a set — by appending a tombstone, never by deleting anything.
     ///
     /// The event that created the set stays in the log. That is the point: the
@@ -142,6 +221,20 @@ extension AppDatabase {
     /// Assumes it is already inside a write transaction.
     static func commit(_ event: SetEvent, in db: Database) throws {
         try event.insert(db)
+
+        // ── A CLOCK EVENT NEVER LEAVES THE DEVICE ───────────────────────────
+        // `set_events` is local-only and the drainer reconciles ROWS: it looks
+        // each queued event's `setId` up in the projection and, finding
+        // nothing, tells the server to delete that id (`SyncEngine`, the
+        // `projected[setId]` miss). A pause carries the SESSION's id there, so
+        // queueing one would send a delete for an id that is not a set — a
+        // harmless no-op on the server and a request per pause for nothing.
+        // What the server needs from a pause is `duration_min`, which
+        // `closeSession` computes and the session upsert carries.
+        guard !event.kind.isClock else {
+            try reproject(sessionId: event.sessionId, in: db)
+            return
+        }
 
         var item = OutboxItem(
             kind: "set_event.\(event.kind.rawValue)",

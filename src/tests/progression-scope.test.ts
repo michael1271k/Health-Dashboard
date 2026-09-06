@@ -106,8 +106,8 @@ describe('bucketByExerciseDay', () => {
     const byExDay = bucketByExerciseDay(LEGS_B_HISTORY)
     const sessions = lastTwoSessions(byExDay, 'legs_b', LEG_PRESS)
     expect(sessions).toEqual([
-      [{ weightKg: 72.5, reps: 13 }, { weightKg: 72.5, reps: 13 }],
-      [{ weightKg: 72.5, reps: 13 }, { weightKg: 72.5, reps: 13 }],
+      [{ weightKg: 72.5, reps: 13, rpe: null }, { weightKg: 72.5, reps: 13, rpe: null }],
+      [{ weightKg: 72.5, reps: 13, rpe: null }, { weightKg: 72.5, reps: 13, rpe: null }],
     ])
   })
 
@@ -127,7 +127,7 @@ describe('bucketByExerciseDay', () => {
       set('legs_b', '2026-08-14T09:00:00Z', 72.5, 13),
     ]
     expect(lastTwoSessions(bucketByExerciseDay(rows), 'legs_b', LEG_PRESS)).toEqual([
-      [{ weightKg: 72.5, reps: 13 }],
+      [{ weightKg: 72.5, reps: 13, rpe: null }],
     ])
   })
 

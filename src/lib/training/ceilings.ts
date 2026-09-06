@@ -17,6 +17,34 @@ import { canonicalExerciseName } from '@/lib/exercises/aliases'
 /** Recommended jump once the ceiling is cleared twice. */
 export const LOAD_STEP_KG = 2.5
 
+/**
+ * The two load steps the weight stepper offers — a tap and a long press.
+ *
+ * Coarse FIRST, and `LOAD_STEP_KG` is that first entry: it is the jump
+ * `progressionVerdict` suggests and the one the plan is written in. 1.25 is
+ * there because cable stacks and micro-plates genuinely move in halves of it,
+ * and a stepper that can only offer 2.5 forces a load you did not lift to be
+ * recorded as one you did.
+ */
+export const LOAD_STEPS_KG: readonly number[] = [2.5, 1.25]
+
+/** The finest step — what a hand-typed or derived load is snapped to. */
+export const LOAD_STEP_FINE_KG = LOAD_STEPS_KG[LOAD_STEPS_KG.length - 1]
+
+/**
+ * Snap a load to a step of the plate stack.
+ *
+ * Two decimals on the way out, for the same reason `OnyxFormat.kg` keeps them:
+ * 13.75 is a real load and rounding it in one place while storing it in another
+ * is how a load you can read stops matching the load you can search for. A
+ * non-finite or non-positive step hands the value back untouched rather than
+ * producing NaN.
+ */
+export function roundToStep(kg: number, step: number = LOAD_STEP_FINE_KG): number {
+  if (!Number.isFinite(kg) || !Number.isFinite(step) || step <= 0) return kg
+  return Math.round(Math.round(kg / step) * step * 100) / 100
+}
+
 export interface RepWindow { floor: number; ceiling: number }
 
 /**
@@ -102,7 +130,42 @@ export function holdTargetFor(
   return holds.length ? Math.max(...holds) : null
 }
 
-export interface WorkingSet { weightKg: number; reps: number }
+export interface WorkingSet {
+  weightKg: number
+  reps: number
+  /**
+   * CR-10, or null/absent for an UNRATED set — which is most of the history.
+   * See `PROGRESSION_MAX_RPE` for why the difference is load-bearing.
+   */
+  rpe?: number | null
+}
+
+/**
+ * The ceiling on effort a progression may be earned at.
+ *
+ * ── THE HEADER PROMISED THIS FOR A YEAR AND THE CODE NEVER READ IT ──────────
+ * `PROGRESSION_RULES` has always said "all work sets hit the ceiling at RPE
+ * ≤ 8.5"; only the reps half was implemented. Hitting the top of the window at
+ * an RPE of 9.5 is the top of the window bought with everything you had, and
+ * adding load to it is how a stall becomes a regression.
+ *
+ * ── AN UNRATED SET PASSES, DELIBERATELY ────────────────────────────────────
+ * `workout_sets.rpe` is nullable and most of the history is null (87 of 112
+ * sessions carry no session rating at all). Treating null as "too hard" would
+ * silently turn the progression cue off for every lift logged before rating was
+ * a habit; treating it as "easy" is what the nil-vs-zero rule forbids
+ * everywhere else. The honest reading is that an unrated set makes no claim
+ * about effort, so it cannot be the thing that blocks a verdict the reps have
+ * earned — and the moment you DO rate a set 9, it counts.
+ */
+export const PROGRESSION_MAX_RPE = 8.5
+
+/** No rated working set was above the effort ceiling. Unrated sets pass. */
+export function underEffortCeiling(sets: WorkingSet[]): boolean {
+  return workLoads(sets).every(
+    (s) => s.rpe == null || !Number.isFinite(s.rpe) || (s.rpe as number) <= PROGRESSION_MAX_RPE,
+  )
+}
 
 /**
  * Did this session earn a load increase? Every working set must reach the
@@ -328,7 +391,9 @@ export interface ProgressionVerdict {
  *  · newest cleared, previous did not → `one-more` (one more clean session)
  *  · otherwise → `no`
  *
- * "Cleared" is `topLoadCleared`: two sets at the ceiling on the heaviest load.
+ * "Cleared" is `topLoadCleared` AND `underEffortCeiling`: two sets at the
+ * ceiling on the heaviest load, none of them RATED above 8.5. An unrated set
+ * passes — see `PROGRESSION_MAX_RPE`.
  *
  * A ladder COLLAPSE no longer counts as cleared. It used to, on the reasoning
  * that a mid-session load increase shouldn't break the chain — but the effect
@@ -344,7 +409,8 @@ export function progressionVerdict(
 ): ProgressionVerdict {
   if (ceiling == null || !sessions.length) return { state: 'no', ceiling, suggestKg: null }
 
-  const cleared = (sets: WorkingSet[]): boolean => topLoadCleared(sets, ceiling)
+  const cleared = (sets: WorkingSet[]): boolean =>
+    topLoadCleared(sets, ceiling) && underEffortCeiling(sets)
   /** Progression is measured from the load actually being handled. */
   const topLoad = (sets: WorkingSet[]): number => {
     const working = sets.filter((s) => s.weightKg > 0)
