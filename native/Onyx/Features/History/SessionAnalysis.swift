@@ -72,14 +72,22 @@ enum SessionAnalysis {
         let exercises: [ExerciseReport]
         /// Weighted sets per landmark, descending, untrained muscles absent.
         let muscles: [(muscle: LandmarkMuscle, sets: Double)]
-        let cardio: [CardioLogRow]
         let prCount: Int
         /// Every set that was performed, ghosts excluded, a unilateral pair
         /// counted once — the denominator the muscle sheet's weighted total is
         /// read against. NOT `sets`, which is working sets only: warm-ups earn
         /// muscle credit and would otherwise make the two figures disagree.
         let physicalSets: Int
-        var tonnageKg: Double { jsRound(exercises.reduce(0) { $0 + $1.detail.volumeKg }) }
+        /// Σ of the movements' own tonnage, to the two decimals a real plate
+        /// can reach.
+        ///
+        /// It used to be `jsRound(…)` — a whole number — over per-exercise
+        /// figures that were themselves `jsRound`ed. Two roundings, and the
+        /// second one is why a session the database records as 13,242.5 kg
+        /// could not be printed as anything but 13,243 no matter what the
+        /// formatter did. `SessionVolume.sessionVolumeKg` already ends at two
+        /// decimals; this only clears the float dust of adding eight of them.
+        var tonnageKg: Double { jsRound(exercises.reduce(0) { $0 + $1.detail.volumeKg } * 100) / 100 }
         var sets: Int { exercises.reduce(0) { $0 + Int($1.detail.workingSets) } }
     }
 
@@ -106,7 +114,11 @@ enum SessionAnalysis {
             out.append(Summary(
                 id: session.id, date: session.date, dayKey: session.dayKey, durationMin: session.durationMin,
                 sets: SessionDetail.toRows(working.map(detailSet)).filter { $0.num != nil }.count,
-                tonnageKg: SessionVolume.sessionVolumeKg(working.map(volumeSet)),
+                // WORKING for the count, EVERY non-ghost row for the tonnage —
+                // see `report`'s `volumeKg`. A history row and the session page
+                // it opens disagreeing about the same workout's weight is the
+                // same divergence, one screen earlier.
+                tonnageKg: SessionVolume.sessionVolumeKg(rows.map(volumeSet)),
                 prCount: pr.prCount
             ))
         }
@@ -115,7 +127,13 @@ enum SessionAnalysis {
 
     // MARK: - The report
 
-    static func report(_ session: WorkoutSession, rows: [HistorySetRow], history: [HistorySetRow], cardio: [CardioLogRow]) -> Report {
+    /// `cardio_logs` is deliberately NOT an input. It was, and the page drew a
+    /// banner from it under the ledger — a second list, in a different shape,
+    /// of rows that are not part of this workout (`AppDatabase.cardio` matches
+    /// the session id OR the date, so any bout logged that day appeared). A
+    /// treadmill bout that IS part of the session is a `workout_sets` row and
+    /// comes through `rows` like every other movement.
+    static func report(_ session: WorkoutSession, rows: [HistorySetRow], history: [HistorySetRow]) -> Report {
         let groups = grouped(rows)
         // The ledger is in performed order, so "prior" is everything before
         // this session's first row — a same-day session is ordered by start.
@@ -143,7 +161,20 @@ enum SessionAnalysis {
                 exerciseId: g.exerciseId, name: canonical, order: Double(order), sets: sets,
                 workingSets: Double(SessionDetail.toRows(working).count),
                 topKg: working.map(\.weightKg).max() ?? 0,
-                volumeKg: jsRound(SessionVolume.sessionVolumeKg(working.map { VolumeSet(weightKg: $0.weightKg, reps: $0.reps, side: $0.side, pairId: $0.pairId, setType: $0.setType) })),
+                // ── EVERY SET, NOT THE WORKING ONES ────────────────────
+                // `SessionVolume`'s header states the rule and the header is
+                // right: "A ghost weighs nothing; a warm-up still counts." It
+                // already drops the ghosts, so pre-filtering to working sets
+                // here was the caller overruling the rule — and `Report.
+                // tonnageKg` sums these, so the session page reported 12,343 kg
+                // for a workout `SessionEditing.totals`, `closeSession` and
+                // `workout_sessions.total_volume_kg` all put at 13,242.5. The
+                // gap was one 60 × 15 warm-up on the leg press.
+                //
+                // `topKg`, `bestEst1rm` and `workingSets` stay on `working`:
+                // "Top" is a claim about the working sets and a warm-up must
+                // not be allowed to win it.
+                volumeKg: SessionVolume.sessionVolumeKg(sets.map { VolumeSet(weightKg: $0.weightKg, reps: $0.reps, side: $0.side, pairId: $0.pairId, setType: $0.setType) }),
                 bestEst1rm: working.compactMap(\.est1rmKg).max(),
                 prAxes: pr.axesByKey.first { $0.key == g.exerciseId }?.axes.map(\.rawValue)
             )
@@ -215,7 +246,7 @@ enum SessionAnalysis {
         // "what did it beat" in place rather than in a second list.
         return Report(
             session: session, exercises: exercises,
-            muscles: muscles, cardio: cardio, prCount: pr.prCount,
+            muscles: muscles, prCount: pr.prCount,
             physicalSets: groups.reduce(0) { $0 + physicalSets($1.sets) }
         )
     }
@@ -291,8 +322,28 @@ enum SessionAnalysis {
         let sets: [HistorySetRow]
     }
 
-    /// One session's rows by exercise, exercises in first-seen order, sets in
-    /// performed order within each.
+    /// One session's rows by exercise, exercises in the order they were
+    /// PERFORMED IN, sets in performed order within each.
+    ///
+    /// ── `exercise_order` FIRST, FIRST-SEEN AS THE FALLBACK ──────────────────
+    /// This grouped by first appearance alone, and `fold_order` — which is what
+    /// decides first appearance — is `reproject`'s enumeration of the fold, and
+    /// the fold sorts by `set_index` across the whole session. So the order a
+    /// session's movements come back in is the order their FIRST SETS were
+    /// logged in, and nothing a reader does can change it.
+    ///
+    /// Dragging a card in the edit deck (§U4.5) writes `exercise_order` onto
+    /// every set of every movement the drag shifted — `LoggerModel.deckOrder`,
+    /// through `SetPatch` and `SetEventFold` — and the column reached Postgres
+    /// correctly. It simply had no reader: the summary, the history list and
+    /// the ledger all grouped by first appearance, so a reorder was a gesture
+    /// with a database write behind it and no visible effect on either client.
+    ///
+    /// A movement's position is the MINIMUM its rows carry: an amend can miss a
+    /// row (a warm-up added after the drag), and one straggler must not split a
+    /// movement in two or send it to the end. Nil is not zero — a row nobody
+    /// ever placed sorts by where it was seen, after everything that has been
+    /// placed, which is the honest reading of "unknown".
     static func grouped(_ rows: [HistorySetRow]) -> [Group] {
         var order: [String] = []
         var by: [String: [HistorySetRow]] = [:]
@@ -300,10 +351,20 @@ enum SessionAnalysis {
             if by[r.exerciseId] == nil { order.append(r.exerciseId) }
             by[r.exerciseId, default: []].append(r)
         }
-        return order.map { id in
+        let groups = order.enumerated().map { seen, id -> (seen: Int, placed: Int?, group: Group) in
             let sets = by[id]!.sorted { ($0.setIndex, $0.foldOrder) < ($1.setIndex, $1.foldOrder) }
-            return Group(exerciseId: id, name: sets[0].exerciseName, sets: sets)
+            return (seen, sets.compactMap(\.exerciseOrder).min(), Group(exerciseId: id, name: sets[0].exerciseName, sets: sets))
         }
+        return groups
+            .sorted { a, b in
+                switch (a.placed, b.placed) {
+                case let (x?, y?): return x != y ? x < y : a.seen < b.seen
+                case (nil, _?):    return false
+                case (_?, nil):    return true
+                case (nil, nil):   return a.seen < b.seen
+                }
+            }
+            .map(\.group)
     }
 
     /// `buildBaselines` over the prior rows + `detectSessionPrs` over the
@@ -354,7 +415,8 @@ enum SessionAnalysis {
         CoreBridge.detailSet(
             setNumber: Double(r.setIndex), weightKg: r.weightKg, reps: Double(r.reps), rpe: r.rpe,
             est1rmKg: r.est1rmKg, setType: r.setType, side: r.lr, pairId: r.pairId,
-            durationSec: r.durationSec.map(Double.init), incline: r.incline, distanceKm: r.distanceKm
+            durationSec: r.durationSec.map(Double.init), incline: r.incline, distanceKm: r.distanceKm,
+            elevationM: r.elevationM
         )
     }
 

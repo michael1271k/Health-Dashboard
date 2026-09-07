@@ -127,6 +127,7 @@ public enum SetEventFold {
                     durationSec: snapshot.durationSec,
                     incline: snapshot.incline,
                     distanceKm: snapshot.distanceKm,
+                    elevationM: snapshot.elevationM,
                     isPendingSync: isPendingSync
                 )
             }

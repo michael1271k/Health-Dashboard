@@ -24,6 +24,11 @@ public struct DetailSet: Codable, Sendable, Equatable {
     public var durationSec: Double?
     public var incline: Double?
     public var distanceKm: Double?
+    /// Total ascent in METRES, measured rather than derived from
+    /// `incline` × `distanceKm` — see `WorkoutSet.elevationM`. Optional on the
+    /// type for the reason the three above it are: every vector written before
+    /// it existed carries no such key.
+    public var elevationM: Double?
 }
 
 public struct DetailExercise: Codable, Sendable, Equatable {

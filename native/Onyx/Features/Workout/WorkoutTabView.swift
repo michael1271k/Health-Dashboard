@@ -103,7 +103,7 @@ struct WorkoutTabView: View {
             .padding(.bottom, OnyxSpace.xl)
         }
         .onyxScreen(.train)
-        .navigationTitle("Workout")
+        .navigationTitle("Train")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
         .navigationDestination(item: $summary) { id in

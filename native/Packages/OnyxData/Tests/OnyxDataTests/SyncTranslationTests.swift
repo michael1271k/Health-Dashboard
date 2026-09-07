@@ -182,7 +182,7 @@ struct SyncTranslationTests {
             WorkoutSet(id: "b", sessionId: "s1", exerciseId: "helix5-pec-deck",
                        setIndex: 2, weightKg: 40, reps: 12, side: "left",
                        pairId: "p1", est1rmKg: 55, rpe: 8, exerciseOrder: 3,
-                       durationSec: 300, incline: 2, distanceKm: 0.37),
+                       durationSec: 300, incline: 2, distanceKm: 0.37, elevationM: 7.4),
             userId: "u1", exerciseId: "uuid-1"
         )
 
@@ -205,8 +205,14 @@ struct SyncTranslationTests {
         // barbell row and a treadmill walk go up in ONE batch, so the barbell
         // row has to write `duration_sec`, `incline` and `distance_km` as null
         // rather than omit them.
-        #expect(try keys(bare).count == 16, "every RemoteSetRow CodingKey is encoded")
-        for column in ["duration_sec", "incline", "distance_km"] {
+        // 17 since `v19.cardioElevation`. The bump is deliberate and this
+        // assertion is what forces it to be: `elevation_m` is a column
+        // `docs/sql/cardio-elevation.sql` adds BY HAND, so a body naming it
+        // fails the whole batch until the founder has run that file. Pinning
+        // the count is what makes the dependency between the two impossible to
+        // add by accident.
+        #expect(try keys(bare).count == 17, "every RemoteSetRow CodingKey is encoded")
+        for column in ["duration_sec", "incline", "distance_km", "elevation_m"] {
             #expect(try keys(bare).contains(column), "\(column) is on the wire")
         }
 

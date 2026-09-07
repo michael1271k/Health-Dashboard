@@ -78,7 +78,7 @@ export function formatReps(reps: number | null | undefined, timed = false): stri
 }
 
 /**
- * A set that is not reps and kilograms — `5:00 · 0.37 km · 2%`.
+ * A set that is not reps and kilograms — `5:00 · 0.37 km · 2% · 7 m`.
  *
  * ── WHY THIS IS A SIBLING AND NOT A BRANCH INSIDE `formatSet` ───────────────
  * `formatSet` is parity-locked: a golden vector and a Swift port assert every
@@ -97,11 +97,26 @@ export function formatReps(reps: number | null | undefined, timed = false): stri
  * distance and a zero distance are the same non-fact here. Incline is the one
  * exception to the zero rule in the other direction — a DECLINE is a real
  * setting, so the test is `!== 0` rather than `> 0`.
+ *
+ * ── ASCENT IS LAST, AND IT IS MEASURED ──────────────────────────────────────
+ * `elevationM` is total ascent in metres, and it takes the `> 0` rule rather
+ * than incline's: ascent is non-negative by definition, so a zero and an
+ * absence say the same thing, exactly as they do for distance.
+ *
+ * It is NOT derived from `incline × distanceKm`. Those agree only while the
+ * incline never moved — a real bout walks 2 %, then 4 %, then flat, and
+ * `incline` keeps one of the three — so when the stored ascent disagrees with
+ * the product of the two components beside it, the stored one is right. See
+ * `docs/sql/cardio-elevation.sql`.
+ *
+ * Optional in arity so the three-argument callers written before the column
+ * existed still read as they did; absent is `undefined`, which is dropped.
  */
 export function formatCardioSet(
   durationSec: number | null | undefined,
   distanceKm: number | null | undefined,
   incline: number | null | undefined,
+  elevationM?: number | null,
 ): string | null {
   const ok = (v: number | null | undefined): v is number => v != null && Number.isFinite(v)
   const parts: string[] = []
@@ -113,5 +128,6 @@ export function formatCardioSet(
   }
   if (ok(distanceKm) && distanceKm > 0) parts.push(`${distanceKm} km`)
   if (ok(incline) && incline !== 0) parts.push(`${incline}%`)
+  if (ok(elevationM) && elevationM > 0) parts.push(`${elevationM} m`)
   return parts.length ? parts.join(' · ') : null
 }

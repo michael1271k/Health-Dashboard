@@ -21,15 +21,17 @@ enum CoreBridge {
     static func detailSet(
         setNumber: Double, weightKg: Double, reps: Double, rpe: Double?,
         est1rmKg: Double?, setType: String, side: String?, pairId: String?,
-        durationSec: Double? = nil, incline: Double? = nil, distanceKm: Double? = nil
+        durationSec: Double? = nil, incline: Double? = nil, distanceKm: Double? = nil,
+        elevationM: Double? = nil
     ) -> DetailSet {
         // `compactMapValues` in `make` drops a nil, which is exactly right for
-        // the three cardio axes: absent decodes to nil and every lifted set
+        // the four cardio axes: absent decodes to nil and every lifted set
         // takes that path.
         make([
             "setNumber": setNumber, "weightKg": weightKg, "reps": reps, "rpe": rpe, "isPr": false,
             "est1rmKg": est1rmKg, "setType": setType, "side": side, "pairId": pairId,
             "durationSec": durationSec, "incline": incline, "distanceKm": distanceKm,
+            "elevationM": elevationM,
         ])
     }
 

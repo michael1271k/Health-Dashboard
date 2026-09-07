@@ -60,13 +60,34 @@ extension SessionAnalysis {
         /// upper day that happened to precede it turns a tonnage delta into
         /// noise with a sign on it.
         let previous: Summary?
-        /// Estimated, always, and stamped as such: the local mirror carries no
-        /// `calories_burned` column until Track E's HealthKit wave lands.
-        let calories: CalorieEstimate?
-        /// Measured average heart rate. Nil until `HKWorkout` reads land
-        /// (§7.4) — the cell says "—" rather than borrowing the heart rate of a
-        /// cardio bout that happened to share the date.
+        /// Active energy, in kcal.
+        ///
+        /// ── MEASURED WHEN THERE IS A MEASUREMENT ────────────────────────────
+        /// This was `Estimates.estimateCalories(…)` unconditionally and
+        /// `avgBpm` was the literal `nil`, both written when the local mirror
+        /// had no columns to read. It has had `calories_burned`, `avg_bpm`,
+        /// `calories_estimated` and `avg_bpm_estimated` since `v11`;
+        /// `HealthSync.syncSessionMetrics` fills them from the watch's own
+        /// `HKWorkout` and the finish sheet writes them when you type one. So
+        /// the summary page was the only screen in the app still guessing, and
+        /// it printed `calc` over a figure the watch had measured — the 7
+        /// September session has 383 kcal and 122 bpm on the row and showed an
+        /// estimate and a dash.
+        ///
+        /// The estimate remains the fallback, and `caloriesEstimated` is what
+        /// the `calc` mark and the provenance line read: a measured figure must
+        /// never be labelled as arithmetic.
+        let calories: Double?
+        /// False only when the store holds a MEASURED figure (the column is
+        /// present and `calories_estimated` is 0).
+        let caloriesEstimated: Bool
+        /// How the estimate was arrived at, when it is one. Nil for a measured
+        /// figure and for no figure at all.
+        let calorieBasis: CalorieEstimate.Basis?
+        /// Average heart rate — the watch's, when it recorded one.
         let avgBpm: Double?
+        /// True when `avgBpm` is carried forward rather than measured.
+        let avgBpmEstimated: Bool
         /// The tag row: plan, phase week and lever, each resolved FOR THIS
         /// DATE and not for today. A session logged in week 3 of the cut still
         /// says so after the block has moved on.
@@ -117,8 +138,7 @@ extension SessionAnalysis {
         let rows = ledger.filter { $0.sessionId == sessionId }
         let ids = Set(rows.map(\.exerciseId))
         let history = ledger.filter { ids.contains($0.exerciseId) }
-        let cardio = (try? database.cardio(sessionId: session.id, date: session.date)) ?? []
-        let built = report(session, rows: rows, history: history, cardio: cardio)
+        let built = report(session, rows: rows, history: history)
 
         // The split's line, oldest first. `summaries` replays the whole ledger
         // in order, so a record beaten last month still counts on the session
@@ -143,6 +163,17 @@ extension SessionAnalysis {
         let bodyweight: Double? = ((try? database.latestBodyReading(userId: session.userId, before: session.date)) ?? nil)?.weightKg
         let today = LogicalDay.today()
 
+        // What the session row itself holds. A STORED figure wins outright,
+        // measured or not: `HealthSync` writes the watch's own active energy,
+        // and where it could only estimate it estimated from your recent
+        // sessions, which beats a MET table applied to a duration. The
+        // `*_estimated` flags travel with the number so the cell can say which
+        // it is. The MET estimate is reached only when the column is null.
+        let storedKcal = session.caloriesBurned.map(Double.init)
+        let estimate = Estimates.estimateCalories(
+            durationMin: session.durationMin, samples: [], bodyweightKg: bodyweight
+        )
+
         return Page(
             report: built,
             split: mine.map {
@@ -153,8 +184,11 @@ extension SessionAnalysis {
             },
             careerIndex: careerIndex,
             previous: index.flatMap { $0 > 0 ? mine[$0 - 1] : nil },
-            calories: Estimates.estimateCalories(durationMin: session.durationMin, samples: [], bodyweightKg: bodyweight),
-            avgBpm: nil,
+            calories: storedKcal ?? estimate?.kcal,
+            caloriesEstimated: storedKcal == nil ? true : session.caloriesEstimated,
+            calorieBasis: storedKcal == nil ? estimate?.basis : nil,
+            avgBpm: session.avgBpm.map(Double.init),
+            avgBpmEstimated: session.avgBpmEstimated,
             planLabel: Programs.plan(id: goals?.activePlan ?? "")?.label ?? Program.onyx5.label,
             week: Phases.weekPhase(weekStart: Week.start(of: session.date, startDay: Week.startDay(fromEndDay: goals?.weekEndDay))),
             lever: Levers.leverForDate(

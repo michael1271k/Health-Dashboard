@@ -131,31 +131,33 @@ enum HistoryPreviews {
         for (n, s) in chestBack.enumerated() {
             let id = "s-\(s.date)"
             let start = LogicalDay.date(fromISO: s.date)!.addingTimeInterval(17 * 3600)
+            // ── HEART RATE AND CALORIES, MEASURED ON THE LAST SESSION ───
+            // The metric grid has four provenance states and could photograph
+            // only one: `SessionPage` hard-coded `avgBpm: nil` and always
+            // estimated the calories, so every shot showed "—" and "no weight"
+            // and the measured case — the one the watch actually produces, and
+            // the one the Calories cell overflowed in — was unreviewable.
+            //
+            // On the LAST session only, so the grid's own "first of this split"
+            // and no-data lines are still reachable on the six behind it.
+            let watched = id == lastSession
             try WorkoutSession(id: id, userId: userId, dayKey: "cb_a", date: s.date, startedAt: start,
-                               endedAt: start.addingTimeInterval(64 * 60), durationMin: 64, sessionRpe: 7 + Double(n % 2) * 0.5).insert(db)
+                               endedAt: start.addingTimeInterval(64 * 60), durationMin: 64, sessionRpe: 7 + Double(n % 2) * 0.5,
+                               avgBpm: watched ? 122 : nil, caloriesBurned: watched ? 383 : nil,
+                               avgBpmEstimated: false, caloriesEstimated: false).insert(db)
             var order = 0
+            // The MOVEMENT's own position, as `LoggerModel.deckOrder` writes it
+            // and as the real 7 September rows carry it. The treadmill is 0 and
+            // is inserted LAST, so its card being first in the report is the
+            // `exercise_order` sort doing its job rather than fold order
+            // agreeing with it by accident — which is the whole of what a
+            // reorder has to survive.
+            let placed = ["ex-treadmill": 0, "ex-incline": 1, "ex-pulldown": 2,
+                          "ex-row": 3, "ex-raise": 4, "ex-hkr": 5]
             func set(_ ex: String, _ i: Int, _ w: Double, _ r: Int, type: String = "normal", side: String? = nil, pair: String? = nil, rpe: Double? = nil) throws {
                 try WorkoutSet(id: "\(id)-\(ex)-\(i)\(side ?? "")", sessionId: id, exerciseId: ex, setIndex: i, weightKg: w, reps: r,
-                               setType: type, side: side, pairId: pair, est1rmKg: Epley.oneRepMax(weight: w, reps: Double(r)), rpe: rpe, foldOrder: order).insert(db)
-                order += 1
-            }
-            // ── THE SET THAT IS NOT REPS AND KILOGRAMS ──────────────────
-            // 2026-09-07 opens with one, and it is the only row in the live
-            // database using `duration_sec` / `incline` / `distance_km`. A
-            // fixture without one photographs the fix as an unchanged screen:
-            // the ledger's job here is to render `5:00 · 0.37 km · 2%` where it
-            // used to render `0kg × 0`, and nothing else in six weeks of this
-            // seed carries a cardio axis.
-            //
-            // On the LAST session only, and as a warm-up — the same shape the
-            // real row has, so it earns no tonnage, no ordinal and no record,
-            // and the other six sessions' arithmetic is untouched.
-            if id == lastSession {
-                try WorkoutSet(
-                    id: "\(id)-treadmill", sessionId: id, exerciseId: "ex-treadmill", setIndex: 1,
-                    weightKg: 0, reps: 0, setType: "warmup",
-                    durationSec: 300, incline: 2, distanceKm: 0.37, foldOrder: order
-                ).insert(db)
+                               setType: type, side: side, pairId: pair, est1rmKg: Epley.oneRepMax(weight: w, reps: Double(r)), rpe: rpe,
+                               exerciseOrder: placed[ex], foldOrder: order).insert(db)
                 order += 1
             }
             try set("ex-incline", 0, 20, 12, type: "warmup")
@@ -177,6 +179,38 @@ enum HistoryPreviews {
                 try set("ex-raise", i + 1, w, r - 1, side: "right", pair: pair)
             }
             for i in 0..<2 { try set("ex-hkr", i + 1, 0, 12 + i + n / 2, rpe: 6) }
+            // ── THE SET THAT IS NOT REPS AND KILOGRAMS ──────────────────
+            // 2026-09-07 opens with one, and it is the only row in the live
+            // database using `duration_sec` / `incline` / `distance_km` /
+            // `elevation_m`. A fixture without one photographs the fix as an
+            // unchanged screen: the ledger's job here is to render
+            // `5:00 · 0.37 km · 2% · 7 m` where it used to render `0kg × 0`,
+            // and nothing else in six weeks of this seed carries a cardio
+            // axis.
+            //
+            // On the LAST session only, and as a warm-up — the same shape the
+            // real row has, so it earns no tonnage, no ordinal and no record,
+            // and the other six sessions' arithmetic is untouched.
+            //
+            // LOGGED LAST, PLACED FIRST. `exercise_order` 0 against a fold
+            // order behind every lift, so the report putting its card at the
+            // top is `SessionAnalysis.grouped` reading the column rather than
+            // first appearance agreeing with it — the one state that tells a
+            // reorder apart from a coincidence.
+            if id == lastSession {
+                try WorkoutSet(
+                    id: "\(id)-treadmill", sessionId: id, exerciseId: "ex-treadmill", setIndex: 1,
+                    weightKg: 0, reps: 0, setType: "warmup",
+                    exerciseOrder: placed["ex-treadmill"],
+                    // 7 m of ascent. 0.37 km at 2 % is 7.4 — close, and NOT
+                    // where this comes from: the column is measured, and a
+                    // fixture that used the product would photograph the one
+                    // thing the column exists to disprove.
+                    durationSec: 300, incline: 2, distanceKm: 0.37, elevationM: 7,
+                    foldOrder: order
+                ).insert(db)
+                order += 1
+            }
         }
 
         // ── ONE PPL-ERA SESSION ─────────────────────────────────────────────

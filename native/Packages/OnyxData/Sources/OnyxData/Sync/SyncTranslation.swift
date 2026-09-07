@@ -383,6 +383,21 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     public var durationSec: Int?
     public var incline: Double?
     public var distanceKm: Double?
+    /// Total ascent for the bout, in metres — `docs/sql/cardio-elevation.sql`.
+    ///
+    /// Pulled and SENT, on the same terms as the three axes above: the puller
+    /// asks for `select=*`, so a server without the column simply answers
+    /// without the key and this decodes nil, and the push writes the key on
+    /// every row so one batch never carries two shapes.
+    ///
+    /// ── AND THE PUSH IS WHY THE SQL COMES FIRST ─────────────────────────────
+    /// `docs/sql/cardio-elevation.sql` is applied BY HAND, and until it is,
+    /// PostgREST rejects a body naming a column it does not have — the whole
+    /// session, not one field. Sending it conditionally is the alternative and
+    /// it is worse: the condition would have to be a schema probe on every
+    /// drain, and a batch that sometimes carries the key and sometimes does not
+    /// is the two-shapes bug this type's `encode(to:)` exists to prevent.
+    public var elevationM: Double?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -401,6 +416,7 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         case durationSec = "duration_sec"
         case incline
         case distanceKm = "distance_km"
+        case elevationM = "elevation_m"
     }
 
     /// Same reason as `RemoteSessionRow`: nulls are written, never omitted, so
@@ -469,6 +485,10 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         try c.encode(durationSec, forKey: .durationSec)
         try c.encode(incline, forKey: .incline)
         try c.encode(distanceKm, forKey: .distanceKm)
+        // A FOURTH, for the same reason and with the same null. Ascent is
+        // measured, so this device's nil is "nobody measured it", which for a
+        // barbell row is the truth and for the treadmill is what came down.
+        try c.encode(elevationM, forKey: .elevationM)
     }
 }
 
@@ -566,7 +586,8 @@ public extension SyncTranslation {
             exerciseOrder: set.exerciseOrder,
             durationSec: set.durationSec,
             incline: set.incline,
-            distanceKm: set.distanceKm
+            distanceKm: set.distanceKm,
+            elevationM: set.elevationM
         )
     }
 

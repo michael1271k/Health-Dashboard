@@ -45,6 +45,17 @@ export interface DetailSet {
   durationSec?: number | null
   incline?: number | null
   distanceKm?: number | null
+  /**
+   * Total ascent for the bout, in METRES — `docs/sql/cardio-elevation.sql`.
+   *
+   * Measured, not `incline × distanceKm`: those agree only while the incline
+   * never moved, and `incline` stores one reading of a walk that changed it.
+   *
+   * The column is applied by hand, so `null` on every row is the normal state
+   * until it is — and PostgREST answers a missing column with a missing key,
+   * which lands here as nullish either way.
+   */
+  elevationM?: number | null
   /*
    * `restSec` USED to be here, and it is worth saying why it is not.
    *
@@ -179,6 +190,7 @@ type RawSet = {
   duration_sec: number | null
   incline: number | null
   distance_km: number | null
+  elevation_m: number | null
   /** Absent on a database without the column, and on every historic row. */
   exercises: { name: string; muscle_groups: string[] | null; is_compound: boolean }
 }
@@ -216,7 +228,7 @@ export function useSessionDetail(sessionId: string | null) {
       // empty session, which is a fact rather than a schema question.
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, duration_sec, incline, distance_km, exercises!inner(name, muscle_groups, is_compound)')
+        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, duration_sec, incline, distance_km, elevation_m, exercises!inner(name, muscle_groups, is_compound)')
         .eq('session_id', sessionId as string)
         .order('exercise_order', { ascending: true })
         .order('set_number', { ascending: true })
@@ -295,7 +307,7 @@ export function useSessionDetail(sessionId: string | null) {
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
           durationSec: r.duration_sec ?? null, incline: r.incline ?? null,
-          distanceKm: r.distance_km ?? null,
+          distanceKm: r.distance_km ?? null, elevationM: r.elevation_m ?? null,
         })
         // One set per landmark mover, deduped across a unilateral pair. Declared
         // out here because both the working-set count and the muscle credit

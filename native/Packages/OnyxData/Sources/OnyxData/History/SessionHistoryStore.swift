@@ -37,6 +37,21 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
     public var durationSec: Int?
     public var incline: Double?
     public var distanceKm: Double?
+    /// Total ascent in metres — see `WorkoutSet.elevationM`. Selected because
+    /// the Session Report's `DetailSet` is built from this row and nothing
+    /// else; a column absent from `setSelect` is a column the ledger cannot
+    /// draw, however faithfully the rest of the path carried it.
+    public var elevationM: Double?
+    /// The MOVEMENT's position in the session, dense from 0 — the column a
+    /// reorder writes (`WorkoutSet.exerciseOrder`). Nil on a row logged before
+    /// it existed, and on any row nobody has ever placed.
+    ///
+    /// It is selected here because the alternative is what §U4.5 shipped: a
+    /// drag rewrote `exercise_order` on every set it moved, and every reader
+    /// grouped the session by FIRST APPEARANCE in `fold_order` instead — so
+    /// the reorder was written correctly, pushed correctly, and invisible on
+    /// both clients. `SessionAnalysis.grouped` is the one place it is read.
+    public var exerciseOrder: Int?
     /// The session's logical day, ISO.
     public var date: String
     public var dayKey: String?
@@ -58,6 +73,8 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
         case durationSec = "duration_sec"
         case incline
         case distanceKm = "distance_km"
+        case elevationM = "elevation_m"
+        case exerciseOrder = "exercise_order"
         case date
         case dayKey = "day_key"
     }
@@ -84,7 +101,7 @@ public extension AppDatabase {
                COALESCE(e.name, s.exercise_id) AS exercise_name,
                s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                s.side, s.pair_id, s.est_1rm_kg, s.rpe,
-               s.duration_sec, s.incline, s.distance_km,
+               s.duration_sec, s.incline, s.distance_km, s.elevation_m, s.exercise_order,
                sess.date, sess.day_key
         FROM workout_sets s
         JOIN workout_sessions sess ON sess.id = s.session_id

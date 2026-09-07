@@ -94,6 +94,22 @@ describe('formatCardioSet', () => {
     expect(formatCardioSet(60, null, 0)).toBe('1:00')
     expect(formatCardioSet(60, null, -3)).toBe('1:00 · -3%')
   })
+
+  it('appends measured ascent last, and drops it at zero or below', () => {
+    expect(formatCardioSet(300, 0.37, 2, 7)).toBe('5:00 · 0.37 km · 2% · 7 m')
+    // NOT derived: 0.37 km at 2% is 7.4 m, and a bout that changed incline
+    // measured 12. The stored figure wins — that is why the column exists.
+    expect(formatCardioSet(300, 0.37, 2, 12)).toBe('5:00 · 0.37 km · 2% · 12 m')
+    expect(formatCardioSet(null, null, null, 7)).toBe('7 m')
+    // Ascent is non-negative by definition, so zero and absent are one fact —
+    // the distance rule, not incline's.
+    expect(formatCardioSet(60, null, null, 0)).toBe('1:00')
+    expect(formatCardioSet(60, null, null, -5)).toBe('1:00')
+    expect(formatCardioSet(null, null, null, 0)).toBeNull()
+    expect(formatCardioSet(60, null, null, Number.NaN)).toBe('1:00')
+    // Three arguments still read exactly as they did.
+    expect(formatCardioSet(300, 0.37, 2)).toBe('5:00 · 0.37 km · 2%')
+  })
 })
 
 describe('setDetail carries the same rule into the export', () => {

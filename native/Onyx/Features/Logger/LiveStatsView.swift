@@ -264,7 +264,11 @@ struct LiveStatsView: View {
     @ViewBuilder
     private var tonnage: some View {
         let figure = HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-            Text(OnyxFormat.volume(model.totalVolumeKg))
+            // `volumeExact`, not `volume`: this face, the finish sheet's
+            // Tonnage tile and the summary's Volume cell are the same claim
+            // about the same session, and the one that rounds is the one that
+            // gets called wrong.
+            Text(OnyxFormat.volumeExact(model.totalVolumeKg))
                 .onyxType(.hero).onyxNumeral()
                 .foregroundStyle(Color.onyx.textPrimary)
                 .lineLimit(1)
