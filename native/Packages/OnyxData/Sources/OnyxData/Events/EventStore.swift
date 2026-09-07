@@ -172,16 +172,6 @@ extension AppDatabase {
         }
     }
 
-    /// The instant of the last event that added or changed a SET — the
-    /// long-idle guard's "last completed set". A void does not count: undoing a
-    /// set is not doing one.
-    public func lastSetActivity(sessionId: String) throws -> Date? {
-        try setEvents(sessionId: sessionId)
-            .filter { $0.kind == .append || $0.kind == .amend }
-            .map(\.createdAt)
-            .max()
-    }
-
     /// Delete a set — by appending a tombstone, never by deleting anything.
     ///
     /// The event that created the set stays in the log. That is the point: the
@@ -232,7 +222,24 @@ extension AppDatabase {
         // What the server needs from a pause is `duration_min`, which
         // `closeSession` computes and the session upsert carries.
         guard !event.kind.isClock else {
-            try reproject(sessionId: event.sessionId, in: db)
+            // ── AND IT IS BORN SYNCED ───────────────────────────────────────
+            // `is_synced` starts 0 and is only ever set by the outbox ack or by
+            // `ingest`, neither of which a clock event reaches — so it would sit
+            // at 0 for the life of the row. `LiveSessionOwner.meActive` reads
+            // "I own this session AND I have unsynced events" as "this device
+            // is actively logging" and refuses the watch an implicit takeover
+            // on the strength of it. One pause would make that true forever:
+            // put the phone down, pick up the watch, and every append there is
+            // refused until somebody presses *Log here*. A row that is
+            // local-only by design has nowhere to sync TO, so it is already as
+            // synced as it will ever be.
+            try db.execute(
+                sql: "UPDATE set_events SET is_synced = 1 WHERE id = ?", arguments: [event.id]
+            )
+            // No `reproject`: `SetEventFold` skips these kinds, so the
+            // projection is provably unchanged and re-folding the whole log —
+            // and rewriting every `workout_sets` row for the session — on each
+            // pause tap buys nothing.
             return
         }
 

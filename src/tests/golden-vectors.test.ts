@@ -7682,7 +7682,8 @@ describe('golden vectors — session duration', () => {
   it('exports the rule and its long-idle guard', () => {
     interface DurIn {
       startedAt: string; endedAt: string
-      pausedSec: number; lastSetAt: string | null; restTargetSec: number | null
+      pausedSec: number; pausedBeforeLastSetSec: number
+      lastSetAt: string | null; restTargetSec: number | null
     }
     const cases: Case<DurIn, SessionDurationResult>[] = []
     const at = (hhmm: string, day = '06') => `2026-09-${day}T${hhmm}:00.000Z`
@@ -7691,6 +7692,7 @@ describe('golden vectors — session duration', () => {
       input: i,
       expected: sessionDuration({
         startedAt: i.startedAt, endedAt: i.endedAt, pausedMs: i.pausedSec * 1000,
+        pausedBeforeLastSetMs: i.pausedBeforeLastSetSec * 1000,
         lastSetAt: i.lastSetAt, restTargetSec: i.restTargetSec,
       }),
     })
@@ -7714,25 +7716,40 @@ describe('golden vectors — session duration', () => {
     for (const [gn, startedAt, endedAt] of grid) {
       for (const pausedSec of pauses) {
         for (const [ln, lastSetAt] of lasts) {
-          push(`${gn} · paused ${pausedSec}s · ${ln}`, { startedAt, endedAt, pausedSec, lastSetAt, restTargetSec: null })
+          // All of the pause after the last set, and all of it before: the two
+          // ends of the partition the guard turns on.
+          for (const [sn, before] of [['tail', 0], ['before', pausedSec]] as const) {
+            push(`${gn} · paused ${pausedSec}s (${sn}) · ${ln}`, {
+              startedAt, endedAt, pausedSec, pausedBeforeLastSetSec: before, lastSetAt, restTargetSec: null,
+            })
+          }
         }
       }
     }
     for (const restTargetSec of [0, 75, 105, 135, 300, 3600, -30]) {
       push(`rest target ${restTargetSec}`, {
-        startedAt: at('10:46'), endedAt: at('17:12'), pausedSec: 0, lastSetAt: at('11:46'), restTargetSec,
+        startedAt: at('10:46'), endedAt: at('17:12'), pausedSec: 0, pausedBeforeLastSetSec: 0,
+        lastSetAt: at('11:46'), restTargetSec,
       })
     }
     // The threshold itself, from both sides.
-    push('idle exactly 20', { startedAt: at('10:00'), endedAt: at('11:20'), pausedSec: 0, lastSetAt: at('11:00'), restTargetSec: null })
-    push('idle 21', { startedAt: at('10:00'), endedAt: at('11:21'), pausedSec: 0, lastSetAt: at('11:00'), restTargetSec: 0 })
-    push('unparseable start', { startedAt: 'nope', endedAt: at('11:00'), pausedSec: 0, lastSetAt: null, restTargetSec: null })
-    push('unparseable end', { startedAt: at('10:00'), endedAt: '', pausedSec: 0, lastSetAt: null, restTargetSec: null })
+    push('idle exactly 20', { startedAt: at('10:00'), endedAt: at('11:20'), pausedSec: 0, pausedBeforeLastSetSec: 0, lastSetAt: at('11:00'), restTargetSec: null })
+    push('idle 21', { startedAt: at('10:00'), endedAt: at('11:21'), pausedSec: 0, pausedBeforeLastSetSec: 0, lastSetAt: at('11:00'), restTargetSec: 0 })
+    push('a pause that straddles the last set', {
+      startedAt: at('10:00'), endedAt: at('14:00'), pausedSec: 3600,
+      pausedBeforeLastSetSec: 1200, lastSetAt: at('11:20'), restTargetSec: 0,
+    })
+    push('more pause-before than pause', {
+      startedAt: at('10:00'), endedAt: at('13:00'), pausedSec: 600,
+      pausedBeforeLastSetSec: 99_999, lastSetAt: at('11:00'), restTargetSec: 0,
+    })
+    push('unparseable start', { startedAt: 'nope', endedAt: at('11:00'), pausedSec: 0, pausedBeforeLastSetSec: 0, lastSetAt: null, restTargetSec: null })
+    push('unparseable end', { startedAt: at('10:00'), endedAt: '', pausedSec: 0, pausedBeforeLastSetSec: 0, lastSetAt: null, restTargetSec: null })
 
     emit('session-duration.json', {
       module: 'sessions/sessionDuration',
       fn: 'sessionDuration',
-      note: `duration_min = ended − started − paused, never negative, rounded to whole minutes; null for an unparseable instant or a finish before the start. LONG-IDLE GUARD: a last set more than ${LONG_IDLE_MIN} minutes before the finish (strictly more — 20 is still training) means the tail was not training, and the answer becomes the work plus one rest (the movement's restTargetSec, else ${DEFAULT_REST_TARGET_SEC}s), never longer than the uncapped answer. A last set outside [started, ended] is ignored. This is what the 385-minute Sept 6 session was missing on both clients.`,
+      note: `duration_min = ended − started − paused, never negative, rounded to whole minutes; null for an unparseable instant or a finish before the start. LONG-IDLE GUARD: a last set more than ${LONG_IDLE_MIN} minutes before the finish (strictly more — 20 is still training) means the tail was not training, and the answer becomes the work plus one rest (the movement's restTargetSec, else ${DEFAULT_REST_TARGET_SEC}s), never longer than the uncapped answer. Only pausedBeforeLastSetSec comes off that work: a pause inside the discarded tail must not be subtracted from it as well, or a real hour recorded as thirty minutes — the 385-minute bug's mirror image. It is clamped to the total pause. A last set outside [started, ended] is ignored.`,
       cases,
     })
   })
@@ -7921,6 +7938,16 @@ describe('golden vectors — session seed', () => {
     })
     push('history longer than the program', {
       sessions: [sept6], sets: [1, 2, 3, 4, 5].map((i) => st('sept6', 'Face Pull', i, 15, 15)),
+    })
+    push('only a warm-up — not evidence about the deck', {
+      sessions: [sept6], sets: [st('sept6', 'Face Pull', 1, 5, 15, { setType: 'warmup' })],
+    })
+    push('only a warm-up, with an older session that lifted', {
+      sessions: [sept6, sess('older', '2026-08-30')],
+      sets: [
+        st('sept6', 'Face Pull', 1, 5, 15, { setType: 'warmup' }),
+        st('older', 'Face Pull', 1, 15, 15),
+      ],
     })
     push('warm-up carried', {
       sessions: [sept6],

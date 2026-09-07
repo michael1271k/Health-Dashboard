@@ -80,9 +80,39 @@ describe('sessionDuration — the long-idle guard', () => {
   it('subtracts a pause that happened before the last set', () => {
     const r = sessionDuration({
       startedAt: at('10:00'), endedAt: at('17:00'), lastSetAt: at('11:30'),
-      pausedMs: 30 * 60_000, restTargetSec: 0,
+      pausedMs: 30 * 60_000, pausedBeforeLastSetMs: 30 * 60_000, restTargetSec: 0,
     })
     expect(r.minutes).toBe(60)
+  })
+
+  it('does NOT subtract a pause that happened after the last set', () => {
+    // The 385-minute bug's mirror image. Lifted 10:00–11:00, wandered off,
+    // paused 12:00–12:30, pressed Finish at 13:00. The pause is inside the tail
+    // the guard already discards; taking it off the hour as well halves a real
+    // session.
+    const r = sessionDuration({
+      startedAt: at('10:00'), endedAt: at('13:00'), lastSetAt: at('11:00'),
+      pausedMs: 30 * 60_000, restTargetSec: 0,
+    })
+    expect(r.capped).toBe(true)
+    expect(r.minutes).toBe(60)
+  })
+
+  it('splits a pause that straddles the last set', () => {
+    // 20 minutes banked before the last set, 40 after.
+    const r = sessionDuration({
+      startedAt: at('10:00'), endedAt: at('14:00'), lastSetAt: at('11:20'),
+      pausedMs: 60 * 60_000, pausedBeforeLastSetMs: 20 * 60_000, restTargetSec: 0,
+    })
+    expect(r.minutes).toBe(60)
+  })
+
+  it('cannot be handed more pause-before than pause', () => {
+    const r = sessionDuration({
+      startedAt: at('10:00'), endedAt: at('13:00'), lastSetAt: at('11:00'),
+      pausedMs: 10 * 60_000, pausedBeforeLastSetMs: 999 * 60_000, restTargetSec: 0,
+    })
+    expect(r.minutes).toBe(50)
   })
 
   it('ignores a last set outside the session', () => {

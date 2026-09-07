@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase/client'
 import { activeProgram, eraForDate, HELIX_CUT_START } from '@/lib/programs'
 import { logicalTodayISO } from '@/lib/utils/day'
 import { useExerciseMap } from '@/lib/hooks/useLogger'
+import { useUserGoals } from '@/lib/hooks/useDashboard'
+import { activeLeverOf } from '@/lib/nutrition/levers'
+import { maintenanceLeverOn } from '@/lib/nutrition/maintenance'
 import {
   progressionAlerts, type ProgressionAlert, type ProgressionSetRow, type ProgressionTarget,
 } from '@/lib/training/progressionQueue'
@@ -52,8 +55,28 @@ export function useProgressionQueue() {
   const dayKeys = [...new Set(targets.map((t) => t.dayKey))]
   const eraDate = logicalTodayISO()
 
+  // ── AND A MAINTENANCE WEEK IS NOT EVIDENCE ABOUT A CEILING ─────────────────
+  // Decision 6, and the phone has enforced it since P3 E4: the deck seed skips
+  // sessions logged under the maintenance lever
+  // (`SessionSeedBuilder.sessionsForSeed`), and `AppDatabase.progressionQueue`
+  // reads the SAME list so the verdict and the number it pre-fills can never be
+  // about different sessions. Without the same filter here, two cleared
+  // sessions inside a release week still produce a `ready` chip on the web
+  // while the deck it points at would never seed from them — a chip on a load
+  // nothing proposed.
+  //
+  // Derived from the date, not stored: nothing on `workout_sessions` records
+  // which kind of week it was. Same resolution `useExerciseSetHistory`,
+  // the scorer, the widget and the export already run.
+  const { data: goalsRow } = useUserGoals()
+  const storedLeverId = activeLeverOf(goalsRow)
+  const releaseEndsOn = (goalsRow as { maintenance_until?: string | null } | null)?.maintenance_until ?? null
+
   return useQuery({
-    queryKey: ['progression_queue', eraDate, [...ids].sort().join(','), [...dayKeys].sort().join('|')],
+    queryKey: [
+      'progression_queue', eraDate, [...ids].sort().join(','), [...dayKeys].sort().join('|'),
+      storedLeverId ?? 'none', releaseEndsOn ?? 'none',
+    ],
     enabled: ids.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<ProgressionAlert[]> => {
@@ -70,7 +93,11 @@ export function useProgressionQueue() {
       if (error) throw error
 
       const rows = ((data ?? []) as unknown as ProgressionSetRow[])
-        .filter((r) => eraForDate(r.workout_sessions.started_at.slice(0, 10)) === era)
+        .filter((r) => {
+          const date = r.workout_sessions.started_at.slice(0, 10)
+          if (eraForDate(date) !== era) return false
+          return !maintenanceLeverOn(date, storedLeverId, releaseEndsOn, eraDate)
+        })
 
       return progressionAlerts(targets, rows)
     },

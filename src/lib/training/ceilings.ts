@@ -26,6 +26,9 @@ export const LOAD_STEP_KG = 2.5
  * and a stepper that can only offer 2.5 forces a load you did not lift to be
  * recorded as one you did.
  */
+// No caller yet: the stepper that offers them is wave U2's. The constants and
+// `roundToStep` land here so the two clients agree on them before either draws
+// a control.
 export const LOAD_STEPS_KG: readonly number[] = [2.5, 1.25]
 
 /** The finest step — what a hand-typed or derived load is snapped to. */
@@ -157,6 +160,18 @@ export interface WorkingSet {
  * everywhere else. The honest reading is that an unrated set makes no claim
  * about effort, so it cannot be the thing that blocks a verdict the reps have
  * earned — and the moment you DO rate a set 9, it counts.
+ *
+ * ── IT COUNTS AGAIN NEXT WEEK, AND THAT IS THE RULE, NOT A BUG ─────────────
+ * `resolveSeededRpe` carries a rating forward while the load and the reps are
+ * unchanged, so a 9 given at the ceiling seeds a 9 into the next deck, which
+ * commits a 9, which blocks `ready` again. That reads like a lock and it is the
+ * instruction: you are at the top of the window at an RPE of 9, and adding load
+ * to that is how a stall becomes a regression. The seed clears itself the
+ * moment the work gets harder, and re-rating the set is one tap — the two ways
+ * out are the two things that should end it. `workout_sets` stores no
+ * `rpe_seed`, so nothing downstream can tell an inherited rating from a fresh
+ * one, and inventing that distinction here would mean grading two identical
+ * sessions differently.
  */
 export const PROGRESSION_MAX_RPE = 8.5
 

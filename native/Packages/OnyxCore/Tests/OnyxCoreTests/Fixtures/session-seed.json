@@ -5294,6 +5294,512 @@
       }
     },
     {
+      "name": "only a warm-up — not evidence about the deck",
+      "input": {
+        "dayKey": "cb_a",
+        "today": "2026-09-13",
+        "phase": "cut",
+        "programId": "onyx5",
+        "sessions": [
+          {
+            "id": "sept6",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "sets": [
+          {
+            "sessionId": "sept6",
+            "exerciseName": "Face Pull",
+            "order": 1,
+            "weightKg": 5,
+            "reps": 15,
+            "setType": "warmup"
+          }
+        ],
+        "template": null,
+        "ready": []
+      },
+      "expected": {
+        "dayKey": "cb_a",
+        "exercises": [
+          {
+            "name": "Incline DB Press",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Lat Pulldown",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Chest Press (Machine)",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 34,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 34,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Seated Cable Row (V-Grip)",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 38.5,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 38.5,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Pec Deck",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 47.5,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 47.5,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Straight-Arm Pulldown",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Face Pull",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 13.75,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 13.75,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 13.75,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "only a warm-up, with an older session that lifted",
+      "input": {
+        "dayKey": "cb_a",
+        "today": "2026-09-13",
+        "phase": "cut",
+        "programId": "onyx5",
+        "sessions": [
+          {
+            "id": "sept6",
+            "dayKey": "cb_a",
+            "date": "2026-09-06",
+            "startedAt": "2026-09-06T09:00:00Z",
+            "maintenance": false
+          },
+          {
+            "id": "older",
+            "dayKey": "cb_a",
+            "date": "2026-08-30",
+            "startedAt": "2026-08-30T09:00:00Z",
+            "maintenance": false
+          }
+        ],
+        "sets": [
+          {
+            "sessionId": "sept6",
+            "exerciseName": "Face Pull",
+            "order": 1,
+            "weightKg": 5,
+            "reps": 15,
+            "setType": "warmup"
+          },
+          {
+            "sessionId": "older",
+            "exerciseName": "Face Pull",
+            "order": 1,
+            "weightKg": 15,
+            "reps": 15
+          }
+        ],
+        "template": null,
+        "ready": []
+      },
+      "expected": {
+        "dayKey": "cb_a",
+        "exercises": [
+          {
+            "name": "Incline DB Press",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 32,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Lat Pulldown",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 45,
+                "reps": 8,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Chest Press (Machine)",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 34,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 34,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Seated Cable Row (V-Grip)",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 38.5,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 38.5,
+                "reps": 10,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Pec Deck",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 47.5,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 47.5,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Straight-Arm Pulldown",
+            "source": "program",
+            "seededFrom": null,
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": null,
+                "progressed": false
+              }
+            ]
+          },
+          {
+            "name": "Face Pull",
+            "source": "history",
+            "seededFrom": "2026-08-30",
+            "rows": [
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 15,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": "15kg × 15",
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": "15kg × 15",
+                "progressed": false
+              },
+              {
+                "kind": "normal",
+                "weightKg": 15,
+                "reps": 12,
+                "rpe": null,
+                "rpeStale": false,
+                "previous": "15kg × 15",
+                "progressed": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "warm-up carried",
       "input": {
         "dayKey": "cb_a",

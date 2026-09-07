@@ -210,7 +210,12 @@ export async function saveSession(
     endedAt: payload.endedAt,
     pausedMs: (payload.pausedMin ?? 0) * 60_000,
   })
-  const durationMin = metrics.durationMin ?? computed.minutes
+  // `|| null` and not `??`: the old fallback mapped a zero-length span to null
+  // (`Math.max(0, …) || null`), and `elapsedDurationMin` refuses to store a 0
+  // for the same reason — a session that took no time is a session that did not
+  // happen, and the figure would then be averaged into the routine's own
+  // duration seed.
+  const durationMin = metrics.durationMin ?? (computed.minutes || null)
 
   // ── Calories + heart rate, when the session carries neither ────────────────
   // Only ever fills a GAP — a measured figure is kept untouched — and anything

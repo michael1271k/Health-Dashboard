@@ -29,7 +29,12 @@
  * display name by the caller (`PrRecorder.nameResolver` on the phone, the
  * `exercises` join on the web) and canonicalised in here.
  *
- * Pure and framework-free — the server and the phone both read it.
+ * Pure and framework-free. THE PHONE reads it (`SessionSeedBuilder`, through
+ * `AppDatabase.sessionSeed`); the web still seeds through `templateDraft.ts`,
+ * which now follows the same tier ORDER but reproduces the previous session
+ * 1:1 rather than fitting it to the program's set count. So this file is the
+ * definition and the vector, and on the web it is the specification rather than
+ * the code path — see `templateDraft.ts` for exactly where the two differ.
  */
 import { activeProgram, eraForDate, type ProgramExercise, type ProgramPhase } from '@/lib/programs'
 import { canonicalExerciseName } from '@/lib/exercises/aliases'
@@ -183,10 +188,20 @@ function formatKg(value: number): string {
  *
  * A genuine L/R pair is TWO rows sharing a `pair_id`, and it is ONE set of work
  * at the weaker side — `min(weight) × min(reps)`, the rule `sessionVolumeKg`
- * already scores it by, so a set logged split seeds exactly what the same set
- * seeds logged unsided. A lone side, or a bucket that is not exactly one L and
- * one R, is left as the rows it is: inventing a partner for it would be
- * inventing work.
+ * scores it by, so a set logged split seeds exactly what the same set seeds
+ * logged unsided. A lone side, or a bucket that is not exactly one L and one R,
+ * is left as the rows it is: inventing a partner for it would be inventing
+ * work.
+ *
+ * ── ONE DIVERGENCE FROM `sessionVolumeKg`, AND IT IS DELIBERATE ──────────────
+ * That function's comment says a malformed 3+ bucket is scored "each row as
+ * logged", and its code does not: `if (left && right)` takes the fold branch
+ * for two Ls and an R, credits `min` of the first pair it finds, and silently
+ * drops the third row's tonnage. This requires `bucket.length === 2`, so it
+ * does what that comment describes. The two therefore agree on every
+ * well-formed pair — which is all the live data has — and differ only on the
+ * malformed case both of them warn about. Fixing it there would move stored
+ * tonnage and needs its own recompute, so it is reported, not done here.
  *
  * `ghost` rows are dropped — a set deliberately not performed is not evidence.
  */
@@ -329,7 +344,13 @@ function seedExercise(
     const rows = collapsePairs(raw)
     const warmups = rows.filter((s) => s.setType === 'warmup')
     const working = rows.filter((s) => isWorkingSet(s.setType))
-    if (!rows.length) continue
+    // ── A SESSION WITH NO WORKING SETS IS NOT EVIDENCE ABOUT THE DECK ───────
+    // You warmed up and stopped. Committing to the history tier on that would
+    // return the warm-up and NOTHING else — `workingRows` has no row to repeat,
+    // so it produces none — and the day would open with zero of the sets the
+    // program prescribes, having silently refused to fall through to the
+    // template or the cold start. Walk back to a session that actually lifted.
+    if (!working.length) continue
     return {
       name,
       source: 'history',

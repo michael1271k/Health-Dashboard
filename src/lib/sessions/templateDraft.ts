@@ -1,8 +1,14 @@
 /**
  * Program-day template → pre-seeded Command Center draft.
  *
- * Seeding priority, highest first — the same order `sessions/sessionSeed.ts`
- * gives the phone, so the two clients open the same day on the same numbers:
+ * Seeding priority, highest first — the same ORDER `sessions/sessionSeed.ts`
+ * gives the phone, so the two clients read the same sources in the same
+ * sequence. Not the same ROWS: `seedFromHistory` reproduces the previous
+ * session 1:1, while the phone's builder truncates to the program's set count,
+ * pads a short history at the rep floor and applies a `ready` bump. A day where
+ * you did four sets opens with four here and three there, deliberately — the
+ * web deck is a copy of what you did and the phone's is the plan with your
+ * numbers in it. Only the ORDER is the parity claim.
  *   1. The exercise's LAST REAL SESSION on this routine day, in the same era and
  *      the same kind of week — reproduced EXACTLY: the same NUMBER of sets, each
  *      set's weight, reps, rating and tag. If last time was 2 sets, the deck

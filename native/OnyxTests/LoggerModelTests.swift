@@ -1,6 +1,8 @@
 import Foundation
 import Testing
+import GRDB
 import OnyxCore
+import OnyxData
 @testable import Onyx
 
 /// The logger's own state machine.
@@ -277,5 +279,81 @@ struct LoggerModelTests {
         let model = armsBulk()
         log(model, "DB Shoulder Press", sets: 1)
         #expect(model.recordCount == model.prsThisSession)
+    }
+
+    // ── The deck the seed builds, against a real store ──────────────────────
+
+    /// One finished Upper A on `date`, with a warm-up and three working sets of
+    /// Face Pull.
+    private func seeded(_ date: String) throws -> AppDatabase {
+        let db = try AppDatabase.inMemory(deviceId: "test")
+        let id = LoggerModel.exerciseId("Face Pull")
+        try db.seedRows { conn in
+            try Exercise(id: id, name: "Face Pull").insert(conn)
+            try WorkoutSession(
+                id: "s1", userId: "u1", dayKey: "cb_a", date: date,
+                startedAt: LogicalDay.date(fromISO: date)
+            ).insert(conn)
+            try WorkoutSet(id: "w", sessionId: "s1", exerciseId: id, setIndex: 1,
+                           weightKg: 5, reps: 15, setType: "warmup").insert(conn)
+            for i in 0..<3 {
+                try WorkoutSet(id: "n\(i)", sessionId: "s1", exerciseId: id, setIndex: i + 2,
+                               weightKg: 16.25, reps: 15 - i).insert(conn)
+            }
+        }
+        return db
+    }
+
+    @Test("the deck opens on the last session's numbers, warm-up included")
+    func seedsFromHistory() throws {
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(face.rows.map(\.kind) == [.warmup, .normal, .normal, .normal])
+        #expect(face.rows.filter { $0.kind == .normal }.map(\.weightKg) == [16.25, 16.25, 16.25])
+        #expect(face.rows.filter { $0.kind == .normal }.map(\.reps) == [15, 14, 13])
+        #expect(model.seededFrom(face) == "2026-08-24")
+    }
+
+    @Test("the Previous column is about the right WORKING set, not the right row")
+    func previousIsWorkingOrdinal() throws {
+        // The seed carries a warm-up, so a row index counts one more than a
+        // working ordinal. Reading the labels off the row index shifts every
+        // one of them by the warm-up count.
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(face.rows[0].previous == "5kg × 15", "the warm-up's own set")
+        #expect(face.rows[1].previous == "16.25kg × 15")
+        #expect(face.rows[2].previous == "16.25kg × 14")
+        #expect(face.rows[3].previous == "16.25kg × 13")
+    }
+
+    @Test("a phase switch does not count ticked warm-ups against the prescription")
+    func warmupsAreNotPrescribed() throws {
+        // Upper A prescribes 3 working sets of Face Pull on a cut and 3 on a
+        // bulk, so `Single Arm Lateral Raise (Cable)` is the lift that trims —
+        // but the failure this guards is about the WARM-UP row, so Face Pull is
+        // the case: tick the warm-up and one working set, switch phase, and a
+        // rule that counts the warm-up sees 2 of 3 rather than 1 of 3.
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        for row in face.rows.prefix(2) {
+            row.reps = row.reps ?? 10
+            model.toggleDone(row, in: face)
+        }
+        model.phase = .bulk
+
+        let rebuilt = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(rebuilt.rows.filter { $0.kind != .warmup }.count == 3,
+                "all three working sets survive; two of them are still to do")
+        #expect(rebuilt.rows.contains { $0.kind == .warmup }, "and the warm-up is not thrown away")
     }
 }

@@ -23,9 +23,10 @@
  * chip at all. Inventing one from the name is how "Face Pull" ends up labelled
  * a compound for having two words in it.
  *
- * Pure and framework-free: the export, the phone (`ExerciseTags` in
- * `OnyxCore/Exercises/Tags.swift`) and the deck all read it. Vector
- * `exercise-tags.json`.
+ * Pure and framework-free, and with no caller yet: the chip row on the exercise
+ * header is wave U2's, and the export line is E5's. The rule and its Swift twin
+ * (`ExerciseTags` in `OnyxCore/Exercises/Tags.swift`) land first so both clients
+ * agree on it before either draws it. Vector `exercise-tags.json`.
  */
 import { equipmentLabelFor, EQUIPMENT_FALLBACK } from '@/lib/exercises/equipment'
 import { isUnilateralExercise } from '@/lib/exercises/unilateral'

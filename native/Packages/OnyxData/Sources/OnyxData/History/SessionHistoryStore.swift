@@ -203,6 +203,7 @@ public extension AppDatabase {
             let goals = try userId
                 .map { try UserGoalRow.filter(Column("user_id") == $0).fetchOne(db) }
                 ?? UserGoalRow.fetchOne(db)
+            let instant = Self.instantFormatter()
             let all = try WorkoutSession
                 .filter(Column("day_key") == dayKey)
                 .fetchAll(db)
@@ -212,7 +213,7 @@ public extension AppDatabase {
                         // Any string that sorts chronologically. A session with
                         // no `started_at` sorts to the top of its own day, which
                         // is where a row that never recorded one belongs.
-                        startedAt: s.startedAt.map(Self.sortableInstant) ?? "",
+                        startedAt: s.startedAt.map(instant) ?? "",
                         maintenance: Maintenance.leverOn(
                             s.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: today
                         )
@@ -264,7 +265,14 @@ public extension AppDatabase {
         program: Program = .onyx5, today: String = LogicalDay.today()
     ) throws -> SeededDeck {
         let history = try sessionsForSeed(dayKey: dayKey, userId: userId, today: today)
-        let alerts = (try? progressionQueue(dayKey: dayKey, program: program, phase: phase, today: today)) ?? []
+        // The qualifying ids are handed over rather than re-derived: without
+        // this, `progressionQueue` folds the same sessions and re-reads all of
+        // their sets a second time, on the main actor, inside `LoggerModel
+        // .init`. That read grows with the season.
+        let alerts = (try? progressionQueue(
+            dayKey: dayKey, program: program, phase: phase, today: today,
+            qualifying: Set(history.sessions.map(\.id))
+        )) ?? []
         let seed = SessionSeedBuilder.build(
             dayKey: dayKey, today: today, phase: phase,
             sessions: history.sessions, sets: history.sets,
@@ -299,11 +307,15 @@ public extension AppDatabase {
         }
     }
 
-    /// A sortable instant. `ISO8601DateFormatter` is not Sendable and this runs
-    /// once per session row, so it is built per call rather than shared.
-    private static func sortableInstant(_ date: Date) -> String {
+    /// A sortable instant.
+    ///
+    /// `ISO8601DateFormatter` is not `Sendable`, so it cannot be a shared
+    /// static — but building one PER ROW is a formatter per session on a read
+    /// that runs on the main actor while the logger opens. One per call,
+    /// captured by the closure the caller maps with.
+    private static func instantFormatter() -> (Date) -> String {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime]
-        return f.string(from: date)
+        return { f.string(from: $0) }
     }
 }

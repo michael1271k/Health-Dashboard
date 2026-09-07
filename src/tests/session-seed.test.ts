@@ -149,6 +149,28 @@ describe('buildSessionSeed — the tiers', () => {
     expect(exercise(seed({ sessions, sets }), 'Face Pull').seededFrom).toBe('2026-08-30')
   })
 
+  it('walks past a session that only warmed up', () => {
+    // You warmed up and stopped. Committing to the history tier on that returns
+    // the warm-up and NOTHING else — there is no working row to repeat — and the
+    // day opens with none of the sets the program asks for.
+    const sessions = [session({ id: 'w', date: '2026-09-06' }), session({ id: 'real', date: '2026-08-30' })]
+    const sets: SeedSet[] = [
+      set({ sessionId: 'w', exerciseName: 'Face Pull', weightKg: 5, reps: 15, setType: 'warmup' }),
+      set({ sessionId: 'real', exerciseName: 'Face Pull', weightKg: 15, reps: 15 }),
+    ]
+    const face = exercise(seed({ sessions, sets }), 'Face Pull')
+    expect(face.seededFrom).toBe('2026-08-30')
+    expect(face.rows.filter((r) => r.kind === 'normal')).toHaveLength(3)
+  })
+
+  it('falls to the cold start when every session only warmed up', () => {
+    const sessions = [session({ id: 'w', date: '2026-09-06' })]
+    const sets = [set({ sessionId: 'w', exerciseName: 'Face Pull', weightKg: 5, reps: 15, setType: 'warmup' })]
+    const face = exercise(seed({ sessions, sets }), 'Face Pull')
+    expect(face.source).toBe('program')
+    expect(face.rows).toHaveLength(3)
+  })
+
   it('never reads a maintenance week', () => {
     const sessions = [session({ id: 'm', date: '2026-09-06', maintenance: true })]
     const sets = [set({ sessionId: 'm', exerciseName: 'Face Pull', weightKg: 8, reps: 15 })]

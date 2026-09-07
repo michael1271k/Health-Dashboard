@@ -89,10 +89,14 @@ public final class AppEnvironment {
     /// in exactly one place — `WorkoutWeek.build`. Re-deriving it here would be
     /// a second copy of the rule that decides what day it is, which is the one
     /// thing this app has already been bitten by (a swapped session read off
-    /// the weekday). So whoever has the day key in hand publishes, and the
-    /// banner, the chip and the card all read the same array.
+    /// the weekday). So whoever has the day key in hand publishes, and every
+    /// surface that shows an alert reads the same array.
     ///
     /// In-app only (decision 10): nothing here schedules a notification.
+    ///
+    /// STAGED: the session-open banner and the exercise chip are Track U's
+    /// (waves U1, U2). The Workout tab's own card still computes its own list
+    /// in `WorkoutWeek.build`; it moves onto this array when U1 lands.
     private(set) var progressionAlerts: [ProgressionQueue.Alert] = []
     private(set) var progressionDayKey: String?
 

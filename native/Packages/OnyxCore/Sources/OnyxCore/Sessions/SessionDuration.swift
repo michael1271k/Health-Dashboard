@@ -49,10 +49,28 @@ public enum SessionDuration {
     /// Instants, not ISO strings: the phone has `Date`s in hand and parsing
     /// them back out of text would be a second format to keep in step. The
     /// vector feeds ISO strings, which the test decodes.
+    /// - Parameter pausedBeforeLastSetSec: of `pausedSec`, how much had already
+    ///   CLOSED when the last set was logged.
+    ///
+    ///   ── WHY THE TOTAL IS NOT ENOUGH ────────────────────────────────────────
+    ///   The long-idle guard throws the tail away, and a pause tapped inside
+    ///   that tail is part of what it throws away. Subtracting the TOTAL from
+    ///   the work that came before it takes those minutes twice — once by
+    ///   discarding the tail they are in, and again off the hour that was
+    ///   actually trained. A session that lifted 10:00–11:00, was paused
+    ///   12:00–12:30 and was finished at 13:00 recorded 30 minutes for a real
+    ///   hour: the 385-minute bug's mirror image, shrinking instead of
+    ///   inflating.
+    ///
+    ///   Zero is the right default — the guard exists for the case where the
+    ///   session sat idle AFTER the work, so an unattributed pause belongs to
+    ///   the tail. `AppDatabase.closeSession` has the event log and passes the
+    ///   real split.
     public static func compute(
         startedAt: Date?,
         endedAt: Date?,
         pausedSec: Double = 0,
+        pausedBeforeLastSetSec: Double = 0,
         lastSetAt: Date? = nil,
         restTargetSec: Double? = nil
     ) -> SessionDurationResult {
@@ -77,12 +95,15 @@ public enum SessionDuration {
             return SessionDurationResult(minutes: jsRound(active), pausedMin: pausedMin, idleMin: nil, capped: false)
         }
 
-        // The work, plus one rest. Pauses BEFORE the last set are real gaps in
-        // the work and come off; pauses after it are inside the tail being
-        // discarded, so subtracting them again would take the same minutes
-        // twice.
+        // The work, plus one rest. Only the pause that had CLOSED by the last
+        // set is a gap in the work; anything after it is inside the tail being
+        // discarded, and taking it off here as well would remove the same
+        // minutes twice.
         let restMin = Swift.max(0, restTargetSec ?? defaultRestTargetSec) / 60
-        let worked = Swift.max(0, lastSetAt.timeIntervalSince(startedAt) / minute - pausedMin)
+        let before = pausedBeforeLastSetSec.isFinite
+            ? Swift.min(Swift.max(0, pausedBeforeLastSetSec), paused)
+            : 0
+        let worked = Swift.max(0, lastSetAt.timeIntervalSince(startedAt) / minute - jsRound(before / minute))
         return SessionDurationResult(
             // Never longer than the uncapped answer: the guard may only shorten.
             minutes: jsRound(Swift.min(active, worked + restMin)),

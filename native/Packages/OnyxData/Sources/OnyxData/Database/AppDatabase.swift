@@ -860,14 +860,20 @@ extension AppDatabase {
             let events = try SetEvent
                 .filter(SetEvent.Columns.sessionId == id)
                 .fetchAll(db)
+            let lastSetAt = events
+                .filter { $0.kind == .append || $0.kind == .amend }
+                .map(\.createdAt)
+                .max()
             let derived = SessionDuration.compute(
                 startedAt: session.startedAt,
                 endedAt: endedAt,
                 pausedSec: Self.pausedSeconds(events, now: endedAt),
-                lastSetAt: events
-                    .filter { $0.kind == .append || $0.kind == .amend }
-                    .map(\.createdAt)
-                    .max(),
+                // The same fold, evaluated at the last set rather than at the
+                // finish: a pause tapped AFTER the last set is inside the tail
+                // the long-idle guard discards, and subtracting it from the
+                // work as well would take those minutes twice.
+                pausedBeforeLastSetSec: lastSetAt.map { Self.pausedSeconds(events, now: $0) } ?? 0,
+                lastSetAt: lastSetAt,
                 restTargetSec: restTargetSec
             )
             if let minutes = derived.minutes { session.durationMin = minutes }

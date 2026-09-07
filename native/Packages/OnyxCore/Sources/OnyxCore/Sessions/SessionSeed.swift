@@ -221,6 +221,15 @@ public enum SessionSeedBuilder {
     /// or a bucket that is not exactly one L and one R, is left as the rows it
     /// is: inventing a partner for it would be inventing work.
     ///
+    /// ── ONE DIVERGENCE FROM `sessionVolumeKg`, AND IT IS DELIBERATE ────────
+    /// That function's comment says a malformed 3+ bucket is scored "each row
+    /// as logged", and its code does not: `if let left, let right` takes the
+    /// fold branch for two Ls and an R and silently drops the third row's
+    /// tonnage. This requires a bucket of exactly two, so it does what that
+    /// comment describes. The two agree on every well-formed pair — all the
+    /// live data has — and differ only on the malformed case both warn about.
+    /// Fixing it there would move stored tonnage and needs its own recompute.
+    ///
     /// `ghost` rows are dropped — a set deliberately not performed is not
     /// evidence.
     public static func collapsePairs(_ sets: [SeedSet]) -> [SeedSet] {
@@ -330,9 +339,16 @@ public enum SessionSeedBuilder {
         for session in ordered {
             guard let raw = bySession[session.id]?[key], !raw.isEmpty else { continue }
             let rows = collapsePairs(raw)
-            guard !rows.isEmpty else { continue }
             let warmups = rows.filter { $0.setType == "warmup" }
             let working = rows.filter { SetTags.isWorkingSet($0.setType) }
+            // ── A SESSION WITH NO WORKING SETS IS NOT EVIDENCE ─────────────
+            // You warmed up and stopped. Committing to the history tier on
+            // that would return the warm-up and NOTHING else — `workingRows`
+            // has no row to repeat, so it produces none — and the day would
+            // open with zero of the sets the program prescribes, having
+            // silently refused to fall through to the template or the cold
+            // start. Walk back to a session that actually lifted.
+            guard !working.isEmpty else { continue }
             return SeedExercise(
                 name: name, source: .history, seededFrom: session.date,
                 // Warm-ups are carried, in the order they were performed. A

@@ -126,12 +126,18 @@ final class LoggerModel: Identifiable {
         var isRecord: Bool
 
         /// The remembered rating was DROPPED because this row's work is harder
-        /// than the set it was seeded from — the "rate this" pip. Distinct from
-        /// `rpe == nil`, which is simply an unrated set.
+        /// than the set it was seeded from. Distinct from `rpe == nil`, which
+        /// is simply an unrated set.
+        ///
+        /// STAGED for the set row's "rate this" pip (wave U2). Nothing draws it
+        /// in this build.
         var rpeStale: Bool
 
         /// This row opens on a progression bump: `.ready` pre-filled the
-        /// suggested load at the rep floor. Drives the chip on the row.
+        /// suggested load at the rep floor.
+        ///
+        /// STAGED for the row's progression chip (wave U2). Nothing draws it in
+        /// this build.
         var progressed: Bool
 
         init(
@@ -214,7 +220,20 @@ final class LoggerModel: Identifiable {
 
     private(set) var day: ProgramDay
     var phase: ProgramPhase {
-        didSet { if phase != oldValue { rebuildForPhase() } }
+        didSet {
+            guard phase != oldValue else { return }
+            // ── THE SEED IS PHASE-SCOPED, SO IT IS REBUILT TOO ──────────────
+            // `SessionSeedBuilder.build` walks `day.exercises(for: phase)`, so
+            // a lift the OTHER phase drops has no seed entry at all. Switching
+            // cut → bulk brings the wrist curl and the hip adduction back, and
+            // without this they would open on `wk1Kg` with a blank Previous —
+            // the July-number problem this wave exists to remove, for exactly
+            // the subset of lifts a phase switch introduces.
+            let opened = Self.loadSeed(store: store, day: day, phase: phase, userId: userId)
+            seed = opened.seed
+            progressionAlerts = opened.alerts
+            rebuildForPhase()
+        }
     }
     private(set) var exercises: [ExerciseState] = []
     let startedAt: Date
@@ -240,6 +259,9 @@ final class LoggerModel: Identifiable {
     /// Lifts that have earned a load bump today. Published to
     /// `AppEnvironment.progressionAlerts` by whoever opens the logger
     /// (decision 10 — in-app only).
+    ///
+    /// STAGED: the banner, the tab card's chip and the row chip are Track U's
+    /// (waves U1 and U2). Nothing in this build reads it yet.
     private(set) var progressionAlerts: [ProgressionQueue.Alert] = []
 
     // ── The live PR bar ─────────────────────────────────────────────────────
@@ -390,26 +412,38 @@ final class LoggerModel: Identifiable {
                 return ExerciseState(plan: plan, rows: seedRows(plan, count: prescribed))
             }
 
-            let logged = previous.rows.filter(\.isDone)
+            // ── WARM-UPS ARE NOT PART OF THE PRESCRIPTION ───────────────
+            // `prescribed` counts WORKING sets, and since P3 E4 the deck also
+            // carries last session's warm-ups. Measuring against a `logged`
+            // that includes them makes a phase switch DELETE working rows you
+            // have not done yet: two ticked warm-ups and one working set read
+            // as three against a prescription of two, so the branch below
+            // collapses the deck to the ticked rows and the two sets still to
+            // do are gone with no way back but `addSet`.
+            let working = previous.rows.filter { $0.kind != .warmup }
+            let logged = working.filter(\.isDone)
             // A lift this phase DROPS (`cutSets: 0` — the wrist curl, the hip
             // adduction) keeps its place if it already carries work. Switching
             // to a cut mid-session must not take sets you have done off the
             // screen to satisfy a prescription: the events are still in the log
             // and a screen that disagrees with the log is worse than a screen
-            // showing a lift the plan no longer asks for.
-            guard prescribed > 0 || !logged.isEmpty else { return nil }
+            // showing a lift the plan no longer asks for. A ticked WARM-UP is
+            // work done too, which is why the guard reads every row.
+            guard prescribed > 0 || previous.rows.contains(where: \.isDone) else { return nil }
 
             if logged.count >= prescribed {
-                previous.rows = logged
+                previous.rows = previous.rows.filter(\.isDone)
             } else {
                 // Trim the SURPLUS blanks, keeping the rows where they are.
                 // Rebuilding as `logged + blanks` sorts the ticked rows to the
                 // top, so a session where set 2 was skipped and set 3 logged
                 // reorders itself under the reader on a phase switch.
-                let blanks = previous.rows.filter { !$0.isDone }
+                let blanks = working.filter { !$0.isDone }
                 let wanted = prescribed - logged.count
                 let keep = Set(blanks.prefix(wanted).map(\.id))
-                previous.rows = previous.rows.filter { $0.isDone || keep.contains($0.id) }
+                // A warm-up row survives whatever the prescription says — it
+                // was never counted against it.
+                previous.rows = previous.rows.filter { $0.isDone || $0.kind == .warmup || keep.contains($0.id) }
                     + seedRows(plan, count: max(0, wanted - blanks.count), warmups: false)
             }
             return previous
@@ -440,8 +474,16 @@ final class LoggerModel: Identifiable {
             // A count above what the seed produced (a phase switch to bulk)
             // repeats its last row rather than falling back to `wk1Kg`: the
             // load you are handling is a better proposal than the one from July.
-            if let src = i < working.count ? working[i] : working.last {
-                out.append(Self.setRow(src))
+            if i < working.count {
+                out.append(Self.setRow(working[i]))
+            } else if let last = working.last {
+                // Past what the seed produced: the last known LOAD at the rep
+                // FLOOR, which is what `SessionSeedBuilder.workingRows` does for
+                // the same case. Copying the last row verbatim would carry its
+                // reps too, and the two sides would answer differently.
+                var carried = Self.setRow(last)
+                carried.reps = plan.repWindow?.floor ?? carried.reps
+                out.append(carried)
             } else {
                 out.append(SetRow(weightKg: plan.wk1Kg))
             }
@@ -483,7 +525,7 @@ final class LoggerModel: Identifiable {
             kind: last?.kind == .warmup ? .normal : (last?.kind ?? .normal),
             // The set beyond the prescription has no seeded previous — history
             // does not contain a set number that has never been programmed.
-            previous: seededPrevious(exercise.plan, index: exercise.rows.count)
+            previous: seededPrevious(exercise.plan, workingIndex: exercise.rows.filter { $0.kind != .warmup }.count)
         ))
     }
 
@@ -579,13 +621,23 @@ final class LoggerModel: Identifiable {
         refreshLivePrs()
     }
 
-    /// The Previous column for a set number that has not been ticked yet.
-    private func seededPrevious(_ plan: ProgramExercise, index: Int) -> String? {
+    /// The Previous column for one WORKING set of a movement.
+    ///
+    /// ── THE ORDINAL IS AMONG WORKING SETS, NOT AMONG ROWS ───────────────────
+    /// The seed's working rows are numbered 0…n by working ordinal, and the
+    /// deck's rows are not: since the seed carries last session's warm-ups, a
+    /// row index counts them too. Passing one for the other shifts every label
+    /// by the warm-up count — a warm-up row claiming working set 1's history,
+    /// and working set 1 showing set 3's.
+    ///
+    /// Past the prescription there is nothing to show: history does not contain
+    /// a set number that has never been programmed.
+    private func seededPrevious(_ plan: ProgramExercise, workingIndex: Int) -> String? {
         let working = seed.exercises
             .first { ExerciseAliases.canonicalName($0.name) == ExerciseAliases.canonicalName(plan.name) }?
             .rows.filter { $0.kind == .normal } ?? []
-        guard !working.isEmpty else { return nil }
-        return (index < working.count ? working[index] : working.last)?.previous
+        guard workingIndex >= 0, workingIndex < working.count else { return nil }
+        return working[workingIndex].previous
     }
 
     // MARK: - Live records
@@ -610,7 +662,15 @@ final class LoggerModel: Identifiable {
         for exercise in exercises {
             let name = ExerciseAliases.canonicalName(exercise.name)
             let key = Self.exerciseId(exercise.name)
-            let floor = Ceilings.repWindow(for: name, dayKey: day.key, phase: phase)?.floor
+            // ── THE LEDGER'S FLOOR, NOT THIS SESSION'S PHASE ────────────
+            // `PrRecorder.baselines` and `PrRecorder.record` both call
+            // `Ceilings.repWindow(for:dayKey:)` and take its `.cut` default, so
+            // passing `phase` here would gate the e1RM axis by a different
+            // window than the close path uses. Leg Press is 8–12 on a bulk and
+            // 12–15 on a cut: a bulk set of 140 × 10 would light gold live
+            // (floor 8, eligible) and file nothing on close (floor 12, not
+            // eligible). Matching `record` exactly is the requirement.
+            let floor = Ceilings.repWindow(for: name, dayKey: day.key)?.floor
             for (i, row) in exercise.rows.enumerated() where row.isDone {
                 candidates.append(PrCandidateSet(
                     key: key,
@@ -677,13 +737,28 @@ final class LoggerModel: Identifiable {
     /// what changes is how much of the clock since then counts. Rebasing the
     /// start would be the shorter patch and it would lie to `Era.forDate`, to
     /// the PR date and to every reader of "when did you train".
+    /// ── THE LOG IS WRITTEN FIRST, AND THE STATE FOLLOWS IT ─────────────────
+    /// Both of these used to flip the flag and then try to write, which is two
+    /// failures in one shape. `record` claims the pencil and REFUSES when the
+    /// watch holds it (`EventStore.claimPencil`), so a refused pause left the
+    /// screen stopped and the log running — and a refused RESUME left an open
+    /// pause in the log forever, so the session came back paused and
+    /// `closeSession` subtracted the whole interval. The visible state is now
+    /// whatever the log accepted.
+    ///
+    /// And it needs a SESSION. `attach` only looks one up; the row is created
+    /// by the first append (`ensureSession`). Pausing during your warm-up,
+    /// before ticking anything, therefore wrote no event at all — the minutes
+    /// went straight back into `duration_min`, which is the bug this whole
+    /// mechanism exists to remove.
     func pause(at now: Date = Date()) {
         guard !isPaused else { return }
-        isPaused = true
-        pausedSince = now
-        guard let store, let sessionId else { return }
+        guard let store else { isPaused = true; pausedSince = now; return }
         do {
+            guard let sessionId = try ensureSession() else { return }
             try store.pauseSession(sessionId)
+            isPaused = true
+            pausedSince = now
             storeError = nil
         } catch {
             storeError = String(describing: error)
@@ -692,15 +767,18 @@ final class LoggerModel: Identifiable {
 
     func resume(at now: Date = Date()) {
         guard isPaused else { return }
-        isPaused = false
-        // Banked from the local stamp rather than re-read: the store's own
-        // answer is the same arithmetic over the two events this pair just
-        // wrote, and a read per tap is a read for nothing.
-        if let since = pausedSince { bankedPausedSeconds += max(0, now.timeIntervalSince(since)) }
-        pausedSince = nil
-        guard let store, let sessionId else { return }
+        func bank() {
+            // Banked from the local stamp rather than re-read: the store's own
+            // answer is the same arithmetic over the two events this pair just
+            // wrote, and a read per tap is a read for nothing.
+            if let since = pausedSince { bankedPausedSeconds += max(0, now.timeIntervalSince(since)) }
+            pausedSince = nil
+            isPaused = false
+        }
+        guard let store, let sessionId else { bank(); return }
         do {
             try store.resumeSession(sessionId)
+            bank()
             storeError = nil
         } catch {
             storeError = String(describing: error)
@@ -783,6 +861,14 @@ final class LoggerModel: Identifiable {
                     row.isRecord = false
                 }
             }
+            // `recordCount` is `prsThisSession` now, not a scan of the rows, so
+            // clearing the badges is not enough — the header and the Lock
+            // Screen would keep reporting records on an empty deck.
+            prsThisSession = 0
+            // The clock too: a discarded session's pause belongs to nothing.
+            isPaused = false
+            pausedSince = nil
+            bankedPausedSeconds = 0
             storeError = nil
             return true
         } catch {
@@ -835,25 +921,35 @@ final class LoggerModel: Identifiable {
             // logged — and an empty session is indistinguishable, later, from a
             // workout somebody abandoned. The row is created by the first
             // append instead, in `ensureSession`.
-            sessionId = try store.liveSession(dayKey: day.key, date: LogicalDay.today())?.id
+            // ── `sessionId` IS ASSIGNED LAST, AND THAT IS THE POINT ─────────
+            // `attach`'s own guard is `sessionId == nil`, so a read that threw
+            // AFTER the id was assigned left the model owning a session with an
+            // empty deck and no second chance to restore it — and re-ticking
+            // set 1 would then append a FRESH set id at an index the log
+            // already holds, which is a duplicated set in the projection and in
+            // the upload. Everything is read into locals first.
+            let live = try store.liveSession(dayKey: day.key, date: LogicalDay.today())?.id
             // The bar, built ONCE and from the same function that writes the
             // ledger on close (`PrRecorder.baselines`). Excluding this session
             // is what stops every set being measured against itself.
-            baselines = try store.livePrBaselines(
+            let bar = try store.livePrBaselines(
                 exerciseIds: exercises.map { Self.exerciseId($0.name) },
-                excluding: sessionId,
+                excluding: live,
                 dayKey: day.key
             )
+            // Rejoining a session that was paused when the app was killed: the
+            // log knows, and the wall clock has kept running.
+            let paused = try live.map { (try store.isPaused(sessionId: $0), try store.pausedSeconds(sessionId: $0)) }
+
+            sessionId = live
+            baselines = bar
+            if let paused {
+                isPaused = paused.0
+                pausedSince = paused.0 ? Date() : nil
+                bankedPausedSeconds = paused.1
+            }
             try restoreLoggedSets()
             refreshLivePrs()
-            if let sessionId {
-                // Rejoining a session that was paused when the app was killed:
-                // the log knows, and the wall clock has kept running.
-                isPaused = try store.isPaused(sessionId: sessionId)
-                let total = try store.pausedSeconds(sessionId: sessionId)
-                pausedSince = isPaused ? Date() : nil
-                bankedPausedSeconds = total
-            }
         } catch {
             // A store failure must not take the screen down with it: the deck
             // is still correct and still usable, and the events it could not
@@ -890,7 +986,14 @@ final class LoggerModel: Identifiable {
                     // A logged set's Previous is the same seed the blank row
                     // would have shown — what this set number was LAST time,
                     // not what it is now.
-                    previous: seededPrevious(exercise.plan, index: mine.firstIndex { $0.id == set.id } ?? 0),
+                    // A restored warm-up shows nothing: `seededPrevious` is
+                    // about working sets, and a warm-up wearing set 1's history
+                    // is worse than a blank column.
+                    previous: set.setType == "warmup" ? nil : seededPrevious(
+                        exercise.plan,
+                        workingIndex: mine.prefix(while: { $0.id != set.id })
+                            .filter { $0.setType != "warmup" }.count
+                    ),
                     isRecord: false
                 )
             }

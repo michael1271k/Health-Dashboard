@@ -48,6 +48,24 @@ export interface DurationInput {
   endedAt: string
   /** Total milliseconds the session spent paused. */
   pausedMs?: number
+  /**
+   * Of that pause, how much had already CLOSED when the last set was logged.
+   *
+   * ── WHY THE TOTAL IS NOT ENOUGH ────────────────────────────────────────────
+   * The long-idle guard throws the tail away, and a pause tapped inside that
+   * tail is part of what it throws away. Subtracting the TOTAL from the work
+   * that came before it takes those minutes twice — once by discarding the tail
+   * they are in, and again off the hour that was actually trained. A session
+   * that lifted 10:00–11:00, was paused 12:00–12:30 and was finished at 13:00
+   * recorded 30 minutes for a real hour: the 385-minute bug's mirror image,
+   * shrinking instead of inflating.
+   *
+   * Zero is the right default. The guard exists for the case where the session
+   * sat idle AFTER the work, so an unattributed pause belongs to the tail —
+   * and the one caller that has a `lastSetAt` (`AppDatabase.closeSession`) has
+   * the event log and passes the real split.
+   */
+  pausedBeforeLastSetMs?: number
   /** ISO instant of the last completed set, when one is known. */
   lastSetAt?: string | null
   /** The rest the last movement prescribes, in seconds. */
@@ -92,11 +110,14 @@ export function sessionDuration(input: DurationInput): SessionDurationResult {
     return { minutes: Math.round(active), pausedMin, idleMin: null, capped: false }
   }
 
-  // The work, plus one rest. Pauses BEFORE the last set are real gaps in the
-  // work and come off; pauses after it are inside the tail being discarded, so
-  // subtracting them again would take the same minutes twice.
+  // The work, plus one rest. Only the pause that had CLOSED by the last set is
+  // a gap in the work; anything after it is inside the tail being discarded,
+  // and taking it off here as well would remove the same minutes twice.
   const restMin = Math.max(0, (input.restTargetSec ?? DEFAULT_REST_TARGET_SEC)) / 60
-  const worked = Math.max(0, (lastSet - started) / MIN - pausedMin)
+  const before = Number.isFinite(input.pausedBeforeLastSetMs)
+    ? Math.max(0, Math.min(input.pausedBeforeLastSetMs as number, pausedMs))
+    : 0
+  const worked = Math.max(0, (lastSet - started) / MIN - Math.round(before / MIN))
   return {
     // Never longer than the uncapped answer: the guard may only shorten.
     minutes: Math.round(Math.min(active, worked + restMin)),

@@ -22,7 +22,15 @@ public extension AppDatabase {
     /// a swapped session still carries the key it was performed as. Rows from
     /// the other era are dropped, as the web does: a new block never inherits
     /// the old one's chain.
-    func progressionQueue(dayKey: String, program: Program, phase: ProgramPhase, today: String) throws -> [ProgressionQueue.Alert] {
+    /// - Parameter qualifying: the session ids `SessionSeedBuilder
+    ///   .sessionsForSeed` already returned, when the caller has them. Passing
+    ///   them avoids folding the same sessions and re-reading all of their sets
+    ///   a second time — `AppDatabase.sessionSeed` needs both answers and would
+    ///   otherwise pay for the read twice, on the main actor.
+    func progressionQueue(
+        dayKey: String, program: Program, phase: ProgramPhase, today: String,
+        qualifying: Set<String>? = nil
+    ) throws -> [ProgressionQueue.Alert] {
         guard let day = program.day(key: dayKey) else { return [] }
         let exercises = day.exercises(for: phase)
         guard !exercises.isEmpty else { return [] }
@@ -58,7 +66,8 @@ public extension AppDatabase {
         // seed never proposed.
         //
         let era = Era.forDate(today)
-        let qualifying = Set(try sessionsForSeed(dayKey: dayKey, today: today).sessions.map(\.id))
+        let allowed = try qualifying
+            ?? Set(sessionsForSeed(dayKey: dayKey, today: today).sessions.map(\.id))
         // The session instant, for ordering two sessions of one lift: the
         // ledger already comes date-then-started_at ordered, so the date plus
         // the row's position in that order is a sortable key without a second
@@ -66,7 +75,7 @@ public extension AppDatabase {
         var instant: [String: String] = [:]
         var rows: [ProgressionQueue.SetRow] = []
         for r in try historySets(exerciseIds: Array(fold.keys))
-        where r.dayKey == dayKey && Era.forDate(r.date) == era && qualifying.contains(r.sessionId) {
+        where r.dayKey == dayKey && Era.forDate(r.date) == era && allowed.contains(r.sessionId) {
             if instant[r.sessionId] == nil {
                 instant[r.sessionId] = "\(r.date)|\(String(format: "%06d", instant.count))"
             }

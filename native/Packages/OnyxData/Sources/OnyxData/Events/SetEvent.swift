@@ -112,6 +112,21 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         /// True for the two kinds that are about the session's clock rather
         /// than about a set.
         public var isClock: Bool { self == .pause || self == .resume }
+
+        // ── ADDING A KIND IS A ONE-WAY DOOR, AND THIS ONE WAS TAKEN ─────────
+        // `Body.init(from:)` decodes this enum and switches on it with no
+        // fallback, so a build that predates a kind cannot decode a row that
+        // carries it — and `reproject` runs inside `commit`'s transaction, so
+        // the failure is not "one row is skipped", it is "no further set can be
+        // logged into that session at all".
+        //
+        // That is fine going forward (this build reads every kind it can write)
+        // and it is a real hazard BACKWARD: rolling the app back past P3 E4
+        // leaves any session that was ever paused unloggable until the store is
+        // reset. The alternative — a tolerant decoder — cannot help, because
+        // the build that needs the tolerance is the one already shipped. The
+        // next kind added here should come with a `Kind` fallback FIRST, in a
+        // release before the one that writes it.
     }
 
     /// This event's own identity. Two devices never generate the same one, so

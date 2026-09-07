@@ -363,6 +363,7 @@ struct SessionDurationGoldenTests {
         let startedAt: String
         let endedAt: String
         let pausedSec: Double
+        let pausedBeforeLastSetSec: Double
         let lastSetAt: String?
         let restTargetSec: Double?
     }
@@ -386,6 +387,7 @@ struct SessionDurationGoldenTests {
                 startedAt: Self.parse(c.input.startedAt),
                 endedAt: Self.parse(c.input.endedAt),
                 pausedSec: c.input.pausedSec,
+                pausedBeforeLastSetSec: c.input.pausedBeforeLastSetSec,
                 lastSetAt: c.input.lastSetAt.flatMap(Self.parse),
                 restTargetSec: c.input.restTargetSec
             )
