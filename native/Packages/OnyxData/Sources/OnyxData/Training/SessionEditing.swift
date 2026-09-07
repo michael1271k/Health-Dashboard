@@ -197,7 +197,19 @@ public extension AppDatabase {
         // on the way in, and seeding is a ONE-WAY DOOR: a no-op amend would
         // permanently take a pulled session out of the mirror's reach (see
         // `seedEventLog`) and queue an upload for a session nothing touched.
+        //
+        // ── AND `isEmpty` IS NOT ENOUGH ─────────────────────────────────────
+        // `SetPatch.isEmpty` is "every field is nil", which the logger's own
+        // amend can never be: it sends the whole row on every commit, and
+        // `ExerciseCardView` commits on every focus LOSS, changed or not. So
+        // tapping into a set's weight field to read it and tapping away was a
+        // full edit — a seed, a PR replay, a recount, an outbox upsert and a
+        // forty-nine-day rescore, for a session nobody had touched, and it took
+        // that session permanently out of the mirror's reach. The patch is
+        // compared against the row it describes, which is the only check that
+        // can tell "I retyped 40" from "I changed 40 to 60".
         guard !patch.isEmpty else { return nil }
+        guard try changesSomething(patch, sessionId: sessionId, setId: setId) else { return nil }
         return try edit(sessionId: sessionId) { db, _ in
             guard let existing = try WorkoutSet.fetchOne(db, key: setId), existing.sessionId == sessionId
             else { throw SessionEditing.EditError.noSuchSet(setId) }
@@ -283,6 +295,38 @@ public extension AppDatabase {
             try session.update(db)
             try Self.enqueueSessionUpsert(sessionId: sessionId, in: db)
             return outcome
+        }
+    }
+
+    /// Would applying `patch` produce a different row?
+    ///
+    /// Read in its own transaction, before `edit` opens the write one. That is
+    /// a race in principle — the row could change in between — and it is the
+    /// harmless direction: the worst case is one redundant event, which is what
+    /// the check exists to reduce and not a correctness claim.
+    ///
+    /// `SetSnapshot` is the shape the fold applies a patch to, so this asks the
+    /// question with exactly the arithmetic `reproject` would use. Missing rows
+    /// answer `true` — `amendSet` throws `noSuchSet` inside the transaction and
+    /// that error belongs there, not swallowed here as a no-op.
+    private func changesSomething(_ patch: SetPatch, sessionId: String, setId: String) throws -> Bool {
+        try writer.read { db in
+            guard let existing = try WorkoutSet.fetchOne(db, key: setId),
+                  existing.sessionId == sessionId
+            else { return true }
+            let before = SetSnapshot(
+                exerciseId: existing.exerciseId,
+                setIndex: existing.setIndex,
+                weightKg: existing.weightKg,
+                reps: existing.reps,
+                setType: existing.setType,
+                side: existing.side,
+                pairId: existing.pairId,
+                est1rmKg: existing.est1rmKg,
+                rpe: existing.rpe,
+                quality: existing.quality
+            )
+            return patch.applied(to: before) != before
         }
     }
 

@@ -25,8 +25,13 @@ struct MetaTagRow: View {
 
     /// One reading. `tint` is nil for a plain fact — the four that are just
     /// numbers — and set only where the value means something beyond itself.
-    struct Tag: Identifiable {
-        let id = UUID()
+    /// ── IDENTIFIED BY ITS TEXT, NOT BY A FRESH UUID ────────────────────────
+    /// `tags` is a computed property on both callers, so a `let id = UUID()`
+    /// gave every capsule a new identity on every body evaluation: the whole
+    /// row torn down and rebuilt on each redraw, no transition able to finish,
+    /// and `List` row reuse defeated in a section footer. The text IS the
+    /// identity — two capsules on one row never carry the same reading.
+    struct Tag {
         let text: String
         /// Drawn before the text at `micro`, scaling with the type.
         let symbol: String?
@@ -37,18 +42,33 @@ struct MetaTagRow: View {
             self.symbol = symbol
             self.tint = tint
         }
+
+        /// What VoiceOver hears. The symbol names are the app's only two
+        /// direction glyphs; anything else is drawn and not spoken, which is
+        /// correct for a decoration.
+        var spoken: String {
+            switch symbol {
+            case "arrowtriangle.up.fill":   "up \(text)"
+            case "arrowtriangle.down.fill": "down \(text)"
+            default:                        text
+            }
+        }
     }
 
     let tags: [Tag]
 
     var body: some View {
         FlowRow(spacing: OnyxSpace.xs) {
-            ForEach(tags) { tag in
+            ForEach(tags, id: \.text) { tag in
                 capsule(tag)
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(tags.map(\.text).joined(separator: ", "))
+        // The glyph is read, not skipped: the arrow on "vs 30 Aug" is the only
+        // judgement on the row, and a label built from the text alone made the
+        // one tag that says whether the lift went up or down sound exactly like
+        // the four that state a total.
+        .accessibilityLabel(tags.map(\.spoken).joined(separator: ", "))
     }
 
     private func capsule(_ tag: Tag) -> some View {
@@ -65,8 +85,12 @@ struct MetaTagRow: View {
                 // line shuffle sideways when a 1,160 becomes a 1,240.
                 .onyxType(.caption).onyxNumeral()
                 .foregroundStyle(tint ?? Color.onyx.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
+                // `FlowRow` wraps BETWEEN subviews and never inside one, so a
+                // capsule wider than the screen has only two ways out: scale
+                // down or truncate mid-figure. "Top 40 kg × 11" passes 375 pt
+                // at AX5, and a truncated number is worse than a small one.
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
         }
         .padding(.horizontal, OnyxSpace.s)
         .padding(.vertical, OnyxSpace.xs)

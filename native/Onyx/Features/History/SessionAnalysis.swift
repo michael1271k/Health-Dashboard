@@ -41,6 +41,13 @@ enum SessionAnalysis {
         let timed: Bool
         let rows: [RowWithPrev]
         let prevDate: String?
+        /// The previous session's WORKING sets, whole.
+        ///
+        /// `rows` carries them too, but positionally — one beside each of this
+        /// session's numbered rows, and any past that count is dropped. A
+        /// comparison built from those is wrong in exactly the case it matters
+        /// (a set was cut), so the honest list travels separately.
+        let previousSets: [HistorySet]
         let cue: ProgressionCue?
         let stats: ExerciseStats
         /// "10–12" / "55s", or nil when the program does not prescribe it.
@@ -180,6 +187,7 @@ enum SessionAnalysis {
                 detail: detail, canonical: canonical, timed: timed,
                 rows: SessionDetail.rowsWithPrev(SessionDetail.toRows(sets), prev: prev),
                 prevDate: prevRows.first?.date,
+                previousSets: prev,
                 cue: cue, stats: SessionDetail.exerciseStats(detail), window: window,
                 atCeiling: atCeiling,
                 spark: sessionMeanE1rm((priorByEx[g.exerciseId] ?? []) + g.sets).map(\.kg)
@@ -230,8 +238,17 @@ enum SessionAnalysis {
     /// `ExerciseSlug.nameBySlug` is the second source `PrRecorder.nameResolver`
     /// already consults for exactly this case; this is that lookup without a
     /// database handle, because the caller has the rows already.
+    /// Precedence is `nameResolver`'s: the CATALOGUE first (which is what
+    /// `stored` already is — the query is `COALESCE(e.name, s.exercise_id)`),
+    /// and the slug table only when the coalesce fell through to the id. The
+    /// two must agree, because `restoreLoggedSets` resolves catalogue-first and
+    /// `editorDay` builds its cards from this: name a movement differently in
+    /// the two places and the card is built under one name while the rows fail
+    /// to match it, so the sets never restore and the first tick writes a
+    /// second exercise id.
     static func displayName(id: String, stored: String) -> String {
-        ExerciseAliases.canonicalName(ExerciseSlug.nameBySlug[id] ?? stored)
+        guard stored == id else { return ExerciseAliases.canonicalName(stored) }
+        return ExerciseAliases.canonicalName(ExerciseSlug.nameBySlug[id] ?? stored)
     }
 
     // MARK: - Exercise history

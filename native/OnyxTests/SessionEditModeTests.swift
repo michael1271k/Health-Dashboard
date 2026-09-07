@@ -115,6 +115,54 @@ struct SessionEditModeTests {
         #expect(sessions[0].endedAt != nil)
     }
 
+    @Test("unticking and re-ticking a set does not destroy it")
+    func retickSurvivesTheTombstone() throws {
+        let database = try store()
+        let model = try attached(database)
+        let exercise = try chestPress(model)
+        let row = try #require(exercise.rows.first)
+
+        model.toggleDone(row, in: exercise)            // untick — a tombstone
+        #expect(!row.isDone)
+        #expect(try database.sets(sessionId: Self.sessionId).count == 2)
+
+        model.toggleDone(row, in: exercise)            // and change your mind
+        #expect(row.isDone)
+
+        // ── THE RULE THIS PINS ──────────────────────────────────────────────
+        // `SetEventFold` says a voided set id "outranks everything, forever" —
+        // an `.append` under it is skipped before any other rule. So a re-tick
+        // under the SAME id left the row ticked on screen and absent from the
+        // projection, while `recount` wrote the smaller tonnage onto the
+        // session row and queued it for upload.
+        let rows = try database.sets(sessionId: Self.sessionId)
+        #expect(rows.count == 3, "the re-ticked set must come back")
+        #expect(!rows.contains { $0.id == "set-1" }, "the tombstoned id must not be reused")
+        #expect(rows.contains { $0.reps == 10 && $0.weightKg == 40 })
+    }
+
+    @Test("re-committing a set without changing it does not seed the event log")
+    func noOpAmendIsNotAnEdit() throws {
+        let database = try store()
+        let model = try attached(database)
+        let exercise = try chestPress(model)
+        let row = try #require(exercise.rows.first)
+
+        // What a tap into the weight field and a tap away produces:
+        // `ExerciseCardView` commits on every focus loss, changed or not.
+        model.commitEdit(row, in: exercise)
+
+        let events = try database.read { db in
+            try Int.fetchOne(db, sql: "SELECT count(*) FROM set_events WHERE session_id = ?",
+                             arguments: [Self.sessionId]) ?? 0
+        }
+        // Seeding is a ONE-WAY DOOR: from the first event this session is
+        // skipped by `applyPulledSets` forever. Reading a number must not walk
+        // through it.
+        #expect(events == 0, "a patch that restates the row must not seed the log")
+        #expect(!model.editDirty, "and must not schedule a forty-nine-day cascade")
+    }
+
     @Test("an edit is dirty until it is finished, and finishing anchors the cascade on the session's date")
     func finishReportsTheCascadeAnchor() throws {
         let database = try store()

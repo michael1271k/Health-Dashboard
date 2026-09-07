@@ -145,10 +145,19 @@ public final class AppEnvironment {
     /// touching `AppDatabase.rescore` directly, so there is exactly one place
     /// that decides how a cascade is scheduled and one place that publishes the
     /// generation when it lands.
-    func rescore(from date: String, reason: Rescore.Reason) {
-        guard let rescoreQueue else { return }
+    /// Returns whether the request was ACCEPTED — false while signed out,
+    /// when there is no queue to take it.
+    ///
+    /// The caller that has state to clear (the session editor's dirty flag)
+    /// needs to know: clearing it on a request that went nowhere loses the
+    /// cascade AND the only record that one was owed, and the chevron can then
+    /// never ask again.
+    @discardableResult
+    func rescore(from date: String, reason: Rescore.Reason) -> Bool {
+        guard let rescoreQueue else { return false }
         isRescoring = true
         Task { await rescoreQueue.request(from: date, reason: reason) }
+        return true
     }
 
     /// Publish the queue for a day. Passing a different `dayKey` replaces the

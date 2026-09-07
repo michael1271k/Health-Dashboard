@@ -37,10 +37,16 @@ struct SleepTile: View {
     /// and the tile is `max` of the two rather than their sum.
     private let stageRowHeight: CGFloat = 22
 
-    /// At an accessibility size a 96 pt gauge and a 22 pt row are both wrong,
-    /// and the tile is allowed to be tall — the whole point of the setting. So
-    /// the two columns become one and every row grows.
-    private var stacked: Bool { typeSize.isAccessibilitySize }
+    /// At a large size a 96 pt gauge and a 22 pt row are both wrong, and the
+    /// tile is allowed to be tall — the whole point of the setting. So the two
+    /// columns become one and every row grows.
+    ///
+    /// `>= .xxLarge`, not `isAccessibilitySize`: the stage column is ~190 pt,
+    /// and at xxxLarge "Awake" and its two figures already ellipsise there —
+    /// three settings below the one the accessibility test covers.
+    private var stacked: Bool { typeSize >= .xxLarge }
+
+    @ScaledMetric(relativeTo: .caption) private var shareWidth: CGFloat = 34
 
     private let accent = Color.onyx.accent(.recover)
 
@@ -257,6 +263,7 @@ struct SleepTile: View {
                 .onyxType(.caption)
                 .foregroundStyle(Color.onyx.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
             Spacer(minLength: OnyxSpace.xs)
             Text(minutes.map { DayFormat.minutes($0) } ?? "—")
                 .onyxType(.caption).fontWeight(.semibold).onyxNumeral()
@@ -265,8 +272,9 @@ struct SleepTile: View {
             Text(share(minutes))
                 .onyxType(.caption).onyxNumeral()
                 .foregroundStyle(Color.onyx.textTertiary)
-                .frame(width: 34, alignment: .trailing)
+                .frame(width: shareWidth, alignment: .trailing)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         // A MINIMUM: at the accessibility sizes the label wraps and takes the
         // row with it, which is the whole reason the two-column shape is
@@ -339,5 +347,10 @@ struct SleepTile: View {
         .tint(accent)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel("Trouble falling asleep")
+        // `ButtonToggleStyle` publishes `.isButton` + `.isSelected`, so the ON
+        // state reads "selected" and the OFF state reads as a plain button with
+        // nothing to say it has two states at all. The value is the fix; the
+        // trait is the platform's and is not ours to add.
+        .accessibilityValue(on ? "on" : "off")
     }
 }

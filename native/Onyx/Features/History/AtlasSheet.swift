@@ -48,17 +48,38 @@ struct AtlasSheet: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .body) private var valueWidth: CGFloat = 34
 
     /// Degrees of turn that have been COMMITTED. `live` is what the finger is
     /// adding right now, and it is folded in on release rather than reset —
     /// resetting it and animating `turn` from its old value is the "animate
     /// from the target, not the presentation value" jump.
-    @State private var turn: Double = 0
+    @State private var turn: Double
     @State private var live: Double = 0
     @State private var picked: Picked?
-    /// The opening face is decided once, on appear — not derived, because the
-    /// reader turns it afterwards and a derived value would turn it back.
-    @State private var opened = false
+    /// Which way the finger committed on this drag. `nil` until it is past the
+    /// threshold in one axis — see `spin`.
+    @State private var horizontal: Bool?
+
+    init(sets: [LandmarkMuscle: Double], physicalSets: Int, sessionLabel: String) {
+        self.sets = sets
+        self.physicalSets = physicalSets
+        self.sessionLabel = sessionLabel
+        // ── THE OPENING FACE IS DECIDED HERE, NOT IN A `.task` ──────────────
+        // Setting it after the first render turned the body 180° in one
+        // unanimated frame AND crossed `showsBack`, which fired the selection
+        // haptic on presentation — a body that jumps and buzzes as the sheet
+        // arrives. `sets` is available in `init`, so the state can simply start
+        // where it belongs.
+        //
+        // Always-Front is right for a chest day and wrong for every pull: the
+        // sheet's question is "where did it land", and it may as well open on
+        // the half where most of it did.
+        func credit(_ side: OnyxAtlasView) -> Double {
+            OnyxAtlas.landmarks(on: side).reduce(0) { $0 + (sets[$1] ?? 0) }
+        }
+        _turn = State(initialValue: credit(.back) > credit(.front) ? 180 : 0)
+    }
 
     private var angle: Double { turn + live }
 
@@ -76,19 +97,6 @@ struct AtlasSheet: View {
     private var worked: [LandmarkMuscle: Double] { MuscleCredit.worked(from: sets) }
 
     private var weightedTotal: Double { sets.values.reduce(0, +) }
-
-    /// More weighted credit on the back of the figure than on the front.
-    ///
-    /// `OnyxAtlas.landmarks(on:)` is the authority on which side draws which
-    /// muscle — the same generated table the drawing and the hit test use — so
-    /// this cannot drift from the picture the way a hand-written list of
-    /// posterior muscles would.
-    private var backHeavier: Bool {
-        func credit(_ side: OnyxAtlasView) -> Double {
-            OnyxAtlas.landmarks(on: side).reduce(0) { $0 + (sets[$1] ?? 0) }
-        }
-        return credit(.back) > credit(.front)
-    }
 
     /// Ranked, heaviest first, ties broken on the landmark's own order so the
     /// legend cannot reshuffle between two redraws.
@@ -132,17 +140,6 @@ struct AtlasSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        // ── IT OPENS ON THE FACE THAT CARRIES THE SESSION ───────────────────
-        // Always-Front is right for a chest day and wrong for every pull: an
-        // Upper A opened showing four blue arms while the two biggest readings
-        // on the legend — lats and upper back, both 4.5 — were on the side
-        // nobody could see. The sheet's job is "where did it land", and it may
-        // as well answer with the half where it did.
-        .task {
-            guard !opened else { return }
-            opened = true
-            if backHeavier { turn = 180 }
-        }
         // §3.4 gives `.selection` to a control changing value, and the body
         // coming round is exactly that — fired on the FACE rather than on every
         // degree, so a slow turn ticks once.
@@ -207,11 +204,17 @@ struct AtlasSheet: View {
                 // The SHORTEST way round from wherever the finger left it, so
                 // tapping the segment you are already nearly on does not send
                 // the body all the way through the long side.
-                let target = (angle / 360).rounded() * 360 + (back ? 180 : 0)
-                let alternative = target + (target > angle ? -360 : 360)
-                let nearest = abs(target - angle) <= abs(alternative - angle) ? target : alternative
+                // Folded first, exactly as `spin.onEnded` does. Assigning
+                // `turn` absolutely while a drag is still in flight — or after
+                // one was cancelled without `onEnded`, which leaves `live`
+                // standing — jumps the body by whatever the finger had added.
+                turn += live
+                live = 0
+                let from = turn
+                let target = (from / 360).rounded() * 360 + (back ? 180 : 0)
+                let alternative = target + (target > from ? -360 : 360)
+                let nearest = abs(target - from) <= abs(alternative - from) ? target : alternative
                 withAnimation(reduceMotion ? OnyxMotion.fade : OnyxMotion.move) {
-                    live = 0
                     turn = nearest
                 }
             }
@@ -250,12 +253,19 @@ struct AtlasSheet: View {
         }
         .overlay(alignment: .bottom) { callout }
         .contentShape(.rect)
-        .gesture(spin)
+        // ── SIMULTANEOUS, AND AXIS-LOCKED ───────────────────────────────────
+        // `.gesture` alone WINS against the enclosing `ScrollView`'s pan, so a
+        // 300 pt figure filling most of a large sheet became a dead zone: you
+        // could not scroll to the legend by dragging on the body, which is the
+        // obvious place to put a thumb. Simultaneous keeps the scroll, and the
+        // axis lock is what stops a vertical flick from also spinning the body
+        // on its way past.
+        .simultaneousGesture(spin)
         .padding(.bottom, OnyxSpace.s)
         .accessibilityAction(named: "Turn over") {
             withAnimation(reduceMotion ? OnyxMotion.fade : OnyxMotion.move) {
+                turn += live + 180
                 live = 0
-                turn += 180
             }
         }
     }
@@ -306,6 +316,11 @@ struct AtlasSheet: View {
         // shading is at its darkest, so nothing is ever caught half-visible.
         .opacity(visible(at: degrees) ? 1 : 0)
         .allowsHitTesting(visible(at: degrees) && edgeOn < 0.5)
+        // Opacity does NOT take a view out of the accessibility tree, and
+        // `AtlasFigure` publishes one button per landmark — so the rotor walked
+        // sixteen muscles on the face nobody can see, and activating one fired
+        // `onPick` for a muscle that is not drawn.
+        .accessibilityHidden(!visible(at: degrees))
     }
 
     private func visible(at degrees: Double) -> Bool {
@@ -320,10 +335,19 @@ struct AtlasSheet: View {
     private var spin: some Gesture {
         DragGesture(minimumDistance: 8)
             .onChanged { value in
+                // Decided once per drag, on the first movement past the
+                // threshold, and never revisited — a lock that can flip
+                // mid-drag is a body that starts turning halfway down a scroll.
+                if horizontal == nil {
+                    horizontal = abs(value.translation.width) > abs(value.translation.height)
+                }
+                guard horizontal == true else { return }
                 live = value.translation.width * 0.6
                 if picked != nil { picked = nil }
             }
             .onEnded { value in
+                defer { horizontal = nil }
+                guard horizontal == true else { return }
                 // Fold BEFORE animating: `live` going to zero while `turn`
                 // animates from its old value is a visible jump back through
                 // everything the finger just did.
@@ -435,7 +459,11 @@ struct AtlasSheet: View {
                 Text(OnyxFormat.sets(entry.sets))
                     .onyxType(.body).fontWeight(.semibold).onyxNumeral()
                     .foregroundStyle(Color.onyx.textPrimary)
-                    .frame(width: 34, alignment: .trailing)
+                    .lineLimit(1)
+                    // A fixed 34 pt column holds "4.5" at the default size and
+                    // wraps it at AX5. The column scales with the type it is
+                    // sized for.
+                    .frame(width: valueWidth, alignment: .trailing)
             }
             .frame(minHeight: 44)
             .contentShape(.rect)

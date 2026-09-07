@@ -186,6 +186,13 @@ struct LiveLoggerView: View {
         // ActivityKit update against a budget this file is careful about
         // everywhere else — for a card that is behind the sheet the whole time.
         .sheet(isPresented: $showTimer) {
+            // Guarded like every sibling. It is unreachable in edit mode today
+            // — `LoggerHero` draws a static duration and never sets the flag —
+            // and if it ever fires there `LiveActivityController.update` falls
+            // through to `start()`, which ENDS the running workout's card to
+            // adopt a three-week-old session and takes the global rest-skip
+            // handler with it.
+            guard !model.isEditing else { return }
             activity.update(model: model, clock: clock)
         } content: {
             TimerSheet(clock: clock, accent: accent)
@@ -235,10 +242,17 @@ struct LiveLoggerView: View {
         // describing a session that no longer exists, from the edit's date up
         // to forty-eight days after it. `RescoreQueue` coalesces, so a Save
         // followed by a dismiss asks twice and runs once.
-        .onDisappear {
-            guard model.isEditing, model.editDirty, let date = model.editing?.date else { return }
-            model.clearEditDirty()
-            environment?.rescore(from: date, reason: .sessionEdit)
+        .onDisappear { requestRescore() }
+        // ── ASKED PER EDIT, NOT ONLY ON THE WAY OUT ─────────────────────────
+        // `.onDisappear` does not fire when iOS terminates the app, so an edit
+        // made and then jetsammed left `daily_scores` describing a session that
+        // no longer existed, for up to forty-eight days, with nothing to retry
+        // it. Every edit in one sitting shares ONE anchor — the session's own
+        // date — so `RescoreQueue` folds them into a single run and asking per
+        // edit costs nothing over asking once. The `.onDisappear` above is now
+        // a backstop rather than the mechanism.
+        .onChange(of: model.editDirty) { _, dirty in
+            if dirty { requestRescore() }
         }
         .onAppear {
             // Edit mode is attached by the caller, which is the only place that
@@ -252,7 +266,12 @@ struct LiveLoggerView: View {
             activity.start(model: model, clock: clock)
         }
         .onChange(of: model.completedSets) { _, _ in
-            if !model.isEditing { activity.update(model: model, clock: clock) }
+            guard !model.isEditing else { return }
+            activity.update(model: model, clock: clock)
+            // Not in edit mode: every restored card is already complete, so the
+            // first re-tick would jump the cursor forward off the very card the
+            // reader opened the editor to correct — the same failure `_focus`'s
+            // edit case above exists to prevent, arriving one tap later.
             advanceIfFinished()
         }
         // The Lock Screen mirrors the pause. A card counting a session up while
@@ -667,12 +686,23 @@ struct LiveLoggerView: View {
     /// refuse when there is nothing to write: leaving a session with no sets
     /// left in it is a correction, and it still has to rescore.
     private func finishEdit(sessionRpe: Double?) -> Bool {
-        guard let date = model.finishEdit(sessionRpe: sessionRpe) else { return false }
-        model.clearEditDirty()
-        environment?.rescore(from: date, reason: .sessionEdit)
+        guard model.finishEdit(sessionRpe: sessionRpe) != nil else { return false }
+        requestRescore()
         model.stopRest()
         dismiss()
         return true
+    }
+
+    /// Ask for the cascade, and forget the edit only once somebody took it.
+    ///
+    /// `AppEnvironment.rescore` refuses while signed out (there is no queue),
+    /// and `environment` is optional for the previews. Clearing the flag on a
+    /// request that went nowhere would lose the cascade AND the only record
+    /// that one was owed — the backstop on the way out could then never ask.
+    private func requestRescore() {
+        guard model.isEditing, model.editDirty, let date = model.editing?.date else { return }
+        guard environment?.rescore(from: date, reason: .sessionEdit) == true else { return }
+        model.clearEditDirty()
     }
 }
 

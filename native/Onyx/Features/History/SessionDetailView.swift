@@ -139,6 +139,7 @@ struct SessionDetailView: View {
         // the view, not only on the id changing.
         .task(id: environment.rescoreGeneration) {
             guard loadedAt != environment.rescoreGeneration else { return }
+            let first = loadedAt < 0
             loadedAt = environment.rescoreGeneration
             let database = environment.database, id = sessionId
             page = await Task.detached(priority: .userInitiated) {
@@ -146,8 +147,14 @@ struct SessionDetailView: View {
             }.value
             missing = page == nil
             #if DEBUG
-            if startAtAtlas, page != nil { showAtlas = true }
-            if startAtEditor, page != nil { openEditor() }
+            // `else if`, and only on the FIRST load: two modals from one source
+            // view drops the second with an "already presenting" warning, and
+            // this `.task` re-runs on every cascade — so saving from the editor
+            // re-presented the editor over the page the shot was meant to take.
+            if first, page != nil {
+                if startAtAtlas { showAtlas = true }
+                else if startAtEditor { openEditor() }
+            }
             #endif
             // `defaultScrollAnchor` is decided at first layout, when the list
             // is still empty — so the harness's ledger shot has to scroll after
@@ -179,7 +186,9 @@ struct SessionDetailView: View {
                 Label("Edit session", systemImage: "square.and.pencil")
             }
             .disabled(!canEdit)
-            .accessibilityHint("Opens this workout on the logger, where its sets can be corrected.")
+            .accessibilityHint(canEdit
+                ? "Opens this workout on the logger, where its sets can be corrected."
+                : "This session cannot be edited on the phone yet.")
         }
     }
 
@@ -249,9 +258,29 @@ struct SessionDetailView: View {
         return day
     }
 
-    /// Whether the button is live. Cheap enough to recompute — the report is
-    /// already in memory and this is a set of a dozen strings.
-    private var canEdit: Bool { report.flatMap { editorDay($0) } != nil }
+    /// Whether the button is live.
+    ///
+    /// ── AND WHY A UNILATERAL SESSION IS NOT EDITABLE YET ────────────────────
+    /// The logger has no split concept: `LoggerModel.SetRow` carries no `side`
+    /// and no `pairId`, and `snapshot` writes neither. So a session holding L/R
+    /// pairs restores as two independent rows — the deck's own tonnage comes out
+    /// nearly double (`SessionVolume.sessionVolumeKg` collapses a pair to its
+    /// weaker side and the deck does not), amending one side rewrites its
+    /// `set_index` to its deck position and splits a pair that shared one set
+    /// number, and deleting one side leaves an orphan with a dangling `pair_id`
+    /// that every later reader scores as a lone side.
+    ///
+    /// Refusing is the honest answer while that is true. The summary page still
+    /// reads correctly — `SessionDetail.toRows` folds pairs properly — so what
+    /// is withheld is the correction, not the record.
+    ///
+    /// ponytail: a whole-session gate, because one bad row poisons the
+    /// aggregates for the whole session. Per-exercise once `SetRow` carries a
+    /// side.
+    private var canEdit: Bool {
+        guard let report, editorDay(report) != nil else { return false }
+        return !report.exercises.contains { $0.rows.contains { $0.row.kind == "pair" } }
+    }
 
     /// The phase this session was logged IN, not the one selected today.
     ///
@@ -266,7 +295,7 @@ struct SessionDetailView: View {
     }
 
     private func openEditor() {
-        guard let report, let day = editorDay(report) else { return }
+        guard canEdit, let report, let day = editorDay(report) else { return }
         let session = report.session
         let model = LoggerModel(
             day: day,
@@ -761,23 +790,25 @@ struct SessionDetailView: View {
         return tags
     }
 
-    /// This movement's tonnage on the session before this one, from the rows
-    /// the page already holds — `RowWithPrev.prev` is the previous session's
-    /// set beside each of ours, which is the same arithmetic the ledger draws.
+    /// This movement's tonnage on the session before this one.
+    ///
+    /// ── FROM `previousSets`, NOT FROM THE `prev` COLUMNS ────────────────────
+    /// It was rebuilt from `RowWithPrev.prev`, and `SessionDetail.rowsWithPrev`
+    /// attaches those POSITIONALLY — indexed by this session's numbered rows.
+    /// Any previous set past that count is never attached and was silently
+    /// dropped. Four sets of 100 × 10 last time and three this time summed to
+    /// 3000 against 3000, so the one capsule on the row that carries a verdict
+    /// said "equal" on a lift whose tonnage had fallen a quarter — and cutting
+    /// a set is exactly when the reader wants the arrow.
+    ///
+    /// `sessionVolumeKg`, not a sum of w × r: it collapses a unilateral pair to
+    /// its weaker side and skips a ghost, and `ex.detail.volumeKg` — the figure
+    /// this is compared AGAINST — is that same function.
     private func previousVolume(_ ex: SessionAnalysis.ExerciseReport) -> Double? {
-        guard ex.prevDate != nil else { return nil }
-        // `sessionVolumeKg`, not a sum of w × r: it collapses a unilateral
-        // pair to its weaker side and skips a ghost, and `ex.detail.volumeKg`
-        // — the figure this is compared AGAINST — is that same function. Two
-        // different rules either side of a comparison is how a lateral raise
-        // reads as having doubled.
-        let sets = ex.rows.flatMap { row in
-            [row.prev, row.prevRight].compactMap { $0 }.map {
-                VolumeSet(weightKg: $0.weightKg, reps: $0.reps, side: $0.side, pairId: $0.pairId, setType: $0.setType)
-            }
-        }
-        guard !sets.isEmpty else { return nil }
-        return SessionVolume.sessionVolumeKg(sets)
+        guard !ex.previousSets.isEmpty else { return nil }
+        return SessionVolume.sessionVolumeKg(ex.previousSets.map {
+            VolumeSet(weightKg: $0.weightKg, reps: $0.reps, side: $0.side, pairId: $0.pairId, setType: $0.setType)
+        })
     }
 
     /// What the atlas's share sheet calls this session.

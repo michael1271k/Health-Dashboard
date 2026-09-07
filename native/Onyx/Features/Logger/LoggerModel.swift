@@ -100,7 +100,31 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     @MainActor
     @Observable
     final class SetRow: Identifiable {
+        /// SwiftUI's identity. Stable for the life of the row, because a
+        /// `ForEach` that re-identifies a row mid-gesture tears down the field
+        /// the finger is in.
         let id: String
+
+        /// The id this row is written to the STORE under, which is a different
+        /// thing and does not survive a void.
+        ///
+        /// ── WHY A TOMBSTONED ID CAN NEVER COME BACK ─────────────────────────
+        /// `SetEventFold` is explicit: `voided` membership "outranks everything,
+        /// forever", and an `.append` for a voided set id is skipped before any
+        /// other rule. So untick-then-retick — which is the single most ordinary
+        /// gesture on this deck, and the entire point of the edit screen —
+        /// re-appended the same id, the fold dropped it, and the set was GONE
+        /// while the row on screen stayed ticked. `refreshLivePrs` counted it,
+        /// the header counted it, and `reproject` did not.
+        ///
+        /// In edit mode it is worse than a display lie: the same transaction
+        /// runs `recount`, writes the shrunken `total_volume_kg` and `set_count`
+        /// onto the session row, and queues that for upload.
+        ///
+        /// So a void re-mints this. `id` stays put for the view; the next append
+        /// is a genuinely new set, which is what un-ticking and re-ticking
+        /// actually means.
+        var storeId: String
         var weightKg: Double?
         var reps: Int?
         /// CR-10. `nil` is UNRATED, which the progression rule has to be able to
@@ -143,12 +167,14 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
 
         init(
             id: String = newOnyxID(),
+            storeId: String? = nil,
             weightKg: Double? = nil, reps: Int? = nil, rpe: Double? = nil,
             kind: SetKind = .normal, quality: SetQuality? = nil, isDone: Bool = false,
             previous: String? = nil, isRecord: Bool = false,
             rpeStale: Bool = false, progressed: Bool = false
         ) {
             self.id = id
+            self.storeId = storeId ?? id
             self.weightKg = weightKg
             self.reps = reps
             self.rpe = rpe
@@ -373,6 +399,19 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
 
     /// Called by the view once the cascade has been asked for.
     func clearEditDirty() { editDirty = false }
+
+    /// ── WHY THE FLAG IS RAISED PER EDIT AND NOT ONCE ────────────────────────
+    /// `LiveLoggerView` watches it and asks for the cascade the moment it goes
+    /// up, then clears it. Every edit in one sitting shares ONE anchor — the
+    /// session's own date — so `RescoreQueue` folds them into a single run and
+    /// per-edit costs nothing over per-session. What it buys is that an app
+    /// killed between an edit and the chevron has already asked: the set edit
+    /// itself landed in its own transaction, and the scores behind it are no
+    /// longer forty-eight days out of date with no repair path.
+    private func markDirty() {
+        guard isEditing else { return }
+        editDirty = true
+    }
     private let userId: String
 
     // MARK: - Derived
@@ -664,7 +703,11 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         row.isDone = true
         appendInStore(row, in: exercise)
         refreshLivePrs()
-        startRest(for: exercise)
+        // A rest timer on a session that ended three weeks ago is a countdown
+        // for nobody. Every other live affordance on this screen is already
+        // guarded in the view; this one is in the model because that is where
+        // the tick happens.
+        if !isEditing { startRest(for: exercise) }
         return true
     }
 
@@ -735,7 +778,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     setType: row.kind.rawValue,
                     timed: TimedExercise.isTimed(name),
                     repFloor: floor,
-                    date: LogicalDay.today(),
+                    // The session's own day when there is one: `PrSeed` matches
+                    // an asserted record by `(date, name, setNumber)`, and
+                    // today's date on a three-week-old set matches nothing.
+                    date: editing?.date ?? LogicalDay.today(),
                     exerciseName: name,
                     setNumber: i + 1
                 ))
@@ -1158,17 +1204,43 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // actually carry. A throw here leaves a restored, usable deck with
             // no live records rather than no deck at all.
             try restoreLoggedSets()
+        } catch {
+            // ── THE ONE THROW THAT MUST UNWIND ──────────────────────────────
+            // `openEditor`'s guard is `sessionId != nil`, so a failed restore
+            // with the id already assigned opens the editor on a REAL finished
+            // session with every row blank. The first tick then appends beside
+            // the rows `seedEventLog` is about to seed from `workout_sets` —
+            // the whole workout, twice, with the aggregates to match. A deck
+            // that refuses to open is the only safe answer.
+            sessionId = nil
+            editing = nil
+            storeError = String(describing: error)
+            return
+        }
+        do {
             baselines = try store.livePrBaselines(
                 exerciseIds: Array(Set(
                     exercises.map { Self.exerciseId($0.name) }
                         + exercises.compactMap(\.storedExerciseId)
                 )),
                 excluding: session.id,
+                // ── THE BAR IS WHAT CAME BEFORE THIS SESSION ────────────────
+                // `baselines` has no date bound of its own: `save.ts` never
+                // needed one because it builds the bar at close, when there IS
+                // nothing after. Editing a three-week-old session is the first
+                // caller for which "every other session" and "every EARLIER
+                // session" are different sets — without this the deck measures
+                // an August set against a September one and shows no records
+                // at all on a session whose own summary page, one screen back,
+                // shows three.
+                before: session.date,
                 dayKey: day.key
             )
             refreshLivePrs()
             storeError = nil
         } catch {
+            // A bar that could not be built costs the live record badges and
+            // nothing else. The deck is restored and usable.
             storeError = String(describing: error)
         }
     }
@@ -1204,10 +1276,26 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         func canonical(_ id: String) -> String {
             ExerciseAliases.canonicalName(catalogue[id] ?? ExerciseSlug.nameBySlug[id] ?? id)
         }
+        // ── AND THE REVERSE, FOR A MOVEMENT THIS SESSION DOES NOT HOLD ──────
+        // `snapshot` falls back to `ExerciseSlug.id` when an exercise has no
+        // stored id, which is right on a session this phone logged and wrong on
+        // one the web logged: a forgotten set of Cable Fly added to it would go
+        // up as `helix5-cable-fly`, an id no catalogue row on the server
+        // matches, and the web's own `COALESCE(e.name, s.exercise_id)` would
+        // then render the movement as that literal string.
+        idByCanonicalName = Dictionary(
+            catalogue.map { (ExerciseAliases.canonicalName($0.value).lowercased(), $0.key) },
+            uniquingKeysWith: { first, _ in first }
+        )
 
         for exercise in exercises {
-            let wanted = ExerciseAliases.canonicalName(exercise.name)
-            let mine = logged.filter { canonical($0.exerciseId) == wanted }
+            // Lowercased on BOTH sides. `SessionDetailView.editorDay` compares
+            // case-insensitively when it decides whether the program already
+            // names a movement; a case-sensitive match here would reuse the
+            // program's card and then fail to find its rows — a blank card, and
+            // a fresh `helix5-` id on the first tick.
+            let wanted = ExerciseAliases.canonicalName(exercise.name).lowercased()
+            let mine = logged.filter { canonical($0.exerciseId).lowercased() == wanted }
             guard !mine.isEmpty else { continue }
             // Whatever id these rows already carry is the id a set appended
             // beside them must carry — see `ExerciseState.storedExerciseId`.
@@ -1215,6 +1303,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             var rows: [SetRow] = mine.map { set in
                 SetRow(
                     id: set.id,
+                    storeId: set.id,
                     weightKg: set.weightKg,
                     reps: set.reps,
                     rpe: set.rpe,
@@ -1240,9 +1329,22 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // already holds the ones that were performed.
             let remaining = max(0, exercise.rows.count - rows.count)
             rows.append(contentsOf: seedRows(exercise.plan, count: remaining, warmups: false))
+            // ── AND ON AN EDIT, NO "PREVIOUS" AT ALL ────────────────────────
+            // The seed is built by `sessionSeed(dayKey:)`, which takes no date
+            // and answers with the most recent session on this day key. On a
+            // three-week-old session that is a workout which happened AFTER the
+            // one being corrected, printed under each set as what it was "last
+            // time". A blank column is the honest reading; the summary page one
+            // screen back carries the real comparison.
+            if isEditing { for row in rows { row.previous = nil } }
             exercise.rows = rows
         }
     }
+
+    /// Canonical name → the local catalogue's uuid, built by `restoreLoggedSets`.
+    /// Empty on a live session, which needs no such lookup: the slug IS the id
+    /// there, and it is what `closeSession` expects.
+    private var idByCanonicalName: [String: String] = [:]
 
     /// The catalogue id for a movement.
     ///
@@ -1263,7 +1365,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
 
     private func snapshot(_ row: SetRow, in exercise: ExerciseState) -> SetSnapshot {
         SetSnapshot(
-            exerciseId: exercise.storedExerciseId ?? Self.exerciseId(exercise.name),
+            exerciseId: storedId(for: exercise),
             setIndex: (exercise.rows.firstIndex { $0.id == row.id } ?? 0) + 1,
             // A missing load is 0 kg — a real bodyweight set — and a missing rep
             // count cannot reach here, because `toggleDone` refuses to tick one.
@@ -1274,6 +1376,21 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             rpe: row.rpe,
             quality: row.quality?.rawValue
         )
+    }
+
+    /// Which `exercise_id` this movement's sets are written under.
+    ///
+    /// The session's own, when it already holds rows of this movement; then the
+    /// local catalogue, so a set ADDED to a web-logged session joins the same
+    /// row every other client resolves; then the slug, which is what a live
+    /// session writes and what `ExerciseIndex.id(forSlug:)` resolves on push.
+    private func storedId(for exercise: ExerciseState) -> String {
+        if let stored = exercise.storedExerciseId { return stored }
+        if isEditing,
+           let catalogued = idByCanonicalName[ExerciseAliases.canonicalName(exercise.name).lowercased()] {
+            return catalogued
+        }
+        return Self.exerciseId(exercise.name)
     }
 
     /// The session row this device is writing into, created on demand.
@@ -1306,10 +1423,17 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         do {
             guard let sessionId = try ensureSession() else { return }
             if isEditing {
-                try store.addSet(sessionId: sessionId, snapshot(row, in: exercise), setId: row.id)
-                editDirty = true
+                // ── THE OUTCOME IS THE ANSWER TO "DID ANYTHING CHANGE" ──
+                // `SessionEditing` returns nil for a write it declined — an
+                // amend whose patch restates the row it describes, which is
+                // what a tap into a field and a tap away produces. Flagging the
+                // edit dirty on one of those schedules a forty-nine-day cascade
+                // for a session nobody touched.
+                if try store.addSet(sessionId: sessionId, snapshot(row, in: exercise), setId: row.storeId) != nil {
+                    markDirty()
+                }
             } else {
-                try store.appendSet(sessionId: sessionId, setId: row.id, snapshot(row, in: exercise))
+                try store.appendSet(sessionId: sessionId, setId: row.storeId, snapshot(row, in: exercise))
             }
             storeError = nil
         } catch {
@@ -1327,18 +1451,19 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 // record BACK when a mistyped 100 becomes 60 — and recounts the
                 // session's stored tonnage. `EventStore.amendSet` does none of
                 // the three and claims a pencil nothing is holding.
-                try store.amendSet(
-                    sessionId: sessionId, setId: row.id,
+                if try store.amendSet(
+                    sessionId: sessionId, setId: row.storeId,
                     weightKg: next.weightKg, reps: next.reps, rpe: next.rpe,
                     setType: next.setType,
                     quality: next.quality ?? SetPatch.clearedQuality,
                     est1rmKg: next.est1rmKg, setIndex: next.setIndex
-                )
-                editDirty = true
+                ) != nil {
+                    markDirty()
+                }
                 storeError = nil
                 return
             }
-            try store.amendSet(sessionId: sessionId, setId: row.id, SetPatch(
+            try store.amendSet(sessionId: sessionId, setId: row.storeId, SetPatch(
                 setIndex: next.setIndex, weightKg: next.weightKg, reps: next.reps,
                 setType: next.setType, est1rmKg: next.est1rmKg, rpe: next.rpe,
                 // The sentinel, not nil: `nil` in a patch means UNCHANGED, so
@@ -1359,11 +1484,17 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         guard let store, let sessionId else { return }
         do {
             if isEditing {
-                try store.deleteSet(sessionId: sessionId, setId: row.id)
-                editDirty = true
+                if try store.deleteSet(sessionId: sessionId, setId: row.storeId) != nil {
+                    markDirty()
+                }
             } else {
-                try store.voidSet(sessionId: sessionId, setId: row.id)
+                try store.voidSet(sessionId: sessionId, setId: row.storeId)
             }
+            // The tombstone is permanent (`SetEventFold`'s rule 3), so this row
+            // must never write under that id again. Re-minted HERE rather than
+            // in `toggleDone` so every path that voids gets it — there is only
+            // one, and there being only one is not a rule anybody wrote down.
+            row.storeId = newOnyxID()
             storeError = nil
         } catch {
             storeError = String(describing: error)
