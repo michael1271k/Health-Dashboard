@@ -188,7 +188,7 @@ struct WeeklyExportBuilderTests {
 
         let markdown = WeeklyExport.build(got)
         #expect(markdown.contains("Legs & Core A"))
-        #expect(markdown.hasSuffix(WeeklyExport.priorReportNote("Week 6")))
+        #expect(markdown.hasPrefix("# ONYX Week 6 \u{00B7} 2026-08-23\u{2192}2026-08-29 \u{00B7} Onyx Cut \u{00B7} Cut \u{00B7} lever=mixed"))
     }
 
     /// The whole payload, by hand — every field the web's `weekPayload` would

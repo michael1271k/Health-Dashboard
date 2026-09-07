@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { leverPeriods, atwaterKcal, LEVER_SCHEDULE } from '@/lib/nutrition/levers'
 import { buildWeeklyExport, type WeeklyExportInput, type ExportDay } from '@/lib/reports/weeklyExport'
+import { headings, headerCells, rowFor, rowsOf } from './exportGrammar'
 
 /**
  * ── A WEEK IS NOT NECESSARILY ONE TARGET ─────────────────────────────────────
@@ -112,26 +113,53 @@ const input = (): WeeklyExportInput => ({
   days, sessions: [], volumeByMuscle: [], doms: [], cardio: [],
 })
 
-describe('the Targets & Levers section', () => {
+describe('the levers the week actually ran under', () => {
+  /**
+   * v3 states the rungs in ONE of two places, never both: the header's `lever=`
+   * token when the whole week ran under a single rung, and a `## LEVERS`
+   * section when it did not. The section is the branch this fixture exercises —
+   * a lever released mid-week is exactly the case a header token cannot state.
+   */
   it('names each rung, its numbers, and the exact days it governed', () => {
     const out = buildWeeklyExport(input())
-    expect(out).toContain('## Targets & Levers')
-    expect(out).toContain('- **Lever 1** — 1885 kcal · 170P / 182C / 53F · 10000 steps')
-    expect(out).toContain('    - **Lever 1 was active on Sun 16, Mon 17, Tue 18 & Wed 19 Aug** — 4 days.')
-    expect(out).toContain('- **Custom** — 1999 kcal · 170P / 206C / 55F · 10000 steps')
-    expect(out).toContain('    - **Custom was active on Thu 20, Fri 21 & Sat 22 Aug** — 3 days.')
+    expect(headings(out)).toContain('## LEVERS')
+    const l1 = rowFor(out, 'LEVERS', 'lever-1')
+    expect(l1.label).toBe('Lever 1')
+    expect([l1.kcal, l1.P, l1.C, l1.F, l1.steps]).toEqual(['1885', '170', '182', '53', '10000'])
+    expect(l1.dates).toBe('2026-08-16…2026-08-19')
+
+    const custom = rowFor(out, 'LEVERS', 'custom')
+    expect(custom.label).toBe('Custom')
+    expect([custom.kcal, custom.P, custom.C, custom.F, custom.steps])
+      .toEqual(['1999', '170', '206', '55', '10000'])
+    expect(custom.dates).toBe('2026-08-20…2026-08-22')
+    // A week under more than one rung says so on the header rather than naming
+    // one of them, which would be a claim about the other four days.
+    expect(headerCells(out)[4]).toBe('lever=mixed')
   })
 
   it('states the CHANGE — which morning, and by how much', () => {
     // A reader scanning the daily rows needs to know the target moved under
-    // them, and the direction. "+70 kcal" is the whole story of that Thursday.
-    expect(buildWeeklyExport(input()))
-      .toContain('    - Changed from **Lever 1** on Thu 2026-08-20 (+114 kcal, 0 steps)')
+    // them, and the direction. v3 does not print the delta as a sentence; it
+    // prints both rungs with their runs, and the change is the difference —
+    // which is only true if the runs ABUT and the numbers differ.
+    const out = buildWeeklyExport(input())
+    const rows = rowsOf(out, 'LEVERS')
+    expect(rows).toHaveLength(2)
+    // The rung came off on the Thursday morning: the first run ends Wednesday
+    // and the second opens the very next day, with no unattributed gap.
+    expect(rows[0].dates.split('…')[1]).toBe('2026-08-19')
+    expect(rows[1].dates.split('…')[0]).toBe('2026-08-20')
+    // +114 kcal, and the step target did not move.
+    expect(Number(rows[1].kcal) - Number(rows[0].kcal)).toBe(114)
+    expect(rows[1].steps).toBe(rows[0].steps)
   })
 
   it('says so plainly when nothing moved', () => {
     // A week wholly inside one rung — 2–8 Aug is entirely baseline, before
-    // Lever 1 was pulled on the 16th.
+    // Lever 1 was pulled on the 16th. ONE rung is stated on the header and the
+    // section is not printed at all: a `## LEVERS` block with a single row
+    // would be four lines saying what the header already said.
     const flat = ['2026-08-02', '2026-08-03', '2026-08-04', '2026-08-05',
       '2026-08-06', '2026-08-07', '2026-08-08']
     const out = buildWeeklyExport({
@@ -140,21 +168,28 @@ describe('the Targets & Levers section', () => {
       days: flat.map((d, i) => day(d, WEEKDAYS[i])),
       targetPeriods: leverPeriods(flat, 'custom', '2026-08-14', OWN),
     })
-    expect(out).toContain('- **Baseline** — 1955 kcal')
-    expect(out).toContain('- Unchanged all week.')
-    expect(out).not.toContain('Changed from')
+    expect(headings(out)).not.toContain('## LEVERS')
+    expect(headerCells(out)[4]).toBe('lever=baseline 1955kcal 170P 195C 55F 10000st')
+    expect(headerCells(out)[4]).not.toBe('lever=mixed')
   })
 
   it('falls back to the plain targets line when no periods are supplied', () => {
     // An older caller, or a payload built without goal history. It must degrade
-    // to what the export always printed rather than to an empty section.
+    // to the week's own goals rather than to an empty section or a fabricated
+    // rung name.
     const out = buildWeeklyExport({ ...input(), targetPeriods: undefined })
-    expect(out).toContain('## Targets & Levers')
-    expect(out).toContain('- **Targets:** 1955 kcal · 170 g protein · 10000 steps')
+    expect(headings(out)).not.toContain('## LEVERS')
+    expect(headerCells(out)[4]).toBe('lever=—')
+    expect(headerCells(out)[5]).toMatch(/^goals 1955kcal 170P 10000st /)
   })
 
   it('keeps the sleep target, which no lever touches', () => {
-    expect(buildWeeklyExport(input())).toContain('- Sleep target: 7.5 h')
+    // It rides in the week's own `goals` token, beside the figures a rung does
+    // move — so a released lever can never take it with it.
+    for (const periods of [input().targetPeriods, undefined]) {
+      const out = buildWeeklyExport({ ...input(), targetPeriods: periods })
+      expect(headerCells(out)[5]).toContain('7.5h')
+    }
   })
 })
 

@@ -141,8 +141,7 @@ import { adjustMacros, atwater, type Macros, type MacroEdit } from '@/lib/nutrit
 import { resolveTargets, mergedProfiles, type TargetSources, type ResolvedTargets } from '@/lib/nutrition/targets'
 import {
   buildWeeklyExport, weeklySummary, trendTotals, energyBalance, sparkline, markdownTable, nutrientLine, flaggedNutrients,
-  setDetail, consolidateSupplements, trendLedger, priorReportNote, fatigueLabelsFor, FATIGUE_SLOT_LABELS,
-  UNILATERAL_VOLUME_NOTE, EPLEY_NOTE, APPLE_WATCH_DISCLAIMER,
+  setDetail, consolidateSupplements, supplementRows, trendLedger, fatigueLabelsFor, FATIGUE_SLOT_LABELS,
   type WeeklyExportInput, type ExportDay, type ExportSet, type ExportSession, type WeeklySummary, type TrendTotals, type EnergyBalance,
 } from '@/lib/reports/weeklyExport'
 import { derivedWeek, type DerivedWeek } from '@/lib/reports/derived'
@@ -4974,14 +4973,15 @@ describe('golden vectors — weekly export', () => {
     })
 
     emit('report-notes.json', {
-      module: 'reports/weeklyExport', fn: 'priorReportNote / fatigueLabelsFor / constants',
-      note: 'The closing line per label, the two fatigue slot triples, and the three standing notes verbatim.',
+      module: 'reports/weeklyExport', fn: 'fatigueLabelsFor / supplementRows',
+      note: 'The two fatigue slot triples, and the deduped supplement stack both renderers read.'
+        + ' The four standing closing notes retired with export v2 \u2014 v3 states the same'
+        + ' caveats once, inline, on the heading of the section they govern.',
       cases: [{
         name: 'the strings', input: {},
         expected: {
-          notes: ([undefined, null, '', '  ', 'Week 7', ' Week 7 '] as Array<string | null | undefined>).map((l) => ({ label: l ?? null, note: priorReportNote(l) })),
           training: fatigueLabelsFor(true), rest: fatigueLabelsFor(false), slots: FATIGUE_SLOT_LABELS,
-          unilateral: UNILATERAL_VOLUME_NOTE, epley: EPLEY_NOTE, watch: APPLE_WATCH_DISCLAIMER,
+          supplements: supplementRows(RICH.supplementProtocol!),
         },
       }],
     })

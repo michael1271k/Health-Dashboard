@@ -4,6 +4,7 @@ import { manualHkUuid, isManualHkUuid } from '@/lib/nutrition/manualEntry'
 import {
   buildWeeklyExport, type WeeklyExportInput, type ExportDay,
 } from '@/lib/reports/weeklyExport'
+import { dayRow, derivedWeekRow, DASH } from './exportGrammar'
 
 /**
  * MANUAL INTAKE MUST WIN — end to end.
@@ -88,11 +89,16 @@ describe('manual intake override reaches the export', () => {
   })
 
   // ── Link 4 · the renderer ──
+  // In v3 the corrected day is a `## DAYS` row and its intake is the `kcal`
+  // column, zipped against the legend on the heading rather than found by
+  // substring — `1891` also appears in `## WEEK` and could match there.
   it('prints the corrected intake and macros verbatim', () => {
     const out = buildWeeklyExport(base({
       days: [day({ calories: 1891, proteinG: 173, carbsG: 188, fatG: 52 })],
     }))
-    expect(out).toMatch(/Macros: 1891 kcal \(173P \/ 188C \/ 52F\)/)
+    const row = dayRow(out, '2026-08-05')
+    expect(row.kcal).toBe('1891')
+    expect([row.P, row.C, row.F]).toEqual(['173', '188', '52'])
   })
 
   it('carries a corrected value that differs from the synced one', () => {
@@ -100,8 +106,8 @@ describe('manual intake override reaches the export', () => {
     // prints. There is no second source of calories to fall back to.
     const synced = buildWeeklyExport(base({ days: [day({ calories: 2400 })] }))
     const corrected = buildWeeklyExport(base({ days: [day({ calories: 1891 })] }))
-    expect(synced).toMatch(/Macros: 2400 kcal/)
-    expect(corrected).toMatch(/Macros: 1891 kcal/)
+    expect(dayRow(synced, '2026-08-05').kcal).toBe('2400')
+    expect(dayRow(corrected, '2026-08-05').kcal).toBe('1891')
     expect(corrected).not.toMatch(/2400/)
   })
 
@@ -110,14 +116,27 @@ describe('manual intake override reaches the export', () => {
     const out = buildWeeklyExport(base({
       days: [day({ calories: 1891, bmrKcal: 1517, activeKcal: 911 })],
     }))
-    // 1517 BMR + 911 active + 198.6 TEF = 2626.6.
-    expect(out).toMatch(/Intake 1891 kcal vs expenditure 2627 kcal/)
-    expect(out).toMatch(/736 kcal DEFICIT/)
+    // 1517 BMR + 911 active + 198.6 TEF = 2626.6 expenditure, against 1891 in.
+    // It is stated under the fence, because three of those four terms are
+    // arithmetic rather than measurement.
+    const energy = derivedWeekRow(out)
+    expect(energy.tdee_avg).toBe('2627')
+    expect(energy.balance_kcal).toBe('-736')
+    expect(energy.energy_days).toBe('1')
+    // The corrected intake is what the TEF term was taken from, so a stale copy
+    // held elsewhere would show up here too: 1891 × 0.105 = 198.6.
+    expect(energy.tef_avg).toBe('199')
+    expect([energy.bmr_avg, energy.active_avg]).toEqual(['1517', '911'])
   })
 
   it('prints a zero-calorie correction as 0, not as "not recorded"', () => {
-    // A logged fast is a measurement. Only an ABSENT entry is an em-dash.
+    // A logged fast is a measurement. Only an ABSENT entry is an em-dash, and
+    // in v3 that distinction IS the difference between `0` and `—` in one cell.
     const out = buildWeeklyExport(base({ days: [day({ calories: 0 })] }))
-    expect(out).toMatch(/Macros: 0 kcal/)
+    expect(dayRow(out, '2026-08-05').kcal).toBe('0')
+    expect(dayRow(out, '2026-08-05').kcal).not.toBe(DASH)
+    // And an absent one still dashes, so the two cannot be confused.
+    const absent = buildWeeklyExport(base({ days: [day({ calories: null })] }))
+    expect(dayRow(absent, '2026-08-05').kcal).toBe(DASH)
   })
 })
