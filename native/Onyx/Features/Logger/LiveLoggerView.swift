@@ -142,6 +142,10 @@ struct LiveLoggerView: View {
         .onChange(of: model.physicalSets) { _, _ in activity.update(model: model) }
         .onChange(of: model.totalVolumeKg) { _, _ in activity.update(model: model) }
         .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model) }
+        // And the record count moves on paths none of the three above touch:
+        // demoting a ticked set to a warm-up keeps its tonnage and its physical
+        // count and takes its record away.
+        .onChange(of: model.recordCount) { _, _ in activity.update(model: model) }
         // ── THE CLOCK HAS TO END ITSELF ─────────────────────────────────────
         // `startRest` set a deadline and only a tap, an adjustment into the
         // past or the next set ever cleared it. So the capsule sat at 0:00
