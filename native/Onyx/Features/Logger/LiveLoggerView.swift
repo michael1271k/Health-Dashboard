@@ -56,8 +56,6 @@ struct LiveLoggerView: View {
     @State private var showFinish = false
     @State private var showTimer = false
     @State private var confirmCancel = false
-    @State private var editingNote = false
-    @State private var noteDraft = ""
 
     /// Which face, and how it got here — the animation travels with it.
     @State private var selection = LoggerFaceSelection()
@@ -224,16 +222,6 @@ struct LiveLoggerView: View {
             Button("Keep logging", role: .cancel) {}
         } message: {
             Text(cancelMessage)
-        }
-        // The note is a fast action rather than a row in the set options sheet:
-        // it is about the MOVEMENT, and it was two taps down a sheet that is
-        // about one set of it.
-        .alert("Note", isPresented: $editingNote) {
-            TextField("What happened on this lift?", text: $noteDraft)
-            Button("Save") { noteTarget?.note = noteDraft }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(noteTarget?.name ?? "")
         }
         // ── LEAVING IS NOT CANCELLING, AND IT STILL OWES THE CASCADE ────────
         // There is no draft here: every set edit committed the moment it was
@@ -406,12 +394,11 @@ struct LiveLoggerView: View {
     // `MuscleDistributionSheet`, and that is the face the distribution belongs
     // on anyway.
     //
-    // ponytail: `Note` DID lose its only door. The note still renders on the
-    // exercise card and still syncs; nothing can now type one. The plumbing
-    // below (`noteDraft`, `editingNote`, `noteTarget`, the alert) is kept
-    // deliberately for one turn pending the founder's call on where the verb
-    // should live — the set options sheet is the obvious home. Delete it, or
-    // wire it up, rather than leaving it here indefinitely.
+    // `Note` is gone entirely, on the founder's call rather than by omission.
+    // A note still RENDERS on the exercise card and still arrives from the web,
+    // so an existing one is never hidden — the phone simply stopped being a
+    // place to type one. `ExerciseState.note` and its sync stay for that
+    // reading half; only the writing half left.
 
     /// Finish, in the navigation bar's trailing slot.
     ///
@@ -450,12 +437,6 @@ struct LiveLoggerView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(model.isEditing ? "Save session" : "Finish workout")
         }
-    }
-
-    /// The movement a note would be about: the one you are standing in front of,
-    /// or the last one when the session is finished and there is no current set.
-    private var noteTarget: LoggerModel.ExerciseState? {
-        model.currentSet?.exercise ?? model.exercises.last
     }
 
     // MARK: - The two faces
