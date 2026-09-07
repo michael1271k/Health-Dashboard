@@ -252,6 +252,18 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     public var durationSec: Int?
     public var incline: Double?
     public var distanceKm: Double?
+    /// Total ascent for the bout, in METRES — the fourth cardio axis
+    /// (`docs/sql/cardio-elevation.sql`, `v19.cardioElevation`).
+    ///
+    /// **Measured, never derived.** `incline × distanceKm` looks like the same
+    /// number and is only equal while the incline never moved; a real walk is
+    /// 2 % then 4 % then flat, and `incline` holds one of those three. So a
+    /// stored value here can legitimately disagree with the product of the two
+    /// columns beside it, and when it does, this one is right.
+    ///
+    /// `nil` is the normal state — the Postgres column is applied by hand and
+    /// nothing writes it yet.
+    public var elevationM: Double?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -275,6 +287,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case durationSec = "duration_sec"
         case incline
         case distanceKm = "distance_km"
+        case elevationM = "elevation_m"
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -285,6 +298,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
         rpe: Double? = nil, quality: String? = nil, exerciseOrder: Int? = nil,
         durationSec: Int? = nil, incline: Double? = nil, distanceKm: Double? = nil,
+        elevationM: Double? = nil,
         isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
@@ -303,6 +317,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.durationSec = durationSec
         self.incline = incline
         self.distanceKm = distanceKm
+        self.elevationM = elevationM
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

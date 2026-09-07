@@ -4882,12 +4882,18 @@ describe('golden vectors — weekly export', () => {
       cases: fmts,
     })
 
-    interface CardioIn { durationSec: number | null; distanceKm: number | null; incline: number | null }
-    const cardios: Array<[number | null, number | null, number | null]> = [
-      [300, 0.37, 2], [300, null, null], [null, 0.37, null], [null, null, 2],
-      [null, null, null], [0, 0, 0], [45, null, null], [3600, 10, 12.5],
-      [59, 1.5, -3], [61, 0.005, 0.5], [90.6, 2, 1],
-      [0, 0.37, 0], [125, null, 15],
+    interface CardioIn { durationSec: number | null; distanceKm: number | null; incline: number | null; elevationM: number | null }
+    const cardios: Array<[number | null, number | null, number | null, number | null]> = [
+      [300, 0.37, 2, null], [300, null, null, null], [null, 0.37, null, null], [null, null, 2, null],
+      [null, null, null, null], [0, 0, 0, 0], [45, null, null, null], [3600, 10, 12.5, null],
+      [59, 1.5, -3, null], [61, 0.005, 0.5, null], [90.6, 2, 1, null],
+      [0, 0.37, 0, null], [125, null, 15, null],
+      // The ascent axis. Last component, `> 0` rather than incline's `!== 0`,
+      // and NOT `incline × distanceKm` — the last two rows are the whole point
+      // of storing it: 0.37 km at 2 % is 7.4 m and the bout measured 12, which
+      // is what a walk that changed incline looks like.
+      [300, 0.37, 2, 7], [300, 0.37, 2, 12], [null, null, null, 7],
+      [300, null, null, 7.4], [null, null, 2, 0], [null, null, null, -5],
     ]
     // No NaN case: `JSON.stringify` writes it as `null`, so a vector could not
     // tell the Swift port which of the two it was being asked about. The
@@ -4895,11 +4901,11 @@ describe('golden vectors — weekly export', () => {
 
     emit('cardio-set-format.json', {
       module: 'utils/setFormat', fn: 'formatCardioSet',
-      note: '`5:00 · 0.37 km · 2%`, each component dropped when absent, non-finite or zero — except incline, which keeps a negative (a decline is a real setting). Duration rounds to the nearest SECOND then splits. Null when nothing survives, which is what hands the row back to formatSet.',
-      cases: cardios.map(([durationSec, distanceKm, incline]) => ({
-        name: `${durationSec} s / ${distanceKm} km / ${incline}%`,
-        input: { durationSec, distanceKm, incline } as CardioIn,
-        expected: formatCardioSet(durationSec, distanceKm, incline),
+      note: '`5:00 · 0.37 km · 2% · 7 m`, each component dropped when absent, non-finite or zero — except incline, which keeps a negative (a decline is a real setting). Ascent takes the `> 0` rule, not incline\'s: total ascent is non-negative, so a zero and an absence are the same non-fact. Duration rounds to the nearest SECOND then splits. Null when nothing survives, which is what hands the row back to formatSet.',
+      cases: cardios.map(([durationSec, distanceKm, incline, elevationM]) => ({
+        name: `${durationSec} s / ${distanceKm} km / ${incline}% / ${elevationM} m`,
+        input: { durationSec, distanceKm, incline, elevationM } as CardioIn,
+        expected: formatCardioSet(durationSec, distanceKm, incline, elevationM),
       })),
     })
 

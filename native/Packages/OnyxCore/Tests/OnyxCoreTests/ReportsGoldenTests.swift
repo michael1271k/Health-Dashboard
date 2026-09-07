@@ -127,21 +127,23 @@ struct ExportRenderersGoldenTests {
         }
     }
 
-    struct CardioFmtIn: Decodable { let durationSec: Double?; let distanceKm: Double?; let incline: Double? }
+    struct CardioFmtIn: Decodable { let durationSec: Double?; let distanceKm: Double?; let incline: Double?; let elevationM: Double? }
 
     @Test("formatCardioSet matches")
     func cardioSetFormatMatches() throws {
         for c in try GoldenFixture<CardioFmtIn, String?>.load("cardio-set-format").cases {
             #expect(
-                SetFormat.cardio(durationSec: c.input.durationSec, distanceKm: c.input.distanceKm, incline: c.input.incline)
-                    == c.expected,
+                SetFormat.cardio(
+                    durationSec: c.input.durationSec, distanceKm: c.input.distanceKm,
+                    incline: c.input.incline, elevationM: c.input.elevationM
+                ) == c.expected,
                 "formatCardioSet — \(c.name)"
             )
         }
         // Not in the vector: `JSON.stringify` writes NaN as null, so a fixture
         // cannot ask this question across the two languages.
-        #expect(SetFormat.cardio(durationSec: .nan, distanceKm: .nan, incline: .nan) == nil)
-        #expect(SetFormat.cardio(durationSec: .infinity, distanceKm: 1, incline: nil) == "1 km")
+        #expect(SetFormat.cardio(durationSec: .nan, distanceKm: .nan, incline: .nan, elevationM: .nan) == nil)
+        #expect(SetFormat.cardio(durationSec: .infinity, distanceKm: 1, incline: nil, elevationM: .infinity) == "1 km")
     }
 
     struct StoredIn: Decodable { let stored: String? }

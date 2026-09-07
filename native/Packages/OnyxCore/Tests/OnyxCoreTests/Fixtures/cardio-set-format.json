@@ -1,124 +1,197 @@
 {
   "module": "utils/setFormat",
   "fn": "formatCardioSet",
-  "note": "`5:00 · 0.37 km · 2%`, each component dropped when absent, non-finite or zero — except incline, which keeps a negative (a decline is a real setting). Duration rounds to the nearest SECOND then splits. Null when nothing survives, which is what hands the row back to formatSet.",
+  "note": "`5:00 · 0.37 km · 2% · 7 m`, each component dropped when absent, non-finite or zero — except incline, which keeps a negative (a decline is a real setting). Ascent takes the `> 0` rule, not incline's: total ascent is non-negative, so a zero and an absence are the same non-fact. Duration rounds to the nearest SECOND then splits. Null when nothing survives, which is what hands the row back to formatSet.",
   "cases": [
     {
-      "name": "300 s / 0.37 km / 2%",
+      "name": "300 s / 0.37 km / 2% / null m",
       "input": {
         "durationSec": 300,
         "distanceKm": 0.37,
-        "incline": 2
+        "incline": 2,
+        "elevationM": null
       },
       "expected": "5:00 · 0.37 km · 2%"
     },
     {
-      "name": "300 s / null km / null%",
+      "name": "300 s / null km / null% / null m",
       "input": {
         "durationSec": 300,
         "distanceKm": null,
-        "incline": null
+        "incline": null,
+        "elevationM": null
       },
       "expected": "5:00"
     },
     {
-      "name": "null s / 0.37 km / null%",
+      "name": "null s / 0.37 km / null% / null m",
       "input": {
         "durationSec": null,
         "distanceKm": 0.37,
-        "incline": null
+        "incline": null,
+        "elevationM": null
       },
       "expected": "0.37 km"
     },
     {
-      "name": "null s / null km / 2%",
+      "name": "null s / null km / 2% / null m",
       "input": {
         "durationSec": null,
         "distanceKm": null,
-        "incline": 2
+        "incline": 2,
+        "elevationM": null
       },
       "expected": "2%"
     },
     {
-      "name": "null s / null km / null%",
+      "name": "null s / null km / null% / null m",
       "input": {
         "durationSec": null,
         "distanceKm": null,
-        "incline": null
+        "incline": null,
+        "elevationM": null
       },
       "expected": null
     },
     {
-      "name": "0 s / 0 km / 0%",
+      "name": "0 s / 0 km / 0% / 0 m",
       "input": {
         "durationSec": 0,
         "distanceKm": 0,
-        "incline": 0
+        "incline": 0,
+        "elevationM": 0
       },
       "expected": null
     },
     {
-      "name": "45 s / null km / null%",
+      "name": "45 s / null km / null% / null m",
       "input": {
         "durationSec": 45,
         "distanceKm": null,
-        "incline": null
+        "incline": null,
+        "elevationM": null
       },
       "expected": "0:45"
     },
     {
-      "name": "3600 s / 10 km / 12.5%",
+      "name": "3600 s / 10 km / 12.5% / null m",
       "input": {
         "durationSec": 3600,
         "distanceKm": 10,
-        "incline": 12.5
+        "incline": 12.5,
+        "elevationM": null
       },
       "expected": "60:00 · 10 km · 12.5%"
     },
     {
-      "name": "59 s / 1.5 km / -3%",
+      "name": "59 s / 1.5 km / -3% / null m",
       "input": {
         "durationSec": 59,
         "distanceKm": 1.5,
-        "incline": -3
+        "incline": -3,
+        "elevationM": null
       },
       "expected": "0:59 · 1.5 km · -3%"
     },
     {
-      "name": "61 s / 0.005 km / 0.5%",
+      "name": "61 s / 0.005 km / 0.5% / null m",
       "input": {
         "durationSec": 61,
         "distanceKm": 0.005,
-        "incline": 0.5
+        "incline": 0.5,
+        "elevationM": null
       },
       "expected": "1:01 · 0.005 km · 0.5%"
     },
     {
-      "name": "90.6 s / 2 km / 1%",
+      "name": "90.6 s / 2 km / 1% / null m",
       "input": {
         "durationSec": 90.6,
         "distanceKm": 2,
-        "incline": 1
+        "incline": 1,
+        "elevationM": null
       },
       "expected": "1:31 · 2 km · 1%"
     },
     {
-      "name": "0 s / 0.37 km / 0%",
+      "name": "0 s / 0.37 km / 0% / null m",
       "input": {
         "durationSec": 0,
         "distanceKm": 0.37,
-        "incline": 0
+        "incline": 0,
+        "elevationM": null
       },
       "expected": "0.37 km"
     },
     {
-      "name": "125 s / null km / 15%",
+      "name": "125 s / null km / 15% / null m",
       "input": {
         "durationSec": 125,
         "distanceKm": null,
-        "incline": 15
+        "incline": 15,
+        "elevationM": null
       },
       "expected": "2:05 · 15%"
+    },
+    {
+      "name": "300 s / 0.37 km / 2% / 7 m",
+      "input": {
+        "durationSec": 300,
+        "distanceKm": 0.37,
+        "incline": 2,
+        "elevationM": 7
+      },
+      "expected": "5:00 · 0.37 km · 2% · 7 m"
+    },
+    {
+      "name": "300 s / 0.37 km / 2% / 12 m",
+      "input": {
+        "durationSec": 300,
+        "distanceKm": 0.37,
+        "incline": 2,
+        "elevationM": 12
+      },
+      "expected": "5:00 · 0.37 km · 2% · 12 m"
+    },
+    {
+      "name": "null s / null km / null% / 7 m",
+      "input": {
+        "durationSec": null,
+        "distanceKm": null,
+        "incline": null,
+        "elevationM": 7
+      },
+      "expected": "7 m"
+    },
+    {
+      "name": "300 s / null km / null% / 7.4 m",
+      "input": {
+        "durationSec": 300,
+        "distanceKm": null,
+        "incline": null,
+        "elevationM": 7.4
+      },
+      "expected": "5:00 · 7.4 m"
+    },
+    {
+      "name": "null s / null km / 2% / 0 m",
+      "input": {
+        "durationSec": null,
+        "distanceKm": null,
+        "incline": 2,
+        "elevationM": 0
+      },
+      "expected": "2%"
+    },
+    {
+      "name": "null s / null km / null% / -5 m",
+      "input": {
+        "durationSec": null,
+        "distanceKm": null,
+        "incline": null,
+        "elevationM": -5
+      },
+      "expected": null
     }
   ]
 }

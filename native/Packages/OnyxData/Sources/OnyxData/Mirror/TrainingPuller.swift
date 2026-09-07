@@ -267,6 +267,9 @@ extension AppDatabase {
                         durationSec: row.durationSec,
                         incline: row.incline,
                         distanceKm: row.distanceKm,
+                        // The fourth axis, on the same terms: nil on every row
+                        // until `docs/sql/cardio-elevation.sql` is applied.
+                        elevationM: row.elevationM,
                         isPendingSync: false,
                         foldOrder: order
                     ).save(db)

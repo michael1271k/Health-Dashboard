@@ -233,7 +233,7 @@ struct FinishSheet: View {
                 columns: Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.s), count: readingColumns),
                 spacing: OnyxSpace.s
             ) {
-                tile("Tonnage", "scalemass", OnyxFormat.volume(model.totalVolumeKg), "kg",
+                tile("Tonnage", "scalemass", OnyxFormat.volumeExact(model.totalVolumeKg), "kg",
                      tint: Color.onyx.textPrimary)
                 tile("Sets", "square.stack.3d.up", "\(model.completedSets)/\(model.plannedSets)", nil,
                      tint: Color.onyx.textPrimary)

@@ -243,6 +243,10 @@ export interface Database {
           incline: number | null
           /** Distance covered, kilometres. */
           distance_km: number | null
+          /** Total ascent, metres. MEASURED — not `incline` × `distance_km`,
+           *  which is only equal while the incline never moved. Added by
+           *  `docs/sql/cardio-elevation.sql`, applied by hand. */
+          elevation_m: number | null
           set_type: string
           side: string | null
           pair_id: string | null

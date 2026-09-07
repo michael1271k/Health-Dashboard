@@ -71,11 +71,17 @@ private struct SignedInTabs: View {
                 }
             }
             // Onyx's five: Today · Workout · Nutrition · Pulse · Settings
-            // (§4). The names are the ones on the screens they open — "Train"
-            // and "Fuel" were the web app's, and neither is what the tab is
-            // called anywhere else on the device. The logger is NOT the Workout
-            // root — see `WorkoutTabView` for why.
-            SwiftUI.Tab("Workout", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
+            // (§4). The names are the ones on the screens they open, which is
+            // the rule that matters and the reason this tab and
+            // `WorkoutTabView.navigationTitle` always move together.
+            //
+            // "Train" since 2026-09-07, on the founder's call. It had been
+            // "Workout" because "Train" was the web app's word and read as
+            // borrowed; the tab and its screen were renamed in the same commit,
+            // so the tab still says exactly what the screen it opens says.
+            // `Tab.train` was already the case name. The logger is NOT the
+            // Train root — see `WorkoutTabView` for why.
+            SwiftUI.Tab("Train", systemImage: "figure.strengthtraining.traditional", value: Tab.train) {
                 NavigationStack { WorkoutTabView() }
             }
             SwiftUI.Tab("Nutrition", systemImage: "fork.knife", value: Tab.fuel) {

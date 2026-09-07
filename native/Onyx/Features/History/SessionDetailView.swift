@@ -72,7 +72,17 @@ struct SessionDetailView: View {
                 ForEach(page.report.exercises) { exercise in
                     ledger(exercise)
                 }
-                if !page.report.cardio.isEmpty { cardio(page.report.cardio) }
+                // ── NO CARDIO BANNER HERE ───────────────────────────────────
+                // `cardio_logs` is the MAIN TAB's subject — a bout is planned,
+                // counted against the Zone 2 rail and read on the day it
+                // happened. On a finished session it was a second list under
+                // the ledger, in a different shape from every movement above
+                // it, describing rows that are not part of the workout the page
+                // is about (`AppDatabase.cardio` matches on the DATE as well as
+                // the session, so a morning walk appeared under an evening leg
+                // day). A treadmill bout that IS part of the session is a
+                // `workout_sets` row and gets an exercise card like any other
+                // movement — see the seed's Treadmill, first in this list.
             }
         }
         .listRowBackground(Rectangle().fill(.ultraThinMaterial))
@@ -409,11 +419,24 @@ struct SessionDetailView: View {
         let report = page.report
         return VStack(spacing: OnyxSpace.grid) {
             LazyVGrid(columns: columns(3), spacing: OnyxSpace.grid) {
-                cell("Volume", OnyxFormat.volume(report.tonnageKg), "kg",
+                cell("Volume", OnyxFormat.volumeExact(report.tonnageKg), "kg",
                      sub: delta(page.tonnageDelta, unit: "kg", higherIsBetter: true))
                 cell("Duration", report.session.durationMin.map { jsIntegerString(jsRound($0)) } ?? "—", "min",
                      sub: delta(page.durationDelta, unit: "min", higherIsBetter: nil))
-                cell("Sets", "\(report.sets)", nil, sub: composition(report) ?? delta(page.setsDelta.map(Double.init), unit: "", higherIsBetter: true))
+                // ── EVERY SET PERFORMED, NOT THE WORKING ONES ──────────────
+                // `Report.sets` sums `workingSets`, so a session that opened
+                // with a treadmill bout and a leg-press warm-up headlined 20
+                // for 22 rows — while the muscle card one screen down read the
+                // same session as 22 (`physicalSets`, which is what weighted
+                // sets are counted against). Two set counts on one page.
+                //
+                // `physicalSets` is the honest headline: its own doc comment is
+                // "every set that was performed, ghosts excluded, a unilateral
+                // pair counted once", which is what the word Sets means to
+                // somebody who has just done them. The composition line under
+                // it — `3 warm-up · 1 drop` — is what says how many were which,
+                // and it is why the bigger number does not mislead.
+                cell("Sets", "\(report.physicalSets)", nil, sub: composition(report) ?? delta(page.setsDelta.map(Double.init), unit: "", higherIsBetter: true))
             }
             LazyVGrid(columns: columns(4), spacing: OnyxSpace.grid) {
                 cell("Difficulty", report.session.sessionRpe.map { "\(OnyxFormat.rpe($0))/10" } ?? "—", nil,
@@ -422,11 +445,10 @@ struct SessionDetailView: View {
                      sub: recordsDelta(page),
                      tint: report.prCount > 0 ? Color.onyx.record : nil)
                 cell("Avg HR", page.avgBpm.map { jsIntegerString($0) } ?? "—", page.avgBpm == nil ? nil : "bpm",
-                     sub: .init("no data", Color.onyx.textTertiary))
-                cell("Calories", page.calories.map { jsIntegerString($0.kcal) } ?? "—",
+                     sub: .init(bpmBasis(page), Color.onyx.textTertiary))
+                cell("Calories", page.calories.map { jsIntegerString($0) } ?? "—",
                      page.calories == nil ? nil : "kcal",
-                     sub: .init(basis(page.calories), Color.onyx.textTertiary),
-                     estimated: page.calories != nil)
+                     sub: .init(basis(page), Color.onyx.textTertiary))
             }
         }
     }
@@ -448,7 +470,27 @@ struct SessionDetailView: View {
         init(_ text: String, _ color: Color) { self.text = text; self.color = color }
     }
 
-    private func cell(_ label: String, _ value: String, _ unit: String?, sub: Sub, tint: Color? = nil, estimated: Bool = false) -> some View {
+    /// ── FOUR ACROSS ON A 375 pt PHONE IS 84 pt A CELL ───────────────────────
+    /// Which is what the Calories cell broke on. `383` in `.display` beside
+    /// `kcal` beside a raised `calc` needed ~110 pt; the value obeyed its
+    /// `minimumScaleFactor` and stopped, and the two unconstrained `Text`es
+    /// behind it did the only other thing they can — wrapped. `kcal` on its own
+    /// line, `calc` on a third, and a tile two lines taller than the three
+    /// beside it.
+    ///
+    /// Three changes, and the first is the one that matters:
+    ///
+    ///  · The `calc` superscript is GONE. The sub-line under the figure already
+    ///    reads "estimated" or "measured" — it is the same fact, in a word
+    ///    rather than an abbreviation, on the line that exists to carry it, in
+    ///    the 24 pt the cell does not have to spare. Two marks for one claim,
+    ///    and the one that cost the layout was the one nobody has to be taught.
+    ///  · The unit is held to one line and allowed to scale, like the value it
+    ///    sits beside. A unit that wraps is a unit that has left its number.
+    ///  · The stack no longer lets the unit push the value: `layoutPriority`
+    ///    gives the figure the width first, which is the right order — `38…`
+    ///    beside `kcal` is worse than `383` beside a slightly smaller `kcal`.
+    private func cell(_ label: String, _ value: String, _ unit: String?, sub: Sub, tint: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .onyxMicro()
@@ -459,20 +501,13 @@ struct SessionDetailView: View {
                     .onyxType(.display).onyxNumeral()
                     .foregroundStyle(tint ?? Color.onyx.textPrimary)
                     .lineLimit(1).minimumScaleFactor(0.7)
+                    .layoutPriority(1)
                 if let unit {
                     Text(unit)
                         .onyxType(.caption)
                         .foregroundStyle(Color.onyx.textTertiary)
-                }
-                // The web report's `calc` superscript: this figure was not
-                // measured. It is the difference between "you burned 340 kcal"
-                // and "340 kcal is what a session this long costs someone your
-                // weight", and only one of those is a fact.
-                if estimated {
-                    Text("calc")
-                        .onyxType(.micro)
-                        .foregroundStyle(Color.onyx.textTertiary)
-                        .baselineOffset(6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
             }
             Text(sub.text)
@@ -520,12 +555,24 @@ struct SessionDetailView: View {
         return Sub(entries.map { "\($0.count) \($0.full.lowercased())" }.joined(separator: " · "), Color.onyx.textTertiary)
     }
 
-    private func basis(_ estimate: CalorieEstimate?) -> String {
-        switch estimate?.basis {
-        case .personalMedian: "your median"
-        case .metFormula: "estimated"
-        case nil: "no weight"
+    /// Where the calorie figure came from — and it is the sub-line, not a
+    /// superscript, that carries it now (see `cell`).
+    ///
+    /// "measured" is a word this cell could not say before: `Page.calories` was
+    /// always an estimate, so the mark over it was always `calc`, including on
+    /// the sessions the watch had actually measured.
+    private func basis(_ page: SessionAnalysis.Page) -> String {
+        guard page.calories != nil else { return "no data" }
+        guard page.caloriesEstimated else { return "measured" }
+        switch page.calorieBasis {
+        case .personalMedian: return "your median"
+        case .metFormula, nil: return "estimated"
         }
+    }
+
+    private func bpmBasis(_ page: SessionAnalysis.Page) -> String {
+        guard page.avgBpm != nil else { return "no data" }
+        return page.avgBpmEstimated ? "estimated" : "measured"
     }
 
     /// Records against the previous session of this split. It is the reserved
@@ -543,7 +590,7 @@ struct SessionDetailView: View {
     private func progression(_ page: SessionAnalysis.Page) -> some View {
         OnyxChartCard(
             "Progression", domain: .train,
-            headline: "\(OnyxFormat.volume(page.report.tonnageKg)) kg",
+            headline: "\(OnyxFormat.volumeExact(page.report.tonnageKg)) kg",
             caption: page.verdict,
             // Only when the window holds one. A legend for a state nothing is
             // in is a line of chrome explaining nothing.
@@ -959,31 +1006,6 @@ struct SessionDetailView: View {
         return "\(day) · \(date.formatted(.dateTime.day().month(.abbreviated)))"
     }
 
-    // MARK: - 6 · Cardio
-
-    private func cardio(_ rows: [CardioLogRow]) -> some View {
-        Section {
-            ForEach(rows, id: \.id) { c in
-                LabeledContent(CardioKind(c.kind).label) {
-                    Text(cardioText(c)).onyxNumeral().foregroundStyle(Color.onyx.textPrimary)
-                }
-                .frame(minHeight: 44)
-            }
-        } header: {
-            OnyxSectionHeader("Cardio", .body)
-        }
-    }
-
-    private func cardioText(_ c: CardioLogRow) -> String {
-        var parts: [String] = []
-        if let m = c.distanceM { parts.append("\(jsToFixed1(m / 1000)) km") }
-        if let min = c.durationMin { parts.append("\(jsIntegerString(jsRound(min))) min") }
-        if let pace = CardioMetrics.paceMinPerKm(distanceM: c.distanceM, durationMin: c.durationMin) {
-            parts.append(CardioMetrics.formatPace(pace))
-        }
-        if let pct = c.inclinePct { parts.append("\(jsIntegerString(pct))%") }
-        return parts.isEmpty ? "—" : parts.joined(separator: " · ")
-    }
 }
 
 // MARK: - The progression chart
@@ -1220,12 +1242,17 @@ struct SetRow: View {
 
     /// Never wrapped, and never scaled below legibility: it is the row.
     ///
-    /// A three-component cardio value — `5:00 · 0.37 km · 2%` — is whole at
-    /// 375 pt and TRUNCATES at AX5, where the incline drops off the end. That
-    /// is the row's own rule and not an accident: it sheds the effort column at
-    /// the same sizes, and `spoken` carries the value in full to VoiceOver. If
-    /// a sighted AX5 reader ever needs the third component, this line is the
-    /// one to change — `lineLimit(typeSize.isAccessibilitySize ? 2 : 1)`.
+    /// A FOUR-component cardio value — `5:00 · 0.37 km · 2% · 7 m` — is whole
+    /// at 375 pt (verified on an SE 3rd gen) and TRUNCATES at AX5, where the
+    /// incline and the ascent both drop off the end. That is the row's own rule
+    /// and not an accident: it sheds the effort column at the same sizes, and
+    /// `spoken` carries the value in full to VoiceOver, ascent included. If a
+    /// sighted AX5 reader ever needs the tail, this line is the one to change —
+    /// `lineLimit(typeSize.isAccessibilitySize ? 2 : 1)`.
+    ///
+    /// The components are ordered longest-lived first, so what AX5 sheds is
+    /// what was added last: duration and distance are the two facts a walk
+    /// always has, and ascent is the one the column was added for.
     private var value: some View {
         Text(current)
             .onyxType(.body).onyxNumeral()
@@ -1361,7 +1388,7 @@ struct SetRow: View {
         SetFormat.format(weightKg: kg, reps: reps, timed: timed)
     }
 
-    /// The set as ITS OWN axes — `5:00 · 0.37 km · 2%` for the treadmill,
+    /// The set as ITS OWN axes — `5:00 · 0.37 km · 2% · 7 m` for the treadmill,
     /// `42kg × 10` for everything else.
     ///
     /// `SetFormat.cardio` answers nil unless the set carries one of the three
@@ -1374,8 +1401,10 @@ struct SetRow: View {
     /// cardio axis, and the prev column only draws on a NUMBERED row — the
     /// treadmill is a warm-up and has no number.
     private func fmt(_ s: DetailSet) -> String {
-        SetFormat.cardio(durationSec: s.durationSec, distanceKm: s.distanceKm, incline: s.incline)
-            ?? fmt(s.weightKg, s.reps)
+        SetFormat.cardio(
+            durationSec: s.durationSec, distanceKm: s.distanceKm,
+            incline: s.incline, elevationM: s.elevationM
+        ) ?? fmt(s.weightKg, s.reps)
     }
 }
 

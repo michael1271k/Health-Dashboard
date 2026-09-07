@@ -436,7 +436,8 @@ public extension AppDatabase {
                         // it as `0kg × 0` on the first edit of the session.
                         durationSec: row.durationSec,
                         incline: row.incline,
-                        distanceKm: row.distanceKm
+                        distanceKm: row.distanceKm,
+                        elevationM: row.elevationM
                     )
                 )
             )

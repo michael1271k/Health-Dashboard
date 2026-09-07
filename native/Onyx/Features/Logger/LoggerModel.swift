@@ -165,13 +165,49 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         /// bumped load's own ink — `ExerciseCardView.progression`.
         var progressed: Bool
 
+        /// A set that is not reps and kilograms: seconds under load, incline
+        /// percent, kilometres. All three nil on a lifted set.
+        ///
+        /// ── CARRIED, NOT EDITABLE, AND THAT IS THE POINT ────────────────────
+        /// The deck has no control for any of them and this wave does not add
+        /// one. What it adds is the ability to CARRY them, because a row that
+        /// cannot hold a fact destroys it: `snapshot` builds the payload for
+        /// every append and amend the deck writes, so a restored treadmill row
+        /// re-appended without these went back into the log as `0kg × 0` with
+        /// the five minutes, the 0.37 km and the 2 % gone — and then pushed
+        /// that over the server's copy.
+        ///
+        /// Worse, `toggleDone` refuses to tick a row with no reps. So the
+        /// treadmill row could be UN-ticked (which voids it, permanently — see
+        /// `storeId`) and then could not be put back. One tap on the only set
+        /// in the session that carries no reps deleted it from the phone, from
+        /// the projection and from Postgres, with no way back on this screen.
+        /// `isCardio` is what both halves of that now test.
+        var durationSec: Int?
+        var incline: Double?
+        var distanceKm: Double?
+        /// Total ascent in metres — carried on exactly the same terms as the
+        /// three above, and for the same reason: a row that cannot hold a fact
+        /// destroys it on the next append.
+        var elevationM: Double?
+
+        /// This row's content is time and distance rather than reps.
+        ///
+        /// Ascent is deliberately NOT one of the tests. A bout that measured
+        /// ascent measured something else too — there is no walk with an
+        /// elevation and no duration — so adding it here would only widen the
+        /// door for a row where all it can mean is a stray value.
+        var isCardio: Bool { durationSec != nil || distanceKm != nil || incline != nil }
+
         init(
             id: String = newOnyxID(),
             storeId: String? = nil,
             weightKg: Double? = nil, reps: Int? = nil, rpe: Double? = nil,
             kind: SetKind = .normal, quality: SetQuality? = nil, isDone: Bool = false,
             previous: String? = nil, isRecord: Bool = false,
-            rpeStale: Bool = false, progressed: Bool = false
+            rpeStale: Bool = false, progressed: Bool = false,
+            durationSec: Int? = nil, incline: Double? = nil, distanceKm: Double? = nil,
+            elevationM: Double? = nil
         ) {
             self.id = id
             self.storeId = storeId ?? id
@@ -185,6 +221,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             self.isRecord = isRecord
             self.rpeStale = rpeStale
             self.progressed = progressed
+            self.durationSec = durationSec
+            self.incline = incline
+            self.distanceKm = distanceKm
+            self.elevationM = elevationM
         }
 
         /// Tonnage this row contributes. A ghost contributes nothing; a warm-up
@@ -750,7 +790,15 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
         // A set with no reps has not happened. Ticking it would put a zero into
         // the tonnage and a zero into the history.
-        guard let reps = row.reps, reps > 0 else { return false }
+        //
+        // ── UNLESS ITS CONTENT IS NOT REPS ──────────────────────────────────
+        // A treadmill bout is five minutes at incline 2 for 0.37 km and zero of
+        // everything this guard measures. Untick-then-retick is the single most
+        // ordinary gesture on the edit deck; refusing the SECOND half of it on
+        // that row made the first half a deletion with no undo — the void is
+        // terminal in the log and gets pushed. The row still has to have
+        // happened, which for a cardio set is `isCardio`.
+        guard (row.reps ?? 0) > 0 || row.isCardio else { return false }
         row.isDone = true
         appendInStore(row, in: exercise)
         refreshLivePrs()
@@ -1372,7 +1420,14 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                         workingIndex: mine.prefix(while: { $0.id != set.id })
                             .filter { $0.setType != "warmup" }.count
                     ),
-                    isRecord: false
+                    isRecord: false,
+                    // A treadmill bout restores as a treadmill bout. Dropped
+                    // here, the first amend of the session wrote them back as
+                    // null — see `SetRow.durationSec`.
+                    durationSec: set.durationSec,
+                    incline: set.incline,
+                    distanceKm: set.distanceKm,
+                    elevationM: set.elevationM
                 )
             }
             // Keep whatever blanks the prescription still asks for beyond what
@@ -1426,7 +1481,13 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             est1rmKg: row.estimated1RM,
             rpe: row.rpe,
             quality: row.quality?.rawValue,
-            exerciseOrder: deckOrder(of: exercise)
+            exerciseOrder: deckOrder(of: exercise),
+            // Nil on every lifted row, which is what they are on a lifted set.
+            // On a restored cardio bout they are the only content the set has.
+            durationSec: row.durationSec,
+            incline: row.incline,
+            distanceKm: row.distanceKm,
+            elevationM: row.elevationM
         )
     }
 
@@ -1600,6 +1661,34 @@ enum OnyxFormat {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = value < 100 ? 1 : 0
+        return formatter.string(from: value as NSNumber) ?? "\(value)"
+    }
+
+    /// `13,242.5` — the same grouping, and ALWAYS one decimal.
+    ///
+    /// ── WHY THIS IS A SIBLING AND NOT A CHANGE TO `volume` ──────────────────
+    /// `volume` drops the decimal above 100 and it is right to nearly
+    /// everywhere it is called: a per-exercise pill, a chart callout, a week's
+    /// total, a delta and a Lock Screen face are all readings where the tenth
+    /// of a kilogram is noise competing for width that is genuinely scarce.
+    ///
+    /// Three surfaces are not readings — they are the CLAIM about one session's
+    /// weight, and they are checked against each other and against
+    /// `workout_sessions.total_volume_kg`: the finish sheet's Tonnage tile, the
+    /// logger's Live Stats face and the summary's Volume cell. A half kilogram
+    /// rounded away there makes the app say 13,243 for a session the database
+    /// records as 13,242.5, and a figure that does not match the one the sheet
+    /// showed thirty seconds earlier is a figure nobody trusts again.
+    ///
+    /// `minimum` as well as `maximum`, so a whole number prints `9,000.0`
+    /// rather than `9,000` — a column of tonnages that gains and loses a
+    /// decimal place between sessions is harder to read than one that never
+    /// does.
+    static func volumeExact(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 1
+        formatter.maximumFractionDigits = 1
         return formatter.string(from: value as NSNumber) ?? "\(value)"
     }
 

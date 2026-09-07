@@ -23,7 +23,7 @@ public enum SetFormat {
         return "\(w.map(jsIntegerString) ?? "null")\(unit) × \(ns)"
     }
 
-    /// A set that is not reps and kilograms — `5:00 · 0.37 km · 2%`.
+    /// A set that is not reps and kilograms — `5:00 · 0.37 km · 2% · 7 m`.
     ///
     /// A SIBLING of `format`, not a branch inside it: `format` is parity-locked
     /// by a golden vector and its contract is that a set has a load and a rep
@@ -37,7 +37,16 @@ public enum SetFormat {
     /// A component is dropped when absent, non-finite or zero. Incline reads
     /// `!= 0` rather than `> 0`: a DECLINE is a real treadmill setting and an
     /// unstated one is not.
-    public static func cardio(durationSec: Double?, distanceKm: Double?, incline: Double?) -> String? {
+    ///
+    /// Ascent is LAST and takes the `> 0` rule, not incline's. Total ascent is
+    /// non-negative by definition — a descent is not negative ascent, it is a
+    /// different measurement nothing here holds — so a zero and an absence say
+    /// the same thing, exactly as they do for distance.
+    ///
+    /// It is rendered rather than computed from the two components before it:
+    /// they agree only while the incline never moved, and when they disagree
+    /// this is the measured one. See `docs/sql/cardio-elevation.sql`.
+    public static func cardio(durationSec: Double?, distanceKm: Double?, incline: Double?, elevationM: Double?) -> String? {
         func ok(_ v: Double?) -> Double? { v.flatMap { $0.isFinite ? $0 : nil } }
         var parts: [String] = []
         if let d = ok(durationSec), d > 0 {
@@ -52,6 +61,7 @@ public enum SetFormat {
         }
         if let km = ok(distanceKm), km > 0 { parts.append("\(jsIntegerString(km)) km") }
         if let i = ok(incline), i != 0 { parts.append("\(jsIntegerString(i))%") }
+        if let e = ok(elevationM), e > 0 { parts.append("\(jsIntegerString(e)) m") }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }

@@ -7,7 +7,10 @@ enum LoggerFace: String, CaseIterable, Identifiable {
     case workout, stats
 
     var id: String { rawValue }
-    var title: String { self == .workout ? "Workout" : "Live Stats" }
+    /// "Train", not "Workout", since 2026-09-07: the tab this deck belongs to
+    /// is called Train, and a segmented control naming the other word inside it
+    /// is the app calling one thing two names on one screen.
+    var title: String { self == .workout ? "Train" : "Live Stats" }
     var index: Int { self == .workout ? 0 : 1 }
 }
 

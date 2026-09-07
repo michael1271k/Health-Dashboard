@@ -350,7 +350,7 @@ struct LiveLoggerView: View {
                 .accessibilityLabel(model.isEditing ? "Close editor" : "Leave workout")
                 .accessibilityHint(model.isEditing
                     ? "Every change is already saved. Finish runs the recompute."
-                    : "The session keeps running. Resume it from the Workout tab.")
+                    : "The session keeps running. Resume it from the Train tab.")
 
             // ── AND WHY EDIT MODE HAS NO TRASH ──────────────────────────────
             // `cancel()` is `discardSession`: the session row, its sets, its

@@ -224,6 +224,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case durationSec = "duration_sec"
         case incline
         case distanceKm = "distance_km"
+        case elevationM = "elevation_m"
     }
 
     public var exerciseId: String
@@ -290,6 +291,16 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     public var durationSec: Int?
     public var incline: Double?
     public var distanceKm: Double?
+    /// Total ascent in metres — a FOURTH optional key, on the same terms.
+    ///
+    /// It has to be here for the reason the three above it are: the projection
+    /// is a fold, so an axis the snapshot cannot carry is an axis
+    /// `seedEventLog` drops and `reproject` then writes back as null — over the
+    /// server's own copy, on the first edit of the session.
+    ///
+    /// A build that has never heard of this key decodes `nil` and re-encodes
+    /// without it. Still no new `Kind`; that remains the one-way door.
+    public var elevationM: Double?
 
     public init(
         exerciseId: String,
@@ -305,7 +316,8 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         exerciseOrder: Int? = nil,
         durationSec: Int? = nil,
         incline: Double? = nil,
-        distanceKm: Double? = nil
+        distanceKm: Double? = nil,
+        elevationM: Double? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -321,6 +333,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.durationSec = durationSec
         self.incline = incline
         self.distanceKm = distanceKm
+        self.elevationM = elevationM
     }
 }
 

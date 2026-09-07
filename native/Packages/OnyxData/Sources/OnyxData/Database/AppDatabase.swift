@@ -873,6 +873,38 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v19 ─────────────────────────────────────────────────────────────
+        // The fourth cardio axis: total ascent, in metres.
+        //
+        // `docs/sql/cardio-elevation.sql` is the Postgres half and the founder
+        // runs it by hand, so until they do a null is not a gap — it is every
+        // row. This column exists first precisely so that the day the server
+        // grows it, the value has somewhere to land on the way down.
+        //
+        // ── AND IT IS STORED, NOT COMPUTED ──────────────────────────────────
+        // `incline` × `distance_km` is the same number only while the incline
+        // never moved. A real bout walks 2 %, then 4 %, then flat, and
+        // `incline` keeps whichever reading the machine last showed — so the
+        // product is a guess about the middle of the walk. The treadmill (and
+        // HealthKit's `.elevationAscended`) measures the ascent directly.
+        //
+        // Same shape as `v18` one migration up, and safe for the same reason:
+        // ONE nullable column, backfilled to nothing, on a table every reader
+        // already treats nulls in. No default — a `0` would claim 2,190
+        // historical rows were walked on the flat, which is a claim about sets
+        // that were not walked at all.
+        //
+        // Guarded and never edited in place: `v18` is shipped, and a migration
+        // that changes after a device has run it is a migration that device
+        // will never run again.
+        migrator.registerMigration("v19.cardioElevation") { db in
+            let existing = Set(try db.columns(in: "workout_sets").map(\.name))
+            guard !existing.contains("elevation_m") else { return }
+            try db.alter(table: "workout_sets") { t in
+                t.add(column: "elevation_m", .double)
+            }
+        }
+
         return migrator
     }
 }
