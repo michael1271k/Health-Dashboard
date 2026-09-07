@@ -18,10 +18,23 @@ struct TrainingTrendsView: View {
 
     /// Screenshot harness only; the app reads the environment's database.
     var seeded: [TrendSession]?
+    /// Screenshot harness only: force a maintenance week the seeded history
+    /// would not otherwise contain, so the hollow bars can be photographed.
+    var seededLens: MaintenanceLens?
 
     @State private var sessions: [TrendSession]?
     @State private var window: EraWindow = .default
     @State private var input: EraWindowInput?
+    /// Which weeks were maintenance weeks, resolved once for both charts that
+    /// draw them. See `MaintenanceLens`.
+    @State private var lens: MaintenanceLens = .schedule
+    /// The generation this screen's data was read at.
+    ///
+    /// `.task(id:)` also fires on APPEAR, and this screen's whole point is that
+    /// it reads a few thousand sets once. Keying the guard on the generation
+    /// rather than on `sessions == nil` keeps that — and re-reads exactly when
+    /// an edit has finished rewriting the scores behind it.
+    @State private var loadedAt = -1
 
     private let today = LogicalDay.today()
 
@@ -38,7 +51,7 @@ struct TrainingTrendsView: View {
                     // to the window would make two cards answer the same
                     // question at two scales.
                     let visible = sessions.filter { resolved.contains($0.date) }
-                    VolumeStreamCard(sessions: visible, era: resolved.era, today: today)
+                    VolumeStreamCard(sessions: visible, era: resolved.era, today: today, lens: lens)
                     IntensityCard(sessions: visible, today: today)
                     StrengthTrendsCard(sessions: visible, today: today)
                     MuscleFocusCard(sessions: visible, today: today)
@@ -52,14 +65,18 @@ struct TrainingTrendsView: View {
         }
         .onyxScreen(.train)
         .navigationTitle("Trends")
-        .task {
-            guard sessions == nil else { return }
+        .task(id: environment.rescoreGeneration) {
+            guard loadedAt != environment.rescoreGeneration else { return }
+            loadedAt = environment.rescoreGeneration
             // ponytail: the whole history in one read (~5k sets today); page by
             // era/year when the table is ten times that.
             let loaded = seeded ?? ((try? environment.database.trainingTrendSessions(
                 userId: environment.userIdString, from: "2000-01-01", to: today
             )) ?? [])
             sessions = loaded
+            lens = seededLens ?? MaintenanceLens.read(
+                database: environment.database, userId: environment.userIdString, today: today
+            )
             // "All" means this screen's own oldest session, not a floor
             // invented for it — which is exactly what `firstDataISO` is for.
             input = EraWindowSource.input(
@@ -84,6 +101,7 @@ private struct VolumeStreamCard: View {
     /// spans both programmes and gets both pill sets.
     let era: String
     let today: String
+    let lens: MaintenanceLens
 
     /// `nil` is every split, stacked.
     @State private var split: String?
@@ -94,6 +112,8 @@ private struct VolumeStreamCard: View {
         let end: Date
         let split: String
         let kg: Double
+        /// Planned lighter — see `MaintenanceLens`.
+        let maintenance: Bool
     }
 
     private var splits: [String] { VolumeSplit.splits(forEra: era) }
@@ -115,7 +135,10 @@ private struct VolumeStreamCard: View {
         return order.compactMap { id in
             let parts = id.split(separator: "|").map(String.init)
             guard let start = OnyxChart.date(parts[0]) else { return nil }
-            return Bar(id: id, start: start, end: start.addingTimeInterval(7 * 86_400), split: parts[1], kg: kg[id]!)
+            return Bar(
+                id: id, start: start, end: start.addingTimeInterval(7 * 86_400),
+                split: parts[1], kg: kg[id]!, maintenance: lens.callsWeek(startingOn: parts[0])
+            )
         }
     }
 
@@ -128,7 +151,12 @@ private struct VolumeStreamCard: View {
     var body: some View {
         let bars = bars
         let weekTotals = Dictionary(grouping: bars, by: \.start).values.map { $0.reduce(0) { $0 + $1.kg } }
-        OnyxChartCard("Volume", domain: .train, headline: latestWeekKg.map { "\(ChartScale.compactKg($0)) kg" }) {
+        OnyxChartCard(
+            "Volume", domain: .train,
+            headline: latestWeekKg.map { "\(ChartScale.compactKg($0)) kg" },
+            legend: bars.contains(where: \.maintenance)
+                ? AnyView(MaintenanceLegend(symbol: .bar)) : nil
+        ) {
             VStack(alignment: .leading, spacing: 6) {
                 Picker("Split", selection: $split) {
                     Text("All splits").tag(String?.none)
@@ -149,6 +177,19 @@ private struct VolumeStreamCard: View {
                         )
                         .foregroundStyle(by: .value("Split", VolumeSplit.label(bar.split)))
                         .cornerRadius(3)
+                        // ── A MAINTENANCE WEEK IS DRAWN HOLLOW ──────────────
+                        // A deliberate deload is a SHORT bar, and a short bar
+                        // drawn like every other one reads as a week that went
+                        // wrong. Washing it back says "planned" while keeping
+                        // the split's own colour, which is what the legend and
+                        // the picker are keyed on — a second hue per split
+                        // would double the palette to say one thing.
+                        //
+                        // Hollow and not hatched: a stacked bar has no outline
+                        // to hollow out and Swift Charts has no pattern fill,
+                        // so a hatch would be a custom `ChartContent` drawing
+                        // its own rectangles and losing the stack.
+                        .opacity(bar.maintenance ? 0.38 : 1)
                     }
                     .chartForegroundStyleScale(
                         domain: splits.map(VolumeSplit.label),

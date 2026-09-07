@@ -69,11 +69,32 @@ enum TrendsPreviews {
         return try! database.trainingTrendSessions(userId: userId, from: "2000-01-01", to: today)
     }
 
+    /// A lever pulled for one week, three weeks back. `stored` only governs
+    /// dates from `today` on, so the WEEK is expressed as a release that has
+    /// already ended — which is exactly how a past maintenance week reads.
+    private static var maintenanceLens: MaintenanceLens {
+        let today = LogicalDay.today()
+        let weekStart = ISODate.addDays(Week.start(of: today), -21) ?? today
+        return MaintenanceLens(
+            stored: LeverId.maintenanceWeek.rawValue,
+            until: ISODate.addDays(weekStart, 6),
+            today: weekStart
+        )
+    }
+
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         switch screen {
         case "trends-empty":
             NavigationStack { TrainingTrendsView(seeded: sessions(seeded: false)) }.environment(AppEnvironment.preview)
+        case "trends-maintenance":
+            // A maintenance lever running from three weeks ago to two, so the
+            // hollow bar sits BETWEEN solid ones — a wash at the end of the
+            // series could be read as a week that is not over yet.
+            NavigationStack {
+                TrainingTrendsView(seeded: sessions(), seededLens: maintenanceLens)
+            }
+            .environment(AppEnvironment.preview)
         default:
             NavigationStack { TrainingTrendsView(seeded: sessions()) }.environment(AppEnvironment.preview)
         }

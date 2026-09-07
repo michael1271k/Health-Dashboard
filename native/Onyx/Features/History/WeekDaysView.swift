@@ -17,6 +17,14 @@ struct WeekDaysView: View {
     var seeded: HistoryWeeks.WeekDetail?
 
     @State private var detail: HistoryWeeks.WeekDetail?
+    /// The generation this screen's data was read at.
+    ///
+    /// `.task(id:)` fires on appear too, and this screen deliberately reads its
+    /// whole ledger once. Keying the guard on the generation preserves that and
+    /// re-reads exactly when a rescore cascade has finished rewriting what is
+    /// under it — see `AppEnvironment.rescoreGeneration`.
+    @State private var loadedAt = -1
+
     @State private var exportText: String?
 
     var body: some View {
@@ -65,7 +73,7 @@ struct WeekDaysView: View {
             }
         }
         .overlay { if detail == nil { ProgressView() } }
-        .task { await load() }
+        .task(id: environment.rescoreGeneration) { await load() }
     }
 
     // MARK: - Actions
@@ -120,7 +128,8 @@ struct WeekDaysView: View {
             detail = seeded
             return
         }
-        guard detail == nil else { return }
+        guard loadedAt != environment.rescoreGeneration else { return }
+        loadedAt = environment.rescoreGeneration
         let database = environment.database
         let userId = environment.userIdString
         let window = self.window

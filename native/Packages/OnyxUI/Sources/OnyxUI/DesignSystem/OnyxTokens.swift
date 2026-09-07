@@ -179,6 +179,29 @@ extension Color {
         /// 86.3, ΔE76 to carbs 20.8, and no token nearer than that.
         public static let record = Color(hex: 0xFFD35C)
 
+        /// The colour of a `DeltaVerdict`.
+        ///
+        /// ── WHY THE MAPPING LIVES HERE AND NOT IN THE SCREEN THAT NEEDED IT ──
+        /// Whether a kilogram gained is good news is a DOMAIN question — it
+        /// depends on the phase and on whether the week is a maintenance week —
+        /// and `DeltaVerdict` is the one rule that answers it, with a vector.
+        /// What a verdict LOOKS like is a token question, and it was living as
+        /// a private four-line switch inside `BodyTrendsView.LedgerSection`. The
+        /// moment a second surface wanted the same colours (the composition
+        /// tooltip, U6) that switch would have been copied, and the copy is how
+        /// two screens end up disagreeing about whether the same number is good.
+        ///
+        /// `neutral` is deliberately `textSecondary` and not a hue: inside a
+        /// maintenance band the honest statement is "this did not move", and a
+        /// colour would make it a verdict.
+        public static func verdict(_ verdict: Verdict) -> Color {
+            switch verdict {
+            case .good:    good
+            case .bad:     danger
+            case .neutral: textSecondary
+            }
+        }
+
         // ── Macros & water ───────────────────────────────────────────────────
         //
         // Fixed app-wide and never re-mapped per screen: a bar that is coral in

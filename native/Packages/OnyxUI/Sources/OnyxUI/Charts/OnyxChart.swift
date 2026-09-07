@@ -180,10 +180,21 @@ public struct OnyxCallout: View {
 
     let title: String
     let lines: [Line]
+    /// One line of context under the values — "6 days since", "Maintenance
+    /// week". Tertiary ink and caption size, because it qualifies the reading
+    /// rather than being one: a footnote set in the same weight as a value is
+    /// a second value with no units.
+    let footnote: String?
+    /// The callout is PINNED and will not follow the finger away. Drawn as a
+    /// glyph beside the title, so a callout that stayed behind is visibly
+    /// different from one that is being scrubbed.
+    let pinned: Bool
 
-    public init(_ title: String, lines: [Line]) {
+    public init(_ title: String, lines: [Line], footnote: String? = nil, pinned: Bool = false) {
         self.title = title
         self.lines = lines
+        self.footnote = footnote
+        self.pinned = pinned
     }
 
     public init(_ title: String, value: String) {
@@ -192,9 +203,16 @@ public struct OnyxCallout: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(Color.onyx.textSecondary)
+            HStack(spacing: 4) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(Color.onyx.textSecondary)
+                if pinned {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(Color.onyx.textTertiary)
+                }
+            }
             ForEach(lines) { line in
                 HStack(spacing: 5) {
                     if let color = line.color {
@@ -211,6 +229,11 @@ public struct OnyxCallout: View {
                         .foregroundStyle(Color.onyx.textPrimary)
                 }
             }
+            if let footnote {
+                Text(footnote)
+                    .font(.caption2)
+                    .foregroundStyle(Color.onyx.textTertiary)
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -226,6 +249,17 @@ public struct OnyxChartCard<Content: View>: View {
     let domain: OnyxDomain
     let headline: String?
     let caption: String?
+    /// A key for something the marks encode that colour cannot — a hollow
+    /// symbol, a washed bar.
+    ///
+    /// ── WHY IT IS THE CARD'S AND NOT THE CHART'S ────────────────────────────
+    /// `content` is handed a FIXED height, so a legend drawn inside it comes
+    /// out of the plot: adding one 30 pt row to a 180 pt budget took a third of
+    /// the bars away, which is the opposite of what a legend is for. Up here it
+    /// costs the CARD height, like the caption it sits under. `chartLegend`
+    /// cannot do this job — it is generated from `chartForegroundStyleScale`,
+    /// and what is being explained is a shape, not a hue.
+    let legend: AnyView?
     let content: Content
 
     /// The plot scales with the type, not the other way round: at AX5 the axis
@@ -239,12 +273,14 @@ public struct OnyxChartCard<Content: View>: View {
         domain: OnyxDomain,
         headline: String? = nil,
         caption: String? = nil,
+        legend: AnyView? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.domain = domain
         self.headline = headline
         self.caption = caption
+        self.legend = legend
         self.content = content()
     }
 
@@ -273,6 +309,7 @@ public struct OnyxChartCard<Content: View>: View {
                     .font(.footnote)
                     .foregroundStyle(Color.onyx.textSecondary)
             }
+            if let legend { legend }
             content
                 .frame(height: plotHeight)
         }

@@ -331,7 +331,11 @@ struct SessionDetailView: View {
         OnyxChartCard(
             "Progression", domain: .train,
             headline: "\(OnyxFormat.volume(page.report.tonnageKg)) kg",
-            caption: page.verdict
+            caption: page.verdict,
+            // Only when the window holds one. A legend for a state nothing is
+            // in is a line of chrome explaining nothing.
+            legend: page.split.contains(where: \.isMaintenance)
+                ? AnyView(MaintenanceLegend(symbol: .point)) : nil
         ) {
             if page.split.count >= 2 {
                 SplitVolumeChart(points: page.split, current: page.report.session.id, tint: split)
@@ -558,15 +562,39 @@ private struct SplitVolumeChart: View {
                 // Gold is a record and nothing else, so a point wears it only
                 // when that session actually set one. The session being read
                 // gets the accent ring instead — "you are here" is not a verdict.
+                //
+                // ── AND A MAINTENANCE WEEK IS DRAWN HOLLOW ──────────────────
+                // The line DROPS on these weeks by design; that is what a
+                // maintenance week is. Filled like every other point, the dip
+                // reads as a session that went badly, and the chart's own
+                // verdict sentence then argues with the plan. Hollow says "this
+                // was meant to be lighter" without adding a colour — status
+                // hues stay reserved, and gold still means only one thing.
                 PointMark(x: .value("Date", entry.date), y: .value("kg", entry.point.tonnageKg))
-                    .foregroundStyle(entry.point.prCount > 0 ? Color.onyx.record : tint)
+                    .foregroundStyle(pointColor(entry.point))
                     .symbolSize(entry.point.sessionId == current ? 90 : 28)
+                    .symbol {
+                        let side: CGFloat = entry.point.sessionId == current ? 11 : 7
+                        if entry.point.isMaintenance {
+                            Circle()
+                                .strokeBorder(pointColor(entry.point), lineWidth: 1.5)
+                                .frame(width: side, height: side)
+                        } else {
+                            Circle()
+                                .fill(pointColor(entry.point))
+                                .frame(width: side, height: side)
+                        }
+                    }
             }
             if let picked = nearest(selected), let entry = dated.first(where: { $0.date == picked }) {
                 RuleMark(x: .value("Selected", picked))
                     .foregroundStyle(Color.onyx.textTertiary)
                     .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                        OnyxCallout(OnyxChart.shortDate(picked), lines: callout(entry.point))
+                        OnyxCallout(
+                            OnyxChart.shortDate(picked),
+                            lines: callout(entry.point),
+                            footnote: entry.point.isMaintenance ? "Maintenance week" : nil
+                        )
                     }
             }
         }
@@ -597,6 +625,10 @@ private struct SplitVolumeChart: View {
             lines.append(OnyxCallout.Line("", "\(point.prCount) PR", color: Color.onyx.record))
         }
         return lines
+    }
+
+    private func pointColor(_ point: SessionAnalysis.SplitPoint) -> Color {
+        point.prCount > 0 ? Color.onyx.record : tint
     }
 }
 

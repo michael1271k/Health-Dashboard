@@ -83,6 +83,22 @@ enum BodyTrendsPreviews {
         case "body-trends-empty":
             NavigationStack { BodyTrendsView(seeded: .empty) }
                 .environment(AppEnvironment.preview)
+        case "body-trends-tooltip":
+            // The ledger card, pinned. A scrub is a gesture and a screenshot
+            // cannot perform one, so the harness banks the reading the finger
+            // would have stopped on.
+            let slice = seeded()
+            NavigationStack {
+                BodyTrendsView(
+                    seeded: slice,
+                    seededSelection: slice.ledger
+                        .map(\.date)
+                        .sorted()
+                        .dropLast(3)
+                        .last
+                )
+            }
+            .environment(AppEnvironment.preview)
         default:
             ContentUnavailableView("No Body screen named \(screen)", systemImage: "questionmark.square.dashed")
         }
