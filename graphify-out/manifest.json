@@ -3080,8 +3080,8 @@
     "semantic_hash": ""
   },
   "scripts/native-shot.sh": {
-    "mtime": 1788766695.5521595,
-    "ast_hash": "482a7fea1877adfc91b5b08075b5c3dd",
+    "mtime": 1788774853.6994135,
+    "ast_hash": "a218f70c66ed12e90fc44aef410d52c5",
     "semantic_hash": ""
   },
   "src/tests/native-token-discipline.test.ts": {
@@ -3565,23 +3565,23 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-ax5.png": {
-    "mtime": 1788766695.515322,
-    "ast_hash": "29a68e915791843333e1076ab10c6a81",
+    "mtime": 1788774853.6454275,
+    "ast_hash": "051fb68da6d94a4a28f9783f704a6ded",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-finish-ax5.png": {
-    "mtime": 1788766695.5194745,
-    "ast_hash": "1b7fbbe340042f8e5fa6fdbe537b5b3d",
+    "mtime": 1788774853.6476684,
+    "ast_hash": "32abf482dfd7e9c60883ea1960b86c1a",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-finish.png": {
-    "mtime": 1788766695.522848,
-    "ast_hash": "6b363ce414d80663b7bb8afc44151861",
+    "mtime": 1788774853.6501052,
+    "ast_hash": "2a86610e75e2ac3d1b9ab3dac4086572",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger.png": {
-    "mtime": 1788766695.5482597,
-    "ast_hash": "5787151ef62cd42e3efcf6cdca578eed",
+    "mtime": 1788774853.6754653,
+    "ast_hash": "306f1e7b13d104fc47360e1bb83a197e",
     "semantic_hash": ""
   },
   "native/__screenshots__/backfill-ax5.png": {
@@ -3750,8 +3750,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/PreviewHarness.swift": {
-    "mtime": 1788766695.504484,
-    "ast_hash": "a92cd17b0ba5e9c39f4f99ac48a204f4",
+    "mtime": 1788774853.6267347,
+    "ast_hash": "336d4522d23b43ff9464e24f3761cce6",
     "semantic_hash": ""
   },
   "native/Onyx/App/SyncCoordinating.swift": {
@@ -3860,8 +3860,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/ExerciseCardView.swift": {
-    "mtime": 1788696716.761868,
-    "ast_hash": "5e9e292ede128ef08426b63a0354f82d",
+    "mtime": 1788774853.627668,
+    "ast_hash": "37f98cf6b6bc05f0cdaaddb354849c50",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/FinishSheet.swift": {
@@ -3875,13 +3875,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LiveLoggerView.swift": {
-    "mtime": 1788767790.5623295,
-    "ast_hash": "4cfe65f2f4bc94bf2fdc3c6c9c5e3761",
+    "mtime": 1788774853.6285326,
+    "ast_hash": "f74ff50f98d366ef5a735d9c8fd51da0",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerModel.swift": {
-    "mtime": 1788767739.0940993,
-    "ast_hash": "e2da8e1fd2cf76255de6ca1ac6d083e5",
+    "mtime": 1788774853.6299813,
+    "ast_hash": "4eef6bdb49e736c2e867cbb8878b51ac",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviewData.swift": {
@@ -3890,8 +3890,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviews.swift": {
-    "mtime": 1788767811.0627158,
-    "ast_hash": "d9588a8ff35f7fa014f45daeec9f8976",
+    "mtime": 1788774853.630656,
+    "ast_hash": "69a2ec308716c5fbd74cacdaad2acbce",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/MuscleDistributionSheet.swift": {
@@ -6780,18 +6780,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/SetOptionsSheet.swift": {
-    "mtime": 1788695861.0169466,
-    "ast_hash": "35d851ec0224e2dc431afd66150e53ac",
-    "semantic_hash": ""
-  },
-  "native/__screenshots__/logger-options-ax5.png": {
-    "mtime": 1788766695.5261045,
-    "ast_hash": "45edd7ff5494e2c2c038a6e24234a35e",
-    "semantic_hash": ""
-  },
-  "native/__screenshots__/logger-options.png": {
-    "mtime": 1788766695.5292866,
-    "ast_hash": "37431747bd41c78fc37c616cdc963ec2",
+    "mtime": 1788774853.6316235,
+    "ast_hash": "f595370c42cc08ddd04d21ddc487112c",
     "semantic_hash": ""
   },
   "docs/PHASE_3_PLAN.md": {
@@ -6805,8 +6795,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LiveStatsView.swift": {
-    "mtime": 1788766695.5061018,
-    "ast_hash": "e2fdcee9a4579a3e5041eed0067ba395",
+    "mtime": 1788774853.6292224,
+    "ast_hash": "859ee3983e4e7c99912c7d63c9d5af3a",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerHero.swift": {
@@ -6845,23 +6835,23 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-paused-ax5.png": {
-    "mtime": 1788766695.5328882,
-    "ast_hash": "c1a7ce3ae0cfad264955f27924230c7b",
+    "mtime": 1788774853.6569324,
+    "ast_hash": "c3c3c7a13ea752aa5a6d55c060733fa8",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-paused.png": {
-    "mtime": 1788766695.539601,
-    "ast_hash": "5e61824973eef7a56446d52b12e2bb31",
+    "mtime": 1788774853.66093,
+    "ast_hash": "d93f02598f8f4086de601b3837db02b8",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-stats-ax5.png": {
-    "mtime": 1788766695.5420506,
-    "ast_hash": "53e84e19a21f9adf9c69e6c73d983af7",
+    "mtime": 1788774853.6680558,
+    "ast_hash": "b3c064709f1fde94f3fdc1062810da8b",
     "semantic_hash": ""
   },
   "native/__screenshots__/logger-stats.png": {
-    "mtime": 1788766695.5445602,
-    "ast_hash": "7a81c7d4600c2604eeb0bc6c14d8f5b5",
+    "mtime": 1788774853.671768,
+    "ast_hash": "4ac07b0344c50eae0a72274e3f6dd786",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Exercises/Tags.swift": {
@@ -6942,6 +6932,101 @@
   "src/tests/session-seed.test.ts": {
     "mtime": 1788767369.9611235,
     "ast_hash": "81364b07045157247db216c9778c9e6b",
+    "semantic_hash": ""
+  },
+  "native/Onyx/Features/Logger/EffortPickerSheet.swift": {
+    "mtime": 1788774853.6271677,
+    "ast_hash": "db029c3f958e23606d88e1e3168cbad2",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/effort-picker-375-ax5.png": {
+    "mtime": 1788774853.632234,
+    "ast_hash": "85cdf10a75eb35ac65f7575c0a349f16",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/effort-picker-375.png": {
+    "mtime": 1788774853.633261,
+    "ast_hash": "f074582fa7fa5ccd6681dc45b2a4dbfe",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/effort-picker-ax5.png": {
+    "mtime": 1788774853.6343071,
+    "ast_hash": "169ac00874d379cd7898e4ba4b19c298",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/effort-picker.png": {
+    "mtime": 1788774853.6384513,
+    "ast_hash": "a2f65f14c03c1efefe870e6c38df9184",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-375-ax5.png": {
+    "mtime": 1788774853.640249,
+    "ast_hash": "1bc5842aef3f4ebcc3504a175734f4b4",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-375.png": {
+    "mtime": 1788774853.6421242,
+    "ast_hash": "ab7b10c14ace2c183f579f4b298ce0d3",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-paused-375-ax5.png": {
+    "mtime": 1788774853.6514962,
+    "ast_hash": "459c85b15c4243acbc985d5cebea7928",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-paused-375.png": {
+    "mtime": 1788774853.6530418,
+    "ast_hash": "241cf68c9b2f19fccfb52504231e66ec",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-stats-375-ax5.png": {
+    "mtime": 1788774853.6623514,
+    "ast_hash": "90283c502af2060694372a8fa888fce2",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/logger-stats-375.png": {
+    "mtime": 1788774853.6640248,
+    "ast_hash": "856ad3ce30022da2247caac80fbbae80",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-options-375-ax5.png": {
+    "mtime": 1788774853.6800733,
+    "ast_hash": "a3a99d6df65bc7c152c924b6ec84e495",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-options-375.png": {
+    "mtime": 1788774853.680949,
+    "ast_hash": "33954326fe9352b979f28791c56dbf10",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-options-ax5.png": {
+    "mtime": 1788774853.6826727,
+    "ast_hash": "a1ba979da921c417130c6839de656682",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-options.png": {
+    "mtime": 1788774853.6848993,
+    "ast_hash": "564f3bf21fde64503677f6e47124aab4",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-row-375-ax5.png": {
+    "mtime": 1788774853.6870022,
+    "ast_hash": "031569a1041d78e27a572d4392248772",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-row-375.png": {
+    "mtime": 1788774853.6885526,
+    "ast_hash": "7aad2fd2730dee16e3791e1888467fc6",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-row-ax5.png": {
+    "mtime": 1788774853.6936882,
+    "ast_hash": "4115ffc25e95283a46ee02ad71791c73",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/set-row.png": {
+    "mtime": 1788774853.698479,
+    "ast_hash": "d81d5cab4a3ee268240e8574f102901d",
     "semantic_hash": ""
   }
 }
