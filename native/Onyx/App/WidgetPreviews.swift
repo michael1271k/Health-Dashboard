@@ -162,8 +162,14 @@ enum WidgetPreviews {
                         .font(.system(size: 9, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Color.onyx.textTertiary)
                     // The elapsed origin travels in the state now, so that the
-                    // card can be paused; see `ContentState.timerOrigin`.
-                    WorkoutLockCard(title: "Delts & Arms", state: state)
+                    // card can be paused; see `ContentState.timerOrigin`. The
+                    // attribute stays as the fallback for a card encoded before
+                    // that field existed.
+                    WorkoutLockCard(
+                        title: "Delts & Arms",
+                        startedAt: Date().addingTimeInterval(-45 * 60),
+                        state: state
+                    )
                     // The Lock Screen's own width, over a stand-in for a
                     // wallpaper: the real card is `.activityBackgroundTint`
                     // composited on whatever is behind it, and on this page's

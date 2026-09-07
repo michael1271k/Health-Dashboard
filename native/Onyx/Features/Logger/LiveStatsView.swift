@@ -52,7 +52,9 @@ struct LiveStatsView: View {
             .padding(.bottom, OnyxSpace.xl)
         }
         .scrollIndicators(.hidden)
-        .task(id: model.completedSets) { session = model.sessionRow }
+        // Keyed on PHYSICAL sets: a warm-up leaves `completedSets` alone and
+        // still changes the session row this card draws.
+        .task(id: model.physicalSets) { session = model.sessionRow }
     }
 
     // MARK: - Now
@@ -96,7 +98,11 @@ struct LiveStatsView: View {
             timeCell(
                 "Paused",
                 running: clock.isPaused,
-                origin: clock.pausedAt,
+                // Shifted back by what is already banked, the same trick
+                // `timerOrigin` plays. Counting from `pausedAt` alone dropped
+                // every earlier pause while this one ran and handed them back
+                // on resume, so the cell jumped backwards and then forwards.
+                origin: clock.pausedAt?.addingTimeInterval(-clock.pausedTotal),
                 frozen: clock.pausedTotal,
                 tint: Color.onyx.textSecondary
             )
@@ -194,19 +200,38 @@ struct LiveStatsView: View {
         return min(1, Double(model.completedSets) / Double(model.plannedSets))
     }
 
+    @ViewBuilder
     private var tonnage: some View {
-        HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+        let figure = HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
             Text(OnyxFormat.volume(model.totalVolumeKg))
                 .onyxType(.hero).onyxNumeral()
                 .foregroundStyle(Color.onyx.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text("kg").onyxMicro()
-            Spacer(minLength: OnyxSpace.s)
-            tonnageDelta
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Tonnage")
+        // The delta is a sentence, and at an accessibility size a sentence does
+        // not share a line with a hero figure — it sets the card's MINIMUM
+        // width instead, and a card wider than the page overflows it in both
+        // directions because a vertical scroll view will not scroll sideways to
+        // rescue it. Under the figure at those sizes; beside it otherwise.
+        if typeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                figure
+                tonnageDelta
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Tonnage")
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
+                figure
+                Spacer(minLength: OnyxSpace.s)
+                tonnageDelta
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Tonnage")
+        }
     }
 
     /// Against what the seed says this session was last time.
@@ -230,7 +255,7 @@ struct LiveStatsView: View {
                 .onyxType(.caption).fontWeight(.semibold).onyxNumeral()
                 .foregroundStyle(ahead ? Color.onyx.good : Color.onyx.textTertiary)
                 .lineLimit(1)
-                .fixedSize()
+                .minimumScaleFactor(0.7)
                 .padding(.horizontal, OnyxSpace.s)
                 .padding(.vertical, OnyxSpace.xs)
                 .onyxGlass(.row)
@@ -386,7 +411,7 @@ struct LiveStatsView: View {
             .onyxType(.caption).fontWeight(.semibold).onyxNumeral()
             .foregroundStyle(tint)
             .lineLimit(1)
-            .fixedSize()
+            .minimumScaleFactor(0.7)
             .padding(.horizontal, OnyxSpace.s)
             .padding(.vertical, 2)
             .background(Capsule().fill(tint.opacity(0.16)))
@@ -496,16 +521,18 @@ struct LiveStatsView: View {
             }
             Spacer(minLength: OnyxSpace.s)
             VStack(alignment: .trailing, spacing: 1) {
-                Text(mark(record.value, record.axis))
+                Text(mark(record.mark.value, record.axis))
                     .onyxType(.body).fontWeight(.semibold).onyxNumeral()
                     .foregroundStyle(Color.onyx.record)
                 // The mark it beat. A trophy without the old number is a
                 // congratulation; with it, it is a measurement.
-                Text("was \(mark(record.previous, record.axis))")
+                Text("was \(mark(record.mark.previous, record.axis))")
                     .onyxType(.caption).onyxNumeral()
                     .foregroundStyle(Color.onyx.textTertiary)
             }
-            .fixedSize()
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .layoutPriority(1)
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)
@@ -618,28 +645,6 @@ struct LiveStatsView: View {
     }
 }
 
-// MARK: - Progress
-
-/// A fraction, drawn. One hue, light track to solid fill — magnitude, which is
-/// the one job a sequential encoding has.
-struct OnyxProgressBar: View {
-    let fraction: Double
-    let tint: Color
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.onyx.hairline)
-                Capsule()
-                    .fill(tint)
-                    .frame(width: proxy.size.width * min(max(fraction, 0), 1))
-            }
-        }
-        .frame(height: 4)
-        .animation(OnyxMotion.counter, value: fraction)
-        .accessibilityHidden(true)
-    }
-}
 
 #if DEBUG
 #Preview("Live Stats") {

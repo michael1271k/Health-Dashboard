@@ -146,4 +146,22 @@ struct LoggerClockTests {
         #expect(clock.elapsed() < 1)
         #expect(clock.timerOrigin <= Date())
     }
+
+    @Test("correcting the start of a PAUSED session keeps the reading it asked for")
+    func startWhilePaused() {
+        // The clamp used to anchor on `Date()` while `elapsed` anchored on the
+        // pause, so every start inside the open pause — the whole window the
+        // sheet's wheel can reach — came back as a confident 0:00.
+        let clock = LoggerClock(startedAt: Date().addingTimeInterval(-90 * 60))
+        clock.pause()
+        let pausedAt = try! #require(clock.pausedAt)
+
+        clock.setStart(pausedAt.addingTimeInterval(-60 * 60))
+        #expect(abs(clock.elapsed() - 60 * 60) < 1)
+
+        // Still clamped: a start after the pause began is zero elapsed, not a
+        // negative one dressed up by `max(0, …)`.
+        clock.setStart(pausedAt.addingTimeInterval(60))
+        #expect(clock.elapsed() == 0)
+    }
 }

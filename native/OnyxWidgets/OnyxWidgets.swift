@@ -176,7 +176,7 @@ struct OnyxWorkoutActivityWidget: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    WorkoutCountdown(state: context.state)
+                    WorkoutCountdown(state: context.state, startedAt: context.attributes.startedAt)
                         .frame(maxWidth: 62, alignment: .trailing)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
@@ -259,7 +259,11 @@ private struct LockScreenWorkout: View {
         case .small:
             WorkoutWatchCard(title: context.attributes.title, state: context.state)
         default:
-            WorkoutLockCard(title: context.attributes.title, state: context.state)
+            WorkoutLockCard(
+                title: context.attributes.title,
+                startedAt: context.attributes.startedAt,
+                state: context.state
+            )
         }
     }
 }

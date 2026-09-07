@@ -32,8 +32,7 @@ final class SeedPrProvider: LivePrProviding {
                     exercise: exercise.name,
                     setLabel: "Set \(index + 1)",
                     axis: .weight,
-                    value: kg,
-                    previous: seed
+                    mark: AxisRecord(value: kg, previous: seed)
                 ))
             }
         }

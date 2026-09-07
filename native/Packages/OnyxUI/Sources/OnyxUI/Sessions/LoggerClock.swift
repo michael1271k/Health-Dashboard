@@ -51,8 +51,15 @@ public final class LoggerClock: PauseControlling {
     /// spinning one minute past `now` should read as "just started", not count
     /// backwards. `Text(_:style:.timer)` counts DOWN from a future date, which
     /// is the visible failure this prevents.
+    ///
+    /// The ceiling anchors on `pausedAt ?? Date()`, the SAME instant `elapsed`
+    /// and `setElapsed` use. Clamping against `Date()` instead let every start
+    /// inside the current pause through, and every one of them made
+    /// `pausedAt − startedAt − pausedTotal` negative — which `max(0, …)` then
+    /// rendered as a confident 0:00. Pause, then correct the start, is exactly
+    /// the flow `TimerSheet` exists for.
     public func setStart(_ date: Date) {
-        startedAt = min(date, Date().addingTimeInterval(-pausedTotal))
+        startedAt = min(date, (pausedAt ?? Date()).addingTimeInterval(-pausedTotal))
     }
 
     /// Move `startedAt` so that `elapsed` reads `seconds`.

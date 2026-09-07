@@ -288,14 +288,18 @@ struct LoggerFaceSwitch: View {
     @State private var width: CGFloat = 0
 
     var body: some View {
-        ZStack(alignment: .leading) {
-            pill(width / 2)
-            HStack(spacing: 0) {
-                ForEach(LoggerFace.allCases) { face in
-                    segment(face)
-                }
+        HStack(spacing: 0) {
+            ForEach(LoggerFace.allCases) { face in
+                segment(face)
             }
         }
+        // ── WHY THE PILL IS A BACKGROUND AND NOT A SIBLING ──────────────────
+        // A bare `Capsule()` has no intrinsic height. As the first child of a
+        // `ZStack` it therefore accepted every point the stack could offer and
+        // grew the control to 240 pt. Behind the labels it is proposed exactly
+        // their height, which is also the only height this control has any
+        // business being.
+        .background(alignment: .leading) { pill(width / 2) }
         // The labels define the height and the track follows them. A fixed box
         // put "Live Stats" outside its own capsule at AX5 and left the pill
         // overhanging the track's corners, which reads as a rendering fault.
@@ -337,7 +341,11 @@ struct LoggerFaceSwitch: View {
                 .minimumScaleFactor(0.6)
                 .padding(.horizontal, OnyxSpace.s)
                 .padding(.vertical, OnyxSpace.s)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Width greedy, height NOT. `maxHeight: .infinity` here made
+                // every segment claim whatever vertical space the screen had
+                // spare, and the control came out 240 pt tall on a face whose
+                // content was short. The label's own height is the height.
+                .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -372,10 +380,10 @@ struct LoggerFaceSwitch: View {
                 let projected = CGFloat(selection.face.index) * half + value.predictedEndTranslation.width
                 let target: LoggerFace = projected > half / 2 ? .stats : .workout
                 let flicked = abs(value.velocity.width) > Self.flickSpeed
-                var next = LoggerFaceSelection(face: target, flicked: flicked)
                 // A throw that lands where it started still threw something:
-                // the pill has to spring home, and it earned the overshoot.
-                if next.face == selection.face { next.flicked = flicked }
+                // the pill has to spring home, and it earned the overshoot —
+                // which is why `flicked` is set from the velocity either way.
+                let next = LoggerFaceSelection(face: target, flicked: flicked)
                 withAnimation(next.animation) {
                     selection = next
                     drag = 0

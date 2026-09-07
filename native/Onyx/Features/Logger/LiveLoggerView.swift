@@ -61,17 +61,6 @@ struct LiveLoggerView: View {
 
     /// Which face, and how it got here — the animation travels with it.
     @State private var selection = LoggerFaceSelection()
-    /// What the pager is showing. Driven from `selection`; the two are separate
-    /// only because `scrollPosition` wants an optional binding of its own.
-    @State private var scrolledFace: LoggerFace?
-    /// The screen's own width, measured on the stack that spans it.
-    ///
-    /// A page has to be exactly one screen wide or the face beside it shows down
-    /// the edge of the one you are reading. Neither a `GeometryReader` nor
-    /// `containerRelativeFrame` gave that number at an accessibility size — both
-    /// resolved against a box the chip row had widened — so it is measured where
-    /// it is known to be right: the stack the hero spans.
-    @State private var pageWidth: CGFloat = 0
 
     /// The session clock. `LoggerClock` until wave E4 makes `LoggerModel`
     /// conform to `PauseControlling`; at that point this `@State` goes and the
@@ -141,7 +130,6 @@ struct LiveLoggerView: View {
         _activity = State(initialValue: activity ?? LiveActivityController())
         _focus = State(initialValue: model.currentSet?.exercise.id ?? model.exercises.first?.id)
         _selection = State(initialValue: LoggerFaceSelection(face: face))
-        _scrolledFace = State(initialValue: face)
         _clock = State(initialValue: clock ?? LoggerClock(startedAt: model.startedAt))
         _prs = State(initialValue: SeedPrProvider(model: model))
     }
@@ -149,24 +137,19 @@ struct LiveLoggerView: View {
     private var accent: Color { Color.onyx.day(model.day.key) }
 
     var body: some View {
-        VStack(spacing: OnyxSpace.m) {
-            LoggerHero(
-                day: model.day,
-                clock: clock,
-                selection: $selection,
-                onTimer: { showTimer = true }
-            )
-            if let storeError = model.storeError { banner(storeError) }
-            restCapsule
-            OnyxChipRow(chips, pinned: finishChip)
-            faces
+        // ── WHY A `GeometryReader` AND NOT A MEASUREMENT ────────────────────
+        // The page width had been measured on the stack itself, and that is a
+        // loop: the stack's width set a frame inside the stack, which set the
+        // stack's width. At an accessibility size it settled 55 pt wide of the
+        // screen, and the Live Stats face came into view down the edge of the
+        // deck. A `GeometryReader` takes the size PROPOSED to it and ignores
+        // what its content would like, so `proxy.size.width` is the screen and
+        // nothing inside can argue with it — which is also what stops the chip
+        // row's own ideal width from widening the column it sits in.
+        GeometryReader { proxy in
+            stack(page: proxy.size.width)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
-        .frame(maxWidth: .infinity)
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
-        // One place, so the capsule arriving, the "Skip rest" chip arriving and
-        // the deck sliding down for both are ONE movement rather than three
-        // that start together and end apart.
-        .animation(OnyxMotion.drawer, value: model.restEndsAt)
         .onyxScreen(.train)
         .foregroundStyle(Color.onyx.textPrimary)
         // The hero says which workout this is, in 28 pt and in the day's own
@@ -177,7 +160,15 @@ struct LiveLoggerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar { leaveItem }
-        .sheet(isPresented: $showTimer) { TimerSheet(clock: clock, accent: accent) }
+        // Pushed on DISMISSAL, not on every change. `startedAt` moves once per
+        // tick of the timer sheet's wheel, and each one would have been an
+        // ActivityKit update against a budget this file is careful about
+        // everywhere else — for a card that is behind the sheet the whole time.
+        .sheet(isPresented: $showTimer) {
+            activity.update(model: model, clock: clock)
+        } content: {
+            TimerSheet(clock: clock, accent: accent)
+        }
         .sheet(isPresented: $showDistribution) { MuscleDistributionSheet(model: model) }
         .sheet(isPresented: $showPhase) {
             PhaseSheet(day: model.day, phase: Binding(
@@ -227,7 +218,6 @@ struct LiveLoggerView: View {
         // the phone in your hand says it is stopped is the two surfaces
         // disagreeing about the number that becomes `duration_min`.
         .onChange(of: clock.pausedAt) { _, _ in activity.update(model: model, clock: clock) }
-        .onChange(of: clock.startedAt) { _, _ in activity.update(model: model, clock: clock) }
         // A warm-up changes neither `completedSets` nor the rest clock, and
         // `commitEdit` — retyping a load on a logged set — changes none of the
         // three. Both leave the Lock Screen showing a number that is no longer
@@ -254,6 +244,25 @@ struct LiveLoggerView: View {
         // face-down on a bench when it happens.
         .sensoryFeedback(.success, trigger: restExpiries)
         .onChange(of: model.phase) { _, next in storedPhase = next.rawValue }
+    }
+
+    private func stack(page: CGFloat) -> some View {
+        VStack(spacing: OnyxSpace.m) {
+            LoggerHero(
+                day: model.day,
+                clock: clock,
+                selection: $selection,
+                onTimer: { showTimer = true }
+            )
+            if let storeError = model.storeError { banner(storeError) }
+            restCapsule
+            OnyxChipRow(chips, pinned: finishChip)
+            faces(page: page)
+        }
+        // One place, so the capsule arriving, the "Skip rest" chip arriving and
+        // the deck sliding down for both are ONE movement rather than three
+        // that start together and end apart.
+        .animation(OnyxMotion.drawer, value: model.restEndsAt)
     }
 
     // MARK: - Toolbar
@@ -364,49 +373,40 @@ struct LiveLoggerView: View {
     /// The spring comes from the SELECTION, so the pill in the hero and the page
     /// under it move on one animation: damping 1.0 when a segment was tapped,
     /// 0.8 when the pill was thrown.
-    private var faces: some View {
-        // ── WHY A SCROLL VIEW NOBODY CAN SCROLL ─────────────────────────────
-        // The first cut measured the page width with a `GeometryReader` and slid
-        // an `HStack` by that much. It was right at the default text size and
-        // wrong at AX5: a `GeometryReader` is only as wide as its parent lets it
-        // be, the chip row's pinned chip widened that parent past the screen,
-        // and the Live Stats page came into view down the right-hand edge of the
-        // deck — and `containerRelativeFrame` resolved against the same widened
-        // box. So the width is measured once, on the stack the hero spans, which
-        // is demonstrably the screen; both pages take it and nothing else can.
-        //
-        // Scrolling is off because the deck's set rows are swiped horizontally
-        // to log (wave U2 retires that; until then it is live), and a pager
-        // underneath would compete for the same finger on every row of every
-        // card. The gesture lives on the segmented control's pill instead.
-        // `scrollPosition` still moves it, and it moves on the ambient
-        // animation — which is how the pill and the page ride one spring.
-        ScrollView(.horizontal) {
-            HStack(spacing: 0) {
-                deck
-                    .frame(width: max(pageWidth, 1))
-                    .id(LoggerFace.workout)
-                    .accessibilityHidden(selection.face != .workout)
-                LiveStatsView(
-                    model: model,
-                    clock: clock,
-                    prs: prs,
-                    onMuscleFocus: { showDistribution = true }
-                )
-                .frame(width: max(pageWidth, 1))
-                .id(LoggerFace.stats)
-                .accessibilityHidden(selection.face != .stats)
-            }
-            // A plain `HStack`, not a lazy one: both faces stay built, which is
-            // what keeps the deck's scroll offset across a switch.
-            .scrollTargetLayout()
+    ///
+    /// ── AND WHY IT IS NOT A PAGING SCROLL VIEW ──────────────────────────────
+    /// It was, briefly. A horizontal `ScrollView` owns the paging geometry for
+    /// free, but the deck's set rows are swiped horizontally to log (wave U2
+    /// retires that; until then it is live) and a pager underneath competes for
+    /// the same finger on every row of every card. Turning the scrolling off to
+    /// stop that also stops `scrollPosition` from moving it — the Live Stats
+    /// face rendered as the deck, with the pill saying otherwise. So the offset
+    /// is ours, and the gesture stays on the pill.
+    ///
+    /// ── AND WHY IT IS PINNED AND CLIPPED ────────────────────────────────────
+    /// `frame(width:alignment: .leading)` puts a two-page strip inside a
+    /// one-page box anchored left, and `clipped()` cuts what hangs off it —
+    /// belt and braces over a width `body`'s `GeometryReader` already
+    /// guarantees, because leaking the other face down the right-hand edge is
+    /// the failure this screen actually shipped at an accessibility size.
+    private func faces(page: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            deck(ready: page > 1)
+                .frame(width: page)
+                .accessibilityHidden(selection.face != .workout)
+            LiveStatsView(
+                model: model,
+                clock: clock,
+                prs: prs,
+                onMuscleFocus: { showDistribution = true }
+            )
+            .frame(width: page)
+            .accessibilityHidden(selection.face != .stats)
         }
-        .scrollDisabled(true)
-        .scrollIndicators(.hidden)
-        .scrollPosition(id: $scrolledFace, anchor: .leading)
-        .onChange(of: selection.face) { _, next in
-            withAnimation(selection.animation) { scrolledFace = next }
-        }
+        .frame(width: page, alignment: .leading)
+        .offset(x: -CGFloat(selection.face.index) * page)
+        .animation(selection.animation, value: selection.face)
+        .clipped()
     }
 
     // MARK: - The deck
@@ -435,7 +435,7 @@ struct LiveLoggerView: View {
     /// here — see `focus` — so this is a `ScrollViewReader` and a one-way
     /// `scrollTo`. Scrolling to read never moves the cursor, and finishing a
     /// movement still takes you to the next one.
-    private var deck: some View {
+    private func deck(ready: Bool) -> some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 LazyVStack(spacing: OnyxSpace.m) {
@@ -469,7 +469,16 @@ struct LiveLoggerView: View {
             // top of a workout that is half done. Unanimated on purpose: this is
             // where the screen STARTS, and a scroll you did not ask for on the
             // first frame reads as the app losing its place.
-            .task { proxy.scrollTo(focus, anchor: .top) }
+            //
+            // Keyed on `ready` — the page having a width — because a `scrollTo`
+            // into a scroll view that has not been given any room yet is a
+            // no-op, and a plain `.task` never runs again to notice. That is
+            // exactly what happened when the pager moved into a
+            // `GeometryReader`: the deck opened at movement one, every time.
+            .task(id: ready) {
+                guard ready else { return }
+                proxy.scrollTo(focus, anchor: .top)
+            }
         }
     }
 
@@ -511,14 +520,6 @@ struct LiveLoggerView: View {
             .padding(.horizontal, OnyxSpace.l)
     }
 
-    /// Stamp the session finished and take the card off the Lock Screen.
-    /// Stamp the session finished — and only then leave.
-    ///
-    /// `finish` returns false when there is nothing to close: no store row, or
-    /// not one working set logged (a session of warm-ups). Ending the activity
-    /// and dismissing anyway left the session row open forever, the tab reading
-    /// it back as live, and the failure reported to a screen that no longer
-    /// existed. Now the sheet stays up and the banner has somewhere to appear.
     /// What the confirmation offers, and what it warns about.
     ///
     /// The two states are genuinely different actions and the dialog says so: a
@@ -548,6 +549,13 @@ struct LiveLoggerView: View {
         dismiss()
     }
 
+    /// Stamp the session finished — and only then leave.
+    ///
+    /// Returns false when there is nothing to close: no store row, or not one
+    /// working set logged (a session of warm-ups). Ending the activity and
+    /// dismissing anyway left the session row open forever, the tab reading it
+    /// back as live, and the failure reported to a screen that no longer
+    /// existed. Now the sheet stays up and the banner has somewhere to appear.
     private func finish(sessionRpe: Double?) -> Bool {
         guard model.finish(sessionRpe: sessionRpe) else { return false }
         model.stopRest()

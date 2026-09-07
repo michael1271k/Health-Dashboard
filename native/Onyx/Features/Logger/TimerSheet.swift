@@ -154,9 +154,19 @@ struct TimerSheet: View {
                     Text("Elapsed")
                         .onyxType(.body)
                     Spacer(minLength: OnyxSpace.s)
-                    Text(Clock.format(clock.elapsed()))
-                        .onyxType(.body).fontWeight(.semibold).onyxNumeral()
-                        .foregroundStyle(accent)
+                    // The same running/paused split the headline uses.
+                    // `Clock.format(clock.elapsed())` depends on `Date()`, which
+                    // is not observable, so the row only redrew when the clock
+                    // was edited — it read 22:00 beside a headline saying 25:00.
+                    Group {
+                        if clock.isPaused {
+                            Text(Clock.format(clock.elapsed()))
+                        } else {
+                            Text(clock.timerOrigin, style: .timer)
+                        }
+                    }
+                    .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+                    .foregroundStyle(accent)
                 }
             } onIncrement: {
                 clock.setElapsed(clock.elapsed() + 60)

@@ -55,7 +55,16 @@ final class LiveActivityController {
             model.stopRest()
             self?.update(model: model, clock: clock)
         }
-        guard isEnabled, activity == nil else { return }
+        guard isEnabled else { return }
+        // Already holding a card — this controller is BORROWED from the Workout
+        // tab, so re-entering the logger arrives here with one alive. Push the
+        // current state instead of returning silently, or the Lock Screen keeps
+        // whatever it was showing when the cover was dismissed: a paused clock
+        // beside a phone that has since resumed.
+        if activity != nil {
+            update(model: model, clock: clock)
+            return
+        }
         // ── ADOPT WHAT THE LAST LAUNCH LEFT BEHIND ──────────────────────────
         // The handle lived only in memory, so a force-quit or a jetsam
         // mid-workout — which this app has a crash log for — left a Lock Screen

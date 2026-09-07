@@ -95,23 +95,25 @@ public struct LivePrRecord: Identifiable, Equatable, Sendable {
     /// Which set of it: "Set 2".
     public var setLabel: String
     public var axis: PrAxis
-    /// The new mark.
-    public var value: Double
-    /// The mark it beat. A record REQUIRES a baseline, so this is never absent —
-    /// and printing what was beaten is the whole difference between a trophy and
-    /// a number.
-    public var previous: Double
+    /// The new mark and the one it beat.
+    ///
+    /// `OnyxCore.AxisRecord`, not two `Double`s: it is the type
+    /// `LivePrEngine.compute` already fills in, and it carries the same
+    /// invariant in its own header — a record REQUIRES a baseline, so
+    /// `previous` is never absent. Printing what was beaten is the whole
+    /// difference between a trophy and a number, and when E4 hands this over it
+    /// is a field copy rather than an unpack.
+    public var mark: AxisRecord
 
     public init(
         id: String, exercise: String, setLabel: String,
-        axis: PrAxis, value: Double, previous: Double
+        axis: PrAxis, mark: AxisRecord
     ) {
         self.id = id
         self.exercise = exercise
         self.setLabel = setLabel
         self.axis = axis
-        self.value = value
-        self.previous = previous
+        self.mark = mark
     }
 }
 

@@ -53,6 +53,7 @@ func restCountdown(_ endsAt: Date?) -> ClosedRange<Date>? {
 /// length in the gap between sets.
 struct WorkoutLockCard: View {
     let title: String
+    let startedAt: Date
     let state: OnyxWorkoutAttributes.ContentState
 
     private var accent: Color { Color.onyx.day(state.dayKey) }
@@ -69,7 +70,7 @@ struct WorkoutLockCard: View {
                         .font(OnyxWidgetType.label(10, weight: .black))
                         .tracking(1.2)
                         .foregroundStyle(accent)
-                    WorkoutCountdown(state: state)
+                    WorkoutCountdown(state: state, startedAt: startedAt)
                 }
                 WorkoutTotals(state: state)
                 WorkoutCurrentSet(state: state)
@@ -147,6 +148,9 @@ struct WorkoutWatchCard: View {
 /// clock that has died.
 struct WorkoutCountdown: View {
     let state: OnyxWorkoutAttributes.ContentState
+    /// The activity's own fixed start, and the fallback for a card that was
+    /// encoded before `timerOrigin` existed — see `ContentState.timerOrigin`.
+    let startedAt: Date
 
     var body: some View {
         Group {
@@ -157,15 +161,15 @@ struct WorkoutCountdown: View {
                     Image(systemName: "timer")
                 }
                 .foregroundStyle(Color.onyx.day(state.dayKey))
-            } else if state.isPaused {
+            } else if state.isPaused == true {
                 Label {
-                    Text(state.elapsed)
+                    Text(state.elapsed ?? "")
                 } icon: {
                     Image(systemName: "pause.fill")
                 }
                 .foregroundStyle(Color.onyx.textTertiary)
             } else {
-                Text(state.timerOrigin, style: .timer)
+                Text(state.timerOrigin ?? startedAt, style: .timer)
                     .foregroundStyle(Color.onyx.textSecondary)
             }
         }
