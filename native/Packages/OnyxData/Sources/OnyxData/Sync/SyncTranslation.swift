@@ -227,6 +227,12 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
     public var caloriesBurned: Int?
     public var avgBpmEstimated: Bool
     public var caloriesEstimated: Bool
+    /// The session's own aggregates. `numeric` / `integer` server-side, all
+    /// three nullable — a session nothing has computed for carries NULL, and
+    /// `nil` is not `0` here any more than anywhere else in this app.
+    public var totalVolumeKg: Double?
+    public var setCount: Int?
+    public var prCount: Int?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -243,13 +249,17 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         case caloriesBurned = "calories_burned"
         case avgBpmEstimated = "avg_bpm_estimated"
         case caloriesEstimated = "calories_estimated"
+        case totalVolumeKg = "total_volume_kg"
+        case setCount = "set_count"
+        case prCount = "pr_count"
     }
 
     public init(
         id: String, userId: String, startedAt: Date, splitDay: String, endedAt: Date? = nil,
         dayKey: String? = nil, notes: String? = nil, durationMin: Int? = nil, sessionRpe: Double? = nil,
         updatedAt: Date? = nil, avgBpm: Int? = nil, caloriesBurned: Int? = nil,
-        avgBpmEstimated: Bool = false, caloriesEstimated: Bool = false
+        avgBpmEstimated: Bool = false, caloriesEstimated: Bool = false,
+        totalVolumeKg: Double? = nil, setCount: Int? = nil, prCount: Int? = nil
     ) {
         self.id = id
         self.userId = userId
@@ -265,6 +275,9 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         self.caloriesBurned = caloriesBurned
         self.avgBpmEstimated = avgBpmEstimated
         self.caloriesEstimated = caloriesEstimated
+        self.totalVolumeKg = totalVolumeKg
+        self.setCount = setCount
+        self.prCount = prCount
     }
 
     public init(from decoder: any Decoder) throws {
@@ -283,6 +296,9 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         caloriesBurned = try c.decodeIfPresent(Int.self, forKey: .caloriesBurned)
         avgBpmEstimated = try c.decodeIfPresent(Bool.self, forKey: .avgBpmEstimated) ?? false
         caloriesEstimated = try c.decodeIfPresent(Bool.self, forKey: .caloriesEstimated) ?? false
+        totalVolumeKg = try c.decodeIfPresent(Double.self, forKey: .totalVolumeKg)
+        setCount = try c.decodeIfPresent(Int.self, forKey: .setCount)
+        prCount = try c.decodeIfPresent(Int.self, forKey: .prCount)
     }
 
     /// ── EVERY KEY, EVERY TIME, INCLUDING THE NULLS ──────────────────────────
@@ -311,6 +327,18 @@ public struct RemoteSessionRow: Codable, Sendable, Equatable {
         try c.encode(caloriesBurned, forKey: .caloriesBurned)
         try c.encode(avgBpmEstimated, forKey: .avgBpmEstimated)
         try c.encode(caloriesEstimated, forKey: .caloriesEstimated)
+        // ── THE THREE AGGREGATES ARE THE ONE EXCEPTION TO "EVERY KEY" ───────
+        // `encodeIfPresent`, deliberately, against the rule three paragraphs
+        // up. Those keys are nulled on purpose because a cleared note must
+        // reach the server; these must NOT be, because the web computes them
+        // on save and this device only computes them for a session it has the
+        // sets for. A phone that has never pulled a 2024 session would
+        // otherwise upsert `total_volume_kg: null` over a figure the web
+        // wrote — erasing history to say "I don't know", which is exactly the
+        // trade `SyncEngine` refused when it left them out entirely.
+        try c.encodeIfPresent(totalVolumeKg, forKey: .totalVolumeKg)
+        try c.encodeIfPresent(setCount, forKey: .setCount)
+        try c.encodeIfPresent(prCount, forKey: .prCount)
         // `updated_at` is NOT encoded — see the field. The server owns it.
     }
 }
@@ -397,10 +425,14 @@ public extension SyncTranslation {
     ///   is still open — an unfinished session is marked by a NULL `ended_at`,
     ///   not by a status. Inventing `in_progress` would put a value in that
     ///   column that no reader in either app knows.
-    /// - `total_volume_kg`, `set_count` and `pr_count` are not sent: computing
-    ///   them means `sessionVolumeKg`, `countCommittedSets` and `prEngine`,
-    ///   none of which are ported yet. Omitted, they stay NULL on a new row and
-    ///   untouched on an existing one — which is honest. A zero would not be.
+    /// - `total_volume_kg`, `set_count` and `pr_count` ARE sent now, and only
+    ///   when this device has computed them (E1). All three engines are ported
+    ///   — `SessionVolume`, `Draft.totals`, `PrEngine` — and `SessionEditing`
+    ///   is what made it necessary: a phone that rewrites a closed session's
+    ///   sets without rewriting its tonnage leaves the web reading a figure
+    ///   for a workout that no longer exists. A nil is still OMITTED rather
+    ///   than nulled, so a session this device holds no sets for keeps
+    ///   whatever the web wrote.
     static func sessionRow(
         _ session: WorkoutSession,
         now: Date = Date(),
@@ -440,7 +472,10 @@ public extension SyncTranslation {
             avgBpm: session.avgBpm,
             caloriesBurned: session.caloriesBurned,
             avgBpmEstimated: session.avgBpmEstimated,
-            caloriesEstimated: session.caloriesEstimated
+            caloriesEstimated: session.caloriesEstimated,
+            totalVolumeKg: session.totalVolumeKg,
+            setCount: session.setCount,
+            prCount: session.prCount
         )
     }
 

@@ -28,7 +28,14 @@ export async function POST(req: Request) {
   // awake) — the server cannot. Trust client-provided values when present and
   // fall back to the server clock only for cron/headless calls.
   const body = await req.json().catch(() => ({})) as { backfillDays?: number; date?: string; hoursAwake?: number; force?: boolean; isToday?: boolean }
-  const backfillDays = Math.max(0, Math.min(31, Number(body?.backfillDays) || 0))
+  // ── 49, NOT 31 ──────────────────────────────────────────────────────────
+  // Readiness v9 reads a 49-day window ENDING on the day it scores, so a
+  // session edited on day D moves `battery_pct` on D and on every day up to 48
+  // after it. The old cap was 31: an edit seven weeks back rewrote the last
+  // month and left the three weeks between them describing a workout that no
+  // longer exists. The phone's own cascade uses the same horizon — see
+  // `Rescore.horizonDays`, derived from `Readiness.constants.historyDays`.
+  const backfillDays = Math.max(0, Math.min(49, Number(body?.backfillDays) || 0))
   const today = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayISO()
   const awake = Number.isFinite(body?.hoursAwake) ? Math.max(0, Math.min(18, Number(body?.hoursAwake))) : hoursAwakeToday()
   // Edit/delete recompute: `force` bypasses the finalized freeze; the client

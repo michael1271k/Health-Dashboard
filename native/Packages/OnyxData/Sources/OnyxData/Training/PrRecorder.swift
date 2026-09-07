@@ -41,36 +41,33 @@ public enum PrRecorder {
     /// write is idempotent: the natural key `(user_id, exercise_key, axis)` is
     /// what both clients upsert on, and re-running over the same session
     /// recomputes the same baselines and lands the same values.
+    /// What one `record` pass did. `written` is the ledger rows upserted;
+    /// `prCount` is the session's own `pr_count` — distinct axis-PRs across
+    /// every exercise, which is a DIFFERENT number and the one the session row
+    /// stores.
+    public struct Result: Sendable, Equatable {
+        public var written: Int
+        public var prCount: Int
+        public static let none = Result(written: 0, prCount: 0)
+    }
+
     @discardableResult
     public static func record(
         _ db: Database, sessionId: String, userId: String, dayKey: String?, date: String
-    ) throws -> Int {
+    ) throws -> Result {
         let sets = try WorkoutSet
             .filter(Column("session_id") == sessionId)
             .order(Column("set_index"), Column("rowid"))
             .fetchAll(db)
-        guard !sets.isEmpty else { return 0 }
+        guard !sets.isEmpty else { return .none }
 
         let name = try nameResolver(db)
         let exerciseIds = Set(sets.map(\.exerciseId))
 
-        func floor(_ key: String) -> Double? {
-            Ceilings.repWindow(for: name(key), dayKey: dayKey)?.floor
-        }
-
         let baselines = try baselines(
             db, exerciseIds: exerciseIds, excluding: sessionId, dayKey: dayKey, name: name
         )
-
-        let candidates = sets.enumerated().map { i, s in
-            PrCandidateSet(
-                key: s.exerciseId, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
-                timed: TimedExercise.isTimed(name(s.exerciseId)), repFloor: floor(s.exerciseId),
-                pairId: s.pairId, side: s.side, date: date,
-                exerciseName: name(s.exerciseId), setNumber: s.setIndex > 0 ? s.setIndex : i + 1
-            )
-        }
-
+        let candidates = Self.candidates(sets, dayKey: dayKey, date: date, name: name)
         let result = PrEngine.detectSessionPrs(candidates, baselines)
         var written = 0
         for exercise in PrEngine.recordSets(candidates, result) {
@@ -105,7 +102,49 @@ public enum PrRecorder {
                 written += 1
             }
         }
-        return written
+        return Result(written: written, prCount: result.prCount)
+    }
+
+    /// One session's sets, as the engine takes them.
+    ///
+    /// Keyed on `exercise_id` — as `save.ts` keys it — with the canonical name
+    /// applied only where a name is genuinely wanted. Two callers share it so
+    /// the ledger written on close and the count stored on the session row can
+    /// never be built from differently-shaped inputs.
+    static func candidates(
+        _ sets: [WorkoutSet], dayKey: String?, date: String, name: (String) -> String
+    ) -> [PrCandidateSet] {
+        sets.enumerated().map { i, s in
+            let canonical = name(s.exerciseId)
+            return PrCandidateSet(
+                key: s.exerciseId, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
+                timed: TimedExercise.isTimed(canonical),
+                repFloor: Ceilings.repWindow(for: canonical, dayKey: dayKey)?.floor,
+                pairId: s.pairId, side: s.side, date: date,
+                exerciseName: canonical, setNumber: s.setIndex > 0 ? s.setIndex : i + 1
+            )
+        }
+    }
+
+    /// `workout_sessions.pr_count` for a set of rows, WITHOUT writing anything.
+    ///
+    /// The session row stores a count and the ledger stores the records, and
+    /// they are two different numbers over the same detection — so this runs
+    /// the detection and throws the ledger half away. An edit needs the count
+    /// recomputed on every save; it must not re-file a record for an exercise
+    /// nobody touched, which is what calling `record` again would do.
+    static func prCount(
+        _ db: Database, sets: [WorkoutSet], dayKey: String?, date: String
+    ) throws -> Int {
+        guard let sessionId = sets.first?.sessionId else { return 0 }
+        let name = try nameResolver(db)
+        let baselines = try baselines(
+            db, exerciseIds: Set(sets.map(\.exerciseId)), excluding: sessionId,
+            dayKey: dayKey, name: name
+        )
+        return PrEngine.detectSessionPrs(
+            candidates(sets, dayKey: dayKey, date: date, name: name), baselines
+        ).prCount
     }
 
     /// The bar every candidate is measured against.
@@ -161,9 +200,173 @@ public enum PrRecorder {
         for session in sessions {
             total += try record(
                 db, sessionId: session.id, userId: userId, dayKey: session.dayKey, date: session.date
-            )
+            ).written
         }
         return total
+    }
+
+    /// Rebuild ONE exercise's ledger from scratch, chronologically.
+    ///
+    /// ── WHY THE RECORDER ALONE CANNOT RETRACT ───────────────────────────────
+    /// `record` upserts. That is exactly right for finishing a workout — a
+    /// record is only ever beaten — and exactly wrong the moment a set can be
+    /// LOWERED after the fact. Correct a mistyped 100 kg to 60 and the 100 kg
+    /// row is still the best-ever bench, filed against a set that no longer
+    /// exists, and no amount of re-running `record` will ever take it out.
+    ///
+    /// So the ledger for this exercise is deleted and replayed: every session
+    /// this device holds, oldest first, each judged only against what came
+    /// BEFORE it. That is `backfill-prs.mjs`'s rule, and it is the only one
+    /// that produces the same answer whichever direction the edit went.
+    ///
+    /// ── AND WHY IT IS KEYED ON THE NAME, NOT THE ID ─────────────────────────
+    /// `record` keys the engine on `exercise_id` (as `save.ts` does) and applies
+    /// the name at the last step. Here the CALLER has a ledger key — a canonical
+    /// display name — and every id that resolves to it is the same movement as
+    /// far as `personal_records` is concerned. Keying on the name is what makes
+    /// a lift logged on the web under a catalogue uuid and on the phone under a
+    /// `helix5-` slug replay as one history rather than two.
+    ///
+    /// ── WHICH MEANS THE TWO CAN DISAGREE, AND `record` IS THE NARROW ONE ────
+    /// A lift logged on both clients has its history under two `exercise_id`s
+    /// in this table — `nameResolver`'s own header calls that routine, not
+    /// rare. `record` builds its baseline from ONE of them, so closing a phone
+    /// session can file a record the full history would have refused; a replay
+    /// of that key then quietly retracts it. The narrow side is `record`, and
+    /// widening it moves stored records for every lift with an alias, which is
+    /// a recompute and a founder decision (F16, decision 12) rather than a
+    /// side effect of an edit. Filed, not fixed here.
+    ///
+    /// ── THE ONE THING THAT MUST NOT BE FORGOTTEN ────────────────────────────
+    /// An axis that had a row before and has none after — every set that ever
+    /// reached the floor is now deleted — needs the SERVER told. An upsert
+    /// cannot say "there is no record here any more"; only a delete can, and
+    /// the local row going quiet would otherwise leave the web showing a
+    /// record for a lift with no qualifying set left in the history.
+    ///
+    /// Returns the ledger rows written.
+    @discardableResult
+    public static func replay(
+        _ db: Database, userId: String, exerciseKey: String
+    ) throws -> Int {
+        let name = try nameResolver(db)
+        let everySet = try WorkoutSet.fetchAll(db)
+        let ids = Set(everySet.map(\.exerciseId).filter { name($0) == exerciseKey })
+        guard !ids.isEmpty else {
+            // Every set for this lift is gone. The ledger goes with it.
+            try retract(db, userId: userId, exerciseKey: exerciseKey)
+            return 0
+        }
+
+        // ── FINISHED SESSIONS ONLY ──────────────────────────────────────────
+        // `record` has only ever run at close, so the ledger has only ever
+        // held closed sessions' records. A replay that walked the live one too
+        // would file — and push — a record for a set that is still being
+        // logged; void that set a minute later and nothing re-runs the replay,
+        // because `record` at close only ever raises. The result is a standing
+        // record for a set that no longer exists, which is the exact failure
+        // this function was written to prevent, arriving through another door.
+        let sessions = try WorkoutSession
+            .filter(Column("ended_at") != nil)
+            .order(Column("date"), Column("started_at"), Column("rowid"))
+            .fetchAll(db)
+        var bySession: [String: [WorkoutSet]] = [:]
+        for set in everySet where ids.contains(set.exerciseId) {
+            bySession[set.sessionId, default: []].append(set)
+        }
+
+        /// Every set judged so far — the baseline the NEXT session is measured
+        /// against. `record` gets this for free by excluding one session from a
+        /// whole-table read; a replay has to accumulate it, because a session in
+        /// the middle of the history must not be judged against its own future.
+        var seen: [BaselineSetRow] = []
+        var written = 0
+        let timed = TimedExercise.isTimed(exerciseKey)
+        let floor = PrTruth.floor(for: exerciseKey)
+
+        // Clear the slate — locally AND on the wire. Every axis is queued for
+        // deletion up front; each one the replay wins back drops its own
+        // pending delete on the way in (`enqueueRowUpsert` removes it), so what
+        // survives in the queue is exactly the axes that no longer have a
+        // qualifying set. There is no third state to reconcile afterwards.
+        try retract(db, userId: userId, exerciseKey: exerciseKey)
+
+        for session in sessions {
+            guard let rows = bySession[session.id]?
+                .sorted(by: { ($0.setIndex, $0.foldOrder) < ($1.setIndex, $1.foldOrder) }),
+                  !rows.isEmpty
+            else { continue }
+
+            // The rep window is resolved per SESSION, because it depends on the
+            // day key — the same lift has a different floor on a leg day and an
+            // upper day. `Ceilings.repWindow`'s phase default is untouched, so
+            // this gates the e1RM axis exactly as `record` does.
+            let repFloor = Ceilings.repWindow(for: exerciseKey, dayKey: session.dayKey)?.floor
+            let baselines = PrEngine.buildBaselines(
+                seen, isTimed: { _ in timed }, floorFor: { _ in floor }
+            )
+            let candidates = rows.enumerated().map { i, s in
+                PrCandidateSet(
+                    key: exerciseKey, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
+                    timed: timed, repFloor: repFloor,
+                    pairId: s.pairId, side: s.side, date: session.date,
+                    exerciseName: exerciseKey, setNumber: s.setIndex > 0 ? s.setIndex : i + 1
+                )
+            }
+            let result = PrEngine.detectSessionPrs(candidates, baselines)
+            for exercise in PrEngine.recordSets(candidates, result) {
+                for record in exercise.records {
+                    let row = PersonalRecordRow(
+                        userId: userId,
+                        exerciseKey: exerciseKey,
+                        axis: record.axis.rawValue,
+                        value: (record.set.value * 100).rounded() / 100,
+                        reps: Int(record.set.reps),
+                        weightKg: record.set.weightKg,
+                        sessionId: session.id,
+                        achievedOn: session.date,
+                        updatedAt: AppDatabase.localWriteTimestamp
+                    )
+                    try row.save(db)
+                    try AppDatabase.enqueueRowUpsert(
+                        table: PersonalRecordRow.databaseTableName,
+                        id: AppDatabase.rowID([userId, exerciseKey, record.axis.rawValue]),
+                        in: db
+                    )
+                    written += 1
+                }
+            }
+            seen.append(contentsOf: rows.map {
+                BaselineSetRow(
+                    key: exerciseKey, weightKg: $0.weightKg, reps: Double($0.reps),
+                    est1rm: $0.est1rmKg, setType: $0.setType, repFloor: repFloor,
+                    pairId: $0.pairId, side: $0.side
+                )
+            })
+        }
+
+        return written
+    }
+
+    /// Delete every ledger row for one key, locally and on the wire.
+    ///
+    /// An upsert cannot say "there is no record here any more" — only a delete
+    /// can, and a local row going quiet would leave the web showing a record
+    /// for a lift with no qualifying set left in the history.
+    private static func retract(
+        _ db: Database, userId: String, exerciseKey: String
+    ) throws {
+        let rows = try PersonalRecordRow
+            .filter(Column("user_id") == userId && Column("exercise_key") == exerciseKey)
+            .fetchAll(db)
+        for row in rows {
+            try row.delete(db)
+            try AppDatabase.enqueueRowDelete(
+                table: PersonalRecordRow.databaseTableName,
+                key: ["user_id": userId, "exercise_key": exerciseKey, "axis": row.axis],
+                in: db
+            )
+        }
     }
 
     /// `exercise_id` → the canonical display name the ledger is keyed on.

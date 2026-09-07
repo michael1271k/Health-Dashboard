@@ -107,6 +107,22 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
     public var caloriesBurned: Int?
     public var avgBpmEstimated: Bool
     public var caloriesEstimated: Bool
+    /// The session's own aggregates, as both clients store them: tonnage under
+    /// `SessionVolume.sessionVolumeKg`'s rules (a unilateral pair scored once,
+    /// at the weaker side), the committed-set count that collapses the same
+    /// pairs, and the distinct axis-PRs the ledger filed. Nil until something
+    /// has computed them — a zero tonnage is a claim about a workout, an absent
+    /// one is a gap in what is known about it.
+    public var totalVolumeKg: Double?
+    public var setCount: Int?
+    public var prCount: Int?
+    /// A human set `duration_min` and it is not the clock's to re-derive.
+    ///
+    /// LOCAL ONLY — Postgres has no such column and wants none. It is not a
+    /// fact about the workout but about who last wrote a number, and its only
+    /// reader is `closeSession` deciding whether it may overwrite. Same rule as
+    /// `WorkoutSet.foldOrder`.
+    public var durationEdited: Bool
     /// Set locally the moment a session is committed; cleared when the outbox
     /// confirms the server accepted it.
     public var isPendingSync: Bool
@@ -125,6 +141,10 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
         case caloriesBurned = "calories_burned"
         case avgBpmEstimated = "avg_bpm_estimated"
         case caloriesEstimated = "calories_estimated"
+        case totalVolumeKg = "total_volume_kg"
+        case setCount = "set_count"
+        case prCount = "pr_count"
+        case durationEdited = "duration_edited"
         case isPendingSync = "is_pending_sync"
     }
 
@@ -134,6 +154,8 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
         sessionRpe: Double? = nil, notes: String? = nil,
         avgBpm: Int? = nil, caloriesBurned: Int? = nil,
         avgBpmEstimated: Bool = false, caloriesEstimated: Bool = false,
+        totalVolumeKg: Double? = nil, setCount: Int? = nil, prCount: Int? = nil,
+        durationEdited: Bool = false,
         isPendingSync: Bool = false
     ) {
         self.id = id
@@ -149,6 +171,10 @@ public struct WorkoutSession: Codable, FetchableRecord, PersistableRecord, Ident
         self.caloriesBurned = caloriesBurned
         self.avgBpmEstimated = avgBpmEstimated
         self.caloriesEstimated = caloriesEstimated
+        self.totalVolumeKg = totalVolumeKg
+        self.setCount = setCount
+        self.prCount = prCount
+        self.durationEdited = durationEdited
         self.isPendingSync = isPendingSync
     }
 }

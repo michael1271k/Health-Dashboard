@@ -704,6 +704,40 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v15 ─────────────────────────────────────────────────────────────
+        // The session's own aggregates, and the flag that says a human set the
+        // duration.
+        //
+        // ── WHY THE THREE AGGREGATES COME LOCAL NOW ─────────────────────────
+        // `SyncEngine` has left `total_volume_kg`, `set_count` and `pr_count`
+        // NULL since Wave 3, on the honest grounds that `sessionVolumeKg`,
+        // `countCommittedSets` and `prEngine` were not ported. All three are
+        // ported now (`SessionVolume`, `Draft.totals`, `PrEngine`), and E1 is
+        // the wave that makes it matter: editing a set on a CLOSED session
+        // changes the tonnage, and a phone that rewrites the sets without
+        // rewriting the total leaves the web reading a figure for a workout
+        // that no longer exists. They are still nullable and still absent on a
+        // session nothing has computed for — `nil` is not `0` here either.
+        //
+        // ── AND WHY `duration_edited` IS LOCAL-ONLY ─────────────────────────
+        // Postgres has no such column and does not need one: it is not a fact
+        // about the workout, it is a fact about who last wrote a number, and
+        // the only reader is `closeSession` on this device deciding whether it
+        // may re-derive `duration_min`. Same rule as `workout_sets.fold_order`
+        // — derived local state, never sent. Inventing a server column for it
+        // would put a value in the schema no other reader knows how to use.
+        migrator.registerMigration("v15.sessionTotals") { db in
+            let existing = Set(try db.columns(in: "workout_sessions").map(\.name))
+            try db.alter(table: "workout_sessions") { t in
+                if !existing.contains("total_volume_kg") { t.add(column: "total_volume_kg", .double) }
+                if !existing.contains("set_count") { t.add(column: "set_count", .integer) }
+                if !existing.contains("pr_count") { t.add(column: "pr_count", .integer) }
+                if !existing.contains("duration_edited") {
+                    t.add(column: "duration_edited", .boolean).notNull().defaults(to: false)
+                }
+            }
+        }
+
         return migrator
     }
 }
@@ -876,7 +910,12 @@ extension AppDatabase {
                 lastSetAt: lastSetAt,
                 restTargetSec: restTargetSec
             )
-            if let minutes = derived.minutes { session.durationMin = minutes }
+            // ── A TYPED DURATION SURVIVES THE CLOSE ─────────────────────────
+            // `duration_edited` says a person answered this, and the clock is
+            // then not allowed to argue. Without the check, correcting the
+            // duration in the finish sheet and then tapping Finish would hand
+            // the number straight back to the arithmetic that was corrected.
+            if let minutes = derived.minutes, !session.durationEdited { session.durationMin = minutes }
             // `nil` leaves the existing rating alone rather than clearing it —
             // an unrated session is not a session rated zero, and the battery
             // falls back to its own default rather than treating it as easy.
@@ -897,9 +936,21 @@ extension AppDatabase {
             // just written the session — there is no state in which one lands
             // and the other does not, so a failure means the store is broken
             // and swallowing it would only hide that.
-            try PrRecorder.record(
+            let prs = try PrRecorder.record(
                 db, sessionId: id, userId: session.userId, dayKey: session.dayKey, date: session.date
             )
+            // ── AND THE THREE AGGREGATES THE WEB HAS ALWAYS WRITTEN ─────────
+            // `SyncEngine` left `total_volume_kg`, `set_count` and `pr_count`
+            // NULL while `sessionVolumeKg`, `countCommittedSets` and `prEngine`
+            // were unported. All three are ported, so a session finished on the
+            // phone now carries the same figures a session finished on the web
+            // does — and `SessionEditing` keeps them true afterwards.
+            let sets = try WorkoutSet.filter(Column("session_id") == id).fetchAll(db)
+            let totals = SessionEditing.totals(sets)
+            session.totalVolumeKg = totals.volumeKg
+            session.setCount = totals.count
+            session.prCount = prs.prCount
+            try session.update(db)
             return session
         }
     }
@@ -989,21 +1040,23 @@ extension AppDatabase {
     /// `nil` leaves a figure alone rather than clearing it; clearing one is not
     /// a thing the finish sheet can ask for and inventing the distinction here
     /// would be a fourth state nothing reads.
-    public func setSessionMetrics(id: String, avgBpm: Int? = nil, caloriesBurned: Int? = nil) throws {
-        guard avgBpm != nil || caloriesBurned != nil else { return }
-        try writer.write { db in
-            guard var session = try WorkoutSession.fetchOne(db, key: id) else { return }
-            if let avgBpm {
-                session.avgBpm = avgBpm
-                session.avgBpmEstimated = false
-            }
-            if let caloriesBurned {
-                session.caloriesBurned = caloriesBurned
-                session.caloriesEstimated = false
-            }
-            try session.update(db)
-            try Self.enqueueSessionUpsert(sessionId: id, in: db)
-        }
+    /// `durationMin` was added in E1 and carries `duration_edited` with it: a
+    /// duration a person typed is not the clock's to re-derive on close.
+    ///
+    /// ── ONE IMPLEMENTATION, TWO NAMES ───────────────────────────────────────
+    /// The body moved to `SessionEditing`'s `updateMetrics`, which does the
+    /// same three columns plus the aggregate recount every write of this row
+    /// now owes. This stays because the finish sheet and `SessionMetrics` both
+    /// call it, and two functions writing the same columns by slightly
+    /// different rules is exactly how the provenance flags drift apart.
+    @discardableResult
+    public func setSessionMetrics(
+        id: String, durationMin: Double? = nil, avgBpm: Int? = nil, caloriesBurned: Int? = nil
+    ) throws -> SessionEditing.Outcome? {
+        guard durationMin != nil || avgBpm != nil || caloriesBurned != nil else { return nil }
+        return try updateMetrics(
+            sessionId: id, durationMin: durationMin, avgBpm: avgBpm, calories: caloriesBurned
+        )
     }
 }
 
