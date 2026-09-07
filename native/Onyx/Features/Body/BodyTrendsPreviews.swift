@@ -18,7 +18,7 @@ enum BodyTrendsPreviews {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
         let today = LogicalDay.today()
         let from = ISODate.addDays(today, -89) ?? today
-        try? database.editUserGoals(userId: userId) { row in
+        _ = try? database.editUserGoals(userId: userId) { row in
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.targetWeightKg = 62

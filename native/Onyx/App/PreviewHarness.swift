@@ -35,7 +35,7 @@ enum PreviewHarness {
     static func seededModel() -> SettingsModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
         let userId = "00000000-0000-0000-0000-000000000001"
-        try? database.editUserGoals(userId: userId) { row in
+        _ = try? database.editUserGoals(userId: userId) { row in
             row.calorieGoal = 1955
             row.proteinGoalG = 170
             row.carbsGoalG = 195
@@ -54,7 +54,7 @@ enum PreviewHarness {
             row.targetBodyFatPct = 13
             row.targetMuscleMassKg = 33
         }
-        try? database.editPlanPhaseGoals(userId: userId, planId: "onyx5", phase: "cut") { row in
+        _ = try? database.editPlanPhaseGoals(userId: userId, planId: "onyx5", phase: "cut") { row in
             row.kcal = 1955
             row.proteinG = 170
             row.carbsG = 195

@@ -10,11 +10,29 @@
 # simulator booted — so the same "does it compile" signal survives the move,
 # and it now covers OnyxCore as a side effect.
 #
+# ── AND WHY IT REGENERATES THE PROJECT FIRST ─────────────────────────────────
+# `Onyx.xcodeproj` is a build artefact and gitignored, so it goes stale the
+# moment a merge brings in a .swift file the last `xcodegen generate` never saw.
+# Xcode then reports the new type as "cannot find in scope" from every file that
+# uses it, and the cascade reads like four unrelated source bugs — the shape
+# this line exists to prevent. Nothing detected it before: `scripts/native-shot.sh`
+# regenerates on its way to a screenshot, so the shot loop stayed green through
+# two whole waves while ⌘B in Xcode did not.
+#
+# Healing beats detecting here. The project file is untracked, so there is no
+# committed baseline to diff against, and a detector would have to reimplement
+# `project.yml`'s directory glob to know what SHOULD be in it.
+#
 # ── WHAT IT DOES NOT COVER ───────────────────────────────────────────────────
 # OnyxData (Supabase + GRDB — `npm run swift:data` owns it), the app target and
 # the widget extension target (both need `xcodebuild`, see the plan's §9), and
 # anything about LAYOUT: a tile that compiles can still draw badly, and no
 # compiler has an opinion about that. The shot loop does.
+#
+# Regenerating is not the same as COMPILING the app target — that is still four
+# minutes of `xcodebuild` and still belongs to the shot loop and the ship gate.
+# What it guarantees is narrower and is the thing that actually broke: the
+# project Xcode opens lists every file on disk.
 set -euo pipefail
 
 if ! command -v xcrun >/dev/null 2>&1; then
@@ -29,6 +47,15 @@ if [ -z "$SDK" ]; then
 fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Idempotent and about a second. Skipped rather than failed where xcodegen is
+# not installed, matching the `xcrun` guard above — but NOT skipped quietly if
+# it runs and fails: `set -e` is on, so a broken `project.yml` stops the check
+# here instead of leaving a stale project behind and a green tick.
+if [ -f "$ROOT/native/project.yml" ] && command -v xcodegen >/dev/null 2>&1; then
+  (cd "$ROOT/native" && xcodegen generate >/dev/null)
+  echo "✔ Onyx.xcodeproj regenerated from project.yml"
+fi
 
 # A scratch path OUTSIDE the repo, like `swift:core` and `swift:data`, so the
 # build products never land in git and PyCharm never indexes them.

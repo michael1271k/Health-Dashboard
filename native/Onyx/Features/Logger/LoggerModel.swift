@@ -596,7 +596,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 // FLOOR, which is what `SessionSeedBuilder.workingRows` does for
                 // the same case. Copying the last row verbatim would carry its
                 // reps too, and the two sides would answer differently.
-                var carried = Self.setRow(last)
+                let carried = Self.setRow(last)
                 carried.reps = plan.repWindow?.floor ?? carried.reps
                 out.append(carried)
             } else {
@@ -1106,7 +1106,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         let history = (try? store?.effortHistory(
             userId: userId, dayKey: day.key, before: LogicalDay.today()
         )) ?? []
-        return Effort.suggestEffortWord(mean: mean, history: history ?? [])
+        return Effort.suggestEffortWord(mean: mean, history: history)
     }
 
     // MARK: - The store

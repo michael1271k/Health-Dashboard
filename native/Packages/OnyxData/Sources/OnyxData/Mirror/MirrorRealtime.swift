@@ -152,7 +152,32 @@ public actor MirrorRealtime {
                 }
             })
         }
-        await channel.subscribe()
+        do {
+            try await channel.subscribeWithError()
+        } catch {
+            // ── A FAILED JOIN HAS TO UNDO ITSELF ────────────────────────────
+            // `subscribe()` — deprecated in favour of this — was `try? await
+            // subscribeWithError()`, so the failure was invisible AND the
+            // channel stayed on `self`. The `guard channel == nil` at the top
+            // then turned every later `start()` into a no-op: one bad join and
+            // the socket is dead for the lifetime of the process, with no way
+            // back short of sign-out. `stop()` cancels the listeners, drops the
+            // channel and stops the coalescer, which is exactly the state a
+            // retry needs.
+            //
+            // Swallowing the error itself is still right: the socket is a
+            // latency optimisation, not a data path. `SyncCoordinator` pulls on
+            // launch and on every foreground, so a dead socket costs push
+            // freshness between devices and nothing else — and there is no
+            // caller up the chain (`startRealtime` is `async`, not `throws`)
+            // that could do anything with it.
+            //
+            // ponytail: nothing retries after this. `SyncCoordinator`'s own
+            // `guard realtime == nil` still blocks a second attempt — if push
+            // silence after a dropped token becomes real, clear that there and
+            // call `startRealtime` again from the scene-phase handler.
+            await stop()
+        }
     }
 
     /// Close it. Cancels every listener first, so nothing is delivered into a

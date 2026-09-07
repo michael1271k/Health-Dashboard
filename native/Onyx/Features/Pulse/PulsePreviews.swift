@@ -20,7 +20,7 @@ enum PulsePreviews {
     @MainActor
     static func model(_ seed: (AppDatabase) throws -> Void = { _ in }) -> DayModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
-        try? database.editUserGoals(userId: userId) { row in
+        _ = try? database.editUserGoals(userId: userId) { row in
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.sleepGoalHours = 8
