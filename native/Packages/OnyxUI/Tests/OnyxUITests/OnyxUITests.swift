@@ -87,3 +87,81 @@ struct OnyxChartTests {
         #expect(OnyxChart.date("2026-9") == nil)
     }
 }
+
+/// The one piece of arithmetic in the logger's chrome that is not a layout.
+///
+/// `elapsed` becomes `duration_min`, which multiplies session RPE into training
+/// load, which readiness reads over 49 days — so an error here moves
+/// `battery_pct` on every day for seven weeks, and it does it quietly. The live
+/// database holds a 60-minute session recorded as 385 minutes; this is the
+/// arithmetic that has to stop being able to say that.
+@Suite("The session clock")
+@MainActor
+struct LoggerClockTests {
+
+    @Test("elapsed is the wall clock minus what was banked in pauses") func pauses() async throws {
+        let clock = LoggerClock(startedAt: Date().addingTimeInterval(-600))
+        #expect(!clock.isPaused)
+        #expect(abs(clock.elapsed() - 600) < 1)
+        // A running clock counts from an origin the system can render; with no
+        // pauses yet that origin IS the start.
+        #expect(clock.timerOrigin == clock.startedAt)
+
+        clock.pause()
+        #expect(clock.isPaused)
+        let frozen = clock.elapsed()
+        try await Task.sleep(for: .milliseconds(120))
+        // Frozen, not stalled: the reading does not move while paused.
+        #expect(clock.elapsed() == frozen)
+
+        // Idempotent — the button and the Lock Screen can both send it.
+        clock.pause()
+        #expect(clock.elapsed() == frozen)
+
+        clock.resume()
+        #expect(!clock.isPaused)
+        #expect(clock.pausedTotal >= 0.1)
+        // The pause came OUT of elapsed, and the origin moved forward by it.
+        #expect(abs(clock.elapsed() - frozen) < 0.05)
+        #expect(abs(clock.timerOrigin.timeIntervalSince(clock.startedAt) - clock.pausedTotal) < 0.001)
+    }
+
+    @Test("editing elapsed moves the start and never the pause ledger") func edits() {
+        let clock = LoggerClock(startedAt: Date().addingTimeInterval(-600))
+        clock.pause()
+        clock.resume()
+        let banked = clock.pausedTotal
+
+        clock.setElapsed(45 * 60)
+        #expect(abs(clock.elapsed() - 45 * 60) < 0.05)
+        #expect(clock.pausedTotal == banked)
+
+        // Negative is clamped rather than refused: a stepper held down at 0:00
+        // must not run the clock backwards.
+        clock.setElapsed(-60)
+        #expect(clock.elapsed() == 0)
+
+        // A start in the future would make `Text(_:style:.timer)` count DOWN.
+        clock.setStart(Date().addingTimeInterval(3600))
+        #expect(clock.elapsed() < 1)
+        #expect(clock.timerOrigin <= Date())
+    }
+
+    @Test("correcting the start of a PAUSED session keeps the reading it asked for")
+    func startWhilePaused() {
+        // The clamp used to anchor on `Date()` while `elapsed` anchored on the
+        // pause, so every start inside the open pause — the whole window the
+        // sheet's wheel can reach — came back as a confident 0:00.
+        let clock = LoggerClock(startedAt: Date().addingTimeInterval(-90 * 60))
+        clock.pause()
+        let pausedAt = try! #require(clock.pausedAt)
+
+        clock.setStart(pausedAt.addingTimeInterval(-60 * 60))
+        #expect(abs(clock.elapsed() - 60 * 60) < 1)
+
+        // Still clamped: a start after the pause began is zero elapsed, not a
+        // negative one dressed up by `max(0, …)`.
+        clock.setStart(pausedAt.addingTimeInterval(60))
+        #expect(clock.elapsed() == 0)
+    }
+}

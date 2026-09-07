@@ -32,6 +32,17 @@ import SwiftUI
 /// scale is wrong at both ends. Stored in `em` and multiplied by the SCALED
 /// size, so it stays proportional when the user turns text up.
 public enum OnyxType: CaseIterable, Sendable {
+    /// A RUNNING clock, and only that: the live logger's elapsed timer.
+    ///
+    /// ── WHY THE SCALE GREW A SEVENTH ROLE RATHER THAN THE FEATURE A SIZE ────
+    /// The logger's timer is read at arm's length, across a gym floor, by
+    /// someone deciding whether to start the next set — the one figure in this
+    /// app whose viewing distance is not the phone's. `hero` at 28 is what every
+    /// other screen's headline number is, and a timer set in it disappears into
+    /// the split name beside it. `.largeTitle` is 34 and is the one system style
+    /// above `.title`, so this stays what the file promises: the roles ARE
+    /// system text styles, and a feature still may not spell a size.
+    case clock
     /// The one figure a screen is about: a readiness score, the day's kcal.
     /// At most one per screen — a second hero is two screens in a trench coat.
     case hero
@@ -49,6 +60,7 @@ public enum OnyxType: CaseIterable, Sendable {
     /// The system style this role IS. Not "scales against" — is.
     public var textStyle: Font.TextStyle {
         switch self {
+        case .clock:     .largeTitle  // 34
         case .hero:      .title       // 28
         case .display:   .title3      // 20
         case .body:      .body        // 17
@@ -62,6 +74,7 @@ public enum OnyxType: CaseIterable, Sendable {
     /// record; the rendering never reads it.
     public var points: CGFloat {
         switch self {
+        case .clock: 34
         case .hero: 28
         case .display: 20
         case .body: 17
@@ -74,17 +87,23 @@ public enum OnyxType: CaseIterable, Sendable {
     public var weight: Font.Weight {
         switch self {
         case .hero:      .bold
+        // Semibold rather than bold at 34: the mass a weight adds is what makes
+        // a figure loud, and at this size the size is already the loudness.
+        case .clock:     .semibold
         case .display:   .semibold
         case .micro:     .semibold
         case .body, .secondary, .caption: .regular
         }
     }
 
-    /// Rounded only for the hero, which is always a numeral and takes the same
-    /// shape language as `onyxNumeral()`. Prose in a rounded face reads as a
-    /// children's app.
+    /// Rounded only for the figures — the hero and the clock — which take the
+    /// same shape language as `onyxNumeral()`. Prose in a rounded face reads as
+    /// a children's app.
     public var design: Font.Design {
-        self == .hero ? .rounded : .default
+        switch self {
+        case .hero, .clock: .rounded
+        default: .default
+        }
     }
 
     /// CSS `letter-spacing`, in `em`. Negative as the type grows, positive at
@@ -93,6 +112,7 @@ public enum OnyxType: CaseIterable, Sendable {
     /// what the register captions it replaces were tracked to by hand.
     public var trackingEm: CGFloat {
         switch self {
+        case .clock:   -0.03
         case .hero:    -0.02
         case .display: -0.01
         case .micro:    0.10
@@ -154,6 +174,14 @@ public extension View {
     /// hero is always a number.
     func onyxHero() -> some View {
         onyxType(.hero).monospacedDigit().contentTransition(.numericText())
+    }
+
+    /// A running clock. Monospaced so the digits do not shuffle the layout once
+    /// a second, and WITHOUT `contentTransition(.numericText())` — that animates
+    /// a digit rolling, which is right for a total that changed because you did
+    /// something and wrong for a second hand.
+    func onyxClock() -> some View {
+        onyxType(.clock).monospacedDigit()
     }
 
     /// A card or sheet title.

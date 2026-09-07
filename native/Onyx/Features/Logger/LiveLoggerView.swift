@@ -23,17 +23,53 @@ import OnyxData
 /// re-implementing something the system ships — and re-implementing it worse,
 /// because the collapse animated a frame behind the scroll.
 ///
-/// So the bar is the system's bar. The rest clock lives in it, as a capsule in
+/// So the bar is the system's bar. The rest clock lived in it, as a capsule in
 /// the principal slot, which is exactly where iOS puts a running timer in Phone
 /// and in Voice Memos. Everything the header used to hold that is not a number
-/// you are reading right now moved into the trailing menu, and what is left on
-/// screen is one 44 pt strip of totals and the movement in front of you.
+/// you are reading right now moved into the trailing menu, and what was left on
+/// screen was one 44 pt strip of totals and the movement in front of you.
+///
+/// ── AND WHAT PHASE 3 MADE IT ────────────────────────────────────────────────
+/// The logger is the flagship screen now, and a flagship cannot be a system
+/// title over a strip of three numbers. Wave U1 gives it a hero in the day's own
+/// colour — the split, the week, and a 34 pt clock you can stop — a segmented
+/// control between two faces of one model, and a row of chips where a three-dot
+/// menu used to hide four verbs.
+///
+/// What moved, and where it went:
+///   • the 44 pt totals strip → the Live Stats face's `Now` card, with room to
+///     say what each number is (`LiveStatsView`);
+///   • `Text(startedAt, style: .timer)` in that strip → the hero's clock, which
+///     is now pausable and correctable (`LoggerHero`, `TimerSheet`);
+///   • the `.principal` rest capsule → under the hero (`LoggerRestCapsule`),
+///     because a countdown you watch for ninety seconds is content;
+///   • the trailing three-dot `Menu` → `OnyxChipRow`, where "Skip rest" is
+///     absent rather than present-and-disabled;
+///   • "Muscle distribution" → a card that draws the body, and still opens the
+///     sheet it used to be a menu item for.
+///
+/// The navigation bar keeps exactly what it should: the two ways out.
 struct LiveLoggerView: View {
     @State private var model: LoggerModel
     @State private var showDistribution = false
     @State private var showPhase = false
     @State private var showFinish = false
+    @State private var showTimer = false
     @State private var confirmCancel = false
+    @State private var editingNote = false
+    @State private var noteDraft = ""
+
+    /// Which face, and how it got here — the animation travels with it.
+    @State private var selection = LoggerFaceSelection()
+
+    /// The session clock. `LoggerClock` until wave E4 makes `LoggerModel`
+    /// conform to `PauseControlling`; at that point this `@State` goes and the
+    /// hero, the timer sheet and the Live Activity are handed `model` instead.
+    /// Nothing else on this screen changes, which is what the protocol bought.
+    @State private var clock: LoggerClock
+
+    /// Records claimed so far. `SeedPrProvider` until E4 lights `LivePrEngine`.
+    @State private var prs: SeedPrProvider
     /// Bumped when the rest clock reaches zero of its own accord — never when
     /// it is skipped or dragged into the past, both of which cancel the task
     /// below before it fires. §3.4 gives `.success` to "session finished"; a
@@ -76,29 +112,62 @@ struct LiveLoggerView: View {
     /// as a cover, so dismissing the cover mid-session keeps the Lock Screen
     /// card alive and updatable. Previews and the harness pass nothing and get
     /// their own.
-    init(model: LoggerModel, activity: LiveActivityController? = nil) {
+    ///
+    /// `face` and `clock` are the same argument the finish sheet's harness case
+    /// makes: a screen with a state nobody can reach is a screen nobody
+    /// maintains. Live Stats and a paused session are two of this screen's three
+    /// faces, and neither can be photographed by a shot script that can only
+    /// launch it. They are ordinary parameters rather than debug flags because
+    /// they are ordinary facts — which face is showing, and which clock is
+    /// running — and wave E4 hands `clock` the `LoggerModel` itself.
+    init(
+        model: LoggerModel,
+        activity: LiveActivityController? = nil,
+        face: LoggerFace = .workout,
+        clock: LoggerClock? = nil
+    ) {
         _model = State(initialValue: model)
         _activity = State(initialValue: activity ?? LiveActivityController())
         _focus = State(initialValue: model.currentSet?.exercise.id ?? model.exercises.first?.id)
+        _selection = State(initialValue: LoggerFaceSelection(face: face))
+        _clock = State(initialValue: clock ?? LoggerClock(startedAt: model.startedAt))
+        _prs = State(initialValue: SeedPrProvider(model: model))
     }
 
     private var accent: Color { Color.onyx.day(model.day.key) }
 
     var body: some View {
-        VStack(spacing: OnyxSpace.m) {
-            if let storeError = model.storeError { banner(storeError) }
-            totals
-            deck
+        // ── WHY A `GeometryReader` AND NOT A MEASUREMENT ────────────────────
+        // The page width had been measured on the stack itself, and that is a
+        // loop: the stack's width set a frame inside the stack, which set the
+        // stack's width. At an accessibility size it settled 55 pt wide of the
+        // screen, and the Live Stats face came into view down the edge of the
+        // deck. A `GeometryReader` takes the size PROPOSED to it and ignores
+        // what its content would like, so `proxy.size.width` is the screen and
+        // nothing inside can argue with it — which is also what stops the chip
+        // row's own ideal width from widening the column it sits in.
+        GeometryReader { proxy in
+            stack(page: proxy.size.width)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
-        .padding(.top, OnyxSpace.s)
         .onyxScreen(.train)
         .foregroundStyle(Color.onyx.textPrimary)
-        .navigationTitle(model.day.label)
+        // The hero says which workout this is, in 28 pt and in the day's own
+        // colour. A system title repeating it in 17 pt grey is the same fact
+        // twice, and the bar's material over the mesh is a second surface where
+        // the design has one.
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            leaveItem
-            clockItem
-            trailingItems
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar { leaveItem }
+        // Pushed on DISMISSAL, not on every change. `startedAt` moves once per
+        // tick of the timer sheet's wheel, and each one would have been an
+        // ActivityKit update against a budget this file is careful about
+        // everywhere else — for a card that is behind the sheet the whole time.
+        .sheet(isPresented: $showTimer) {
+            activity.update(model: model, clock: clock)
+        } content: {
+            TimerSheet(clock: clock, accent: accent)
         }
         .sheet(isPresented: $showDistribution) { MuscleDistributionSheet(model: model) }
         .sheet(isPresented: $showPhase) {
@@ -127,21 +196,35 @@ struct LiveLoggerView: View {
         } message: {
             Text(cancelMessage)
         }
+        // The note is a fast action rather than a row in the set options sheet:
+        // it is about the MOVEMENT, and it was two taps down a sheet that is
+        // about one set of it.
+        .alert("Note", isPresented: $editingNote) {
+            TextField("What happened on this lift?", text: $noteDraft)
+            Button("Save") { noteTarget?.note = noteDraft }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(noteTarget?.name ?? "")
+        }
         .onAppear {
             model.attach()
-            activity.start(model: model)
+            activity.start(model: model, clock: clock)
         }
         .onChange(of: model.completedSets) { _, _ in
-            activity.update(model: model)
+            activity.update(model: model, clock: clock)
             advanceIfFinished()
         }
+        // The Lock Screen mirrors the pause. A card counting a session up while
+        // the phone in your hand says it is stopped is the two surfaces
+        // disagreeing about the number that becomes `duration_min`.
+        .onChange(of: clock.pausedAt) { _, _ in activity.update(model: model, clock: clock) }
         // A warm-up changes neither `completedSets` nor the rest clock, and
         // `commitEdit` — retyping a load on a logged set — changes none of the
         // three. Both leave the Lock Screen showing a number that is no longer
         // true.
-        .onChange(of: model.physicalSets) { _, _ in activity.update(model: model) }
-        .onChange(of: model.totalVolumeKg) { _, _ in activity.update(model: model) }
-        .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model) }
+        .onChange(of: model.physicalSets) { _, _ in activity.update(model: model, clock: clock) }
+        .onChange(of: model.totalVolumeKg) { _, _ in activity.update(model: model, clock: clock) }
+        .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model, clock: clock) }
         // ── THE CLOCK HAS TO END ITSELF ─────────────────────────────────────
         // `startRest` set a deadline and only a tap, an adjustment into the
         // past or the next set ever cleared it. So the capsule sat at 0:00
@@ -151,7 +234,19 @@ struct LiveLoggerView: View {
         // exactly the ±15 s case.
         .task(id: model.restEndsAt) {
             guard let endsAt = model.restEndsAt else { return }
-            try? await Task.sleep(for: .seconds(max(0, endsAt.timeIntervalSinceNow)))
+            // A deadline already in the PAST is cleared, not celebrated. It is
+            // reachable exactly as the paragraph above describes: the rest
+            // expires while you are on the Workout tab, this task is not
+            // running to clear it, and coming back used to `max(0, …)` the
+            // negative interval into a zero-length sleep that completed
+            // uncancelled — a `.success` haptic for a rest that ended minutes
+            // ago, on a screen you had only just opened.
+            let wait = endsAt.timeIntervalSinceNow
+            guard wait > 0 else {
+                model.stopRest()
+                return
+            }
+            try? await Task.sleep(for: .seconds(wait))
             guard !Task.isCancelled else { return }
             restExpiries += 1
             withAnimation(OnyxMotion.drawer) { model.stopRest() }
@@ -161,6 +256,25 @@ struct LiveLoggerView: View {
         // face-down on a bench when it happens.
         .sensoryFeedback(.success, trigger: restExpiries)
         .onChange(of: model.phase) { _, next in storedPhase = next.rawValue }
+    }
+
+    private func stack(page: CGFloat) -> some View {
+        VStack(spacing: OnyxSpace.m) {
+            LoggerHero(
+                day: model.day,
+                clock: clock,
+                selection: $selection,
+                onTimer: { showTimer = true }
+            )
+            if let storeError = model.storeError { banner(storeError) }
+            restCapsule
+            OnyxChipRow(chips, pinned: finishChip)
+            faces(page: page)
+        }
+        // One place, so the capsule arriving, the "Skip rest" chip arriving and
+        // the deck sliding down for both are ONE movement rather than three
+        // that start together and end apart.
+        .animation(OnyxMotion.drawer, value: model.restEndsAt)
     }
 
     // MARK: - Toolbar
@@ -190,141 +304,121 @@ struct LiveLoggerView: View {
         }
     }
 
-    /// The rest clock, where iOS puts a running timer: the principal slot.
+    // MARK: - Fast actions
+
+    /// Muscle focus · Phase · Skip rest · Note · Finish.
     ///
-    /// It replaces the title rather than sitting beside it, because while you
-    /// are resting the remaining seconds ARE what this screen is about — and
-    /// the title comes back the moment the clock stops, which is a state change
-    /// worth showing rather than a layout to keep stable.
-    private var clockItem: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            // `restCountdown`, not `model.restEndsAt` directly — the deadline
-            // outlives this view. `.task(id:)` is what clears it, and leaving
-            // the logger cancels that task, so a rest started here and left to
-            // expire on the Workout tab comes back as a date in the PAST.
-            if let countdown = restCountdown(model.restEndsAt) {
-                RestCapsule(
-                    countdown: countdown,
-                    accent: accent,
-                    onSkip: { withAnimation(OnyxMotion.drawer) { model.stopRest() } },
-                    onAdjust: { model.adjustRest(by: $0) }
-                )
-                .transition(.scale(scale: 0.8).combined(with: .opacity))
-            } else {
-                Text(model.day.label)
-                    .onyxType(.body).fontWeight(.semibold)
-                    .foregroundStyle(Color.onyx.textPrimary)
-            }
-        }
-    }
-
-    private var trailingItems: some ToolbarContent {
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            Menu {
-                Button("Muscle distribution", systemImage: "figure.stand") { showDistribution = true }
-                Button("Change phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true }
-                if model.restEndsAt != nil {
-                    Button("Skip rest", systemImage: "forward.end") { model.stopRest() }
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-            }
-            .accessibilityLabel("More")
-
-            Button("Finish") { showFinish = true }
-                .fontWeight(.semibold)
-        }
-    }
-
-    // MARK: - Totals
-
-    /// One 44 pt strip where three tiles used to be.
+    /// ── WHY A ROW AND NOT THE MENU IT REPLACES ──────────────────────────────
+    /// These were behind `Menu { … }` in the toolbar: two taps and a system
+    /// popover — over the deck the popover was about — to skip a rest. A menu is
+    /// the right shape for a long, cold list. These are four verbs used every
+    /// session with wet hands.
     ///
-    /// The tiles said VOLUME, SETS and RECORDS in three boxes with three
-    /// borders, stacked over a coach line that repeated the same verdict — a
-    /// §3.6 defect in the same file as the sets it was pushing off screen.
-    /// Three numbers on one line is the same information at a fifth of the
-    /// height, and the height is what the logger is short of.
-    private var totals: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: OnyxSpace.m) {
-                volumeStat; setsStat; records
-                Spacer(minLength: 0)
-                elapsed
-            }
-            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                HStack(spacing: OnyxSpace.m) { volumeStat; setsStat; records }
-                elapsed
-            }
-            // Two by two. At AX5 three totals cannot share a row, and what
-            // sharing it produced was "3," over "4" — a tonnage broken across
-            // two lines mid-number. One per line was honest and 215 pt tall,
-            // which pushed the first set row off the screen; paired, it is two.
-            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                HStack(spacing: OnyxSpace.m) { volumeStat; setsStat }
-                HStack(spacing: OnyxSpace.m) { records; elapsed }
-            }
-            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                volumeStat; setsStat; records; elapsed
-            }
+    /// "Skip rest" is ABSENT rather than disabled when nothing is resting, and
+    /// the row springs closed around the gap. A control that is present and does
+    /// nothing is a control you have to read before you can ignore it.
+    private var chips: [OnyxChip] {
+        var out: [OnyxChip] = [
+            OnyxChip(title: "Muscle focus", systemImage: "figure.stand") { showDistribution = true },
+            OnyxChip(title: "Phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true },
+        ]
+        if model.restEndsAt != nil {
+            out.append(OnyxChip(title: "Skip rest", systemImage: "forward.end", tint: accent) {
+                withAnimation(OnyxMotion.drawer) { model.stopRest() }
+            })
         }
-        .padding(.horizontal, OnyxSpace.m)
-        .frame(minHeight: 44)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .onyxGlass(.row)
-        .padding(.horizontal, OnyxSpace.l)
-        .accessibilityElement(children: .combine)
+        out.append(OnyxChip(title: "Note", systemImage: "square.and.pencil") {
+            noteDraft = noteTarget?.note ?? ""
+            editingNote = true
+        })
+        return out
     }
 
-    private var volumeStat: some View {
-        stat(OnyxFormat.volume(model.totalVolumeKg), "kg", Color.onyx.textPrimary)
-    }
-
-    private var setsStat: some View {
-        stat("\(model.completedSets)/\(model.plannedSets)", "sets", accent)
-    }
-
-    private func stat(_ value: String, _ unit: String, _ color: Color) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
-            Text(value)
-                .onyxType(.body).fontWeight(.semibold).onyxNumeral()
-                .foregroundStyle(color)
-            Text(unit).onyxType(.caption).foregroundStyle(Color.onyx.textTertiary)
+    /// The one chip that ends the screen, so the one that is filled — and the
+    /// one that is pinned out of the scroll. With "Skip rest" present, a
+    /// five-chip row runs past 402 pt and Finish was the half off the edge.
+    private var finishChip: OnyxChip {
+        OnyxChip(title: "Finish", systemImage: "checkmark", tint: accent, isProminent: true) {
+            showFinish = true
         }
-        // A total that wraps is a total that lies: "3,436" broken after the
-        // comma reads as 3 on one line and 4 on the next.
-        .lineLimit(1)
-        .fixedSize()
-        .animation(OnyxMotion.counter, value: value)
     }
 
-    /// A permanent gold zero is how gold stops meaning a personal record, so an
-    /// empty count is a dash in tertiary ink and the gold arrives only when
-    /// there is something to be gold about.
+    /// The movement a note would be about: the one you are standing in front of,
+    /// or the last one when the session is finished and there is no current set.
+    private var noteTarget: LoggerModel.ExerciseState? {
+        model.currentSet?.exercise ?? model.exercises.last
+    }
+
+    // MARK: - Rest
+
     @ViewBuilder
-    private var records: some View {
-        if model.recordCount > 0 {
-            stat("\(model.recordCount)", "PR", Color.onyx.record)
-        } else {
-            stat("—", "PR", Color.onyx.textTertiary)
+    private var restCapsule: some View {
+        // `restCountdown`, not `model.restEndsAt` directly — the deadline
+        // outlives this view. `.task(id:)` is what clears it, and leaving the
+        // logger cancels that task, so a rest started here and left to expire on
+        // the Workout tab comes back as a date in the PAST, which
+        // `Text(timerInterval:)` traps on.
+        if let countdown = restCountdown(model.restEndsAt) {
+            LoggerRestCapsule(
+                countdown: countdown,
+                accent: accent,
+                onSkip: { withAnimation(OnyxMotion.drawer) { model.stopRest() } },
+                onAdjust: { model.adjustRest(by: $0) }
+            )
+            .frame(maxWidth: .infinity)
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
         }
     }
 
-    /// Session duration, counted by the SYSTEM.
+    // MARK: - The two faces
+
+    /// One model, two pages, one slide.
     ///
-    /// `Text(_:style:.timer)` re-renders itself once a second without the view
-    /// tree knowing, so a clock on this screen costs nothing — which is what
-    /// makes it affordable to leave running while you type into a field two
-    /// rows below it.
-    private var elapsed: some View {
-        Label {
-            Text(model.startedAt, style: .timer).onyxNumeral()
-        } icon: {
-            Image(systemName: "hourglass")
+    /// ── WHY BOTH PAGES STAY IN THE TREE ─────────────────────────────────────
+    /// The deck is a `ScrollView` and you are eleven movements into it. A face
+    /// switch that rebuilt it would return you to the top of a workout that is
+    /// half done — the exact failure `focus` exists to prevent on the other
+    /// axis. Two children of an `HStack` at an offset are both alive, so the
+    /// scroll offset is simply never lost. The deck's own `LazyVStack` is what
+    /// keeps the offscreen cost to nothing.
+    ///
+    /// The spring comes from the SELECTION, so the pill in the hero and the page
+    /// under it move on one animation: damping 1.0 when a segment was tapped,
+    /// 0.8 when the pill was thrown.
+    ///
+    /// ── AND WHY IT IS NOT A PAGING SCROLL VIEW ──────────────────────────────
+    /// It was, briefly. A horizontal `ScrollView` owns the paging geometry for
+    /// free, but the deck's set rows are swiped horizontally to log (wave U2
+    /// retires that; until then it is live) and a pager underneath competes for
+    /// the same finger on every row of every card. Turning the scrolling off to
+    /// stop that also stops `scrollPosition` from moving it — the Live Stats
+    /// face rendered as the deck, with the pill saying otherwise. So the offset
+    /// is ours, and the gesture stays on the pill.
+    ///
+    /// ── AND WHY IT IS PINNED AND CLIPPED ────────────────────────────────────
+    /// `frame(width:alignment: .leading)` puts a two-page strip inside a
+    /// one-page box anchored left, and `clipped()` cuts what hangs off it —
+    /// belt and braces over a width `body`'s `GeometryReader` already
+    /// guarantees, because leaking the other face down the right-hand edge is
+    /// the failure this screen actually shipped at an accessibility size.
+    private func faces(page: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            deck(ready: page > 1)
+                .frame(width: page)
+                .accessibilityHidden(selection.face != .workout)
+            LiveStatsView(
+                model: model,
+                clock: clock,
+                prs: prs,
+                onMuscleFocus: { showDistribution = true }
+            )
+            .frame(width: page)
+            .accessibilityHidden(selection.face != .stats)
         }
-        .onyxType(.caption)
-        .foregroundStyle(Color.onyx.textSecondary)
-        .fixedSize()
+        .frame(width: page, alignment: .leading)
+        .offset(x: -CGFloat(selection.face.index) * page)
+        .animation(selection.animation, value: selection.face)
+        .clipped()
     }
 
     // MARK: - The deck
@@ -353,7 +447,7 @@ struct LiveLoggerView: View {
     /// here — see `focus` — so this is a `ScrollViewReader` and a one-way
     /// `scrollTo`. Scrolling to read never moves the cursor, and finishing a
     /// movement still takes you to the next one.
-    private var deck: some View {
+    private func deck(ready: Bool) -> some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 LazyVStack(spacing: OnyxSpace.m) {
@@ -387,7 +481,16 @@ struct LiveLoggerView: View {
             // top of a workout that is half done. Unanimated on purpose: this is
             // where the screen STARTS, and a scroll you did not ask for on the
             // first frame reads as the app losing its place.
-            .task { proxy.scrollTo(focus, anchor: .top) }
+            //
+            // Keyed on `ready` — the page having a width — because a `scrollTo`
+            // into a scroll view that has not been given any room yet is a
+            // no-op, and a plain `.task` never runs again to notice. That is
+            // exactly what happened when the pager moved into a
+            // `GeometryReader`: the deck opened at movement one, every time.
+            .task(id: ready) {
+                guard ready else { return }
+                proxy.scrollTo(focus, anchor: .top)
+            }
         }
     }
 
@@ -429,14 +532,6 @@ struct LiveLoggerView: View {
             .padding(.horizontal, OnyxSpace.l)
     }
 
-    /// Stamp the session finished and take the card off the Lock Screen.
-    /// Stamp the session finished — and only then leave.
-    ///
-    /// `finish` returns false when there is nothing to close: no store row, or
-    /// not one working set logged (a session of warm-ups). Ending the activity
-    /// and dismissing anyway left the session row open forever, the tab reading
-    /// it back as live, and the failure reported to a screen that no longer
-    /// existed. Now the sheet stays up and the banner has somewhere to appear.
     /// What the confirmation offers, and what it warns about.
     ///
     /// The two states are genuinely different actions and the dialog says so: a
@@ -466,70 +561,19 @@ struct LiveLoggerView: View {
         dismiss()
     }
 
+    /// Stamp the session finished — and only then leave.
+    ///
+    /// Returns false when there is nothing to close: no store row, or not one
+    /// working set logged (a session of warm-ups). Ending the activity and
+    /// dismissing anyway left the session row open forever, the tab reading it
+    /// back as live, and the failure reported to a screen that no longer
+    /// existed. Now the sheet stays up and the banner has somewhere to appear.
     private func finish(sessionRpe: Double?) -> Bool {
         guard model.finish(sessionRpe: sessionRpe) else { return false }
         model.stopRest()
         activity.end()
         dismiss()
         return true
-    }
-}
-
-// MARK: - The rest clock
-
-/// The rest clock, as a capsule in the navigation bar.
-///
-/// ── WHY `Text(timerInterval:)` AND NOT A `TimelineView` ─────────────────────
-/// The Wave 1 bar drove a `TimelineView(.periodic(by: 0.5))` so it could animate
-/// a ring. A ring in a 44 pt bar is 20 pt across and says nothing the digits do
-/// not, and the schedule woke the view twice a second to say so. `Text` with a
-/// timer interval is counted by the SYSTEM — the same mechanism the Live
-/// Activity uses, so the bar and the Lock Screen cannot disagree — and it costs
-/// this view exactly nothing.
-///
-/// ── AND WHY THE END INSTANT, NOT A COUNTER ──────────────────────────────────
-/// The end is stored and the remaining time derived. A decrementing counter
-/// drifts, and worse, it is wrong after a backgrounding — iOS suspends the app
-/// between sets routinely, and a counter resumes where it stopped while a
-/// deadline is simply late.
-///
-/// ── AND WHY IT TAKES A RANGE RATHER THAN THE DEADLINE ───────────────────────
-/// `Text(timerInterval:)` traps on a range whose end is behind its start —
-/// "Fatal error: Range requires lowerBound <= upperBound" — so the check has to
-/// happen where the value is still optional, at the call site. `restCountdown`
-/// in `Shared/` is that check, and it is shared with the Lock Screen card and
-/// the Dynamic Island, which have the same problem for a different reason.
-private struct RestCapsule: View {
-    let countdown: ClosedRange<Date>
-    let accent: Color
-    let onSkip: () -> Void
-    let onAdjust: (TimeInterval) -> Void
-
-    var body: some View {
-        Button(action: onSkip) {
-            HStack(spacing: OnyxSpace.xs) {
-                Image(systemName: "timer")
-                Text(timerInterval: countdown, countsDown: true)
-                    .onyxNumeral()
-                    // Reserved, so the capsule does not resize as the digits
-                    // fall from 1:00 to 59.
-                    .frame(minWidth: 42)
-            }
-            .onyxType(.caption).fontWeight(.semibold)
-            .foregroundStyle(accent)
-            .padding(.horizontal, OnyxSpace.s)
-            .padding(.vertical, OnyxSpace.xs)
-            .background(Capsule().fill(accent.opacity(0.18)))
-            .overlay(Capsule().strokeBorder(accent.opacity(0.45), lineWidth: 0.5))
-        }
-        .buttonStyle(.plain)
-        .contextMenu {
-            Button("Add 15 seconds", systemImage: "plus") { onAdjust(15) }
-            Button("Take 15 seconds off", systemImage: "minus") { onAdjust(-15) }
-            Button("Skip rest", systemImage: "forward.end") { onSkip() }
-        }
-        .accessibilityLabel("Resting")
-        .accessibilityHint("Tap to skip. Long press to add or remove fifteen seconds.")
     }
 }
 

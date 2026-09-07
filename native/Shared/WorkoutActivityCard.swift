@@ -135,9 +135,21 @@ struct WorkoutWatchCard: View {
 
 // MARK: - Pieces
 
-/// The rest clock while resting, the session's own elapsed time otherwise.
+/// The rest clock while resting, the session's own elapsed time otherwise —
+/// and a stopped clock when the session is paused.
+///
+/// ── WHY THE ELAPSED CASE IS TWO CASES ───────────────────────────────────────
+/// `Text(_:style:.timer)` is counted by the SYSTEM, which is why a clock on a
+/// Lock Screen card is affordable at all: ActivityKit budgets updates and this
+/// one spends none. What the system cannot do is STOP it. So a running session
+/// is an origin — `state.timerOrigin`, already moved forward by whatever has
+/// been banked in pauses — and a paused one is the frozen string the phone
+/// computed, drawn beside a pause glyph so the reading is not mistaken for a
+/// clock that has died.
 struct WorkoutCountdown: View {
     let state: OnyxWorkoutAttributes.ContentState
+    /// The activity's own fixed start, and the fallback for a card that was
+    /// encoded before `timerOrigin` existed — see `ContentState.timerOrigin`.
     let startedAt: Date
 
     var body: some View {
@@ -149,10 +161,15 @@ struct WorkoutCountdown: View {
                     Image(systemName: "timer")
                 }
                 .foregroundStyle(Color.onyx.day(state.dayKey))
+            } else if state.isPaused == true {
+                Label {
+                    Text(state.elapsed ?? "")
+                } icon: {
+                    Image(systemName: "pause.fill")
+                }
+                .foregroundStyle(Color.onyx.textTertiary)
             } else {
-                // A duration counted by the SYSTEM. ActivityKit budgets
-                // updates; a clock is not worth spending them on.
-                Text(startedAt, style: .timer)
+                Text(state.timerOrigin ?? startedAt, style: .timer)
                     .foregroundStyle(Color.onyx.textSecondary)
             }
         }

@@ -14,6 +14,7 @@ import Foundation
 // documented as safe to call from it.
 @preconcurrency import ActivityKit
 import OnyxCore
+import OnyxUI
 
 /// Starts, feeds and ends the workout Live Activity.
 ///
@@ -35,7 +36,7 @@ final class LiveActivityController {
         ActivityAuthorizationInfo().areActivitiesEnabled
     }
 
-    func start(model: LoggerModel) {
+    func start(model: LoggerModel, clock: any PauseControlling) {
         // ── THE SKIP BUTTON'S MAILBOX IS THIS TYPE'S JOB ────────────────────
         // `RestSkipIntent` is performed by the system with no reference to
         // anything, so something has to leave it one, and this controller is
@@ -49,12 +50,21 @@ final class LiveActivityController {
         // screen that normally pushes a `restEndsAt` change to the card is the
         // logger, which by definition is not on screen when the Lock Screen
         // button is the thing being tapped.
-        RestSkip.handler = { [weak self, weak model] in
-            guard let model else { return }
+        RestSkip.handler = { [weak self, weak model, weak clock] in
+            guard let model, let clock else { return }
             model.stopRest()
-            self?.update(model: model)
+            self?.update(model: model, clock: clock)
         }
-        guard isEnabled, activity == nil else { return }
+        guard isEnabled else { return }
+        // Already holding a card — this controller is BORROWED from the Workout
+        // tab, so re-entering the logger arrives here with one alive. Push the
+        // current state instead of returning silently, or the Lock Screen keeps
+        // whatever it was showing when the cover was dismissed: a paused clock
+        // beside a phone that has since resumed.
+        if activity != nil {
+            update(model: model, clock: clock)
+            return
+        }
         // ── ADOPT WHAT THE LAST LAUNCH LEFT BEHIND ──────────────────────────
         // The handle lived only in memory, so a force-quit or a jetsam
         // mid-workout — which this app has a crash log for — left a Lock Screen
@@ -73,7 +83,7 @@ final class LiveActivityController {
         if let existing = Activity<OnyxWorkoutAttributes>.activities.first {
             if existing.attributes.startedAt == model.startedAt {
                 activity = existing
-                update(model: model)
+                update(model: model, clock: clock)
                 return
             }
             Task { await existing.end(nil, dismissalPolicy: .immediate) }
@@ -85,7 +95,7 @@ final class LiveActivityController {
         do {
             activity = try Activity.request(
                 attributes: attributes,
-                content: .init(state: Self.state(from: model), staleDate: nil)
+                content: .init(state: Self.state(from: model, clock: clock), staleDate: nil)
             )
         } catch {
             // Declined, unsupported, or over the system's activity budget. The
@@ -95,14 +105,14 @@ final class LiveActivityController {
         }
     }
 
-    func update(model: LoggerModel) {
+    func update(model: LoggerModel, clock: any PauseControlling) {
         guard let activity else {
             // The session may have started before the user enabled activities.
-            start(model: model)
+            start(model: model, clock: clock)
             return
         }
         Task {
-            await activity.update(.init(state: Self.state(from: model), staleDate: nil))
+            await activity.update(.init(state: Self.state(from: model, clock: clock), staleDate: nil))
         }
     }
 
@@ -120,7 +130,9 @@ final class LiveActivityController {
 
     /// Compose the card. Every formatting decision the deck already made is
     /// carried across as text rather than re-derived on the far side.
-    private static func state(from model: LoggerModel) -> OnyxWorkoutAttributes.ContentState {
+    private static func state(
+        from model: LoggerModel, clock: any PauseControlling
+    ) -> OnyxWorkoutAttributes.ContentState {
         let current = model.currentSet
 
         var load = ""
@@ -145,6 +157,14 @@ final class LiveActivityController {
             setsPlanned: model.plannedSets,
             prsThisSession: model.recordCount,
             restEndsAt: model.restEndsAt,
+            // The clock, mirrored. `timerOrigin` is already moved forward by
+            // whatever has been banked in pauses, so the card counts the same
+            // seconds the hero does without an update per second — and the
+            // paused reading is composed HERE, because the producer owns every
+            // formatting rule on this card.
+            timerOrigin: clock.timerOrigin,
+            isPaused: clock.isPaused,
+            elapsed: clock.isPaused ? Clock.format(clock.elapsed()) : "",
             spark: model.volumeCurve,
             dayKey: model.day.key
         )

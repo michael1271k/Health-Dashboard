@@ -68,6 +68,34 @@ struct OnyxWorkoutAttributes: ActivityAttributes {
         /// itself with a `Text(_:style:)` timer. `nil` means not resting, which
         /// is not the same as a timer at zero.
         var restEndsAt: Date?
+        /// The instant the elapsed clock counts UP from, pauses already
+        /// subtracted — `startedAt + pausedTotal`, not `attributes.startedAt`.
+        ///
+        /// ── WHY THE ORIGIN AND NOT AN ELAPSED NUMBER ────────────────────────
+        /// `attributes.startedAt` is fixed for the life of the activity, and a
+        /// session that was paused for eleven minutes is eleven minutes younger
+        /// than the wall clock says. Sending a MOVED origin keeps the card's
+        /// clock a `Text(_:style:.timer)` — counted by the system, costing no
+        /// updates — while still being the same number the phone shows. Sending
+        /// elapsed seconds instead would need an update every second, which is
+        /// exactly the budget ActivityKit rations.
+        ///
+        /// ── AND WHY ALL THREE ARE OPTIONAL ──────────────────────────────────
+        /// A running activity outlives an app update, and ActivityKit decodes
+        /// the card it already holds with the NEW type. A synthesized
+        /// `Decodable` requires every non-optional key, so adding three of them
+        /// would fail that decode — `Activity.activities` would not hand the
+        /// card back, `start()` could not adopt it, and the next launch would
+        /// request a SECOND card beside an orphan nothing can end. Optional is
+        /// what makes the decoder tolerant of its own past.
+        var timerOrigin: Date?
+        /// Whether the session is stopped. A system timer cannot be, so the card
+        /// draws `elapsed` instead while this is true.
+        var isPaused: Bool?
+        /// The frozen reading, pre-formatted — "48:12". Meaningful only while
+        /// `isPaused`; the producer owns the formatting, as it does for every
+        /// other string here.
+        var elapsed: String?
         /// Cumulative session tonnage after each completed set, oldest first.
         ///
         /// The one non-scalar field, and the exception earns itself: a

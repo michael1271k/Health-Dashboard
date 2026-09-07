@@ -139,7 +139,7 @@ enum PreviewHarness {
             PulsePreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)
-        case "logger", "logger-finish", "logger-options":
+        case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options":
             LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
             TodayPreviews.view(screen)

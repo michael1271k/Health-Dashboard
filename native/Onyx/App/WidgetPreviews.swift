@@ -108,12 +108,15 @@ enum WidgetPreviews {
     // type scale through a whole rename. `Shared/WorkoutActivityCard.swift`
     // takes the state as a plain value for exactly this reason.
     //
-    // Three states, because they are three different layouts and the middle one
+    // Four states, because they are four different layouts and the second one
     // is what the card looks like for most of a session: mid-set, resting (the
-    // skip button appears), and a set that just took a record.
+    // skip button appears), a set that just took a record, and paused — the one
+    // state where the clock is a string rather than a system timer, and the only
+    // way to see that the phone and the Lock Screen agree about it.
     static let activityStates: [(String, OnyxWorkoutAttributes.ContentState)] = {
         func state(
-            rest: Date? = nil, prs: Int = 0, rpe: String = "", setLabel: String = "Set 3 of 4"
+            rest: Date? = nil, prs: Int = 0, rpe: String = "", setLabel: String = "Set 3 of 4",
+            paused: Bool = false
         ) -> OnyxWorkoutAttributes.ContentState {
             .init(
                 exercise: "Seated Cable Row (Wide Grip)",
@@ -126,6 +129,13 @@ enum WidgetPreviews {
                 setsPlanned: 22,
                 prsThisSession: prs,
                 restEndsAt: rest,
+                // 45 minutes in, which is what a session looks like. Off
+                // `Date()` for the same reason `resting` is: an origin two days
+                // in the past renders "48:52:29" — a real reading of a wrong
+                // number, which is the hardest kind to notice.
+                timerOrigin: Date().addingTimeInterval(-45 * 60),
+                isPaused: paused,
+                elapsed: paused ? "45:00" : "",
                 spark: [120, 265, 388, 505, 640, 762, 869, 1074],
                 dayKey: "arms"
             )
@@ -140,6 +150,7 @@ enum WidgetPreviews {
             ("working", state(rpe: "RPE 8")),
             ("resting", state(rest: resting, rpe: "RPE 8")),
             ("record", state(rest: resting, prs: 2, rpe: "RPE 9", setLabel: "Set 4 of 4")),
+            ("paused", state(rpe: "RPE 8", paused: true)),
         ]
     }()
 
@@ -150,12 +161,11 @@ enum WidgetPreviews {
                     Text("activity-lock-\(name)")
                         .font(.system(size: 9, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Color.onyx.textTertiary)
+                    // The elapsed origin travels in the state now, so that the
+                    // card can be paused; see `ContentState.timerOrigin`. The
+                    // attribute stays as the fallback for a card encoded before
+                    // that field existed.
                     WorkoutLockCard(
-                        // 45 minutes in, which is what a session looks like.
-                        // `sampleDate` is the fixture's own 2026-09-03, and
-                        // `Text(_:style:.timer)` counting up from a date two
-                        // days ago rendered "48:52:29" — a real reading of a
-                        // wrong number, which is the hardest kind to notice.
                         title: "Delts & Arms",
                         startedAt: Date().addingTimeInterval(-45 * 60),
                         state: state

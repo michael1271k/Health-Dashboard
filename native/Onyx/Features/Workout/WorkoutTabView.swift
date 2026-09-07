@@ -49,6 +49,14 @@ struct WorkoutTabView: View {
     /// resume.
     @State private var presented: LoggerModel?
     @State private var activity = LiveActivityController()
+    /// The session's elapsed clock, kept beside `session` and for the same
+    /// reason: leaving the logger mid-workout tears the cover down, and a clock
+    /// that lived in `LiveLoggerView`'s own `@State` went with it. Start at
+    /// 10:00, pause at 10:30, leave, come back at 11:30 and the hero read
+    /// 1:30:00 — the hour of pause gone, from the number this whole wave exists
+    /// to make true. Wave E4 folds it into `LoggerModel`, which is kept here
+    /// already, and this property goes with the stand-in.
+    @State private var sessionClock: LoggerClock?
     @State private var showPhase = false
     @State private var loggingCardio = false
     /// The swap sheet. §5.2 item 3 puts rest and swap on the session card,
@@ -111,7 +119,7 @@ struct WorkoutTabView: View {
         // empty case stops being representable.
         .fullScreenCover(item: $presented, onDismiss: reload) { model in
             NavigationStack {
-                LiveLoggerView(model: model, activity: activity)
+                LiveLoggerView(model: model, activity: activity, clock: sessionClock)
             }
             .preferredColorScheme(.dark)
         }
@@ -787,10 +795,12 @@ struct WorkoutTabView: View {
             // for the life of the activity — so a new session feeding the old
             // activity would update a Lock Screen that still says yesterday.
             if session != nil { activity.end() }
-            session = LoggerModel(
+            let model = LoggerModel(
                 day: day, phase: phase,
                 store: environment.database, userId: environment.userIdString
             )
+            session = model
+            sessionClock = LoggerClock(startedAt: model.startedAt)
         }
         presented = session
     }
@@ -809,6 +819,7 @@ struct WorkoutTabView: View {
             // it is complete the moment it appears.
             if !wasDone, case let .done(id, _, _, _, _) = state {
                 session = nil
+                sessionClock = nil
                 finishes += 1
                 summary = id
             }
