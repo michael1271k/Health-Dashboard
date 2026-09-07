@@ -996,9 +996,9 @@ private struct SetRowView: View {
                         // is a thing you dismiss. An overlay, so it is still
                         // free: the row has no width to give it.
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 9, weight: .bold))
+                            .onyxType(.micro).fontWeight(.bold)
                             .foregroundStyle(Color.onyx.accent(.train))
-                            .padding(.top, 4)
+                            .padding(.top, 2)
                     }
                 }
         }
