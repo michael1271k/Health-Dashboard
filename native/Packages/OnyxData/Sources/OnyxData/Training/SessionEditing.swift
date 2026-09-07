@@ -119,10 +119,23 @@ public extension AppDatabase {
         sessionId: String,
         durationMin: Double? = nil,
         avgBpm: Int? = nil,
-        calories: Int? = nil
+        calories: Int? = nil,
+        sessionRpe: Double? = nil
     ) throws -> SessionEditing.Outcome? {
         try writer.write { db in
             guard var session = try WorkoutSession.fetchOne(db, key: sessionId) else { return nil }
+            // ── WHY THE EFFORT IS HERE AND NOT IN `closeSession` ────────────
+            // `closeSession` writes it because closing is when it is first
+            // asked. Re-opening a finished session for editing (§U4.5) asks
+            // again — the dial is the same dial — and closing a session that
+            // already ended would rewrite `ended_at` and re-derive a duration
+            // over a clock that has not been running for three weeks. Clamped
+            // to the CR-10 scale the dial can produce; a keyboard cannot reach
+            // this, but `session_rpe` is an ACWR input and every other write to
+            // it is clamped.
+            if let sessionRpe {
+                session.sessionRpe = min(10, max(0, sessionRpe))
+            }
             if let durationMin {
                 // Clamped, not trusted. A stepper cannot produce a negative and
                 // a keyboard can, and `duration_min` is an ACWR input.
@@ -156,6 +169,13 @@ public extension AppDatabase {
     /// clear a rating nobody touched. `SetPatch.clearedQuality` is the one
     /// sentinel that takes a value back off — see the field.
     @discardableResult
+    /// `est1rmKg` travels with a changed load on purpose: `PrEngine` reads the
+    /// STORED estimate with `||` — a value that is present and wrong is not
+    /// missing, so it does not fall through to Epley — and the ledger, the
+    /// sparkline and the next session's baselines would all keep the estimate of
+    /// the weight you just corrected. `setIndex` is here for the same class of
+    /// reason: the logger's deck knows a set's position within its exercise and
+    /// the patch is the only way to say so.
     func amendSet(
         sessionId: String,
         setId: String,
@@ -163,10 +183,13 @@ public extension AppDatabase {
         reps: Int? = nil,
         rpe: Double? = nil,
         setType: String? = nil,
-        quality: String? = nil
+        quality: String? = nil,
+        est1rmKg: Double? = nil,
+        setIndex: Int? = nil
     ) throws -> SessionEditing.Outcome? {
         let patch = SetPatch(
-            weightKg: weightKg, reps: reps, setType: setType, rpe: rpe, quality: quality
+            setIndex: setIndex, weightKg: weightKg, reps: reps, setType: setType,
+            est1rmKg: est1rmKg, rpe: rpe, quality: quality
         )
         // An amend that changes nothing is permanent noise in a log that is
         // never compacted — the rule `EventStore.amendSet` states. Checked HERE

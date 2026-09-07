@@ -120,7 +120,7 @@ enum SessionAnalysis {
         var exercises: [ExerciseReport] = []
         var i = 0   // index into pr.perSet, which is in `groups` order
         for (order, g) in groups.enumerated() {
-            let canonical = ExerciseAliases.canonicalName(g.name)
+            let canonical = displayName(id: g.exerciseId, stored: g.name)
             let timed = TimedExercise.isTimed(canonical)
             var sets: [DetailSet] = []
             for r in g.sets {
@@ -212,6 +212,28 @@ enum SessionAnalysis {
         )
     }
 
+    // MARK: - Names
+
+    /// The movement's display name, from an `exercise_id` and whatever the
+    /// ledger stored beside it.
+    ///
+    /// ── WHY THE STORED NAME IS NOT ENOUGH ───────────────────────────────────
+    /// `SessionHistoryStore`'s query is `COALESCE(e.name, s.exercise_id)`, and
+    /// a set logged on this phone carries `"helix5-<slug>"` in `exercise_id`
+    /// until the catalogue resolves it — so the fallback IS the slug, and the
+    /// ledger header, the muscle map, the rep window and the PR key all took
+    /// `helix5-incline-db-press` as a movement's name. Visible as a title; a
+    /// silent miss everywhere else, because `Ceilings.repWindow` and
+    /// `MuscleMap` have no entry under a slug and answer nil rather than
+    /// wrongly.
+    ///
+    /// `ExerciseSlug.nameBySlug` is the second source `PrRecorder.nameResolver`
+    /// already consults for exactly this case; this is that lookup without a
+    /// database handle, because the caller has the rows already.
+    static func displayName(id: String, stored: String) -> String {
+        ExerciseAliases.canonicalName(ExerciseSlug.nameBySlug[id] ?? stored)
+    }
+
     // MARK: - Exercise history
 
     /// Session-MEAN estimated 1RM per day, oldest first, over WORKING sets.
@@ -272,7 +294,7 @@ enum SessionAnalysis {
     /// `groups`-flattened order.
     static func detect(groups: [Group], prior: [HistorySetRow], dayKey: String?, date: String) -> SessionPrResult {
         var nameByEx: [String: String] = [:]
-        for g in groups { nameByEx[g.exerciseId] = ExerciseAliases.canonicalName(g.name) }
+        for g in groups { nameByEx[g.exerciseId] = displayName(id: g.exerciseId, stored: g.name) }
         func name(_ key: String) -> String { nameByEx[key] ?? "" }
         func floor(_ key: String) -> Double? { Ceilings.repWindow(for: name(key), dayKey: dayKey)?.floor }
 

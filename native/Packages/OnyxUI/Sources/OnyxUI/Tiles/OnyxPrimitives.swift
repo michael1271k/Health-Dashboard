@@ -436,16 +436,25 @@ public struct DepthArc: View {
   let goalMin: Int?
   let lineWidth: CGFloat
   let monochrome: Bool
+  /// Draw "goal 8h 0m" under the duration inside the bowl.
+  ///
+  /// The label is set at `d * 0.075` with a 7 pt floor, which is legible on the
+  /// 180–300 pt gauges every other caller draws and is a grey smudge on the
+  /// 96 pt one the compacted Pulse tile draws (§U5.1). The GOAL still reaches
+  /// `fill` — the arc is still a fraction of it — so turning the label off
+  /// changes what is written, never what is drawn.
+  let showsGoal: Bool
 
   /// Public because the Sleep SHEET draws this arc (§5.1) and the widget face
   /// draws it too. One gauge, one implementation: the sheet and the Lock Screen
   /// can never disagree about how long a night was.
-  public init(segments: [(OnyxSleepStage, Int)], minutes: Int?, goalMin: Int?, lineWidth: CGFloat = 10, monochrome: Bool = false) {
+  public init(segments: [(OnyxSleepStage, Int)], minutes: Int?, goalMin: Int?, lineWidth: CGFloat = 10, monochrome: Bool = false, showsGoal: Bool = true) {
     self.segments = segments
     self.minutes = minutes
     self.goalMin = goalMin
     self.lineWidth = lineWidth
     self.monochrome = monochrome
+    self.showsGoal = showsGoal
   }
 
   private var staged: Int { segments.reduce(0) { $0 + $1.1 } }
@@ -496,7 +505,7 @@ public struct DepthArc: View {
         VStack(spacing: 1) {
           BigValue(value: OnyxSnapshot.formatSleep(minutes) == "—" ? nil
                    : OnyxSnapshot.formatSleep(minutes), size: d * 0.17, color: .white)
-          if let goalMin {
+          if let goalMin, showsGoal {
             Text("goal \(OnyxSnapshot.formatSleep(goalMin))")
               .font(OnyxWidgetType.face(max(7, d * 0.075)))
               .foregroundStyle(Color.onyx.textSecondary)

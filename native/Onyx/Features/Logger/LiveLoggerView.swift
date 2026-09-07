@@ -113,6 +113,13 @@ struct LiveLoggerView: View {
     /// Presented as a full-screen cover by `WorkoutTabView`; this is how it leaves.
     @Environment(\.dismiss) private var dismiss
 
+    /// OPTIONAL, and it has to be: `LoggerPreviews` and the shot harness present
+    /// this screen with a model and no environment, and a non-optional
+    /// `@Environment(AppEnvironment.self)` traps the moment it is read. Only the
+    /// edit path needs it — to run the rescore cascade, which is the one thing
+    /// `LoggerModel.finishEdit` deliberately does not do itself.
+    @Environment(AppEnvironment.self) private var environment: AppEnvironment?
+
     /// `activity` is BORROWED from the Workout tab when the logger is presented
     /// as a cover, so dismissing the cover mid-session keeps the Lock Screen
     /// card alive and updatable. Previews and the harness pass nothing and get
@@ -134,7 +141,16 @@ struct LiveLoggerView: View {
     ) {
         _model = State(initialValue: model)
         _activity = State(initialValue: activity ?? LiveActivityController())
-        _focus = State(initialValue: model.currentSet?.exercise.id ?? model.exercises.first?.id)
+        // ── AND THE CURSOR STARTS DIFFERENTLY ON AN EDIT ───────────────────
+        // `currentSet` is the first movement with an UNTICKED row, which on a
+        // live deck is where you are standing. On a re-opened session every set
+        // that was performed is already ticked, so it is the first lift the
+        // session SKIPPED — and the deck opened six cards down, past every
+        // movement the reader came here to correct. The top is the answer: an
+        // edit is read in the session's own order, which `editorDay` now builds.
+        _focus = State(initialValue: model.isEditing
+            ? model.exercises.first?.id
+            : (model.currentSet?.exercise.id ?? model.exercises.first?.id))
         _selection = State(initialValue: LoggerFaceSelection(face: face))
         if paused { model.pause() }
     }
@@ -211,29 +227,49 @@ struct LiveLoggerView: View {
         } message: {
             Text(noteTarget?.name ?? "")
         }
+        // ── LEAVING IS NOT CANCELLING, AND IT STILL OWES THE CASCADE ────────
+        // There is no draft here: every set edit committed the moment it was
+        // made, seeded the event log, replayed the ledger and rewrote the
+        // session's aggregates. So the chevron cannot discard, and the only
+        // thing it CAN do wrong is skip the rescore — leaving `daily_scores`
+        // describing a session that no longer exists, from the edit's date up
+        // to forty-eight days after it. `RescoreQueue` coalesces, so a Save
+        // followed by a dismiss asks twice and runs once.
+        .onDisappear {
+            guard model.isEditing, model.editDirty, let date = model.editing?.date else { return }
+            model.clearEditDirty()
+            environment?.rescore(from: date, reason: .sessionEdit)
+        }
         .onAppear {
+            // Edit mode is attached by the caller, which is the only place that
+            // holds the session row. `attach`'s own guard (`sessionId == nil`)
+            // makes this a no-op there rather than a second lookup, but the
+            // Live Activity is not idempotent: starting one for a workout that
+            // finished three weeks ago puts a countdown on the Lock Screen for
+            // a session nobody is doing.
+            guard !model.isEditing else { return }
             model.attach()
             activity.start(model: model, clock: clock)
         }
         .onChange(of: model.completedSets) { _, _ in
-            activity.update(model: model, clock: clock)
+            if !model.isEditing { activity.update(model: model, clock: clock) }
             advanceIfFinished()
         }
         // The Lock Screen mirrors the pause. A card counting a session up while
         // the phone in your hand says it is stopped is the two surfaces
         // disagreeing about the number that becomes `duration_min`.
-        .onChange(of: clock.pausedAt) { _, _ in activity.update(model: model, clock: clock) }
+        .onChange(of: clock.pausedAt) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
         // A warm-up changes neither `completedSets` nor the rest clock, and
         // `commitEdit` — retyping a load on a logged set — changes none of the
         // three. Both leave the Lock Screen showing a number that is no longer
         // true.
-        .onChange(of: model.physicalSets) { _, _ in activity.update(model: model, clock: clock) }
-        .onChange(of: model.totalVolumeKg) { _, _ in activity.update(model: model, clock: clock) }
-        .onChange(of: model.restEndsAt) { _, _ in activity.update(model: model, clock: clock) }
+        .onChange(of: model.physicalSets) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
+        .onChange(of: model.totalVolumeKg) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
+        .onChange(of: model.restEndsAt) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
         // And the record count moves on paths none of the three above touch:
         // demoting a ticked set to a warm-up keeps its tonnage and its physical
         // count and takes its record away.
-        .onChange(of: model.recordCount) { _, _ in activity.update(model: model, clock: clock) }
+        .onChange(of: model.recordCount) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
         // ── THE CLOCK HAS TO END ITSELF ─────────────────────────────────────
         // `startRest` set a deadline and only a tap, an adjustment into the
         // past or the next set ever cleared it. So the capsule sat at 0:00
@@ -273,7 +309,8 @@ struct LiveLoggerView: View {
                 day: model.day,
                 clock: clock,
                 selection: $selection,
-                onTimer: { showTimer = true }
+                onTimer: { showTimer = true },
+                editing: model.editing
             )
             if let storeError = model.storeError { banner(storeError) }
             restCapsule
@@ -293,8 +330,22 @@ struct LiveLoggerView: View {
     private var leaveItem: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarLeading) {
             Button { dismiss() } label: { Image(systemName: "chevron.down") }
-                .accessibilityLabel("Leave workout")
-                .accessibilityHint("The session keeps running. Resume it from the Workout tab.")
+                .accessibilityLabel(model.isEditing ? "Close editor" : "Leave workout")
+                .accessibilityHint(model.isEditing
+                    ? "Every change is already saved. Finish runs the recompute."
+                    : "The session keeps running. Resume it from the Workout tab.")
+
+            // ── AND WHY EDIT MODE HAS NO TRASH ──────────────────────────────
+            // `cancel()` is `discardSession`: the session row, its sets, its
+            // events and its outbox items in one transaction. On the live deck
+            // that is a workout that did not happen. On a session from three
+            // weeks ago it is a workout that DID, with a daily score, a PR
+            // ledger and forty-eight days of readiness built on it — and no
+            // undo, because the events it would destroy are the record of it.
+            // Deleting a past session is a different verb than cancelling a
+            // live one and it does not belong on a screen whose other buttons
+            // are about the set in front of you.
+            if !model.isEditing {
 
             // ── AND WHY LEAVING NEEDED A SIBLING ────────────────────────────
             // The chevron was the only way out, and it leaves the session
@@ -304,12 +355,13 @@ struct LiveLoggerView: View {
             // session up and never creates one), so the button mostly just
             // closes a door; when a set HAS been logged it is the only control
             // in the app that can take it back.
-            Button(role: .destructive) { confirmCancel = true } label: {
-                Image(systemName: "trash")
+                Button(role: .destructive) { confirmCancel = true } label: {
+                    Image(systemName: "trash")
+                }
+                .tint(Color.onyx.danger)
+                .accessibilityLabel("Cancel workout")
+                .accessibilityHint("Ends the session and discards anything logged in it.")
             }
-            .tint(Color.onyx.danger)
-            .accessibilityLabel("Cancel workout")
-            .accessibilityHint("Ends the session and discards anything logged in it.")
         }
     }
 
@@ -347,7 +399,13 @@ struct LiveLoggerView: View {
     /// one that is pinned out of the scroll. With "Skip rest" present, a
     /// five-chip row runs past 402 pt and Finish was the half off the edge.
     private var finishChip: OnyxChip {
-        OnyxChip(title: "Finish", systemImage: "checkmark", tint: accent, isProminent: true) {
+        // "Finish" on a session that finished three weeks ago is the wrong
+        // verb: it reads as ending something, and what it does is write the
+        // effort and run the recompute.
+        OnyxChip(
+            title: model.isEditing ? "Save" : "Finish",
+            systemImage: "checkmark", tint: accent, isProminent: true
+        ) {
             showFinish = true
         }
     }
@@ -586,9 +644,33 @@ struct LiveLoggerView: View {
     /// back as live, and the failure reported to a screen that no longer
     /// existed. Now the sheet stays up and the banner has somewhere to appear.
     private func finish(sessionRpe: Double?) -> Bool {
+        if model.isEditing { return finishEdit(sessionRpe: sessionRpe) }
         guard model.finish(sessionRpe: sessionRpe) else { return false }
         model.stopRest()
         activity.end()
+        dismiss()
+        return true
+    }
+
+    /// Close an edit: the effort word, then the cascade (§U4.5).
+    ///
+    /// ── WHY THE RESCORE IS HERE AND NOT IN THE MODEL ────────────────────────
+    /// `AppEnvironment.rescore` is the app's ONE scheduler for it — it
+    /// coalesces overlapping requests by a union of their horizons and publishes
+    /// `rescoreGeneration` once, when every day the edit touched agrees. A model
+    /// calling `AppDatabase.rescore` directly would be a second scheduler, and
+    /// two of them is how forty-nine days get computed twice and a screen
+    /// reloads onto the half-written answer.
+    ///
+    /// The set edits themselves already landed, one transaction each, as they
+    /// were made — this is the only thing Finish still owes. So it does not
+    /// refuse when there is nothing to write: leaving a session with no sets
+    /// left in it is a correction, and it still has to rescore.
+    private func finishEdit(sessionRpe: Double?) -> Bool {
+        guard let date = model.finishEdit(sessionRpe: sessionRpe) else { return false }
+        model.clearEditDirty()
+        environment?.rescore(from: date, reason: .sessionEdit)
+        model.stopRest()
         dismiss()
         return true
     }

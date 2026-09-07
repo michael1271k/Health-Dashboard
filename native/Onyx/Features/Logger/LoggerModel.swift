@@ -184,6 +184,22 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         var rows: [SetRow]
         var note: String
 
+        /// The `exercise_id` the SESSION's existing rows carry, when there are
+        /// any (§U4.5).
+        ///
+        /// ── WHY IT IS NOT ALWAYS `ExerciseSlug.id` ──────────────────────────
+        /// A set logged on this phone carries `"helix5-<slug>"`; one logged on
+        /// the web carries the catalogue's uuid. Appending a forgotten set to a
+        /// web-logged session with the slug would put two ids on one movement
+        /// in one session, and `SessionAnalysis.grouped` keys on the id — so
+        /// the summary would draw "Incline DB Press" twice, once with three
+        /// sets and once with one, and `PrRecorder.record` (which also keys on
+        /// the id) would measure the new set against an empty baseline.
+        ///
+        /// Nil for a live session and for a movement this session has no rows
+        /// of, where the slug is correct and is what `closeSession` expects.
+        var storedExerciseId: String?
+
         /// `nonisolated` because `Identifiable` is not: `ForEach` reads `id`
         /// while diffing, outside any actor, and a main-actor-isolated `id`
         /// makes the conformance itself a data race the compiler refuses.
@@ -309,6 +325,54 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// `SessionDetailView(sessionId:)` at it — and `nil` is the honest answer
     /// while nothing has been logged, which is what hides that button.
     private(set) var sessionId: String?
+
+    /// Set when the deck was opened on a session that is already history.
+    ///
+    /// ── WHAT EDIT MODE ACTUALLY CHANGES (§U4.5) ─────────────────────────────
+    /// Three things, and deliberately nothing else — the deck, the set row, the
+    /// options sheet, the effort picker and the records card are the same code
+    /// looking at the same model:
+    ///
+    ///  1. **Where the writes go.** `EventStore`'s `appendSet` / `amendSet` /
+    ///     `voidSet` claim the pencil, do not seed a log, do not replay the PR
+    ///     ledger and do not recount the session's aggregates — all four of
+    ///     which a finished session needs. `SessionEditing` does all of them in
+    ///     one transaction, and it is the only path that can RETRACT a record.
+    ///  2. **What finishing means.** `closeSession` stamps `ended_at` and
+    ///     derives `duration_min` from a clock that stopped weeks ago. Editing
+    ///     finishes with `updateMetrics` — the three figures and the effort —
+    ///     and then the caller runs the cascade.
+    ///  3. **The clock.** There is no elapsed time to count. The hero shows the
+    ///     session's own date and its stored duration.
+    private(set) var editing: EditContext?
+
+    /// What the view needs to know about the session under the deck.
+    struct EditContext: Equatable, Sendable {
+        /// The session's logical day, ISO — the cascade's anchor.
+        let date: String
+        /// When it began, for the hero's date line.
+        let startedAt: Date?
+        /// `duration_min` as stored, which the hero draws where the live deck
+        /// draws a running timer.
+        let durationMin: Double?
+    }
+
+    var isEditing: Bool { editing != nil }
+
+    /// An edit has written something that the daily scores do not know about.
+    ///
+    /// ── WHY LEAVING HAS TO RESCORE TOO ──────────────────────────────────────
+    /// Every set edit lands in its own transaction the moment it is made —
+    /// there is no draft, and the chevron is not a Cancel. What Finish uniquely
+    /// owes is the CASCADE, and a person who corrects a load and then taps the
+    /// chevron has changed `total_volume_kg` and the PR ledger while every
+    /// `daily_scores` row from that date forward still describes the old
+    /// session. Silent, and it survives until something else happens to edit a
+    /// day inside the same window.
+    private(set) var editDirty = false
+
+    /// Called by the view once the cascade has been asked for.
+    func clearEditDirty() { editDirty = false }
     private let userId: String
 
     // MARK: - Derived
@@ -650,7 +714,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         var origin: [SetRow] = []
         for exercise in exercises {
             let name = ExerciseAliases.canonicalName(exercise.name)
-            let key = Self.exerciseId(exercise.name)
+            // The same key `snapshot` writes and `attach(editing:)` built the
+            // bar from. A slug here against uuid-keyed baselines is the bug
+            // above, one layer up.
+            let key = exercise.storedExerciseId ?? Self.exerciseId(exercise.name)
             // ── THE LEDGER'S FLOOR, NOT THIS SESSION'S PHASE ────────────
             // `PrRecorder.baselines` and `PrRecorder.record` both call
             // `Ceilings.repWindow(for:dayKey:)` and take its `.cut` default, so
@@ -865,6 +932,36 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
     }
 
+    /// Finish an EDIT: write the four figures the athlete knows and report the
+    /// date the cascade has to start from (§U4.5).
+    ///
+    /// ── WHY IT DOES NOT RESCORE ─────────────────────────────────────────────
+    /// The same reason `SessionEditing.Outcome` carries a date instead of
+    /// running one: the cascade is up to forty-nine day computations, it belongs
+    /// off the main actor, and the model has no `AppEnvironment` to reach the
+    /// one queue that coalesces it. The caller gets the anchor and calls
+    /// `AppEnvironment.rescore(from:reason:)`, which is the app's single entry
+    /// point for it.
+    ///
+    /// ── AND WHY ONCE, AT THE END ────────────────────────────────────────────
+    /// Every set edit already rewrote this session's own aggregates and replayed
+    /// its ledger inside its own transaction. What is left is the DAILY SCORES
+    /// downstream of it, and those depend on the session as a whole — running
+    /// them per tick would compute the same forty-nine days once per set for an
+    /// answer only the last one is right about.
+    @discardableResult
+    func finishEdit(sessionRpe: Double? = nil) -> String? {
+        guard let store, let sessionId, let editing else { return nil }
+        do {
+            try store.updateMetrics(sessionId: sessionId, sessionRpe: sessionRpe)
+            storeError = nil
+            return editing.date
+        } catch {
+            storeError = String(describing: error)
+            return nil
+        }
+    }
+
     /// Throw the session away — this workout did not happen.
     ///
     /// The common case costs nothing and touches nothing: `attach` looks a
@@ -1023,6 +1120,59 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
     }
 
+    /// Re-open a FINISHED session on the deck (§U4.5).
+    ///
+    /// The live `attach` looks for `ended_at IS NULL` on TODAY's day key, which
+    /// is exactly the predicate a past session fails. This one is handed the
+    /// row, so it needs no lookup — and it refuses a live one, because a deck
+    /// bound to a running session through the editing API would race the one
+    /// the Workout tab is holding.
+    ///
+    /// No pause state is restored: a session that ended is not paused, and the
+    /// pause ledger it carries is already inside its stored `duration_min`.
+    func attach(editing session: WorkoutSession) {
+        guard let store, sessionId == nil, session.endedAt != nil else { return }
+        do {
+            sessionId = session.id
+            editing = EditContext(
+                date: session.date,
+                startedAt: session.startedAt,
+                durationMin: session.durationMin
+            )
+            startedAt = session.startedAt ?? LogicalDay.date(fromISO: session.date) ?? Date()
+            // ── RESTORE FIRST, THEN THE BAR ─────────────────────────────────
+            // The live `attach` builds the baselines before it assigns
+            // anything, and is right to: it knows the deck's ids up front
+            // because a live session's rows are this device's. A re-opened one
+            // may carry the WEB's catalogue uuids, and `livePrBaselines`
+            // filters `workout_sets` by `exercise_id` — so the deck's slugs
+            // matched nothing, every baseline came back empty, and
+            // `PrEngine.detectSessionPrs` awards no axis against an empty index
+            // ("a delta against nothing is not a delta"). The visible symptom
+            // was an edit deck showing ONE trophy on a session whose own
+            // summary page showed three records.
+            //
+            // `restoreLoggedSets` is what learns those ids, so it runs first
+            // and the bar is built from the union: the deck's slugs for a
+            // movement with no rows yet, plus whatever the session's rows
+            // actually carry. A throw here leaves a restored, usable deck with
+            // no live records rather than no deck at all.
+            try restoreLoggedSets()
+            baselines = try store.livePrBaselines(
+                exerciseIds: Array(Set(
+                    exercises.map { Self.exerciseId($0.name) }
+                        + exercises.compactMap(\.storedExerciseId)
+                )),
+                excluding: session.id,
+                dayKey: day.key
+            )
+            refreshLivePrs()
+            storeError = nil
+        } catch {
+            storeError = String(describing: error)
+        }
+    }
+
     /// Non-fatal store trouble, shown in the header rather than thrown.
     private(set) var storeError: String?
 
@@ -1035,9 +1185,33 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         let logged = try store.sets(sessionId: sessionId)
         guard !logged.isEmpty else { return }
 
+        // ── MATCHED BY NAME, NOT BY ID ──────────────────────────────────────
+        // `Self.exerciseId(name)` is right for a session this phone logged and
+        // finds nothing at all in one the web logged, where `exercise_id` is a
+        // catalogue uuid (F2). A live `attach` never sees one — a live session
+        // is by definition this device's — but every session §U4.5 re-opens
+        // might be, and the failure is silent: the deck comes up blank and
+        // looks like a session with nothing in it.
+        //
+        // `PrRecorder.nameResolver`'s rule, over rows the caller already holds:
+        // the local catalogue, then `ExerciseSlug.nameBySlug`, then the alias
+        // table. The same two sources the PR ledger keys on, so a set restores
+        // onto the movement it files its records under.
+        let catalogue = Dictionary(
+            (try? store.exercises().map { ($0.id, $0.name) }) ?? [],
+            uniquingKeysWith: { first, _ in first }
+        )
+        func canonical(_ id: String) -> String {
+            ExerciseAliases.canonicalName(catalogue[id] ?? ExerciseSlug.nameBySlug[id] ?? id)
+        }
+
         for exercise in exercises {
-            let mine = logged.filter { $0.exerciseId == Self.exerciseId(exercise.name) }
+            let wanted = ExerciseAliases.canonicalName(exercise.name)
+            let mine = logged.filter { canonical($0.exerciseId) == wanted }
             guard !mine.isEmpty else { continue }
+            // Whatever id these rows already carry is the id a set appended
+            // beside them must carry — see `ExerciseState.storedExerciseId`.
+            exercise.storedExerciseId = mine[0].exerciseId
             var rows: [SetRow] = mine.map { set in
                 SetRow(
                     id: set.id,
@@ -1089,7 +1263,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
 
     private func snapshot(_ row: SetRow, in exercise: ExerciseState) -> SetSnapshot {
         SetSnapshot(
-            exerciseId: Self.exerciseId(exercise.name),
+            exerciseId: exercise.storedExerciseId ?? Self.exerciseId(exercise.name),
             setIndex: (exercise.rows.firstIndex { $0.id == row.id } ?? 0) + 1,
             // A missing load is 0 kg — a real bodyweight set — and a missing rep
             // count cannot reach here, because `toggleDone` refuses to tick one.
@@ -1109,6 +1283,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     private func ensureSession() throws -> String? {
         guard let store else { return nil }
         if let sessionId { return sessionId }
+        // Edit mode is handed its session and never creates one. Reaching here
+        // with `editing` set would mean `attach(editing:)` failed and the deck
+        // then opened a BRAND NEW session dated today for a workout three weeks
+        // old — the one failure in this file that writes a fact rather than
+        // losing one.
+        guard editing == nil else { return nil }
         let session = try store.openSession(
             userId: userId,
             dayKey: day.key,
@@ -1122,10 +1302,15 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     }
 
     private func appendInStore(_ row: SetRow, in exercise: ExerciseState) {
-        guard store != nil else { return }
+        guard let store else { return }
         do {
             guard let sessionId = try ensureSession() else { return }
-            try store?.appendSet(sessionId: sessionId, setId: row.id, snapshot(row, in: exercise))
+            if isEditing {
+                try store.addSet(sessionId: sessionId, snapshot(row, in: exercise), setId: row.id)
+                editDirty = true
+            } else {
+                try store.appendSet(sessionId: sessionId, setId: row.id, snapshot(row, in: exercise))
+            }
             storeError = nil
         } catch {
             storeError = String(describing: error)
@@ -1136,6 +1321,23 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         guard let store, let sessionId else { return }
         let next = snapshot(row, in: exercise)
         do {
+            if isEditing {
+                // `SessionEditing.amendSet`, which seeds the log, replays the
+                // ledger for this movement — the only path that can take a
+                // record BACK when a mistyped 100 becomes 60 — and recounts the
+                // session's stored tonnage. `EventStore.amendSet` does none of
+                // the three and claims a pencil nothing is holding.
+                try store.amendSet(
+                    sessionId: sessionId, setId: row.id,
+                    weightKg: next.weightKg, reps: next.reps, rpe: next.rpe,
+                    setType: next.setType,
+                    quality: next.quality ?? SetPatch.clearedQuality,
+                    est1rmKg: next.est1rmKg, setIndex: next.setIndex
+                )
+                editDirty = true
+                storeError = nil
+                return
+            }
             try store.amendSet(sessionId: sessionId, setId: row.id, SetPatch(
                 setIndex: next.setIndex, weightKg: next.weightKg, reps: next.reps,
                 setType: next.setType, est1rmKg: next.est1rmKg, rpe: next.rpe,
@@ -1156,7 +1358,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     private func voidInStore(_ row: SetRow) {
         guard let store, let sessionId else { return }
         do {
-            try store.voidSet(sessionId: sessionId, setId: row.id)
+            if isEditing {
+                try store.deleteSet(sessionId: sessionId, setId: row.id)
+                editDirty = true
+            } else {
+                try store.voidSet(sessionId: sessionId, setId: row.id)
+            }
             storeError = nil
         } catch {
             storeError = String(describing: error)
