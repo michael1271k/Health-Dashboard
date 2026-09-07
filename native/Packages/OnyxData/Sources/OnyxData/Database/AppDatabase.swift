@@ -792,6 +792,50 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── A SESSION REPAIRED ON THE SERVER CANNOT OTHERWISE REACH A DEVICE ─
+        // `TrainingPuller.applyPulledSets` refuses any session that has local
+        // `set_events`, and it is right to: those sets are a FOLD over the
+        // events, so pulled rows would be deleted by the very next append and
+        // the two would disagree in between. The guard has no exception, which
+        // makes it a permanent block for a session repaired out of band.
+        //
+        // 2026-09-07 is that session. Sixteen of its twenty-one weighted sets
+        // had survived the tombstoned-`storeId` void bug, `exercise_order` was
+        // null on every row and the three aggregates were never written; the
+        // server now holds all of it, plus the treadmill set. Without this the
+        // device that logged it folds its truncated log forever AND pushes it
+        // back over the repair on the next edit — the repair would lose.
+        //
+        // So the local fold for these ids is dropped: the events, the
+        // projection, and anything queued that names them. The next pull then
+        // sees a session with no events and adopts the server copy wholesale,
+        // which is exactly the path a web-logged session already takes.
+        //
+        // ── AND THE CURSOR GOES WITH THEM ───────────────────────────────────
+        // `pullTraining` asks for sessions `since` the stored cursor. The
+        // repair's `updated_at` is already behind a device that has synced
+        // since, so clearing the rows alone would leave them cleared and never
+        // refilled — strictly worse than the stale fold. Dropping the cursor
+        // costs one full training pull, once.
+        migrator.registerMigration("v17.adoptRepairedSessions") { db in
+            let repaired = ["b6a936a8-c730-413e-8c27-14575b093983"]
+            for id in repaired {
+                try db.execute(sql: "DELETE FROM set_events WHERE session_id = ?", arguments: [id])
+                try db.execute(sql: "DELETE FROM workout_sets WHERE session_id = ?", arguments: [id])
+                // The outbox keys nothing by session — the id lives inside the
+                // JSON payload — so this matches on the payload itself. A
+                // queued commit naming a repaired session is precisely the
+                // write that would undo the repair.
+                try db.execute(
+                    sql: "DELETE FROM outbox WHERE instr(CAST(payload AS TEXT), ?) > 0",
+                    arguments: [id]
+                )
+            }
+            try db.execute(
+                sql: "DELETE FROM sync_cursors WHERE table_name IN ('workout_sessions', 'workout_sets')"
+            )
+        }
+
         return migrator
     }
 }
