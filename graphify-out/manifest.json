@@ -2275,7 +2275,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788696240.3335445,
+    "mtime": 1788769275.639531,
     "ast_hash": "d94cffed264ff2c846a5f4abd603c06f",
     "semantic_hash": ""
   },
@@ -2305,7 +2305,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788696234.081712,
+    "mtime": 1788769228.8869157,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2340,7 +2340,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788696235.8268054,
+    "mtime": 1788769416.3896513,
     "ast_hash": "7a2ebabd8697d3a4559fc6e239b8da1e",
     "semantic_hash": ""
   },
@@ -2410,7 +2410,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788696237.6866426,
+    "mtime": 1788769243.8422117,
     "ast_hash": "85a747101884140eead57762604f3370",
     "semantic_hash": ""
   },
@@ -3875,13 +3875,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LiveLoggerView.swift": {
-    "mtime": 1788767402.0109775,
-    "ast_hash": "9741136bbb36dcff01a8f5ad215e14d4",
+    "mtime": 1788767790.5623295,
+    "ast_hash": "4cfe65f2f4bc94bf2fdc3c6c9c5e3761",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerModel.swift": {
-    "mtime": 1788767369.9409275,
-    "ast_hash": "0966d1d264389df777454d358dc23e31",
+    "mtime": 1788767739.0940993,
+    "ast_hash": "e2da8e1fd2cf76255de6ca1ac6d083e5",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviewData.swift": {
@@ -3890,8 +3890,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviews.swift": {
-    "mtime": 1788766695.5067418,
-    "ast_hash": "63bd3f58221f76eb3964745cb544257b",
+    "mtime": 1788767811.0627158,
+    "ast_hash": "d9588a8ff35f7fa014f45daeec9f8976",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/MuscleDistributionSheet.swift": {
@@ -4105,8 +4105,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutTabView.swift": {
-    "mtime": 1788767369.9417083,
-    "ast_hash": "9981bfe544b27ef134c6398af4213ea1",
+    "mtime": 1788767811.0825372,
+    "ast_hash": "6d0558ef7706f7d2803b3b65c5a89ce3",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutWeek.swift": {
@@ -4135,8 +4135,8 @@
     "semantic_hash": ""
   },
   "native/OnyxTests/LoggerModelTests.swift": {
-    "mtime": 1788767369.9420676,
-    "ast_hash": "173fae85742b8e813ca5b8fcfbdb7380",
+    "mtime": 1788767867.3826923,
+    "ast_hash": "56daa49f2bbfd4c27a83a78ba29c6a01",
     "semantic_hash": ""
   },
   "native/OnyxTests/RestCountdownTests.swift": {
@@ -5820,8 +5820,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/AppDatabase.swift": {
-    "mtime": 1788767369.947534,
-    "ast_hash": "d061775a21c3ddeef3611de2b672604f",
+    "mtime": 1788767599.821555,
+    "ast_hash": "5b8233b1a9ba46c6492bcef3065e4b1f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/ExerciseCatalog.swift": {
@@ -6320,8 +6320,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Tests/OnyxUITests/OnyxUITests.swift": {
-    "mtime": 1788766695.5095274,
-    "ast_hash": "3e7be22c7747de78ad63dd50c6152541",
+    "mtime": 1788768141.0957348,
+    "ast_hash": "f516f09e1142170b9a6f1112dbcdf109",
     "semantic_hash": ""
   },
   "native/Shared/OnyxWorkoutAttributes.swift": {
@@ -6815,8 +6815,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerStubs.swift": {
-    "mtime": 1788766695.5068827,
-    "ast_hash": "4f657798336ad7acc0fab370f7b915ca",
+    "mtime": 1788767851.0602477,
+    "ast_hash": "b07ee43b2344aa6b4cea46bfc6aa1a83",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/TimerSheet.swift": {
@@ -6835,8 +6835,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Sources/OnyxUI/Sessions/LoggerClock.swift": {
-    "mtime": 1788766695.5090241,
-    "ast_hash": "4aa5ce6699ced9ec445c1d2d7351e9ec",
+    "mtime": 1788767851.0472445,
+    "ast_hash": "228260e3aaab32aad9e0ca091f15d231",
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Sources/OnyxUI/Sessions/LoggerSeams.swift": {

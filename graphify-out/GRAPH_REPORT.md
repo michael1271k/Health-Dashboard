@@ -1,91 +1,91 @@
 # Graph Report - Onyx  (2026-09-07)
 
 ## Corpus Check
-- 1241 files · ~5,592,504 words
+- 1241 files · ~5,593,149 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 12641 nodes · 32599 edges · 1178 communities (355 shown, 823 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 1662 edges (avg confidence: 0.79)
+- 12669 nodes · 32618 edges · 1201 communities (364 shown, 837 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 1667 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d63b601c`
+- Built from commit: `78986cf0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- OnyxCore
+- SwiftUI
 - .detectSessionPrs
-- Sendable
+- Equatable
 - BodyCompInput
 - computeForDate.ts
-- ContentView.swift
-- displayWeight
-- palette.ts
+- RecoveryTrackers.tsx
+- BodyCompositionChart.tsx
+- TrainingWidgets.tsx
 - Next.js PWA Dashboard (Netlify)
-- WeekSoFarCard.tsx
+- formatSleep
 - battery.ts
-- .sessionRow
+- CodingKeys
 - CodingKeys
 - String
 - logicalTodayISO
 - NutritionModel
-- .planPermanentMove
+- Program.swift
 - Pre-flight findings (facts, file:line, live DB 2026-09-06)
 - HELIX — Native Migration: the Ultra Plan
 - compilerOptions
 - LandmarkMuscle
 - ScoringHolesTests
 - SupplementChecklist.tsx
-- FakeMirror
-- app/page.tsx
+- .rows
+- FuelWidget.tsx
 - DayModel
 - Ceilings
 - SessionDetailView
 - useInsights.ts
 - programs.ts
-- SyncError
+- OutboxItem
 - DraftSet
-- useCharts.ts
-- GlassLevel
-- effort.ts
+- eraForDate
+- OnyxScreenBackground
+- setTags.ts
 - Waves
 - golden-vectors.test.ts
 - Wire
 - EventStoreTests
 - VitalsGroups.tsx
 - SyncEngine
-- ExerciseCard.tsx
+- draft.ts
+- palette.ts
 - ExerciseBreakdown.tsx
-- SessionDeck.tsx
 - OnyxDomain
-- WorkoutSession
+- CodingKeys
 - RowPushTests
 - SetRowView
-- [date]/page.tsx
+- parts.tsx
 - prEngine.ts
 - devDependencies
 - In
 - ONYX — Native Phase 2: the No-Mercy UI/UX Refactor & the Great Sync
 - SettingsModel
 - OnyxJSON
-- FmtV2Report.tsx
+- fmtV2.ts
 - Effort
-- sessionVolumeKg
-- BigValue
+- OnyxPrimitives.swift
+- .face
 - SessionClock
-- TargetSnapshot
+- TargetResolver
 - dependencies
 - route-client-boundary.test.ts
 - Battery
 - ScheduleSwapGoldenTests
 - dashboard/layout.ts
 - .adjust
-- app/layout.tsx
+- healthkit.ts
 - weeklyExport.ts
-- isoAddDays
-- ceilings.ts
+- useWeeklyLoop.ts
+- query-key-coverage.test.ts
 - .build
 - eslint.config.mjs
 - ProgramExercise
@@ -109,9 +109,9 @@
 - SetPatch
 - AppDatabase
 - scripts
-- LoggerModelTests
+- LoggerModel
 - routineTemplate.ts
-- useWeeklyLoop.ts
+- FatigueTracker.tsx
 - Helix app icon concept: two intertwined DNA-style double helices (silver + glowing orange) forming an 'H' monogram
 - Helix app brand logo mark (blue crossing/interlocking chevron symbol)
 - Helix Double-Helix Logo Mark (silver + orange strands)
@@ -131,27 +131,27 @@
 - CustomSupplementRow
 - set-row-grid.spec.ts
 - ReportsGoldenTests.swift
+- BigValue
+- OnyxNumberField
 - View
-- DayTargetSheet
-- OnyxWorkoutAttributes
 - DoseRow
 - BatteryDrain
-- TargetProfile
+- ResolvedTargets
 - HelixScope
 - no-input-zoom.test.ts
-- CodingKeys
+- client.ts
 - Double
-- SyncCoordinator
-- readiness.ts
-- .resolve
+- MirrorCoalescer
+- .build
+- commit.ts
 - GoalBoard
 - SupplementNutrients
 - OnyxWidgets.swift
 - postcss.config.mjs
 - Code-Comment Convention (no Phase-N tags)
 - Playwright (e2e)
-- isWorkingSet
-- CardioLogSheet
+- s
+- .formatPace
 - tailwind.config.ts
 - .syncSessionMetrics
 - EraWindow
@@ -170,7 +170,7 @@
 - HELIX Data Pipeline (Apple Health → Ingest → Supabase → PWA/Notion)
 - Helix app master icon (dual DNA helix, silver + molten orange, dark rounded-square background)
 - DANGER
-- .view
+- HistoryWeeks.swift
 - VitalsGrid
 - Color
 - palette-tokens.test.ts
@@ -181,7 +181,7 @@
 - OnyxMark
 - MuscleMapGoldenTests
 - gen-mirror-swift.mjs
-- PhaseKind
+- .dayNumber
 - VolumeStreamCard
 - CompositeRowPushTests
 - nav-chevrons.test.ts
@@ -198,12 +198,12 @@
 - CompositionFace
 - FlowRow
 - LayoutGoldenTests
-- CardioLogger.tsx
+- DailyWidgets.tsx
 - ProgressConfiguration
 - String
 - In
-- Observation
-- NutritionPhase
+- SyncCoordinator
+- ExerciseSummary
 - Readiness v9 — the model behind the battery
 - CodingKeys
 - ContextMode
@@ -211,15 +211,15 @@
 - BodyFocusOption
 - reconcile-pr-counts.mjs
 - CodingKeys
-- .whole
-- dailyLog.ts
+- WidgetPreviews
+- save.ts
 - AppDelegate
-- OnyxBanner
+- Coordinator
 - clock
 - LiveSessionOwner
 - sessionSeed.ts
 - session-summary-header.spec.ts
-- workout.ts
+- .sets
 - HistoryWeeksTests
 - backfill-notion-sets.mjs
 - restTargets.ts
@@ -228,13 +228,13 @@
 - CeilingsGoldenTests
 - session-ledger.spec.ts
 - LiveLoggerView
-- overlay.tsx
-- BackfillProgress
+- FmtV2Report.tsx
+- SyncCoordinator.swift
 - PauseControlling
 - renderer.ts
-- VolumeChart.tsx
-- tags.ts
-- .seeded
+- Page
+- ExerciseCard.tsx
+- WorkoutSession
 - PackageDescription
 - String
 - VitalsFocusOption
@@ -243,9 +243,9 @@
 - Zone.tsx
 - JSONValue
 - .build
-- useMuscleAnalytics.ts
+- .scoringInputs
 - Body
-- AppEnvironment.swift
+- .view
 - WeekCapsuleRow
 - CodingKeys
 - InvariantTests
@@ -254,18 +254,18 @@
 - ONYX Native — Wave 1 foundation
 - manifest.json
 - HealthKitReader
-- .readings
+- .cutReadings
 - EraWindowPicker
 - Double
-- Hashable
-- .aggregate
-- .list
-- LoggerHero
+- DayTargetSheet
+- NutritionPhase
+- MarkdownView.tsx
+- LoggerFaceSwitch
 - SleepStage
-- .rows
+- GlassLevel
 - AppDatabase.swift
 - ExerciseSummaryGoldenTests
-- SyncStatus
+- Observation
 - .build
 - RPEDial
 - WidgetSize
@@ -278,31 +278,31 @@
 - .record
 - OnyxChip
 - recompute-scores.mjs
-- BottomNav.tsx
+- app/layout.tsx
 - OnyxType
 - OnyxScope
-- PhaseGoals
+- OnyxEntry
 - .addDays
-- ExerciseCardView
-- .fullDay
-- .withLock
+- ReadinessOrb.tsx
+- .view
+- LiveActivityController.swift
 - LoggerClock
 - OnyxAtlasFigure
-- DailyGoldenTests.swift
+- .marks
 - EventDurabilityTests
 - HistoryView
 - DailyTarget
 - Tiles
 - FatigueSummaryRow
-- SleepSample
+- LoggerHero
 - Git conventions
 - ExerciseLibraryView
-- SeedIn
-- NutrientCompletionTests.swift
+- .seed
+- NutrientCompletionTests
 - native-token-discipline.test.ts
 - AuthState
 - AtlasFigure
-- VolumeZone
+- .body
 - SignInView
 - package.json
 - @dnd-kit/core
@@ -310,17 +310,17 @@
 - .seeded
 - framer-motion
 - @tanstack/query-sync-storage-persister
-- .body
-- Field
+- Destination
+- LeversView
 - graphify
 - .mcp.json
 - Foundation
-- accessibleRow
-- .isMaintenanceDate
+- ViewModifier
+- SessionSeed.swift
 - check-swift.sh
 - OnyxTileEntry
 - store-shots.sh
-- TodayFeed
+- TodayFeedBuilderTests
 - Any
 - Bool
 - @capacitor/ios
@@ -336,7 +336,7 @@
 - HKUnit
 - String
 - Any
-- TrainingQuadrant
+- .face
 - CAPPluginCall
 - CAPPluginMethod
 - String
@@ -367,7 +367,7 @@
 - TimeInterval
 - String
 - WeekPhase
-- StreakDay
+- WidgetGoldenTests
 - Bool
 - Error
 - String
@@ -386,7 +386,7 @@
 - targetMatch.ts
 - Double
 - String
-- jsToFixed
+- jsRound
 - T
 - ClosedRange
 - Date
@@ -395,17 +395,17 @@
 - @capacitor/preferences
 - SessionAnalysis
 - CodingKeys
-- LivePrRecord
+- SeedPrProvider
 - LockConfiguration
 - SupplementDose
-- ExerciseIndexTests
+- RootView.swift
 - CodingKey
-- WeekChange
-- SyncTranslationTests.swift
-- ExercisesGoldenTests.swift
-- HistorySet
+- .repWindow
+- SyncTranslation.swift
+- DeckMoverParityTests
+- jsIntegerString
 - ProgressionQueueTests
-- LoggerModel
+- ExerciseState
 - Double
 - SessionClockSheet.tsx
 - String
@@ -421,48 +421,48 @@
 - String
 - Void
 - CodingKeys
-- MuscleDistributionSheet
+- tiles.ts
 - HealthCatalogueTests
-- .reason
+- OnyxUITests.swift
 - Keys
-- OnyxRing
+- nutrientTargets.ts
 - CodingKeys
-- Sheet
+- OnyxAtlasView
 - SetEvent
-- Sheet.tsx
+- useHelixReducedMotion
 - SetKind
-- MacroEditSheet
+- .whole
 - BodyConfiguration
-- EventStoreError
-- PlanCatalogueGoldenTests
-- .compute
+- .readings
+- intensityCalendar.ts
+- SyncReason
 - CodingKeys
 - CardioLogRow
 - WeeklyExportBuilderTests
-- ProgressionQueue
-- In
+- .alerts
+- RecordingRefresher
 - StoredDashboardLayout
 - .onyxType
 - OnyxProgressBar
-- CardioKind
+- TodayModelTests
 - Timed.swift
 - View
 - WeighIn
 - BatteryGoldenTests
 - AliasGoldenTests
-- WidgetSnapshotBuilder.swift
+- zip2
 - Bool
 - Double
 - String
-- RealtimeKeys
+- .init
 - VolumeGoldenTests
 - @dnd-kit/modifiers
-- ContextGoldenTests
-- OnyxWordmark
-- KeychainAuthStorageTests
+- LeversGoldenTests
+- Level
+- PrSeedGoldenTests
 - Color
 - HealthKey
-- Destination
+- .view
 - Double
 - LandmarkMuscle
 - LoggerModel
@@ -488,7 +488,7 @@
 - View
 - Bool
 - Wire
-- newOnyxID
+- HealthPayload
 - Dashboard
 - DailyTarget
 - Double
@@ -512,7 +512,7 @@
 - AnyObject
 - Never
 - Kind
-- OnyxLinks
+- .readinessHistory
 - SyncCoordinator
 - Double
 - Task
@@ -529,10 +529,10 @@
 - ProgramDay
 - ProgramPhase
 - String
-- BodyCompMetric
+- NutrientTarget
 - UUID
 - AppDatabase
-- jsRound
+- .compactKg
 - Bool
 - BodyPlot
 - @dnd-kit/utilities
@@ -547,7 +547,7 @@
 - Never
 - @eslint/eslintrc
 - LoggerModel
-- nav-scroll-memory.test.tsx
+- Row
 - NutritionLever
 - Program
 - ProgramPhase
@@ -585,7 +585,7 @@
 - ProposedViewSize
 - StackSlot
 - String
-- CardioLedgerFace
+- .body
 - Subviews
 - Task
 - ScoringInputs
@@ -612,7 +612,7 @@
 - Task
 - Void
 - WidgetId
-- HistorySetRow
+- .report
 - Bool
 - HistorySet
 - Double
@@ -628,7 +628,7 @@
 - PrAxis
 - SeedTemplate
 - derive.ts
-- .view
+- UserIdCasingTests
 - SessionDraft
 - SetPatch
 - Exercise
@@ -672,6 +672,7 @@
 - Double
 - WorkoutSet
 - String
+- .refreshDailyScore
 - Bool
 - Double
 - String
@@ -698,6 +699,7 @@
 - LandmarkMuscle
 - MoverTokens
 - Set
+- CodingKeys
 - String
 - Bool
 - String
@@ -712,7 +714,11 @@
 - PrTruthGoldenTests
 - String
 - Bool
+- .build
 - String
+- BackfillProgress
+- ProgressionState
+- dashboard-web-parity.test.ts
 - Double
 - Bool
 - String
@@ -803,6 +809,10 @@
 - Bool
 - Double
 - String
+- OnyxTokens.swift
+- CGFloat
+- LoggerClock
+- AppDatabase
 - ProgramExercise
 - String
 - Double
@@ -816,10 +826,20 @@
 - Double
 - Encoder
 - PrFloor
+- PrBaselines
+- ProgramExercise
+- SessionSeed
+- SetQuality
 - Bool
 - Double
 - LandmarkMuscle
 - String
+- LoggerModel
+- CardioLogRow
+- LoggerClock
+- WorkoutWeek
+- AppDatabase
+- Database
 - Bool
 - Double
 - PrAxis
@@ -865,6 +885,9 @@
 - FatigueSlot
 - String
 - SupplementSlot
+- ValueObservation
+- ValueReducers
+- SeedPrProvider
 - Bool
 - DetailExercise
 - DetailSet
@@ -1178,7 +1201,7 @@
 - String
 - LocalizedStringResource
 - Void
-- Equatable
+- Sendable
 - .parseTargets
 
 ## God Nodes (most connected - your core abstractions)
@@ -1186,9 +1209,9 @@
 2. `OnyxCore` - 181 edges
 3. `logicalTodayISO()` - 137 edges
 4. `DayModel` - 126 edges
-5. `OnyxTileEntry` - 93 edges
-6. `jsRound()` - 90 edges
-7. `LoggerModel` - 87 edges
+5. `LoggerModel` - 95 edges
+6. `OnyxTileEntry` - 92 edges
+7. `jsRound()` - 90 edges
 8. `OnyxData` - 86 edges
 9. `GRDB` - 78 edges
 10. `Testing` - 77 edges
@@ -1208,75 +1231,75 @@
 ## Import Cycles
 - None detected.
 
-## Communities (1178 total, 823 thin omitted)
+## Communities (1201 total, 837 thin omitted)
 
-### Community 0 - "OnyxCore"
-Cohesion: 0.07
-Nodes (9): Charts, String, .capitalizedFirst, OnyxCore, OnyxUI, os, SwiftUI, UniformTypeIdentifiers (+1 more)
+### Community 0 - "SwiftUI"
+Cohesion: 0.06
+Nodes (9): AppIntents, Charts, String, .capitalizedFirst, OnyxData, OnyxUI, os, SwiftUI (+1 more)
 
 ### Community 1 - ".detectSessionPrs"
-Cohesion: 0.10
-Nodes (21): AxisRecord, AxisRecordSet, BaselineSetRow, DetectedSet, ExerciseRecordSets, KeyAxes, KeyedValue, OrderedBests (+13 more)
+Cohesion: 0.08
+Nodes (26): SessionPrResult, LivePrDetail, LivePrEngine, LivePrEntry, LivePrs, AxisRecord, AxisRecordSet, BaselineSetRow (+18 more)
 
-### Community 2 - "Sendable"
-Cohesion: 0.05
-Nodes (61): BodyMetricKey, Window, WorkoutSummary, Kind, normal, warmup, Body, CalendarDay (+53 more)
+### Community 2 - "Equatable"
+Cohesion: 0.06
+Nodes (47): BodyMetricKey, Equatable, Body, CalendarDay, .id, Cardio, DayContext, E1rm (+39 more)
 
 ### Community 3 - "BodyCompInput"
 Cohesion: 0.15
 Nodes (10): BodyCompDerived, BodyCompInput, BodyComposition, VisceralBand, elevated, high, optimal, WhrBand (+2 more)
 
 ### Community 4 - "computeForDate.ts"
-Cohesion: 0.11
-Nodes (33): ContextSelector(), ExceptionDayBanner(), ActiveContext, useContextMode(), useSetContext(), CONTEXT_META, CONTEXT_MODES, contextFromDayLabel() (+25 more)
+Cohesion: 0.07
+Nodes (54): POST(), todayISO(), ContextSelector(), ExceptionDayBanner(), ActiveContext, useContextMode(), useSetContext(), CONTEXT_META (+46 more)
 
-### Community 5 - "ContentView.swift"
+### Community 5 - "RecoveryTrackers.tsx"
 Cohesion: 0.09
-Nodes (33): Combine, ObservableObject, ContentView, .body, HelixTheme, MacrosScreen, .body, .remaining (+25 more)
+Nodes (43): generate(), readAtlas(), ROOT, SOURCE, swiftPath(), TARGETS, tokenize(), DomsTracker() (+35 more)
 
-### Community 6 - "displayWeight"
+### Community 6 - "BodyCompositionChart.tsx"
+Cohesion: 0.05
+Nodes (56): BodyCompositionChart(), COLORS, Family, FAMILY_META, FAMILY_SERIES, fmtDate(), ChartScrubber(), lastValues() (+48 more)
+
+### Community 7 - "TrainingWidgets.tsx"
 Cohesion: 0.04
-Nodes (82): BARS, BodyDelta(), CompositionLedger(), compositionRows(), LedgerRow(), num(), r1(), TrendRow() (+74 more)
-
-### Community 7 - "palette.ts"
-Cohesion: 0.03
-Nodes (117): generate(), readAtlas(), ROOT, SOURCE, swiftPath(), TARGETS, tokenize(), DRY (+109 more)
+Nodes (81): DRY, env, rows, sb, MuscleAtlas, WeeklyMuscleSheet(), MuscleDistribution(), MuscleDistributionSheet() (+73 more)
 
 ### Community 8 - "Next.js PWA Dashboard (Netlify)"
 Cohesion: 0.12
 Nodes (17): /api/ingest endpoint, Daily Score engine, Native iOS App (Capacitor HealthKit Bridge), Netlify (Deployment), Next.js PWA Dashboard (Netlify), @notionhq/client (Notion API), Notion Gym-Log Mirror, react-three-fiber (battery orb) (+9 more)
 
-### Community 9 - "WeekSoFarCard.tsx"
-Cohesion: 0.23
-Nodes (11): isoMinus(), useWeekSoFar(), WeekSoFarCard(), biggestChange(), ChangeDirection, pct(), totalsFrom(), WeekChange (+3 more)
+### Community 9 - "formatSleep"
+Cohesion: 0.14
+Nodes (17): clock(), NightlyHistogram(), SleepArc(), SleepStages(), STAGES, clockOf(), SleepWidgetImpl(), biggestChange() (+9 more)
 
 ### Community 10 - "battery.ts"
-Cohesion: 0.06
-Nodes (61): estimatedTag(), exceptionReason(), exceptionTag(), isExceptionDay(), NUTRITION_EXCEPTION_REASONS, NutritionExceptionReason, TargetPeriod, FATIGUE_SLOTS (+53 more)
-
-### Community 11 - ".sessionRow"
 Cohesion: 0.08
-Nodes (16): T, side, RemoteSessionRow, Bool, Calendar, Date, Decoder, Double (+8 more)
+Nodes (55): batteryDays(), BATTERY, batteryBreakdown, BatteryState, clamp(), computeBattery(), computeMorningCharge(), computeSleepQuality() (+47 more)
+
+### Community 11 - "CodingKeys"
+Cohesion: 0.05
+Nodes (38): CodingKeys, avgBpm, avgBpmEstimated, caloriesBurned, caloriesEstimated, dayKey, durationMin, endedAt (+30 more)
 
 ### Community 12 - "CodingKeys"
 Cohesion: 0.01
 Nodes (171): CodingKeys, achievedOn, active, activeCal, activeCalGoal, activeEnergy, activeKcal, activeLever (+163 more)
 
 ### Community 13 - "String"
-Cohesion: 0.19
-Nodes (16): SeedProgression, SeedRow, SeedSession, SeedSet, SeedTemplate, SeedTemplateExercise, SeedTemplateSet, SessionSeedBuilder (+8 more)
+Cohesion: 0.26
+Nodes (10): Kind, normal, warmup, SeedRow, SeedSet, SessionSeedBuilder, Double, Int (+2 more)
 
 ### Community 14 - "logicalTodayISO"
-Cohesion: 0.03
-Nodes (114): MacroProgressChart, NutritionPage(), DashboardPage(), BrandHeader(), TodayLink(), daysAgoISO(), Series, TrendStrip() (+106 more)
+Cohesion: 0.02
+Nodes (170): MacroProgressChart, NutritionPage(), DailyNexusPage(), DaySheet, scoreColor(), DashboardPage(), EMPTY_SKIPPED, ScoreCard (+162 more)
 
 ### Community 15 - "NutritionModel"
 Cohesion: 0.05
-Nodes (38): Eaten, NutritionModel, .dayShapeLabel, .dayTarget, .eaten, .goals, .heldBy, .isEstimated (+30 more)
+Nodes (42): Eaten, NutritionModel, .dayShapeLabel, .dayTarget, .eaten, .exceptionReason, .goals, .heldBy (+34 more)
 
-### Community 16 - ".planPermanentMove"
-Cohesion: 0.08
-Nodes (32): Era, .fillFooter, SwapDaySheet, .body, .placeSection, .restSection, .undoSection, Kind (+24 more)
+### Community 16 - "Program.swift"
+Cohesion: 0.06
+Nodes (35): Era, ProgramDay, SwapDaySheet, .body, .placeSection, .restSection, .undoSection, SwapSheetDoor (+27 more)
 
 ### Community 17 - "Pre-flight findings (facts, file:line, live DB 2026-09-06)"
 Cohesion: 0.04
@@ -1299,56 +1322,56 @@ Cohesion: 0.27
 Nodes (5): ScoringHolesTests, AppDatabase, Double, ScoringInputs, String
 
 ### Community 22 - "SupplementChecklist.tsx"
-Cohesion: 0.06
-Nodes (63): NutrientsPage(), prefetchSheetBodies(), COLORS, FORMS, SupplementChecklist(), SupplementRow(), usePrefersReducedMotion(), WD (+55 more)
+Cohesion: 0.07
+Nodes (56): NutrientsPage(), prefetchSheetBodies(), COLORS, FORMS, SupplementChecklist(), SupplementRow(), usePrefersReducedMotion(), WD (+48 more)
 
-### Community 23 - "FakeMirror"
-Cohesion: 0.23
-Nodes (6): TrainingPuller, FakeMirror, iso(), MirrorTests, TrainingPullerTests, Unreachable
+### Community 23 - ".rows"
+Cohesion: 0.16
+Nodes (7): object, TrainingPuller, FakeMirror, iso(), MirrorTests, TrainingPullerTests, Unreachable
 
-### Community 24 - "app/page.tsx"
-Cohesion: 0.03
-Nodes (109): EMPTY_SKIPPED, ScoreCard, SHEET_ACCENT, SheetKey, SupplementChecklist, TrainingCard, TrendStrip, VitalsGroups (+101 more)
+### Community 24 - "FuelWidget.tsx"
+Cohesion: 0.11
+Nodes (24): WidgetEmpty(), WidgetFrame, SleepWidget, StackWidget, StepsWidget, FuelWidget, NutrientsWidget, NutrientsWidgetImpl() (+16 more)
 
 ### Community 25 - "DayModel"
-Cohesion: 0.04
-Nodes (56): escaping, DayModel, .activeCustoms, .archivedCustoms, .battery, .clock, .context, .decodedCustoms (+48 more)
+Cohesion: 0.05
+Nodes (50): escaping, DayModel, .activeCustoms, .archivedCustoms, .battery, .clock, .context, .decodedCustoms (+42 more)
 
 ### Community 26 - "Ceilings"
-Cohesion: 0.16
-Nodes (10): Ceilings, cleared, LoadRung, Bool, Double, Program, ProgramPhase, WorkingSet (+2 more)
+Cohesion: 0.18
+Nodes (14): Ceilings, LadderState, blocked, cleared, collapseReady, incomplete, LadderVerdict, LevelUpCue (+6 more)
 
 ### Community 27 - "SessionDetailView"
 Cohesion: 0.08
-Nodes (32): SessionDetailView, .body, .report, .split, SetRow, .axes, .current, .isRecord (+24 more)
+Nodes (30): SessionDetailView, .body, .report, .split, SetRow, .axes, .current, .isRecord (+22 more)
 
 ### Community 28 - "useInsights.ts"
 Cohesion: 0.13
 Nodes (29): InsightCoach(), TONE, calorieAdherence(), computeInsights(), DayPoint, daysSinceLastSession(), fuelVsForce(), Insight (+21 more)
 
 ### Community 29 - "programs.ts"
-Cohesion: 0.03
-Nodes (132): SessionAnalysisPage(), RestTodayButton(), SwapDayControl(), SwapNote, useRestSwap(), MarkdownView, NO_DAYS, WeekCapsule (+124 more)
+Cohesion: 0.05
+Nodes (110): isoMinus(), useWeekSoFar(), WeekSoFarCard(), RestTodayButton(), SwapDayControl(), SwapNote, useRestSwap(), MoveDaySheet() (+102 more)
 
-### Community 30 - "SyncError"
-Cohesion: 0.13
-Nodes (14): AppDatabase, Date, Error, String, SyncRemote, SyncError, ambiguousExercise, sessionHasNoStart (+6 more)
+### Community 30 - "OutboxItem"
+Cohesion: 0.08
+Nodes (21): MutablePersistableRecord, OutboxItem, Status, failed, inFlight, Data, Date, Date (+13 more)
 
 ### Community 31 - "DraftSet"
-Cohesion: 0.09
-Nodes (14): Draft, DraftExercise, .isCardio, DraftSet, .isCommitted, PairAsymmetry, SessionDraft, SetPatch (+6 more)
+Cohesion: 0.12
+Nodes (10): Draft, DraftExercise, .isCardio, DraftSet, .isCommitted, PairAsymmetry, SessionDraft, SetPatch (+2 more)
 
-### Community 32 - "useCharts.ts"
+### Community 32 - "eraForDate"
 Cohesion: 0.04
-Nodes (65): BodyCompositionChart(), COLORS, Family, FAMILY_META, FAMILY_SERIES, fmtDate(), ChartRange(), ChartTooltip() (+57 more)
+Nodes (67): ChartRange(), ChartTooltip(), TooltipProps, RpeCalendar(), VolumeStream(), bandFor(), formatDate(), StepsChart() (+59 more)
 
-### Community 33 - "GlassLevel"
-Cohesion: 0.09
-Nodes (26): EnvironmentKey, Material, EnvironmentValues, .onyxBatteryLevel, GlassLevel, chrome, .drawsHairline, .material (+18 more)
+### Community 33 - "OnyxScreenBackground"
+Cohesion: 0.15
+Nodes (14): EnvironmentKey, EnvironmentValues, .onyxBatteryLevel, OnyxBatteryLevelKey, OnyxScreenBackground, .corner, .intensity, .mesh (+6 more)
 
-### Community 34 - "effort.ts"
-Cohesion: 0.11
-Nodes (32): FinishSheet(), StatPatch, RpeLadder(), Row(), Effort(), EffortScale(), useEffortBaseline(), meanOf() (+24 more)
+### Community 34 - "setTags.ts"
+Cohesion: 0.08
+Nodes (38): FinishSheet(), StatPatch, RpeLadder(), SetActionSheet(), SetTypeValue, TYPES, Row(), Effort() (+30 more)
 
 ### Community 35 - "Waves"
 Cohesion: 0.06
@@ -1356,99 +1379,99 @@ Nodes (35): Added by W13's audits (2026-09-06) — none of it is code, all of it
 
 ### Community 36 - "golden-vectors.test.ts"
 Cohesion: 0.02
-Nodes (95): BATTERY_DRAIN_KEYS, BatteryDrainKey, batteryStackDay, BatteryStackDayIn, BatteryStackOptions, batteryStackSeries(), EMPTY_DRAINS, BodyCompMetric (+87 more)
+Nodes (137): BodyCompFields, bodyCompGapLabel(), bodyCompGapShort(), bodyCompState, FIELD_NAME, MANUAL_FIELDS, missingBodyCompFields(), nameList() (+129 more)
 
 ### Community 37 - "Wire"
-Cohesion: 0.16
-Nodes (5): BackfillTests, .calendar, Snapshots, .all, Wire
+Cohesion: 0.14
+Nodes (9): SyncCoordinatorError, .description, tablesFailed, BackfillTests, .calendar, Snapshots, .all, Unreachable (+1 more)
 
 ### Community 39 - "VitalsGroups.tsx"
 Cohesion: 0.13
-Nodes (22): VitalsWidgetImpl(), Better, deltaColorOf(), Group, GROUPS, latestReading(), M, MetricDef (+14 more)
+Nodes (21): VitalsWidgetImpl(), Better, deltaColorOf(), Group, GROUPS, latestReading(), M, MetricDef (+13 more)
 
 ### Community 40 - "SyncEngine"
 Cohesion: 0.20
-Nodes (5): SyncEngine, CardinalityViolation, FakeRemote, Offline, SyncEngineTests
+Nodes (6): Error, SyncEngine, CardinalityViolation, FakeRemote, Offline, SyncEngineTests
 
-### Community 41 - "ExerciseCard.tsx"
+### Community 41 - "draft.ts"
+Cohesion: 0.05
+Nodes (58): CoachNotes(), LiveSessionPill(), SetEditorRow, ReloadHome(), useHasLiveDraft(), useLiveDraft(), EMPTY_STATS, useSessionDraft() (+50 more)
+
+### Community 42 - "palette.ts"
+Cohesion: 0.04
+Nodes (95): SessionAnalysisPage(), BARS, BodyDelta(), CompositionLedger(), compositionRows(), LedgerRow(), num(), r1() (+87 more)
+
+### Community 43 - "ExerciseBreakdown.tsx"
 Cohesion: 0.03
-Nodes (89): CardioCell(), ExerciseCard, ReadyCue, DRAG_MODIFIERS, DROP_ANIMATION, MEASURING, SetActionSheet(), SetTypeValue (+81 more)
-
-### Community 42 - "ExerciseBreakdown.tsx"
-Cohesion: 0.05
-Nodes (72): SessionIntelCard(), trend(), ExerciseBreakdown(), ExerciseHistorySheet, progressionCue(), SetBadge(), shortDate(), Delta() (+64 more)
-
-### Community 43 - "SessionDeck.tsx"
-Cohesion: 0.05
-Nodes (50): SessionPageInner(), CoachNotes(), FinishButton(), LiveSessionBar, LiveSessionHero(), LiveSessionPill(), SessionDeck(), SessionElapsed (+42 more)
+Nodes (95): SessionPageInner(), DurationSheet(), ProgressionAlerts(), AXIS_ORDER, fmtAxis(), fmtDelta(), fmtE1rm(), fmtLoad() (+87 more)
 
 ### Community 44 - "OnyxDomain"
-Cohesion: 0.06
-Nodes (43): LinearGradient, .body, .rowBorder, Group, .id, DaySheet, .body, DayTile (+35 more)
+Cohesion: 0.05
+Nodes (48): LinearGradient, .body, .rowBorder, Group, .id, SorenessSheet, .body, StackRow (+40 more)
 
-### Community 45 - "WorkoutSession"
-Cohesion: 0.04
-Nodes (56): MutablePersistableRecord, CodingKeys, attempts, avgBpm, avgBpmEstimated, caloriesBurned, caloriesEstimated, createdAt (+48 more)
+### Community 45 - "CodingKeys"
+Cohesion: 0.05
+Nodes (41): CodingKeys, attempts, avgBpm, avgBpmEstimated, caloriesBurned, caloriesEstimated, createdAt, date (+33 more)
 
 ### Community 46 - "RowPushTests"
 Cohesion: 0.14
 Nodes (5): pending, IdleSyncRemote, PreferencesTests, RecordingPush, RowPushTests
 
 ### Community 47 - "SetRowView"
-Cohesion: 0.13
-Nodes (22): AnyDatabaseCancellable, NumericField, .body, SetColumn, SetRowView, .affordances, .badge, .canLog (+14 more)
+Cohesion: 0.09
+Nodes (32): AnyDatabaseCancellable, ExerciseCardView, .columnHeaders, .header, .progress, .rail, .repWindow, .sets (+24 more)
 
-### Community 48 - "[date]/page.tsx"
-Cohesion: 0.05
-Nodes (60): DailyNexusPage(), DaySheet, scoreColor(), CompletenessArc, SEGMENT_META, BAND_COLOR, debtColor(), SleepDebtGauge (+52 more)
+### Community 48 - "parts.tsx"
+Cohesion: 0.13
+Nodes (17): BalanceBars(), Bar(), ConsistencyDay, HalfArc(), Heatmap(), LineChart(), Milestones(), MiniBars() (+9 more)
 
 ### Community 49 - "prEngine.ts"
-Cohesion: 0.04
-Nodes (76): canonicalExerciseName(), EXERCISE_ALIASES, AXES, StandingPr, PrHistoryRow, PrSessionInput, prSetKey(), sessionPrRecords (+68 more)
+Cohesion: 0.08
+Nodes (49): canonicalExerciseName(), EXERCISE_ALIASES, COMPOUND_PATTERNS, DB, isCompoundLift(), resolveExercises(), absorbSet(), axisValue() (+41 more)
 
 ### Community 50 - "devDependencies"
 Cohesion: 0.05
 Nodes (43): @capacitor/cli, eslint, eslint-config-next, jsdom, @netlify/plugin-nextjs, @next/bundle-analyzer, @playwright/test, postcss (+35 more)
 
 ### Community 51 - "In"
-Cohesion: 0.12
-Nodes (14): BatteryStackDayIn, BodyCompReadingIn, BodyCompGoldenTests, DeficitLedgerGoldenTests, EwmaIn, GoalBoardGoldenTests, In, ConsistencyDayIn (+6 more)
+Cohesion: 0.11
+Nodes (21): BatteryStackDayIn, BodyCompReadingIn, Double, GoalBoard, PhaseKind, String, Trajectory, TrajectoryPoint (+13 more)
 
 ### Community 52 - "ONYX — Native Phase 2: the No-Mercy UI/UX Refactor & the Great Sync"
 Cohesion: 0.04
 Nodes (47): 0. Context — why Phase 2, 10. Tracks & merge recipe, 11. Verification, 12. Commands, 13. First actions on approval, 1. Decisions (brainstorm 2026-09-04), 2.1 Why it looks web-like (it is not raw hex — there is none in `Features/`), 2.2 Bugs confirmed at source (+39 more)
 
 ### Community 53 - "SettingsModel"
-Cohesion: 0.07
-Nodes (26): SettingsForm, .leverSummary, .reduceMotion, .trackRpe, .unitSystem, .weekSpanLabel, .weekStartDay, SettingsTabView (+18 more)
+Cohesion: 0.06
+Nodes (30): OnyxLinks, .versionString, SettingsForm, .leverSummary, .reduceMotion, .trackRpe, .unitSystem, .weekSpanLabel (+22 more)
 
 ### Community 54 - "OnyxJSON"
-Cohesion: 0.10
-Nodes (7): JSONDecoder, JSONEncoder, Row, OnyxJSON, DayEditingTests, UserIdCasingTests, .lower
+Cohesion: 0.12
+Nodes (6): JSONDecoder, JSONEncoder, T, Row, OnyxJSON, DayEditingTests
 
-### Community 55 - "FmtV2Report.tsx"
-Cohesion: 0.11
-Nodes (30): anchorsOf(), asymmetryOf(), BodyCompTrajectory(), FmtV2Report(), metricOf(), proseLines(), SectionView(), AsymmetryRow (+22 more)
+### Community 55 - "fmtV2.ts"
+Cohesion: 0.18
+Nodes (21): ReportTargetsResult, bodyCompSeries(), cleanInstruction(), FmtV2Header, FmtV2Part, FmtV2SectionKind, hasTargets(), headingOf() (+13 more)
 
 ### Community 56 - "Effort"
-Cohesion: 0.22
-Nodes (5): .body, Cr10Anchor, Effort, EffortWord, RpeStop
+Cohesion: 0.08
+Nodes (12): .body, Deck, Indexed, SetGroup, Cr10Anchor, Effort, EffortWord, RpeStop (+4 more)
 
-### Community 57 - "sessionVolumeKg"
-Cohesion: 0.06
-Nodes (33): ExerciseHistoryBody(), ExerciseLedger(), longDate(), TAG, collapsePairs(), TrendSetRow, EMPTY, ExerciseHistoryData (+25 more)
+### Community 57 - "OnyxPrimitives.swift"
+Cohesion: 0.07
+Nodes (39): WeekSoFarView, .body, .position, .ring, .spokenChange, BarChart, .body, .peak (+31 more)
 
-### Community 58 - "BigValue"
-Cohesion: 0.04
-Nodes (147): .face, .face, .body, .body, .body, .body, .body, .face (+139 more)
+### Community 58 - ".face"
+Cohesion: 0.05
+Nodes (81): AdherenceStrip, .body, CalendarFace, .body, .caption, .days, .s, ConsistencyFace (+73 more)
 
 ### Community 59 - "SessionClock"
 Cohesion: 0.18
 Nodes (5): Clock, ClockMode, stopwatch, timer, SessionClock
 
-### Community 60 - "TargetSnapshot"
-Cohesion: 0.12
-Nodes (9): AppDatabase, DailyTarget, TargetProfile, TargetResolver, TargetSnapshot, .storedProfiles, .weekStartDay, TargetSources (+1 more)
+### Community 60 - "TargetResolver"
+Cohesion: 0.13
+Nodes (6): Harness, .body, NutritionPreviews, AppDatabase, TargetResolver, TargetResolverTests
 
 ### Community 61 - "dependencies"
 Cohesion: 0.05
@@ -1467,31 +1490,31 @@ Cohesion: 0.11
 Nodes (23): CardioRecord, CardioRow, NightWindow, AxisValues, Block, BlockOut, CardioPrsGoldenTests, ExerciseGoldenTests (+15 more)
 
 ### Community 65 - "dashboard/layout.ts"
-Cohesion: 0.07
-Nodes (70): NOT_ON_WEB, SIZE_WORD, SortableSlot, StackFaces, WEB_WIDGET_IDS, webLayout(), WidgetGrid(), addWidget() (+62 more)
+Cohesion: 0.08
+Nodes (64): NOT_ON_WEB, SIZE_WORD, SortableSlot, StackFaces, WEB_WIDGET_IDS, webLayout(), WidgetGrid(), addWidget() (+56 more)
 
 ### Community 66 - ".adjust"
-Cohesion: 0.15
-Nodes (10): Edit, calories, carbs, fat, protein, MacroMath, Macros, .atwater (+2 more)
+Cohesion: 0.17
+Nodes (8): Edit, calories, carbs, fat, protein, MacroMath, MacroMathTests, .sweep
 
-### Community 67 - "app/layout.tsx"
-Cohesion: 0.04
-Nodes (75): metadata, viewport, HelixMark(), LaunchSurface(), AuthGate(), AuthState, hasPersistedSession(), CrashRecorder() (+67 more)
+### Community 67 - "healthkit.ts"
+Cohesion: 0.09
+Nodes (33): NativeBoot(), Phase, PullToRefresh(), ALLOWED, initDeepLinks(), safePath(), EXTRA_READ_TYPES, fetchSleep() (+25 more)
 
 ### Community 68 - "weeklyExport.ts"
-Cohesion: 0.06
-Nodes (54): isDefaultSkipReason(), WEIGH_IN_SKIP_REASONS, weighInSkipReason, tdeeBreakdown(), buildWeeklyExport(), cardioLabel(), clock(), consolidateSupplements() (+46 more)
-
-### Community 69 - "isoAddDays"
 Cohesion: 0.04
-Nodes (93): addDays(), BodyProgressPanel, iso(), PathfinderInner(), View, WEEKDAYS, fmt(), ReportsPage() (+85 more)
+Nodes (84): isDefaultSkipReason(), WEIGH_IN_SKIP_REASONS, weighInSkipReason, StandingPr, estimatedTag(), exceptionTag(), NUTRITION_EXCEPTION_REASONS, NutritionExceptionReason (+76 more)
 
-### Community 70 - "ceilings.ts"
-Cohesion: 0.07
-Nodes (50): RoutineList(), WD_SHORT, AdherenceDay, AdherenceDayIn, AdherenceTargets, AdherenceVerdict, exerciseTrend, macroAdherenceSeries() (+42 more)
+### Community 69 - "useWeeklyLoop.ts"
+Cohesion: 0.03
+Nodes (140): addDays(), BodyProgressPanel, iso(), PathfinderInner(), View, WEEKDAYS, fmt(), ReportsPage() (+132 more)
+
+### Community 70 - "query-key-coverage.test.ts"
+Cohesion: 0.08
+Nodes (30): main(), render(), SOURCE, TARGETS, AuthGate(), AuthState, hasPersistedSession(), RealtimeProvider() (+22 more)
 
 ### Community 71 - ".build"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (21): DayCell, .id, .isLogged, .isRest, ProgressionRow, .id, Snapshot, State (+13 more)
 
 ### Community 72 - "eslint.config.mjs"
@@ -1499,12 +1522,12 @@ Cohesion: 0.40
 Nodes (4): compat, __dirname, eslintConfig, __filename
 
 ### Community 73 - "ProgramExercise"
-Cohesion: 0.09
-Nodes (21): Program, ProgramDay, .id, ProgramExercise, .id, ProgramPhase, .blurb, bulk (+13 more)
+Cohesion: 0.11
+Nodes (18): Program, ProgramDay, .id, ProgramExercise, .id, ProgramPhase, .blurb, bulk (+10 more)
 
 ### Community 74 - "Decodable"
 Cohesion: 0.04
-Nodes (66): BaselineSetRow, Decodable, LedgerRow, MuscleSetRow, Empty, Empty, Empty, PrCandidateSet (+58 more)
+Nodes (60): BaselineSetRow, Decodable, LedgerRow, MuscleSetRow, Empty, Empty, Empty, PrCandidateSet (+52 more)
 
 ### Community 75 - "IntentDescription"
 Cohesion: 0.12
@@ -1515,8 +1538,8 @@ Cohesion: 0.29
 Nodes (8): AppDatabase, StackCredit, Bool, Calendar, Date, Double, String, SupplementDose
 
 ### Community 77 - "levers.ts"
-Cohesion: 0.09
-Nodes (38): LeversPage(), longDate(), LeverTag(), DEFAULT_ERA_WINDOW, ERA_WINDOW_MODES, eraForWindow(), eraWindowFromKey(), EraWindowInput (+30 more)
+Cohesion: 0.10
+Nodes (37): LeversPage(), DEFAULT_ERA_WINDOW, ERA_WINDOW_MODES, eraForWindow(), eraWindowFromKey(), EraWindowInput, eraWindowKey(), EraWindowMode (+29 more)
 
 ### Community 80 - "next.config.ts"
 Cohesion: 0.50
@@ -1527,76 +1550,76 @@ Cohesion: 0.70
 Nodes (4): canRecoverSilently(), GlobalError(), purgeAndReload(), reloadWhenVisible()
 
 ### Community 83 - "LiveStatsView"
-Cohesion: 0.11
-Nodes (23): .content, LiveStatsView, .accent, .body, .effortCard, .exercisesCard, .muscleCard, .nowCard (+15 more)
+Cohesion: 0.12
+Nodes (22): .content, LiveStatsView, .accent, .body, .effortCard, .exercisesCard, .muscleCard, .nowCard (+14 more)
 
 ### Community 84 - ".progressionQueue"
 Cohesion: 0.13
 Nodes (15): AppDatabase, Program, ProgramPhase, Set, String, AppDatabase, SeedHistory, CardioLogRow (+7 more)
 
 ### Community 86 - "LeverId"
-Cohesion: 0.14
-Nodes (18): LeverGoals, LeverId, baseline, baseline2, custom, lever1, lever2, maintenanceWeek (+10 more)
+Cohesion: 0.09
+Nodes (24): LeverGoals, LeverId, baseline, baseline2, custom, lever1, lever2, maintenanceWeek (+16 more)
 
 ### Community 87 - "smartBlocks.ts"
-Cohesion: 0.12
-Nodes (27): HeroCard(), leadOf(), Markdown(), MarkdownView(), TONE_COLOR, BarsBlock, cellsOf(), classify() (+19 more)
+Cohesion: 0.25
+Nodes (16): BarsBlock, cellsOf(), classify(), CodeBlock, HeroBlock, heroOf(), isBanner(), MdBlock (+8 more)
 
 ### Community 88 - "InBodyEntryView"
 Cohesion: 0.07
-Nodes (39): BodyCompDerived, Field, bmi, bmr, bodyFat, bone, muscle, protein (+31 more)
+Nodes (41): BodyCompDerived, Field, bmi, bmr, bodyFat, bone, muscle, protein (+33 more)
 
 ### Community 89 - "useNutritionGoals.ts"
-Cohesion: 0.08
-Nodes (58): ProfilesZone(), formatDate(), MacroKey, MacroProgressChart(), METRICS, NutritionRow, DayTargetCard(), CASCADE_KEYS (+50 more)
+Cohesion: 0.05
+Nodes (72): longDate(), ProfilesZone(), DayTargetCard(), BodyTargets, PlanNumbers, RecoveryNumbers, CASCADE_KEYS, dailyTargetKey() (+64 more)
 
 ### Community 90 - "StackPushTests"
 Cohesion: 0.17
 Nodes (7): IdleSyncRemote, RecordingPush, StackPushTests, AppDatabase, Bool, String, T
 
 ### Community 91 - "SetPatch"
-Cohesion: 0.16
+Cohesion: 0.18
 Nodes (7): Decoder, SetPatch, .isEmpty, event(), fold(), SetEventFoldTests, SetEvent
 
 ### Community 92 - "AppDatabase"
-Cohesion: 0.10
-Nodes (17): DatabaseMigrator, DatabaseWriter, AppDatabase, .migrator, OpenError, missingDatabase, Bool, Database (+9 more)
+Cohesion: 0.09
+Nodes (19): Database, DatabaseMigrator, DatabaseWriter, Exercise, AppDatabase, .migrator, OpenError, missingDatabase (+11 more)
 
 ### Community 93 - "scripts"
 Cohesion: 0.08
 Nodes (24): scripts, analyze, atlas, build, check, check:atlas, check:mirror, check:swift (+16 more)
 
-### Community 94 - "LoggerModelTests"
-Cohesion: 0.18
-Nodes (4): LoggerModelTests, AppDatabase, Int, String
+### Community 94 - "LoggerModel"
+Cohesion: 0.09
+Nodes (19): .restCapsule, LoggerModel, .muscleSets, .plannedSets, .recordCount, .sessionRow, .volumeCurve, Date (+11 more)
 
 ### Community 95 - "routineTemplate.ts"
-Cohesion: 0.09
-Nodes (26): routineTemplateKey(), useRoutineTemplate(), useRoutineTemplates(), daySplitEnum(), parseTemplate(), payloadToTemplate(), RoutineTemplate, TEMPLATE_TAGS (+18 more)
+Cohesion: 0.07
+Nodes (37): RoutineList(), WD_SHORT, routineTemplateKey(), useRoutineTemplate(), useRoutineTemplates(), daySplitEnum(), ProgramDay, PROGRAMS (+29 more)
 
-### Community 96 - "useWeeklyLoop.ts"
-Cohesion: 0.08
-Nodes (47): FatigueWidgetImpl(), SlotDots(), FatigueTracker(), SlotRow(), useFatigue(), useLogFatigue(), axesBySession(), AXIS_ORDER (+39 more)
+### Community 96 - "FatigueTracker.tsx"
+Cohesion: 0.21
+Nodes (20): FatigueWidgetImpl(), FatigueTracker(), SlotRow(), useFatigue(), useLogFatigue(), FATIGUE_LEVELS, FatigueDay, fatigueDelta() (+12 more)
 
 ### Community 103 - "ReadinessV9GoldenTests"
 Cohesion: 0.14
 Nodes (15): LoadCardio, LoadSession, LoadSignal, CardioInput, Constants, DailyInput, Empty, LoadsInput (+7 more)
 
 ### Community 104 - "SleepTile"
-Cohesion: 0.10
-Nodes (20): .fuelLine, .detail, SleepTile, .arc, .arcWidth, .body, .goalChip, .goalText (+12 more)
+Cohesion: 0.07
+Nodes (29): .fuelLine, .detail, SleepTile, .arc, .arcWidth, .body, .goalChip, .goalText (+21 more)
 
 ### Community 105 - "components.json"
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
 ### Community 106 - "HealthkitPlugin"
-Cohesion: 0.08
-Nodes (13): Capacitor, CAPBridgedPlugin, CAPBridgeViewController, CAPPlugin, HealthKit, HKQuantityType, RootView, .body (+5 more)
+Cohesion: 0.10
+Nodes (10): Capacitor, CAPBridgedPlugin, CAPBridgeViewController, CAPPlugin, HealthKit, HKQuantityType, UIKit, HealthkitPlugin (+2 more)
 
 ### Community 107 - "CardioAxis"
-Cohesion: 0.12
-Nodes (15): CardioAxis, calories, distance, duration, .isMin, .label, pace, CardioPrs (+7 more)
+Cohesion: 0.20
+Nodes (11): CardioAxis, calories, distance, duration, .isMin, .label, pace, CardioPrs (+3 more)
 
 ### Community 108 - "AppDatabase"
 Cohesion: 0.17
@@ -1623,20 +1646,20 @@ Cohesion: 0.50
 Nodes (3): FIXTURE, TRACKS, VIEWPORTS
 
 ### Community 115 - "ReportsGoldenTests.swift"
-Cohesion: 0.24
-Nodes (6): WeekJson, Empty, firstDiff(), loadRaw(), stripNulls(), WeeklyExportGoldenTests
+Cohesion: 0.38
+Nodes (5): Empty, firstDiff(), loadRaw(), stripNulls(), WeeklyExportGoldenTests
 
-### Community 116 - "View"
+### Community 116 - "BigValue"
 Cohesion: 0.04
-Nodes (97): .segments, .face, CalorieDayFace, .body, .s, CalorieLedgerFace, .body, .ledgerColumn (+89 more)
+Nodes (124): .face, .face, .body, .body, .body, .body, .body, .face (+116 more)
 
-### Community 117 - "DayTargetSheet"
-Cohesion: 0.12
-Nodes (15): Harness, .body, NutritionPreviews, DayTargetSheet, .reasons, .shapeFootnote, Field, carbs (+7 more)
+### Community 117 - "OnyxNumberField"
+Cohesion: 0.07
+Nodes (43): OnyxFieldCell, .body, OnyxHeldRow, .body, OnyxKeyboardDone, .body, OnyxNumberField, .body (+35 more)
 
-### Community 118 - "OnyxWorkoutAttributes"
-Cohesion: 0.09
-Nodes (37): ActivityAttributes, ActivityViewContext, .activityPage, .restCell, LockScreenWorkout, .body, .body, OnyxWidgetType (+29 more)
+### Community 118 - "View"
+Cohesion: 0.04
+Nodes (82): ActivityAttributes, ActivityViewContext, Combine, .activityPage, .restCell, LockScreenWorkout, .body, .body (+74 more)
 
 ### Community 119 - "DoseRow"
 Cohesion: 0.16
@@ -1646,33 +1669,33 @@ Nodes (18): ArchivedRow, DoseRow, .caption, .custom, .skipped, .spokenState, Sta
 Cohesion: 0.16
 Nodes (13): BatteryDrain, activity, load, time, wellness, workout, BatteryStackDay, .id (+5 more)
 
-### Community 121 - "TargetProfile"
-Cohesion: 0.14
-Nodes (7): .selectedKey, TargetProfile, TargetProfiles, ResolvedTargets, .goals, Targets, TargetSources
+### Community 121 - "ResolvedTargets"
+Cohesion: 0.31
+Nodes (4): ResolvedTargets, .goals, Targets, TargetSources
 
 ### Community 122 - "HelixScope"
 Cohesion: 0.12
 Nodes (19): LocalizedError, HelixScope, body, full, lifestyle, performance, training, HelixSnapshotClient (+11 more)
 
-### Community 124 - "CodingKeys"
-Cohesion: 0.08
-Nodes (24): CodingKeys, avgBpm, avgBpmEstimated, caloriesBurned, caloriesEstimated, dayKey, durationMin, endedAt (+16 more)
+### Community 124 - "client.ts"
+Cohesion: 0.07
+Nodes (21): daysAgoISO(), Series, TrendStrip(), useTrendSeries(), RestSuggestion(), HelixMark(), LaunchSurface(), SessRow (+13 more)
 
 ### Community 125 - "Double"
+Cohesion: 0.21
+Nodes (9): LoadCardio, LoadSession, Readiness, ReadinessConstants, ReadinessHistory, Bool, Double, ReadinessResult (+1 more)
+
+### Community 126 - "MirrorCoalescer"
+Cohesion: 0.17
+Nodes (7): RealtimeChannelV2, MirrorCoalescer, .noted, MirrorRealtime, .tables, MirrorRefreshing, MirrorSync
+
+### Community 127 - ".build"
 Cohesion: 0.16
-Nodes (12): LoadCardio, LoadSession, Readiness, ReadinessConstants, ReadinessHistory, Bool, Double, ReadinessResult (+4 more)
+Nodes (17): Consistency, ConsistencyCell, .id, ConsistencyDayIn, ConsistencySeries, ConsistencyState, done, extra (+9 more)
 
-### Community 126 - "SyncCoordinator"
-Cohesion: 0.06
-Nodes (20): RealtimeChannelV2, MirrorCoalescer, .noted, MirrorRealtime, .tables, MirrorRefreshing, MirrorSync, SyncCoordinator (+12 more)
-
-### Community 127 - "readiness.ts"
-Cohesion: 0.13
-Nodes (29): toDays(), ExportReadiness, cardioLoad(), clamp(), computeReadinessSignals(), dailyLoads(), ewmaLoads(), fosterWeek() (+21 more)
-
-### Community 128 - ".resolve"
-Cohesion: 0.31
-Nodes (5): EraWindowInput, ResolvedEraWindow, .era, Bool, String
+### Community 128 - "commit.ts"
+Cohesion: 0.16
+Nodes (18): admission, admitNewestFirst(), isEligible(), isJsonSafe(), isSmallEnough(), PersistableQuery, QueryProvider(), sizeOf() (+10 more)
 
 ### Community 129 - "GoalBoard"
 Cohesion: 0.26
@@ -1683,48 +1706,40 @@ Cohesion: 0.40
 Nodes (5): SupplementNutrients, CustomSupplement, Double, String, SupplementDose
 
 ### Community 131 - "OnyxWidgets.swift"
-Cohesion: 0.10
-Nodes (28): ActivityKit, AppIntents, IntentResult, LiveActivityIntent, OnyxBodyWidget, .body, OnyxDailyWidget, .body (+20 more)
+Cohesion: 0.20
+Nodes (20): OnyxBodyWidget, .body, OnyxDailyWidget, .body, OnyxFuelWidget, .body, OnyxLockWidget, .body (+12 more)
 
-### Community 135 - "isWorkingSet"
-Cohesion: 0.08
-Nodes (26): args, buckets, db, DRY, env, MAP, unmapped, ExerciseHistory (+18 more)
-
-### Community 140 - "CardioLogSheet"
-Cohesion: 0.24
-Nodes (4): CardioLogSheet, .canSave, .pace, CardioMetrics
+### Community 135 - "s"
+Cohesion: 0.06
+Nodes (31): asserted, bySession, db, deferred, DRY, env, jiti, keep (+23 more)
 
 ### Community 142 - ".syncSessionMetrics"
-Cohesion: 0.23
-Nodes (3): Estimates, AppDatabase, HealthSync
+Cohesion: 0.19
+Nodes (4): Estimates, KcalSample, AppDatabase, HealthSync
 
 ### Community 143 - "EraWindow"
 Cohesion: 0.09
-Nodes (21): EraWindow, all, currentLever, currentPhase, days, .key, .leverFloor, sinceCutStart (+13 more)
+Nodes (22): EraWindow, all, currentLever, currentPhase, days, .key, .leverFloor, sinceCutStart (+14 more)
 
 ### Community 147 - "FinishSheet"
-Cohesion: 0.14
-Nodes (18): Metric, FinishSheet, .accent, .body, .columns, .finishButton, .heaviest, .minutes (+10 more)
+Cohesion: 0.12
+Nodes (21): Metric, FinishSheet, .accent, .body, .columns, .finishButton, .heaviest, .minutes (+13 more)
 
 ### Community 156 - "OnyxSleepStage"
 Cohesion: 0.04
-Nodes (65): .body, .body, MetricRow, .body, .deltaChip, .deltaSpoken, .label, .reading (+57 more)
+Nodes (57): .body, .body, MetricRow, .body, .deltaChip, .deltaSpoken, .label, .reading (+49 more)
 
 ### Community 157 - "SetQuality"
 Cohesion: 0.14
 Nodes (19): Cr10, EffortWord, .id, EffortWords, RpeLadder, SetQuality, assisted, cutShort (+11 more)
 
-### Community 161 - ".view"
-Cohesion: 0.12
-Nodes (15): HistoryPreviews, AppEnvironment, Double, String, View, CalendarJumpSheet, .body, MonthGrid (+7 more)
+### Community 161 - "HistoryWeeks.swift"
+Cohesion: 0.17
+Nodes (13): CalendarJumpSheet, .body, .months, Month, MonthGrid, .body, DayHistoryRow, .body (+5 more)
 
 ### Community 162 - "VitalsGrid"
 Cohesion: 0.18
 Nodes (16): Reading, A, B, Bool, Color, Double, String, VitalCell (+8 more)
-
-### Community 166 - "Color"
-Cohesion: 0.13
-Nodes (5): OnyxUITests, Color, onyx, OnyxCorner, OnyxSpace
 
 ### Community 168 - "BodyCompFields"
 Cohesion: 0.26
@@ -1736,15 +1751,15 @@ Nodes (3): SessionMetricsTests, .calendar, Watch
 
 ### Community 171 - "tapLight"
 Cohesion: 0.11
-Nodes (21): DurationSheet(), ExerciseDeckList(), RestCountdown(), Step(), SessionMenu(), Step(), SheetMenuRow(), MEASURING (+13 more)
+Nodes (23): ExerciseCard, ReadyCue, DRAG_MODIFIERS, DROP_ANIMATION, ExerciseDeckList(), MEASURING, RestCountdown(), Step() (+15 more)
 
 ### Community 172 - "palette-discipline.test.ts"
 Cohesion: 0.43
 Nodes (6): ALLOWED_ORPHANS, PALETTE_SRC, PALETTE_VALUES, scan(), sourceFiles(), stripComments()
 
 ### Community 173 - "OnyxMark"
-Cohesion: 0.27
-Nodes (9): AnyShapeStyle, OnyxMark, .ink, Bool, CGFloat, Color, Double, View (+1 more)
+Cohesion: 0.17
+Nodes (13): AnyShapeStyle, OnyxMark, .body, .ink, OnyxRing, Bool, CGFloat, CGRect (+5 more)
 
 ### Community 175 - "MuscleMapGoldenTests"
 Cohesion: 0.11
@@ -1754,13 +1769,13 @@ Nodes (12): MoverTokens, BodyweightOut, ExercisePredicateGoldenTests, ExerciseTa
 Cohesion: 0.21
 Nodes (16): camel(), generate(), migrationFor(), OUT, parseCols(), pascal(), registryFor(), RESERVED (+8 more)
 
-### Community 177 - "PhaseKind"
-Cohesion: 0.22
-Nodes (13): PhaseDef, PhaseEra, onyx, ppl, PhaseKind, bulk, cut, deload (+5 more)
+### Community 177 - ".dayNumber"
+Cohesion: 0.08
+Nodes (21): VitalMetric, SessionElapsed, SessionPause, Week, PhaseDef, PhaseEra, onyx, ppl (+13 more)
 
 ### Community 178 - "VolumeStreamCard"
 Cohesion: 0.12
-Nodes (26): CalendarModel, Bar, Cell, .yEnd, .yStart, IntensityCard, .body, MuscleFocusCard (+18 more)
+Nodes (25): CalendarModel, Bar, Cell, .yEnd, .yStart, IntensityCard, .body, .volumeByDate (+17 more)
 
 ### Community 179 - "CompositeRowPushTests"
 Cohesion: 0.25
@@ -1783,19 +1798,19 @@ Cohesion: 0.13
 Nodes (12): CascadeIn, DraftGoldenTests, ExIn, PairIn, PairOut, PatchIn, PatchSpec, Int (+4 more)
 
 ### Community 185 - "SetOptionsSheet"
-Cohesion: 0.17
-Nodes (16): .body, SetOptionsSheet, .accent, .actions, .body, .kindSection, .qualityColumns, .qualitySection (+8 more)
+Cohesion: 0.18
+Nodes (15): SetOptionsSheet, .accent, .actions, .body, .kindSection, .qualityColumns, .qualitySection, .typeColumns (+7 more)
 
 ### Community 186 - "PrTruth"
 Cohesion: 0.23
 Nodes (5): LoggedBest, PrFloor, PrTruth, TruthRecord, TruthSetVolume
 
 ### Community 187 - "SetSnapshot"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (5): SetSnapshot, Double, Int, AppDatabaseTests, AppDatabase
 
 ### Community 188 - "WidgetId"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (21): WidgetId, bar, body, cardio, consistency, deficit, fatigue, fuel (+13 more)
 
 ### Community 189 - "Insights"
@@ -1811,16 +1826,16 @@ Cohesion: 0.14
 Nodes (17): CompositionFace, .accent, .b, .fat, .ffm, .lst, .s, .smm (+9 more)
 
 ### Community 192 - "FlowRow"
-Cohesion: 0.22
-Nodes (8): Layout, FlowRow, CGFloat, CGRect, CGSize, ProposedViewSize, Subviews, FlowLayout
+Cohesion: 0.31
+Nodes (7): Layout, FlowRow, CGFloat, CGRect, CGSize, ProposedViewSize, Subviews
 
 ### Community 193 - "LayoutGoldenTests"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (18): DashboardSurface, Catalogue, ClampInput, decodeLayout(), Empty, HeightExpected, HeightInput, idsIn() (+10 more)
 
-### Community 194 - "CardioLogger.tsx"
-Cohesion: 0.15
-Nodes (27): CardioSheet(), CardioWidgetImpl(), CardioLogger(), KINDS, axesHeldBy(), axisValue(), CARDIO_AXES, CARDIO_AXIS_LABEL (+19 more)
+### Community 194 - "DailyWidgets.tsx"
+Cohesion: 0.09
+Nodes (41): CardioSheet(), CardioWidget, CardioWidgetImpl(), FatigueWidget, KIND_LABEL, minutesNow(), SlotDots(), StackWidgetImpl() (+33 more)
 
 ### Community 195 - "ProgressConfiguration"
 Cohesion: 0.18
@@ -1828,19 +1843,15 @@ Nodes (11): ProgressConfiguration, .description, .onyxFocus, .scope, .title, Pro
 
 ### Community 196 - "String"
 Cohesion: 0.02
-Nodes (95): Bundle, CustomStringConvertible, Error, HelixSnapshot, .badges, .timed, .change, key (+87 more)
+Nodes (81): Bundle, CustomStringConvertible, HelixSnapshot, Input, .badges, .change, key, OSStatus (+73 more)
 
 ### Community 197 - "In"
 Cohesion: 0.20
 Nodes (13): ArchiveRow, IdRow, In, Out, SupplementCreditGoldenTests, Bool, CustomSupplement, DayClock (+5 more)
 
-### Community 198 - "Observation"
-Cohesion: 0.25
-Nodes (3): Observation, SyncCoordinating, SyncCoordinator
-
-### Community 199 - "NutritionPhase"
-Cohesion: 0.05
-Nodes (32): ExerciseSummary, ExerciseSummarySet, Bool, Double, String, TrendSetRow, VolumeSet, ProgressionVerdict (+24 more)
+### Community 199 - "ExerciseSummary"
+Cohesion: 0.24
+Nodes (8): .stats, ExerciseSummary, ExerciseSummarySet, Bool, Double, String, TrendSetRow, VolumeSet
 
 ### Community 200 - "Readiness v9 — the model behind the battery"
 Cohesion: 0.17
@@ -1851,8 +1862,8 @@ Cohesion: 0.12
 Nodes (16): CodingKeys, date, dayKey, est1rmKg, exerciseId, exerciseName, foldOrder, id (+8 more)
 
 ### Community 202 - "ContextMode"
-Cohesion: 0.07
-Nodes (30): Coordinator, ReportWebView, MainActor, String, URL, AppDatabase, ResolvedGoals, ScoringSupplements (+22 more)
+Cohesion: 0.06
+Nodes (32): ContextMode, ContextRange, ContextGoldenTests, CoverIn, DateIn, DatesIn, DaysIn, KindsIn (+24 more)
 
 ### Community 204 - "BodyFocusOption"
 Cohesion: 0.14
@@ -1866,40 +1877,40 @@ Nodes (5): attributed, behind, db, DRY, env
 Cohesion: 0.10
 Nodes (20): CodingKeys, body, createdAt, deviceId, est1rmKg, exerciseId, id, kind (+12 more)
 
-### Community 208 - ".whole"
-Cohesion: 0.14
-Nodes (8): NutritionFormat, AppDatabase, Bool, DailyTarget, Double, String, T, .against
+### Community 208 - "WidgetPreviews"
+Cohesion: 0.15
+Nodes (17): AnyView, Cell, .size, CGSize, String, View, WidgetPreviews, LockView (+9 more)
 
-### Community 209 - "dailyLog.ts"
-Cohesion: 0.06
-Nodes (48): POST(), todayISO(), POST(), GET(), POST(), GET(), DB, requireUserId() (+40 more)
+### Community 209 - "save.ts"
+Cohesion: 0.04
+Nodes (66): POST(), GET(), POST(), GET(), DB, requireUserId(), resolveCallerUserId(), BODY_MASS_KEYS (+58 more)
 
 ### Community 210 - "AppDelegate"
 Cohesion: 0.22
 Nodes (7): NSUserActivity, UIApplication, UIApplicationDelegate, UIResponder, UIUserActivityRestoring, UIWindow, AppDelegate
 
-### Community 211 - "OnyxBanner"
-Cohesion: 0.21
-Nodes (11): OnyxBanner, .body, .row, Color, String, Void, Tone, failure (+3 more)
+### Community 211 - "Coordinator"
+Cohesion: 0.16
+Nodes (12): Coordinator, ReportWebView, MainActor, String, URL, NSObject, UIViewRepresentable, WebKit (+4 more)
 
 ### Community 212 - "clock"
 Cohesion: 0.28
 Nodes (6): clock(), SessionClockEventTests, Date, Double, Int64, String
 
 ### Community 213 - "LiveSessionOwner"
-Cohesion: 0.15
-Nodes (4): AppDatabase, LiveSessionOwner, .id, LiveSessionOwnerTests
+Cohesion: 0.12
+Nodes (9): EventStoreError, clockUnavailable, emptyPatch, notSessionOwner, unresolvableAck, AppDatabase, LiveSessionOwner, .id (+1 more)
 
 ### Community 214 - "sessionSeed.ts"
-Cohesion: 0.05
-Nodes (47): asserted, bySession, db, deferred, DRY, env, jiti, keep (+39 more)
+Cohesion: 0.08
+Nodes (32): AXES, beaten, current, db, DRY, env, jiti, post (+24 more)
 
-### Community 216 - "workout.ts"
-Cohesion: 0.09
-Nodes (16): SetEventFold, Bool, SetEvent, String, SPLIT, ActiveWorkoutSession, asNutritionMode(), Exercise (+8 more)
+### Community 216 - ".sets"
+Cohesion: 0.29
+Nodes (5): SetEventFold, Bool, SetEvent, String, WorkoutSet
 
 ### Community 217 - "HistoryWeeksTests"
-Cohesion: 0.25
+Cohesion: 0.27
 Nodes (4): HistoryWeeksTests, AppDatabase, Double, String
 
 ### Community 218 - "backfill-notion-sets.mjs"
@@ -1923,36 +1934,36 @@ Cohesion: 0.06
 Nodes (44): Cr10Anchor, EffortWord, LadderVerdict, LevelUpCue, LoadRung, CeilingsGoldenTests, Constants, CountsIn (+36 more)
 
 ### Community 224 - "LiveLoggerView"
-Cohesion: 0.09
-Nodes (22): LiveActivityController, LoggerFace, LiveLoggerView, .accent, .body, .cancelActionTitle, .cancelMessage, .chips (+14 more)
+Cohesion: 0.08
+Nodes (25): CGFloat, LiveActivityController, LoggerFace, LiveLoggerView, .accent, .body, .cancelActionTitle, .cancelMessage (+17 more)
 
-### Community 225 - "overlay.tsx"
-Cohesion: 0.33
-Nodes (9): DatePickerPopover(), iso(), WD, acquireOverlay(), applyLock(), clearLock(), Portal(), releaseOverlay() (+1 more)
+### Community 225 - "FmtV2Report.tsx"
+Cohesion: 0.13
+Nodes (11): anchorsOf(), asymmetryOf(), FmtV2Report(), metricOf(), proseLines(), SectionView(), AsymmetryRow, FmtV2Report (+3 more)
 
-### Community 226 - "BackfillProgress"
-Cohesion: 0.12
-Nodes (17): .preview, BackfillProgress, .isFinished, .rowsLanded, .tablesLanded, SyncProgress, SyncState, failed (+9 more)
+### Community 226 - "SyncCoordinator.swift"
+Cohesion: 0.22
+Nodes (10): SyncProgress, SyncState, failed, idle, running, SyncStep, health, pull (+2 more)
 
 ### Community 227 - "PauseControlling"
-Cohesion: 0.13
-Nodes (21): AnyObject, .clocks, .timerButton, Binding, Color, Date, TimerSheet, .body (+13 more)
+Cohesion: 0.11
+Nodes (24): AnyObject, .clocks, Bool, Date, TimeInterval, .timerButton, Binding, Color (+16 more)
 
 ### Community 228 - "renderer.ts"
 Cohesion: 0.30
 Nodes (12): isFmtV2(), el(), markdown(), proseOf(), render(), renderBars(), renderBlocks(), renderHero() (+4 more)
 
-### Community 229 - "VolumeChart.tsx"
-Cohesion: 0.13
-Nodes (21): formatDate(), splitColor(), VolumeChart(), VolumeCurve(), axisBound(), compactKg(), niceDomain(), NiceDomainOptions (+13 more)
+### Community 229 - "Page"
+Cohesion: 0.17
+Nodes (15): Page, .durationDelta, .setsDelta, .tonnageDelta, .verdict, SessionAnalysis, SplitPoint, .id (+7 more)
 
-### Community 230 - "tags.ts"
-Cohesion: 0.14
-Nodes (17): Row(), EQUIPMENT_RULES, equipmentLabelFor(), EquipmentRule, exerciseIcon(), exerciseIconFor(), ICONS, EQUIPMENT_ALIASES (+9 more)
+### Community 230 - "ExerciseCard.tsx"
+Cohesion: 0.05
+Nodes (48): Row(), CardioCell(), setGridFor(), SetGridMode, setValueLabel(), BODYWEIGHT_PATTERNS, isBodyweightExercise(), isLoadableBodyweightExercise() (+40 more)
 
-### Community 231 - ".seeded"
-Cohesion: 0.23
-Nodes (3): AppDatabase, OnyxSnapshot, WidgetSnapshotBuilderTests
+### Community 231 - "WorkoutSession"
+Cohesion: 0.11
+Nodes (12): Exercise, Bool, Double, String, WorkoutSession, WorkoutSet, AppDatabase, OnyxSnapshot (+4 more)
 
 ### Community 233 - "String"
 Cohesion: 0.19
@@ -1963,7 +1974,7 @@ Cohesion: 0.29
 Nodes (6): VitalsFocusOption, .focus, panel, recovery, respiration, temperature
 
 ### Community 235 - "SeriesGoldenTests"
-Cohesion: 0.12
+Cohesion: 0.14
 Nodes (10): AdherenceDayIn, AdherenceTargets, AdherenceIn, ChipIn, SeriesGoldenTests, TrendIn, VitalIn, VolumeIn (+2 more)
 
 ### Community 236 - "ExtractedGoldenTests.swift"
@@ -1971,28 +1982,28 @@ Cohesion: 0.06
 Nodes (25): BodyDetailRow, BodyTrendRow, SetGroup, MuscleDistribution, ProgressionScope, Alert, DeckGoldenTests, In (+17 more)
 
 ### Community 237 - "Zone.tsx"
-Cohesion: 0.06
-Nodes (48): BodyTargetsPage(), LEVER_LABEL(), SettingsPage(), SettingsSheet, MODE_TO_PHASE, planList(), PlanPage(), ExerciseDetailPage() (+40 more)
+Cohesion: 0.05
+Nodes (57): BodyTargetsPage(), LEVER_LABEL(), SettingsPage(), SettingsSheet, MODE_TO_PHASE, planList(), PlanPage(), ExerciseDetailPage() (+49 more)
 
 ### Community 238 - "JSONValue"
-Cohesion: 0.11
-Nodes (20): NutritionMode, NutritionPreset, NutritionMode, bulk, cut, NutritionPreset, NutritionPresets, PresetOverride (+12 more)
+Cohesion: 0.08
+Nodes (26): .stats, NutritionMode, NutritionPreset, MuscleAggregate, MuscleAggregator, MuscleSetRow, MuscleStat, WeeklyMuscleRow (+18 more)
 
 ### Community 239 - ".build"
-Cohesion: 0.41
-Nodes (7): DeficitDayIn, DeficitLedger, DeficitLedgerSeries, DeficitWeek, .id, Double, String
+Cohesion: 0.30
+Nodes (8): DeficitDayIn, DeficitLedger, DeficitLedgerSeries, DeficitWeek, .id, Double, String, DeficitLedgerGoldenTests
 
-### Community 240 - "useMuscleAnalytics.ts"
-Cohesion: 0.14
-Nodes (18): VolumeStream(), MuscleAnalyticsSection(), aggregateMuscleSets(), effectiveVolumes(), MUSCLE_GROUPS, MUSCLE_MAP, MuscleAggregate, MuscleSetRow (+10 more)
+### Community 240 - ".scoringInputs"
+Cohesion: 0.27
+Nodes (9): AppDatabase, ResolvedGoals, ScoringSupplements, SetCounts, Bool, Double, ScoringInputs, String (+1 more)
 
 ### Community 241 - "Body"
-Cohesion: 0.10
+Cohesion: 0.09
 Nodes (20): Encoder, Body, amend, append, pause, resume, void, Kind (+12 more)
 
-### Community 242 - "AppEnvironment.swift"
-Cohesion: 0.09
-Nodes (14): App, AuthLocalStorage, Supabase, HelixWatch_Watch_AppApp, AppEnvironment, .preview, OnyxApp, .body (+6 more)
+### Community 242 - ".view"
+Cohesion: 0.08
+Nodes (14): AuthLocalStorage, HistoryPreviews, AppEnvironment, Double, String, View, Security, Supabase (+6 more)
 
 ### Community 243 - "WeekCapsuleRow"
 Cohesion: 0.18
@@ -2019,72 +2030,80 @@ Cohesion: 0.20
 Nodes (9): background_color, description, display, icons, name, orientation, short_name, start_url (+1 more)
 
 ### Community 250 - "HealthKitReader"
-Cohesion: 0.14
-Nodes (11): HKObjectType, HKWorkoutActivityType, HealthKitReader, .isAvailable, Bool, Date, Double, HKUnit (+3 more)
+Cohesion: 0.08
+Nodes (15): HKObjectType, HKWorkoutActivityType, HealthKitReader, .isAvailable, Bool, Date, Double, HKUnit (+7 more)
 
-### Community 251 - ".readings"
-Cohesion: 0.18
-Nodes (4): GoalBoardTests, Double, GoalBoard, VitalsStoreTests
+### Community 251 - ".cutReadings"
+Cohesion: 0.27
+Nodes (3): GoalBoardTests, Double, GoalBoard
 
 ### Community 252 - "EraWindowPicker"
-Cohesion: 0.24
-Nodes (9): .body, EraWindowPicker, .body, EraWindowSource, .programStart, AppDatabase, EraWindowInput, ResolvedEraWindow (+1 more)
+Cohesion: 0.19
+Nodes (12): .body, EraWindowPicker, .body, EraWindowSource, .programStart, AppDatabase, EraWindowInput, ResolvedEraWindow (+4 more)
 
 ### Community 253 - "Double"
-Cohesion: 0.05
-Nodes (48): AxisRecord, ClockMode, ExerciseHistory, HistorySet, KcalSample, AlignIn, AlignOut, BpmIn (+40 more)
+Cohesion: 0.04
+Nodes (60): AxisRecord, ClockMode, ExerciseHistory, HistorySet, KcalSample, SessionDuration, SessionDurationResult, Bool (+52 more)
 
-### Community 254 - "Hashable"
-Cohesion: 0.11
-Nodes (18): Hashable, Metric, bpm, calories, Field, bodyFat, muscle, weight (+10 more)
-
-### Community 255 - ".aggregate"
-Cohesion: 0.38
-Nodes (6): .stats, MuscleAggregate, MuscleAggregator, MuscleSetRow, MuscleStat, WeeklyMuscleRow
-
-### Community 256 - ".list"
+### Community 254 - "DayTargetSheet"
 Cohesion: 0.13
-Nodes (14): StackRow, .body, String, Void, ScrollViewProxy, Color, String, Void (+6 more)
+Nodes (7): .matchedProfile, .provenance, DayTargetSheet, .reasons, .selectedKey, .shapeFootnote, TargetProfiles
 
-### Community 257 - "LoggerHero"
-Cohesion: 0.09
-Nodes (28): Animation, LoggerFace, .id, .index, stats, .title, workout, LoggerFaceSelection (+20 more)
+### Community 255 - "NutritionPhase"
+Cohesion: 0.16
+Nodes (8): DeriveInput, NutritionPhaseGoldenTests, DayInput, NutritionPhase, bulk, cut, .label, maintenance
+
+### Community 256 - "MarkdownView.tsx"
+Cohesion: 0.16
+Nodes (10): HeroCard(), leadOf(), Markdown(), TONE_COLOR, isShouted(), parseStatusLead(), SmartBlock, StatusLead (+2 more)
+
+### Community 257 - "LoggerFaceSwitch"
+Cohesion: 0.19
+Nodes (13): Animation, LoggerFace, .id, .index, stats, .title, workout, LoggerFaceSelection (+5 more)
 
 ### Community 258 - "SleepStage"
 Cohesion: 0.12
 Nodes (10): Color, Helix, HelixLink, SleepStage, awake, .color, core, deep (+2 more)
 
+### Community 259 - "GlassLevel"
+Cohesion: 0.16
+Nodes (12): Material, GlassLevel, chrome, .drawsHairline, .material, .radius, row, .shadow (+4 more)
+
+### Community 260 - "AppDatabase.swift"
+Cohesion: 0.14
+Nodes (6): WidgetStore, WidgetStoreError, noUser, ExerciseCatalogTests, NutritionWeekTests, PrRecorderTests
+
 ### Community 261 - "ExerciseSummaryGoldenTests"
 Cohesion: 0.36
 Nodes (4): ExerciseSummarySet, ExerciseSummaryGoldenTests, In, Bool
 
-### Community 262 - "SyncStatus"
-Cohesion: 0.22
-Nodes (5): Phase, failed, idle, running, SyncStatus
+### Community 262 - "Observation"
+Cohesion: 0.09
+Nodes (15): LivePrRecord, PrAxis, .displayName, .unit, AxisRecord, PrAxis, String, Observation (+7 more)
 
 ### Community 263 - ".build"
-Cohesion: 0.09
-Nodes (23): ExportCardio, sumOf(), Align, center, left, right, EnergyBalance, PeakDoms (+15 more)
+Cohesion: 0.11
+Nodes (17): Align, center, left, right, EnergyBalance, SetRow, Bool, Double (+9 more)
 
 ### Community 264 - "RPEDial"
 Cohesion: 0.19
-Nodes (12): .dial, RPEDial, .body, .fill, .fraction, .reading, .side, .stroke (+4 more)
+Nodes (12): .dial, RPEDial, .body, .fill, .fraction, .side, .stroke, .track (+4 more)
 
 ### Community 265 - "WidgetSize"
 Cohesion: 0.24
 Nodes (7): Double, WidgetSize, l, .rank, s, w, xl
 
 ### Community 266 - "MirrorTable"
-Cohesion: 0.08
-Nodes (22): async, ISO8601DateFormatter, ISO8601, LogicalDayISO, MirrorGroup, body, daily, plan (+14 more)
+Cohesion: 0.09
+Nodes (17): async, ISO8601DateFormatter, AppDatabase, ISO8601, LogicalDayISO, MirrorGroup, body, daily (+9 more)
 
 ### Community 267 - ".loggedSession"
-Cohesion: 0.24
+Cohesion: 0.26
 Nodes (6): AppDatabase, Int, ProgramDay, String, WorkoutWeek, WorkoutWeekTests
 
 ### Community 268 - ".kg"
 Cohesion: 0.23
-Nodes (8): Activity, LiveActivityController, .isEnabled, Bool, LoggerModel, OnyxFormat, .weeksText, .volumeByDate
+Nodes (8): Activity, .reading, LiveActivityController, .isEnabled, Bool, LoggerModel, OnyxFormat, .weeksText
 
 ### Community 269 - "SessionDetailGoldenTests"
 Cohesion: 0.15
@@ -2096,7 +2115,7 @@ Nodes (7): HealthCatalogue, HealthMetric, HealthReduce, average, latest, sum, Do
 
 ### Community 271 - "VitalSpec"
 Cohesion: 0.14
-Nodes (31): DayFloorRow, .body, GoalStat, .body, Bool, Color, Double, OnyxSnapshot (+23 more)
+Nodes (32): DayFloorRow, .body, GoalStat, .body, Bool, Color, Double, OnyxSnapshot (+24 more)
 
 ### Community 272 - ".record"
 Cohesion: 0.32
@@ -2110,57 +2129,65 @@ Nodes (7): OnyxChip, OnyxChipRow, .body, Bool, Color, String, Void
 Cohesion: 0.14
 Nodes (10): anon, appUrl, argv, before, DRY, env, explicitDates, isLocal (+2 more)
 
-### Community 275 - "BottomNav.tsx"
-Cohesion: 0.25
-Nodes (9): BottomNav(), NavCell(), Sidebar(), ADOPTED, coreNavItems, isNavActive(), navItems, routeTransition (+1 more)
+### Community 275 - "app/layout.tsx"
+Cohesion: 0.13
+Nodes (16): metadata, viewport, BottomNav(), NavCell(), Sidebar(), CrashRecorder(), LOADED_AT, safeToReload() (+8 more)
 
 ### Community 276 - "OnyxType"
 Cohesion: 0.12
-Nodes (19): OnyxType, body, caption, clock, .design, display, .font, hero (+11 more)
+Nodes (17): OnyxWordmark, .body, OnyxType, body, caption, clock, .design, display (+9 more)
 
 ### Community 277 - "OnyxScope"
 Cohesion: 0.29
 Nodes (6): OnyxScope, body, full, lifestyle, performance, training
 
-### Community 278 - "PhaseGoals"
-Cohesion: 0.33
-Nodes (4): PhaseGoals, PlanInfo, ProgramPhase, Programs
+### Community 278 - "OnyxEntry"
+Cohesion: 0.24
+Nodes (8): AppIntentRecommendation, AppIntentTimelineProvider, Timeline, TimelineEntry, TimelineProviderContext, OnyxEntry, .date, OnyxIntentProvider
 
 ### Community 279 - ".addDays"
-Cohesion: 0.03
-Nodes (66): CalendarSession, .nights, Date, LiveScore, SessionTotals, .date, AppDatabase, BatteryStackDay (+58 more)
+Cohesion: 0.04
+Nodes (51): .isTraining, .program, .scheduled, AppDatabase, Bool, Calendar, Date, GoalBoard (+43 more)
 
-### Community 280 - "ExerciseCardView"
-Cohesion: 0.27
-Nodes (9): ExerciseCardView, .columnHeaders, .header, .progress, .rail, .repWindow, .sets, Color (+1 more)
+### Community 280 - "ReadinessOrb.tsx"
+Cohesion: 0.22
+Nodes (7): ReadinessOrb, SCORE_COMPONENTS, ScoreCard, ScoreCardProps, ScoreKey, EcgPulse(), KineticNumber()
 
-### Community 281 - ".fullDay"
-Cohesion: 0.15
-Nodes (16): DomsOnly, .body, Observing, Presenting, .body, PulsePreviews, AppDatabase, Bool (+8 more)
+### Community 281 - ".view"
+Cohesion: 0.12
+Nodes (20): Sheet, calendar, .id, macros, target, water, DomsOnly, Observing (+12 more)
+
+### Community 282 - "LiveActivityController.swift"
+Cohesion: 0.17
+Nodes (6): ActivityKit, IntentResult, LiveActivityIntent, RestSkipIntentTests, RestSkip, RestSkipIntent
 
 ### Community 283 - "LoggerClock"
-Cohesion: 0.24
-Nodes (7): LoggerPreviews, String, View, LoggerClock, Date, TimeInterval, LoggerClockTests
+Cohesion: 0.32
+Nodes (5): LoggerClock, Date, TimeInterval, LoggerClockTests, PauseControlling
 
 ### Community 284 - "OnyxAtlasFigure"
 Cohesion: 0.25
 Nodes (7): .worked, OnyxAtlasFigure, .body, Side, back, both, front
 
 ### Community 287 - "HistoryView"
-Cohesion: 0.14
-Nodes (15): BodyTrendsScreen, BodyTrendsView, .body, EraWindowInput, ResolvedEraWindow, HistoryView, .bodySegment, .emptyState (+7 more)
+Cohesion: 0.16
+Nodes (14): BodyTrendsScreen, BodyTrendsView, .body, EraWindowInput, ResolvedEraWindow, HistoryView, .bodySegment, .emptyState (+6 more)
 
 ### Community 288 - "DailyTarget"
 Cohesion: 0.42
 Nodes (3): .hasOverride, DailyTarget, DailyTargets
 
+### Community 289 - "Tiles"
+Cohesion: 0.20
+Nodes (6): LedgerWindow, StackBehind, StackBlock, StackDose, StackSchedule, Tiles
+
 ### Community 290 - "FatigueSummaryRow"
 Cohesion: 0.27
 Nodes (9): FatigueSummaryRow, .cost, .costSpoken, .day, .detail, .dots, .latest, .logged (+1 more)
 
-### Community 291 - "SleepSample"
-Cohesion: 0.16
-Nodes (5): Date, Sleep, SleepNight, SleepSample, SleepTests
+### Community 291 - "LoggerHero"
+Cohesion: 0.18
+Nodes (12): LoggerHero, .accent, .bleed, .body, .week, LoggerRestCapsule, ClosedRange, Color (+4 more)
 
 ### Community 292 - "Git conventions"
 Cohesion: 0.40
@@ -2170,9 +2197,9 @@ Nodes (4): Git conventions, One trunk, `[skip ci]` is retired, The `merge=ours` 
 Cohesion: 0.33
 Nodes (7): ExerciseLibraryView, .body, .filtered, .flat, Double, MuscleGroup, String
 
-### Community 294 - "SeedIn"
-Cohesion: 0.22
-Nodes (8): ListIn, SeedIn, SessionSeedGoldenTests, ProgramPhase, RpeSeed, SeedSession, SeedSet, SeedProgression
+### Community 294 - ".seed"
+Cohesion: 0.23
+Nodes (7): SeedProgression, SeedSession, Bool, Program, ProgramExercise, ProgramPhase, SessionSeedGoldenTests
 
 ### Community 296 - "native-token-discipline.test.ts"
 Cohesion: 0.33
@@ -2186,9 +2213,9 @@ Nodes (5): AuthState, resolving, signedIn, signedOut, UUID
 Cohesion: 0.13
 Nodes (9): AtlasFigure, .body, Side, back, both, front, OnyxAtlasHitTests, ExerciseAliases (+1 more)
 
-### Community 299 - "VolumeZone"
-Cohesion: 0.25
-Nodes (6): VolumeZone, building, na, optimal, over, under
+### Community 299 - ".body"
+Cohesion: 0.23
+Nodes (11): SignedInTabs, .batteryLevel, .body, .initialTab, Double, Tab, body, fuel (+3 more)
 
 ### Community 300 - "SignInView"
 Cohesion: 0.27
@@ -2206,69 +2233,77 @@ Nodes (6): DerivedWeek, EnergyBalance, In, Out, WeekNumberGoldenTests, WeeklySum
 Cohesion: 0.40
 Nodes (3): ReadinessHistoryTests, AppDatabase, ReadinessHistory
 
-### Community 307 - ".body"
-Cohesion: 0.09
-Nodes (24): SignedInTabs, .batteryLevel, .body, .initialTab, Double, Tab, body, fuel (+16 more)
+### Community 307 - "Destination"
+Cohesion: 0.14
+Nodes (13): DeepLinkGoldenTests, Dest, In, Out, String, DeepLink, Destination, body (+5 more)
 
-### Community 308 - "Field"
-Cohesion: 0.20
-Nodes (10): Field, activeCal, carbs, fat, .isMacro, kcal, protein, sleep (+2 more)
+### Community 308 - "LeversView"
+Cohesion: 0.12
+Nodes (16): Draft, Field, activeCal, carbs, fat, .isMacro, kcal, protein (+8 more)
 
 ### Community 311 - "Foundation"
-Cohesion: 0.04
-Nodes (10): Foundation, GRDB, Onyx, OnyxData, Testing, Epley, AppDatabase, AppDatabase (+2 more)
+Cohesion: 0.05
+Nodes (9): Foundation, GRDB, Onyx, OnyxCore, Testing, AppDatabase, AppDatabase, AppDatabase (+1 more)
 
-### Community 312 - "accessibleRow"
-Cohesion: 0.20
-Nodes (8): accessibleRow(), .body, BodyTrendsChrome, Bool, CGFloat, Content, Arrangeable, ViewModifier
+### Community 312 - "ViewModifier"
+Cohesion: 0.40
+Nodes (4): BodyTrendsChrome, Bool, Arrangeable, ViewModifier
+
+### Community 313 - "SessionSeed.swift"
+Cohesion: 0.26
+Nodes (9): SeedExercise, SeedSource, history, program, template, SeedTemplate, SeedTemplateExercise, SeedTemplateSet (+1 more)
 
 ### Community 315 - "OnyxTileEntry"
-Cohesion: 0.02
-Nodes (110): AppIntentRecommendation, AppIntentTimelineProvider, DomainSheet, .extras, .s, .stack, Void, WidgetId (+102 more)
+Cohesion: 0.03
+Nodes (91): Bool, WidgetFamily, .isAccessory, DomainSheet, .extras, .s, .stack, Void (+83 more)
 
-### Community 318 - "TodayFeed"
-Cohesion: 0.15
-Nodes (17): AppDatabase, Bool, Calendar, GoalBoard, OnyxSnapshot, ReadinessResult, String, TimeZone (+9 more)
+### Community 318 - "TodayFeedBuilderTests"
+Cohesion: 0.50
+Nodes (3): Date, TodayFeedBuilderTests, .now
 
 ### Community 326 - "OnyxSectionHeader"
 Cohesion: 0.06
-Nodes (49): OnyxFieldCell, .body, OnyxHeldRow, .body, OnyxKeyboardDone, .body, OnyxNumberField, .body (+41 more)
+Nodes (34): PreviewHarness, .requestedScreen, String, View, OnyxSectionHeader, .body, .body, PreviewReport (+26 more)
 
 ### Community 328 - "gen-report-bundle.mjs"
 Cohesion: 0.40
 Nodes (3): OUT_DIR, ROOT, TMP
 
-### Community 334 - "TrainingQuadrant"
-Cohesion: 0.22
-Nodes (15): FuelQuadrant, .accent, MacroPip, StepsQuadrant, .accent, Bool, Color, Double (+7 more)
+### Community 334 - ".face"
+Cohesion: 0.14
+Nodes (24): DailyView, .face, .mono, .s, FuelQuadrant, .accent, .body, MacroPip (+16 more)
 
 ### Community 346 - "CodingKeys"
 Cohesion: 0.20
 Nodes (10): CodingKeys, achievedOn, axis, date, distanceM, durationMin, exerciseKey, kind (+2 more)
 
 ### Community 350 - "Int"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (39): DatabaseValueConvertible, FetchableRecord, AppDatabase, BodyCompositionRow, DailyLogRow, DailyMetricRow, DailyScoreRow, DailyTargetRow (+31 more)
 
-### Community 365 - "StreakDay"
-Cohesion: 0.28
-Nodes (5): CalendarDay, Streak, StreakDay, StreakResult, CalOut
+### Community 365 - "WidgetGoldenTests"
+Cohesion: 0.05
+Nodes (38): CalendarDay, CalendarSession, .nights, .series, Streak, StreakDay, StreakResult, CalendarDay (+30 more)
+
+### Community 377 - "BackfillSheet"
+Cohesion: 0.36
+Nodes (4): .preview, BackfillSheet, .body, .header
 
 ### Community 381 - "targetMatch.ts"
-Cohesion: 0.24
-Nodes (10): ReportTargetsResult, useReportTargets(), hasTargets(), ReportTargets, TargetExercise, fold(), formatTarget(), targetForExercise() (+2 more)
+Cohesion: 0.39
+Nodes (6): TargetExercise, fold(), formatTarget(), targetForExercise(), trimZero(), REPORT
 
-### Community 384 - "jsToFixed"
-Cohesion: 0.07
-Nodes (23): m, .parts, positive(), VitalGroup, .domain, engine, .id, .metrics (+15 more)
+### Community 384 - "jsRound"
+Cohesion: 0.09
+Nodes (17): m, DeficitDayIn, ScheduleReadinessContext, positive(), .metrics, .metric, Entry, WeekVitalsRow (+9 more)
 
 ### Community 392 - "CodingKeys"
 Cohesion: 0.22
 Nodes (9): CodingKeys, archivedAt, color, dose, form, id, micros, name (+1 more)
 
-### Community 393 - "LivePrRecord"
-Cohesion: 0.24
-Nodes (10): SeedPrProvider, .livePrs, LoggerModel, LivePrRecord, PrAxis, .displayName, .unit, AxisRecord (+2 more)
+### Community 393 - "SeedPrProvider"
+Cohesion: 0.50
+Nodes (4): LivePrProviding, SeedPrProvider, .livePrs, LivePrRecord
 
 ### Community 394 - "LockConfiguration"
 Cohesion: 0.18
@@ -2278,145 +2313,161 @@ Nodes (11): .galleryOptions, .galleryOptions, LockConfiguration, .description, .
 Cohesion: 0.25
 Nodes (8): DoseState, due, later, skipped, taken, SupplementDose, .credited, .id
 
+### Community 396 - "RootView.swift"
+Cohesion: 0.20
+Nodes (8): App, RootView, .body, HelixWatch_Watch_AppApp, OnyxApp, .body, StartupErrorView, .body
+
 ### Community 397 - "CodingKey"
-Cohesion: 0.08
-Nodes (24): CodingKey, CodingKeys, kind, n, CodingKeys, bodyFatPct, muscleMassKg, skeletalMuscleMassKg (+16 more)
+Cohesion: 0.11
+Nodes (19): CodingKey, CodingKeys, kind, n, CodingKeys, bodyFatPct, date, fatFreeMassKg (+11 more)
 
-### Community 398 - "WeekChange"
-Cohesion: 0.21
-Nodes (7): Direction, down, up, WeekChange, WeekSoFar, WeekTotals, WeekSoFarGoldenTests
+### Community 398 - ".repWindow"
+Cohesion: 0.24
+Nodes (4): Program, ProgramPhase, .repWindow, .lift
 
-### Community 399 - "SyncTranslationTests.swift"
-Cohesion: 0.40
-Nodes (3): TimeInterval, SyncBackoff, SyncBackoffTests
+### Community 399 - "SyncTranslation.swift"
+Cohesion: 0.33
+Nodes (4): TimeInterval, SyncBackoff, SyncKind, SyncBackoffTests
 
-### Community 400 - "ExercisesGoldenTests.swift"
-Cohesion: 0.29
+### Community 400 - "DeckMoverParityTests"
+Cohesion: 0.33
 Nodes (3): DeckMoverParityTests, .allExercises, ProgramExercise
 
-### Community 401 - "HistorySet"
-Cohesion: 0.17
-Nodes (9): SeedSource, history, program, template, ExerciseHistory, HistorySet, NextSet, NextSetFinder (+1 more)
+### Community 401 - "jsIntegerString"
+Cohesion: 0.15
+Nodes (7): jsIntegerString(), ExerciseHistory, HistorySet, NextSet, NextSetFinder, PrevAlign, RestTargets
 
 ### Community 402 - "ProgressionQueueTests"
 Cohesion: 0.39
 Nodes (4): ProgressionQueueTests, Database, Double, String
 
-### Community 403 - "LoggerModel"
-Cohesion: 0.07
-Nodes (36): ExerciseState, .id, .isComplete, .name, .physicalSets, .volumeKg, .workingSets, LoggerModel (+28 more)
+### Community 403 - "ExerciseState"
+Cohesion: 0.09
+Nodes (22): ExerciseState, .id, .isComplete, .name, .physicalSets, .volumeKg, .workingSets, .completedSets (+14 more)
 
 ### Community 405 - "SessionClockSheet.tsx"
-Cohesion: 0.18
-Nodes (29): ClockBody(), Dial(), SessionClock(), StopwatchControls(), TimerControls(), clampDuration(), clockIsLive(), ClockMode (+21 more)
+Cohesion: 0.16
+Nodes (31): ClockBody(), Dial(), ModeTabs(), SessionClock(), StopwatchControls(), TimerControls(), useVisibleInterval(), clampDuration() (+23 more)
 
 ### Community 418 - "CodingKeys"
 Cohesion: 0.25
 Nodes (8): CodingKeys, activeKcal, date, distanceM, durationMin, id, kcal, kind
 
-### Community 419 - "MuscleDistributionSheet"
-Cohesion: 0.31
-Nodes (4): MuscleDistributionSheet, .legend, .ranked, .weightedTotal
+### Community 419 - "tiles.ts"
+Cohesion: 0.24
+Nodes (10): StepsWidgetImpl(), daysAgo(), dueLabel(), mean(), parseMin(), StackBlock, stackSchedule, StackSlot (+2 more)
 
 ### Community 422 - "Keys"
 Cohesion: 0.29
 Nodes (7): Keys, done, quality, reps, rpe, setType, weightKg
 
-### Community 423 - "OnyxRing"
-Cohesion: 0.29
-Nodes (5): .body, OnyxRing, CGRect, Path, Shape
+### Community 423 - "nutrientTargets.ts"
+Cohesion: 0.22
+Nodes (8): NUTRIENT_GROUPS, NUTRIENT_SIGNALS, NUTRIENT_TARGETS, NutrientGroup, NutrientSignal, NutrientTarget, RAW, SRC
 
 ### Community 424 - "CodingKeys"
 Cohesion: 0.29
 Nodes (7): CodingKeys, id, reason, rows, syncedAt, tableName, userId
 
-### Community 425 - "Sheet"
-Cohesion: 0.33
-Nodes (6): Sheet, calendar, .id, macros, target, water
+### Community 425 - "OnyxAtlasView"
+Cohesion: 0.29
+Nodes (6): OnyxAtlasDetail, OnyxAtlasPath, .id, OnyxAtlasView, back, front
 
 ### Community 426 - "SetEvent"
 Cohesion: 0.40
 Nodes (4): PersistenceContainer, Columns, SetEvent, .databaseTableName
 
-### Community 427 - "Sheet.tsx"
-Cohesion: 0.11
-Nodes (24): Template(), ModeTabs(), MotionProvider(), resetOverlayLock(), Sheet(), SheetProps, nearestSnap(), project() (+16 more)
+### Community 427 - "useHelixReducedMotion"
+Cohesion: 0.06
+Nodes (40): Template(), DatePickerPopover(), iso(), WD, AnimatedCard(), AnimatedCardProps, MotionProvider(), acquireOverlay() (+32 more)
 
 ### Community 428 - "SetKind"
 Cohesion: 0.20
 Nodes (10): SetKind, .badge, dropset, failure, ghost, .hint, .id, .label (+2 more)
 
-### Community 429 - "MacroEditSheet"
-Cohesion: 0.19
-Nodes (10): MacroEditSheet, .body, .divider, .loaded, .reading, StepperRow, .body, .controls (+2 more)
+### Community 429 - ".whole"
+Cohesion: 0.15
+Nodes (14): NutritionFormat, String, MacroEditSheet, .against, .body, .divider, .loaded, .reading (+6 more)
 
 ### Community 430 - "BodyConfiguration"
 Cohesion: 0.33
 Nodes (5): BodyConfiguration, .description, .onyxFocus, .scope, .title
 
-### Community 431 - "EventStoreError"
-Cohesion: 0.33
-Nodes (5): EventStoreError, clockUnavailable, emptyPatch, notSessionOwner, unresolvableAck
+### Community 432 - "intensityCalendar.ts"
+Cohesion: 0.31
+Nodes (6): buildIntensityCalendar(), CalendarCell, CalendarModel, CalendarStats, iso(), sundayOf()
 
-### Community 432 - "PlanCatalogueGoldenTests"
-Cohesion: 0.33
-Nodes (3): CatalogueOut, PlanCatalogueGoldenTests, RawIn
-
-### Community 433 - ".compute"
-Cohesion: 0.50
-Nodes (3): SessionDuration, Date, Double
+### Community 433 - "SyncReason"
+Cohesion: 0.22
+Nodes (9): SyncReason, backfill, foreground, healthKit, .isRealtime, launch, .ledgerName, pull (+1 more)
 
 ### Community 434 - "CodingKeys"
 Cohesion: 0.40
 Nodes (5): CodingKeys, reps, rpe, setType, weightKg
 
 ### Community 435 - "CardioLogRow"
-Cohesion: 0.13
-Nodes (12): AppDatabase, LoggedSessionDay, NightMinutes, AsyncThrowingStream, Date, Double, Error, Sendable (+4 more)
+Cohesion: 0.11
+Nodes (15): AppDatabase, LoggedSessionDay, NightMinutes, AsyncThrowingStream, Date, Double, Error, Sendable (+7 more)
 
 ### Community 436 - "WeeklyExportBuilderTests"
 Cohesion: 0.50
 Nodes (3): Date, String, WeeklyExportBuilderTests
 
-### Community 437 - "ProgressionQueue"
-Cohesion: 0.20
-Nodes (9): ProgressionQueue, SetRow, Double, Program, ProgramPhase, String, WorkingSet, SeededDeck (+1 more)
-
-### Community 438 - "In"
-Cohesion: 0.50
-Nodes (3): ScheduleReadinessContext, In, ScheduleReadinessGoldenTests
+### Community 437 - ".alerts"
+Cohesion: 0.19
+Nodes (13): Alert, ProgressionQueue, SetRow, Bool, Double, Program, ProgramPhase, String (+5 more)
 
 ### Community 439 - "StoredDashboardLayout"
 Cohesion: 0.33
 Nodes (4): AppDatabase, StoredDashboardLayout, .layout, .object
 
+### Community 440 - ".onyxType"
+Cohesion: 0.21
+Nodes (5): OnyxTypeModifier, CGFloat, Content, View, View
+
 ### Community 441 - "OnyxProgressBar"
 Cohesion: 0.38
 Nodes (5): .setsProgress, OnyxProgressBar, .body, Color, Double
 
-### Community 442 - "CardioKind"
-Cohesion: 0.50
-Nodes (3): CardioKind, .label, .symbol
+### Community 442 - "TodayModelTests"
+Cohesion: 0.29
+Nodes (3): .shown, TodayModelTests, OnyxTile
 
 ### Community 444 - "View"
 Cohesion: 0.06
 Nodes (58): AdherenceDots, .body, Bar, CaloriesCard, .body, .eaten, .figures, .spoken (+50 more)
 
 ### Community 446 - "BatteryGoldenTests"
-Cohesion: 0.06
-Nodes (31): Input, BatteryExpected, BatteryGoldenTests, BatteryInput, Constants, DeriveInput, Empty, EnergyGoldenTests (+23 more)
-
-### Community 448 - "WidgetSnapshotBuilder.swift"
-Cohesion: 0.50
-Nodes (3): A, B, zip2()
-
-### Community 455 - "ContextGoldenTests"
 Cohesion: 0.05
-Nodes (44): ContextMeta, ContextMode, ContextRange, LeverPeriod, ContextGoldenTests, CoverIn, DailyTargetGoldenTests, DateCase (+36 more)
+Nodes (27): BatteryExpected, BatteryGoldenTests, BatteryInput, Constants, Empty, EnergyGoldenTests, EpleyGoldenTests, EstimatedInput (+19 more)
+
+### Community 448 - "zip2"
+Cohesion: 0.19
+Nodes (5): A, B, zip2(), KeychainAuthStorageTests, Epley
+
+### Community 452 - ".init"
+Cohesion: 0.43
+Nodes (4): .phase, ProgramDay, ProgramPhase, SeededDeck
+
+### Community 455 - "LeversGoldenTests"
+Cohesion: 0.09
+Nodes (25): ContextMeta, LeverPeriod, DailyTargetGoldenTests, DateCase, DateOut, IdIn, IdOut, KeyIn (+17 more)
+
+### Community 456 - "Level"
+Cohesion: 0.43
+Nodes (6): Level, rest, trainHard, trainLight, ReadinessResult, String
+
+### Community 457 - "PrSeedGoldenTests"
+Cohesion: 0.29
+Nodes (5): SeededPr, DateIn, PrSeedGoldenTests, Seed, SeedIn
 
 ### Community 459 - "HealthKey"
 Cohesion: 0.06
-Nodes (33): HealthKey, activeEnergy, avgHeartRate, avgRestHeartRate, bloodOxygen, bmi, bodyFat, calcium (+25 more)
+Nodes (35): .body, Bool, HealthKey, activeEnergy, avgHeartRate, avgRestHeartRate, bloodOxygen, bmi (+27 more)
+
+### Community 460 - ".view"
+Cohesion: 0.33
+Nodes (5): AppEnvironment, String, View, TodayPreviews, .weighInEnvironment
 
 ### Community 475 - "Snapshot"
 Cohesion: 0.10
@@ -2424,35 +2475,35 @@ Nodes (24): Snapshot, .counts, Snapshot, .agreeing, .answered, .disagreeing, .is
 
 ### Community 480 - ".face"
 Cohesion: 0.06
-Nodes (51): .body, FamilySplit, .body, LiftRow, .points, OneRepMaxFocusFace, .s, .top (+43 more)
+Nodes (52): .body, FamilySplit, .body, LiftRow, .body, .points, OneRepMaxFocusFace, .s (+44 more)
 
 ### Community 481 - "WeeklyExportBuilder"
-Cohesion: 0.11
-Nodes (25): ExportReadiness, j(), Rows, Any, AppDatabase, Bool, CustomSupplement, Date (+17 more)
+Cohesion: 0.10
+Nodes (29): ExportReadiness, HistorySetRow, .lr, Double, Int, j(), Rows, Any (+21 more)
 
 ### Community 482 - "TodayModel"
-Cohesion: 0.09
-Nodes (18): StackEditSheet, .body, .slot, StackSlot, AppEnvironment, Bool, String, View (+10 more)
+Cohesion: 0.14
+Nodes (11): StackEditSheet, .body, .slot, StackSlot, Void, WidgetId, TodayTabView, .body (+3 more)
 
 ### Community 485 - "Wire"
-Cohesion: 0.10
-Nodes (17): Box, ScriptedHealth, Any, AppDatabase, Bool, Calendar, Double, Error (+9 more)
+Cohesion: 0.08
+Nodes (20): Box, PaginationTests, ScriptedHealth, Any, AppDatabase, Bool, Calendar, Date (+12 more)
 
-### Community 486 - "newOnyxID"
+### Community 486 - "HealthPayload"
 Cohesion: 0.13
-Nodes (19): .isMacrosManual, .isWaterManual, AppDatabase, IngestReport, .isEmpty, Bool, Date, Double (+11 more)
+Nodes (18): .isMacrosManual, .isWaterManual, AppDatabase, IngestReport, .isEmpty, Bool, Date, Double (+10 more)
 
 ### Community 487 - "Dashboard"
-Cohesion: 0.20
-Nodes (9): Dashboard, DashboardLayout, DashboardSurface, desktop, phone, StackSlot, Any, Bool (+1 more)
+Cohesion: 0.16
+Nodes (11): Bool, Dashboard, DashboardLayout, DashboardSurface, desktop, phone, StackSlot, Any (+3 more)
 
 ### Community 492 - "FatigueSlot"
 Cohesion: 0.08
-Nodes (23): CodingKeyRepresentable, FatigueLevel, .fatigue, .sleepDebt, Fatigue, FatigueLevel, FatigueReading, FatigueRow (+15 more)
+Nodes (24): CodingKeyRepresentable, FatigueLevel, .fatigue, .fatigueSlots, .sleepDebt, Fatigue, FatigueLevel, FatigueReading (+16 more)
 
 ### Community 497 - "GoalBoardRow"
-Cohesion: 0.10
-Nodes (23): DateFormatter, GoalBoardRow, .balanceInk, .balanceText, .bandText, .body, .daysText, .etaText (+15 more)
+Cohesion: 0.08
+Nodes (29): DateFormatter, GoalBoardRow, .balanceInk, .balanceText, .bandText, .body, .daysText, .etaText (+21 more)
 
 ### Community 498 - ".date"
 Cohesion: 0.11
@@ -2460,55 +2511,51 @@ Nodes (14): DayScreen, .body, .selectedDate, .title, Binding, Date, WeekWindow, 
 
 ### Community 505 - "ExerciseDetailView"
 Cohesion: 0.07
-Nodes (29): Element, ExerciseSummary, Array, ExerciseDetailView, .body, .canonical, .caveat, .chevrons (+21 more)
+Nodes (32): Element, ExerciseSummary, Array, ExerciseDetailView, .bestReading, .body, .canonical, .caveat (+24 more)
 
 ### Community 509 - "Kind"
 Cohesion: 0.13
 Nodes (13): ExerciseTag, ExerciseTags, Kind, equipment, laterality, load, timed, unloaded (+5 more)
 
-### Community 510 - "OnyxLinks"
-Cohesion: 0.50
-Nodes (4): OnyxLinks, .versionString, String, info
+### Community 510 - ".readinessHistory"
+Cohesion: 0.60
+Nodes (3): AppDatabase, ReadinessHistory, String
 
 ### Community 516 - "DomsTile"
-Cohesion: 0.08
-Nodes (28): DomsTile, .body, .caption, .colors, .figure, .severity, .sideDots, .spoken (+20 more)
+Cohesion: 0.09
+Nodes (26): DomsTile, .body, .caption, .colors, .figure, .severity, .sideDots, .spoken (+18 more)
 
 ### Community 518 - "WorkoutTabView"
-Cohesion: 0.08
-Nodes (32): Bool, CardioLogRow, Color, Double, Int, LandmarkMuscle, LoggerClock, ProgramDay (+24 more)
+Cohesion: 0.07
+Nodes (33): CardioLogRow, Destination, Bool, Color, Double, Int, LandmarkMuscle, ProgramDay (+25 more)
 
 ### Community 521 - "AppEnvironment"
-Cohesion: 0.13
-Nodes (13): BackfillModel, HealthObservers, AppEnvironment, .userIdString, AppDatabase, String, Void, Never (+5 more)
+Cohesion: 0.15
+Nodes (12): BackfillModel, HealthObservers, AppEnvironment, .userIdString, AppDatabase, Void, Never, SupabaseClient (+4 more)
 
 ### Community 522 - ".date"
-Cohesion: 0.08
-Nodes (26): .body, .dated, Color.onyx, Line, OnyxCallout, .body, OnyxChart, .reduceMotion (+18 more)
+Cohesion: 0.07
+Nodes (32): Color.onyx, Line, OnyxCallout, .body, OnyxChart, .reduceMotion, OnyxChartCard, .body (+24 more)
 
-### Community 527 - "BodyCompMetric"
-Cohesion: 0.10
-Nodes (23): HKObserverQuery, BodyCompMetric, .id, BodyCompPoint, .id, BodyCompReadingIn, BodyCompSeries, BodyMetricKey (+15 more)
-
-### Community 530 - "jsRound"
-Cohesion: 0.10
-Nodes (14): .bestReading, .headline, .yDomain, .verdict, .meta, Entry, WeekVitalsRow, .body (+6 more)
+### Community 527 - "NutrientTarget"
+Cohesion: 0.21
+Nodes (9): HKObserverQuery, Kind, ceiling, floor, NutrientTarget, NutrientTargets, Bool, Double (+1 more)
 
 ### Community 532 - "BodyPlot"
-Cohesion: 0.09
-Nodes (32): BodyPlot, fat, ffm, .id, .label, lean, skeletal, visceral (+24 more)
+Cohesion: 0.07
+Nodes (37): accessibleRow(), .body, BodyPlot, fat, ffm, .id, .label, lean (+29 more)
 
 ### Community 541 - ".week"
-Cohesion: 0.29
-Nodes (7): Derived, icuCompare(), meanOf(), ExportDay, ExportSession, LedgerWeek, WeeklyExportInput
+Cohesion: 0.18
+Nodes (19): ExportCardio, BatteryDay, Derived, DerivedWeek, ExerciseProgression, icuCompare(), meanOf(), QualityTally (+11 more)
 
-### Community 545 - "nav-scroll-memory.test.tsx"
-Cohesion: 0.21
-Nodes (8): listen(), offsets, onScroll(), restoreScroll(), useScrollMemory(), Harness(), setScrollY(), userScrollTo()
+### Community 545 - "Row"
+Cohesion: 0.40
+Nodes (5): ProgressionQueueGoldenTests, QueueIn, Row, .set, Session
 
 ### Community 549 - "OnyxPressStyle"
-Cohesion: 0.09
-Nodes (21): ButtonStyle, .startButton, NowStrip, .batteryColor, .body, .caption, .reading, .ring (+13 more)
+Cohesion: 0.07
+Nodes (23): ButtonStyle, .startButton, OnyxBanner, .body, .row, Color, String, Void (+15 more)
 
 ### Community 553 - "HealthReading"
 Cohesion: 0.21
@@ -2519,84 +2566,96 @@ Cohesion: 0.12
 Nodes (15): DailyLogRow, HealthKey, HealthPayload, HealthReading, IngestTests, ScriptedHealth, AppDatabase, Bool (+7 more)
 
 ### Community 560 - "DashboardGrid"
-Cohesion: 0.13
-Nodes (12): .shown, TodayModelTests, OnyxTile, DashboardGrid, .body, Row, .id, SmartStackView (+4 more)
+Cohesion: 0.18
+Nodes (11): WidgetSize, .family, DashboardGrid, .body, Row, .id, SmartStackView, .body (+3 more)
 
 ### Community 566 - "Identifiable"
-Cohesion: 0.04
-Nodes (58): CaseIterable, Identifiable, Segment, history, .id, summary, JumpDate, Segment (+50 more)
+Cohesion: 0.03
+Nodes (68): CaseIterable, Hashable, Identifiable, Segment, history, .id, summary, JumpDate (+60 more)
 
-### Community 583 - "CardioLedgerFace"
-Cohesion: 0.12
-Nodes (22): CardioFocusFace, .accent, .body, .c, .s, CardioFormat, CardioLargeFace, .accent (+14 more)
+### Community 583 - ".body"
+Cohesion: 0.13
+Nodes (23): CardioFocusFace, .accent, .body, .c, .s, CardioFormat, CardioLargeFace, .accent (+15 more)
 
 ### Community 586 - "ScoringInputs"
-Cohesion: 0.09
-Nodes (18): Level, rest, trainHard, trainLight, ReadinessResult, ScoringInputs, Bool, Double (+10 more)
+Cohesion: 0.12
+Nodes (12): ScoringInputs, Bool, Double, ActivityInput, AlertInput, HydrationInput, MultiplierInput, NutritionInput (+4 more)
 
 ### Community 591 - "Capsule"
-Cohesion: 0.17
-Nodes (20): Capsule, .id, DayCell, .id, .isLogged, .isMissed, .isRest, DayRow (+12 more)
+Cohesion: 0.14
+Nodes (23): Capsule, .id, DayCell, .id, .isLogged, .isMissed, .isRest, DayRow (+15 more)
 
 ### Community 598 - "JSONValue"
 Cohesion: 0.17
 Nodes (9): DatabaseValue, JSONValue, array, bool, .canonicalText, null, number, object (+1 more)
 
-### Community 610 - "HistorySetRow"
-Cohesion: 0.08
-Nodes (36): ExerciseReport, .id, Group, Report, .sets, .tonnageKg, SessionAnalysis, Summary (+28 more)
+### Community 610 - ".report"
+Cohesion: 0.14
+Nodes (17): ExerciseReport, .id, Group, Report, .sets, .tonnageKg, SessionAnalysis, Summary (+9 more)
 
 ### Community 625 - "derive.ts"
 Cohesion: 0.04
-Nodes (66): main(), render(), SOURCE, TARGETS, isZone2(), sessionVolumeSeries(), vitalSeries, nextDayISO() (+58 more)
-
-### Community 626 - ".view"
-Cohesion: 0.20
-Nodes (10): PreviewHarness, .requestedScreen, String, View, PreviewReport, ReportReaderView, .body, ReportsListView (+2 more)
+Nodes (70): AdherenceDay, AdherenceDayIn, AdherenceTargets, AdherenceVerdict, macroAdherenceSeries(), pctOf(), sessionVolumeSeries(), VitalCombine (+62 more)
 
 ### Community 631 - "TrajectoryView"
-Cohesion: 0.03
-Nodes (90): AnyView, ConsistencyCell, Cell, .size, Bool, CGSize, String, View (+82 more)
+Cohesion: 0.04
+Nodes (76): ConsistencyCell, OnyxChartEmpty, .body, MuscleView, .body, .families, .mono, .size (+68 more)
 
 ### Community 632 - "NoHealth"
-Cohesion: 0.20
-Nodes (9): .healthReader, NoHealth, .isAvailable, Bool, Date, Double, HealthReading, HealthReduce (+1 more)
+Cohesion: 0.15
+Nodes (10): .healthReader, NoHealth, .isAvailable, Bool, Date, Double, HealthReading, HealthReduce (+2 more)
 
 ### Community 654 - "CodingKeys"
 Cohesion: 0.18
 Nodes (11): CodingKeys, carbsG, date, fatG, kcal, note, profileKey, proteinG (+3 more)
 
+### Community 697 - "CodingKeys"
+Cohesion: 0.40
+Nodes (5): CodingKeys, bodyFatPct, muscleMassKg, skeletalMuscleMassKg, weightKg
+
 ### Community 709 - "PrTruthGoldenTests"
 Cohesion: 0.22
 Nodes (6): LoggedBest, TruthRecord, AxisIn, Book, NameIn, PrTruthGoldenTests
 
-### Community 1849 - "Equatable"
+### Community 714 - "BackfillProgress"
+Cohesion: 0.40
+Nodes (4): BackfillProgress, .isFinished, .rowsLanded, .tablesLanded
+
+### Community 715 - "ProgressionState"
+Cohesion: 0.50
+Nodes (4): ProgressionState, no, oneMore, ready
+
+### Community 716 - "dashboard-web-parity.test.ts"
+Cohesion: 0.83
+Nodes (3): excludedIds(), read(), renderedIds()
+
+### Community 1849 - "Sendable"
 Cohesion: 0.03
-Nodes (127): Codable, Equatable, BatteryDay, DerivedWeek, ExerciseProgression, QualityTally, Bool, Double (+119 more)
+Nodes (130): Codable, ExportBodyComp, ExportCardio, ExportDay, ExportDoms, ExportExercise, ExportFatigue, ExportPr (+122 more)
 
 ### Community 1851 - ".parseTargets"
 Cohesion: 0.09
 Nodes (13): .groups, ReportTargets, TargetExercise, MacroTarget, ParsedTable, ReportReader, ReportTargets, .isEmpty (+5 more)
 
 ## Knowledge Gaps
-- **2566 isolated node(s):** `resolving`, `signedIn`, `signedOut`, `.userIdString`, `.isAvailable` (+2561 more)
+- **2565 isolated node(s):** `.clock`, `.prs`, `.accent`, `.leaveItem`, `.noteTarget` (+2560 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **823 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **837 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `WorkoutSet` connect `workout.ts` to `dailyLog.ts`, `ceilings.ts`?**
-  _High betweenness centrality (0.334) - this node is a cross-community bridge._
-- **Why does `fold()` connect `SetPatch` to `workout.ts`, `clock`, `.progressionQueue`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **Why does `Foundation` connect `Foundation` to `OnyxCore`, `.detectSessionPrs`, `BodyCompInput`, `String`, `BodyCompMetric`, `.planPermanentMove`, `jsRound`, `LandmarkMuscle`, `FakeMirror`, `DraftSet`, `Wire`, `WorkoutSession`, `RowPushTests`, `In`, `Identifiable`, `OnyxJSON`, `Effort`, `SessionClock`, `Battery`, `.adjust`, `ProgramExercise`, `LeverId`, `SetPatch`, `HealthkitPlugin`, `CardioAxis`, `ReportsGoldenTests.swift`, `DayTargetSheet`, `BatteryDrain`, `TargetProfile`, `HelixScope`, `Double`, `SyncCoordinator`, `.resolve`, `GoalBoard`, `SupplementNutrients`, `OnyxWidgets.swift`, `CardioLogSheet`, `SetQuality`, `.view`, `BodyCompFields`, `PhaseKind`, `PrTruth`, `Insights`, `LayoutGoldenTests`, `String`, `Observation`, `NutritionPhase`, `LiveSessionOwner`, `workout.ts`, `BackfillProgress`, `PackageDescription`, `String`, `ExtractedGoldenTests.swift`, `JSONValue`, `.build`, `AppEnvironment.swift`, `InvariantTests`, `BodyMetric`, `HealthKitReader`, `.aggregate`, `AppDatabase.swift`, `.build`, `MirrorTable`, `HealthReduce`, `OnyxScope`, `PhaseGoals`, `.addDays`, `DailyGoldenTests.swift`, `DailyTarget`, `SleepSample`, `NutrientCompletionTests.swift`, `AtlasFigure`, `VolumeZone`, `.body`, `Equatable`, `OnyxTileEntry`, `.parseTargets`, `Int`, `StreakDay`, `jsToFixed`, `ScoringInputs.swift`, `WeekChange`, `SyncTranslationTests.swift`, `ExercisesGoldenTests.swift`, `HistorySet`, `HealthCatalogueTests`, `.reason`, `.compute`, `CardioLogRow`, `ProgressionQueue`, `Timed.swift`, `WeighIn`, `WidgetSnapshotBuilder.swift`, `RealtimeKeys`, `Wire`, `newOnyxID`, `Dashboard`, `FatigueSlot`, `.date`, `ExerciseDetailView`, `Kind`?**
-  _High betweenness centrality (0.056) - this node is a cross-community bridge._
-- **What connects `resolving`, `signedIn`, `signedOut` to the rest of the system?**
-  _2566 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `OnyxCore` be split into smaller, more focused modules?**
-  _Cohesion score 0.07177033492822966 - nodes in this community are weakly interconnected._
+- **Why does `WorkoutSet` connect `.sets` to `useNutritionGoals.ts`, `save.ts`, `routineTemplate.ts`?**
+  _High betweenness centrality (0.341) - this node is a cross-community bridge._
+- **Why does `fold()` connect `SetPatch` to `.sets`, `clock`, `.progressionQueue`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
+- **Why does `Foundation` connect `Foundation` to `SwiftUI`, `.detectSessionPrs`, `BodyCompInput`, `NutrientTarget`, `Program.swift`, `.compactKg`, `LandmarkMuscle`, `.rows`, `Ceilings`, `.week`, `DraftSet`, `Wire`, `RowPushTests`, `In`, `Identifiable`, `OnyxJSON`, `Effort`, `SessionClock`, `TargetResolver`, `Battery`, `.adjust`, `ProgramExercise`, `LeverId`, `SetPatch`, `HealthkitPlugin`, `CardioAxis`, `ReportsGoldenTests.swift`, `BatteryDrain`, `ResolvedTargets`, `HelixScope`, `Double`, `MirrorCoalescer`, `.build`, `GoalBoard`, `SupplementNutrients`, `.formatPace`, `.syncSessionMetrics`, `EraWindow`, `SetQuality`, `HistoryWeeks.swift`, `BodyCompFields`, `.dayNumber`, `PrTruth`, `Insights`, `LayoutGoldenTests`, `String`, `ExerciseSummary`, `LiveSessionOwner`, `.sets`, `SyncCoordinator.swift`, `WorkoutSession`, `PackageDescription`, `String`, `ExtractedGoldenTests.swift`, `JSONValue`, `.build`, `Body`, `.view`, `BodyMetric`, `HealthKitReader`, `Double`, `DayTargetSheet`, `NutritionPhase`, `AppDatabase.swift`, `Observation`, `.build`, `MirrorTable`, `HealthReduce`, `OnyxScope`, `.addDays`, `LiveActivityController.swift`, `.marks`, `DailyTarget`, `Tiles`, `AtlasFigure`, `Destination`, `Sendable`, `SessionSeed.swift`, `OnyxTileEntry`, `.parseTargets`, `Int`, `WidgetGoldenTests`, `jsRound`, `ScoringInputs.swift`, `SyncTranslation.swift`, `jsIntegerString`, `HealthCatalogueTests`, `CardioLogRow`, `.alerts`, `Timed.swift`, `WeighIn`, `BatteryGoldenTests`, `zip2`, `HealthPayload`, `Dashboard`, `FatigueSlot`, `.date`, `ExerciseDetailView`, `Kind`?**
+  _High betweenness centrality (0.053) - this node is a cross-community bridge._
+- **What connects `.clock`, `.prs`, `.accent` to the rest of the system?**
+  _2565 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `SwiftUI` be split into smaller, more focused modules?**
+  _Cohesion score 0.06018018018018018 - nodes in this community are weakly interconnected._
 - **Should `.detectSessionPrs` be split into smaller, more focused modules?**
-  _Cohesion score 0.10204081632653061 - nodes in this community are weakly interconnected._
-- **Should `Sendable` be split into smaller, more focused modules?**
-  _Cohesion score 0.04555638536221061 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07731694828469023 - nodes in this community are weakly interconnected._
+- **Should `Equatable` be split into smaller, more focused modules?**
+  _Cohesion score 0.05590386624869383 - nodes in this community are weakly interconnected._
