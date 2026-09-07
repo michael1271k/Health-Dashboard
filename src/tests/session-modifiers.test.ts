@@ -10,7 +10,7 @@ const draftWith = (sets: DraftSet[]): SessionDraft => ({
   date: '2026-07-16',
   notes: '',
   startedAt: '2026-07-16T12:00:00.000Z',
-  exercises: [{ localId: 'x', name: 'Chest Press (Machine)', sets }],
+  exercises: [{ localId: 'x', name: 'Chest Press', sets }],
 })
 
 describe('countCommittedSets — unilateral L/R sub-sets count once', () => {

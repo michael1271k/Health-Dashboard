@@ -128,6 +128,13 @@ enum WidgetPreviews {
                 setsDone: 9,
                 setsPlanned: 22,
                 prsThisSession: prs,
+                // The lift you are resting BEFORE, and what it cost last time.
+                // Both are seeded so the resting card's NEXT state is
+                // photographable — `WorkoutCurrentSet` draws them only while
+                // `restEndsAt` is set, so the working and paused cards below
+                // are unaffected by carrying them.
+                nextExercise: "Seated Cable Row (Wide Grip)",
+                lastRpe: "RPE 8.5",
                 restEndsAt: rest,
                 // 45 minutes in, which is what a session looks like. Off
                 // `Date()` for the same reason `resting` is: an origin two days

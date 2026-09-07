@@ -424,8 +424,8 @@
       },
       "expected": [
         {
-          "leverId": "baseline-2",
-          "label": "Baseline 2",
+          "leverId": "baseline",
+          "label": "Baseline",
           "goals": {
             "calorie": 1935,
             "protein": 170,
@@ -474,9 +474,9 @@
           "leverId": "baseline",
           "label": "Baseline",
           "goals": {
-            "calorie": 1955,
+            "calorie": 1935,
             "protein": 170,
-            "carbs": 195,
+            "carbs": 190,
             "fat": 55,
             "steps": 10000
           },
@@ -574,9 +574,9 @@
           "leverId": "baseline",
           "label": "Baseline",
           "goals": {
-            "calorie": 1955,
+            "calorie": 1935,
             "protein": 170,
-            "carbs": 195,
+            "carbs": 190,
             "fat": 55,
             "steps": 10000
           },
@@ -1016,8 +1016,8 @@
       },
       "expected": [
         {
-          "leverId": "baseline-2",
-          "label": "Baseline 2",
+          "leverId": "baseline",
+          "label": "Baseline",
           "goals": {
             "calorie": 1935,
             "protein": 170,
@@ -1031,8 +1031,8 @@
           ]
         },
         {
-          "leverId": "baseline-2",
-          "label": "Baseline 2",
+          "leverId": "baseline",
+          "label": "Baseline",
           "goals": {
             "calorie": 2200,
             "protein": 180,
@@ -1045,8 +1045,8 @@
           ]
         },
         {
-          "leverId": "baseline-2",
-          "label": "Baseline 2",
+          "leverId": "baseline",
+          "label": "Baseline",
           "goals": {
             "calorie": 1935,
             "protein": 170,

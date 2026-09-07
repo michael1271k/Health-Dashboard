@@ -61,8 +61,8 @@ describe('the schedule', () => {
   it('closes the maintenance week rather than leaving it running', () => {
     expect(scheduledLeverOn('2026-08-30')).toBe('maintenance-week')   // opens
     expect(scheduledLeverOn('2026-09-05')).toBe('maintenance-week')   // last day
-    expect(scheduledLeverOn('2026-09-06')).toBe('baseline-2')         // cut resumes, re-based
-    expect(scheduledLeverOn('2026-12-01')).toBe('baseline-2')         // and stays resumed
+    expect(scheduledLeverOn('2026-09-06')).toBe('baseline')           // cut resumes on the re-based baseline
+    expect(scheduledLeverOn('2026-12-01')).toBe('baseline')           // and stays resumed
   })
 
   /**
@@ -83,7 +83,7 @@ describe('leverForDate', () => {
   it('grades a finished day against the rung that was in force THEN', () => {
     // The selection you are holding today is Lever 2; 20 July was still 1,955.
     expect(leverForDate('2026-07-20', 'lever-2', TODAY)).toBe('baseline')
-    expect(leverById(leverForDate('2026-07-20', 'lever-2', TODAY))?.calorieGoal).toBe(1955)
+    expect(leverById(leverForDate('2026-07-20', 'lever-2', TODAY))?.calorieGoal).toBe(1935)
   })
 
   it('grades 16 Aug onward against Lever 1, even with nothing stored', () => {
@@ -115,8 +115,11 @@ describe('leverForDate', () => {
 describe('what the grader actually sees', () => {
   const goals = { calorie: 2400, protein: 100, carbs: 300, fat: 80, steps: 6000 }
 
-  it('a July day is graded at 1955 and an August one at 1885', () => {
-    expect(applyLever(goals, leverForDate('2026-07-20', 'lever-1', TODAY)).calorie).toBe(1955)
+  // 1935, not the 1955 this asserted until 2026-09-07: the two baselines were
+  // collapsed into one rung carrying 1,935 / 190 C, which re-grades July and
+  // early August as well as the days from 6 Sep. Deliberate — see the rung.
+  it('a July day is graded at 1935 and an August one at 1885', () => {
+    expect(applyLever(goals, leverForDate('2026-07-20', 'lever-1', TODAY)).calorie).toBe(1935)
     expect(applyLever(goals, leverForDate('2026-08-17', 'lever-1', TODAY)).calorie).toBe(1885)
   })
 

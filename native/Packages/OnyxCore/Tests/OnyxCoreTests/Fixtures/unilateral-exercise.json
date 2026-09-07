@@ -25,9 +25,9 @@
       "expected": false
     },
     {
-      "name": "Single Arm Lateral Raise (Cable)",
+      "name": "Single Arm Lateral Raise",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)"
+        "name": "Single Arm Lateral Raise"
       },
       "expected": true
     },
@@ -382,9 +382,9 @@
       "expected": false
     },
     {
-      "name": "Chest Press (Machine)",
+      "name": "Chest Press",
       "input": {
-        "name": "Chest Press (Machine)"
+        "name": "Chest Press"
       },
       "expected": false
     },
@@ -466,16 +466,16 @@
       "expected": false
     },
     {
-      "name": "DB Shoulder Press",
+      "name": "Shoulder Press",
       "input": {
-        "name": "DB Shoulder Press"
+        "name": "Shoulder Press"
       },
       "expected": false
     },
     {
-      "name": "Single Arm Lateral Raise (Cable)",
+      "name": "Single Arm Lateral Raise",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)"
+        "name": "Single Arm Lateral Raise"
       },
       "expected": true
     },
@@ -487,16 +487,16 @@
       "expected": false
     },
     {
-      "name": "Cable Overhead Extension",
+      "name": "Overhead Triceps Extension",
       "input": {
-        "name": "Cable Overhead Extension"
+        "name": "Overhead Triceps Extension"
       },
       "expected": false
     },
     {
-      "name": "DB Hammer Curl",
+      "name": "Hammer Curl",
       "input": {
-        "name": "DB Hammer Curl"
+        "name": "Hammer Curl"
       },
       "expected": false
     },
@@ -536,30 +536,30 @@
       "expected": false
     },
     {
-      "name": "Preacher Curl (Machine)",
+      "name": "Preacher Curl",
       "input": {
-        "name": "Preacher Curl (Machine)"
+        "name": "Preacher Curl"
       },
       "expected": false
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable)",
+      "name": "Single Arm Triceps Pushdown",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)"
+        "name": "Single Arm Triceps Pushdown"
       },
       "expected": true
     },
     {
-      "name": "Romanian Deadlift (Dumbbell)",
+      "name": "Romanian Deadlift",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)"
+        "name": "Romanian Deadlift"
       },
       "expected": false
     },
     {
-      "name": "Hip Thrust (Machine)",
+      "name": "Hip Thrust",
       "input": {
-        "name": "Hip Thrust (Machine)"
+        "name": "Hip Thrust"
       },
       "expected": false
     },

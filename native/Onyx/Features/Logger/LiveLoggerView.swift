@@ -90,10 +90,10 @@ struct LiveLoggerView: View {
     /// check what is coming and scroll back, and neither of those is a
     /// statement about which set you are standing in front of.
     ///
-    /// So this is the logger's own cursor. Nothing writes it but `init` and
-    /// `advanceIfFinished`, and the scroll follows it rather than the reverse.
-    /// The one behaviour that depends on it — moving on when a movement is
-    /// finished — then cannot be defeated by having scrolled somewhere.
+    /// So this is the logger's own cursor. Nothing writes it but `init`: the
+    /// opening position, and after that the reader's own scrolling. It used to
+    /// be advanced on completing a movement; that is gone (see the
+    /// `completedSets` observer).
     @State private var focus: String?
 
     /// `@State`, emphatically not `let`.
@@ -181,6 +181,7 @@ struct LiveLoggerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar { leaveItem }
+        .toolbar { finishItem }
         // Pushed on DISMISSAL, not on every change. `startedAt` moves once per
         // tick of the timer sheet's wheel, and each one would have been an
         // ActivityKit update against a budget this file is careful about
@@ -268,11 +269,14 @@ struct LiveLoggerView: View {
         .onChange(of: model.completedSets) { _, _ in
             guard !model.isEditing else { return }
             activity.update(model: model, clock: clock)
-            // Not in edit mode: every restored card is already complete, so the
-            // first re-tick would jump the cursor forward off the very card the
-            // reader opened the editor to correct — the same failure `_focus`'s
-            // edit case above exists to prevent, arriving one tap later.
-            advanceIfFinished()
+            // ── THE DECK NO LONGER MOVES ITSELF ─────────────────────────────
+            // `advanceIfFinished()` used to run here: finishing a movement slid
+            // the deck to the next card. It is deleted, on the founder's call.
+            // The behaviour is indefensible on a phone propped against a rack —
+            // you tick the last set, look away, and the screen you look back at
+            // is a different movement, so correcting the set you just logged
+            // means scrolling back to find it. `focus` is now written by `init`
+            // alone and the scroll follows the reader.
         }
         // The Lock Screen mirrors the pause. A card counting a session up while
         // the phone in your hand says it is stopped is the two surfaces
@@ -329,11 +333,18 @@ struct LiveLoggerView: View {
                 clock: clock,
                 selection: $selection,
                 onTimer: { showTimer = true },
-                editing: model.editing
+                editing: model.editing,
+                phase: model.phase,
+                onPhase: { showPhase = true },
+                // Validated HERE, where it is still optional:
+                // `Text(timerInterval:)` traps on a range whose end is behind
+                // its start, and the deadline outlives this view.
+                restCountdown: restCountdown(model.restEndsAt),
+                onSkipRest: { withAnimation(OnyxMotion.drawer) { model.stopRest() } },
+                onAdjustRest: { model.adjustRest(by: $0) }
             )
             if let storeError = model.storeError { banner(storeError) }
-            restCapsule
-            OnyxChipRow(chips, pinned: finishChip)
+            OnyxChipRow(chips)
             faces(page: page)
         }
         // One place, so the capsule arriving, the "Skip rest" chip arriving and
@@ -398,34 +409,51 @@ struct LiveLoggerView: View {
     /// the row springs closed around the gap. A control that is present and does
     /// nothing is a control you have to read before you can ignore it.
     private var chips: [OnyxChip] {
-        var out: [OnyxChip] = [
+        [
             OnyxChip(title: "Muscle focus", systemImage: "figure.stand") { showDistribution = true },
-            OnyxChip(title: "Phase", systemImage: "arrow.triangle.2.circlepath") { showPhase = true },
+            OnyxChip(title: "Note", systemImage: "square.and.pencil") {
+                noteDraft = noteTarget?.note ?? ""
+                editingNote = true
+            },
         ]
-        if model.restEndsAt != nil {
-            out.append(OnyxChip(title: "Skip rest", systemImage: "forward.end", tint: accent) {
-                withAnimation(OnyxMotion.drawer) { model.stopRest() }
-            })
-        }
-        out.append(OnyxChip(title: "Note", systemImage: "square.and.pencil") {
-            noteDraft = noteTarget?.note ?? ""
-            editingNote = true
-        })
-        return out
     }
 
-    /// The one chip that ends the screen, so the one that is filled — and the
-    /// one that is pinned out of the scroll. With "Skip rest" present, a
-    /// five-chip row runs past 402 pt and Finish was the half off the edge.
-    private var finishChip: OnyxChip {
-        // "Finish" on a session that finished three weeks ago is the wrong
-        // verb: it reads as ending something, and what it does is write the
-        // effort and run the recompute.
-        OnyxChip(
-            title: model.isEditing ? "Save" : "Finish",
-            systemImage: "checkmark", tint: accent, isProminent: true
-        ) {
-            showFinish = true
+    /// Finish, in the navigation bar's trailing slot.
+    ///
+    /// ── WHY IT LEFT THE CHIP ROW ────────────────────────────────────────────
+    /// U1 declined exactly this move and said so: Finish stayed a chip because
+    /// pinning it out of the scroll had fixed the real defect. What changed is
+    /// the row around it. `Phase` and `Skip rest` are gone, so the row is two
+    /// cold verbs — and a filled, prominent chip beside two grey ones reads as
+    /// the row's subject rather than as the way out. The bar is where iOS puts
+    /// the way out, opposite the way back in, and it costs the band nothing.
+    private var finishItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            // "Finish" on a session that finished three weeks ago is the wrong
+            // verb: it reads as ending something, and what it does is write the
+            // effort and run the recompute.
+            // ── AN HStack, NOT A `Label`, AND NOT `.borderedProminent` ─────
+            // A `Label` in a toolbar collapses to its glyph, and
+            // `.labelStyle(.titleAndIcon)` does not win it back: the bar's own
+            // style is applied outside it. Two shots of this change came back
+            // as a bare blue tick in the corner — "confirm" in every other app,
+            // and here "end the workout and run a 49-day recompute". The word
+            // is the control, so the row is built by hand and the fill is a
+            // background rather than a button style that can restyle it.
+            Button { showFinish = true } label: {
+                HStack(spacing: OnyxSpace.xs) {
+                    Image(systemName: "checkmark").imageScale(.small)
+                    Text(model.isEditing ? "Save" : "Finish")
+                }
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(Color.onyx.base)
+                .lineLimit(1)
+                .padding(.horizontal, OnyxSpace.m)
+                .frame(minHeight: 32)
+                .background(Capsule().fill(accent))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(model.isEditing ? "Save session" : "Finish workout")
         }
     }
 
@@ -433,27 +461,6 @@ struct LiveLoggerView: View {
     /// or the last one when the session is finished and there is no current set.
     private var noteTarget: LoggerModel.ExerciseState? {
         model.currentSet?.exercise ?? model.exercises.last
-    }
-
-    // MARK: - Rest
-
-    @ViewBuilder
-    private var restCapsule: some View {
-        // `restCountdown`, not `model.restEndsAt` directly — the deadline
-        // outlives this view. `.task(id:)` is what clears it, and leaving the
-        // logger cancels that task, so a rest started here and left to expire on
-        // the Workout tab comes back as a date in the PAST, which
-        // `Text(timerInterval:)` traps on.
-        if let countdown = restCountdown(model.restEndsAt) {
-            LoggerRestCapsule(
-                countdown: countdown,
-                accent: accent,
-                onSkip: { withAnimation(OnyxMotion.drawer) { model.stopRest() } },
-                onAdjust: { model.adjustRest(by: $0) }
-            )
-            .frame(maxWidth: .infinity)
-            .transition(.scale(scale: 0.9).combined(with: .opacity))
-        }
     }
 
     // MARK: - The two faces
@@ -588,29 +595,6 @@ struct LiveLoggerView: View {
         }
     }
 
-    /// Move to the next unfinished movement once this one is done.
-    ///
-    /// The deck is ordered and the session is ordered, so the card you want
-    /// after the last set of an exercise is never ambiguous — and scrolling to
-    /// it by hand, past a card you have just filled in, is the one piece of
-    /// navigation the screen genuinely knows how to do for you.
-    ///
-    /// It moves `focus`, which the scroll follows; it never reads where the
-    /// scroll happens to BE. Having scrolled down to look at what is coming
-    /// must not change what finishing this movement does.
-    private func advanceIfFinished() {
-        guard let index = model.exercises.firstIndex(where: { $0.id == focus }),
-              model.exercises[index].isComplete
-        else { return }
-        // FORWARD only. `model.currentSet` is the first unticked row in
-        // document order, so a session where the first movement was skipped and
-        // the third finished would send the deck backwards to card one.
-        guard let next = model.exercises[(index + 1)...].first(where: { !$0.isComplete })
-                ?? model.currentSet?.exercise,
-              next.id != focus
-        else { return }
-        withAnimation(OnyxMotion.move) { focus = next.id }
-    }
 
     // MARK: - Failures
 

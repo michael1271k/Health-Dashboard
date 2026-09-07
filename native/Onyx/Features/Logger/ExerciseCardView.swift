@@ -46,6 +46,12 @@ struct ExerciseCardView: View {
     @State private var optionsFor: SetTarget?
     @State private var effortFor: SetTarget?
 
+    /// A movement is being dragged over this card right now.
+    ///
+    /// A drop target with no feedback is a guess: the deck is eleven cards of
+    /// one shape and the finger is over the one you are aiming at.
+    @State private var isDropTarget = false
+
     /// The muscle this movement is FOR — its first primary mover, which is what
     /// gives the card its rail colour. A card striped in the day's accent tells
     /// you which workout you are in, which you know; striped by muscle it tells
@@ -59,6 +65,25 @@ struct ExerciseCardView: View {
         guard let family else { return Color.onyx.day(model.day.key) }
         return Color.onyx.muscle(family)
     }
+
+    /// A movement with no external load — reps, or seconds, are the record.
+    ///
+    /// ── WHY THE NAME AND NOT `wk1Kg == nil` ────────────────────────────────
+    /// `wk1Kg` is nil for two unrelated reasons. A Reverse Crunch has no seed
+    /// load because it never carries one; a Hack Squat has none because nobody
+    /// has logged it yet — and hiding the load column on the Hack Squat would
+    /// remove the only control that could ever give it one. `ProgramExercise`
+    /// says so itself. `BodyweightExercise` and `TimedExercise` are the
+    /// predicates OnyxCore already uses for exactly this distinction, and both
+    /// anchor around a machine qualifier so `Crunch Machine` stays loaded
+    /// while `Reverse Crunch` does not.
+    private var isWeightless: Bool {
+        BodyweightExercise.isBodyweight(exercise.plan.name)
+            || TimedExercise.isTimed(exercise.plan.name)
+    }
+
+    /// Seconds rather than reps — a plank's `55s` window.
+    private var isTimed: Bool { TimedExercise.isTimed(exercise.plan.name) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -85,6 +110,34 @@ struct ExerciseCardView: View {
             .frame(width: 3)
         }
         .clipShape(RoundedRectangle(cornerRadius: OnyxCorner.tile, style: .continuous))
+        // The landing zone, lit only while something is over it.
+        .overlay {
+            RoundedRectangle(cornerRadius: OnyxCorner.tile, style: .continuous)
+                .strokeBorder(Color.onyx.day(model.day.key), lineWidth: 2)
+                .opacity(isDropTarget ? 1 : 0)
+                // `.opacity(0)` does not remove a view from the accessibility
+                // tree, and a decorative border has no business in it either way.
+                .accessibilityHidden(true)
+        }
+        .animation(OnyxMotion.move, value: isDropTarget)
+        // ── THE WHOLE CARD RECEIVES, ONLY THE GRIP SENDS ────────────────────
+        // Aiming at a 30 pt handle with a card in your other hand is a game;
+        // aiming at the card is not. Making the card DRAGGABLE would be the
+        // symmetric mistake — every set row inside it is interactive, and the
+        // system's drag interaction would start competing with them.
+        //
+        // `String` is what `DashboardGrid` drags too, which means the payload
+        // can also arrive from another app. Anything that is not one of this
+        // deck's own movements is refused, which is what `firstIndex` returning
+        // nil says.
+        .dropDestination(for: String.self) { items, _ in
+            guard let dragged = items.first,
+                  let from = model.exercises.firstIndex(where: { $0.id == dragged }),
+                  from != position.index
+            else { return false }
+            withAnimation(OnyxMotion.move) { model.moveExercise(from: from, to: position.index) }
+            return true
+        } isTargeted: { isDropTarget = $0 }
         .animation(OnyxMotion.move, value: exercise.rows.count)
         .sheet(item: $optionsFor) { target in
             // Looked up by id rather than held by reference: between the tap
@@ -149,20 +202,25 @@ struct ExerciseCardView: View {
         VStack(alignment: .leading, spacing: OnyxSpace.xs) {
             // ── WHY THE REGISTER LEAVES THE TITLE'S LINE AT AX5 ─────────────
             // It is baseline-aligned to the first line of a title that wraps,
-            // so "Chest Press (Machine)" over three lines put `1 OF 7` beside
+            // so "Chest Press" over three lines put `1 OF 7` beside
             // the word "Chest" — a line that reads as a claim about the chest
             // and is not one. Below the title it is unambiguous and costs the
             // header nothing it was not already spending on a wrapped name.
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 2) {
                     title
-                    register
+                    HStack(spacing: OnyxSpace.s) {
+                        register
+                        Spacer(minLength: 0)
+                        grip
+                    }
                 }
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
                     title
                     Spacer(minLength: OnyxSpace.xs)
                     register.layoutPriority(1)
+                    grip
                 }
             }
 
@@ -211,6 +269,66 @@ struct ExerciseCardView: View {
             .lineLimit(3)
             .minimumScaleFactor(0.7)
             .fixedSize(horizontal: false, vertical: true)
+            // ── THE REORDER, WITHOUT THE DRAG ───────────────────────────────
+            // The grip is a drag affordance and a drag affordance alone is not
+            // an affordance: VoiceOver cannot lift it, and neither can anyone
+            // holding a barbell in the other hand. These are the same call the
+            // drop makes, on the element you land on first when you swipe onto
+            // a card — the movement's own name.
+            .accessibilityActions {
+                if position.index > 0 {
+                    Button("Move up") {
+                        withAnimation(OnyxMotion.move) {
+                            model.moveExercise(from: position.index, to: position.index - 1)
+                        }
+                    }
+                }
+                if position.index < position.total - 1 {
+                    Button("Move down") {
+                        withAnimation(OnyxMotion.move) {
+                            model.moveExercise(from: position.index, to: position.index + 1)
+                        }
+                    }
+                }
+            }
+    }
+
+    /// The drag handle — what the web deck puts in the same corner.
+    ///
+    /// ── WHY `.draggable` AND NOT A GESTURE ──────────────────────────────────
+    /// `AtlasFigure` records what a hand-rolled `.gesture` inside a `ScrollView`
+    /// costs: it WINS against the scroll pan, and a 300 pt figure became a dead
+    /// zone until it was rewritten as a `.simultaneousGesture` with a one-shot
+    /// axis lock. There is nothing to arbitrate here — the system's drag
+    /// interaction and the scroll already know about each other, they hand off
+    /// on the long press, and the deck keeps scrolling under a lifted card.
+    /// `DashboardGrid` drags the same way for the same reason.
+    ///
+    /// Narrow and full-height: 30 pt is all the width a header with a
+    /// three-line name at AX5 can spare on a 375 pt phone, and 44 pt of height
+    /// is the platform's minimum for the finger that has to find it.
+    private var grip: some View {
+        Image(systemName: "line.3.horizontal")
+            // A ROLE, never `.system(size:)` — `native-token-discipline` fails
+            // the build on one, and a symbol sized in points ignores the type
+            // setting the rest of the header respects.
+            .onyxType(.caption)
+            .foregroundStyle(Color.onyx.textTertiary)
+            .frame(width: 30, height: 44)
+            .contentShape(.rect)
+            .draggable(exercise.id) {
+                // The name, not a screenshot of the card. A lifted preview of a
+                // 300 pt card covers the deck it is being dropped into.
+                Text(exercise.name)
+                    .onyxType(.secondary)
+                    .foregroundStyle(Color.onyx.textPrimary)
+                    .padding(.horizontal, OnyxSpace.m)
+                    .padding(.vertical, OnyxSpace.s)
+                    .onyxGlass(.row)
+            }
+            // The reorder is reachable from the title's own rotor actions, and
+            // a handle VoiceOver cannot lift is an element it should not stop on.
+            .accessibilityHidden(true)
     }
 
     private var register: some View {
@@ -384,6 +502,8 @@ struct ExerciseCardView: View {
                     row: row,
                     ordinal: index + 1,
                     rail: rail,
+                    isWeightless: isWeightless,
+                    isTimed: isTimed,
                     onLog: { model.toggleDone(row, in: exercise) },
                     onCommit: { model.commitEdit(row, in: exercise) },
                     onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } },
@@ -461,8 +581,17 @@ struct ExerciseCardView: View {
                 // widest phone and wrong on the narrowest, which is backwards.
                 // The floors are the same on both sides now, so the two stacks
                 // squeeze identically.
-                head("KG").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
-                head("REPS").frame(minWidth: SetColumn.reps)
+                // ── AND THE COLUMN IS ABSENT, NOT EMPTY, ON A REPS-ONLY
+                // MOVEMENT ──────────────────────────────────────────────────
+                // A Reverse Crunch has no external load and a Plank has no
+                // reps at all; a `0 kg` stepper on either is a control that
+                // cannot be right. Dropping the whole track gives the two
+                // columns that DO mean something the width, which at 375 pt is
+                // the difference between "Max Effort" and "Max Eff…".
+                if !isWeightless {
+                    head("KG").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
+                }
+                head(isTimed ? "TIME" : "REPS").frame(minWidth: SetColumn.reps)
                 head("EFFORT")
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -601,6 +730,12 @@ private struct SetRowView: View {
     @Bindable var row: LoggerModel.SetRow
     let ordinal: Int
     let rail: Color
+    /// Resolved by the CARD, not the row: it is a property of the movement and
+    /// the header has to agree with every row under it. Two answers to one
+    /// question is how the header and the row ended up eight points apart at
+    /// 375 pt the last time this table was touched.
+    var isWeightless = false
+    var isTimed = false
     let onLog: () -> Bool
     let onCommit: () -> Void
     let onDelete: () -> Void
@@ -654,7 +789,7 @@ private struct SetRowView: View {
                 // AX5 load and its two steppers. A third line costs this row
                 // 30 pt at a size where it is already 120 tall.
                 VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                    weightField
+                    if !isWeightless { weightField }
                     repsField
                     effort
                 }
@@ -665,7 +800,7 @@ private struct SetRowView: View {
                 // which number was which, and the column headers say it better
                 // and once — where this said it on all forty rows, in the width
                 // that the effort word now uses to say something.
-                weightField
+                if !isWeightless { weightField }
                 repsField
                 effort
             }
@@ -688,7 +823,22 @@ private struct SetRowView: View {
         ZStack {
             badgeSurface
             if row.isDone && row.kind == .normal {
-                Image(systemName: isRecord ? "trophy.fill" : "checkmark")
+                // ── THREE OUTCOMES, ONE GLYPH SLOT ──────────────────────────
+                // A record outranks a failure: both are true of a set taken to
+                // the stop that beat something, and "you beat it" is the fact
+                // worth the slot. `F` then says the set went to failure, which
+                // the effort column ALSO says in words — deliberately, because
+                // the badge is what you see in peripheral vision scrolling the
+                // deck and the word is what you read when you stop.
+                Group {
+                    if isRecord {
+                        Image(systemName: "trophy.fill")
+                    } else if isFailure {
+                        Text("F")
+                    } else {
+                        Image(systemName: "checkmark")
+                    }
+                }
                     .onyxType(.caption).fontWeight(.heavy)
                     .foregroundStyle(Color.onyx.base)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
@@ -770,6 +920,17 @@ private struct SetRowView: View {
     }
 
     private var isRecord: Bool { row.isRecord && row.isDone }
+
+    /// Taken to failure — the ladder's top rung, `RpeLadder` value 10.
+    ///
+    /// Read off the RATING and not off `SetKind.failure`. They are two
+    /// different facts: the kind is how the set was PROGRAMMED (a planned
+    /// failure set), the rating is how it went. A set rated 10 is one that
+    /// missed a rep or lost position, whatever it was planned as, and that is
+    /// the one worth marking on the badge.
+    private var isFailure: Bool {
+        row.isDone && row.rpe == RpeLadder.stops.last?.value
+    }
 
     /// ── STATE IS THE FILL TREATMENT, NOT THE HUE ────────────────────────────
     /// A warm-up and a logged set were both a solid fill in the card's accent,
@@ -1017,8 +1178,15 @@ private struct SetRowView: View {
         // Good for 300 ms after a commit, then back to the rail's own wash. The
         // flash is the receipt: the row you logged is the row that changed
         // colour, which no toast at the top of a screen can say.
+        // A record carries the SAME hue at twice the strength. Not gold: the
+        // badge is already gold and the gold sweep runs along the edge, so a
+        // third gold surface would make the row a colour swatch. Twice the
+        // rail's wash reads as "this row is more than the others" while still
+        // saying which muscle it belongs to — which is the whole reason the
+        // rail is the muscle's colour and not the day's.
         RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
             .fill(justLogged ? Color.onyx.good.opacity(0.22)
+                  : isRecord ? rail.opacity(0.20)
                   : row.isDone ? rail.opacity(0.10)
                   : Color.onyx.hairline.opacity(0.35))
     }

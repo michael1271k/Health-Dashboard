@@ -103,7 +103,7 @@ enum HistoryPreviews {
         ("ex-incline", "Incline DB Press"),
         ("ex-pulldown", "Lat Pulldown"),
         ("ex-row", "Seated Cable Row (Wide Grip)"),
-        ("ex-raise", "Single Arm Lateral Raise (Cable)"),
+        ("ex-raise", "Single Arm Lateral Raise"),
         ("ex-hkr", "Hanging Knee Raise"),
         ("ex-hack", "Hack Squat"),
     ]
@@ -140,7 +140,16 @@ enum HistoryPreviews {
             }
             try set("ex-incline", 0, 20, 12, type: "warmup")
             for (i, (w, r)) in s.incline.enumerated() { try set("ex-incline", i + 1, w, r, rpe: 7 + Double(i) * 0.5) }
-            for (i, (w, r)) in s.pulldown.enumerated() { try set("ex-pulldown", i + 1, w, r, rpe: 7.5) }
+            // The last set of the pulldown on the session the shot loop opens
+            // is taken to FAILURE, which is the only way any screenshot of this
+            // app shows the state: nothing else in six weeks of this fixture
+            // sits on the top rung of `RpeLadder`, so the `F` badge and the red
+            // effort word were unreviewable — and an unreviewable state is one
+            // that breaks silently.
+            for (i, (w, r)) in s.pulldown.enumerated() {
+                let failed = id == lastSession && i == s.pulldown.count - 1
+                try set("ex-pulldown", i + 1, w, r, rpe: failed ? 10 : 7.5)
+            }
             for (i, (w, r)) in s.row.enumerated() { try set("ex-row", i + 1, w, r, rpe: 8) }
             for (i, (w, r)) in s.raise.enumerated() {
                 let pair = "\(id)-raise-\(i)"

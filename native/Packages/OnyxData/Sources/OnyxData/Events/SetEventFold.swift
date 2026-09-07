@@ -123,6 +123,7 @@ public enum SetEventFold {
                     est1rmKg: snapshot.est1rmKg,
                     rpe: snapshot.rpe,
                     quality: snapshot.quality,
+                    exerciseOrder: snapshot.exerciseOrder,
                     isPendingSync: isPendingSync
                 )
             }

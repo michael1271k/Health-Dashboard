@@ -2284,12 +2284,12 @@ describe('golden vectors — muscle map', () => {
       // and the machine live inside the parentheses and are exactly the words
       // that tell two movements apart.
       'Seated Cable Row (V-Grip)', 'Seated Cable Row (Wide Grip)', 'Seated Cable Row',
-      'Shoulder Press (DB)', 'DB Shoulder Press', 'Crunch (Machine)', 'Crunch Machine',
+      'Shoulder Press', 'Shoulder Press', 'Crunch (Machine)', 'Crunch Machine',
       'Neutral-Grip Lat Pulldown', 'lat pulldown neutral grip',
       // Case and padding.
       'PEC DECK', '  pec   deck  ', 'pec-deck', 'Pec\tDeck',
       // Same specificity, first-written wins.
-      'Cable Overhead Extension', 'Cable Triceps Extension',
+      'Overhead Triceps Extension', 'Cable Triceps Extension',
       // Nothing matches these.
       'Zercher Good Morning', 'Zercher Squat', 'Sled Push', '', '   ', '(((',
     ]
@@ -2384,7 +2384,7 @@ describe('golden vectors — bodyweight and unilateral', () => {
       // Padding and case.
       '  push-up  ', 'PULL-UPS', 'dips', ' Dips\t',
       // Loaded movements, which none of this touches.
-      'Leg Press', 'Hip Thrust (Machine)', 'Lat Pulldown', 'Pec Deck',
+      'Leg Press', 'Hip Thrust', 'Lat Pulldown', 'Pec Deck',
     ]
     interface Out { bodyweight: boolean; loadable: boolean; unloaded: boolean }
     emit('bodyweight-exercise.json', {
@@ -2405,7 +2405,7 @@ describe('golden vectors — bodyweight and unilateral', () => {
     const uni: Array<string | null> = [
       null, '', '   ',
       // One per UNILATERAL_PATTERN.
-      'Single Arm Lateral Raise (Cable)', 'Single-Arm Row', 'Single Armed Press',
+      'Single Arm Lateral Raise', 'Single-Arm Row', 'Single Armed Press',
       'Single Leg Curl', 'Single-Legged Deadlift', 'Single Side Carry',
       'One Arm Cable Crossover', 'One-Arm Row', '1-Arm Row', '1 Arm Row',
       'Unilateral Leg Press', 'Leg Extension per side', 'Curl per arm', 'Lunge per leg',
@@ -2517,12 +2517,12 @@ describe('golden vectors — PR seed', () => {
     push('07-21 lateral raise via the merged alias', { date: '2026-07-21', exercise: 'Cable Lateral Raise', setNumber: 3, weightKg: 5, reps: 10 })
     push('07-30 row via the wide-grip alias', { date: '2026-07-30', exercise: 'seated cable row - bar wide grip', setNumber: 2, weightKg: 42.5, reps: 10 })
     push('07-30 bare Seated Cable Row is a third identity and does not match', { date: '2026-07-30', exercise: 'Seated Cable Row', setNumber: 2, weightKg: 42.5, reps: 10 })
-    push('null date', { date: null, exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13 })
-    push('empty date', { date: '', exercise: 'Hip Thrust (Machine)', setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('null date', { date: null, exercise: 'Hip Thrust', setNumber: 2, weightKg: 27.5, reps: 13 })
+    push('empty date', { date: '', exercise: 'Hip Thrust', setNumber: 2, weightKg: 27.5, reps: 13 })
     push('null exercise', { date: '2026-07-31', exercise: null, setNumber: 2, weightKg: 27.5, reps: 13 })
     push('empty exercise', { date: '2026-07-31', exercise: '', setNumber: 2, weightKg: 27.5, reps: 13 })
-    push('null set number', { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: null, weightKg: 27.5, reps: 13 })
-    push('set number 0', { date: '2026-07-31', exercise: 'Hip Thrust (Machine)', setNumber: 0, weightKg: 27.5, reps: 13 })
+    push('null set number', { date: '2026-07-31', exercise: 'Hip Thrust', setNumber: null, weightKg: 27.5, reps: 13 })
+    push('set number 0', { date: '2026-07-31', exercise: 'Hip Thrust', setNumber: 0, weightKg: 27.5, reps: 13 })
     emit('pr-seeded-axes.json', {
       module: 'training/prSeed',
       fn: 'seededAxesFor',
@@ -2548,14 +2548,14 @@ describe('golden vectors — PR seed', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('golden vectors — PR engine', () => {
-  const HIP = 'Hip Thrust (Machine)'
+  const HIP = 'Hip Thrust'
   const PLANK = 'Side Plank'
   const CRUNCH = 'Reverse Crunch'
   const HACK = 'Hack Squat'
-  const SA = 'Single Arm Lateral Raise (Cable)'
-  const CHEST = 'Chest Press (Machine)'
+  const SA = 'Single Arm Lateral Raise'
+  const CHEST = 'Chest Press'
   const LEGEXT = 'Leg Extension'
-  const HAMMER = 'DB Hammer Curl'
+  const HAMMER = 'Hammer Curl'
 
   const cand = (key: string, weightKg: number, reps: number, extra: Partial<PrCandidateSet> = {}): PrCandidateSet =>
     ({ key, weightKg, reps, timed: key === PLANK, setType: null, ...extra })
@@ -2701,7 +2701,7 @@ describe('golden vectors — PR engine', () => {
     for (const c of [
       { name: 'Leg Press', logged: 72.5 }, { name: 'Leg Extension', logged: 37.5 }, { name: 'Seated Leg Curl', logged: 45 },
       { name: 'Pec Deck', logged: 52.5 }, { name: 'Lat Pulldown', logged: 47 }, { name: 'Straight-Arm Pulldown', logged: 16.25 },
-      { name: 'Cable Overhead Extension', logged: 11.25 }, { name: 'DB Shoulder Press', logged: 30 },
+      { name: 'Overhead Triceps Extension', logged: 11.25 }, { name: 'Shoulder Press', logged: 30 },
     ]) {
       push(`floor over the logged best — ${c.name}`, [{ key: c.name, weightKg: c.logged, reps: 12 }], [], true)
     }
@@ -2796,8 +2796,8 @@ describe('golden vectors — PR engine', () => {
     // ── Volume is a per-set axis ──
     const legext = bl([{ key: LEGEXT, weightKg: 60, reps: 5 }], [])
     push('volume lands on the heaviest set, not the last', [cand(LEGEXT, 30, 12), cand(LEGEXT, 30, 11)], legext)
-    push('three identical sets are no record', [cand('Romanian Deadlift (DB)', 35, 12), cand('Romanian Deadlift (DB)', 35, 12), cand('Romanian Deadlift (DB)', 35, 12)],
-      bl([{ key: 'Romanian Deadlift (DB)', weightKg: 35, reps: 12 }, { key: 'Romanian Deadlift (DB)', weightKg: 35, reps: 12 }], []))
+    push('three identical sets are no record', [cand('Romanian Deadlift', 35, 12), cand('Romanian Deadlift', 35, 12), cand('Romanian Deadlift', 35, 12)],
+      bl([{ key: 'Romanian Deadlift', weightKg: 35, reps: 12 }, { key: 'Romanian Deadlift', weightKg: 35, reps: 12 }], []))
     push('Leg Extension 2026-08-03 — one extra rep on one set of three is nothing',
       [cand(LEGEXT, 37.5, 13), cand(LEGEXT, 37.5, 13), cand(LEGEXT, 37.5, 12, { setType: 'failure' })],
       bl([
@@ -2908,7 +2908,7 @@ describe('golden vectors — PR engine', () => {
       { name: 'Leg Press', logged: 72.5, asserted: 80, comeback: 75 }, { name: LEGEXT, logged: 37.5, asserted: 42.5, comeback: 40 },
       { name: 'Seated Leg Curl', logged: 45, asserted: 50, comeback: 47.5 }, { name: 'Pec Deck', logged: 52.5, asserted: 55, comeback: 55 },
       { name: 'Lat Pulldown', logged: 47, asserted: 49.5, comeback: 49.5 }, { name: 'Straight-Arm Pulldown', logged: 16.25, asserted: 17.5, comeback: 17.5 },
-      { name: 'Cable Overhead Extension', logged: 11.25, asserted: 12.5, comeback: 12.5 }, { name: 'DB Shoulder Press', logged: 30, asserted: 31, comeback: 31 },
+      { name: 'Overhead Triceps Extension', logged: 11.25, asserted: 12.5, comeback: 12.5 }, { name: 'Shoulder Press', logged: 30, asserted: 31, comeback: 31 },
     ]) {
       const b = bl([{ key: c.name, weightKg: c.logged, reps: 12 }], [], true)
       push(`floor — ${c.name}: returning to ${c.comeback} kg is not a record`, [cand(c.name, c.comeback, 10, { date: '2026-08-12' })], b)
@@ -4121,7 +4121,7 @@ describe('golden vectors — session draft', () => {
     interface TotIn { draft: SessionDraft; cap: number }
     const tot: Case<TotIn, { volumeKg: number; sets: number; series: number[] }>[] = []
     const tpush = (name: string, draft: SessionDraft, cap = 12) => tot.push({ name, input: { draft, cap }, expected: { ...draftTotals(draft), series: draftVolumeSeries(draft, cap) } })
-    tpush('warm-ups count', draftOf([exOf('Chest Press (Machine)', [{ weightKg: 20, reps: 10, setType: 'warmup' }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10, setType: 'failure' }])]))
+    tpush('warm-ups count', draftOf([exOf('Chest Press', [{ weightKg: 20, reps: 10, setType: 'warmup' }, { weightKg: 40, reps: 10 }, { weightKg: 40, reps: 10, setType: 'failure' }])]))
     tpush('unticked sets do not', draftOf([exOf('Row', [{ weightKg: 50, reps: 10, done: true }, { weightKg: 50, reps: 10, done: false }, { weightKg: 50, reps: 10 }])]))
     tpush('cardio is skipped', draftOf([exOf('Treadmill', [{ weightKg: 0, reps: 1 }], { kind: 'cardio', distanceKm: 1 }), exOf('Row', [{ weightKg: 50, reps: 10 }])]))
     tpush('a pair scores at the weaker side once', draftOf([exOf('SA', [{ weightKg: 20, reps: 10, side: 'R', pairId: 'p1' }, { weightKg: 18, reps: 10, side: 'L', pairId: 'p1' }])]))
@@ -4297,7 +4297,7 @@ describe('golden vectors — next set and previous alignment', () => {
       cases: cases.map(([name, todayWarmup, previous]) => ({ name, input: { todayWarmup, previous } as In, expected: { rows: previousDisplayRows(previous ?? undefined), aligned: alignPreviousSets(todayWarmup, previous ?? undefined) } })),
     })
 
-    const names: Array<string | null> = [null, '', 'Side Plank', 'side plank', 'Plank', 'Hollow Hold', 'hollow  hold', 'Dead Hang', 'deadhang', 'Wall Sit', 'L-Sit', 'L Sit', 'Lsit', 'Farmer Carry', 'Suitcase Carry', 'Carryover Press', 'Hold', 'Household', 'Planks', 'Leg Press', 'Hip Thrust (Machine)', 'Hanging Knee Raise', 'Reverse Crunch']
+    const names: Array<string | null> = [null, '', 'Side Plank', 'side plank', 'Plank', 'Hollow Hold', 'hollow  hold', 'Dead Hang', 'deadhang', 'Wall Sit', 'L-Sit', 'L Sit', 'Lsit', 'Farmer Carry', 'Suitcase Carry', 'Carryover Press', 'Hold', 'Household', 'Planks', 'Leg Press', 'Hip Thrust', 'Hanging Knee Raise', 'Reverse Crunch']
     emit('timed-exercise.json', {
       module: 'exercises/timed',
       fn: 'isTimedExercise',
@@ -4320,12 +4320,12 @@ describe('golden vectors — live PRs', () => {
         count: r.count,
       }
     }
-    const HIP = 'Hip Thrust (Machine)'
+    const HIP = 'Hip Thrust'
     const PLANK = 'Side Plank'
     const bl = buildBaselines([
       { key: HIP, weightKg: 25, reps: 14 }, { key: HIP, weightKg: 27.5, reps: 12 },
       { key: PLANK, weightKg: 0, reps: 57 },
-      { key: 'Single Arm Lateral Raise (Cable)', weightKg: 5, reps: 12, side: 'L', pairId: 'h' }, { key: 'Single Arm Lateral Raise (Cable)', weightKg: 5, reps: 12, side: 'R', pairId: 'h' },
+      { key: 'Single Arm Lateral Raise', weightKg: 5, reps: 12, side: 'L', pairId: 'h' }, { key: 'Single Arm Lateral Raise', weightKg: 5, reps: 12, side: 'R', pairId: 'h' },
     ], (k) => k === PLANK)
     const cases: Case<In, Out>[] = []
     const push = (name: string, draft: SessionDraft | null, baselines: PrBaselines | null = bl) => cases.push({ name, input: { draft, baselines }, expected: run({ draft, baselines }) })
@@ -4336,10 +4336,10 @@ describe('golden vectors — live PRs', () => {
       exOf(HIP, [{ weightKg: 25, reps: 14 }, { weightKg: 27.5, reps: 13 }, { weightKg: 27.5, reps: 13 }]),
       exOf(PLANK, [{ weightKg: 0, reps: 58 }, { weightKg: 0, reps: 55, done: false }]),
     ], { date: '2026-08-25' }))
-    push('an asserted date takes the record book', draftOf([exOf('DB Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-07-21' }))
-    push('a live date derives', draftOf([exOf('DB Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-08-25' }))
+    push('an asserted date takes the record book', draftOf([exOf('Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-07-21' }))
+    push('a live date derives', draftOf([exOf('Hammer Curl', [{ weightKg: 20, reps: 12 }])], { date: '2026-08-25' }))
     push('supersession — only the surviving axes keep a delta', draftOf([exOf(HIP, [{ weightKg: 25, reps: 15 }, { weightKg: 27.5, reps: 14 }, { weightKg: 27.5, reps: 13 }])]))
-    push('a pair collapses on the tick', draftOf([exOf('Single Arm Lateral Raise (Cable)', [{ weightKg: 5, reps: 14, side: 'L', pairId: 't' }, { weightKg: 5, reps: 14, side: 'R', pairId: 't' }])]))
+    push('a pair collapses on the tick', draftOf([exOf('Single Arm Lateral Raise', [{ weightKg: 5, reps: 14, side: 'L', pairId: 't' }, { weightKg: 5, reps: 14, side: 'R', pairId: 't' }])]))
     push('warm-up committed, no record', draftOf([exOf(HIP, [{ weightKg: 40, reps: 20, setType: 'warmup' }])]))
     push('cardio ignored in the digest', draftOf([exOf('Treadmill', [{ weightKg: 0, reps: 1 }], { kind: 'cardio' }), exOf(HIP, [{ weightKg: 30, reps: 10, quality: 'momentum' }])]))
     push('digest carries side and pair', draftOf([exOf('X', [{ weightKg: 5.25, reps: 10, side: 'L', pairId: 'p', setType: 'failure' }, { weightKg: 5.25, reps: 10, side: 'R', pairId: 'p', done: false }])]))
@@ -4626,7 +4626,7 @@ describe('golden vectors — weekly export', () => {
     days: baseDays, sessions: [], volumeByMuscle: [], doms: [],
   }
 
-  const SA = 'Single Arm Lateral Raise (Cable)'
+  const SA = 'Single Arm Lateral Raise'
   const richDays: ExportDay[] = [
     emptyExportDay('2026-08-30', 'Sun', {
       sleepMin: 551, deepMin: 62, remMin: 118, coreMin: 350, awakeMin: 21, bedTime: '2026-08-29T23:10:00', wakeTime: '2026-08-30T08:21:00', sleepOnsetTrouble: false,
@@ -4711,7 +4711,7 @@ describe('golden vectors — weekly export', () => {
           xset(5, 12, { rpe: 9, side: 'L' }),
         ] },
         { name: 'Side Plank', topKg: 0, repWindow: null, sets: [xset(0, 55, { rpe: 9, side: 'L', pairId: 'h1' }), xset(0, 60, { rpe: 9.5, side: 'R', pairId: 'h1' })] },
-        { name: 'DB Hammer Curl', topKg: 20, repWindow: '10–12', sets: [xset(20, 12, { rpe: 10 }), xset(20, 10, { rpe: 9, quality: 'form_breakdown' })] },
+        { name: 'Hammer Curl', topKg: 20, repWindow: '10–12', sets: [xset(20, 12, { rpe: 10 }), xset(20, 10, { rpe: 9, quality: 'form_breakdown' })] },
       ],
       prs: [
         { name: 'Side Plank', weightKg: 0, reps: 60, axes: ['reps'], volumeKg: null, e1rmKg: null },
@@ -4722,8 +4722,8 @@ describe('golden vectors — weekly export', () => {
       date: '2026-09-03', label: 'Upper B', startedAt: '2026-09-03T18:30:00',
       volumeKg: 5400, setCount: 7, failureSets: 0, durationMin: 65, avgBpm: null, caloriesBurned: null, sessionRpe: 8,
       exercises: [
-        { name: 'Preacher Curl (Machine)', topKg: 18.75, repWindow: '8–12', sets: [xset(18.75, 12, { rpe: 9.5 }), xset(12.5, 8, { rpe: 10, dropset: true })] },
-        { name: 'Chest Press (Machine)', topKg: 40, repWindow: '10–12', sets: [xset(40, 12), xset(40, 11), xset(40, 10)] },
+        { name: 'Preacher Curl', topKg: 18.75, repWindow: '8–12', sets: [xset(18.75, 12, { rpe: 9.5 }), xset(12.5, 8, { rpe: 10, dropset: true })] },
+        { name: 'Chest Press', topKg: 40, repWindow: '10–12', sets: [xset(40, 12), xset(40, 11), xset(40, 10)] },
         { name: 'Leg Press', topKg: 72.5, repWindow: '12–15', sets: [xset(72.5, 14, { rpe: 8 }), xset(72.5, 13, { rpe: 8.5 })] },
       ],
       prs: [],
@@ -4731,8 +4731,8 @@ describe('golden vectors — weekly export', () => {
     {
       date: '2026-09-04', label: 'Legs & Core B', sessionNumber: 43,
       volumeKg: null, setCount: null, failureSets: null, durationMin: null, avgBpm: null, caloriesBurned: null, sessionRpe: 6.5,
-      exercises: [{ name: 'Hip Thrust (Machine)', topKg: null, repWindow: '8–15', sets: [] }],
-      prs: [{ name: 'Hip Thrust (Machine)', weightKg: 30, reps: 12, axes: ['weight'], volumeKg: 360, e1rmKg: 42 }],
+      exercises: [{ name: 'Hip Thrust', topKg: null, repWindow: '8–15', sets: [] }],
+      prs: [{ name: 'Hip Thrust', weightKg: 30, reps: 12, axes: ['weight'], volumeKg: 360, e1rmKg: 42 }],
     },
   ]
 
@@ -4931,9 +4931,9 @@ describe('golden vectors — weekly export', () => {
       ['unloaded reverse crunch', richSessions[0].exercises[2].sets, 'Reverse Crunch'],
       ['the mixed lateral raise', richSessions[1].exercises[0].sets, SA],
       ['the timed plank pair', richSessions[1].exercises[1].sets, 'Side Plank'],
-      ['hammer curl — failure by rating and a quality flag', richSessions[1].exercises[2].sets, 'DB Hammer Curl'],
-      ['a drop set', richSessions[2].exercises[0].sets, 'Preacher Curl (Machine)'],
-      ['nothing rated at all', richSessions[2].exercises[1].sets, 'Chest Press (Machine)'],
+      ['hammer curl — failure by rating and a quality flag', richSessions[1].exercises[2].sets, 'Hammer Curl'],
+      ['a drop set', richSessions[2].exercises[0].sets, 'Preacher Curl'],
+      ['nothing rated at all', richSessions[2].exercises[1].sets, 'Chest Press'],
       ['no exercise name', [xset(40, 12, { rpe: 9 })], undefined],
       ['failure with rating 9 says to failure', [xset(40, 12, { rpe: 9, failure: true })], 'X'],
       ['failure with rating 10 does not repeat itself', [xset(40, 12, { rpe: 10, failure: true })], 'X'],
@@ -6731,17 +6731,17 @@ describe('golden vectors — widget derivations', () => {
     push('a leg press credits Legs once in full', [{ exercise: 'Leg Press', day: '2026-08-05', weightKg: 200, reps: 8 }])
     push('a lat pulldown — Back primary, Arms half', [{ exercise: 'Lat Pulldown', day: '2026-08-04', weightKg: 70, reps: 10 }])
     push('an unloaded set counts a set with no tonnage', [{ exercise: 'Hanging Knee Raise', day: '2026-08-04', weightKg: 0, reps: 15 }])
-    push('a warm-up counts', [{ exercise: 'Chest Press (Machine)', day: '2026-08-05', weightKg: 40, reps: 12, setType: 'warmup' }])
+    push('a warm-up counts', [{ exercise: 'Chest Press', day: '2026-08-05', weightKg: 40, reps: 12, setType: 'warmup' }])
     push('unknown lift contributes nothing', [{ exercise: 'Mystery Machine', day: '2026-08-05', weightKg: 40, reps: 12 }])
     push('a full Upper A', [
-      { exercise: 'Chest Press (Machine)', day: '2026-08-02', weightKg: 60, reps: 10 },
-      { exercise: 'Chest Press (Machine)', day: '2026-08-02', weightKg: 60, reps: 9 },
+      { exercise: 'Chest Press', day: '2026-08-02', weightKg: 60, reps: 10 },
+      { exercise: 'Chest Press', day: '2026-08-02', weightKg: 60, reps: 9 },
       { exercise: 'Lat Pulldown (Neutral Grip)', day: '2026-08-02', weightKg: 70, reps: 10 },
       { exercise: 'Seated Cable Row (Wide Grip)', day: '2026-08-02', weightKg: 55, reps: 12 },
       { exercise: 'Pec Deck', day: '2026-08-02', weightKg: 50, reps: 12 },
       { exercise: 'Face Pull', day: '2026-08-02', weightKg: 20, reps: 15 },
-      { exercise: 'Romanian Deadlift (Dumbbell)', day: '2026-08-02', weightKg: 24, reps: 10 },
-      { exercise: 'Shoulder Press (DB)', day: '2026-08-02', weightKg: 16, reps: 10 },
+      { exercise: 'Romanian Deadlift', day: '2026-08-02', weightKg: 24, reps: 10 },
+      { exercise: 'Shoulder Press', day: '2026-08-02', weightKg: 16, reps: 10 },
     ])
     push('a tie on kg is broken by sets', [
       { exercise: 'Leg Extension', day: '2026-08-05', weightKg: 50, reps: 10 },
@@ -6783,8 +6783,8 @@ describe('golden vectors — exercise flags and the muscle dictionary', () => {
       'Each arm curl', 'ea leg press', 'Bulgarian Split Squat', 'Split Squat', 'Walking Lunges', 'Lunge', 'Step-Up', 'Step Ups', 'Pistol Squat',
       'Skater Squats', 'Copenhagen Plank', 'Suitcase Carry', 'Suitcase Deadlift', 'Double Arm Cable Row', 'Two-Arm Lunge', 'Both Leg Press',
       'Alternating Dumbbell Curl', 'Treadmill Walk', 'Incline Walk', 'Run', 'Cable Lateral Raise (Machine)', 'Smith Squat', 'BB Row', 'DB Fly',
-      'Sled Push', 'Bodyweight Squat', 'Some Unknown Movement', '', '   ', 'Shoulder Press (DB)', 'Seated Cable Row (V-Grip)',
-      'Neutral-Grip Lat Pulldown', 'lat pulldown neutral grip', 'Hip Adduction (Machine)', 'Adductor Machine', 'Overhead Triceps Extension (Cable)',
+      'Sled Push', 'Bodyweight Squat', 'Some Unknown Movement', '', '   ', 'Shoulder Press', 'Seated Cable Row (V-Grip)',
+      'Neutral-Grip Lat Pulldown', 'lat pulldown neutral grip', 'Hip Adduction', 'Adductor Machine', 'Overhead Triceps Extension',
       'Rope Face Pull', 'Straight Arm Pulldown', 'Cable Crossover', 'Cable Fly', 'Butterfly', 'Romanian Deadlift', 'RDL (Dumbbell)', 'Wrist Curl',
       'Reverse Curl', 'Preacher Curl', 'Incline Curl', 'Bicep Curl', 'Biceps Curl', 'Calf Press', 'Standing Calf Raise', 'Russian Twist', 'Hollow Rock',
     ]
@@ -6969,15 +6969,15 @@ describe('golden vectors — muscle distribution of a draft', () => {
       { name: 'cardio is skipped', draft: draft([ex('Treadmill', [set(0, 0)], { kind: 'cardio' }), ex('Pec Deck', [set(50, 12)])]) },
       { name: 'an unknown lift falls back to its stored groups', draft: draft([ex('Mystery Machine', [set(40, 10), set(40, 10)], { muscleGroups: ['glutes', 'hamstrings', 'quadriceps'] })]) },
       { name: 'an unknown lift with no groups credits nothing', draft: draft([ex('Mystery Machine', [set(40, 10)])]) },
-      { name: 'overlap keeps FULL credit — RDL lats + a pulldown', draft: draft([ex('Romanian Deadlift (Dumbbell)', [set(24, 10), set(24, 10)]), ex('Lat Pulldown', [set(70, 10)])]) },
+      { name: 'overlap keeps FULL credit — RDL lats + a pulldown', draft: draft([ex('Romanian Deadlift', [set(24, 10), set(24, 10)]), ex('Lat Pulldown', [set(70, 10)])]) },
       { name: 'a whole Upper A', draft: draft([
-        ex('Chest Press (Machine)', [set(40, 12, { setType: 'warmup' }), set(60, 10), set(60, 9), set(60, 8)]),
+        ex('Chest Press', [set(40, 12, { setType: 'warmup' }), set(60, 10), set(60, 9), set(60, 8)]),
         ex('Lat Pulldown (Neutral Grip)', [set(70, 10), set(70, 10), set(70, 9)]),
         ex('Seated Cable Row (Wide Grip)', [set(55, 12), set(55, 12)]),
         ex('Pec Deck', [set(50, 12), set(50, 12)]),
         ex('Face Pull', [set(20, 15), set(20, 15), set(20, 15)]),
-        ex('Romanian Deadlift (Dumbbell)', [set(24, 10), set(24, 10), set(24, 10)]),
-        ex('Shoulder Press (DB)', [set(16, 10), set(16, 10), set(16, 9)]),
+        ex('Romanian Deadlift', [set(24, 10), set(24, 10), set(24, 10)]),
+        ex('Shoulder Press', [set(16, 10), set(16, 10), set(16, 9)]),
         ex('Hanging Knee Raise', [set(0, 15), set(0, 15)]),
         ex('Side Plank', [set(0, 45, { pairId: 'sp', side: 'L' }), set(0, 45, { pairId: 'sp', side: 'R' })]),
       ]) },
@@ -7135,7 +7135,7 @@ describe('golden vectors — the session report', () => {
     })
 
     const exercises: DetailExercise[] = [
-      dex('Chest Press (Machine)', [ds(1, 40, 12, { setType: 'warmup' }), ds(2, 60, 10, { rpe: 7 }), ds(3, 60, 9, { rpe: 8 }), ds(4, 60, 8, { rpe: 9, isPr: true, prAxes: ['weight', 'e1rm'] })], { bestEst1rm: 76, prAxes: ['weight', 'e1rm'] }),
+      dex('Chest Press', [ds(1, 40, 12, { setType: 'warmup' }), ds(2, 60, 10, { rpe: 7 }), ds(3, 60, 9, { rpe: 8 }), ds(4, 60, 8, { rpe: 9, isPr: true, prAxes: ['weight', 'e1rm'] })], { bestEst1rm: 76, prAxes: ['weight', 'e1rm'] }),
       dex('Cable Lateral Raise (Single Arm)', [ds(1, 7.5, 12, { pairId: 'p', side: 'L', rpe: 8 }), ds(2, 7.5, 12, { pairId: 'p', side: 'R', rpe: 8.5 }), ds(3, 7.5, 11, { pairId: 'q', side: 'L' }), ds(4, 7.5, 12, { pairId: 'q', side: 'R', isPr: true, prAxes: ['reps'] })], { bestEst1rm: 10.5, prAxes: ['reps'] }),
       dex('Hanging Knee Raise', [ds(1, 0, 15), ds(2, 0, 17, { isPr: true, prAxes: ['reps'] })], { bestEst1rm: null, prAxes: ['reps'] }),
       dex('Side Plank', [ds(1, 0, 45), ds(2, 0, 50, { isPr: true, prAxes: ['reps'] })], { bestEst1rm: 0, prAxes: ['reps'] }),
@@ -7655,7 +7655,7 @@ describe('golden vectors — exercise tags', () => {
       'Push-Up', 'Pull-Up', 'Dip', 'Side Plank', 'Plank', 'Dead Hang', 'Wall Sit',
       'Farmer Carry', "Farmer's Walk", 'Suitcase Carry', 'Treadmill', 'Incline Walk',
       'Reverse Crunch', 'Crunch', 'Lateral Raise', 'Hanging Knee Raise',
-      'Smith Squat', 'BB Row', 'DB Row', 'Chest Press (Machine)', 'Leg Press Sled',
+      'Smith Squat', 'BB Row', 'DB Row', 'Chest Press', 'Leg Press Sled',
       'Bulgarian Split Squat', 'Walking Lunge', 'Double-Arm Cable Row',
       'Reverse Hyper', 'Good Morning', '', '   ', null,
     ]
@@ -7905,7 +7905,7 @@ describe('golden vectors — session seed', () => {
     let o = 0
     const day = [
       ['Incline DB Press', 36, 10, 3], ['Lat Pulldown', 50, 11, 3],
-      ['Chest Press (Machine)', 40, 12, 2], ['Seated Cable Row (V-Grip)', 42.5, 12, 2],
+      ['Chest Press', 40, 12, 2], ['Seated Cable Row (V-Grip)', 42.5, 12, 2],
       ['Pec Deck', 52.5, 14, 2], ['Straight-Arm Pulldown', 17.5, 15, 3],
       ['Face Pull', 16.25, 15, 3],
     ] as const
@@ -7964,16 +7964,16 @@ describe('golden vectors — session seed', () => {
       dayKey: 'cb_b',
       sessions: [sess('p', '2026-09-06', { dayKey: 'cb_b' })],
       sets: [
-        st('p', 'Single Arm Triceps Pushdown (Cable)', 1, 7.5, 14, { side: 'L', pairId: 'p1' }),
-        st('p', 'Single Arm Triceps Pushdown (Cable)', 2, 7.5, 12, { side: 'R', pairId: 'p1' }),
-        st('p', 'Single Arm Triceps Pushdown (Cable)', 3, 7.5, 13, { side: 'L', pairId: 'p2' }),
-        st('p', 'Single Arm Triceps Pushdown (Cable)', 4, 6.25, 13, { side: 'R', pairId: 'p2' }),
+        st('p', 'Single Arm Triceps Pushdown', 1, 7.5, 14, { side: 'L', pairId: 'p1' }),
+        st('p', 'Single Arm Triceps Pushdown', 2, 7.5, 12, { side: 'R', pairId: 'p1' }),
+        st('p', 'Single Arm Triceps Pushdown', 3, 7.5, 13, { side: 'L', pairId: 'p2' }),
+        st('p', 'Single Arm Triceps Pushdown', 4, 6.25, 13, { side: 'R', pairId: 'p2' }),
       ],
     })
     push('a lone side stays a row', {
       dayKey: 'cb_b',
       sessions: [sess('p', '2026-09-06', { dayKey: 'cb_b' })],
-      sets: [st('p', 'Single Arm Triceps Pushdown (Cable)', 1, 5, 15, { side: 'L', pairId: 'p1' })],
+      sets: [st('p', 'Single Arm Triceps Pushdown', 1, 5, 15, { side: 'L', pairId: 'p1' })],
     })
     push('alias resolves to the canonical name', {
       sessions: [sept6], sets: [st('sept6', 'Incline Dumbbell Press', 1, 36, 9)],

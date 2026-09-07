@@ -26,8 +26,8 @@ import type { SessionDraft, DraftSet } from '@/lib/sessions/draft'
 
 /** The real deck. Leg press carried ONE warm-up; nothing else did. */
 const SESSION: Array<{ name: string; sets: number; warmups?: number }> = [
-  { name: 'Romanian Deadlift (DB)', sets: 3 },
-  { name: 'Hip Thrust (Machine)', sets: 3 },
+  { name: 'Romanian Deadlift', sets: 3 },
+  { name: 'Hip Thrust', sets: 3 },
   { name: 'Leg Press', sets: 3, warmups: 1 },
   { name: 'Calf Press', sets: 3 },
   { name: 'Seated Leg Curl', sets: 2 },
@@ -41,8 +41,8 @@ const SESSION: Array<{ name: string; sets: number; warmups?: number }> = [
  * table has no rule, which is the real path for several of these.
  */
 const GROUPS: Record<string, string[]> = {
-  'Romanian Deadlift (DB)': ['hamstrings', 'glutes', 'lower back', 'upper back', 'lats'],
-  'Hip Thrust (Machine)': ['glutes', 'hamstrings', 'quadriceps'],
+  'Romanian Deadlift': ['hamstrings', 'glutes', 'lower back', 'upper back', 'lats'],
+  'Hip Thrust': ['glutes', 'hamstrings', 'quadriceps'],
   'Leg Press': ['quadriceps', 'glutes', 'hamstrings'],
   'Calf Press': ['calves'],
   'Seated Leg Curl': ['hamstrings', 'calves'],
@@ -130,7 +130,7 @@ describe('the three fixes, individually', () => {
     // hip thrust also has three sets here. Across the whole week the leg-press
     // rule pays 3.5 against Hevy's 1.5, and the hip-thrust rule pays 1.5.
     expect(resolveMovers('Leg Press', null).secondary).not.toContain('adductors')
-    expect(resolveMovers('Hip Thrust (Machine)', null).secondary).toContain('adductors')
+    expect(resolveMovers('Hip Thrust', null).secondary).toContain('adductors')
     expect(draftMuscleSets(draft()).Adductors).toBe(1.5)
   })
 
@@ -140,7 +140,7 @@ describe('the three fixes, individually', () => {
     // Hevy reported Forearms 1.5 for it, which is 0.5 × 3 RDL sets and cannot
     // be anything else. Where a vendor's label and its arithmetic disagree,
     // the arithmetic is the thing being compared.
-    expect(resolveMovers('Romanian Deadlift (DB)', null).secondary).toContain('forearms')
+    expect(resolveMovers('Romanian Deadlift', null).secondary).toContain('forearms')
     expect(draftMuscleSets(draft()).Forearms).toBe(1.5)
   })
 
@@ -181,7 +181,7 @@ describe('the three fixes, individually', () => {
  * anybody ever DOES reverse it, it is a decision and not a drift.
  */
 const UPPER_A_0823: Array<{ name: string; groups: string[]; sets: number }> = [
-  { name: 'Chest Press (Machine)', groups: ['chest', 'triceps', 'front_delts'], sets: 2 },
+  { name: 'Chest Press', groups: ['chest', 'triceps', 'front_delts'], sets: 2 },
   { name: 'Face Pull', groups: ['rear_delts', 'upper back', 'traps'], sets: 3 },
   { name: 'Incline DB Press', groups: ['chest', 'triceps', 'front_delts'], sets: 3 },
   { name: 'Lat Pulldown', groups: ['lats', 'upper back', 'biceps', 'forearms'], sets: 3 },
@@ -292,7 +292,7 @@ describe('Upper A · 2026-08-23 against Hevy', () => {
  */
 const WEEK: Array<{ name: string; groups: string[]; sets: number; warmups?: number }> = [
   // 08-16 · Upper A
-  { name: 'Chest Press (Machine)', groups: ['chest', 'triceps', 'front_delts'], sets: 2 },
+  { name: 'Chest Press', groups: ['chest', 'triceps', 'front_delts'], sets: 2 },
   { name: 'Face Pull', groups: ['rear_delts', 'upper back', 'traps'], sets: 3 },
   { name: 'Incline DB Press', groups: ['chest', 'triceps', 'front_delts'], sets: 3 },
   { name: 'Lat Pulldown', groups: ['lats', 'upper back', 'biceps', 'forearms'], sets: 3 },
@@ -308,27 +308,27 @@ const WEEK: Array<{ name: string; groups: string[]; sets: number; warmups?: numb
   { name: 'Reverse Crunch', groups: ['abdominals'], sets: 3 },
   { name: 'Seated Leg Curl', groups: ['hamstrings', 'calves'], sets: 3 },
   // 08-18 · Delts & Arms
-  { name: 'Cable Overhead Extension', groups: ['triceps'], sets: 3 },
-  { name: 'DB Hammer Curl', groups: ['biceps', 'forearms'], sets: 3 },
-  { name: 'DB Shoulder Press', groups: ['front_delts', 'side_delts', 'triceps'], sets: 3 },
+  { name: 'Overhead Triceps Extension', groups: ['triceps'], sets: 3 },
+  { name: 'Hammer Curl', groups: ['biceps', 'forearms'], sets: 3 },
+  { name: 'Shoulder Press', groups: ['front_delts', 'side_delts', 'triceps'], sets: 3 },
   { name: 'Reverse EZ-Bar Curl', groups: ['forearms', 'biceps'], sets: 2 },
   { name: 'Rope Triceps Pushdown', groups: ['triceps'], sets: 2 },
   { name: 'Seated Incline DB Curl', groups: ['biceps'], sets: 3 },
-  { name: 'Single Arm Lateral Raise (Cable)', groups: ['side_delts'], sets: 4 },
+  { name: 'Single Arm Lateral Raise', groups: ['side_delts'], sets: 4 },
   // 08-20 · Upper B
-  { name: 'Chest Press (Machine)', groups: ['chest', 'triceps', 'front_delts'], sets: 3 },
+  { name: 'Chest Press', groups: ['chest', 'triceps', 'front_delts'], sets: 3 },
   { name: 'Neutral-Grip Lat Pulldown', groups: ['lats', 'upper back', 'biceps', 'forearms'], sets: 2 },
-  { name: 'Preacher Curl (Machine)', groups: ['biceps'], sets: 3 },
+  { name: 'Preacher Curl', groups: ['biceps'], sets: 3 },
   { name: 'Seated Cable Row (Wide Grip)', groups: ['upper back', 'lats', 'traps', 'rear_delts', 'biceps', 'forearms'], sets: 2 },
   { name: 'Single Arm Cable Crossover', groups: ['chest', 'front_delts'], sets: 2 },
-  { name: 'Single Arm Lateral Raise (Cable)', groups: ['side_delts'], sets: 3 },
-  { name: 'Single Arm Triceps Pushdown (Cable)', groups: ['triceps'], sets: 3 },
+  { name: 'Single Arm Lateral Raise', groups: ['side_delts'], sets: 3 },
+  { name: 'Single Arm Triceps Pushdown', groups: ['triceps'], sets: 3 },
   // 08-21 · Legs & Core B
   { name: 'Calf Press', groups: ['calves'], sets: 3 },
   { name: 'Hanging Knee Raise', groups: ['abdominals'], sets: 3 },
-  { name: 'Hip Thrust (Machine)', groups: ['glutes', 'hamstrings', 'quadriceps'], sets: 3 },
+  { name: 'Hip Thrust', groups: ['glutes', 'hamstrings', 'quadriceps'], sets: 3 },
   { name: 'Leg Press', groups: ['quadriceps', 'glutes', 'hamstrings'], sets: 2, warmups: 1 },
-  { name: 'Romanian Deadlift (DB)', groups: ['hamstrings', 'glutes', 'lower back', 'upper back', 'lats'], sets: 3 },
+  { name: 'Romanian Deadlift', groups: ['hamstrings', 'glutes', 'lower back', 'upper back', 'lats'], sets: 3 },
   { name: 'Seated Leg Curl', groups: ['hamstrings', 'calves'], sets: 2 },
   { name: 'Side Plank', groups: ['obliques', 'abdominals'], sets: 2 },
 ]

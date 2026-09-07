@@ -14,13 +14,13 @@ describe('deltoid + forearm primaries', () => {
 
   it('lateral raises are the only true SIDE-DELT primary', () => {
     expect(primary('Cable Lateral Raise')).toEqual(['side_delts'])
-    expect(primary('Single Arm Lateral Raise (Cable)')).toEqual(['side_delts'])
+    expect(primary('Single Arm Lateral Raise')).toEqual(['side_delts'])
   })
   it('face pull is a REAR-DELT movement, not side delt', () => {
     expect(primary('Face Pull')).toEqual(['rear_delts'])
   })
   it('overhead press is a FRONT-DELT movement (an untracked isolation target)', () => {
-    expect(primary('DB Shoulder Press')).toEqual(['front_delts'])
+    expect(primary('Shoulder Press')).toEqual(['front_delts'])
   })
   it('reverse (pronated) curl is a BICEPS movement that pays the forearms', () => {
     // This file has had it both ways. Pronation genuinely shifts load onto the
@@ -38,9 +38,9 @@ describe('weekly deltoid distribution after the fix', () => {
   // One working set of each of a week's APEX shoulder movements, resolved
   // through resolveMovers exactly as useWeeklyVolume does.
   const names = [
-    'Cable Lateral Raise', 'Single Arm Lateral Raise (Cable)', // side delts, DIRECT
+    'Cable Lateral Raise', 'Single Arm Lateral Raise', // side delts, DIRECT
     'Face Pull',                                               // rear delts, DIRECT
-    'DB Shoulder Press',                                       // front delts, DIRECT
+    'Shoulder Press',                                       // front delts, DIRECT
   ]
   const out = weeklyVolumeByMuscle(
     names.map((n, i) => ({ ...resolveMovers(n), dedupeKey: `s${i}` })),
@@ -100,13 +100,13 @@ describe('secondary movers across the catalogue', () => {
   const movers = (name: string) => resolveMovers(name)
 
   it('an RDL trains the glutes, not only the hamstrings', () => {
-    expect(movers('DB RDL').primary).toEqual(['hamstrings'])
-    expect(movers('DB RDL').secondary).toContain('glutes')
-    expect(movers('Romanian Deadlift (DB)').secondary).toContain('glutes')
+    expect(movers('Romanian Deadlift').primary).toEqual(['hamstrings'])
+    expect(movers('Romanian Deadlift').secondary).toContain('glutes')
+    expect(movers('Romanian Deadlift').secondary).toContain('glutes')
   })
 
   it('a hammer curl trains the forearms', () => {
-    expect(movers('DB Hammer Curl').secondary).toContain('forearms')
+    expect(movers('Hammer Curl').secondary).toContain('forearms')
   })
 
   it('leg press and hack squat train the glutes', () => {
@@ -115,7 +115,7 @@ describe('secondary movers across the catalogue', () => {
   })
 
   it('presses train the triceps and the front delts', () => {
-    for (const n of ['Chest Press (Machine)', 'Incline DB Press']) {
+    for (const n of ['Chest Press', 'Incline DB Press']) {
       expect(movers(n).primary).toEqual(['chest'])
       expect(movers(n).secondary).toEqual(expect.arrayContaining(['triceps', 'front_delts']))
     }
@@ -146,15 +146,15 @@ describe('secondary movers across the catalogue', () => {
 
   it('hip adduction resolves to Adductors under both of its names', () => {
     expect(movers('Hip Adduction').primary).toEqual(['adductors'])
-    expect(movers('Hip Adduction (Machine)').primary).toEqual(['adductors'])
+    expect(movers('Hip Adduction').primary).toEqual(['adductors'])
   })
 
   it('reads the words inside parentheses instead of deleting them', () => {
     // `(...)` used to be stripped WITH its contents, so `Shoulder Press (DB)`
     // matched no entry at all and fell back to a bare `shoulders` tag — the one
     // token that folds to SIDE delts.
-    expect(movers('Shoulder Press (DB)')).toEqual(movers('DB Shoulder Press'))
-    expect(movers('Shoulder Press (DB)').primary).toEqual(['front_delts'])
+    expect(movers('Shoulder Press')).toEqual(movers('Shoulder Press'))
+    expect(movers('Shoulder Press').primary).toEqual(['front_delts'])
     expect(movers('Crunch (Machine)')).toEqual(movers('Crunch Machine'))
   })
 

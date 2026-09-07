@@ -763,6 +763,35 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v16 ─────────────────────────────────────────────────────────────
+        // Which movement came first.
+        //
+        // `SyncTranslation` left `exercise_order` out of the upload since Wave
+        // 3 on the honest grounds that "the local store does not track it", and
+        // that was true: every session logged on this phone carries a NULL in
+        // that column server-side, while every web-logged one is populated. The
+        // reader that suffers is the session report, which orders by
+        // `exercise_order` before `set_number` — so a phone workout comes back
+        // in whatever order `set_number` happens to imply, and a reorder gesture
+        // had nowhere to write.
+        //
+        // NULLABLE, and backfilled to nothing. A default of 0 would say every
+        // historical movement opened its workout; a null says what is actually
+        // known about them, which is nothing, and every reader on both sides
+        // already handles it (`useSessionDetail` reads `?? 999`).
+        //
+        // The projection is NOT rebuilt here. `workout_sets` is a fold over
+        // `set_events`, and the events that predate this migration carry no
+        // order either — a `reprojectAll` would rewrite every row in the store
+        // to put the same nulls back.
+        migrator.registerMigration("v16.exerciseOrder") { db in
+            guard try !db.columns(in: "workout_sets").contains(where: { $0.name == "exercise_order" })
+            else { return }
+            try db.alter(table: "workout_sets") { t in
+                t.add(column: "exercise_order", .integer)
+            }
+        }
+
         return migrator
     }
 }

@@ -237,7 +237,32 @@ public struct OnyxCallout: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .onyxGlass(.row)
+        // ── WHY NOT `onyxGlass(.row)` ───────────────────────────────────────
+        // Glass is a material, and a material TINTS towards whatever is behind
+        // it. Behind this one is a chart: a saturated line, a filled bar and,
+        // on the Body tab, a Tide mesh under all of it — so the callout on the
+        // composition chart came out as a grey-green box with a green gradient
+        // baked into its corner, and `textSecondary` on that is barely a
+        // reading. Every other surface in the app sits on the SCREEN, where
+        // sampling is the whole point; this is the one that sits on the DATA.
+        //
+        // It is also the one surface whose ink cannot follow the material: the
+        // text tokens are fixed white alphas, so in a light colour scheme the
+        // thin material goes pale and takes 92 % white with it. A flat base
+        // fill is legible in both, which a material here can never be.
+        //
+        // 0.92 rather than 1: the mark under the finger stays faintly visible
+        // through it, which is what keeps this a callout on a chart and not a
+        // card parked over one. The hairline is the edge the material used to
+        // imply.
+        .background {
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .fill(Color.onyx.base.opacity(0.92))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .strokeBorder(Color.onyx.hairline, lineWidth: 0.5)
+        }
     }
 }
 

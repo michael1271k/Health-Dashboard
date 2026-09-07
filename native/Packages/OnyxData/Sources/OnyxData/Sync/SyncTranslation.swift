@@ -360,6 +360,15 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     public var pairId: String?
     public var est1rmKg: Double?
     public var rpe: Double?
+    /// Which movement this set belongs to, by deck position — dense from 0, the
+    /// same number `buildCommitPayload` writes on the web.
+    ///
+    /// Tracked locally since `v16.exerciseOrder` and SENT, which every phone
+    /// session before it was not: `useSessionDetail` orders on this column
+    /// before `set_number`, so a workout that uploads nulls comes back in
+    /// whatever order the set numbers imply — the incline press interleaved
+    /// with the flye because both start at 1.
+    public var exerciseOrder: Int?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -374,17 +383,38 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case rpe
+        case exerciseOrder = "exercise_order"
     }
 
     /// Same reason as `RemoteSessionRow`: nulls are written, never omitted, so
     /// every object in a bulk upsert carries an identical key set.
     ///
-    /// What is absent from this list is absent on purpose:
+    /// ── `exercise_order` IS WRITTEN, NULLS AND ALL, AND WHY THAT IS SAFE ─────
+    /// It sits with `rpe` and `side` rather than with `quality`: the phone has
+    /// a real opinion about it for every set it logs, because the opinion IS
+    /// the deck the athlete is looking at. Omitting it per-row is not on the
+    /// table — a batch is one session's sets and PostgREST rejects a body whose
+    /// objects disagree about keys, which fails the whole session rather than
+    /// one column of one row.
     ///
-    ///   · `is_pr` — the PR engine is not ported yet (Track D item 2). Sending
-    ///     `false` would be a claim, and it would overwrite a record flagged by
-    ///     the web app. An omitted column is left untouched by an upsert.
-    ///   · `exercise_order` — the local store does not track it.
+    /// The residue: a session PULLED before `v16` carries a local null over a
+    /// populated server value, and editing it here would write that null back.
+    /// Narrow — `applyPulledSets` has carried the column since the same wave,
+    /// so it only affects rows that landed on this device before the upgrade
+    /// AND are then edited on it — and one re-save on either client repairs it.
+    /// The alternative costs the whole batch.
+    ///
+    /// What is still absent from this list is absent on purpose:
+    ///
+    ///   · `is_pr` — the PR engine is ported now (`PrEngine`, `PrRecorder`) and
+    ///     this is still not sent, because a record is not a property of the set
+    ///     at the moment it is logged. A later set in the same session
+    ///     supersedes it, deleting one hands the axis back, and `PrRecorder`
+    ///     can RETRACT — so a flag frozen into the `.append` payload is a claim
+    ///     that goes stale inside the same workout, and `reproject` would keep
+    ///     replaying the stale one. It wants stamping over the whole session at
+    ///     close, which is a different write from this one. Sending `false`
+    ///     meanwhile would overwrite a record the web app flagged.
     ///   · `quality` — the local store DOES hold it now (`v14.setQuality`), and
     ///     it is still not sent. PostgREST wants an identical key set across
     ///     every object of a bulk upsert, so sending it means sending NULL for
@@ -409,6 +439,7 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         try c.encode(pairId, forKey: .pairId)
         try c.encode(est1rmKg, forKey: .est1rmKg)
         try c.encode(rpe, forKey: .rpe)
+        try c.encode(exerciseOrder, forKey: .exerciseOrder)
     }
 }
 
@@ -502,7 +533,8 @@ public extension SyncTranslation {
             side: try side(set.side),
             pairId: set.pairId,
             est1rmKg: set.est1rmKg,
-            rpe: rpe(set.rpe)
+            rpe: rpe(set.rpe),
+            exerciseOrder: set.exerciseOrder
         )
     }
 

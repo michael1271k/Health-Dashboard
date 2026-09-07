@@ -179,7 +179,7 @@ describe('a mixed unilateral exercise', () => {
   ]
 
   it('never invents a side for a set the log does not give one', () => {
-    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise')
     expect(lines[1]).toBe('Set 2: 3.75 kg × 16 (RPE 8.5 — Hard)')
     expect(lines[2]).toBe('Set 3: 3.75 kg × 15 (RPE 9 — Very Hard)')
     // The whole bug in one assertion: neither bilateral set may name a limb.
@@ -188,7 +188,7 @@ describe('a mixed unilateral exercise', () => {
   })
 
   it('still pairs the sets that ARE two-sided, in place', () => {
-    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise')
     expect(lines[0]).toBe('Set 1: L 5 kg × 15 (RPE 8.5 — Hard) · R 5 kg × 14 (RPE 8.5 — Hard)')
     expect(lines[3]).toBe('Set 4: L 3.75 kg × 15 (RPE 9 — Very Hard) · R 3.75 kg × 15 (RPE 8.5 — Hard)')
   })
@@ -196,7 +196,7 @@ describe('a mixed unilateral exercise', () => {
   it('numbers four sets, not six and not five', () => {
     // Six rows, four sets of work: a pair is ONE set. The old renderer gave the
     // two bilateral rows their own S-numbers off a separate `solo` counter.
-    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise (Cable)')
+    const lines = setDetail(AUG_18, 'Single Arm Lateral Raise')
     expect(lines).toHaveLength(4)
     expect(lines.map((l) => l.split(':')[0])).toEqual(['Set 1', 'Set 2', 'Set 3', 'Set 4'])
   })

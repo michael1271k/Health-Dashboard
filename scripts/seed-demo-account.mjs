@@ -126,7 +126,7 @@ const SPLIT = {
 /** Movements per day, with the load a demo account plausibly lifts. */
 const MOVES = {
   upper_a: [
-    ['Incline DB Press', 24, 8, 12], ['Chest Press (Machine)', 40, 10, 12],
+    ['Incline DB Press', 24, 8, 12], ['Chest Press', 40, 10, 12],
     ['Lat Pulldown', 50, 8, 12], ['Cable Row', 45, 10, 12], ['Lateral Raise', 8, 12, 20],
   ],
   legs_a: [
@@ -135,22 +135,22 @@ const MOVES = {
   ],
   upper_b: [
     ['Overhead Press', 30, 6, 10], ['Chest Supported Row', 45, 8, 12],
-    ['Preacher Curl (Machine)', 18, 8, 12], ['Triceps Pushdown', 25, 10, 15],
+    ['Preacher Curl', 18, 8, 12], ['Triceps Pushdown', 25, 10, 15],
   ],
   legs_b: [
-    ['Hack Squat', 70, 8, 12], ['Hip Thrust (Machine)', 80, 8, 15],
+    ['Hack Squat', 70, 8, 12], ['Hip Thrust', 80, 8, 15],
     ['Leg Curl', 40, 10, 15], ['Standing Calf Raise', 60, 12, 20],
   ],
 }
 
 const MUSCLES = {
-  'Incline DB Press': ['Chest', 'Front delts'], 'Chest Press (Machine)': ['Chest'],
+  'Incline DB Press': ['Chest', 'Front delts'], 'Chest Press': ['Chest'],
   'Lat Pulldown': ['Lats'], 'Cable Row': ['Upper back'], 'Lateral Raise': ['Side delts'],
   'Leg Press': ['Quadriceps'], 'Romanian Deadlift': ['Hamstrings'],
   'Leg Extension': ['Quadriceps'], 'Calf Press': ['Calves'], 'Reverse Crunch': ['Abs'],
   'Overhead Press': ['Front delts'], 'Chest Supported Row': ['Upper back'],
-  'Preacher Curl (Machine)': ['Biceps'], 'Triceps Pushdown': ['Triceps'],
-  'Hack Squat': ['Quadriceps'], 'Hip Thrust (Machine)': ['Glutes'],
+  'Preacher Curl': ['Biceps'], 'Triceps Pushdown': ['Triceps'],
+  'Hack Squat': ['Quadriceps'], 'Hip Thrust': ['Glutes'],
   'Leg Curl': ['Hamstrings'], 'Standing Calf Raise': ['Calves'],
 }
 

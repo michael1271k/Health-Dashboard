@@ -21,21 +21,21 @@ describe('payloadToTemplate — built from what actually reached the database', 
   it('groups sets under their exercise and densifies the order', () => {
     // exerciseOrder arrives sparse when an exercise was removed mid-session.
     const t = payloadToTemplate([
-      set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0, weightKg: 40, reps: 11 }),
-      set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0, weightKg: 40, reps: 10 }),
-      set({ exerciseName: 'Preacher Curl (Machine)', exerciseOrder: 5, weightKg: 17.5, reps: 12 }),
+      set({ exerciseName: 'Chest Press', exerciseOrder: 0, weightKg: 40, reps: 11 }),
+      set({ exerciseName: 'Chest Press', exerciseOrder: 0, weightKg: 40, reps: 10 }),
+      set({ exerciseName: 'Preacher Curl', exerciseOrder: 5, weightKg: 17.5, reps: 12 }),
     ])!
-    expect(t.exercises.map((e) => e.name)).toEqual(['Chest Press (Machine)', 'Preacher Curl (Machine)'])
+    expect(t.exercises.map((e) => e.name)).toEqual(['Chest Press', 'Preacher Curl'])
     expect(t.exercises.map((e) => e.order)).toEqual([0, 1])
     expect(t.exercises[0].sets).toHaveLength(2)
   })
 
   it('preserves the deck ORDER — this is what makes reordering stick', () => {
     const t = payloadToTemplate([
-      set({ exerciseName: 'Preacher Curl (Machine)', exerciseOrder: 0 }),
-      set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 1 }),
+      set({ exerciseName: 'Preacher Curl', exerciseOrder: 0 }),
+      set({ exerciseName: 'Chest Press', exerciseOrder: 1 }),
     ])!
-    expect(t.exercises.map((e) => e.name)).toEqual(['Preacher Curl (Machine)', 'Chest Press (Machine)'])
+    expect(t.exercises.map((e) => e.name)).toEqual(['Preacher Curl', 'Chest Press'])
   })
 
   it('keeps a unilateral pair intact', () => {
@@ -95,7 +95,7 @@ describe('templateToDraft — a template is a PLAN, never a log', () => {
   })
 
   const template = payloadToTemplate([
-    set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0, weightKg: 40, reps: 11 }),
+    set({ exerciseName: 'Chest Press', exerciseOrder: 0, weightKg: 40, reps: 11 }),
     set({ exerciseName: 'SA Triceps Pushdown', exerciseOrder: 1, weightKg: 6.25, reps: 15, side: 'L', pairId: 'p1' }),
     set({ exerciseName: 'SA Triceps Pushdown', exerciseOrder: 1, weightKg: 6.25, reps: 13, side: 'R', pairId: 'p1' }),
   ])!
@@ -134,7 +134,7 @@ describe('templateToDraft — a template is a PLAN, never a log', () => {
 
   it('carries the order across the round trip', () => {
     const d = templateToDraft(template, cbB, '2026-08-20', 'cb_b')
-    expect(d.exercises.map((e) => e.name)).toEqual(['Chest Press (Machine)', 'SA Triceps Pushdown'])
+    expect(d.exercises.map((e) => e.name)).toEqual(['Chest Press', 'SA Triceps Pushdown'])
   })
 
   it('gives each deck its own clientSessionId', () => {
@@ -175,8 +175,8 @@ describe('parseTemplate — an unreadable payload is ABSENT, never a throw', () 
  */
 describe('cardio blocks keep their place in the template', () => {
   const strength = [
-    set({ exerciseName: 'Chest Press (Machine)', exerciseOrder: 0 }),
-    set({ exerciseName: 'Preacher Curl (Machine)', exerciseOrder: 1 }),
+    set({ exerciseName: 'Chest Press', exerciseOrder: 0 }),
+    set({ exerciseName: 'Preacher Curl', exerciseOrder: 1 }),
   ]
 
   it('puts a warm-up first', () => {
@@ -184,7 +184,7 @@ describe('cardio blocks keep their place in the template', () => {
       { name: 'Treadmill', distanceKm: 0.4, durationSec: 300, deckOrder: 0 },
     ])!
     expect(t.exercises.map((e) => e.name)).toEqual([
-      'Treadmill', 'Chest Press (Machine)', 'Preacher Curl (Machine)',
+      'Treadmill', 'Chest Press', 'Preacher Curl',
     ])
     expect(t.exercises[0].kind).toBe('cardio')
     expect(t.exercises[0].distanceKm).toBe(0.4)
@@ -196,7 +196,7 @@ describe('cardio blocks keep their place in the template', () => {
       { name: 'Treadmill', distanceKm: 2, durationSec: 720, deckOrder: 2 },
     ])!
     expect(t.exercises.map((e) => e.name)).toEqual([
-      'Chest Press (Machine)', 'Preacher Curl (Machine)', 'Treadmill',
+      'Chest Press', 'Preacher Curl', 'Treadmill',
     ])
   })
 

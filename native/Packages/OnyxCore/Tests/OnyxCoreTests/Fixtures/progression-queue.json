@@ -23,8 +23,8 @@
             "color": "#E0703C"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_a",
             "dayLabel": "Upper A",
             "color": "#E0703C"
@@ -107,15 +107,15 @@
             "color": "#3D7AB8"
           },
           {
-            "id": "ex-db-shoulder-press",
-            "name": "DB Shoulder Press",
+            "id": "ex-shoulder-press",
+            "name": "Shoulder Press",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -128,15 +128,15 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-cable-overhead-extension",
-            "name": "Cable Overhead Extension",
+            "id": "ex-overhead-triceps-extension",
+            "name": "Overhead Triceps Extension",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-db-hammer-curl",
-            "name": "DB Hammer Curl",
+            "id": "ex-hammer-curl",
+            "name": "Hammer Curl",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -156,8 +156,8 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
@@ -184,36 +184,36 @@
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-preacher-curl-machine-",
-            "name": "Preacher Curl (Machine)",
+            "id": "ex-preacher-curl",
+            "name": "Preacher Curl",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-triceps-pushdown-cable-",
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "id": "ex-single-arm-triceps-pushdown",
+            "name": "Single Arm Triceps Pushdown",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-romanian-deadlift-dumbbell-",
-            "name": "Romanian Deadlift (Dumbbell)",
+            "id": "ex-romanian-deadlift",
+            "name": "Romanian Deadlift",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
           },
           {
-            "id": "ex-hip-thrust-machine-",
-            "name": "Hip Thrust (Machine)",
+            "id": "ex-hip-thrust",
+            "name": "Hip Thrust",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
@@ -346,7 +346,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -356,7 +356,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -366,7 +366,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -376,7 +376,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -386,7 +386,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 52.5,
             "reps": 9,
             "set_type": null,
@@ -396,7 +396,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 52.5,
             "reps": 8,
             "set_type": null,
@@ -486,7 +486,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -496,7 +496,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -506,7 +506,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -516,7 +516,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -605,8 +605,8 @@
           "state": "ready"
         },
         {
-          "exerciseId": "ex-chest-press-machine-",
-          "name": "Chest Press (Machine)",
+          "exerciseId": "ex-chest-press",
+          "name": "Chest Press",
           "dayKey": "cb_b",
           "dayLabel": "Upper B",
           "dayColor": "#B4522A",
@@ -650,8 +650,8 @@
             "color": "#E0703C"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_a",
             "dayLabel": "Upper A",
             "color": "#E0703C"
@@ -734,15 +734,15 @@
             "color": "#3D7AB8"
           },
           {
-            "id": "ex-db-shoulder-press",
-            "name": "DB Shoulder Press",
+            "id": "ex-shoulder-press",
+            "name": "Shoulder Press",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -755,15 +755,15 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-cable-overhead-extension",
-            "name": "Cable Overhead Extension",
+            "id": "ex-overhead-triceps-extension",
+            "name": "Overhead Triceps Extension",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-db-hammer-curl",
-            "name": "DB Hammer Curl",
+            "id": "ex-hammer-curl",
+            "name": "Hammer Curl",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -783,8 +783,8 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
@@ -811,36 +811,36 @@
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-preacher-curl-machine-",
-            "name": "Preacher Curl (Machine)",
+            "id": "ex-preacher-curl",
+            "name": "Preacher Curl",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-triceps-pushdown-cable-",
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "id": "ex-single-arm-triceps-pushdown",
+            "name": "Single Arm Triceps Pushdown",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-romanian-deadlift-dumbbell-",
-            "name": "Romanian Deadlift (Dumbbell)",
+            "id": "ex-romanian-deadlift",
+            "name": "Romanian Deadlift",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
           },
           {
-            "id": "ex-hip-thrust-machine-",
-            "name": "Hip Thrust (Machine)",
+            "id": "ex-hip-thrust",
+            "name": "Hip Thrust",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
@@ -905,8 +905,8 @@
             "color": "#E0703C"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_a",
             "dayLabel": "Upper A",
             "color": "#E0703C"
@@ -989,15 +989,15 @@
             "color": "#3D7AB8"
           },
           {
-            "id": "ex-db-shoulder-press",
-            "name": "DB Shoulder Press",
+            "id": "ex-shoulder-press",
+            "name": "Shoulder Press",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -1010,15 +1010,15 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-cable-overhead-extension",
-            "name": "Cable Overhead Extension",
+            "id": "ex-overhead-triceps-extension",
+            "name": "Overhead Triceps Extension",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-db-hammer-curl",
-            "name": "DB Hammer Curl",
+            "id": "ex-hammer-curl",
+            "name": "Hammer Curl",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -1045,8 +1045,8 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
@@ -1073,36 +1073,36 @@
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-preacher-curl-machine-",
-            "name": "Preacher Curl (Machine)",
+            "id": "ex-preacher-curl",
+            "name": "Preacher Curl",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-triceps-pushdown-cable-",
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "id": "ex-single-arm-triceps-pushdown",
+            "name": "Single Arm Triceps Pushdown",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-romanian-deadlift-dumbbell-",
-            "name": "Romanian Deadlift (Dumbbell)",
+            "id": "ex-romanian-deadlift",
+            "name": "Romanian Deadlift",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
           },
           {
-            "id": "ex-hip-thrust-machine-",
-            "name": "Hip Thrust (Machine)",
+            "id": "ex-hip-thrust",
+            "name": "Hip Thrust",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
@@ -1242,7 +1242,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -1252,7 +1252,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -1262,7 +1262,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -1272,7 +1272,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 50,
             "reps": 12,
             "set_type": null,
@@ -1282,7 +1282,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 52.5,
             "reps": 9,
             "set_type": null,
@@ -1292,7 +1292,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 52.5,
             "reps": 8,
             "set_type": null,
@@ -1382,7 +1382,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -1392,7 +1392,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -1402,7 +1402,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -1412,7 +1412,7 @@
             }
           },
           {
-            "exercise_id": "ex-chest-press-machine-",
+            "exercise_id": "ex-chest-press",
             "weight_kg": 72.5,
             "reps": 13,
             "set_type": null,
@@ -1501,8 +1501,8 @@
           "state": "ready"
         },
         {
-          "exerciseId": "ex-chest-press-machine-",
-          "name": "Chest Press (Machine)",
+          "exerciseId": "ex-chest-press",
+          "name": "Chest Press",
           "dayKey": "cb_b",
           "dayLabel": "Upper B",
           "dayColor": "#B4522A",
@@ -1546,8 +1546,8 @@
             "color": "#E0703C"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_a",
             "dayLabel": "Upper A",
             "color": "#E0703C"
@@ -1630,15 +1630,15 @@
             "color": "#3D7AB8"
           },
           {
-            "id": "ex-db-shoulder-press",
-            "name": "DB Shoulder Press",
+            "id": "ex-shoulder-press",
+            "name": "Shoulder Press",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -1651,15 +1651,15 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-cable-overhead-extension",
-            "name": "Cable Overhead Extension",
+            "id": "ex-overhead-triceps-extension",
+            "name": "Overhead Triceps Extension",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-db-hammer-curl",
-            "name": "DB Hammer Curl",
+            "id": "ex-hammer-curl",
+            "name": "Hammer Curl",
             "dayKey": "arms",
             "dayLabel": "Delts & Arms",
             "color": "#8A6FA8"
@@ -1686,8 +1686,8 @@
             "color": "#8A6FA8"
           },
           {
-            "id": "ex-chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "id": "ex-chest-press",
+            "name": "Chest Press",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
@@ -1714,36 +1714,36 @@
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-lateral-raise-cable-",
-            "name": "Single Arm Lateral Raise (Cable)",
+            "id": "ex-single-arm-lateral-raise",
+            "name": "Single Arm Lateral Raise",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-preacher-curl-machine-",
-            "name": "Preacher Curl (Machine)",
+            "id": "ex-preacher-curl",
+            "name": "Preacher Curl",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-single-arm-triceps-pushdown-cable-",
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "id": "ex-single-arm-triceps-pushdown",
+            "name": "Single Arm Triceps Pushdown",
             "dayKey": "cb_b",
             "dayLabel": "Upper B",
             "color": "#B4522A"
           },
           {
-            "id": "ex-romanian-deadlift-dumbbell-",
-            "name": "Romanian Deadlift (Dumbbell)",
+            "id": "ex-romanian-deadlift",
+            "name": "Romanian Deadlift",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"
           },
           {
-            "id": "ex-hip-thrust-machine-",
-            "name": "Hip Thrust (Machine)",
+            "id": "ex-hip-thrust",
+            "name": "Hip Thrust",
             "dayKey": "legs_b",
             "dayLabel": "Legs & Core B",
             "color": "#2E5C8A"

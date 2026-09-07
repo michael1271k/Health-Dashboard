@@ -217,6 +217,12 @@ extension AppDatabase {
                         pairId: row.pairId,
                         est1rmKg: row.est1rmKg,
                         rpe: row.rpe,
+                        // The web's own deck order, kept rather than re-derived.
+                        // `seedEventLog` carries it into the log on the first
+                        // edit, which is what stops this device pushing a null
+                        // back over it — and it lets the report group a
+                        // web-logged session the way it actually happened.
+                        exerciseOrder: row.exerciseOrder,
                         isPendingSync: false,
                         foldOrder: order
                     ).save(db)

@@ -13,9 +13,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine)",
+      "name": "Chest Press",
       "input": {
-        "name": "Chest Press (Machine)"
+        "name": "Chest Press"
       },
       "expected": null
     },
@@ -37,9 +37,9 @@
       "expected": null
     },
     {
-      "name": "DB Shoulder Press",
+      "name": "Shoulder Press",
       "input": {
-        "name": "DB Shoulder Press"
+        "name": "Shoulder Press"
       },
       "expected": {
         "weight": 31,
@@ -47,16 +47,16 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable)",
+      "name": "Single Arm Lateral Raise",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)"
+        "name": "Single Arm Lateral Raise"
       },
       "expected": null
     },
     {
-      "name": "Cable Overhead Extension",
+      "name": "Overhead Triceps Extension",
       "input": {
-        "name": "Cable Overhead Extension"
+        "name": "Overhead Triceps Extension"
       },
       "expected": {
         "weight": 12.5
@@ -73,9 +73,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable)",
+      "name": "Single Arm Triceps Pushdown",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)"
+        "name": "Single Arm Triceps Pushdown"
       },
       "expected": null
     },
@@ -139,9 +139,9 @@
       "expected": null
     },
     {
-      "name": "DB Hammer Curl",
+      "name": "Hammer Curl",
       "input": {
-        "name": "DB Hammer Curl"
+        "name": "Hammer Curl"
       },
       "expected": null
     },
@@ -153,9 +153,9 @@
       "expected": null
     },
     {
-      "name": "Preacher Curl (Machine)",
+      "name": "Preacher Curl",
       "input": {
-        "name": "Preacher Curl (Machine)"
+        "name": "Preacher Curl"
       },
       "expected": null
     },
@@ -200,16 +200,16 @@
       }
     },
     {
-      "name": "Romanian Deadlift (DB)",
+      "name": "Romanian Deadlift",
       "input": {
-        "name": "Romanian Deadlift (DB)"
+        "name": "Romanian Deadlift"
       },
       "expected": null
     },
     {
-      "name": "Hip Thrust (Machine)",
+      "name": "Hip Thrust",
       "input": {
-        "name": "Hip Thrust (Machine)"
+        "name": "Hip Thrust"
       },
       "expected": null
     },

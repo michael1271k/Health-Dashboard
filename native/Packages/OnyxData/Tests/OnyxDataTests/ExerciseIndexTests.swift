@@ -16,29 +16,30 @@ import OnyxCore
 @Suite("Exercise identity")
 struct ExerciseIndexTests {
 
-    /// The live catalogue, verbatim.
+    /// The live catalogue, verbatim — 46 rows as of 2026-09-07.
+    ///
+    /// It was 60 until the hotfix-polish sprint merged fifteen duplicate rows
+    /// and moved the equipment out of thirteen titles into `exercises.equipment`
+    /// (docs/sql/hotfix-polish.sql). Every `(Machine)` / `(DB)` / `(Cable)` twin
+    /// in the old list was a SECOND PR baseline for one movement, which is the
+    /// failure `aliases.ts` documents at length. `Treadmill` is the one addition.
     private static let liveNames = [
-        "Behind-Back Wrist Curl", "Bicep Curl (DB)", "Bicycle Crunch",
-        "Cable Overhead Extension", "Calf Press", "Calf Press (Machine)",
-        "Calf Raise", "Chest Press (Machine)", "Cross-Body Cable Extension",
-        "Crunch (Machine)", "Crunch Machine", "DB Hammer Curl", "DB RDL",
-        "DB Shoulder Press", "Face Pull", "Hack Squat", "Hammer Curl (DB)",
-        "Hanging Knee Raise", "Hip Adduction", "Hip Adduction (Machine)",
-        "Hip Thrust (Machine)", "Hollow Hold", "Hollow Rock", "Incline DB Press",
-        "Lat Pulldown", "Lat Pulldown (Cable)", "Leg Extension",
-        "Leg Extension (Machine)", "Leg Press", "Lying Leg Raise",
-        "Machine Hip Thrust", "Machine Lateral Raise", "Machine Preacher Curl",
-        "Neutral-Grip Lat Pulldown", "Overhead Triceps Extension (Cable)",
-        "Pec Deck", "Pec Deck (Butterfly)", "Preacher Curl (Machine)",
-        "Reverse Crunch", "Reverse EZ-Bar Curl", "Romanian Deadlift (DB)",
+        "Behind-Back Wrist Curl", "Bicep Curl", "Bicycle Crunch",
+        "Calf Press", "Calf Raise", "Chest Press",
+        "Cross-Body Cable Extension", "Crunch Machine", "Face Pull",
+        "Hack Squat", "Hammer Curl", "Hanging Knee Raise", "Hip Adduction",
+        "Hip Thrust", "Hollow Hold", "Hollow Rock", "Incline DB Press",
+        "Lat Pulldown", "Lateral Raise", "Leg Extension", "Leg Press",
+        "Lying Leg Raise", "Neutral-Grip Lat Pulldown",
+        "Overhead Triceps Extension", "Pec Deck", "Preacher Curl",
+        "Reverse Crunch", "Reverse EZ-Bar Curl", "Romanian Deadlift",
         "Rope Triceps Pushdown", "Russian Twist", "Seated Cable Row",
         "Seated Cable Row (V-Grip)", "Seated Cable Row (Wide Grip)",
         "Seated DB Wrist Curl", "Seated Incline DB Curl",
-        "Seated Lateral Raise (DB)", "Seated Leg Curl", "Seated Leg Curl (Machine)",
-        "Shoulder Press (DB)", "Side Plank", "Single Arm Cable Crossover",
-        "Single Arm Lateral Raise (Cable)", "Single Arm Triceps Pushdown (Cable)",
-        "Single-Arm Cable Fly", "Straight Arm Pulldown (Rope)",
-        "Straight-Arm Pulldown", "Triceps Rope Pushdown",
+        "Seated Lateral Raise", "Seated Leg Curl", "Shoulder Press",
+        "Side Plank", "Single Arm Cable Crossover",
+        "Single Arm Lateral Raise", "Single Arm Triceps Pushdown",
+        "Single-Arm Cable Fly", "Straight-Arm Pulldown", "Treadmill",
     ]
 
     private static let liveCatalogue = liveNames.enumerated().map {
@@ -110,35 +111,48 @@ struct ExerciseIndexTests {
 
     @Test("an unambiguous normalised match resolves the one name that differs")
     func normalisedFallbackResolvesRDL() throws {
-        // The program says `Romanian Deadlift (Dumbbell)`; the catalogue says
-        // `Romanian Deadlift (DB)`. Stripping the parenthesised text is how the
-        // web app has always joined these two, so matching the same way is what
-        // keeps both apps writing to one row.
-        let resolved = try index().id(forSlug: "helix5-romanian-deadlift-dumbbell")
-        #expect(resolved == Self.liveCatalogue.first { $0.name == "Romanian Deadlift (DB)" }?.id)
+        // ── THE LIVE MISMATCH THIS GUARDED IS GONE, AND THE TIER IS NOT ──────
+        // It used to read: the program says `Romanian Deadlift (Dumbbell)`, the
+        // catalogue says `Romanian Deadlift (DB)`, and stripping the
+        // parenthesised text is what keeps both apps writing to one row. The
+        // 2026-09-07 rename made both sides say `Romanian Deadlift`, so that
+        // pair now matches EXACTLY and never reaches this tier.
+        //
+        // The tier still has to work — the next name typed with a suffix the
+        // catalogue spells differently depends on it — so the case is made
+        // explicit here instead of borrowed from a live mismatch that a rename
+        // can quietly remove. That removal is exactly what happened, and it
+        // took the ambiguity test below with it.
+        let catalogue = [RemoteExercise(id: "uuid-db", name: "Romanian Deadlift (DB)")]
+        #expect(try ExerciseIndex(catalogue).id(forSlug: "helix5-romanian-deadlift") == "uuid-db")
     }
 
     @Test("an ambiguous normalised match throws instead of picking one")
     func ambiguityThrows() throws {
-        // `Romanian Deadlift (Dumbbell)` is the one program name with no exact
-        // row, so it is the one that reaches the normalised tier. Give that tier
-        // two equally good answers and it must refuse: the web app takes
-        // whichever row Postgres happened to return first, which is a coin flip,
-        // and a coin flip here splits a movement's history in half.
+        // Give the normalised tier two equally good answers and it must refuse:
+        // the web app takes whichever row Postgres happened to return first,
+        // which is a coin flip, and a coin flip here splits a movement's
+        // history in half.
+        //
+        // The catalogue is synthetic on purpose. This used to lean on
+        // `Romanian Deadlift (Dumbbell)` being "the one program name with no
+        // exact row" — a property the 2026-09-07 rename removed, which turned
+        // the assertion into an `unknownExercise` about a slug that no longer
+        // exists rather than the ambiguity it means to describe.
         let catalogue = [
             RemoteExercise(id: "uuid-db", name: "Romanian Deadlift (DB)"),
             RemoteExercise(id: "uuid-bb", name: "Romanian Deadlift (Barbell)"),
         ]
         #expect(throws: SyncError.ambiguousExercise(
-            name: "Romanian Deadlift (Dumbbell)",
+            name: "Romanian Deadlift",
             candidates: ["Romanian Deadlift (Barbell)", "Romanian Deadlift (DB)"]
         )) {
-            _ = try ExerciseIndex(catalogue).id(forSlug: "helix5-romanian-deadlift-dumbbell")
+            _ = try ExerciseIndex(catalogue).id(forSlug: "helix5-romanian-deadlift")
         }
 
         // With only one of them present it resolves, which is the live case.
         #expect(try ExerciseIndex([catalogue[0]])
-                .id(forSlug: "helix5-romanian-deadlift-dumbbell") == "uuid-db")
+                .id(forSlug: "helix5-romanian-deadlift") == "uuid-db")
     }
 
     @Test("a slug the program does not know throws and names itself")

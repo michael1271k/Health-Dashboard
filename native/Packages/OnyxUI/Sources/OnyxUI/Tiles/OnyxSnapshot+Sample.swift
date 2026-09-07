@@ -169,7 +169,7 @@ public extension OnyxSnapshot {
         E1rm(exercise: "Incline DB Press", kg: 41.2, deltaKg: 1.6, trend: series([38.9, 39.4, 40.1, 40.6, 41.2], step: 6)),
         E1rm(exercise: "Hack Squat", kg: 148.2, deltaKg: 4.1, trend: series([141.0, 143.7, 144.2, 147.0, 148.2], step: 6)),
         E1rm(exercise: "Lat Pulldown", kg: 88.5, deltaKg: -0.8, trend: series([89.1, 90.0, 88.9, 89.3, 88.5], step: 6)),
-        E1rm(exercise: "DB Shoulder Press", kg: 27.9, deltaKg: 0.0, trend: series([27.5, 27.9, 28.1, 27.7, 27.9], step: 6)),
+        E1rm(exercise: "Shoulder Press", kg: 27.9, deltaKg: 0.0, trend: series([27.5, 27.9, 28.1, 27.7, 27.9], step: 6)),
       ],
       volumeByFamily: [
         FamilyVolume(family: "Chest", kg: 3900, sets: 12), FamilyVolume(family: "Back", kg: 4300, sets: 13),

@@ -10,8 +10,8 @@
  *
  * ── EVERY MACRO TRIPLE IS ATWATER-EXACT ──────────────────────────────────────
  * 4 kcal/g protein, 4 kcal/g carbohydrate, 9 kcal/g fat. The baseline is
- * 170·4 + 195·4 + 55·9 = 1955, which is where the app's old `1950` literal came
- * from and what it was five kcal wrong about. `levers.test.ts` asserts the sum
+ * 170·4 + 190·4 + 55·9 = 1935 (it was 1955 on 195 g carbs until the two
+ * baselines were collapsed into one on 2026-09-07). `levers.test.ts` asserts the sum
  * for every rung, so a hand-edited macro here cannot drift from its own calorie
  * figure the way that literal did.
  *
@@ -33,7 +33,7 @@
 // erased at build, so this is a one-way runtime edge and not a cycle.
 import { applyDailyTarget, type DailyTarget } from './dailyTargets'
 
-export type LeverId = 'baseline' | 'baseline-2' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
+export type LeverId = 'baseline' | 'lever-1' | 'lever-2' | 'maintenance-week' | 'custom'
 
 export interface NutritionLever {
   id: LeverId
@@ -76,21 +76,19 @@ export const LEVERS: NutritionLever[] = [
     // was the odd one out, so the baseline was grading step adherence against a
     // target the athlete had never been set — and because `baseline` governs
     // the WHOLE cut from 2026-07-15, every day of it was graded that way.
-    summary: 'The plan as written — full carbs, 10k steps.',
-    calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55,
-    stepsGoal: 10000,
-  },
-  {
-    // ── BASELINE 2 (2026-09-06, Week 8) ──
-    // The cut resumes after the maintenance week on a re-based baseline: 20 kcal
-    // under the original, all of it carbs, no lever pulled. A rung and not a
-    // `custom` row because the past belongs to the schedule — a `custom` stretch
-    // reads the LIVE `user_goals` row, so the next edit to that row would have
-    // re-graded every day from 6 Sep. 1,935 = 170·4 + 190·4 + 55·9.
-    id: 'baseline-2',
-    kind: 'deficit',
-    label: 'Baseline 2',
-    summary: 'The Week 8 re-base — 190 g carbs, 10k steps, no lever.',
+    //
+    // ── RE-BASED TO 1,935 / 190 g CARBS (2026-09-07, founder's call) ────────
+    // `baseline-2` was a SECOND rung carrying exactly these figures, so that the
+    // cut could resume on 6 Sep without touching how July and August had been
+    // graded. The founder chose ONE baseline over two, so that rung is deleted
+    // and this one carries its numbers — which means the 32 days from
+    // 2026-07-15 to 2026-08-15 are now graded at 1,935 / 190 C rather than the
+    // 1,955 / 195 C that was in force while they were lived. A deliberate
+    // re-grade, not drift: stored scores were recomputed in the same commit,
+    // and `export-levers.test.ts` moved with it because a week's export header
+    // prints the rung's numbers.
+    // 1,935 = 170·4 + 190·4 + 55·9, Atwater-exact like every rung.
+    summary: 'The plan as written — 190 g carbs, 10k steps.',
     calorieGoal: 1935, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 55,
     stepsGoal: 10000,
   },
@@ -289,11 +287,13 @@ export const LEVER_SCHEDULE: readonly LeverPeriod[] = [
   // would be graded against maintenance targets for the rest of the block.
   // A release must always be followed by the rung that resumes.
   { from: '2026-08-30', leverId: 'maintenance-week' },
-  // The cut resumes on its re-based rung (Phase 3, E0). This WAS an open
-  // `custom` stretch, which answers with the live `user_goals` row — fine until
-  // that row is next edited, at which point every day since 6 Sep would have
-  // been re-graded. A rung pins the numbers the way the 20 Aug row does.
-  { from: '2026-09-06', leverId: 'baseline-2' },
+  // The cut resumes on the baseline itself. This WAS an open `custom` stretch
+  // (which answers with the live `user_goals` row, so the next edit to that row
+  // would have re-graded every day since 6 Sep), then briefly its own
+  // `baseline-2` rung. The founder collapsed the two baselines into one on
+  // 2026-09-07, so this row points at `baseline` and `baseline` now carries
+  // 1,935 / 190 C — see the rung's own note for what that re-graded.
+  { from: '2026-09-06', leverId: 'baseline' },
 ]
 
 /** The schedule row covering a date, or null before the cut opened. */

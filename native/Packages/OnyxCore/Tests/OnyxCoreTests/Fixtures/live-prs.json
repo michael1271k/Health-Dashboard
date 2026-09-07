@@ -10,35 +10,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -50,11 +50,11 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -77,8 +77,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 30,
@@ -91,7 +91,7 @@
         "baselines": null
       },
       "expected": {
-        "digest": "2026-08-25|Hip Thrust (Machine):0:Hip Thrust (Machine):30:10:::",
+        "digest": "2026-08-25|Hip Thrust:0:Hip Thrust:30:10:::",
         "bySet": [],
         "detail": [],
         "count": 0
@@ -107,8 +107,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 30,
@@ -122,35 +122,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -162,11 +162,11 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -189,8 +189,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 25,
@@ -226,35 +226,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -266,21 +266,21 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|Hip Thrust (Machine):0:Hip Thrust (Machine):25:14:::|Hip Thrust (Machine):1:Hip Thrust (Machine):27.5:13:::|Hip Thrust (Machine):2:Hip Thrust (Machine):27.5:13:::|Side Plank:0:Side Plank:0:58:::",
+        "digest": "2026-08-25|Hip Thrust:0:Hip Thrust:25:14:::|Hip Thrust:1:Hip Thrust:27.5:13:::|Hip Thrust:2:Hip Thrust:27.5:13:::|Side Plank:0:Side Plank:0:58:::",
         "bySet": [
           {
-            "key": "Hip Thrust (Machine)|1",
+            "key": "Hip Thrust|1",
             "axes": [
               "volume",
               "e1rm"
@@ -295,7 +295,7 @@
         ],
         "detail": [
           {
-            "key": "Hip Thrust (Machine)|1",
+            "key": "Hip Thrust|1",
             "records": {
               "volume": {
                 "value": 357.5,
@@ -330,8 +330,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "DB Hammer Curl",
-              "name": "DB Hammer Curl",
+              "localId": "Hammer Curl",
+              "name": "Hammer Curl",
               "sets": [
                 {
                   "weightKg": 20,
@@ -344,35 +344,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -384,21 +384,21 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-07-21|DB Hammer Curl:0:DB Hammer Curl:20:12:::",
+        "digest": "2026-07-21|Hammer Curl:0:Hammer Curl:20:12:::",
         "bySet": [
           {
-            "key": "DB Hammer Curl|0",
+            "key": "Hammer Curl|0",
             "axes": [
               "weight",
               "volume",
@@ -420,8 +420,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "DB Hammer Curl",
-              "name": "DB Hammer Curl",
+              "localId": "Hammer Curl",
+              "name": "Hammer Curl",
               "sets": [
                 {
                   "weightKg": 20,
@@ -434,35 +434,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -474,18 +474,18 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|DB Hammer Curl:0:DB Hammer Curl:20:12:::",
+        "digest": "2026-08-25|Hammer Curl:0:Hammer Curl:20:12:::",
         "bySet": [],
         "detail": [],
         "count": 0
@@ -501,8 +501,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 25,
@@ -523,35 +523,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -563,21 +563,21 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|Hip Thrust (Machine):0:Hip Thrust (Machine):25:15:::|Hip Thrust (Machine):1:Hip Thrust (Machine):27.5:14:::|Hip Thrust (Machine):2:Hip Thrust (Machine):27.5:13:::",
+        "digest": "2026-08-25|Hip Thrust:0:Hip Thrust:25:15:::|Hip Thrust:1:Hip Thrust:27.5:14:::|Hip Thrust:2:Hip Thrust:27.5:13:::",
         "bySet": [
           {
-            "key": "Hip Thrust (Machine)|1",
+            "key": "Hip Thrust|1",
             "axes": [
               "volume",
               "e1rm"
@@ -586,7 +586,7 @@
         ],
         "detail": [
           {
-            "key": "Hip Thrust (Machine)|1",
+            "key": "Hip Thrust|1",
             "records": {
               "volume": {
                 "value": 385,
@@ -612,8 +612,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Single Arm Lateral Raise (Cable)",
-              "name": "Single Arm Lateral Raise (Cable)",
+              "localId": "Single Arm Lateral Raise",
+              "name": "Single Arm Lateral Raise",
               "sets": [
                 {
                   "weightKg": 5,
@@ -634,35 +634,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -674,27 +674,27 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|Single Arm Lateral Raise (Cable):0:Single Arm Lateral Raise (Cable):5:14::L:t|Single Arm Lateral Raise (Cable):1:Single Arm Lateral Raise (Cable):5:14::R:t",
+        "digest": "2026-08-25|Single Arm Lateral Raise:0:Single Arm Lateral Raise:5:14::L:t|Single Arm Lateral Raise:1:Single Arm Lateral Raise:5:14::R:t",
         "bySet": [
           {
-            "key": "Single Arm Lateral Raise (Cable)|0",
+            "key": "Single Arm Lateral Raise|0",
             "axes": [
               "e1rm"
             ]
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)|1",
+            "key": "Single Arm Lateral Raise|1",
             "axes": [
               "volume"
             ]
@@ -702,7 +702,7 @@
         ],
         "detail": [
           {
-            "key": "Single Arm Lateral Raise (Cable)|0",
+            "key": "Single Arm Lateral Raise|0",
             "records": {
               "e1rm": {
                 "value": 7.3,
@@ -711,7 +711,7 @@
             }
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)|1",
+            "key": "Single Arm Lateral Raise|1",
             "records": {
               "volume": {
                 "value": 70,
@@ -733,8 +733,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 40,
@@ -748,35 +748,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -788,18 +788,18 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|Hip Thrust (Machine):0:Hip Thrust (Machine):40:20:warmup::",
+        "digest": "2026-08-25|Hip Thrust:0:Hip Thrust:40:20:warmup::",
         "bySet": [],
         "detail": [],
         "count": 0
@@ -826,8 +826,8 @@
               "kind": "cardio"
             },
             {
-              "localId": "Hip Thrust (Machine)",
-              "name": "Hip Thrust (Machine)",
+              "localId": "Hip Thrust",
+              "name": "Hip Thrust",
               "sets": [
                 {
                   "weightKg": 30,
@@ -841,35 +841,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -881,21 +881,21 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
         }
       },
       "expected": {
-        "digest": "2026-08-25|Hip Thrust (Machine):0:Hip Thrust (Machine):30:10:::",
+        "digest": "2026-08-25|Hip Thrust:0:Hip Thrust:30:10:::",
         "bySet": [
           {
-            "key": "Hip Thrust (Machine)|0",
+            "key": "Hip Thrust|0",
             "axes": [
               "weight",
               "e1rm"
@@ -904,7 +904,7 @@
         ],
         "detail": [
           {
-            "key": "Hip Thrust (Machine)|0",
+            "key": "Hip Thrust|0",
             "records": {
               "weight": {
                 "value": 30,
@@ -954,35 +954,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -994,11 +994,11 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -1035,35 +1035,35 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ],
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
@@ -1075,11 +1075,11 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ],
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]

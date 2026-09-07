@@ -39,20 +39,6 @@
       "expected": "Hack Squat"
     },
     {
-      "name": "\"chest press machine\"",
-      "input": {
-        "raw": "chest press machine"
-      },
-      "expected": "Chest Press (Machine)"
-    },
-    {
-      "name": "\"machine chest press\"",
-      "input": {
-        "raw": "machine chest press"
-      },
-      "expected": "Chest Press (Machine)"
-    },
-    {
       "name": "\"leg press horizontal\"",
       "input": {
         "raw": "leg press horizontal"
@@ -109,34 +95,6 @@
       "expected": "Seated Cable Row (Wide Grip)"
     },
     {
-      "name": "\"cable lateral raise\"",
-      "input": {
-        "raw": "cable lateral raise"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"single arm cable lateral raise\"",
-      "input": {
-        "raw": "single arm cable lateral raise"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"sa lateral raise (cable)\"",
-      "input": {
-        "raw": "sa lateral raise (cable)"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"sa lateral raise\"",
-      "input": {
-        "raw": "sa lateral raise"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
       "name": "\"incline db bench press\"",
       "input": {
         "raw": "incline db bench press"
@@ -156,6 +114,300 @@
         "raw": "incline dumbbell press"
       },
       "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"pec deck (butterfly)\"",
+      "input": {
+        "raw": "pec deck (butterfly)"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"butterfly pec deck\"",
+      "input": {
+        "raw": "butterfly pec deck"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"lat pulldown (cable)\"",
+      "input": {
+        "raw": "lat pulldown (cable)"
+      },
+      "expected": "Lat Pulldown"
+    },
+    {
+      "name": "\"straight arm pulldown (rope)\"",
+      "input": {
+        "raw": "straight arm pulldown (rope)"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"straight arm pulldown\"",
+      "input": {
+        "raw": "straight arm pulldown"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"cable overhead extension\"",
+      "input": {
+        "raw": "cable overhead extension"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"overhead triceps extension (cable)\"",
+      "input": {
+        "raw": "overhead triceps extension (cable)"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"triceps rope pushdown\"",
+      "input": {
+        "raw": "triceps rope pushdown"
+      },
+      "expected": "Rope Triceps Pushdown"
+    },
+    {
+      "name": "\"calf press (machine)\"",
+      "input": {
+        "raw": "calf press (machine)"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"calf press machine\"",
+      "input": {
+        "raw": "calf press machine"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"leg extension (machine)\"",
+      "input": {
+        "raw": "leg extension (machine)"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"leg extension machine\"",
+      "input": {
+        "raw": "leg extension machine"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"seated leg curl (machine)\"",
+      "input": {
+        "raw": "seated leg curl (machine)"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"seated leg curl machine\"",
+      "input": {
+        "raw": "seated leg curl machine"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"crunch (machine)\"",
+      "input": {
+        "raw": "crunch (machine)"
+      },
+      "expected": "Crunch Machine"
+    },
+    {
+      "name": "\"db hammer curl\"",
+      "input": {
+        "raw": "db hammer curl"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"hammer curl (db)\"",
+      "input": {
+        "raw": "hammer curl (db)"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"db shoulder press\"",
+      "input": {
+        "raw": "db shoulder press"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"shoulder press (db)\"",
+      "input": {
+        "raw": "shoulder press (db)"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"hip adduction (machine)\"",
+      "input": {
+        "raw": "hip adduction (machine)"
+      },
+      "expected": "Hip Adduction"
+    },
+    {
+      "name": "\"machine hip thrust\"",
+      "input": {
+        "raw": "machine hip thrust"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"hip thrust (machine)\"",
+      "input": {
+        "raw": "hip thrust (machine)"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"machine preacher curl\"",
+      "input": {
+        "raw": "machine preacher curl"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"preacher curl (machine)\"",
+      "input": {
+        "raw": "preacher curl (machine)"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"db rdl\"",
+      "input": {
+        "raw": "db rdl"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"rdl db\"",
+      "input": {
+        "raw": "rdl db"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"romanian deadlift (db)\"",
+      "input": {
+        "raw": "romanian deadlift (db)"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"romanian deadlift (dumbbell)\"",
+      "input": {
+        "raw": "romanian deadlift (dumbbell)"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"chest press (machine)\"",
+      "input": {
+        "raw": "chest press (machine)"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"chest press machine\"",
+      "input": {
+        "raw": "chest press machine"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"machine chest press\"",
+      "input": {
+        "raw": "machine chest press"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"bicep curl (db)\"",
+      "input": {
+        "raw": "bicep curl (db)"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"bicep curl db\"",
+      "input": {
+        "raw": "bicep curl db"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"seated lateral raise (db)\"",
+      "input": {
+        "raw": "seated lateral raise (db)"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"lateral raise db\"",
+      "input": {
+        "raw": "lateral raise db"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"machine lateral raise\"",
+      "input": {
+        "raw": "machine lateral raise"
+      },
+      "expected": "Lateral Raise"
+    },
+    {
+      "name": "\"single arm lateral raise (cable)\"",
+      "input": {
+        "raw": "single arm lateral raise (cable)"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"cable lateral raise\"",
+      "input": {
+        "raw": "cable lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"single arm cable lateral raise\"",
+      "input": {
+        "raw": "single arm cable lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"sa lateral raise (cable)\"",
+      "input": {
+        "raw": "sa lateral raise (cable)"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"sa lateral raise\"",
+      "input": {
+        "raw": "sa lateral raise"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"single arm triceps pushdown (cable)\"",
+      "input": {
+        "raw": "single arm triceps pushdown (cable)"
+      },
+      "expected": "Single Arm Triceps Pushdown"
     },
     {
       "name": "\"LAT PULLDOWN - CLOSE GRIP (CABLE)\"",
@@ -191,20 +443,6 @@
         "raw": "SMITH SQUAT"
       },
       "expected": "Hack Squat"
-    },
-    {
-      "name": "\"CHEST PRESS MACHINE\"",
-      "input": {
-        "raw": "CHEST PRESS MACHINE"
-      },
-      "expected": "Chest Press (Machine)"
-    },
-    {
-      "name": "\"MACHINE CHEST PRESS\"",
-      "input": {
-        "raw": "MACHINE CHEST PRESS"
-      },
-      "expected": "Chest Press (Machine)"
     },
     {
       "name": "\"LEG PRESS HORIZONTAL\"",
@@ -263,34 +501,6 @@
       "expected": "Seated Cable Row (Wide Grip)"
     },
     {
-      "name": "\"CABLE LATERAL RAISE\"",
-      "input": {
-        "raw": "CABLE LATERAL RAISE"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"SINGLE ARM CABLE LATERAL RAISE\"",
-      "input": {
-        "raw": "SINGLE ARM CABLE LATERAL RAISE"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"SA LATERAL RAISE (CABLE)\"",
-      "input": {
-        "raw": "SA LATERAL RAISE (CABLE)"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"SA LATERAL RAISE\"",
-      "input": {
-        "raw": "SA LATERAL RAISE"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
       "name": "\"INCLINE DB BENCH PRESS\"",
       "input": {
         "raw": "INCLINE DB BENCH PRESS"
@@ -310,6 +520,300 @@
         "raw": "INCLINE DUMBBELL PRESS"
       },
       "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"PEC DECK (BUTTERFLY)\"",
+      "input": {
+        "raw": "PEC DECK (BUTTERFLY)"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"BUTTERFLY PEC DECK\"",
+      "input": {
+        "raw": "BUTTERFLY PEC DECK"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"LAT PULLDOWN (CABLE)\"",
+      "input": {
+        "raw": "LAT PULLDOWN (CABLE)"
+      },
+      "expected": "Lat Pulldown"
+    },
+    {
+      "name": "\"STRAIGHT ARM PULLDOWN (ROPE)\"",
+      "input": {
+        "raw": "STRAIGHT ARM PULLDOWN (ROPE)"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"STRAIGHT ARM PULLDOWN\"",
+      "input": {
+        "raw": "STRAIGHT ARM PULLDOWN"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"CABLE OVERHEAD EXTENSION\"",
+      "input": {
+        "raw": "CABLE OVERHEAD EXTENSION"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"OVERHEAD TRICEPS EXTENSION (CABLE)\"",
+      "input": {
+        "raw": "OVERHEAD TRICEPS EXTENSION (CABLE)"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"TRICEPS ROPE PUSHDOWN\"",
+      "input": {
+        "raw": "TRICEPS ROPE PUSHDOWN"
+      },
+      "expected": "Rope Triceps Pushdown"
+    },
+    {
+      "name": "\"CALF PRESS (MACHINE)\"",
+      "input": {
+        "raw": "CALF PRESS (MACHINE)"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"CALF PRESS MACHINE\"",
+      "input": {
+        "raw": "CALF PRESS MACHINE"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"LEG EXTENSION (MACHINE)\"",
+      "input": {
+        "raw": "LEG EXTENSION (MACHINE)"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"LEG EXTENSION MACHINE\"",
+      "input": {
+        "raw": "LEG EXTENSION MACHINE"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"SEATED LEG CURL (MACHINE)\"",
+      "input": {
+        "raw": "SEATED LEG CURL (MACHINE)"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"SEATED LEG CURL MACHINE\"",
+      "input": {
+        "raw": "SEATED LEG CURL MACHINE"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"CRUNCH (MACHINE)\"",
+      "input": {
+        "raw": "CRUNCH (MACHINE)"
+      },
+      "expected": "Crunch Machine"
+    },
+    {
+      "name": "\"DB HAMMER CURL\"",
+      "input": {
+        "raw": "DB HAMMER CURL"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"HAMMER CURL (DB)\"",
+      "input": {
+        "raw": "HAMMER CURL (DB)"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"DB SHOULDER PRESS\"",
+      "input": {
+        "raw": "DB SHOULDER PRESS"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"SHOULDER PRESS (DB)\"",
+      "input": {
+        "raw": "SHOULDER PRESS (DB)"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"HIP ADDUCTION (MACHINE)\"",
+      "input": {
+        "raw": "HIP ADDUCTION (MACHINE)"
+      },
+      "expected": "Hip Adduction"
+    },
+    {
+      "name": "\"MACHINE HIP THRUST\"",
+      "input": {
+        "raw": "MACHINE HIP THRUST"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"HIP THRUST (MACHINE)\"",
+      "input": {
+        "raw": "HIP THRUST (MACHINE)"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"MACHINE PREACHER CURL\"",
+      "input": {
+        "raw": "MACHINE PREACHER CURL"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"PREACHER CURL (MACHINE)\"",
+      "input": {
+        "raw": "PREACHER CURL (MACHINE)"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"DB RDL\"",
+      "input": {
+        "raw": "DB RDL"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"RDL DB\"",
+      "input": {
+        "raw": "RDL DB"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"ROMANIAN DEADLIFT (DB)\"",
+      "input": {
+        "raw": "ROMANIAN DEADLIFT (DB)"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"ROMANIAN DEADLIFT (DUMBBELL)\"",
+      "input": {
+        "raw": "ROMANIAN DEADLIFT (DUMBBELL)"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"CHEST PRESS (MACHINE)\"",
+      "input": {
+        "raw": "CHEST PRESS (MACHINE)"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"CHEST PRESS MACHINE\"",
+      "input": {
+        "raw": "CHEST PRESS MACHINE"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"MACHINE CHEST PRESS\"",
+      "input": {
+        "raw": "MACHINE CHEST PRESS"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"BICEP CURL (DB)\"",
+      "input": {
+        "raw": "BICEP CURL (DB)"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"BICEP CURL DB\"",
+      "input": {
+        "raw": "BICEP CURL DB"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"SEATED LATERAL RAISE (DB)\"",
+      "input": {
+        "raw": "SEATED LATERAL RAISE (DB)"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"LATERAL RAISE DB\"",
+      "input": {
+        "raw": "LATERAL RAISE DB"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"MACHINE LATERAL RAISE\"",
+      "input": {
+        "raw": "MACHINE LATERAL RAISE"
+      },
+      "expected": "Lateral Raise"
+    },
+    {
+      "name": "\"SINGLE ARM LATERAL RAISE (CABLE)\"",
+      "input": {
+        "raw": "SINGLE ARM LATERAL RAISE (CABLE)"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"CABLE LATERAL RAISE\"",
+      "input": {
+        "raw": "CABLE LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"SINGLE ARM CABLE LATERAL RAISE\"",
+      "input": {
+        "raw": "SINGLE ARM CABLE LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"SA LATERAL RAISE (CABLE)\"",
+      "input": {
+        "raw": "SA LATERAL RAISE (CABLE)"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"SA LATERAL RAISE\"",
+      "input": {
+        "raw": "SA LATERAL RAISE"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"SINGLE ARM TRICEPS PUSHDOWN (CABLE)\"",
+      "input": {
+        "raw": "SINGLE ARM TRICEPS PUSHDOWN (CABLE)"
+      },
+      "expected": "Single Arm Triceps Pushdown"
     },
     {
       "name": "\"  lat pulldown - close grip (cable)\\t\"",
@@ -345,20 +849,6 @@
         "raw": "  smith squat\t"
       },
       "expected": "Hack Squat"
-    },
-    {
-      "name": "\"  chest press machine\\t\"",
-      "input": {
-        "raw": "  chest press machine\t"
-      },
-      "expected": "Chest Press (Machine)"
-    },
-    {
-      "name": "\"  machine chest press\\t\"",
-      "input": {
-        "raw": "  machine chest press\t"
-      },
-      "expected": "Chest Press (Machine)"
     },
     {
       "name": "\"  leg press horizontal\\t\"",
@@ -417,34 +907,6 @@
       "expected": "Seated Cable Row (Wide Grip)"
     },
     {
-      "name": "\"  cable lateral raise\\t\"",
-      "input": {
-        "raw": "  cable lateral raise\t"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"  single arm cable lateral raise\\t\"",
-      "input": {
-        "raw": "  single arm cable lateral raise\t"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"  sa lateral raise (cable)\\t\"",
-      "input": {
-        "raw": "  sa lateral raise (cable)\t"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
-      "name": "\"  sa lateral raise\\t\"",
-      "input": {
-        "raw": "  sa lateral raise\t"
-      },
-      "expected": "Single Arm Lateral Raise (Cable)"
-    },
-    {
       "name": "\"  incline db bench press\\t\"",
       "input": {
         "raw": "  incline db bench press\t"
@@ -466,6 +928,300 @@
       "expected": "Incline DB Press"
     },
     {
+      "name": "\"  pec deck (butterfly)\\t\"",
+      "input": {
+        "raw": "  pec deck (butterfly)\t"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"  butterfly pec deck\\t\"",
+      "input": {
+        "raw": "  butterfly pec deck\t"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"  lat pulldown (cable)\\t\"",
+      "input": {
+        "raw": "  lat pulldown (cable)\t"
+      },
+      "expected": "Lat Pulldown"
+    },
+    {
+      "name": "\"  straight arm pulldown (rope)\\t\"",
+      "input": {
+        "raw": "  straight arm pulldown (rope)\t"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"  straight arm pulldown\\t\"",
+      "input": {
+        "raw": "  straight arm pulldown\t"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"  cable overhead extension\\t\"",
+      "input": {
+        "raw": "  cable overhead extension\t"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"  overhead triceps extension (cable)\\t\"",
+      "input": {
+        "raw": "  overhead triceps extension (cable)\t"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"  triceps rope pushdown\\t\"",
+      "input": {
+        "raw": "  triceps rope pushdown\t"
+      },
+      "expected": "Rope Triceps Pushdown"
+    },
+    {
+      "name": "\"  calf press (machine)\\t\"",
+      "input": {
+        "raw": "  calf press (machine)\t"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"  calf press machine\\t\"",
+      "input": {
+        "raw": "  calf press machine\t"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"  leg extension (machine)\\t\"",
+      "input": {
+        "raw": "  leg extension (machine)\t"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"  leg extension machine\\t\"",
+      "input": {
+        "raw": "  leg extension machine\t"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"  seated leg curl (machine)\\t\"",
+      "input": {
+        "raw": "  seated leg curl (machine)\t"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"  seated leg curl machine\\t\"",
+      "input": {
+        "raw": "  seated leg curl machine\t"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"  crunch (machine)\\t\"",
+      "input": {
+        "raw": "  crunch (machine)\t"
+      },
+      "expected": "Crunch Machine"
+    },
+    {
+      "name": "\"  db hammer curl\\t\"",
+      "input": {
+        "raw": "  db hammer curl\t"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"  hammer curl (db)\\t\"",
+      "input": {
+        "raw": "  hammer curl (db)\t"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"  db shoulder press\\t\"",
+      "input": {
+        "raw": "  db shoulder press\t"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"  shoulder press (db)\\t\"",
+      "input": {
+        "raw": "  shoulder press (db)\t"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"  hip adduction (machine)\\t\"",
+      "input": {
+        "raw": "  hip adduction (machine)\t"
+      },
+      "expected": "Hip Adduction"
+    },
+    {
+      "name": "\"  machine hip thrust\\t\"",
+      "input": {
+        "raw": "  machine hip thrust\t"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"  hip thrust (machine)\\t\"",
+      "input": {
+        "raw": "  hip thrust (machine)\t"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"  machine preacher curl\\t\"",
+      "input": {
+        "raw": "  machine preacher curl\t"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"  preacher curl (machine)\\t\"",
+      "input": {
+        "raw": "  preacher curl (machine)\t"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"  db rdl\\t\"",
+      "input": {
+        "raw": "  db rdl\t"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"  rdl db\\t\"",
+      "input": {
+        "raw": "  rdl db\t"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"  romanian deadlift (db)\\t\"",
+      "input": {
+        "raw": "  romanian deadlift (db)\t"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"  romanian deadlift (dumbbell)\\t\"",
+      "input": {
+        "raw": "  romanian deadlift (dumbbell)\t"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"  chest press (machine)\\t\"",
+      "input": {
+        "raw": "  chest press (machine)\t"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"  chest press machine\\t\"",
+      "input": {
+        "raw": "  chest press machine\t"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"  machine chest press\\t\"",
+      "input": {
+        "raw": "  machine chest press\t"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"  bicep curl (db)\\t\"",
+      "input": {
+        "raw": "  bicep curl (db)\t"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"  bicep curl db\\t\"",
+      "input": {
+        "raw": "  bicep curl db\t"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"  seated lateral raise (db)\\t\"",
+      "input": {
+        "raw": "  seated lateral raise (db)\t"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"  lateral raise db\\t\"",
+      "input": {
+        "raw": "  lateral raise db\t"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"  machine lateral raise\\t\"",
+      "input": {
+        "raw": "  machine lateral raise\t"
+      },
+      "expected": "Lateral Raise"
+    },
+    {
+      "name": "\"  single arm lateral raise (cable)\\t\"",
+      "input": {
+        "raw": "  single arm lateral raise (cable)\t"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"  cable lateral raise\\t\"",
+      "input": {
+        "raw": "  cable lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"  single arm cable lateral raise\\t\"",
+      "input": {
+        "raw": "  single arm cable lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"  sa lateral raise (cable)\\t\"",
+      "input": {
+        "raw": "  sa lateral raise (cable)\t"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"  sa lateral raise\\t\"",
+      "input": {
+        "raw": "  sa lateral raise\t"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"  single arm triceps pushdown (cable)\\t\"",
+      "input": {
+        "raw": "  single arm triceps pushdown (cable)\t"
+      },
+      "expected": "Single Arm Triceps Pushdown"
+    },
+    {
       "name": "\"Neutral-Grip Lat Pulldown\"",
       "input": {
         "raw": "Neutral-Grip Lat Pulldown"
@@ -478,13 +1234,6 @@
         "raw": "Hack Squat"
       },
       "expected": "Hack Squat"
-    },
-    {
-      "name": "\"Chest Press (Machine)\"",
-      "input": {
-        "raw": "Chest Press (Machine)"
-      },
-      "expected": "Chest Press (Machine)"
     },
     {
       "name": "\"Leg Press\"",
@@ -508,11 +1257,158 @@
       "expected": "Seated Cable Row (Wide Grip)"
     },
     {
-      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "name": "\"Incline DB Press\"",
       "input": {
-        "raw": "Single Arm Lateral Raise (Cable)"
+        "raw": "Incline DB Press"
       },
-      "expected": "Single Arm Lateral Raise (Cable)"
+      "expected": "Incline DB Press"
+    },
+    {
+      "name": "\"Pec Deck\"",
+      "input": {
+        "raw": "Pec Deck"
+      },
+      "expected": "Pec Deck"
+    },
+    {
+      "name": "\"Lat Pulldown\"",
+      "input": {
+        "raw": "Lat Pulldown"
+      },
+      "expected": "Lat Pulldown"
+    },
+    {
+      "name": "\"Straight-Arm Pulldown\"",
+      "input": {
+        "raw": "Straight-Arm Pulldown"
+      },
+      "expected": "Straight-Arm Pulldown"
+    },
+    {
+      "name": "\"Overhead Triceps Extension\"",
+      "input": {
+        "raw": "Overhead Triceps Extension"
+      },
+      "expected": "Overhead Triceps Extension"
+    },
+    {
+      "name": "\"Rope Triceps Pushdown\"",
+      "input": {
+        "raw": "Rope Triceps Pushdown"
+      },
+      "expected": "Rope Triceps Pushdown"
+    },
+    {
+      "name": "\"Calf Press\"",
+      "input": {
+        "raw": "Calf Press"
+      },
+      "expected": "Calf Press"
+    },
+    {
+      "name": "\"Leg Extension\"",
+      "input": {
+        "raw": "Leg Extension"
+      },
+      "expected": "Leg Extension"
+    },
+    {
+      "name": "\"Seated Leg Curl\"",
+      "input": {
+        "raw": "Seated Leg Curl"
+      },
+      "expected": "Seated Leg Curl"
+    },
+    {
+      "name": "\"Crunch Machine\"",
+      "input": {
+        "raw": "Crunch Machine"
+      },
+      "expected": "Crunch Machine"
+    },
+    {
+      "name": "\"Hammer Curl\"",
+      "input": {
+        "raw": "Hammer Curl"
+      },
+      "expected": "Hammer Curl"
+    },
+    {
+      "name": "\"Shoulder Press\"",
+      "input": {
+        "raw": "Shoulder Press"
+      },
+      "expected": "Shoulder Press"
+    },
+    {
+      "name": "\"Hip Adduction\"",
+      "input": {
+        "raw": "Hip Adduction"
+      },
+      "expected": "Hip Adduction"
+    },
+    {
+      "name": "\"Hip Thrust\"",
+      "input": {
+        "raw": "Hip Thrust"
+      },
+      "expected": "Hip Thrust"
+    },
+    {
+      "name": "\"Preacher Curl\"",
+      "input": {
+        "raw": "Preacher Curl"
+      },
+      "expected": "Preacher Curl"
+    },
+    {
+      "name": "\"Romanian Deadlift\"",
+      "input": {
+        "raw": "Romanian Deadlift"
+      },
+      "expected": "Romanian Deadlift"
+    },
+    {
+      "name": "\"Chest Press\"",
+      "input": {
+        "raw": "Chest Press"
+      },
+      "expected": "Chest Press"
+    },
+    {
+      "name": "\"Bicep Curl\"",
+      "input": {
+        "raw": "Bicep Curl"
+      },
+      "expected": "Bicep Curl"
+    },
+    {
+      "name": "\"Seated Lateral Raise\"",
+      "input": {
+        "raw": "Seated Lateral Raise"
+      },
+      "expected": "Seated Lateral Raise"
+    },
+    {
+      "name": "\"Lateral Raise\"",
+      "input": {
+        "raw": "Lateral Raise"
+      },
+      "expected": "Lateral Raise"
+    },
+    {
+      "name": "\"Single Arm Lateral Raise\"",
+      "input": {
+        "raw": "Single Arm Lateral Raise"
+      },
+      "expected": "Single Arm Lateral Raise"
+    },
+    {
+      "name": "\"Single Arm Triceps Pushdown\"",
+      "input": {
+        "raw": "Single Arm Triceps Pushdown"
+      },
+      "expected": "Single Arm Triceps Pushdown"
     },
     {
       "name": "\"Incline DB Press\"",
@@ -522,18 +1418,11 @@
       "expected": "Incline DB Press"
     },
     {
-      "name": "\"Incline DB Press\"",
+      "name": "\"Chest Press\"",
       "input": {
-        "raw": "Incline DB Press"
+        "raw": "Chest Press"
       },
-      "expected": "Incline DB Press"
-    },
-    {
-      "name": "\"Chest Press (Machine)\"",
-      "input": {
-        "raw": "Chest Press (Machine)"
-      },
-      "expected": "Chest Press (Machine)"
+      "expected": "Chest Press"
     },
     {
       "name": "\"Pec Deck\"",
@@ -550,25 +1439,25 @@
       "expected": "Single Arm Cable Crossover"
     },
     {
-      "name": "\"DB Shoulder Press\"",
+      "name": "\"Shoulder Press\"",
       "input": {
-        "raw": "DB Shoulder Press"
+        "raw": "Shoulder Press"
       },
-      "expected": "DB Shoulder Press"
+      "expected": "Shoulder Press"
     },
     {
-      "name": "\"Single Arm Lateral Raise (Cable)\"",
+      "name": "\"Single Arm Lateral Raise\"",
       "input": {
-        "raw": "Single Arm Lateral Raise (Cable)"
+        "raw": "Single Arm Lateral Raise"
       },
-      "expected": "Single Arm Lateral Raise (Cable)"
+      "expected": "Single Arm Lateral Raise"
     },
     {
-      "name": "\"Cable Overhead Extension\"",
+      "name": "\"Overhead Triceps Extension\"",
       "input": {
-        "raw": "Cable Overhead Extension"
+        "raw": "Overhead Triceps Extension"
       },
-      "expected": "Cable Overhead Extension"
+      "expected": "Overhead Triceps Extension"
     },
     {
       "name": "\"Rope Triceps Pushdown\"",
@@ -578,11 +1467,11 @@
       "expected": "Rope Triceps Pushdown"
     },
     {
-      "name": "\"Single Arm Triceps Pushdown (Cable)\"",
+      "name": "\"Single Arm Triceps Pushdown\"",
       "input": {
-        "raw": "Single Arm Triceps Pushdown (Cable)"
+        "raw": "Single Arm Triceps Pushdown"
       },
-      "expected": "Single Arm Triceps Pushdown (Cable)"
+      "expected": "Single Arm Triceps Pushdown"
     },
     {
       "name": "\"Lat Pulldown\"",
@@ -634,11 +1523,11 @@
       "expected": "Seated Incline DB Curl"
     },
     {
-      "name": "\"DB Hammer Curl\"",
+      "name": "\"Hammer Curl\"",
       "input": {
-        "raw": "DB Hammer Curl"
+        "raw": "Hammer Curl"
       },
-      "expected": "DB Hammer Curl"
+      "expected": "Hammer Curl"
     },
     {
       "name": "\"Reverse EZ-Bar Curl\"",
@@ -648,11 +1537,11 @@
       "expected": "Reverse EZ-Bar Curl"
     },
     {
-      "name": "\"Preacher Curl (Machine)\"",
+      "name": "\"Preacher Curl\"",
       "input": {
-        "raw": "Preacher Curl (Machine)"
+        "raw": "Preacher Curl"
       },
-      "expected": "Preacher Curl (Machine)"
+      "expected": "Preacher Curl"
     },
     {
       "name": "\"Leg Press\"",
@@ -683,18 +1572,18 @@
       "expected": "Seated Leg Curl"
     },
     {
-      "name": "\"Romanian Deadlift (DB)\"",
+      "name": "\"Romanian Deadlift\"",
       "input": {
-        "raw": "Romanian Deadlift (DB)"
+        "raw": "Romanian Deadlift"
       },
-      "expected": "Romanian Deadlift (DB)"
+      "expected": "Romanian Deadlift"
     },
     {
-      "name": "\"Hip Thrust (Machine)\"",
+      "name": "\"Hip Thrust\"",
       "input": {
-        "raw": "Hip Thrust (Machine)"
+        "raw": "Hip Thrust"
       },
-      "expected": "Hip Thrust (Machine)"
+      "expected": "Hip Thrust"
     },
     {
       "name": "\"Calf Press\"",
@@ -778,7 +1667,7 @@
       "input": {
         "raw": " Hip Thrust (Machine) "
       },
-      "expected": " Hip Thrust (Machine) "
+      "expected": "Hip Thrust"
     }
   ]
 }

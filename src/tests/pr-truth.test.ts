@@ -25,26 +25,26 @@ import {
  *   group by e.name order by e.name;
  */
 const LOGGED_EXERCISES = [
-  'Cable Overhead Extension',
+  'Overhead Triceps Extension',
   'Calf Press',
-  'Chest Press (Machine)',
+  'Chest Press',
   'Crunch Machine',
-  'DB Hammer Curl',
-  'DB Shoulder Press',
+  'Hammer Curl',
+  'Shoulder Press',
   'Face Pull',
   'Hack Squat',
   'Hanging Knee Raise',
-  'Hip Thrust (Machine)',
+  'Hip Thrust',
   'Incline DB Press',
   'Lat Pulldown',
   'Leg Extension',
   'Leg Press',
   'Neutral-Grip Lat Pulldown',
   'Pec Deck',
-  'Preacher Curl (Machine)',
+  'Preacher Curl',
   'Reverse Crunch',
   'Reverse EZ-Bar Curl',
-  'Romanian Deadlift (DB)',
+  'Romanian Deadlift',
   'Rope Triceps Pushdown',
   'Seated Cable Row (V-Grip)',
   'Seated Cable Row (Wide Grip)',
@@ -52,8 +52,8 @@ const LOGGED_EXERCISES = [
   'Seated Leg Curl',
   'Side Plank',
   'Single Arm Cable Crossover',
-  'Single Arm Lateral Raise (Cable)',
-  'Single Arm Triceps Pushdown (Cable)',
+  'Single Arm Lateral Raise',
+  'Single Arm Triceps Pushdown',
   'Straight-Arm Pulldown',
 ] as const
 
@@ -197,11 +197,11 @@ describe('the floor is the EXCESS over what Helix already logged', () => {
   })
 
   it.each([
-    'Hip Thrust (Machine)', 'Incline DB Press', 'Chest Press (Machine)',
-    'Hack Squat', 'Crunch Machine', 'Romanian Deadlift (DB)',
+    'Hip Thrust', 'Incline DB Press', 'Chest Press',
+    'Hack Squat', 'Crunch Machine', 'Romanian Deadlift',
     'Neutral-Grip Lat Pulldown', 'Seated Cable Row (Wide Grip)',
-    'Preacher Curl (Machine)', 'DB Hammer Curl', 'Seated Incline DB Curl',
-    'Single Arm Cable Crossover', 'Single Arm Lateral Raise (Cable)',
+    'Preacher Curl', 'Hammer Curl', 'Seated Incline DB Curl',
+    'Single Arm Cable Crossover', 'Single Arm Lateral Raise',
   ])('%s gets no 1RM floor from estimator noise', (name) => {
     // Hevy's estimate runs a few hundred grams above Epley on these, which is
     // the same size as a real e1RM advance. Trusting it suppressed six genuine
@@ -298,8 +298,8 @@ describe('the floor across the other exercises it was primed to break', () => {
     { name: 'Pec Deck',                  logged: 52.5,  asserted: 55,    comeback: 55 },
     { name: 'Lat Pulldown',              logged: 47,    asserted: 49.5,  comeback: 49.5 },
     { name: 'Straight-Arm Pulldown',     logged: 16.25, asserted: 17.5,  comeback: 17.5 },
-    { name: 'Cable Overhead Extension',  logged: 11.25, asserted: 12.5,  comeback: 12.5 },
-    { name: 'DB Shoulder Press',         logged: 30,    asserted: 31,    comeback: 31 },
+    { name: 'Overhead Triceps Extension',  logged: 11.25, asserted: 12.5,  comeback: 12.5 },
+    { name: 'Shoulder Press',         logged: 30,    asserted: 31,    comeback: 31 },
   ]
 
   it.each(cases)('$name: returning to $comeback kg is not a record', ({ name, logged, asserted, comeback }) => {

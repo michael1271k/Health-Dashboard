@@ -12,18 +12,7 @@
             "id": "baseline",
             "kind": "deficit",
             "label": "Baseline",
-            "summary": "The plan as written — full carbs, 10k steps.",
-            "calorieGoal": 1955,
-            "proteinGoalG": 170,
-            "carbsGoalG": 195,
-            "fatGoalG": 55,
-            "stepsGoal": 10000
-          },
-          {
-            "id": "baseline-2",
-            "kind": "deficit",
-            "label": "Baseline 2",
-            "summary": "The Week 8 re-base — 190 g carbs, 10k steps, no lever.",
+            "summary": "The plan as written — 190 g carbs, 10k steps.",
             "calorieGoal": 1935,
             "proteinGoalG": 170,
             "carbsGoalG": 190,
@@ -66,7 +55,6 @@
         ],
         "deficitIds": [
           "baseline",
-          "baseline-2",
           "lever-1",
           "lever-2"
         ],
@@ -97,7 +85,7 @@
           },
           {
             "from": "2026-09-06",
-            "leverId": "baseline-2"
+            "leverId": "baseline"
           }
         ]
       }

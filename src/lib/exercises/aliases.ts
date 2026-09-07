@@ -47,8 +47,6 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   // `Leg Press Horizontal (Machine)` counted as a fresh record because that
   // row had never seen it. Grip is a CUE (now a program `note`), not an
   // exercise identity.
-  'chest press machine': 'Chest Press (Machine)',
-  'machine chest press': 'Chest Press (Machine)',
   'leg press horizontal': 'Leg Press',
   'leg press horizontal (machine)': 'Leg Press',
   // ── SEATED CABLE ROW IS THE ONE EXCEPTION, carved back out 2026-08-06 ──
@@ -79,10 +77,6 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   // (Upper B) were the same single-arm cable movement under two catalog rows,
   // so the 5 kg × 15 on 07-28 was judged against a baseline that had never seen
   // the 5 kg × 13 on 07-23. Identical failure mode to the machine merges above.
-  'cable lateral raise': 'Single Arm Lateral Raise (Cable)',
-  'single arm cable lateral raise': 'Single Arm Lateral Raise (Cable)',
-  'sa lateral raise (cable)': 'Single Arm Lateral Raise (Cable)',
-  'sa lateral raise': 'Single Arm Lateral Raise (Cable)',
 
   // ── Empty duplicate, deleted 2026-08-03 ──
   // `Incline DB Bench Press` existed as a second catalog row holding ZERO sets
@@ -93,6 +87,66 @@ export const EXERCISE_ALIASES: Record<string, string> = {
   'incline db bench press': 'Incline DB Press',
   'incline dumbbell bench press': 'Incline DB Press',
   'incline dumbbell press': 'Incline DB Press',
+
+  // ── THE 2026-09-07 MERGE-AND-STRIP ──────────────────────────────────────────
+  // Fifteen catalogue rows were merged and thirteen titles lost their equipment
+  // to the new `exercises.equipment` column, so the kit is a TAG and the name is
+  // the movement. Every absorbed and every pre-rename name is keyed here for the
+  // usual reason `merge-exercise.mjs` prints on every run: without it the next
+  // draft recreates the row that was just deleted, under a name whose PR
+  // baseline has never seen a rep.
+  //
+  // Two of the merges were not cosmetic. `DB Hammer Curl` (20 sets, from 21 Jul)
+  // and `Hammer Curl (DB)` (76 sets, to 19 Jun) were the same movement either
+  // side of a July rename, and so were the two shoulder presses — so the first
+  // set logged under each new name in July was graded against a baseline that
+  // had never seen one. Same failure the machine merges above document.
+  //
+  // `Crunch Machine` is NOT renamed to `Crunch`: that matches
+  // `BodyweightExercise.patterns`' `^crunch(es)?$` and would hide the load
+  // column on a 57.5 kg machine. See docs/sql/hotfix-polish.sql.
+  'pec deck (butterfly)': 'Pec Deck',
+  'butterfly pec deck': 'Pec Deck',
+  'lat pulldown (cable)': 'Lat Pulldown',
+  'straight arm pulldown (rope)': 'Straight-Arm Pulldown',
+  'straight arm pulldown': 'Straight-Arm Pulldown',
+  'cable overhead extension': 'Overhead Triceps Extension',
+  'overhead triceps extension (cable)': 'Overhead Triceps Extension',
+  'triceps rope pushdown': 'Rope Triceps Pushdown',
+  'calf press (machine)': 'Calf Press',
+  'calf press machine': 'Calf Press',
+  'leg extension (machine)': 'Leg Extension',
+  'leg extension machine': 'Leg Extension',
+  'seated leg curl (machine)': 'Seated Leg Curl',
+  'seated leg curl machine': 'Seated Leg Curl',
+  'crunch (machine)': 'Crunch Machine',
+  'db hammer curl': 'Hammer Curl',
+  'hammer curl (db)': 'Hammer Curl',
+  'db shoulder press': 'Shoulder Press',
+  'shoulder press (db)': 'Shoulder Press',
+  'hip adduction (machine)': 'Hip Adduction',
+  'machine hip thrust': 'Hip Thrust',
+  'hip thrust (machine)': 'Hip Thrust',
+  'machine preacher curl': 'Preacher Curl',
+  'preacher curl (machine)': 'Preacher Curl',
+  'db rdl': 'Romanian Deadlift',
+  'rdl db': 'Romanian Deadlift',
+  'romanian deadlift (db)': 'Romanian Deadlift',
+  'romanian deadlift (dumbbell)': 'Romanian Deadlift',
+  'chest press (machine)': 'Chest Press',
+  'chest press machine': 'Chest Press',
+  'machine chest press': 'Chest Press',
+  'bicep curl (db)': 'Bicep Curl',
+  'bicep curl db': 'Bicep Curl',
+  'seated lateral raise (db)': 'Seated Lateral Raise',
+  'lateral raise db': 'Seated Lateral Raise',
+  'machine lateral raise': 'Lateral Raise',
+  'single arm lateral raise (cable)': 'Single Arm Lateral Raise',
+  'cable lateral raise': 'Single Arm Lateral Raise',
+  'single arm cable lateral raise': 'Single Arm Lateral Raise',
+  'sa lateral raise (cable)': 'Single Arm Lateral Raise',
+  'sa lateral raise': 'Single Arm Lateral Raise',
+  'single arm triceps pushdown (cable)': 'Single Arm Triceps Pushdown',
 }
 
 export function canonicalExerciseName(raw: string): string {

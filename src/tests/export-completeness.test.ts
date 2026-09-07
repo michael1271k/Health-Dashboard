@@ -153,7 +153,7 @@ describe('set metadata the payload used to drop on the floor', () => {
       ...base,
       sessions: [session({
         exercises: [{
-          name: 'Preacher Curl (Machine)', topKg: 18.75, repWindow: null,
+          name: 'Preacher Curl', topKg: 18.75, repWindow: null,
           sets: [
             { weightKg: 18.75, reps: 12, rpe: 9.5, side: null, failure: false, pairId: null },
             { weightKg: 12.5, reps: 8, rpe: 10, side: null, failure: false, pairId: null, dropset: true },
@@ -161,7 +161,7 @@ describe('set metadata the payload used to drop on the floor', () => {
         }],
       })],
     })
-    expect(setsOf(out, '2026-08-27', 'Preacher Curl (Machine)'))
+    expect(setsOf(out, '2026-08-27', 'Preacher Curl'))
       .toEqual(['18.75×12@9.5', '12.5×8@10D'])
   })
 })

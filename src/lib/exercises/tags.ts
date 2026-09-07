@@ -18,7 +18,7 @@
  *
  * ── COMPOUND IS AN INPUT, NOT A GUESS ───────────────────────────────────────
  * `exercises.is_compound` is a real column and `ProgramExercise.compound` is a
- * real field; nothing about "Chest Press (Machine)" says which it is. So a
+ * real field; nothing about "Chest Press" says which it is. So a
  * caller that knows passes it, and a caller that does not gets no load-class
  * chip at all. Inventing one from the name is how "Face Pull" ends up labelled
  * a compound for having two words in it.

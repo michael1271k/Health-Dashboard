@@ -303,8 +303,8 @@
           "startedAt": "2026-08-02T09:00:00Z",
           "exercises": [
             {
-              "localId": "romanian-deadlift-dumbbell-",
-              "name": "Romanian Deadlift (Dumbbell)",
+              "localId": "romanian-deadlift",
+              "name": "Romanian Deadlift",
               "sets": [
                 {
                   "weightKg": 24,
@@ -352,8 +352,8 @@
           "startedAt": "2026-08-02T09:00:00Z",
           "exercises": [
             {
-              "localId": "chest-press-machine-",
-              "name": "Chest Press (Machine)",
+              "localId": "chest-press",
+              "name": "Chest Press",
               "sets": [
                 {
                   "weightKg": 40,
@@ -439,8 +439,8 @@
               ]
             },
             {
-              "localId": "romanian-deadlift-dumbbell-",
-              "name": "Romanian Deadlift (Dumbbell)",
+              "localId": "romanian-deadlift",
+              "name": "Romanian Deadlift",
               "sets": [
                 {
                   "weightKg": 24,
@@ -457,8 +457,8 @@
               ]
             },
             {
-              "localId": "shoulder-press-db-",
-              "name": "Shoulder Press (DB)",
+              "localId": "shoulder-press",
+              "name": "Shoulder Press",
               "sets": [
                 {
                   "weightKg": 16,

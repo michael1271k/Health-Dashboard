@@ -34,7 +34,7 @@ export interface MuscleEntry { primary: string[]; secondary: string[] }
  * ORDER IS PART OF THE DATA. `lookupMuscles` only replaces its best match on a
  * STRICTLY longer token list, so of two entries with the same specificity the
  * FIRST one here wins — `['overhead','extension']` beats `['cable','extension']`
- * for "Cable Overhead Extension" because it is written above it.
+ * for "Overhead Triceps Extension" because it is written above it.
  */
 export const MUSCLE_DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   // ── Quads ───────────────────────────────────────────────────────────────────

@@ -8,8 +8,8 @@
       "input": {
         "exercises": [
           {
-            "exerciseId": "chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "exerciseId": "chest-press",
+            "name": "Chest Press",
             "order": 0,
             "muscleGroups": [],
             "isCompound": false,
@@ -511,7 +511,7 @@
         "strongest": "Leg Press",
         "highlights": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "axes": [
               "Weight",
               "1RM"
@@ -574,8 +574,8 @@
       "input": {
         "exercises": [
           {
-            "exerciseId": "chest-press-machine-",
-            "name": "Chest Press (Machine)",
+            "exerciseId": "chest-press",
+            "name": "Chest Press",
             "order": 0,
             "muscleGroups": [],
             "isCompound": false,
@@ -1077,7 +1077,7 @@
         "strongest": "Leg Press",
         "highlights": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "axes": [
               "Weight",
               "1RM"

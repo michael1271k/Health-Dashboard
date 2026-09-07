@@ -77,8 +77,8 @@
         "date": "2026-09-03"
       },
       "expected": {
-        "plan": "onyx5|arms|single arm lateral raise (cable)",
-        "session": "2026-09-03|onyx5|arms|single arm lateral raise (cable)"
+        "plan": "onyx5|arms|single arm lateral raise",
+        "session": "2026-09-03|onyx5|arms|single arm lateral raise"
       }
     },
     {

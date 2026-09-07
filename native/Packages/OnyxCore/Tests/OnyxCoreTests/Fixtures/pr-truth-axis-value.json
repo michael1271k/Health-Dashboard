@@ -36,33 +36,33 @@
       "expected": 53.33
     },
     {
-      "name": "Chest Press (Machine) · weight",
+      "name": "Chest Press · weight",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "axis": "weight"
       },
       "expected": 40
     },
     {
-      "name": "Chest Press (Machine) · reps",
+      "name": "Chest Press · reps",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Chest Press (Machine) · volume",
+      "name": "Chest Press · volume",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "axis": "volume"
       },
       "expected": 450
     },
     {
-      "name": "Chest Press (Machine) · e1rm",
+      "name": "Chest Press · e1rm",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "axis": "e1rm"
       },
       "expected": 53.33
@@ -132,97 +132,97 @@
       "expected": 12.32
     },
     {
-      "name": "DB Shoulder Press · weight",
+      "name": "Shoulder Press · weight",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "axis": "weight"
       },
       "expected": 31
     },
     {
-      "name": "DB Shoulder Press · reps",
+      "name": "Shoulder Press · reps",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "DB Shoulder Press · volume",
+      "name": "Shoulder Press · volume",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "axis": "volume"
       },
       "expected": 360
     },
     {
-      "name": "DB Shoulder Press · e1rm",
+      "name": "Shoulder Press · e1rm",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "axis": "e1rm"
       },
       "expected": 42.25
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · weight",
+      "name": "Single Arm Lateral Raise · weight",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "axis": "weight"
       },
       "expected": 5
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · reps",
+      "name": "Single Arm Lateral Raise · reps",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · volume",
+      "name": "Single Arm Lateral Raise · volume",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "axis": "volume"
       },
       "expected": 85
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · e1rm",
+      "name": "Single Arm Lateral Raise · e1rm",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "axis": "e1rm"
       },
       "expected": 7.81
     },
     {
-      "name": "Cable Overhead Extension · weight",
+      "name": "Overhead Triceps Extension · weight",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "axis": "weight"
       },
       "expected": 12.5
     },
     {
-      "name": "Cable Overhead Extension · reps",
+      "name": "Overhead Triceps Extension · reps",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Cable Overhead Extension · volume",
+      "name": "Overhead Triceps Extension · volume",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "axis": "volume"
       },
       "expected": 168.75
     },
     {
-      "name": "Cable Overhead Extension · e1rm",
+      "name": "Overhead Triceps Extension · e1rm",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "axis": "e1rm"
       },
       "expected": 16.79
@@ -260,33 +260,33 @@
       "expected": 22.39
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · weight",
+      "name": "Single Arm Triceps Pushdown · weight",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "axis": "weight"
       },
       "expected": 6.25
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · reps",
+      "name": "Single Arm Triceps Pushdown · reps",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · volume",
+      "name": "Single Arm Triceps Pushdown · volume",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "axis": "volume"
       },
       "expected": 93.75
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · e1rm",
+      "name": "Single Arm Triceps Pushdown · e1rm",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "axis": "e1rm"
       },
       "expected": 9.33
@@ -516,33 +516,33 @@
       "expected": 22.54
     },
     {
-      "name": "DB Hammer Curl · weight",
+      "name": "Hammer Curl · weight",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "axis": "weight"
       },
       "expected": 20
     },
     {
-      "name": "DB Hammer Curl · reps",
+      "name": "Hammer Curl · reps",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "DB Hammer Curl · volume",
+      "name": "Hammer Curl · volume",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "axis": "volume"
       },
       "expected": 240
     },
     {
-      "name": "DB Hammer Curl · e1rm",
+      "name": "Hammer Curl · e1rm",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "axis": "e1rm"
       },
       "expected": 28.17
@@ -580,33 +580,33 @@
       "expected": 21.43
     },
     {
-      "name": "Preacher Curl (Machine) · weight",
+      "name": "Preacher Curl · weight",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "axis": "weight"
       },
       "expected": 17.5
     },
     {
-      "name": "Preacher Curl (Machine) · reps",
+      "name": "Preacher Curl · reps",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Preacher Curl (Machine) · volume",
+      "name": "Preacher Curl · volume",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "axis": "volume"
       },
       "expected": 210
     },
     {
-      "name": "Preacher Curl (Machine) · e1rm",
+      "name": "Preacher Curl · e1rm",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "axis": "e1rm"
       },
       "expected": 24.65
@@ -740,65 +740,65 @@
       "expected": 73.53
     },
     {
-      "name": "Romanian Deadlift (DB) · weight",
+      "name": "Romanian Deadlift · weight",
       "input": {
-        "name": "Romanian Deadlift (DB)",
+        "name": "Romanian Deadlift",
         "axis": "weight"
       },
       "expected": 40
     },
     {
-      "name": "Romanian Deadlift (DB) · reps",
+      "name": "Romanian Deadlift · reps",
       "input": {
-        "name": "Romanian Deadlift (DB)",
+        "name": "Romanian Deadlift",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Romanian Deadlift (DB) · volume",
+      "name": "Romanian Deadlift · volume",
       "input": {
-        "name": "Romanian Deadlift (DB)",
+        "name": "Romanian Deadlift",
         "axis": "volume"
       },
       "expected": 420
     },
     {
-      "name": "Romanian Deadlift (DB) · e1rm",
+      "name": "Romanian Deadlift · e1rm",
       "input": {
-        "name": "Romanian Deadlift (DB)",
+        "name": "Romanian Deadlift",
         "axis": "e1rm"
       },
       "expected": 53.33
     },
     {
-      "name": "Hip Thrust (Machine) · weight",
+      "name": "Hip Thrust · weight",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "axis": "weight"
       },
       "expected": 27.5
     },
     {
-      "name": "Hip Thrust (Machine) · reps",
+      "name": "Hip Thrust · reps",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "axis": "reps"
       },
       "expected": null
     },
     {
-      "name": "Hip Thrust (Machine) · volume",
+      "name": "Hip Thrust · volume",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "axis": "volume"
       },
       "expected": 385
     },
     {
-      "name": "Hip Thrust (Machine) · e1rm",
+      "name": "Hip Thrust · e1rm",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "axis": "e1rm"
       },
       "expected": 40.44

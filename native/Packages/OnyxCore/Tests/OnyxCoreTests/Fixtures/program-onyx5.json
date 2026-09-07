@@ -31,7 +31,7 @@
                 "wk1Kg": 45
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "sets": 2,
                 "reps": "10–12",
                 "restSec": 135,
@@ -129,14 +129,14 @@
             "weekday": 2,
             "exercises": [
               {
-                "name": "DB Shoulder Press",
+                "name": "Shoulder Press",
                 "sets": 3,
                 "reps": "8–10",
                 "restSec": 105,
                 "wk1Kg": 28
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "sets": 4,
                 "reps": "12–20",
                 "restSec": 105,
@@ -150,14 +150,14 @@
                 "wk1Kg": 14
               },
               {
-                "name": "Cable Overhead Extension",
+                "name": "Overhead Triceps Extension",
                 "sets": 3,
                 "reps": "10–15",
                 "restSec": 90,
                 "wk1Kg": 9
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "sets": 3,
                 "reps": "10–12",
                 "restSec": 105,
@@ -185,7 +185,7 @@
             "weekday": 4,
             "exercises": [
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "sets": 3,
                 "reps": "10–12",
                 "restSec": 120,
@@ -213,21 +213,21 @@
                 "wk1Kg": 35
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "sets": 3,
                 "reps": "15–20",
                 "restSec": 90,
                 "wk1Kg": 3.75
               },
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "sets": 3,
                 "reps": "8–12",
                 "restSec": 105,
                 "wk1Kg": 15
               },
               {
-                "name": "Single Arm Triceps Pushdown (Cable)",
+                "name": "Single Arm Triceps Pushdown",
                 "sets": 3,
                 "reps": "12–15",
                 "restSec": 90,
@@ -241,14 +241,14 @@
             "weekday": 5,
             "exercises": [
               {
-                "name": "Romanian Deadlift (Dumbbell)",
+                "name": "Romanian Deadlift",
                 "sets": 3,
                 "reps": "8–12",
                 "restSec": 120,
                 "wk1Kg": 30
               },
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "sets": 3,
                 "reps": "8–15",
                 "restSec": 135,
@@ -322,7 +322,7 @@
                 "wk1Kg": 45
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "sets": 3,
                 "reps": "10–12",
                 "restSec": 135,
@@ -420,14 +420,14 @@
             "weekday": 2,
             "exercises": [
               {
-                "name": "DB Shoulder Press",
+                "name": "Shoulder Press",
                 "sets": 3,
                 "reps": "8–10",
                 "restSec": 105,
                 "wk1Kg": 28
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "sets": 5,
                 "reps": "12–20",
                 "restSec": 105,
@@ -441,14 +441,14 @@
                 "wk1Kg": 14
               },
               {
-                "name": "Cable Overhead Extension",
+                "name": "Overhead Triceps Extension",
                 "sets": 3,
                 "reps": "10–15",
                 "restSec": 90,
                 "wk1Kg": 9
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "sets": 3,
                 "reps": "10–12",
                 "restSec": 105,
@@ -483,7 +483,7 @@
             "weekday": 4,
             "exercises": [
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "sets": 3,
                 "reps": "10–12",
                 "restSec": 120,
@@ -511,21 +511,21 @@
                 "wk1Kg": 35
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "sets": 4,
                 "reps": "15–20",
                 "restSec": 90,
                 "wk1Kg": 3.75
               },
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "sets": 3,
                 "reps": "8–12",
                 "restSec": 105,
                 "wk1Kg": 15
               },
               {
-                "name": "Single Arm Triceps Pushdown (Cable)",
+                "name": "Single Arm Triceps Pushdown",
                 "sets": 3,
                 "reps": "12–15",
                 "restSec": 90,
@@ -539,14 +539,14 @@
             "weekday": 5,
             "exercises": [
               {
-                "name": "Romanian Deadlift (Dumbbell)",
+                "name": "Romanian Deadlift",
                 "sets": 4,
                 "reps": "8–12",
                 "restSec": 120,
                 "wk1Kg": 30
               },
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "sets": 3,
                 "reps": "8–15",
                 "restSec": 135,

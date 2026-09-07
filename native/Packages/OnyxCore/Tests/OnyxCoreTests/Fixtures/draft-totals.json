@@ -13,8 +13,8 @@
           "startedAt": "2026-08-25T09:00:00.000Z",
           "exercises": [
             {
-              "localId": "Chest Press (Machine)",
-              "name": "Chest Press (Machine)",
+              "localId": "Chest Press",
+              "name": "Chest Press",
               "sets": [
                 {
                   "weightKg": 20,

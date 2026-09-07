@@ -14,7 +14,7 @@
         "seeded": [
           {
             "date": "2026-07-16",
-            "exercise": "Preacher Curl (Machine)",
+            "exercise": "Preacher Curl",
             "setNumber": 2,
             "weightKg": 17.5,
             "reps": 12,
@@ -25,7 +25,7 @@
           },
           {
             "date": "2026-07-17",
-            "exercise": "Hip Thrust (Machine)",
+            "exercise": "Hip Thrust",
             "setNumber": 1,
             "weightKg": 25,
             "reps": 14,
@@ -57,7 +57,7 @@
           },
           {
             "date": "2026-07-21",
-            "exercise": "DB Shoulder Press",
+            "exercise": "Shoulder Press",
             "setNumber": 2,
             "weightKg": 30,
             "reps": 11,
@@ -68,7 +68,7 @@
           },
           {
             "date": "2026-07-21",
-            "exercise": "Single Arm Lateral Raise (Cable)",
+            "exercise": "Single Arm Lateral Raise",
             "setNumber": 3,
             "weightKg": 5,
             "reps": 10,
@@ -79,7 +79,7 @@
           },
           {
             "date": "2026-07-21",
-            "exercise": "Cable Overhead Extension",
+            "exercise": "Overhead Triceps Extension",
             "setNumber": 1,
             "weightKg": 10,
             "reps": 15,
@@ -89,7 +89,7 @@
           },
           {
             "date": "2026-07-21",
-            "exercise": "Cable Overhead Extension",
+            "exercise": "Overhead Triceps Extension",
             "setNumber": 2,
             "weightKg": 11.25,
             "reps": 13,
@@ -99,7 +99,7 @@
           },
           {
             "date": "2026-07-21",
-            "exercise": "DB Hammer Curl",
+            "exercise": "Hammer Curl",
             "setNumber": 1,
             "weightKg": 20,
             "reps": 12,
@@ -132,7 +132,7 @@
           },
           {
             "date": "2026-07-23",
-            "exercise": "Single Arm Lateral Raise (Cable)",
+            "exercise": "Single Arm Lateral Raise",
             "setNumber": 2,
             "weightKg": 5,
             "reps": 13,
@@ -143,7 +143,7 @@
           },
           {
             "date": "2026-07-24",
-            "exercise": "Romanian Deadlift (DB)",
+            "exercise": "Romanian Deadlift",
             "setNumber": 1,
             "weightKg": 35,
             "reps": 12,
@@ -155,7 +155,7 @@
           },
           {
             "date": "2026-07-24",
-            "exercise": "Hip Thrust (Machine)",
+            "exercise": "Hip Thrust",
             "setNumber": 2,
             "weightKg": 27.5,
             "reps": 12,
@@ -186,7 +186,7 @@
           },
           {
             "date": "2026-07-28",
-            "exercise": "Single Arm Lateral Raise (Cable)",
+            "exercise": "Single Arm Lateral Raise",
             "setNumber": 1,
             "weightKg": 5,
             "reps": 15,
@@ -197,7 +197,7 @@
           },
           {
             "date": "2026-07-28",
-            "exercise": "Cable Overhead Extension",
+            "exercise": "Overhead Triceps Extension",
             "setNumber": 1,
             "weightKg": 11.25,
             "reps": 15,
@@ -220,7 +220,7 @@
           },
           {
             "date": "2026-07-31",
-            "exercise": "Hip Thrust (Machine)",
+            "exercise": "Hip Thrust",
             "setNumber": 2,
             "weightKg": 27.5,
             "reps": 13,
@@ -252,7 +252,7 @@
           },
           {
             "date": "2026-08-02",
-            "exercise": "Chest Press (Machine)",
+            "exercise": "Chest Press",
             "setNumber": 2,
             "weightKg": 40,
             "reps": 8,

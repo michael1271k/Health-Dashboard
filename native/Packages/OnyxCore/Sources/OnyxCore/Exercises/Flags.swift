@@ -97,10 +97,55 @@ public enum ExerciseIcon {
     ]
     public static let fallback = "Exercise"
 
+    /// The catalogue's own answer, by canonical name — the port of
+    /// `EQUIPMENT_BY_NAME` in `src/lib/exercises/equipment.ts`.
+    ///
+    /// ── WHY A TABLE NOW ─────────────────────────────────────────────────────
+    /// This file's header says the catalogue is "a name table with no equipment
+    /// column", which is what made `rules` the whole answer. On 2026-09-07 the
+    /// founder moved the kit out of the titles and into `exercises.equipment`,
+    /// so thirteen movements lost the only word that placed them — and
+    /// `Single Arm Triceps Pushdown`, with "(Cable)" gone, fell through to the
+    /// LAST rule and came back `Bodyweight`. The logger hides the load column on
+    /// a bodyweight movement, so a cable pushdown would have had nowhere to
+    /// record what it was done with. A missing hint became a wrong claim.
+    ///
+    /// The table wins; `rules` stays underneath for a movement nobody has
+    /// classified yet. Keep it equal to the TypeScript one.
+    public static let byName: [String: String] = [
+        "chest press": "Machine",
+        "hip adduction": "Machine",
+        "hip thrust": "Machine",
+        "preacher curl": "Machine",
+        "lateral raise": "Machine",
+        "calf press": "Machine",
+        "leg extension": "Machine",
+        "leg press": "Machine",
+        "hack squat": "Machine",
+        "seated leg curl": "Machine",
+        "pec deck": "Machine",
+        "lat pulldown": "Machine",
+        "neutral-grip lat pulldown": "Machine",
+        "crunch machine": "Machine",
+        "bicep curl": "Dumbbell",
+        "hammer curl": "Dumbbell",
+        "shoulder press": "Dumbbell",
+        "romanian deadlift": "Dumbbell",
+        "seated lateral raise": "Dumbbell",
+        "overhead triceps extension": "Cable",
+        "single arm lateral raise": "Cable",
+        "single arm triceps pushdown": "Cable",
+        "straight-arm pulldown": "Cable",
+        "rope triceps pushdown": "Cable",
+        "face pull": "Cable",
+    ]
+
     /// Matched against the LOWERCASED name, most-specific first. Never nil.
     public static func label(for name: String?) -> String {
         guard let name = name, !name.isEmpty else { return fallback }
         let lower = name.lowercased()
+        // The table is the catalogue's own answer and outranks every heuristic.
+        if let known = byName[lower.trimmingCharacters(in: .whitespaces)] { return known }
         return rules.first { matches($0.0, lower, caseInsensitive: false) }?.1 ?? fallback
     }
 }

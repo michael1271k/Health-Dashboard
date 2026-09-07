@@ -7,15 +7,6 @@
       "name": "baseline",
       "input": {
         "proteinG": 170,
-        "carbsG": 195,
-        "fatG": 55
-      },
-      "expected": 1955
-    },
-    {
-      "name": "baseline-2",
-      "input": {
-        "proteinG": 170,
         "carbsG": 190,
         "fatG": 55
       },

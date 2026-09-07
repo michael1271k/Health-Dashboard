@@ -5,7 +5,7 @@ import {
   EMPTY_BASELINES, type BaselineSetRow, type PrCandidateSet,
 } from '@/lib/training/prEngine'
 
-const HIP = 'Hip Thrust (Machine)'
+const HIP = 'Hip Thrust'
 const PLANK = 'Side Plank'
 const isTimed = (k: string) => k === PLANK
 
@@ -359,7 +359,7 @@ describe('the volume axis lands on the set that lifted it', () => {
     // A `sessionVolume` axis was reintroduced on 2026-08-11 and withdrawn the
     // same day for reproducing exactly this: with it in place, three identical
     // sets scored a PR again. The engine is back to four axes.
-    const RDL = 'Romanian Deadlift (DB)'
+    const RDL = 'Romanian Deadlift'
     const prior = buildBaselines([
       { key: RDL, weightKg: 35, reps: 12 },
       { key: RDL, weightKg: 35, reps: 12 },
@@ -393,7 +393,7 @@ describe('the volume axis lands on the set that lifted it', () => {
 })
 
 describe('the seeded era is AUTHORITATIVE, not additive', () => {
-  const HAMMER = 'DB Hammer Curl'
+  const HAMMER = 'Hammer Curl'
 
   it('flags a first-ever set the engine could never derive', () => {
     // 2026-07-21 was the first Helix hammer curl, so there is no baseline and
@@ -485,7 +485,7 @@ describe('recordSets when two sets win the same axis', () => {
  * record beside it. These pin the behaviour so it cannot drift back silently.
  */
 describe('raw axis counting — every axis beaten is counted', () => {
-  const EX = 'Chest Press (Machine)'
+  const EX = 'Chest Press'
 
   it('counts the implied e1rm alongside the tonnage record that produced it', () => {
     // 12 > 10 at 37.5 kg drags both tonnage (450 > 375) and Epley with it.
@@ -528,7 +528,7 @@ describe('raw axis counting — every axis beaten is counted', () => {
  * both rows of one physical set could carry a trophy.
  */
 describe('the volume axis obeys the unilateral rule', () => {
-  const SA = 'Single Arm Lateral Raise (Cable)'
+  const SA = 'Single Arm Lateral Raise'
   const pair = (n: string, side: 'L' | 'R', w: number, reps: number): PrCandidateSet =>
     ({ key: SA, weightKg: w, reps, timed: false, setType: null, side, pairId: n })
 
@@ -698,7 +698,7 @@ describe('supersedeWithinSession', () => {
   })
 
   it('treats a unilateral pair as ONE set, not two competitors', () => {
-    const LAT = 'Single Arm Lateral Raise (Cable)'
+    const LAT = 'Single Arm Lateral Raise'
     const baselines = buildBaselines([
       { key: LAT, weightKg: 4, reps: 12 },
       { key: LAT, weightKg: 4, reps: 10 },

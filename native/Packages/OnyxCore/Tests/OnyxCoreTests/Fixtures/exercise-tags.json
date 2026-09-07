@@ -66,6 +66,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -80,6 +85,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -89,12 +99,18 @@
         "name": "Lat Pulldown",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
-      "name": "Chest Press (Machine) · compound",
+      "name": "Chest Press · compound",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": true
       },
       "expected": [
@@ -111,9 +127,9 @@
       ]
     },
     {
-      "name": "Chest Press (Machine) · isolation",
+      "name": "Chest Press · isolation",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": false
       },
       "expected": [
@@ -130,9 +146,9 @@
       ]
     },
     {
-      "name": "Chest Press (Machine) · unknown",
+      "name": "Chest Press · unknown",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": null
       },
       "expected": [
@@ -206,6 +222,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -220,6 +241,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -229,7 +255,13 @@
         "name": "Pec Deck",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Straight-Arm Pulldown · compound",
@@ -242,6 +274,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -256,6 +293,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -265,7 +307,13 @@
         "name": "Straight-Arm Pulldown",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Face Pull · compound",
@@ -278,6 +326,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -292,6 +345,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -301,7 +359,13 @@
         "name": "Face Pull",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Leg Press · compound",
@@ -314,6 +378,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -328,6 +397,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -337,7 +411,13 @@
         "name": "Leg Press",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Hack Squat · compound",
@@ -350,6 +430,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -364,6 +449,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -373,7 +463,13 @@
         "name": "Hack Squat",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Leg Extension · compound",
@@ -386,6 +482,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -400,6 +501,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -409,7 +515,13 @@
         "name": "Leg Extension",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Seated Leg Curl · compound",
@@ -422,6 +534,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -436,6 +553,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -445,7 +567,13 @@
         "name": "Seated Leg Curl",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Calf Press · compound",
@@ -458,6 +586,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -472,6 +605,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -481,7 +619,13 @@
         "name": "Calf Press",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Crunch Machine · compound",
@@ -588,9 +732,9 @@
       ]
     },
     {
-      "name": "DB Shoulder Press · compound",
+      "name": "Shoulder Press · compound",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "compound": true
       },
       "expected": [
@@ -607,9 +751,9 @@
       ]
     },
     {
-      "name": "DB Shoulder Press · isolation",
+      "name": "Shoulder Press · isolation",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "compound": false
       },
       "expected": [
@@ -626,9 +770,9 @@
       ]
     },
     {
-      "name": "DB Shoulder Press · unknown",
+      "name": "Shoulder Press · unknown",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "compound": null
       },
       "expected": [
@@ -640,9 +784,9 @@
       ]
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · compound",
+      "name": "Single Arm Lateral Raise · compound",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "compound": true
       },
       "expected": [
@@ -664,9 +808,9 @@
       ]
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · isolation",
+      "name": "Single Arm Lateral Raise · isolation",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "compound": false
       },
       "expected": [
@@ -688,9 +832,9 @@
       ]
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · unknown",
+      "name": "Single Arm Lateral Raise · unknown",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "compound": null
       },
       "expected": [
@@ -759,9 +903,9 @@
       ]
     },
     {
-      "name": "Cable Overhead Extension · compound",
+      "name": "Overhead Triceps Extension · compound",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "compound": true
       },
       "expected": [
@@ -778,9 +922,9 @@
       ]
     },
     {
-      "name": "Cable Overhead Extension · isolation",
+      "name": "Overhead Triceps Extension · isolation",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "compound": false
       },
       "expected": [
@@ -797,9 +941,9 @@
       ]
     },
     {
-      "name": "Cable Overhead Extension · unknown",
+      "name": "Overhead Triceps Extension · unknown",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "compound": null
       },
       "expected": [
@@ -811,9 +955,9 @@
       ]
     },
     {
-      "name": "DB Hammer Curl · compound",
+      "name": "Hammer Curl · compound",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "compound": true
       },
       "expected": [
@@ -830,9 +974,9 @@
       ]
     },
     {
-      "name": "DB Hammer Curl · isolation",
+      "name": "Hammer Curl · isolation",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "compound": false
       },
       "expected": [
@@ -849,9 +993,9 @@
       ]
     },
     {
-      "name": "DB Hammer Curl · unknown",
+      "name": "Hammer Curl · unknown",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "compound": null
       },
       "expected": [
@@ -873,6 +1017,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -887,6 +1036,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
         }
       ]
     },
@@ -896,7 +1050,13 @@
         "name": "Rope Triceps Pushdown",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Reverse EZ-Bar Curl · compound",
@@ -997,6 +1157,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -1011,6 +1176,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -1020,7 +1190,13 @@
         "name": "Neutral-Grip Lat Pulldown",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Single Arm Cable Crossover · compound",
@@ -1142,9 +1318,9 @@
       ]
     },
     {
-      "name": "Preacher Curl (Machine) · compound",
+      "name": "Preacher Curl · compound",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "compound": true
       },
       "expected": [
@@ -1161,9 +1337,9 @@
       ]
     },
     {
-      "name": "Preacher Curl (Machine) · isolation",
+      "name": "Preacher Curl · isolation",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "compound": false
       },
       "expected": [
@@ -1180,9 +1356,9 @@
       ]
     },
     {
-      "name": "Preacher Curl (Machine) · unknown",
+      "name": "Preacher Curl · unknown",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "compound": null
       },
       "expected": [
@@ -1194,9 +1370,9 @@
       ]
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · compound",
+      "name": "Single Arm Triceps Pushdown · compound",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "compound": true
       },
       "expected": [
@@ -1218,9 +1394,9 @@
       ]
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · isolation",
+      "name": "Single Arm Triceps Pushdown · isolation",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "compound": false
       },
       "expected": [
@@ -1242,9 +1418,9 @@
       ]
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · unknown",
+      "name": "Single Arm Triceps Pushdown · unknown",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "compound": null
       },
       "expected": [
@@ -1261,9 +1437,9 @@
       ]
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · compound",
+      "name": "Romanian Deadlift · compound",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "compound": true
       },
       "expected": [
@@ -1280,9 +1456,9 @@
       ]
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · isolation",
+      "name": "Romanian Deadlift · isolation",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "compound": false
       },
       "expected": [
@@ -1299,9 +1475,9 @@
       ]
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · unknown",
+      "name": "Romanian Deadlift · unknown",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "compound": null
       },
       "expected": [
@@ -1313,9 +1489,9 @@
       ]
     },
     {
-      "name": "Hip Thrust (Machine) · compound",
+      "name": "Hip Thrust · compound",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "compound": true
       },
       "expected": [
@@ -1332,9 +1508,9 @@
       ]
     },
     {
-      "name": "Hip Thrust (Machine) · isolation",
+      "name": "Hip Thrust · isolation",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "compound": false
       },
       "expected": [
@@ -1351,9 +1527,9 @@
       ]
     },
     {
-      "name": "Hip Thrust (Machine) · unknown",
+      "name": "Hip Thrust · unknown",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "compound": null
       },
       "expected": [
@@ -1375,6 +1551,11 @@
           "key": "compound",
           "label": "Compound",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -1389,6 +1570,11 @@
           "key": "isolation",
           "label": "Isolation",
           "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
         }
       ]
     },
@@ -1398,7 +1584,13 @@
         "name": "Hip Adduction",
         "compound": null
       },
-      "expected": []
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
     },
     {
       "name": "Hanging Knee Raise · compound",
@@ -2350,8 +2542,8 @@
           "kind": "load"
         },
         {
-          "key": "bodyweight",
-          "label": "Bodyweight",
+          "key": "machine",
+          "label": "Machine",
           "kind": "equipment"
         }
       ]
@@ -2369,8 +2561,8 @@
           "kind": "load"
         },
         {
-          "key": "bodyweight",
-          "label": "Bodyweight",
+          "key": "machine",
+          "label": "Machine",
           "kind": "equipment"
         }
       ]
@@ -2383,8 +2575,8 @@
       },
       "expected": [
         {
-          "key": "bodyweight",
-          "label": "Bodyweight",
+          "key": "machine",
+          "label": "Machine",
           "kind": "equipment"
         }
       ]
@@ -2613,9 +2805,9 @@
       ]
     },
     {
-      "name": "Chest Press (Machine) · compound",
+      "name": "Chest Press · compound",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": true
       },
       "expected": [
@@ -2632,9 +2824,9 @@
       ]
     },
     {
-      "name": "Chest Press (Machine) · isolation",
+      "name": "Chest Press · isolation",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": false
       },
       "expected": [
@@ -2651,9 +2843,9 @@
       ]
     },
     {
-      "name": "Chest Press (Machine) · unknown",
+      "name": "Chest Press · unknown",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "compound": null
       },
       "expected": [

@@ -8,7 +8,7 @@ import OnyxCore
 /// loads below are from a real Upper B on a cut — 49.5 kg, 42.5 kg, 13.75 kg —
 /// and they are what expose the layout problems that matter: a four-character
 /// load beside a two-character rep count, an RPE of 9.5 rather than 9, and
-/// "Single Arm Triceps Pushdown (Cable)" as a title on a 390 pt screen.
+/// "Single Arm Triceps Pushdown" as a title on a 390 pt screen.
 ///
 /// It also runs the SAME model as the device. A preview built from a parallel
 /// mock is a preview that can be right about code the device does not run.
@@ -27,12 +27,22 @@ extension LoggerModel {
         )
         guard logged else { return model }
 
-        // Chest Press (Machine) — three at 40, the last one graded 9.5.
-        model.fill("Chest Press (Machine)", [(40, 12, 9), (40, 10, 9), (40, 10, 9.5)])
+        // Chest Press — three at 40, the last one graded 9.5.
+        model.fill("Chest Press", [(40, 12, 9), (40, 10, 9), (40, 10, 9.5)])
         // Neutral-Grip Lat Pulldown — a load increase inside the rep window,
         // which is exactly what double progression looks like on a good day.
         model.fill("Neutral-Grip Lat Pulldown", [(47, 12, 8.5), (49.5, 11, 9.5)])
-        model.fill("Seated Cable Row (Wide Grip)", [(42.5, 12, 9), (42.5, 10, 9)])
+        // The second row is taken to FAILURE — 10, `RpeLadder`'s top rung.
+        //
+        // Seeded on purpose and seeded HERE rather than on the chest press:
+        // the deck's badge draws an `F` for a set rated 10, and until this wave
+        // nothing in six weeks of preview data sat on that rung, so the state
+        // could not be photographed at all. It goes on a row that is NOT a
+        // record because a record outranks a failure in the badge — putting
+        // both on one row photographs the trophy and proves nothing about the
+        // F. The trophy itself needs no seeding: the pulldown above takes a
+        // live record through `toggleDone`, which is the real engine.
+        model.fill("Seated Cable Row (Wide Grip)", [(42.5, 12, 9), (42.5, 10, 10)])
         model.fill("Single Arm Cable Crossover", [(7.5, 15, 8)])
         if resting, let next = model.currentSet?.exercise { model.startRest(for: next) }
         return model
