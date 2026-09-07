@@ -450372,7 +450372,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/providers/QueryProvider.tsx",
-      "source_location": "L263",
+      "source_location": "L273",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_providers_queryprovider_queryprovider",
@@ -450384,7 +450384,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/providers/QueryProvider.tsx",
-      "source_location": "L267",
+      "source_location": "L277",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_providers_queryprovider_queryprovider",
@@ -542639,5 +542639,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8899a84d702f9fb32ebe94bea7ac80f856b78862"
+  "built_at_commit": "db1bfafb35d265267c33bddaf62a48d97d904b7d"
 }

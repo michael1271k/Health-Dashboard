@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "src/components/providers/QueryProvider.tsx": {
-    "mtime": 1788201650.008258,
-    "ast_hash": "e4066000cdf1a56dbe588f8b9c209f58",
+    "mtime": 1788803750.8318923,
+    "ast_hash": "853d9d88cf76150e6be427cc7b5e958b",
     "semantic_hash": ""
   },
   "src/components/providers/RealtimeProvider.tsx": {

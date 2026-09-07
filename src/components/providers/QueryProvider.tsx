@@ -237,11 +237,21 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         // v20 was the previous bump: `session-detail` sets gained `prAxes`, and
         // a cache written before it crashed the report on `prAxes.length`.
         //
-        // v22: MUST bump. The persisted blob now carries MUTATIONS as well as
-        // queries (the session-commit outbox below), and a cache written before
-        // this rehydrates into a client whose mutation defaults it does not
-        // know about.
-        buster: 'v22',
+        // v23: MUST bump. Not a shape change — a TRUTH change, which is the
+        // other reason this exists. 2026-09-07 was repaired directly in the
+        // database (16 of its 21 weighted sets had been lost to the
+        // tombstoned-`storeId` void bug, and the aggregates were never
+        // written), and fifteen catalogue rows were merged under new names.
+        // A browser holding yesterday's persisted cache keeps serving the
+        // partial session and the old exercise names for a full `maxAge` —
+        // 24 hours — with no way for the user to tell that what they are
+        // looking at is a local copy rather than the row that was fixed.
+        //
+        // v22 was the previous bump: the persisted blob gained MUTATIONS as
+        // well as queries (the session-commit outbox below), and a cache
+        // written before it rehydrates into a client whose mutation defaults
+        // it does not know about.
+        buster: 'v23',
         dehydrateOptions: {
           /*
            * ── THE OUTBOX ────────────────────────────────────────────────────
