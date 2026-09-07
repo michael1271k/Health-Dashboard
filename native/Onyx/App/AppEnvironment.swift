@@ -100,6 +100,43 @@ public final class AppEnvironment {
     private(set) var progressionAlerts: [ProgressionQueue.Alert] = []
     private(set) var progressionDayKey: String?
 
+    /// Bumped when a rescore cascade COMPLETES — never per day, never per
+    /// commit.
+    ///
+    /// ── WHAT IT IS FOR ──────────────────────────────────────────────────────
+    /// Four screens load their data once and never look again: Trends
+    /// (`guard sessions == nil`), History, the week grid and Body Trends. That
+    /// was correct while the only thing that could change under them was a
+    /// sync — which they were about to be replaced by anyway. It stopped being
+    /// correct the moment a session became editable from inside the app: lower
+    /// a set on the summary card, come back to Trends, and the chart is still
+    /// drawing the old tonnage with no way to ask it not to.
+    ///
+    /// So they key a `.task(id:)` on this. It moves once per cascade, which is
+    /// the only moment at which every score the edit touched agrees — publish
+    /// per day and History would re-read the whole ledger forty-nine times for
+    /// one correction.
+    private(set) var rescoreGeneration = 0
+    /// A run is going. A thin hint (a hairline, a caption) and nothing more —
+    /// no screen blocks on it, because the numbers on display are the OLD
+    /// consistent ones until the generation moves.
+    private(set) var isRescoring = false
+
+    /// The cascade, off the main actor and coalesced. Nil while signed out.
+    private var rescoreQueue: RescoreQueue?
+
+    /// Rewrite every stored score an edit on `date` can move.
+    ///
+    /// The ONE entry point. Every editing surface calls this rather than
+    /// touching `AppDatabase.rescore` directly, so there is exactly one place
+    /// that decides how a cascade is scheduled and one place that publishes the
+    /// generation when it lands.
+    func rescore(from date: String, reason: Rescore.Reason) {
+        guard let rescoreQueue else { return }
+        isRescoring = true
+        Task { await rescoreQueue.request(from: date, reason: reason) }
+    }
+
     /// Publish the queue for a day. Passing a different `dayKey` replaces the
     /// list rather than merging: an alert is about a lift ON a routine day, and
     /// two days' alerts in one array is how the banner starts naming a lift
@@ -263,6 +300,24 @@ public final class AppEnvironment {
             health: HealthSync(database: database, reader: Self.healthReader, userId: userId)
         )
         self.coordinator = coordinator
+        // ── WHY IT HANGS OFF AUTH, LIKE THE COORDINATOR ─────────────────────
+        // Every score it writes is keyed by `user_id`, and a queue that
+        // outlived a sign-out would rewrite the previous user's days into the
+        // next one's store.
+        rescoreQueue = RescoreQueue(database: database, userId: userId) { [weak self] run in
+            await MainActor.run {
+                guard let self else { return }
+                self.rescoreGeneration &+= 1
+                // `hasMore` is the queue's own answer, not a second read: two
+                // passes of one logical cascade must not flicker the hint off
+                // between them.
+                self.isRescoring = run.hasMore
+                NSLog(
+                    "onyx-rescore: %@ %@…%@ wrote %d, failed %d",
+                    run.reason.rawValue, run.from, run.through, run.written, run.failed
+                )
+            }
+        }
         startWeighInWatch()
         let targets = TargetResolver(database: database, userId: userId)
         targets.start()
@@ -363,6 +418,16 @@ public final class AppEnvironment {
         observers = nil
         #endif
         backfill = nil
+        // AWAITED, like the coordinator above. Dropping the reference does not
+        // stop the drain: it runs in an unstructured task that retains the
+        // actor, so it would go on writing the PREVIOUS user's days into the
+        // store the next one is signing in to, queueing upserts their RLS will
+        // reject and bumping a generation that belongs to somebody else.
+        if let rescoreQueue {
+            self.rescoreQueue = nil
+            await rescoreQueue.stop()
+        }
+        isRescoring = false
         targets?.stop()
         targets = nil
         weighInTask?.cancel()

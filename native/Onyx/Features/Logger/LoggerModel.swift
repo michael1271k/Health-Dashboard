@@ -921,19 +921,49 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         return try? store.session(id: sessionId)
     }
 
-    /// The two figures you can supply when the watch did not.
+    /// The three figures you can supply when the watch did not.
     ///
     /// Stamped MEASURED rather than estimated, so the next Health sync does not
-    /// replace what you typed with what the phone inferred — see
-    /// `AppDatabase.setSessionMetrics`.
-    func setMetrics(avgBpm: Int? = nil, calories: Int? = nil) {
+    /// replace what you typed with what the phone inferred. A typed DURATION
+    /// goes further and sets `duration_edited`, which forbids `closeSession`
+    /// from re-deriving it from the clock — see `AppDatabase.updateMetrics`.
+    func setMetrics(durationMin: Double? = nil, avgBpm: Int? = nil, calories: Int? = nil) {
         guard let store, let sessionId else { return }
         do {
-            try store.setSessionMetrics(id: sessionId, avgBpm: avgBpm, caloriesBurned: calories)
+            try store.setSessionMetrics(
+                id: sessionId, durationMin: durationMin, avgBpm: avgBpm, caloriesBurned: calories
+            )
             storeError = nil
         } catch {
             storeError = String(describing: error)
         }
+    }
+
+    /// The word the finish sheet opens on, or nil when nothing was rated.
+    ///
+    /// ── WHY IT IS COMPUTED HERE AND NOT IN THE SHEET ────────────────────────
+    /// It needs two things the sheet cannot reach: the deck's own per-set
+    /// ratings, and what this DAY TYPE has cost recently. The suggestion is
+    /// relative — see `Effort.suggestEffortWord` — so without the second the
+    /// answer is graded against a cold constant and every ordinary session
+    /// reads as easy.
+    ///
+    /// Warm-ups and ghosts are excluded by `deriveSessionRpe` itself
+    /// (`SetTags.isWorkingSet`), so the rows go in whole.
+    func suggestedEffort() -> EffortWord? {
+        let rated = exercises.flatMap { exercise in
+            exercise.rows.filter(\.isDone).map {
+                RatedSet(
+                    weightKg: $0.weightKg ?? 0, reps: Double($0.reps ?? 0),
+                    rpe: $0.rpe, setType: $0.kind.rawValue
+                )
+            }
+        }
+        guard let mean = RpeMemory.deriveSessionRpe(rated) else { return nil }
+        let history = (try? store?.effortHistory(
+            userId: userId, dayKey: day.key, before: LogicalDay.today()
+        )) ?? []
+        return Effort.suggestEffortWord(mean: mean, history: history ?? [])
     }
 
     // MARK: - The store

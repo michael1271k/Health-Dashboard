@@ -146,9 +146,9 @@ enum PreviewHarness {
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history":
             HistoryPreviews.view(screen)
-        case "trends", "trends-empty":
+        case "trends", "trends-empty", "trends-maintenance":
             TrendsPreviews.view(screen)
-        case "body-trends", "body-trends-empty":
+        case "body-trends", "body-trends-empty", "body-trends-tooltip":
             BodyTrendsPreviews.view(screen)
         case let s where s.hasPrefix("widgets"):
             WidgetPreviews.view(s)

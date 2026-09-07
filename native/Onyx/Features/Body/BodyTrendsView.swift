@@ -17,6 +17,10 @@ struct BodyTrendsView: View {
 
     /// Supplied only by previews and the screenshot harness.
     var seeded: BodyVitalsSlice?
+    /// Screenshot harness only: open with the ledger card pinned to this
+    /// reading. A scrub is a gesture, and a gesture is the one thing a
+    /// screenshot cannot perform.
+    var seededSelection: String?
     /// History's Body segment shows this same screen INSIDE its own navigation
     /// (§5.9), where a second "Trends" title and a second background would both
     /// be wrong. Only the chrome differs — the charts are one implementation.
@@ -29,13 +33,19 @@ struct BodyTrendsView: View {
     var body: some View {
         Group {
             if let slice, let input {
-                BodyTrendsScreen(slice: slice, window: $window, input: input)
+                BodyTrendsScreen(
+                    slice: slice, window: $window, input: input, seededSelection: seededSelection
+                )
             } else {
                 ProgressView().controlSize(.large)
             }
         }
         .modifier(BodyTrendsChrome(embedded: embedded))
-        .task(id: window) {
+        // Keyed on the window AND the cascade: a body reading is not a score,
+        // but an edit that moves a day moves what the ledger card compares
+        // against, and a screen that has been open since before the edit would
+        // go on drawing the old series with no way to ask it not to.
+        .task(id: Reload(window: window, generation: environment.rescoreGeneration)) {
             let resolved = EraWindowSource.input(database: environment.database)
             input = resolved
             // A seeded slice is a fixed window by definition; re-reading it on
@@ -64,6 +74,16 @@ struct BodyTrendsView: View {
     }
 }
 
+/// What re-reads the screen: the picked window, or a finished rescore.
+///
+/// One `Equatable` value because `.task(id:)` takes ONE id, and two `.task`s
+/// racing to fill the same `@State` is how a screen ends up showing the older
+/// of two reads.
+private struct Reload: Equatable {
+    let window: EraWindow
+    let generation: Int
+}
+
 /// The chrome the pushed screen wears and the embedded one does not.
 private struct BodyTrendsChrome: ViewModifier {
     let embedded: Bool
@@ -84,6 +104,7 @@ private struct BodyTrendsScreen: View {
     let slice: BodyVitalsSlice
     @Binding var window: EraWindow
     let input: EraWindowInput
+    let seededSelection: String?
 
     var body: some View {
         let readings = BodyVitals.readings(ledger: slice.ledger, logs: slice.logs)
@@ -103,8 +124,10 @@ private struct BodyTrendsScreen: View {
             VStack(alignment: .leading, spacing: OnyxSpace.l) {
                 EraWindowPicker(selection: $window, input: input)
 
-                CompositionSection(readings: readings, goals: slice.goals, windowDays: resolved.days)
-                LedgerSection(readings: readings, goals: slice.goals)
+                CompositionSection(
+                    readings: readings, goals: slice.goals, windowDays: resolved.days,
+                    seededSelection: seededSelection
+                )
                 StepsSection(
                     steps: BodyVitals.steps(metrics: slice.metrics.filter { $0.date >= recent }, logs: logs),
                     goal: slice.goals?.stepsGoal
@@ -217,6 +240,21 @@ private enum BodyPlot: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The domain metric whose direction `DeltaVerdict` knows, or nil.
+    ///
+    /// Only four things have an agreed direction. Lean soft tissue and
+    /// fat-free mass move with muscle and are read the same way; a visceral
+    /// index and a waist-to-hip ratio are readings this screen has no rule for,
+    /// and colouring their deltas would be the view inventing one.
+    var bodyMetric: BodyMetric? {
+        switch self {
+        case .weight:                     .weight
+        case .fat:                        .fat
+        case .skeletal, .lean, .ffm:      .muscle
+        case .visceral, .whr:             nil
+        }
+    }
+
     func format(_ v: Double?) -> String {
         guard let v else { return "—" }
         switch self {
@@ -233,9 +271,20 @@ private struct CompositionSection: View {
     let goals: UserGoalRow?
     /// The resolved window's span, so the scroll domain matches the picker.
     let windowDays: Int
+    /// Harness only — see `BodyTrendsView.seededSelection`.
+    var seededSelection: String?
 
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var plot: BodyPlot = .weight
     @State private var selected: Date?
+    /// The reading the card was left on. A long-press banks the point under the
+    /// finger; letting go then returns to it rather than to nothing, and a
+    /// second long-press lets it go.
+    @State private var pinned: Date?
+
+    /// What the ledger card is about right now: the finger while it is down,
+    /// the pin when it is not.
+    private var active: Date? { selected ?? pinned }
 
     private var series: [TrendPoint] {
         readings.compactMap { r in plot.value(r).map { TrendPoint(d: r.date, v: $0) } }
@@ -263,8 +312,102 @@ private struct CompositionSection: View {
                     chart(series)
                 }
             }
+            // ── AT AX5 IT STOPS FLOATING ────────────────────────────────────
+            // The card carries the delta and the interval, and since the
+            // ledger LIST was deleted it is the only place either is written
+            // down — so capping its type to keep it small would cap the one
+            // surface a fact appears on. Instead it leaves the plot: at an
+            // accessibility size a card set in accessibility type covers the
+            // chart it is describing and clips its own last line. The rule
+            // still marks the reading; the card just sits under it.
+            if typeSize.isAccessibilitySize, let active, let hit = Trend.nearest(series, to: active) {
+                ledger(hit, series: series)
+            }
         }
-        .onChange(of: plot) { selected = nil }
+        // A pin is about ONE reading of ONE metric. Carrying it across a
+        // picker change would leave the card describing kilograms over a body
+        // fat axis, which is the bug the deleted ledger list had.
+        .onChange(of: plot) {
+            selected = nil
+            pinned = nil
+        }
+        .task {
+            guard pinned == nil, let iso = seededSelection else { return }
+            pinned = OnyxChart.date(iso)
+        }
+    }
+
+    // MARK: - The ledger card
+
+    /// The scrubbed reading, its delta and how long ago — the ledger, as a
+    /// floating card instead of a list.
+    ///
+    /// ── WHY THE DELTA IS JUDGED AND NOT JUST SIGNED ─────────────────────────
+    /// Half a kilogram down is good in a cut, bad in a bulk and neither in a
+    /// maintenance week — that is `DeltaVerdict`, the same rule with the same
+    /// vector the ledger list used, now reached through `Color.onyx.verdict`
+    /// so the tooltip and anything else that shows a delta cannot disagree.
+    /// Inside the maintenance band the verdict is `neutral` and the colour is
+    /// text ink: "this did not move" is a statement, and a hue would make it a
+    /// verdict it is not.
+    ///
+    /// ── AND WHY "DAYS SINCE" IS THE FOOTNOTE ────────────────────────────────
+    /// Scale readings are sparse by protocol. A −0.4 kg is a different fact
+    /// after two days than after three weeks, and without the interval the
+    /// delta invites being read as a rate.
+    private func ledger(_ hit: Trend.Hit, series: [TrendPoint]) -> some View {
+        let i = series.firstIndex { $0.d == hit.point.d }
+        let previous = i.flatMap { $0 > 0 ? series[$0 - 1] : nil }
+        let delta = previous.map { hit.point.v - $0.v }
+        let days: Int? = previous.flatMap { p in
+            guard let now = ISODate.dayNumber(hit.point.d), let was = ISODate.dayNumber(p.d)
+            else { return nil }
+            return now - was
+        }
+        var lines = [OnyxCallout.Line(plot.label, plot.format(hit.point.v))]
+        if let delta, abs(delta) >= 0.01 {
+            lines.append(
+                OnyxCallout.Line(
+                    "Δ",
+                    (delta > 0 ? "+" : "−") + plot.format(abs(delta)),
+                    color: Color.onyx.verdict(verdict(delta, on: hit.point.d))
+                )
+            )
+        }
+        return OnyxCallout(
+            OnyxChart.shortDate(hit.date),
+            lines: lines,
+            // Short on purpose: the card is clamped inside the plot, so a
+            // footnote wider than the values above it is a footnote with its
+            // tail cut off. "3 days since" says the same thing and fits.
+            footnote: days.map { $0 == 1 ? "1 day since" : "\($0) days since" }
+                ?? "First in this window",
+            pinned: pinned == hit.date && selected == nil
+        )
+        // The pin is dropped by tapping the card it left behind — the same
+        // place the eye already is, and the only affordance that does not
+        // compete with the scrub.
+        .contentShape(.rect)
+        .onTapGesture { pinned = nil }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Is this delta good news? Phase-aware, and dead inside a maintenance
+    /// week's band — `DeltaVerdict`, unchanged from the list this replaced.
+    ///
+    /// Only weight, fat and skeletal muscle have a direction anyone agrees on;
+    /// the rest are readings, and a verdict on a waist-to-hip ratio delta would
+    /// be this screen inventing a rule the domain does not have.
+    private func verdict(_ delta: Double, on date: String) -> Verdict {
+        guard let metric = plot.bodyMetric else { return .neutral }
+        return DeltaVerdict.verdict(
+            metric, delta: delta,
+            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
+            maintenance: Maintenance.isMaintenanceDate(
+                date, stored: goals?.activeLever, until: goals?.maintenanceUntil,
+                today: LogicalDay.today()
+            )
+        )
     }
 
     private func chart(_ series: [TrendPoint]) -> some View {
@@ -287,116 +430,59 @@ private struct CompositionSection: View {
                             .foregroundStyle(Color.onyx.textTertiary)
                     }
             }
-            if let selected, let hit = Trend.nearest(series, to: selected),
-               let reading = readings.first(where: { $0.date == hit.point.d }) {
+            if let active, let hit = Trend.nearest(series, to: active) {
                 RuleMark(x: .value("Day", hit.date, unit: .day))
                     .foregroundStyle(Color.onyx.textTertiary)
-                    .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                        OnyxCallout(OnyxChart.shortDate(hit.date), lines: [
-                            .init("Weight", BodyPlot.weight.format(reading.weight)),
-                            .init("Body fat", BodyPlot.fat.format(reading.fatPct)),
-                            .init("Skeletal", BodyPlot.skeletal.format(reading.skeletalMuscle)),
-                        ])
+                    // ── `y: .fit`, NOT `.disabled` ──────────────────────────
+                    // `position: .top` puts the card ABOVE the rule and the
+                    // rule spans the whole plot, so with the vertical overflow
+                    // unresolved the card lands above the plot's own top edge
+                    // and the card clips it away entirely — the first shot was
+                    // a rule line with nothing on it. Fitting to the chart
+                    // pulls it back inside, which is where a card following a
+                    // finger belongs anyway.
+                    .annotation(
+                        position: .top, spacing: 4,
+                        overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+                    ) {
+                        if !typeSize.isAccessibilitySize { ledger(hit, series: series) }
                     }
             }
         }
         .chartYScale(domain: Trend.domain(series.map { Optional($0.v) } + [target]))
         .chartXSelection(value: $selected)
+        // ── SIMULTANEOUS, NOT `.onLongPressGesture` ─────────────────────────
+        // `chartXSelection` owns a drag on this view. A long press added the
+        // ordinary way is a second exclusive gesture and one of the two stops
+        // firing — in practice the scrub, which is the one that matters.
+        // Simultaneous lets the press land WHILE the finger is scrubbing,
+        // which is also the only moment there is a point worth pinning.
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.45).onEnded { _ in
+                guard let selected, let hit = Trend.nearest(series, to: selected) else { return }
+                pinned = pinned == hit.date ? nil : hit.date
+            }
+        )
         .onyxScrollable(days: windowDays)
         .onyxChart(.body)
     }
 }
 
-// MARK: - B. Ledger
-
-/// The last ten weigh-ins, each judged against the one before by the phase's
-/// own rule (`DeltaVerdict`): a maintenance day has a dead band, a cut wants
-/// the number down, a bulk wants it up. Rows, not a `List` — a `List` inside
-/// the screen's scroll view would fight it for the gesture.
-private struct LedgerSection: View {
-    let readings: [BodyReading]
-    let goals: UserGoalRow?
-
-    private struct Entry: Identifiable {
-        let reading: BodyReading
-        let delta: Double?
-        var id: String { reading.date }
-    }
-
-    private var entries: [Entry] {
-        let weighed = readings.filter { $0.weight != nil }
-        return weighed.indices.suffix(10).reversed().map { i in
-            var delta: Double?
-            if i > 0, let now = weighed[i].weight, let before = weighed[i - 1].weight {
-                delta = jsRound((now - before) * 100) / 100
-            }
-            return Entry(reading: weighed[i], delta: delta)
-        }
-    }
-
-    var body: some View {
-        let entries = entries
-        VStack(alignment: .leading, spacing: 8) {
-            OnyxSectionHeader("Ledger", .body)
-            VStack(spacing: 0) {
-                if entries.isEmpty {
-                    Text("No weigh-ins in this window.")
-                        .font(.footnote)
-                        .foregroundStyle(Color.onyx.textSecondary)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                }
-                ForEach(entries) { entry in
-                    row(entry)
-                    if entry.id != entries.last?.id { Divider().overlay(Color.onyx.hairline) }
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 4)
-            .onyxGlass(.tile)
-        }
-    }
-
-    private func row(_ entry: Entry) -> some View {
-        let date = OnyxChart.date(entry.reading.date).map(OnyxChart.shortDate) ?? entry.reading.date
-        return accessibleRow(spacing: 12) {
-            Text(date)
-                .font(.subheadline)
-                .foregroundStyle(Color.onyx.textSecondary)
-            Spacer(minLength: 8)
-            if let delta = entry.delta, delta != 0 {
-                Text("\(delta > 0 ? "+" : "−")\(jsToFixed(abs(delta), 1))")
-                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(color(verdict(delta, on: entry.reading.date)))
-                    .accessibilityLabel("\(delta > 0 ? "up" : "down") \(jsToFixed(abs(delta), 1)) kilograms")
-            }
-            Text(BodyPlot.weight.format(entry.reading.weight))
-                .font(.system(.body, design: .rounded).weight(.semibold))
-                .monospacedDigit()
-                .foregroundStyle(Color.onyx.textPrimary)
-        }
-        .frame(minHeight: 44)
-        .accessibilityElement(children: .combine)
-    }
-
-    private func verdict(_ delta: Double, on date: String) -> Verdict {
-        DeltaVerdict.verdict(
-            .weight, delta: delta,
-            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-            maintenance: Maintenance.isMaintenanceDate(
-                date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: LogicalDay.today()
-            )
-        )
-    }
-
-    private func color(_ verdict: Verdict) -> Color {
-        switch verdict {
-        case .good:    Color.onyx.good
-        case .bad:     Color.onyx.danger
-        case .neutral: Color.onyx.textSecondary
-        }
-    }
-}
+// MARK: - B. The ledger, folded into the chart
+//
+// ── WHY THE LIST IS GONE ─────────────────────────────────────────────────────
+// `LedgerSection` drew the last ten weigh-ins as rows under the chart: the same
+// ten points the chart above it had just plotted, with the same deltas, judged
+// by the same `DeltaVerdict` — a second rendering of one dataset, four hundred
+// points tall, that the reader had to look away from the chart to consult. And
+// it only ever spoke about WEIGHT, so choosing "Body fat" from the picker left
+// a "Ledger" underneath still listing kilograms.
+//
+// The chart already has a scrub. So the ledger is what the scrub SAYS: the
+// reading, its delta against the previous one with the verdict's colour, and
+// how long ago that was — for whichever metric is on the axis. Long-press pins
+// the card so it can be read with the thumb off the glass. See
+// `CompositionSection.ledger`.
 
 // MARK: - C. Steps
 

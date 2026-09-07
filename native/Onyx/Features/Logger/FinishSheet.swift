@@ -35,6 +35,7 @@ struct FinishSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(AppEnvironment.self) private var environment
 
     /// ── WHY IT OPENS LARGE ─────────────────────────────────────────────────
     /// The dial is 168 pt and it is the first thing in the sheet, so at the
@@ -44,27 +45,36 @@ struct FinishSheet: View {
     /// exist and the grab handle still works; this only decides which one it
     /// arrives at, and the answer is the one where the summary is a summary.
     @State private var detent: PresentationDetent = .large
-    @State private var rpe: Double = 8
-    /// An unrated session stays unrated. `sessionRpe` is nullable in the store
-    /// precisely so "I did not say" survives, and a dial that starts at 8 would
-    /// otherwise write an 8 for everyone who never touched it.
-    @State private var rated = false
+    /// The WORD, which is the answer. `nil` is an unrated session and stays
+    /// one: `session_rpe` is nullable in the store precisely so "I did not say"
+    /// survives, and a dial that arrives on a value would write that value for
+    /// everyone who never touched it.
+    ///
+    /// It arrives PRE-SELECTED from `Effort.suggestEffortWord` — a proposal,
+    /// not an answer, which is why `suggested` is tracked separately and the
+    /// caption says where the word came from.
+    @State private var word: EffortWord?
+    @State private var suggested: EffortWord?
 
-    /// The watch's two figures, as they stand on disk when the sheet opens.
+    /// The three figures as they stand on disk when the sheet opens.
     ///
     /// Held in `@State` rather than re-read on every draw because they are also
     /// EDITABLE, and a field bound to a store read fights the person typing into
     /// it — the same reason `NumericField` keeps its own string.
+    @State private var durationMin: Int?
     @State private var avgBpm: Int?
     @State private var calories: Int?
+    @State private var durationEdited = false
     @State private var bpmMeasured = false
     @State private var caloriesMeasured = false
+    /// Which cell is open as a stepper. One at a time: three steppers side by
+    /// side on a phone is three two-point targets.
+    @State private var open: Metric?
     @FocusState private var editing: Metric?
 
-    private enum Metric: Hashable { case bpm, calories }
+    private enum Metric: Hashable { case duration, bpm, calories }
 
     private var accent: Color { Color.onyx.day(model.day.key) }
-    private var minutes: Int { max(0, Int(Date().timeIntervalSince(model.startedAt) / 60)) }
 
     /// Three across, until the type size says otherwise. Six tiles is two clean
     /// rows of three on a phone; at an accessibility size three of them is three
@@ -111,7 +121,10 @@ struct FinishSheet: View {
                     }
                 }
             }
-            .task { loadMetrics() }
+            .task {
+                loadMetrics()
+                loadSuggestion()
+            }
         }
         .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.visible)
@@ -128,71 +141,150 @@ struct FinishSheet: View {
     /// sessions — "was last Tuesday an 8 or an 8.5" has no honest answer, which
     /// is how a rating given by feel ends up being given by habit.
     ///
-    /// Borg's scale has always carried verbal anchors and they are the part that
-    /// makes it reproducible. So the anchor is now the largest thing under the
-    /// ring, in the effort colour, and the number keeps its place in the middle
-    /// of the control that sets it — the reading you tune AGAINST, not the thing
-    /// being asked for. Nothing about what is stored changed: `session_rpe`
-    /// still takes the half-point value, which is what the battery, the score
-    /// and the weekly export all read.
+    /// Borg's scale has always carried verbal anchors and they are the part
+    /// that makes it reproducible. So the dial now has FIVE detents and they
+    /// are the five words (`Effort.words`, the same list the web writes): the
+    /// word is the largest thing on the sheet, the CR-10 it stores sits small
+    /// beneath it, and the ring carries a tick at each stop so the control's
+    /// resolution is visible before it is touched. Nothing about what is stored
+    /// changed — `session_rpe` still takes the half-point value, which is what
+    /// the battery, the score and the weekly export all read.
+    ///
+    /// ── AND WHY IT OPENS ON A SUGGESTION ────────────────────────────────────
+    /// `Effort.suggestEffortWord` grades this session's mean per-set rating
+    /// against what this DAY TYPE has recently cost (`effortHistory`), so a
+    /// typical session lands on "Hard" rather than on an absolute ladder the
+    /// athlete was never calibrated to. It is a proposal: the caption says so,
+    /// and clearing it returns the session to unrated.
     private var dial: some View {
         VStack(spacing: OnyxSpace.s) {
-            RPEDial(value: $rpe, rated: $rated, accent: accent)
+            EffortDial(word: $word, accent: accent)
+            caption
+        }
+    }
 
-            if rated {
-                Text(Cr10.label(rpe) ?? "")
-                    .onyxDisplay()
-                    .foregroundStyle(Color.onyx.effort(rpe))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .animation(OnyxMotion.fade, value: rpe)
-                    .accessibilityHidden(true)
-                Button("Clear rating") { rated = false }
+    @ViewBuilder
+    private var caption: some View {
+        if let word {
+            Text(word.hint)
+                .onyxType(.body)
+                .foregroundStyle(Color.onyx.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 44)
+                .accessibilityHidden(true)
+            if word == suggested {
+                // Say whose answer this is. A word already on the dial when the
+                // sheet opens reads as one the athlete gave, and a suggestion
+                // mistaken for an answer is a rating nobody actually made.
+                Text("Suggested from your recent \(model.day.label) sessions")
                     .onyxType(.caption)
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    .frame(minHeight: 44)
-            } else {
-                Text("How hard was the whole session?")
-                    .onyxType(.body)
-                    .foregroundStyle(Color.onyx.textSecondary)
+                    .foregroundStyle(Color.onyx.textTertiary)
                     .multilineTextAlignment(.center)
-                    .frame(minHeight: 44)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            Button("Clear rating") { self.word = nil }
+                .onyxType(.caption)
+                .foregroundStyle(Color.onyx.textSecondary)
+                .frame(minHeight: 44)
+        } else {
+            Text("How hard was the whole session?")
+                .onyxType(.body)
+                .foregroundStyle(Color.onyx.textSecondary)
+                .multilineTextAlignment(.center)
+                .frame(minHeight: 44)
         }
     }
 
     // MARK: - The session, as readings
 
+    /// Two rows, and the difference between them is the whole point.
+    ///
+    /// ── WHAT YOU CAN ANSWER, AND WHAT THE SESSION ANSWERS ───────────────────
+    /// The grid used to be six identical tiles in which two were secretly
+    /// editable, and the only tell was a tinted border you had to already know
+    /// about. Duration, heart rate and calories are the three the athlete may
+    /// know better than the phone — the web asked for all three at the TOP of a
+    /// deck, before the session had happened — so they are one row of their
+    /// own, each with a stepper and a provenance dot. Tonnage, sets and records
+    /// are not questions at all; they are what the session came to, and they sit
+    /// under it as readings.
     private var summary: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
             OnyxSectionHeader("The session", .train)
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.s), count: columns),
+                columns: Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.s), count: editableColumns),
                 spacing: OnyxSpace.s
             ) {
-                tile("Duration", "timer", "\(minutes)", "min", tint: accent)
+                metricCell(
+                    "Duration", "timer", value: $durationMin, unit: "min", step: 5,
+                    field: .duration, provenance: durationEdited ? .edited : .measured
+                )
+                metricCell(
+                    "Avg HR", "heart", value: $avgBpm, unit: "bpm", step: 1,
+                    field: .bpm, provenance: provenance(avgBpm, measured: bpmMeasured)
+                )
+                metricCell(
+                    "Calories", "flame", value: $calories, unit: "kcal", step: 10,
+                    field: .calories, provenance: provenance(calories, measured: caloriesMeasured)
+                )
+            }
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: OnyxSpace.s), count: readingColumns),
+                spacing: OnyxSpace.s
+            ) {
                 tile("Tonnage", "scalemass", OnyxFormat.volume(model.totalVolumeKg), "kg",
                      tint: Color.onyx.textPrimary)
                 tile("Sets", "square.stack.3d.up", "\(model.completedSets)/\(model.plannedSets)", nil,
                      tint: Color.onyx.textPrimary)
-                metricTile("Avg HR", "heart", value: $avgBpm, unit: "bpm",
-                           measured: bpmMeasured, field: .bpm)
-                metricTile("Calories", "flame", value: $calories, unit: "kcal",
-                           measured: caloriesMeasured, field: .calories)
                 tile("Records", "trophy", model.recordCount > 0 ? "\(model.recordCount)" : "—", nil,
                      tint: model.recordCount > 0 ? Color.onyx.record : Color.onyx.textTertiary)
             }
-            provenance
+            provenanceLine
         }
     }
 
-    /// Where the two health figures came from, in one line.
-    ///
-    /// It matters which. A MEASURED average heart rate is the watch's record of
-    /// this session; an estimated one is arithmetic on your own recent history,
-    /// and a reading that does not say which it is invites being read as the
-    /// first when it is the second.
-    private var provenance: some View {
+    /// Where a figure came from. It matters which: a MEASURED average heart
+    /// rate is the watch's record of this session, an estimated one is
+    /// arithmetic on your own recent history, and an EDITED one is what you
+    /// said — which outranks both and is why `setSessionMetrics` stamps it
+    /// measured in the store.
+    private enum Provenance {
+        case measured, estimated, edited, unknown
+
+        var color: Color {
+            switch self {
+            case .measured:  Color.onyx.good
+            case .edited:    Color.onyx.accent(.train)
+            case .estimated: Color.onyx.textTertiary
+            case .unknown:   .clear
+            }
+        }
+
+        var word: String? {
+            switch self {
+            case .measured:  "measured"
+            case .edited:    "edited"
+            case .estimated: "estimated"
+            case .unknown:   nil
+            }
+        }
+    }
+
+    private func provenance(_ value: Int?, measured: Bool) -> Provenance {
+        guard value != nil else { return .unknown }
+        return measured ? .measured : .estimated
+    }
+
+    /// Three across on a phone, one at an accessibility size. Three truncated
+    /// numbers is the one thing a reading must never be.
+    private var editableColumns: Int { typeSize.isAccessibilitySize ? 1 : 3 }
+    private var readingColumns: Int {
+        if typeSize.isAccessibilitySize { return 1 }
+        return typeSize >= .xxLarge ? 2 : 3
+    }
+
+    private var provenanceLine: some View {
         Text(provenanceText)
             .onyxType(.caption)
             .foregroundStyle(Color.onyx.textTertiary)
@@ -202,11 +294,11 @@ struct FinishSheet: View {
 
     private var provenanceText: String {
         if avgBpm == nil || calories == nil {
-            return "Heart rate and calories fill in from Apple Health once the watch has synced — or type them."
+            return "Heart rate and calories fill in from Apple Health once the watch has synced — or tap to set them."
         }
         return bpmMeasured && caloriesMeasured
             ? "Heart rate and calories measured from the watch's own workout."
-            : "Estimated from your recent sessions — edit either to correct it."
+            : "Estimated from your recent sessions — tap either to correct it."
     }
 
     /// The movement that moved the most weight, named. One line, because the
@@ -286,59 +378,162 @@ struct FinishSheet: View {
         .accessibilityValue(unit.map { "\(value) \($0)" } ?? value)
     }
 
-    /// A reading the watch fills in — and that you can correct.
+    /// A reading you can answer, with a stepper and a provenance dot.
     ///
-    /// ── WHY IT IS A FIELD AND NOT A LINE OF TEXT ────────────────────────────
-    /// `syncSessionMetrics` reads an `HKWorkout` overlapping the session and
-    /// takes the heart-rate average and the active-energy sum from it, which is
-    /// better than anything anyone could type — when there is one. There is not
-    /// always one: a phone-only session, a watch left on the charger, a workout
-    /// that syncs a day late. The web asked for all three of these by hand every
-    /// session; this asks for none of them and accepts any of them, which is the
-    /// difference a device with a health store gets to make.
+    /// ── WHY A STEPPER AND NOT ONLY A KEYBOARD ───────────────────────────────
+    /// Every correction these three get is small and known: the duration is out
+    /// by five minutes because the deck sat open in the car, the calories are
+    /// out by fifty. A number pad for that is a keyboard covering the sheet, a
+    /// field to select, a Done to find — for a change a thumb could have made
+    /// twice. So the cell opens INTO ± around the value, and the value itself is
+    /// still a field for the rare case where the answer is nothing like what is
+    /// there.
     ///
-    /// What you type is stamped MEASURED — see `AppDatabase.setSessionMetrics`
-    /// — so a later sync cannot quietly replace your answer with an estimate.
-    private func metricTile(
+    /// One cell is open at a time: three steppers side by side on a phone is
+    /// three two-point targets.
+    ///
+    /// What you set is stamped MEASURED — see `AppDatabase.updateMetrics` — so
+    /// a later sync cannot quietly replace your answer with an estimate. A
+    /// DURATION goes further and sets `duration_edited`, which is what stops
+    /// `closeSession` re-deriving it from the clock a moment later.
+    private func metricCell(
         _ label: String, _ symbol: String,
-        value: Binding<Int?>, unit: String, measured: Bool, field: Metric
+        value: Binding<Int?>, unit: String, step: Int,
+        field: Metric, provenance: Provenance
     ) -> some View {
-        tileShell(label, symbol, tint: measured ? Color.onyx.good : Color.onyx.textPrimary) {
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                // ── THE FIELD HUGS ITS NUMBER ───────────────────────────────
-                // A `TextField` takes every point it is offered, so the unit
-                // beside it was pushed to the far edge of the tile and the two
-                // read as separate facts — `132` on the left and `bpm` on the
-                // right of a 116 pt box. `fixedSize` sizes it to what is typed;
-                // the minimum keeps an empty field from collapsing to the width
-                // of its own em dash.
-                TextField("—", value: value, format: .number)
-                    .keyboardType(.numberPad)
-                    .onyxType(.body).fontWeight(.semibold).onyxNumeral()
-                    .foregroundStyle(value.wrappedValue == nil
-                                     ? Color.onyx.textTertiary : Color.onyx.textPrimary)
-                    .fixedSize()
-                    .frame(minWidth: 34, alignment: .leading)
-                    .focused($editing, equals: field)
-                    .onChange(of: editing) { previous, _ in
-                        // Commit when focus LEAVES this field, not on every
-                        // keystroke: a store write per digit is an outbox item
-                        // per digit.
-                        if previous == field { commitMetrics() }
-                    }
-                    .accessibilityLabel(label)
-                Text(unit)
-                    .onyxType(.micro)
-                    .foregroundStyle(Color.onyx.textTertiary)
+        let isOpen = open == field
+        return VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+            HStack(spacing: OnyxSpace.xs) {
+                Label(label, systemImage: symbol)
+                    .onyxMicro()
+                    .lineLimit(1)
+                    // Three tiles across a phone leaves ~116 pt, and a glyph
+                    // plus "DURATION" tracked out at micro does not fit it —
+                    // the shot read "DURATI…". Scaling the label is right where
+                    // truncating a value would not be: the word is a name the
+                    // reader already knows, and the number beside it is not.
+                    .minimumScaleFactor(0.75)
                 Spacer(minLength: 0)
+                if provenance.word != nil {
+                    Circle()
+                        .fill(provenance.color)
+                        .frame(width: 6, height: 6)
+                }
+            }
+            if isOpen {
+                stepperRow(value: value, unit: unit, step: step, field: field)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(value.wrappedValue.map(String.init) ?? "—")
+                        .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+                        .foregroundStyle(value.wrappedValue == nil
+                                         ? Color.onyx.textTertiary : Color.onyx.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    Text(unit)
+                        .onyxType(.micro)
+                        .foregroundStyle(Color.onyx.textTertiary)
+                    Spacer(minLength: 0)
+                }
             }
         }
-        // The TARGET is the tile, not the 34 pt of text inside it. A field you
-        // have to hit exactly is a field nobody corrects, and the other four
-        // tiles are inert — so the whole box being live is also the only
-        // affordance saying which two of the six you can answer.
+        .padding(.horizontal, OnyxSpace.m)
+        .padding(.vertical, OnyxSpace.s)
+        // ── THE FRAME BEFORE THE BACKGROUND ─────────────────────────────────
+        // A `.background` applied first is proposed the CONTENT's height, not
+        // the frame's, so the wash would end above the floor the minimum sets.
+        // Two points apart at the default size and obvious at AX5.
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .fill(cellTint(provenance).opacity(isOpen ? 0.16 : 0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .strokeBorder(cellTint(provenance).opacity(isOpen ? 0.45 : 0.20), lineWidth: 0.5)
+        )
+        // The TARGET is the cell, not the text inside it. A field you have to
+        // hit exactly is a field nobody corrects — and the whole box being live
+        // is also the only affordance saying which three of the six you answer.
         .contentShape(.rect)
-        .onTapGesture { editing = field }
+        .onTapGesture {
+            if isOpen { closeCell() } else {
+                commitMetrics()
+                open = field
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(
+            value.wrappedValue.map { "\($0) \(unit)\(provenance.word.map { ", \($0)" } ?? "")" }
+                ?? "Not set"
+        )
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: bump(value, by: step)
+            case .decrement: bump(value, by: -step)
+            default: break
+            }
+        }
+    }
+
+    private func cellTint(_ provenance: Provenance) -> Color {
+        switch provenance {
+        case .measured: Color.onyx.good
+        case .edited:   Color.onyx.accent(.train)
+        default:        Color.onyx.textPrimary
+        }
+    }
+
+    private func stepperRow(
+        value: Binding<Int?>, unit: String, step: Int, field: Metric
+    ) -> some View {
+        HStack(spacing: OnyxSpace.xs) {
+            stepButton("minus", enabled: (value.wrappedValue ?? 0) > 0) {
+                bump(value, by: -step)
+            }
+            // `fixedSize` on a NUMBER, never on a sentence: three digits and a
+            // unit have a bounded width, and the field would otherwise take
+            // every point offered and push the unit to the far edge.
+            TextField("—", value: value, format: .number)
+                .keyboardType(.numberPad)
+                .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.onyx.textPrimary)
+                .fixedSize()
+                .frame(minWidth: 34)
+                .focused($editing, equals: field)
+            Text(unit)
+                .onyxType(.micro)
+                .foregroundStyle(Color.onyx.textTertiary)
+            Spacer(minLength: 0)
+            stepButton("plus", enabled: true) { bump(value, by: step) }
+        }
+    }
+
+    private func stepButton(_ symbol: String, enabled: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(enabled ? Color.onyx.textPrimary : Color.onyx.textTertiary)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(Color.onyx.textPrimary.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityHidden(true)
+    }
+
+    /// Step and clamp. A negative duration is an ACWR input and a negative
+    /// heart rate is nothing at all, so the floor is zero on every one of them.
+    private func bump(_ value: Binding<Int?>, by step: Int) {
+        value.wrappedValue = max(0, (value.wrappedValue ?? 0) + step)
+    }
+
+    private func closeCell() {
+        editing = nil
+        open = nil
+        commitMetrics()
     }
 
     private func tileShell<Content: View>(
@@ -366,17 +561,59 @@ struct FinishSheet: View {
     // MARK: - The store
 
     private func loadMetrics() {
-        guard let session = model.sessionRow else { return }
+        // The clock's own answer, PAUSE-AWARE. This tile used to read
+        // `Date() − startedAt`, which is the same arithmetic that recorded the
+        // 6 September session as 385 minutes: it counts the twenty minutes you
+        // spent on the phone between sets as training. `elapsed()` is the
+        // hero's number and `SessionDuration` is what the close then stores.
+        let live = Int(model.elapsed() / 60)
+        guard let session = model.sessionRow else {
+            durationMin = max(0, live)
+            return
+        }
+        // A stored duration wins: the session may have been finished and
+        // reopened, and an edited one certainly wins — see `duration_edited`.
+        durationMin = session.durationMin.map { max(0, Int(jsRound($0))) } ?? max(0, live)
+        durationEdited = session.durationEdited
         avgBpm = session.avgBpm
         calories = session.caloriesBurned
         bpmMeasured = session.avgBpm != nil && !session.avgBpmEstimated
         caloriesMeasured = session.caloriesBurned != nil && !session.caloriesEstimated
     }
 
+    /// The word the sheet opens on. A PROPOSAL — `word` starts nil and this is
+    /// the only thing that ever sets it without a gesture.
+    private func loadSuggestion() {
+        guard word == nil else { return }
+        suggested = model.suggestedEffort()
+        word = suggested
+    }
+
+    /// Write what the three cells hold. Only a figure that actually MOVED is
+    /// sent: `updateMetrics` stamps whatever it receives as the athlete's
+    /// answer, and re-sending an untouched estimate would promote it to
+    /// measured for nothing.
     private func commitMetrics() {
-        model.setMetrics(avgBpm: avgBpm, calories: calories)
-        if avgBpm != nil { bpmMeasured = true }
-        if calories != nil { caloriesMeasured = true }
+        guard let session = model.sessionRow else { return }
+        let storedDuration = session.durationMin.map { Int(jsRound($0)) }
+        let duration = durationMin != storedDuration ? durationMin.map(Double.init) : nil
+        let bpm = avgBpm != session.avgBpm ? avgBpm : nil
+        let kcal = calories != session.caloriesBurned ? calories : nil
+        guard duration != nil || bpm != nil || kcal != nil else { return }
+        model.setMetrics(durationMin: duration, avgBpm: bpm, calories: kcal)
+        if duration != nil { durationEdited = true }
+        if bpm != nil { bpmMeasured = true }
+        if kcal != nil { caloriesMeasured = true }
+        // ── THE CASCADE ─────────────────────────────────────────────────────
+        // A duration is an ACWR input: `duration_min × session_rpe` is what
+        // feeds load, monotony and strain, and readiness reads a 49-day window
+        // ENDING on the day it scores. So correcting it here moves
+        // `battery_pct` on this day and on every day up to forty-eight after
+        // it. Heart rate and calories feed nothing in the scorer, which is why
+        // only a duration change asks for the rewrite.
+        if duration != nil {
+            environment.rescore(from: session.date, reason: .sessionEdit)
+        }
     }
 
     private var finishButton: some View {
@@ -385,9 +622,16 @@ struct FinishSheet: View {
             // has not been committed. Dropping focus first is what makes a
             // typed heart rate part of the session being closed rather than of
             // the next sync.
-            editing = nil
-            commitMetrics()
-            _ = onFinish(rated ? rpe : nil)
+            closeCell()
+            let date = model.sessionRow?.date
+            guard onFinish(word?.cr10) else { return }
+            // Closing writes `duration_min` and `session_rpe`, which are the
+            // two load inputs — so the same forty-nine days move. The finish
+            // path had no cascade at all before E1: `scoreRecentDays` covers
+            // today and yesterday, and a session finished after midnight, or
+            // one whose rating changed a strain that had already been sealed,
+            // simply never reached the days it moved.
+            if let date { environment.rescore(from: date, reason: .sessionEdit) }
         } label: {
             Text("Finish session")
                 .onyxType(.body).fontWeight(.semibold)
@@ -404,75 +648,91 @@ struct FinishSheet: View {
 
 // MARK: - The dial
 
-/// Session RPE, on a dial.
+/// Session effort, on a dial with five detents and a word in the middle.
 ///
 /// ── WHY A DIAL AND NOT A SLIDER ─────────────────────────────────────────────
 /// A slider is the same gesture as the swipe that logs a set and the drag that
 /// scrolls the deck, and this is the one control on the screen that should not
 /// feel like those — it is a considered answer, not a quick one. A dial also
 /// puts the value in the MIDDLE of the control it is set by, which is what lets
-/// the number be the largest thing in the ring without a label pointing at it.
+/// the word be the largest thing in the ring without a label pointing at it.
 ///
-/// It is adjustable from VoiceOver as well: `accessibilityAdjustableAction` maps
-/// swipe-up and swipe-down to the same half-point detents the finger gets, and
-/// speaks the WORD as well as the number, which is what the sheet now shows.
-private struct RPEDial: View {
-    @Binding var value: Double
-    @Binding var rated: Bool
+/// ── WHY FIVE STOPS AND NOT A CONTINUOUS SWEEP ───────────────────────────────
+/// Because the question is verbal. `Effort.words` is the same five-rung ladder
+/// the web writes (`EFFORT_WORDS`), each carrying the CR-10 that lands in
+/// `session_rpe`, and a control with a stop per rung cannot produce a value
+/// that has no word. The half-point sweep it replaces could — and every
+/// half-point between two anchors was a number given by habit, which is exactly
+/// what the words exist to stop.
+///
+/// The stops are drawn ON the ring as ticks, so the resolution is visible
+/// before the dial is touched, and named in the scale underneath it, which is
+/// also a control: the ring is a thumb gesture, the scale is a tap target and
+/// the only one that works at an accessibility size.
+///
+/// It is adjustable from VoiceOver as well: `accessibilityAdjustableAction`
+/// maps swipe-up and swipe-down to the neighbouring word, and speaks the word
+/// and the number together.
+private struct EffortDial: View {
+    @Binding var word: EffortWord?
     let accent: Color
 
-    /// CR-10 below 6 is a warm-up, not a session. The dial covers the range a
-    /// finished workout actually lands in and the digits stay readable.
-    private static let low = 6.0
-    private static let high = 10.0
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var words: [EffortWord] { Effort.words }
+
     /// A three-quarter sweep, opening at the bottom — the shape of every dial
     /// Apple ships, and the gap is where the finger starts and stops rather
     /// than a place the value can hide.
     private static let sweep = 270.0
     private static let start = 135.0
 
-    /// The dial scales with Dynamic Type: the numeral inside it does, and a
-    /// fixed frame around growing type is how a gauge ends up with its own
-    /// reading spilling over the rim.
+    /// The dial scales with Dynamic Type: the word inside it does, and a fixed
+    /// frame around growing type is how a gauge ends up with its own reading
+    /// spilling over the rim.
     @ScaledMetric(relativeTo: .title) private var diameter: CGFloat = 168
 
-    private var fraction: Double { (value - Self.low) / (Self.high - Self.low) }
+    private var index: Int? { word.flatMap { w in words.firstIndex { $0.key == w.key } } }
+    /// Where the selected stop sits along the sweep, 0…1.
+    private var fraction: Double? {
+        index.map { Double($0) / Double(words.count - 1) }
+    }
 
     var body: some View {
-        ZStack {
-            track
-            // Nothing is filled until something has been RATED. A dial that
-            // arrives showing half a sweep has answered the question for you,
-            // and 8 is exactly the answer nobody should be defaulted into.
-            if rated { fill }
-            reading
-        }
-        .frame(width: side, height: side)
-        .contentShape(Circle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { set(from: $0.location) }
-        )
-        .sensoryFeedback(.selection, trigger: value)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Session effort")
-        .accessibilityValue(
-            rated ? "\(OnyxFormat.rpe(value)), \(Cr10.label(value) ?? "")" : "Not rated"
-        )
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: commit(value + 0.5)
-            case .decrement: commit(value - 0.5)
-            default: break
+        VStack(spacing: OnyxSpace.s) {
+            ZStack {
+                track
+                ticks
+                // Nothing is filled until something has been RATED. A dial that
+                // arrives showing half a sweep has answered the question for
+                // you — even when a suggestion put the word in the middle,
+                // clearing it must leave the ring empty.
+                if fraction != nil { fill }
+                reading
             }
+            .frame(width: side, height: side)
+            .contentShape(Circle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged { pick(at: $0.location) })
+            .sensoryFeedback(.selection, trigger: word?.key)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Session effort")
+            .accessibilityValue(
+                word.map { "\($0.label), \(OnyxFormat.rpe($0.cr10))" } ?? "Not rated"
+            )
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: step(1)
+                case .decrement: step(-1)
+                default: break
+                }
+            }
+            scale
         }
     }
 
     private var side: CGFloat { min(diameter, 260) }
 
-    private var stroke: StrokeStyle {
-        StrokeStyle(lineWidth: 12, lineCap: .round)
-    }
+    private var stroke: StrokeStyle { StrokeStyle(lineWidth: 12, lineCap: .round) }
 
     /// ── WHY `trim` AND A ROTATION, NOT `Path.addArc` ────────────────────────
     /// `addArc` takes its angles in the layer's coordinate space, where Y points
@@ -491,42 +751,102 @@ private struct RPEDial: View {
             .padding(6)
     }
 
+    /// One tick per stop, sitting in the track. The selected one is the accent
+    /// and the rest are the surface, so the ring reads as five places to be
+    /// rather than a continuum with a mark on it.
+    private var ticks: some View {
+        ForEach(Array(words.enumerated()), id: \.element.key) { i, stop in
+            let selected = stop.key == word?.key
+            Capsule()
+                .fill(selected ? Color.onyx.textPrimary : Color.onyx.textTertiary.opacity(0.5))
+                .frame(width: 2, height: 8)
+                .offset(y: -(side / 2 - 12))
+                .rotationEffect(
+                    .degrees(Self.start + 90 + Self.sweep * Double(i) / Double(words.count - 1))
+                )
+        }
+    }
+
     private var fill: some View {
         Circle()
-            // A floor, not a fraction: RPE 6 is the bottom of the scale and
-            // `trim(0, 0)` draws nothing, which is what UNRATED looks like.
-            .trim(from: 0, to: Self.sweep / 360 * max(0.02, min(1, fraction)))
-            .stroke(Color.onyx.effort(value), style: stroke)
+            // A floor, not a fraction: the first word is the bottom of the
+            // ladder and `trim(0, 0)` draws nothing, which is what UNRATED
+            // looks like — and "Easy" is an answer, not an absence.
+            .trim(from: 0, to: Self.sweep / 360 * max(0.04, min(1, fraction ?? 0)))
+            .stroke(Color.onyx.effort(word?.cr10 ?? Effort.cr10Min), style: stroke)
             .rotationEffect(.degrees(Self.start))
             .padding(6)
     }
 
-    /// The value, and only the value.
+    /// The WORD, and the number it stores under it.
     ///
-    /// It carried a "SESSION RPE" register label under the numeral, and at AX5
-    /// that label wrapped to two lines and spilled out through both sides of the
-    /// ring. The word that replaced it lives OUTSIDE the ring for the same
-    /// reason: a gauge has room for one reading, and the one that belongs in the
-    /// middle of a control is the one the control sets.
+    /// The word is what the sheet is asking for, so it is the reading in the
+    /// middle of the control that sets it; the CR-10 is what the battery, the
+    /// score and the export all read, so it is present and small. A gauge has
+    /// room for one reading and a footnote, which is exactly these two.
     private var reading: some View {
-        Text(rated ? OnyxFormat.rpe(value) : "—")
-            .onyxHero()
-            .foregroundStyle(rated ? Color.onyx.effort(value) : Color.onyx.textTertiary)
+        VStack(spacing: 2) {
+            Text(word?.label ?? "—")
+                .onyxDisplay()
+                .foregroundStyle(word.map { Color.onyx.effort($0.cr10) } ?? Color.onyx.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .animation(OnyxMotion.fade, value: word?.key)
+            if let word {
+                Text("CR-10 \(OnyxFormat.rpe(word.cr10))")
+                    .onyxType(.micro)
+                    .onyxNumeral()
+                    .foregroundStyle(Color.onyx.textTertiary)
+            }
+        }
+        // Inside a 168 pt ring with a 12 pt stroke: the hole is ~120 pt across,
+        // and a word set in the display face needs every point of it.
+        .frame(maxWidth: side * 0.62)
     }
 
-    /// Where the finger is, as a value.
+    /// The five words, named and tappable.
+    ///
+    /// The ring is a thumb gesture and this is the keyboard-and-VoiceOver half
+    /// of the same control — and the only half that survives an accessibility
+    /// type size, where five words orbiting a circle would each be three lines
+    /// tall and overlap the stroke.
+    private var scale: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 4))
+        return layout {
+            ForEach(words, id: \.key) { stop in
+                Button { word = stop } label: {
+                    Text(stop.label)
+                        .onyxType(.caption)
+                        .fontWeight(stop.key == word?.key ? .semibold : .regular)
+                        .foregroundStyle(
+                            stop.key == word?.key ? Color.onyx.effort(stop.cr10) : Color.onyx.textTertiary
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHidden(true)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Where the finger is, as a stop.
     ///
     /// Screen angles run clockwise from east, so the arc's own parameter is the
     /// touch angle rotated back to the opening at the bottom-left. A touch in
     /// the GAP has no value on the dial, so it snaps to whichever end it is
     /// nearer — which is what a physical dial with a stop does, and is better
-    /// than the alternative of the value jumping across the whole range.
-    private func set(from point: CGPoint) {
+    /// than the value jumping across the whole range.
+    private func pick(at point: CGPoint) {
         let dx = point.x - side / 2
         let dy = point.y - side / 2
         // A touch near the middle has no angle worth reading — `atan2` of two
-        // numbers close to zero swings wildly, so tapping the numeral itself
-        // would set a value at random. The hole is the reading's own space.
+        // numbers close to zero swings wildly, so tapping the word itself would
+        // set a value at random. The hole is the reading's own space.
         guard (dx * dx + dy * dy).squareRoot() > side * 0.28 else { return }
         let degrees = atan2(dy, dx) * 180 / .pi
         var swept = degrees - Self.start
@@ -537,14 +857,15 @@ private struct RPEDial: View {
         } else {
             clamped = swept < (360 + Self.sweep) / 2 ? 1 : 0
         }
-        commit(Self.low + clamped * (Self.high - Self.low))
+        let i = Int((clamped * Double(words.count - 1)).rounded())
+        word = words[Swift.min(words.count - 1, Swift.max(0, i))]
     }
 
-    private func commit(_ raw: Double) {
-        // Half points, which is what the CR-10 ladder has and what every RPE in
-        // the store is already rounded to.
-        value = min(Self.high, max(Self.low, Cr10.normalise(raw)))
-        rated = true
+    private func step(_ delta: Int) {
+        // From unrated, either direction lands on the middle rung: a swipe on
+        // an unanswered dial should not have to travel the whole ladder.
+        let next = (index ?? words.count / 2 - (delta > 0 ? 1 : -1)) + delta
+        word = words[Swift.min(words.count - 1, Swift.max(0, next))]
     }
 }
 

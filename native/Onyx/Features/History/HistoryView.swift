@@ -25,6 +25,14 @@ struct HistoryView: View {
     var seeded: [HistoryWeeks.Capsule]?
 
     @State private var capsules: [HistoryWeeks.Capsule]?
+    /// The generation this screen's data was read at.
+    ///
+    /// `.task(id:)` fires on appear too, and this screen deliberately reads its
+    /// whole ledger once. Keying the guard on the generation preserves that and
+    /// re-reads exactly when a rescore cascade has finished rewriting what is
+    /// under it — see `AppEnvironment.rescoreGeneration`.
+    @State private var loadedAt = -1
+
     @State private var segment: Segment = .weeks
     @State private var window: EraWindow = .default
     @State private var input: EraWindowInput?
@@ -86,8 +94,9 @@ struct HistoryView: View {
             ))
         }
         .overlay { emptyState }
-        .task {
-            guard capsules == nil else { return }
+        .task(id: environment.rescoreGeneration) {
+            guard loadedAt != environment.rescoreGeneration else { return }
+            loadedAt = environment.rescoreGeneration
             if let seeded {
                 capsules = seeded
                 input = EraWindowSource.input(

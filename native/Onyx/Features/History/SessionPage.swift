@@ -27,6 +27,12 @@ extension SessionAnalysis {
         let date: String
         let tonnageKg: Double
         let prCount: Int
+        /// Logged inside a maintenance week (the LEVER, not the deload phase).
+        ///
+        /// The line drops on these weeks by design — that is what a
+        /// maintenance week IS — and a solid point in the middle of a
+        /// progression chart reads as a bad session rather than a planned one.
+        let isMaintenance: Bool
     }
 
     struct Page {
@@ -109,13 +115,19 @@ extension SessionAnalysis {
         let goals: UserGoalRow? = (try? database.read { db in
             try UserGoalRow.filter(Column("user_id") == session.userId).fetchOne(db)
         }) ?? nil
+        let lens = MaintenanceLens(
+            stored: goals?.activeLever, until: goals?.maintenanceUntil, today: LogicalDay.today()
+        )
         let bodyweight: Double? = ((try? database.latestBodyReading(userId: session.userId, before: session.date)) ?? nil)?.weightKg
         let today = LogicalDay.today()
 
         return Page(
             report: built,
             split: mine.map {
-                SplitPoint(sessionId: $0.id, date: $0.date, tonnageKg: $0.tonnageKg, prCount: $0.prCount)
+                SplitPoint(
+                    sessionId: $0.id, date: $0.date, tonnageKg: $0.tonnageKg,
+                    prCount: $0.prCount, isMaintenance: lens.callsIt($0.date)
+                )
             },
             previous: index.flatMap { $0 > 0 ? mine[$0 - 1] : nil },
             calories: Estimates.estimateCalories(durationMin: session.durationMin, samples: [], bodyweightKg: bodyweight),

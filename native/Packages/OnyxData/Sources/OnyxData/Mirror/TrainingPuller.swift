@@ -148,6 +148,22 @@ extension AppDatabase {
                     caloriesBurned: row.caloriesBurned,
                     avgBpmEstimated: row.avgBpmEstimated,
                     caloriesEstimated: row.caloriesEstimated,
+                    // ── A PULL MUST NOT ERASE WHAT THIS DEVICE COMPUTED ─────
+                    // This is a whole-row `save`, so every column not carried
+                    // here is written back as its default. The web computes
+                    // the three aggregates on save and the phone computes them
+                    // on close and on edit, so the pulled value is the right
+                    // one to keep — but a server NULL on a session THIS device
+                    // has the sets for would blank a figure the tab renders.
+                    // Server first, ours as the fallback.
+                    totalVolumeKg: row.totalVolumeKg ?? existing?.totalVolumeKg,
+                    setCount: row.setCount ?? existing?.setCount,
+                    prCount: row.prCount ?? existing?.prCount,
+                    // Local-only and never on the wire: a pull has no opinion
+                    // about who typed the duration, so the flag survives it.
+                    // Without this line, one sync would hand a hand-corrected
+                    // duration back to `closeSession` to re-derive.
+                    durationEdited: existing?.durationEdited ?? false,
                     // It came FROM the server, so by definition it is not
                     // waiting to go TO it — unless this device still has queued
                     // events for it, in which case the flag is not ours to

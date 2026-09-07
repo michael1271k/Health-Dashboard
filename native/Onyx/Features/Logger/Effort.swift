@@ -167,47 +167,13 @@ enum SetQuality: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-// MARK: - Session effort, in words
-
-/// How hard the SESSION was, as five words.
-///
-/// ── WHY WORDS, AND WHY THIS IS NOT A SCALE CONVERSION ───────────────────────
-/// Per-set RPE is reps-in-reserve and clusters at 8–9.5 on a hypertrophy block;
-/// session CR-10 asks a different question and this athlete has never rated a
-/// session above 8. Averaging one into the other proposed roughly 8.9 against
-/// an answer of roughly 7.2, every single session — and `battery.ts` reads the
-/// result as `sessionRpe / 10`, so the over-proposal was a measurably larger
-/// drain. A number invites that comparison; a word does not.
-///
-/// The NUMBER IS STILL WHAT IS STORED. Each word carries a canonical `cr10`,
-/// written to `session_rpe` exactly as before, so the battery, the score, the
-/// weekly export and the widget snapshot all keep reading one numeric column.
-struct EffortWord: Identifiable, Hashable, Sendable {
-    let key: String
-    let label: String
-    /// What lands in `session_rpe`.
-    let cr10: Double
-    let hint: String
-
-    var id: String { key }
-}
-
-enum EffortWords {
-
-    static let all: [EffortWord] = [
-        EffortWord(key: "easy",       label: "Easy",       cr10: 5,   hint: "lighter than usual — plenty left"),
-        EffortWord(key: "solid",      label: "Solid",      cr10: 6.5, hint: "a normal working session"),
-        EffortWord(key: "hard",       label: "Hard",       cr10: 8,   hint: "the session you planned, in full"),
-        EffortWord(key: "brutal",     label: "Brutal",     cr10: 9,   hint: "harder than this day usually is"),
-        EffortWord(key: "everything", label: "Everything", cr10: 10,  hint: "nothing left in the tank"),
-    ]
-
-    /// The word a stored `session_rpe` reads back as — NEAREST rung, never a
-    /// range. The historical rows are 6, 7 and 8, which land on Solid, Solid and
-    /// Hard; inventing a sixth word to preserve a distinction the athlete was
-    /// not reliably drawing would be inventing data.
-    static func word(for cr10: Double?) -> EffortWord? {
-        guard let cr10, cr10.isFinite else { return nil }
-        return all.min { abs($0.cr10 - cr10) < abs($1.cr10 - cr10) }
-    }
-}
+// ── SESSION EFFORT LIVES IN OnyxCore ────────────────────────────────────────
+//
+// `EffortWord` and `EffortWords.all` used to be declared here as well, byte for
+// byte the same five rungs as `Effort.words` in OnyxCore — which is the copy
+// the WEB is vector-equal with (`src/lib/training/effort.ts`, `EFFORT_WORDS`)
+// and the one `Effort.suggestEffortWord` and `Effort.effortCr10` are written
+// against. Nothing in the app target ever read the local pair, so it was five
+// hard-coded CR-10 values waiting to disagree with the ones that are actually
+// stored. Deleted in P3 U3, when the finish sheet started needing the
+// suggestion: `import OnyxCore` and use `Effort.words`.

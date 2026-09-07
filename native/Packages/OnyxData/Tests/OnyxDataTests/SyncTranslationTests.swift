@@ -214,7 +214,7 @@ struct SyncTranslationTests {
         #expect(try sessionKeys(quiet).count == 13, "every encoded RemoteSessionRow key, and updated_at is not one")
     }
 
-    @Test("the columns Track D owns are absent, not zeroed")
+    @Test("an uncomputed aggregate is absent, not zeroed")
     func unportedColumnsAreOmitted() throws {
         let sessionJSON = try JSONSerialization.jsonObject(
             with: OnyxJSON.encoder.encode(
@@ -222,10 +222,27 @@ struct SyncTranslationTests {
             )
         ) as? [String: Any]
         // `nil` is not `0`. A zero volume is a claim about a workout; an absent
-        // column is a gap in one, and the PR engine is not ported yet.
+        // column is a gap in one. `status` is never sent at all — see the
+        // builder's header.
         for column in ["total_volume_kg", "set_count", "pr_count", "status"] {
-            #expect(sessionJSON?[column] == nil, "\(column) must not be written yet")
+            #expect(sessionJSON?[column] == nil, "\(column) must not be written when unknown")
         }
+    }
+
+    @Test("a computed aggregate IS written, so the web reads the edited figures")
+    func computedAggregatesAreWritten() throws {
+        var row = session()
+        row.totalVolumeKg = 1_160.5
+        row.setCount = 18
+        row.prCount = 2
+        let json = try JSONSerialization.jsonObject(
+            with: OnyxJSON.encoder.encode(try SyncTranslation.sessionRow(row, now: Date()))
+        ) as? [String: Any]
+        #expect(json?["total_volume_kg"] as? Double == 1_160.5)
+        #expect(json?["set_count"] as? Int == 18)
+        #expect(json?["pr_count"] as? Int == 2)
+        // Still never sent, computed or not.
+        #expect(json?["status"] == nil)
 
         let setJSON = try JSONSerialization.jsonObject(
             with: OnyxJSON.encoder.encode(try SyncTranslation.setRow(
