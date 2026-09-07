@@ -22,7 +22,15 @@ public extension AppDatabase {
     /// a swapped session still carries the key it was performed as. Rows from
     /// the other era are dropped, as the web does: a new block never inherits
     /// the old one's chain.
-    func progressionQueue(dayKey: String, program: Program, phase: ProgramPhase, today: String) throws -> [ProgressionQueue.Alert] {
+    /// - Parameter qualifying: the session ids `SessionSeedBuilder
+    ///   .sessionsForSeed` already returned, when the caller has them. Passing
+    ///   them avoids folding the same sessions and re-reading all of their sets
+    ///   a second time — `AppDatabase.sessionSeed` needs both answers and would
+    ///   otherwise pay for the read twice, on the main actor.
+    func progressionQueue(
+        dayKey: String, program: Program, phase: ProgramPhase, today: String,
+        qualifying: Set<String>? = nil
+    ) throws -> [ProgressionQueue.Alert] {
         guard let day = program.day(key: dayKey) else { return [] }
         let exercises = day.exercises(for: phase)
         guard !exercises.isEmpty else { return [] }
@@ -50,20 +58,30 @@ public extension AppDatabase {
         }
         guard !targets.isEmpty else { return [] }
 
+        // ── THE SEED AND THE VERDICT READ THE SAME SESSIONS ─────────────────
+        // `SessionSeedBuilder.sessionsForSeed` is the one rule: this day key,
+        // this era, no maintenance week (decision 6). Grading a chain that
+        // includes a deliberately lighter week, and then pre-filling the deck
+        // from a list that excludes it, would put a `ready` chip on a load the
+        // seed never proposed.
+        //
         let era = Era.forDate(today)
+        let allowed = try qualifying
+            ?? Set(sessionsForSeed(dayKey: dayKey, today: today).sessions.map(\.id))
         // The session instant, for ordering two sessions of one lift: the
         // ledger already comes date-then-started_at ordered, so the date plus
         // the row's position in that order is a sortable key without a second
         // read of `workout_sessions`.
         var instant: [String: String] = [:]
         var rows: [ProgressionQueue.SetRow] = []
-        for r in try historySets(exerciseIds: Array(fold.keys)) where r.dayKey == dayKey && Era.forDate(r.date) == era {
+        for r in try historySets(exerciseIds: Array(fold.keys))
+        where r.dayKey == dayKey && Era.forDate(r.date) == era && allowed.contains(r.sessionId) {
             if instant[r.sessionId] == nil {
                 instant[r.sessionId] = "\(r.date)|\(String(format: "%06d", instant.count))"
             }
             rows.append(ProgressionQueue.SetRow(
                 exerciseId: fold[r.exerciseId] ?? r.exerciseId, weightKg: r.weightKg, reps: Double(r.reps), setType: r.setType,
-                startedAt: instant[r.sessionId]!, dayKey: r.dayKey
+                rpe: r.rpe, startedAt: instant[r.sessionId]!, dayKey: r.dayKey
             ))
         }
         return ProgressionQueue.alerts(targets: targets, rows: rows, program: program, phase: phase)

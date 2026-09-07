@@ -1,0 +1,3056 @@
+{
+  "module": "exercises/tags",
+  "fn": "exerciseTags",
+  "note": "Fixed order: load class (only when `compound` is known — never guessed from the name), then the equipment label, then unilateral, bodyweight, timed. The equipment rules can answer \"Bodyweight\" and \"Timed hold\", which are the same claims as the last two tags; when the qualifier fires the equipment chip is DROPPED rather than deduped after, so the qualifier keeps its own place in the order. The \"Exercise\" fallback is not a chip.",
+  "cases": [
+    {
+      "name": "Incline DB Press · compound",
+      "input": {
+        "name": "Incline DB Press",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Incline DB Press · isolation",
+      "input": {
+        "name": "Incline DB Press",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Incline DB Press · unknown",
+      "input": {
+        "name": "Incline DB Press",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Lat Pulldown · compound",
+      "input": {
+        "name": "Lat Pulldown",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Lat Pulldown · isolation",
+      "input": {
+        "name": "Lat Pulldown",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Lat Pulldown · unknown",
+      "input": {
+        "name": "Lat Pulldown",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Chest Press (Machine) · compound",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Chest Press (Machine) · isolation",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Chest Press (Machine) · unknown",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · compound",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · isolation",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (V-Grip) · unknown",
+      "input": {
+        "name": "Seated Cable Row (V-Grip)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Pec Deck · compound",
+      "input": {
+        "name": "Pec Deck",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Pec Deck · isolation",
+      "input": {
+        "name": "Pec Deck",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Pec Deck · unknown",
+      "input": {
+        "name": "Pec Deck",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Straight-Arm Pulldown · compound",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Straight-Arm Pulldown · isolation",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Straight-Arm Pulldown · unknown",
+      "input": {
+        "name": "Straight-Arm Pulldown",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Face Pull · compound",
+      "input": {
+        "name": "Face Pull",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Face Pull · isolation",
+      "input": {
+        "name": "Face Pull",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Face Pull · unknown",
+      "input": {
+        "name": "Face Pull",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Leg Press · compound",
+      "input": {
+        "name": "Leg Press",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Leg Press · isolation",
+      "input": {
+        "name": "Leg Press",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Leg Press · unknown",
+      "input": {
+        "name": "Leg Press",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Hack Squat · compound",
+      "input": {
+        "name": "Hack Squat",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Hack Squat · isolation",
+      "input": {
+        "name": "Hack Squat",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Hack Squat · unknown",
+      "input": {
+        "name": "Hack Squat",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Leg Extension · compound",
+      "input": {
+        "name": "Leg Extension",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Leg Extension · isolation",
+      "input": {
+        "name": "Leg Extension",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Leg Extension · unknown",
+      "input": {
+        "name": "Leg Extension",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Seated Leg Curl · compound",
+      "input": {
+        "name": "Seated Leg Curl",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Seated Leg Curl · isolation",
+      "input": {
+        "name": "Seated Leg Curl",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Seated Leg Curl · unknown",
+      "input": {
+        "name": "Seated Leg Curl",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Calf Press · compound",
+      "input": {
+        "name": "Calf Press",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Calf Press · isolation",
+      "input": {
+        "name": "Calf Press",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Calf Press · unknown",
+      "input": {
+        "name": "Calf Press",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Crunch Machine · compound",
+      "input": {
+        "name": "Crunch Machine",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Crunch Machine · isolation",
+      "input": {
+        "name": "Crunch Machine",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Crunch Machine · unknown",
+      "input": {
+        "name": "Crunch Machine",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · compound",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · isolation",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · unknown",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "DB Shoulder Press · compound",
+      "input": {
+        "name": "DB Shoulder Press",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Shoulder Press · isolation",
+      "input": {
+        "name": "DB Shoulder Press",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Shoulder Press · unknown",
+      "input": {
+        "name": "DB Shoulder Press",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · compound",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · isolation",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Lateral Raise (Cable) · unknown",
+      "input": {
+        "name": "Single Arm Lateral Raise (Cable)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Seated Incline DB Curl · compound",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Incline DB Curl · isolation",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Incline DB Curl · unknown",
+      "input": {
+        "name": "Seated Incline DB Curl",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Cable Overhead Extension · compound",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Cable Overhead Extension · isolation",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Cable Overhead Extension · unknown",
+      "input": {
+        "name": "Cable Overhead Extension",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Hammer Curl · compound",
+      "input": {
+        "name": "DB Hammer Curl",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Hammer Curl · isolation",
+      "input": {
+        "name": "DB Hammer Curl",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Hammer Curl · unknown",
+      "input": {
+        "name": "DB Hammer Curl",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Rope Triceps Pushdown · compound",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Rope Triceps Pushdown · isolation",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Rope Triceps Pushdown · unknown",
+      "input": {
+        "name": "Rope Triceps Pushdown",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · compound",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · isolation",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Reverse EZ-Bar Curl · unknown",
+      "input": {
+        "name": "Reverse EZ-Bar Curl",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Seated DB Wrist Curl · compound",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated DB Wrist Curl · isolation",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated DB Wrist Curl · unknown",
+      "input": {
+        "name": "Seated DB Wrist Curl",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · compound",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · isolation",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Neutral-Grip Lat Pulldown · unknown",
+      "input": {
+        "name": "Neutral-Grip Lat Pulldown",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Single Arm Cable Crossover · compound",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Cable Crossover · isolation",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Cable Crossover · unknown",
+      "input": {
+        "name": "Single Arm Cable Crossover",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · compound",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · isolation",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Seated Cable Row (Wide Grip) · unknown",
+      "input": {
+        "name": "Seated Cable Row (Wide Grip)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Preacher Curl (Machine) · compound",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Preacher Curl (Machine) · isolation",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Preacher Curl (Machine) · unknown",
+      "input": {
+        "name": "Preacher Curl (Machine)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · compound",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · isolation",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Single Arm Triceps Pushdown (Cable) · unknown",
+      "input": {
+        "name": "Single Arm Triceps Pushdown (Cable)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · compound",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · isolation",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Romanian Deadlift (Dumbbell) · unknown",
+      "input": {
+        "name": "Romanian Deadlift (Dumbbell)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Hip Thrust (Machine) · compound",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Hip Thrust (Machine) · isolation",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Hip Thrust (Machine) · unknown",
+      "input": {
+        "name": "Hip Thrust (Machine)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Hip Adduction · compound",
+      "input": {
+        "name": "Hip Adduction",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Hip Adduction · isolation",
+      "input": {
+        "name": "Hip Adduction",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Hip Adduction · unknown",
+      "input": {
+        "name": "Hip Adduction",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Hanging Knee Raise · compound",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Hanging Knee Raise · isolation",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Hanging Knee Raise · unknown",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · compound",
+      "input": {
+        "name": "Side Plank",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · isolation",
+      "input": {
+        "name": "Side Plank",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · unknown",
+      "input": {
+        "name": "Side Plank",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Push-Up · compound",
+      "input": {
+        "name": "Push-Up",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Push-Up · isolation",
+      "input": {
+        "name": "Push-Up",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Push-Up · unknown",
+      "input": {
+        "name": "Push-Up",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Pull-Up · compound",
+      "input": {
+        "name": "Pull-Up",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Pull-Up · isolation",
+      "input": {
+        "name": "Pull-Up",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Pull-Up · unknown",
+      "input": {
+        "name": "Pull-Up",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Dip · compound",
+      "input": {
+        "name": "Dip",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Dip · isolation",
+      "input": {
+        "name": "Dip",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Dip · unknown",
+      "input": {
+        "name": "Dip",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · compound",
+      "input": {
+        "name": "Side Plank",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · isolation",
+      "input": {
+        "name": "Side Plank",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Side Plank · unknown",
+      "input": {
+        "name": "Side Plank",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Plank · compound",
+      "input": {
+        "name": "Plank",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Plank · isolation",
+      "input": {
+        "name": "Plank",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Plank · unknown",
+      "input": {
+        "name": "Plank",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Dead Hang · compound",
+      "input": {
+        "name": "Dead Hang",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Dead Hang · isolation",
+      "input": {
+        "name": "Dead Hang",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Dead Hang · unknown",
+      "input": {
+        "name": "Dead Hang",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Wall Sit · compound",
+      "input": {
+        "name": "Wall Sit",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Wall Sit · isolation",
+      "input": {
+        "name": "Wall Sit",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Wall Sit · unknown",
+      "input": {
+        "name": "Wall Sit",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Farmer Carry · compound",
+      "input": {
+        "name": "Farmer Carry",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Farmer Carry · isolation",
+      "input": {
+        "name": "Farmer Carry",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Farmer Carry · unknown",
+      "input": {
+        "name": "Farmer Carry",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Farmer's Walk · compound",
+      "input": {
+        "name": "Farmer's Walk",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Farmer's Walk · isolation",
+      "input": {
+        "name": "Farmer's Walk",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Farmer's Walk · unknown",
+      "input": {
+        "name": "Farmer's Walk",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Suitcase Carry · compound",
+      "input": {
+        "name": "Suitcase Carry",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Suitcase Carry · isolation",
+      "input": {
+        "name": "Suitcase Carry",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Suitcase Carry · unknown",
+      "input": {
+        "name": "Suitcase Carry",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "carry",
+          "label": "Loaded carry",
+          "kind": "equipment"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        },
+        {
+          "key": "timed",
+          "label": "Timed",
+          "kind": "timed"
+        }
+      ]
+    },
+    {
+      "name": "Treadmill · compound",
+      "input": {
+        "name": "Treadmill",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Treadmill · isolation",
+      "input": {
+        "name": "Treadmill",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Treadmill · unknown",
+      "input": {
+        "name": "Treadmill",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Incline Walk · compound",
+      "input": {
+        "name": "Incline Walk",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Incline Walk · isolation",
+      "input": {
+        "name": "Incline Walk",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Incline Walk · unknown",
+      "input": {
+        "name": "Incline Walk",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "treadmill",
+          "label": "Treadmill",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · compound",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · isolation",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Crunch · unknown",
+      "input": {
+        "name": "Reverse Crunch",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Crunch · compound",
+      "input": {
+        "name": "Crunch",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Crunch · isolation",
+      "input": {
+        "name": "Crunch",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Crunch · unknown",
+      "input": {
+        "name": "Crunch",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Lateral Raise · compound",
+      "input": {
+        "name": "Lateral Raise",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Lateral Raise · isolation",
+      "input": {
+        "name": "Lateral Raise",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Lateral Raise · unknown",
+      "input": {
+        "name": "Lateral Raise",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Hanging Knee Raise · compound",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Hanging Knee Raise · isolation",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Hanging Knee Raise · unknown",
+      "input": {
+        "name": "Hanging Knee Raise",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "hanging",
+          "label": "Hanging",
+          "kind": "equipment"
+        },
+        {
+          "key": "bodyweight",
+          "label": "Bodyweight",
+          "kind": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "Smith Squat · compound",
+      "input": {
+        "name": "Smith Squat",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Smith Squat · isolation",
+      "input": {
+        "name": "Smith Squat",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Smith Squat · unknown",
+      "input": {
+        "name": "Smith Squat",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "BB Row · compound",
+      "input": {
+        "name": "BB Row",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "BB Row · isolation",
+      "input": {
+        "name": "BB Row",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "BB Row · unknown",
+      "input": {
+        "name": "BB Row",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "barbell",
+          "label": "Barbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Row · compound",
+      "input": {
+        "name": "DB Row",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Row · isolation",
+      "input": {
+        "name": "DB Row",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "DB Row · unknown",
+      "input": {
+        "name": "DB Row",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "dumbbell",
+          "label": "Dumbbell",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Chest Press (Machine) · compound",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Chest Press (Machine) · isolation",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Chest Press (Machine) · unknown",
+      "input": {
+        "name": "Chest Press (Machine)",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Leg Press Sled · compound",
+      "input": {
+        "name": "Leg Press Sled",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Leg Press Sled · isolation",
+      "input": {
+        "name": "Leg Press Sled",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Leg Press Sled · unknown",
+      "input": {
+        "name": "Leg Press Sled",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "machine",
+          "label": "Machine",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Bulgarian Split Squat · compound",
+      "input": {
+        "name": "Bulgarian Split Squat",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Bulgarian Split Squat · isolation",
+      "input": {
+        "name": "Bulgarian Split Squat",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Bulgarian Split Squat · unknown",
+      "input": {
+        "name": "Bulgarian Split Squat",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Walking Lunge · compound",
+      "input": {
+        "name": "Walking Lunge",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Walking Lunge · isolation",
+      "input": {
+        "name": "Walking Lunge",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Walking Lunge · unknown",
+      "input": {
+        "name": "Walking Lunge",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "unilateral",
+          "label": "Per side",
+          "kind": "laterality"
+        }
+      ]
+    },
+    {
+      "name": "Double-Arm Cable Row · compound",
+      "input": {
+        "name": "Double-Arm Cable Row",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Double-Arm Cable Row · isolation",
+      "input": {
+        "name": "Double-Arm Cable Row",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        },
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Double-Arm Cable Row · unknown",
+      "input": {
+        "name": "Double-Arm Cable Row",
+        "compound": null
+      },
+      "expected": [
+        {
+          "key": "cable",
+          "label": "Cable",
+          "kind": "equipment"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Hyper · compound",
+      "input": {
+        "name": "Reverse Hyper",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Hyper · isolation",
+      "input": {
+        "name": "Reverse Hyper",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Reverse Hyper · unknown",
+      "input": {
+        "name": "Reverse Hyper",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "Good Morning · compound",
+      "input": {
+        "name": "Good Morning",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Good Morning · isolation",
+      "input": {
+        "name": "Good Morning",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "Good Morning · unknown",
+      "input": {
+        "name": "Good Morning",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "<empty> · compound",
+      "input": {
+        "name": "",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<empty> · isolation",
+      "input": {
+        "name": "",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<empty> · unknown",
+      "input": {
+        "name": "",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "<blank> · compound",
+      "input": {
+        "name": "   ",
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<blank> · isolation",
+      "input": {
+        "name": "   ",
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<blank> · unknown",
+      "input": {
+        "name": "   ",
+        "compound": null
+      },
+      "expected": []
+    },
+    {
+      "name": "<null> · compound",
+      "input": {
+        "name": null,
+        "compound": true
+      },
+      "expected": [
+        {
+          "key": "compound",
+          "label": "Compound",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<null> · isolation",
+      "input": {
+        "name": null,
+        "compound": false
+      },
+      "expected": [
+        {
+          "key": "isolation",
+          "label": "Isolation",
+          "kind": "load"
+        }
+      ]
+    },
+    {
+      "name": "<null> · unknown",
+      "input": {
+        "name": null,
+        "compound": null
+      },
+      "expected": []
+    }
+  ]
+}

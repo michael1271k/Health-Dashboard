@@ -49,6 +49,10 @@ export interface ProgressionSetRow {
   weight_kg: number
   reps: number
   set_type: string | null
+  /** Nullable, and most of the history is null — `underEffortCeiling` treats an
+   *  unrated set as making no claim. Carried so the RPE ≤ 8.5 half of the
+   *  progression rule is not dead code in the one place that grades it. */
+  rpe?: number | null
   workout_sessions: { started_at: string; day_key: string | null }
 }
 
@@ -77,7 +81,9 @@ export function bucketByExerciseDay(rows: readonly ProgressionSetRow[]): Map<str
     const at = r.workout_sessions.started_at
     const key = exerciseDayKey(dk, r.exercise_id)
     const perEx = out.get(key) ?? new Map<string, WorkingSet[]>()
-    perEx.set(at, [...(perEx.get(at) ?? []), { weightKg: r.weight_kg, reps: r.reps }])
+    // Supabase returns numeric(3,1) as a string on some paths; coerce once.
+    const rpe = r.rpe != null && Number.isFinite(Number(r.rpe)) ? Number(r.rpe) : null
+    perEx.set(at, [...(perEx.get(at) ?? []), { weightKg: r.weight_kg, reps: r.reps, rpe }])
     out.set(key, perEx)
   }
   return out

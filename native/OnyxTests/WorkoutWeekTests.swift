@@ -140,7 +140,14 @@ struct WorkoutWeekTests {
         try database.seedRows { db in
             try Exercise(id: exerciseId, name: name).insert(db)
         }
-        let today = LogicalDay.today()
+        // ── PINNED, NOT `LogicalDay.today()` ────────────────────────────────
+        // Since P3 E4 the queue skips sessions logged under the maintenance
+        // lever, and `Levers.schedule` puts one on 2026-08-30 … 09-05. A test
+        // that counts backwards from the real clock walks its two sessions into
+        // that week for part of every month and reports a rule change as a
+        // regression. 08-29 is the last deficit day before it, so -14, -7 and
+        // -1 are all ordinary training days.
+        let today = "2026-08-29"
 
         /// One finished session of `reps`-rep sets at one load.
         func session(_ id: String, date: String, reps: Int) throws {

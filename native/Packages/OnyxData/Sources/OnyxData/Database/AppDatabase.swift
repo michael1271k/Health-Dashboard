@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import OnyxCore
 
 /// The local SQLite store — **the app's only read path**.
 ///
@@ -839,18 +840,43 @@ extension AppDatabase {
     /// `EventStore.commit` puts the append and its queue row in one: a session
     /// that is finished locally and absent from the queue is a workout that
     /// stops syncing with no symptom.
+    /// - Parameter restTargetSec: the rest the last movement prescribes, for the
+    ///   long-idle guard. The logger passes `ProgramExercise.restSec`; nil takes
+    ///   `SessionDuration.defaultRestTargetSec`.
     @discardableResult
     public func closeSession(
         id: String,
         endedAt: Date = Date(),
-        sessionRpe: Double? = nil
+        sessionRpe: Double? = nil,
+        restTargetSec: Double? = nil
     ) throws -> WorkoutSession? {
         try writer.write { db in
             guard var session = try WorkoutSession.fetchOne(db, key: id) else { return nil }
             session.endedAt = endedAt
-            if let startedAt = session.startedAt {
-                session.durationMin = max(0, endedAt.timeIntervalSince(startedAt) / 60)
-            }
+            // ── THE PAUSE COMES OFF, AND A LONG IDLE IS NOT TRAINING ────────
+            // This was `endedAt − startedAt`, which is the same arithmetic that
+            // recorded 2026-09-06's hour of work as 385 minutes on the web. One
+            // rule now, in `OnyxCore`, with a vector — see `SessionDuration`.
+            let events = try SetEvent
+                .filter(SetEvent.Columns.sessionId == id)
+                .fetchAll(db)
+            let lastSetAt = events
+                .filter { $0.kind == .append || $0.kind == .amend }
+                .map(\.createdAt)
+                .max()
+            let derived = SessionDuration.compute(
+                startedAt: session.startedAt,
+                endedAt: endedAt,
+                pausedSec: Self.pausedSeconds(events, now: endedAt),
+                // The same fold, evaluated at the last set rather than at the
+                // finish: a pause tapped AFTER the last set is inside the tail
+                // the long-idle guard discards, and subtracting it from the
+                // work as well would take those minutes twice.
+                pausedBeforeLastSetSec: lastSetAt.map { Self.pausedSeconds(events, now: $0) } ?? 0,
+                lastSetAt: lastSetAt,
+                restTargetSec: restTargetSec
+            )
+            if let minutes = derived.minutes { session.durationMin = minutes }
             // `nil` leaves the existing rating alone rather than clearing it —
             // an unrated session is not a session rated zero, and the battery
             // falls back to its own default rather than treating it as easy.

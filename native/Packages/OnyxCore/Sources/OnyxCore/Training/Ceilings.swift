@@ -20,7 +20,15 @@ public struct RepWindow: Codable, Equatable, Sendable {
 public struct WorkingSet: Codable, Equatable, Sendable {
     public var weightKg: Double
     public var reps: Double
-    public init(weightKg: Double, reps: Double) { self.weightKg = weightKg; self.reps = reps }
+    /// CR-10, or nil for an UNRATED set — which is most of the history. See
+    /// `Ceilings.progressionMaxRpe` for why the difference is load-bearing.
+    public var rpe: Double?
+
+    public init(weightKg: Double, reps: Double, rpe: Double? = nil) {
+        self.weightKg = weightKg
+        self.reps = reps
+        self.rpe = rpe
+    }
 }
 
 /// One load used within an exercise, with the sets performed at it.
@@ -78,6 +86,65 @@ public struct ProgressionVerdict: Codable, Equatable, Sendable {
 public enum Ceilings {
     /// Recommended jump once the ceiling is cleared twice.
     public static let loadStepKg = 2.5
+
+    /// The two load steps the weight stepper offers — a tap and a long press.
+    ///
+    /// Coarse FIRST, and `loadStepKg` is that first entry: it is the jump
+    /// `progressionVerdict` suggests and the one the plan is written in. 1.25 is
+    /// there because cable stacks and micro-plates genuinely move in halves of
+    /// it, and a stepper that can only offer 2.5 forces a load you did not lift
+    /// to be recorded as one you did.
+    /// No caller yet — the stepper that offers them is wave U2's. The
+    /// constants land here so both clients agree before either draws a control.
+    public static let loadSteps: [Double] = [2.5, 1.25]
+
+    /// The finest step — what a hand-typed or derived load is snapped to.
+    public static let loadStepFineKg = 1.25
+
+    /// Snap a load to a step of the plate stack. Two decimals out, for the same
+    /// reason `OnyxFormat.kg` keeps them. A non-finite or non-positive step
+    /// hands the value back untouched rather than producing NaN.
+    public static func roundToStep(_ kg: Double, step: Double = loadStepFineKg) -> Double {
+        guard kg.isFinite, step.isFinite, step > 0 else { return kg }
+        return jsRound(jsRound(kg / step) * step * 100) / 100
+    }
+
+    /// The ceiling on effort a progression may be earned at.
+    ///
+    /// ── THE HEADER PROMISED THIS FOR A YEAR AND THE CODE NEVER READ IT ──────
+    /// The rule at the top of this file has always said "all work sets hit the
+    /// ceiling at RPE ≤ 8.5"; only the reps half was implemented. Hitting the
+    /// top of the window at an RPE of 9.5 is the top of the window bought with
+    /// everything you had, and adding load to it is how a stall becomes a
+    /// regression.
+    ///
+    /// ── AN UNRATED SET PASSES, DELIBERATELY ────────────────────────────────
+    /// `workout_sets.rpe` is nullable and most of the history is null. Treating
+    /// nil as "too hard" would silently turn the cue off for every lift logged
+    /// before rating was a habit; treating it as "easy" is what the nil-is-not-
+    /// zero rule forbids everywhere else. An unrated set makes no claim about
+    /// effort, so it cannot block a verdict the reps have earned — and the
+    /// moment you DO rate a set 9, it counts.
+    ///
+    /// ── IT COUNTS AGAIN NEXT WEEK, AND THAT IS THE RULE ────────────────────
+    /// `RpeMemory.resolveSeededRpe` carries a rating forward while the load and
+    /// reps are unchanged, so a 9 given at the ceiling seeds a 9 into the next
+    /// deck, which commits a 9, which blocks `ready` again. That reads like a
+    /// lock and it is the instruction: you are at the top of the window at an
+    /// RPE of 9, and adding load to that is how a stall becomes a regression.
+    /// The seed clears itself the moment the work gets harder, and re-rating is
+    /// one tap. `workout_sets` stores no `rpe_seed`, so nothing downstream can
+    /// tell an inherited rating from a fresh one — and inventing that
+    /// distinction would mean grading two identical sessions differently.
+    public static let progressionMaxRpe = 8.5
+
+    /// No rated working set was above the effort ceiling. Unrated sets pass.
+    public static func underEffortCeiling(_ sets: [WorkingSet]) -> Bool {
+        workLoads(sets).allSatisfy { s in
+            guard let rpe = s.rpe, rpe.isFinite else { return true }
+            return rpe <= progressionMaxRpe
+        }
+    }
 
     /// `'8–12'` / `'8-12'` → 8–12 · `'10'` → 10–10 · `'55s'` → nil (timed, not rep-driven).
     /// The first and last digit runs are the floor and ceiling; ceiling < floor → nil.
@@ -219,13 +286,20 @@ public enum Ceilings {
     /// Double progression across the last TWO sessions, newest LAST: both
     /// cleared → ready (top + 2.5 kg, nil at 0 kg); newest only → one-more;
     /// otherwise no. A ladder collapse does not count as cleared.
+    ///
+    /// "Cleared" is `topLoadCleared` AND `underEffortCeiling`: two sets at the
+    /// ceiling on the heaviest load, none of them RATED above 8.5. An unrated
+    /// set passes — see `progressionMaxRpe`.
     public static func progressionVerdict(_ sessions: [[WorkingSet]], ceiling: Double?) -> ProgressionVerdict {
         guard let ceiling, let latest = sessions.last else {
             return ProgressionVerdict(state: .no, ceiling: ceiling, suggestKg: nil)
         }
+        let cleared = { (sets: [WorkingSet]) in
+            topLoadCleared(sets, ceiling: ceiling) && underEffortCeiling(sets)
+        }
         let previous = sessions.count >= 2 ? sessions[sessions.count - 2] : nil
-        if !topLoadCleared(latest, ceiling: ceiling) { return ProgressionVerdict(state: .no, ceiling: ceiling, suggestKg: nil) }
-        guard let previous, topLoadCleared(previous, ceiling: ceiling) else {
+        if !cleared(latest) { return ProgressionVerdict(state: .no, ceiling: ceiling, suggestKg: nil) }
+        guard let previous, cleared(previous) else {
             return ProgressionVerdict(state: .oneMore, ceiling: ceiling, suggestKg: nil)
         }
         let top = latest.filter { $0.weightKg > 0 }.map(\.weightKg).max() ?? 0

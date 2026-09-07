@@ -802,6 +802,11 @@ struct WorkoutTabView: View {
             session = model
             sessionClock = LoggerClock(startedAt: model.startedAt)
         }
+        // The logger graded today's queue while building its seed, and it is
+        // the surface that knows the day key for certain. One array, read by
+        // the tab card, the session banner and the row chip (decision 10).
+        // `attach` is the view's job, on appear — publishing does not need it.
+        environment.publishProgression(session?.progressionAlerts ?? [], for: day.key)
         presented = session
     }
 

@@ -1,16 +1,25 @@
 /**
  * Program-day template → pre-seeded Command Center draft.
  *
- * Seeding priority, highest first:
- *   0. The STORED ROUTINE TEMPLATE (`routine_templates`), written from the exact
- *      deck committed for this day — exercise ORDER included, which is the only
- *      source that carries it. See `routineTemplate.ts`.
- *   1. The exercise's LAST REAL SESSION in the same era — reproduced EXACTLY:
- *      the same NUMBER of sets, each set's weight, reps, and failure tag. If last
- *      time was 2 sets, the deck opens with 2 sets — never the template's 3.
- *   2. The explicit per-set seed (seedTemplates.ts), which also defines cardio
- *      and the deck's structure (used only as a cold-start when there's no history).
- *   3. The program's `wk1Kg` cold start (bodyweight/timed moves seed at 0 kg).
+ * Seeding priority, highest first — the same ORDER `sessions/sessionSeed.ts`
+ * gives the phone, so the two clients read the same sources in the same
+ * sequence. Not the same ROWS: `seedFromHistory` reproduces the previous
+ * session 1:1, while the phone's builder truncates to the program's set count,
+ * pads a short history at the rep floor and applies a `ready` bump. A day where
+ * you did four sets opens with four here and three there, deliberately — the
+ * web deck is a copy of what you did and the phone's is the plan with your
+ * numbers in it. Only the ORDER is the parity claim.
+ *   1. The exercise's LAST REAL SESSION on this routine day, in the same era and
+ *      the same kind of week — reproduced EXACTLY: the same NUMBER of sets, each
+ *      set's weight, reps, rating and tag. If last time was 2 sets, the deck
+ *      opens with 2 sets, never the template's 3.
+ *   2. The STORED ROUTINE TEMPLATE (`routine_templates`), written from the exact
+ *      deck committed for this day. It supplies the DECK — which exercises, in
+ *      which ORDER, the one thing no other source carries — and its own loads
+ *      only where history has nothing to say. See `routineTemplate.ts`.
+ *   3. The explicit per-set seed (seedTemplates.ts), which also defines cardio
+ *      and the deck's structure (a cold start, when there is no template).
+ *   4. The program's `wk1Kg` cold start (bodyweight/timed moves seed at 0 kg).
  *
  * This used to read `useExerciseMemory`, which returned ONE set — whichever row
  * was newest by `created_at`, warm-ups included — and fanned that single value
@@ -135,12 +144,6 @@ export function buildTemplateDraft(
   const dayKey = (HELIX_DAY_KEYS as readonly string[]).includes(day.key)
     ? (day.key as SessionDraft['dayKey']) : undefined
 
-  // PRIORITY 1: the stored template — the exact deck you last committed for this
-  // day, exercise ORDER included. It already reflects history (it was written
-  // FROM a session), so consulting history again here would only re-derive a
-  // worse version of the same answer and discard the ordering.
-  if (template?.exercises.length) return withWarmupCardio(templateToDraft(template, day, date, dayKey))
-
   let i = 0
   const localId = () => `tpl-${i++}-${Math.random().toString(36).slice(2, 8)}`
   let p = 0
@@ -150,12 +153,39 @@ export function buildTemplateDraft(
     return h?.sets.length ? h : undefined
   }
 
-  const seed = SEED_TEMPLATES[day.key]
-  const exercises: DraftExercise[] = []
-
   // A template deck is a PLAN, not a log: every set opens UNCHECKED (done:false)
   // and only the ones you tick green are recorded on finish.
   const unchecked = (sets: DraftSet[]): DraftSet[] => sets.map((s) => ({ ...s, done: false }))
+
+  // PRIORITY 1: the stored template supplies the DECK — which exercises, in
+  // which order, the one thing nothing else carries.
+  //
+  // ── AND HISTORY NOW SUPPLIES THE NUMBERS INSIDE IT ─────────────────────────
+  // It used to supply both, on the argument that the template "already reflects
+  // history (it was written FROM a session)". That is true of the session it was
+  // written from and stops being true the moment anything is logged afterwards —
+  // and `routine_templates` is rewritten by every commit on that day_key, so a
+  // maintenance week's lighter loads become the template the next real week
+  // opens on. Phase 3's `sessionSeed.ts` fixed the ordering for the phone
+  // (history → template → wk1Kg, maintenance weeks skipped); this is the same
+  // ordering on the web, applied per exercise so the template keeps the job only
+  // it can do. `useExerciseSetHistory` has already scoped `history` to this
+  // routine day, this era and this kind of week.
+  if (template?.exercises.length) {
+    const fromTemplate = templateToDraft(template, day, date, dayKey)
+    return withWarmupCardio({
+      ...fromTemplate,
+      exercises: fromTemplate.exercises.map((ex) => {
+        if (ex.kind === 'cardio') return ex
+        const prev = historyFor(ex.name)
+        if (!prev) return ex
+        return { ...ex, sets: unchecked(seedFromHistory(prev, newPairId)), seededFrom: prev.date }
+      }),
+    })
+  }
+
+  const seed = SEED_TEMPLATES[day.key]
+  const exercises: DraftExercise[] = []
 
   if (seed) {
     for (const ex of seed.exercises) {

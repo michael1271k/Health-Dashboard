@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import OnyxCore
 
 /// One logged set with the two things a set row does not carry itself: the
 /// exercise's NAME and the session's DATE. Every history screen wants both.
@@ -141,5 +142,180 @@ public extension AppDatabase {
                 arguments: [sessionId, date]
             )
         }
+    }
+}
+
+// MARK: - The session seed
+
+/// The history one day's seed is allowed to read: the qualifying sessions and
+/// their sets, name-resolved. `SessionSeedBuilder` turns it into a deck.
+/// A day's opening deck and the queue that shaped it.
+public struct SeededDeck: Sendable, Equatable {
+    public var seed: SessionSeed
+    /// `ready` AND `one-more` — the banner shows both (decision 10); only
+    /// `ready` pre-fills a load.
+    public var alerts: [ProgressionQueue.Alert]
+
+    public init(seed: SessionSeed, alerts: [ProgressionQueue.Alert]) {
+        self.seed = seed
+        self.alerts = alerts
+    }
+}
+
+public struct SeedHistory: Sendable, Equatable {
+    public var sessions: [SeedSession]
+    public var sets: [SeedSet]
+
+    public init(sessions: [SeedSession], sets: [SeedSet]) {
+        self.sessions = sessions
+        self.sets = sets
+    }
+
+    public static let empty = SeedHistory(sessions: [], sets: [])
+}
+
+public extension AppDatabase {
+
+    /// Every session this device holds for one routine day, with the maintenance
+    /// flag resolved, and the sets of the ones that qualify.
+    ///
+    /// ── THE NAME IS RESOLVED HERE, AND ONLY HERE ────────────────────────────
+    /// `workout_sets.exercise_id` holds a catalogue uuid for a set the web
+    /// logged and `"helix5-<slug>"` for one this phone logged, so a seed that
+    /// matched on the id would find nothing for a web-logged session and fall
+    /// through to the cold start — which is exactly what the Sept 6 Upper A
+    /// session would have done. `PrRecorder.nameResolver` is the same two-source
+    /// lookup the PR ledger keys on (catalogue, then `ExerciseSlug.nameBySlug`,
+    /// then `ExerciseAliases`), so a set files its record and seeds its next
+    /// session under one name or under neither.
+    ///
+    /// `maintenance` is decided per session by the LEVER (decision 6), not by
+    /// `Maintenance.isMaintenanceDate`: the phase axis adds the historical
+    /// deloads, and those are all in the previous era, which the era filter has
+    /// already dropped.
+    /// `userId` scopes the goals lookup only. Nil reads whichever goals row
+    /// this store holds, which is the convention every other read in this
+    /// package follows: the local store is ONE user's mirror, and filtering on
+    /// a user id the puller already guaranteed is a way to return nothing when
+    /// the casing drifts (`UserIdCasingTests`).
+    func sessionsForSeed(dayKey: String, userId: String? = nil, today: String = LogicalDay.today()) throws -> SeedHistory {
+        try read { db in
+            let goals = try userId
+                .map { try UserGoalRow.filter(Column("user_id") == $0).fetchOne(db) }
+                ?? UserGoalRow.fetchOne(db)
+            let instant = Self.instantFormatter()
+            let all = try WorkoutSession
+                .filter(Column("day_key") == dayKey)
+                .fetchAll(db)
+                .map { s in
+                    SeedSession(
+                        id: s.id, dayKey: s.dayKey, date: s.date,
+                        // Any string that sorts chronologically. A session with
+                        // no `started_at` sorts to the top of its own day, which
+                        // is where a row that never recorded one belongs.
+                        startedAt: s.startedAt.map(instant) ?? "",
+                        maintenance: Maintenance.leverOn(
+                            s.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: today
+                        )
+                    )
+                }
+
+            let qualifying = SessionSeedBuilder.sessionsForSeed(all, dayKey: dayKey, today: today)
+            guard !qualifying.isEmpty else { return SeedHistory.empty }
+
+            let name = try PrRecorder.nameResolver(db)
+            let ids = qualifying.map(\.id)
+            let marks = Array(repeating: "?", count: ids.count).joined(separator: ",")
+            let rows = try WorkoutSet.fetchAll(
+                db,
+                sql: "SELECT * FROM workout_sets WHERE session_id IN (\(marks)) ORDER BY session_id, fold_order, set_index, rowid",
+                arguments: StatementArguments(ids)
+            )
+            return SeedHistory(
+                sessions: qualifying,
+                sets: rows.enumerated().map { index, r in
+                    SeedSet(
+                        sessionId: r.sessionId, exerciseName: name(r.exerciseId),
+                        // `set_index` is the performed number, but the puller
+                        // numbers folds by the server's `set_number` and a
+                        // legacy row can carry 0 — the read order is the
+                        // tiebreak that makes this total.
+                        order: r.setIndex > 0 ? r.setIndex : index + 1,
+                        weightKg: r.weightKg, reps: r.reps, rpe: r.rpe,
+                        setType: r.setType,
+                        // The local store spells the side `left` / `right`;
+                        // every OnyxCore rule that folds a pair tests for the
+                        // one-letter form. A pair handed over unmapped is scored
+                        // as two lone sides, silently.
+                        side: Self.domainSide(r.side), pairId: r.pairId
+                    )
+                }
+            )
+        }
+    }
+
+    /// One day's deck, seeded — and the queue that seeded it.
+    ///
+    /// Both, from one call, because they are one read: the `.ready` verdicts
+    /// ARE what pre-fills the rows, so a caller that asked for them separately
+    /// would grade the same sessions twice and could get two answers if a set
+    /// landed in between.
+    func sessionSeed(
+        dayKey: String, userId: String, phase: ProgramPhase,
+        program: Program = .onyx5, today: String = LogicalDay.today()
+    ) throws -> SeededDeck {
+        let history = try sessionsForSeed(dayKey: dayKey, userId: userId, today: today)
+        // The qualifying ids are handed over rather than re-derived: without
+        // this, `progressionQueue` folds the same sessions and re-reads all of
+        // their sets a second time, on the main actor, inside `LoggerModel
+        // .init`. That read grows with the season.
+        let alerts = (try? progressionQueue(
+            dayKey: dayKey, program: program, phase: phase, today: today,
+            qualifying: Set(history.sessions.map(\.id))
+        )) ?? []
+        let seed = SessionSeedBuilder.build(
+            dayKey: dayKey, today: today, phase: phase,
+            sessions: history.sessions, sets: history.sets,
+            template: try? seedTemplate(dayKey: dayKey, userId: userId),
+            ready: alerts
+                .filter { $0.state == .ready }
+                .map { SeedProgression(name: $0.name, suggestKg: $0.suggestKg) },
+            program: program
+        )
+        return SeededDeck(seed: seed, alerts: alerts)
+    }
+
+    /// The stored `routine_templates` payload, as much of it as the seed reads.
+    /// An unreadable payload is ABSENT, never a throw — the tier below it is a
+    /// perfectly good answer.
+    func seedTemplate(dayKey: String, userId: String) throws -> SeedTemplate? {
+        let row = try read { db in
+            try RoutineTemplateRow
+                .filter(Column("user_id") == userId && Column("day_key") == dayKey)
+                .fetchOne(db)
+        }
+        guard let row, let data = row.payload.raw.data(using: .utf8) else { return nil }
+        return try? OnyxJSON.decoder.decode(SeedTemplate.self, from: data)
+    }
+
+    /// `left` / `right` → `L` / `R`. See `HistorySetRow.lr`.
+    private static func domainSide(_ side: String?) -> String? {
+        switch side {
+        case "left": return "L"
+        case "right": return "R"
+        default: return side
+        }
+    }
+
+    /// A sortable instant.
+    ///
+    /// `ISO8601DateFormatter` is not `Sendable`, so it cannot be a shared
+    /// static — but building one PER ROW is a formatter per session on a read
+    /// that runs on the main actor while the logger opens. One per call,
+    /// captured by the closure the caller maps with.
+    private static func instantFormatter() -> (Date) -> String {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return { f.string(from: $0) }
     }
 }

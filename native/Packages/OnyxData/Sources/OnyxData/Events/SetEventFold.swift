@@ -88,6 +88,10 @@ public enum SetEventFold {
                     orphanedAmends[setId, default: []].append(patch)
                 }
 
+            case .pause, .resume:
+                // Rule 6. The session's clock, not a set.
+                continue
+
             case .void:
                 voided.insert(setId)
                 snapshots.removeValue(forKey: setId)

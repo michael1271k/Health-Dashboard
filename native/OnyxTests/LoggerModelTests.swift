@@ -1,5 +1,8 @@
+import Foundation
 import Testing
+import GRDB
 import OnyxCore
+import OnyxData
 @testable import Onyx
 
 /// The logger's own state machine.
@@ -49,8 +52,11 @@ struct LoggerModelTests {
         #expect(survivor != nil, "a lift with logged sets must not vanish with the prescription")
         #expect(survivor?.rows.count == 2)
         #expect(survivor?.rows.allSatisfy(\.isDone) == true)
-        // ...and the blanks it no longer prescribes are gone.
-        #expect(model.exercises.first { $0.name == "Cable Overhead Extension" }?.rows.count == 2)
+        // ...and the blanks it no longer prescribes are gone. `Single Arm
+        // Lateral Raise (Cable)` is the arms lift the cut actually trims (5 → 4);
+        // Cable Overhead Extension used to be one and stopped being one in
+        // `ca9bcfa`, when Week 6's real set counts became the program's.
+        #expect(model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }?.rows.count == 4)
     }
 
     @Test("a dropped lift with NO logged work does leave")
@@ -64,22 +70,24 @@ struct LoggerModelTests {
     @Test("trimming sets does not reorder the ones already logged")
     func rebuildPreservesRowOrder() {
         let model = armsBulk()
-        // Bulk prescribes 3 of these; cut prescribes 2. Tick the LAST one only,
-        // so a rebuild that sorts ticked rows to the top is visible.
-        let exercise = model.exercises.first { $0.name == "DB Hammer Curl" }!
-        #expect(exercise.rows.count == 3)
+        // Bulk prescribes 5 of these; cut prescribes 4. Tick the LAST one only,
+        // so a rebuild that sorts ticked rows to the top is visible. (DB Hammer
+        // Curl was this test's lift until `ca9bcfa` made its cut count equal
+        // its bulk count — a deck that trims nothing cannot show a reorder.)
+        let exercise = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
+        #expect(exercise.rows.count == 5)
         let ids = exercise.rows.map(\.id)
-        let third = exercise.rows[2]
-        third.weightKg = 16
-        third.reps = 10
-        model.toggleDone(third, in: exercise)
+        let last = exercise.rows[4]
+        last.weightKg = 5
+        last.reps = 15
+        model.toggleDone(last, in: exercise)
 
         model.phase = .cut
 
-        let rebuilt = model.exercises.first { $0.name == "DB Hammer Curl" }!
-        #expect(rebuilt.rows.count == 2)
+        let rebuilt = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
+        #expect(rebuilt.rows.count == 4)
         // The logged row is still LAST, not promoted to the front.
-        #expect(rebuilt.rows.last?.id == ids[2])
+        #expect(rebuilt.rows.last?.id == ids[4])
         #expect(rebuilt.rows.first?.id == ids[0])
     }
 
@@ -191,5 +199,161 @@ struct LoggerModelTests {
         log(model, "DB Shoulder Press", sets: 3)
         #expect(model.currentSet?.exercise.name == "Single Arm Lateral Raise (Cable)")
         #expect(model.currentSet?.total == 5)
+    }
+
+    // ── The seed (P3 E4) ────────────────────────────────────────────────────
+
+    @Test("with no store, the deck opens on the program's cold start and says nothing about a previous set")
+    func coldStartHasNoPrevious() {
+        let model = armsBulk()
+        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        #expect(press.rows.count == 3)
+        #expect(press.rows.allSatisfy { $0.weightKg == 28 })
+        // The rep FLOOR, not the ceiling: the floor is what you walk up to.
+        #expect(press.rows.allSatisfy { $0.reps == 8 })
+        // ── THE WHOLE OF THE OLD BUG ────────────────────────────────────────
+        // This used to read "28kg × 8" — the program's July seed, printed as
+        // though it were the last set performed. Nothing was logged, so there
+        // is no previous set, and the honest answer is nothing at all.
+        #expect(press.rows.allSatisfy { $0.previous == nil })
+        #expect(press.rows.allSatisfy { !$0.progressed && !$0.rpeStale })
+        #expect(model.seededFrom(press) == nil)
+    }
+
+    @Test("a movement the program prescribes no load for seeds nil, not zero")
+    func nilLoadIsNotZero() {
+        let model = LoggerModel(day: Program.onyx5.day(key: "legs_b")!, phase: .cut)
+        let raise = model.exercises.first { $0.name == "Hanging Knee Raise" }!
+        #expect(raise.rows[0].weightKg == nil)
+    }
+
+    // ── The session clock (P3 E4) ───────────────────────────────────────────
+
+    @Test("pause stops the clock and resume starts it again")
+    func pauseStopsTheClock() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        #expect(model.isPaused == false)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
+
+        model.pause(at: start.addingTimeInterval(600))
+        #expect(model.isPaused)
+        // Ten minutes in, paused: the number stops moving however long you wait.
+        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(3_000)) == 600)
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(3_000)) == 2_400)
+
+        model.resume(at: start.addingTimeInterval(3_000))
+        #expect(model.isPaused == false)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(3_600)) == 1_200)
+    }
+
+    @Test("pausing twice does not bank the interval twice")
+    func doublePauseIsIdempotent() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        model.pause(at: start.addingTimeInterval(60))
+        model.pause(at: start.addingTimeInterval(120))
+        model.resume(at: start.addingTimeInterval(180))
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+        // A stray resume is not an interval either.
+        model.resume(at: start.addingTimeInterval(240))
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+    }
+
+    @Test("the clock never runs backwards")
+    func clockNeverNegative() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(-600)) == 0)
+    }
+
+    // ── Live records (P3 E4) ────────────────────────────────────────────────
+
+    @Test("with no store there are no baselines, so nothing claims a record")
+    func previewsClaimNoRecords() {
+        // The engine runs against `PrBaselines.empty` in previews. An empty bar
+        // is not "everything is a record": `PrTruth.floor` and the engine's own
+        // eligibility rules still gate it, and the count that matters is the one
+        // the ledger will write.
+        let model = armsBulk()
+        log(model, "DB Shoulder Press", sets: 1)
+        #expect(model.recordCount == model.prsThisSession)
+    }
+
+    // ── The deck the seed builds, against a real store ──────────────────────
+
+    /// One finished Upper A on `date`, with a warm-up and three working sets of
+    /// Face Pull.
+    private func seeded(_ date: String) throws -> AppDatabase {
+        let db = try AppDatabase.inMemory(deviceId: "test")
+        let id = LoggerModel.exerciseId("Face Pull")
+        try db.seedRows { conn in
+            try Exercise(id: id, name: "Face Pull").insert(conn)
+            try WorkoutSession(
+                id: "s1", userId: "u1", dayKey: "cb_a", date: date,
+                startedAt: LogicalDay.date(fromISO: date)
+            ).insert(conn)
+            try WorkoutSet(id: "w", sessionId: "s1", exerciseId: id, setIndex: 1,
+                           weightKg: 5, reps: 15, setType: "warmup").insert(conn)
+            for i in 0..<3 {
+                try WorkoutSet(id: "n\(i)", sessionId: "s1", exerciseId: id, setIndex: i + 2,
+                               weightKg: 16.25, reps: 15 - i).insert(conn)
+            }
+        }
+        return db
+    }
+
+    @Test("the deck opens on the last session's numbers, warm-up included")
+    func seedsFromHistory() throws {
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(face.rows.map(\.kind) == [.warmup, .normal, .normal, .normal])
+        #expect(face.rows.filter { $0.kind == .normal }.map(\.weightKg) == [16.25, 16.25, 16.25])
+        #expect(face.rows.filter { $0.kind == .normal }.map(\.reps) == [15, 14, 13])
+        #expect(model.seededFrom(face) == "2026-08-24")
+    }
+
+    @Test("the Previous column is about the right WORKING set, not the right row")
+    func previousIsWorkingOrdinal() throws {
+        // The seed carries a warm-up, so a row index counts one more than a
+        // working ordinal. Reading the labels off the row index shifts every
+        // one of them by the warm-up count.
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(face.rows[0].previous == "5kg × 15", "the warm-up's own set")
+        #expect(face.rows[1].previous == "16.25kg × 15")
+        #expect(face.rows[2].previous == "16.25kg × 14")
+        #expect(face.rows[3].previous == "16.25kg × 13")
+    }
+
+    @Test("a phase switch does not count ticked warm-ups against the prescription")
+    func warmupsAreNotPrescribed() throws {
+        // Upper A prescribes 3 working sets of Face Pull on a cut and 3 on a
+        // bulk, so `Single Arm Lateral Raise (Cable)` is the lift that trims —
+        // but the failure this guards is about the WARM-UP row, so Face Pull is
+        // the case: tick the warm-up and one working set, switch phase, and a
+        // rule that counts the warm-up sees 2 of 3 rather than 1 of 3.
+        let db = try seeded("2026-08-24")
+        let model = LoggerModel(
+            day: Program.onyx5.day(key: "cb_a")!, phase: .cut, store: db, userId: "u1"
+        )
+        let face = model.exercises.first { $0.name == "Face Pull" }!
+        for row in face.rows.prefix(2) {
+            row.reps = row.reps ?? 10
+            model.toggleDone(row, in: face)
+        }
+        model.phase = .bulk
+
+        let rebuilt = model.exercises.first { $0.name == "Face Pull" }!
+        #expect(rebuilt.rows.filter { $0.kind != .warmup }.count == 3,
+                "all three working sets survive; two of them are still to do")
+        #expect(rebuilt.rows.contains { $0.kind == .warmup }, "and the warm-up is not thrown away")
     }
 }

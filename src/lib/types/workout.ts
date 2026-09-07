@@ -58,6 +58,10 @@ export interface SaveWorkoutPayload {
   dayKey?: string               // HELIX-5 program-day identity (cb_a … legs_b)
   nextSessionFlag?: string
   sessionRpe?: number           // Borg CR10 session effort (1–10, 0.5 steps)
+  /** Minutes the session spent paused. `endedAt` already has them added back
+   *  on, so `save.ts` needs them stated to take them off `duration_min`. */
+  pausedMin?: number
+  metrics?: { durationMin?: number | null; avgBpm?: number | null; caloriesBurned?: number | null }
 }
 
 // Full 5-entry map — kept for history rendering (all historical split_day values)

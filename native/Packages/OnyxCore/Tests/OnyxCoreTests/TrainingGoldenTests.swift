@@ -94,6 +94,38 @@ struct CeilingsGoldenTests {
             #expect(Ceilings.timedProgressionVerdict(c.input.sessions, targetSec: c.input.ceiling) == c.expected, "timedProgressionVerdict — \(c.name)")
         }
     }
+
+    struct StepIn: Decodable { let kg: Double; let step: Double? }
+    struct SetsIn: Decodable { let sets: [WorkingSet] }
+
+    @Test("the stepper's steps, the effort ceiling and the snap match")
+    func stepsMatch() throws {
+        let fixture = try GoldenFixture<StepIn, Double>.load("load-steps")
+        // The constants are stated in the fixture's note, so the numbers
+        // themselves are pinned here against the TypeScript's own values.
+        #expect(Ceilings.loadSteps == [2.5, 1.25])
+        #expect(Ceilings.loadStepKg == Ceilings.loadSteps[0])
+        #expect(Ceilings.loadStepFineKg == Ceilings.loadSteps[Ceilings.loadSteps.count - 1])
+        #expect(Ceilings.progressionMaxRpe == 8.5)
+        for c in fixture.cases {
+            let got = c.input.step.map { Ceilings.roundToStep(c.input.kg, step: $0) }
+                ?? Ceilings.roundToStep(c.input.kg)
+            expectClose(got, c.expected, "roundToStep — \(c.name)")
+        }
+        // Not in the vector — `JSON.stringify` cannot carry NaN. Both sides
+        // hand a non-finite value straight back rather than producing one.
+        #expect(Ceilings.roundToStep(.nan).isNaN)
+        #expect(Ceilings.roundToStep(47, step: .nan) == 47)
+    }
+
+    @Test("underEffortCeiling matches — an unrated set passes")
+    func effortCeilingMatches() throws {
+        for c in try GoldenFixture<SetsIn, Bool>.load("effort-ceiling").cases {
+            #expect(Ceilings.underEffortCeiling(c.input.sets) == c.expected, "underEffortCeiling — \(c.name)")
+        }
+        // Not in the vector, same reason: a non-finite rating is no rating.
+        #expect(Ceilings.underEffortCeiling([WorkingSet(weightKg: 60, reps: 12, rpe: .nan)]))
+    }
 }
 
 @Suite("Effort — CR10, the ladder and the words")

@@ -1,0 +1,114 @@
+{
+  "module": "training/ceilings",
+  "fn": "underEffortCeiling",
+  "note": "True when no RATED working set is above 8.5. An unrated set (null, absent or non-finite) passes — most of the history is unrated and treating that as \"too hard\" would turn the cue off everywhere. Graded over workLoads, so a 0 kg row beside loaded work is dropped first.",
+  "cases": [
+    {
+      "name": "empty",
+      "input": {
+        "sets": []
+      },
+      "expected": true
+    },
+    {
+      "name": "unrated",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "null rated",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": null
+          }
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "at the ceiling",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": 8.5
+          }
+        ]
+      },
+      "expected": true
+    },
+    {
+      "name": "just over",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": 8.6
+          }
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "one over among many",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": 7
+          },
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "bodyweight over",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 16,
+            "rpe": 9
+          }
+        ]
+      },
+      "expected": false
+    },
+    {
+      "name": "a 0 kg row beside loaded work",
+      "input": {
+        "sets": [
+          {
+            "weightKg": 0,
+            "reps": 20,
+            "rpe": 10
+          },
+          {
+            "weightKg": 60,
+            "reps": 12,
+            "rpe": 8
+          }
+        ]
+      },
+      "expected": true
+    }
+  ]
+}

@@ -54,27 +54,12 @@ public enum PrRecorder {
         let name = try nameResolver(db)
         let exerciseIds = Set(sets.map(\.exerciseId))
 
-        // Every set this device holds for these movements EXCEPT this
-        // session's — see point 1 above.
-        let prior = try WorkoutSet
-            .filter(exerciseIds.contains(Column("exercise_id")))
-            .filter(Column("session_id") != sessionId)
-            .fetchAll(db)
-
         func floor(_ key: String) -> Double? {
             Ceilings.repWindow(for: name(key), dayKey: dayKey)?.floor
         }
 
-        let baselines = PrEngine.buildBaselines(
-            prior.map {
-                BaselineSetRow(
-                    key: $0.exerciseId, weightKg: $0.weightKg, reps: Double($0.reps),
-                    est1rm: $0.est1rmKg, setType: $0.setType,
-                    repFloor: floor($0.exerciseId), pairId: $0.pairId, side: $0.side
-                )
-            },
-            isTimed: { TimedExercise.isTimed(name($0)) },
-            floorFor: { PrTruth.floor(for: name($0)) }
+        let baselines = try baselines(
+            db, exerciseIds: exerciseIds, excluding: sessionId, dayKey: dayKey, name: name
         )
 
         let candidates = sets.enumerated().map { i, s in
@@ -121,6 +106,41 @@ public enum PrRecorder {
             }
         }
         return written
+    }
+
+    /// The bar every candidate is measured against.
+    ///
+    /// ── ONE BUILDER, TWO CALLERS, AND THAT IS THE POINT ─────────────────────
+    /// `record` uses it at close to write the ledger; the live logger uses it at
+    /// `attach` to light the trophy mid-set. A live badge computed from
+    /// different baselines than the ledger is a badge that fires on a set the
+    /// close then refuses to file — gold that means "this has never been beaten"
+    /// everywhere else in the app, appearing on a set that has.
+    ///
+    /// `excluding` is the session being judged. `save.ts` gets the exclusion for
+    /// free (it builds baselines before inserting), and both callers here have
+    /// the sets already in the store, so it has to be explicit: without it every
+    /// set is measured against itself and nothing is ever a record.
+    static func baselines(
+        _ db: Database, exerciseIds: Set<String>, excluding sessionId: String?,
+        dayKey: String?, name: @escaping (String) -> String
+    ) throws -> PrBaselines {
+        guard !exerciseIds.isEmpty else { return .empty }
+        var query = WorkoutSet.filter(exerciseIds.contains(Column("exercise_id")))
+        if let sessionId { query = query.filter(Column("session_id") != sessionId) }
+        let prior = try query.fetchAll(db)
+        return PrEngine.buildBaselines(
+            prior.map {
+                BaselineSetRow(
+                    key: $0.exerciseId, weightKg: $0.weightKg, reps: Double($0.reps),
+                    est1rm: $0.est1rmKg, setType: $0.setType,
+                    repFloor: Ceilings.repWindow(for: name($0.exerciseId), dayKey: dayKey)?.floor,
+                    pairId: $0.pairId, side: $0.side
+                )
+            },
+            isTimed: { TimedExercise.isTimed(name($0)) },
+            floorFor: { PrTruth.floor(for: name($0)) }
+        )
     }
 
     /// Replay every session this device holds, oldest first.
@@ -170,6 +190,27 @@ public enum PrRecorder {
 }
 
 extension AppDatabase {
+    /// The live logger's baselines: the bar the deck's ticked sets are measured
+    /// against, built by the same function that writes the ledger on close.
+    ///
+    /// `exerciseIds` are the deck's own ids (`ExerciseSlug.id`), which is what
+    /// the logger writes into `workout_sets` and therefore what the close path
+    /// will key on. A set logged on the WEB carries a catalogue uuid instead, so
+    /// its history is not in this bar — `PrTruth.floor`, folded in by
+    /// `buildBaselines`, is what keeps a return to an old load from reading as a
+    /// record anyway. Matching `record` exactly is the requirement; being
+    /// cleverer than it would light a trophy the close then refuses to file.
+    public func livePrBaselines(
+        exerciseIds: [String], excluding sessionId: String?, dayKey: String?
+    ) throws -> PrBaselines {
+        try writer.read { db in
+            let name = try PrRecorder.nameResolver(db)
+            return try PrRecorder.baselines(
+                db, exerciseIds: Set(exerciseIds), excluding: sessionId, dayKey: dayKey, name: name
+            )
+        }
+    }
+
     /// Replay the PR ledger over every session this device holds.
     ///
     /// The one-off for sessions logged before the recorder existed, and the

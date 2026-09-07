@@ -304,3 +304,97 @@ struct ClockGoldenTests {
         #expect(jsToFixed(-0.001, 2) == "-0.00")
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The session seed (P3 E4) — the three tiers, and the session list they and
+// `ProgressionQueue` share.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Suite("Session seed")
+struct SessionSeedGoldenTests {
+    struct SeedIn: Decodable {
+        let dayKey: String
+        let today: String
+        let phase: ProgramPhase
+        let sessions: [SeedSession]
+        let sets: [SeedSet]
+        let template: SeedTemplate?
+        let ready: [SeedProgression]?
+        let programId: String?
+    }
+
+    struct ListIn: Decodable { let sessions: [SeedSession]; let dayKey: String; let today: String }
+
+    @Test("buildSessionSeed matches — every tier, every filter")
+    func seedMatches() throws {
+        let fixture = try GoldenFixture<SeedIn, SessionSeed>.load("session-seed")
+        #expect(fixture.cases.count > 20)
+        for c in fixture.cases {
+            // The vector names the program by id; both sides hold ONYX-5
+            // byte-identically (`program-onyx5.json` holds them to it).
+            #expect(c.input.programId == nil || c.input.programId == Program.onyx5.id, "program — \(c.name)")
+            let seed = SessionSeedBuilder.build(
+                dayKey: c.input.dayKey, today: c.input.today, phase: c.input.phase,
+                sessions: c.input.sessions, sets: c.input.sets,
+                template: c.input.template, ready: c.input.ready ?? []
+            )
+            #expect(seed == c.expected, "sessionSeed — \(c.name)")
+        }
+    }
+
+    @Test("sessionsForSeed matches — the list the verdict and the seed share")
+    func listMatches() throws {
+        for c in try GoldenFixture<ListIn, [SeedSession]>.load("sessions-for-seed").cases {
+            let got = SessionSeedBuilder.sessionsForSeed(
+                c.input.sessions, dayKey: c.input.dayKey, today: c.input.today
+            )
+            #expect(got == c.expected, "sessionsForSeed — \(c.name)")
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session duration (P3 E4) — the rule the 385-minute session was missing.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Suite("Session duration")
+struct SessionDurationGoldenTests {
+    struct DurIn: Decodable {
+        let startedAt: String
+        let endedAt: String
+        let pausedSec: Double
+        let pausedBeforeLastSetSec: Double
+        let lastSetAt: String?
+        let restTargetSec: Double?
+    }
+
+    /// `Date.parse` in JavaScript, for the instants the vector carries. An
+    /// unparseable string is nil on both sides.
+    static func parse(_ iso: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: iso) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: iso)
+    }
+
+    @Test("sessionDuration matches — the pause comes off and a long idle is not training")
+    func matches() throws {
+        let fixture = try GoldenFixture<DurIn, SessionDurationResult>.load("session-duration")
+        #expect(fixture.cases.count > 100)
+        for c in fixture.cases {
+            let got = SessionDuration.compute(
+                startedAt: Self.parse(c.input.startedAt),
+                endedAt: Self.parse(c.input.endedAt),
+                pausedSec: c.input.pausedSec,
+                pausedBeforeLastSetSec: c.input.pausedBeforeLastSetSec,
+                lastSetAt: c.input.lastSetAt.flatMap(Self.parse),
+                restTargetSec: c.input.restTargetSec
+            )
+            expectClose(got.minutes, c.expected.minutes, "minutes — \(c.name)")
+            expectClose(got.pausedMin, c.expected.pausedMin, "pausedMin — \(c.name)")
+            expectClose(got.idleMin, c.expected.idleMin, "idleMin — \(c.name)")
+            #expect(got.capped == c.expected.capped, "capped — \(c.name)")
+        }
+    }
+}

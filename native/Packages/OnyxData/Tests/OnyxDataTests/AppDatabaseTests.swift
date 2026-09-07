@@ -164,6 +164,89 @@ struct AppDatabaseTests {
         #expect(columns.contains("pair_id"))
         #expect(!columns.contains("weightKg"))
     }
+
+    // ── Duration: the pause comes off, and a long idle is not training ──────
+
+    @Test("closeSession subtracts the pause")
+    func closeSubtractsPause() throws {
+        let db = try seededDatabase()
+        let started = Date(timeIntervalSince1970: 1_757_000_000)
+        try db.writer.write { conn in
+            try conn.execute(
+                sql: "UPDATE workout_sessions SET started_at = ? WHERE id = ?",
+                arguments: [started, "s1"]
+            )
+        }
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 1, weightKg: 60, reps: 8
+        ))
+        try db.pauseSession("s1")
+        // The pause is measured from the event's own wall stamp, so the two
+        // clock events are rewritten to a known interval.
+        try db.writer.write { conn in
+            try conn.execute(
+                sql: "UPDATE set_events SET created_at = ? WHERE kind = 'pause'",
+                arguments: [started.addingTimeInterval(10 * 60)]
+            )
+        }
+        try db.resumeSession("s1")
+        try db.writer.write { conn in
+            try conn.execute(
+                sql: "UPDATE set_events SET created_at = ? WHERE kind = 'resume'",
+                arguments: [started.addingTimeInterval(40 * 60)]
+            )
+        }
+        #expect(try db.pausedSeconds(sessionId: "s1", now: started) == 30 * 60)
+
+        let closed = try db.closeSession(id: "s1", endedAt: started.addingTimeInterval(90 * 60))
+        // 90 minutes of clock, 30 of them paused. The append's own stamp is the
+        // real `Date()` and therefore outside `[started, ended]`, so the
+        // long-idle guard has no last set to reason about and stays out of it —
+        // which is the behaviour a session whose events predate this rule needs.
+        #expect(closed?.durationMin == 60)
+    }
+
+    @Test("a deck left open for hours records the work, not the wall clock")
+    func longIdleIsNotTraining() throws {
+        // The Sept 6 shape, on the phone: an hour of work, committed at 17:12.
+        let db = try seededDatabase()
+        let started = Date(timeIntervalSince1970: 1_757_000_000)
+        try db.writer.write { conn in
+            try conn.execute(
+                sql: "UPDATE workout_sessions SET started_at = ? WHERE id = ?",
+                arguments: [started, "s1"]
+            )
+        }
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 1, weightKg: 60, reps: 8
+        ))
+        try db.writer.write { conn in
+            try conn.execute(
+                sql: "UPDATE set_events SET created_at = ? WHERE kind = 'append'",
+                arguments: [started.addingTimeInterval(60 * 60)]
+            )
+        }
+        let closed = try db.closeSession(
+            id: "s1", endedAt: started.addingTimeInterval(386 * 60), restTargetSec: 120
+        )
+        // Not 386. The work (60) plus one rest (2).
+        #expect(closed?.durationMin == 62)
+    }
+
+    @Test("a pause event is not queued for upload")
+    func clockEventsStayLocal() throws {
+        // `set_events` is local-only and the drainer reconciles ROWS: a queued
+        // clock event would make it send a delete for an id that is not a set.
+        let db = try seededDatabase()
+        try db.appendSet(sessionId: "s1", setId: "set-1", SetSnapshot(
+            exerciseId: "ex-squat", setIndex: 1, weightKg: 60, reps: 8
+        ))
+        let before = try db.writer.read { conn in try OutboxItem.fetchCount(conn) }
+        try db.pauseSession("s1")
+        try db.resumeSession("s1")
+        #expect(try db.writer.read { conn in try OutboxItem.fetchCount(conn) } == before)
+        #expect(try db.setEvents(sessionId: "s1").count == 3, "the events are still in the log")
+    }
 }
 
 @Suite("Keychain session storage")

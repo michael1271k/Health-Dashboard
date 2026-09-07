@@ -1,7 +1,7 @@
 {
   "module": "training/ceilings",
   "fn": "progressionVerdict",
-  "note": "Newest LAST. Both of the last two cleared (topLoadCleared) → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no.",
+  "note": "Newest LAST. Both of the last two cleared → ready with top + 2.5 kg (null at 0 kg); newest only → one-more; else no. null ceiling → no. Cleared = topLoadCleared AND underEffortCeiling: one load, ≥ 2 working sets, all at the rep ceiling, and no set RATED above 8.5 — an unrated set (rpe null/absent) passes, and workLoads drops 0 kg rows once any set carried load.",
   "cases": [
     {
       "name": "clean65 alone @12",
@@ -8557,6 +8557,2078 @@
         "state": "ready",
         "ceiling": 20,
         "suggestKg": 7.8
+      }
+    },
+    {
+      "name": "rpe unrated then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe unrated then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe unrated then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe unrated then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe unrated then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe unrated then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe unrated then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe easy then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe easy then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe easy then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe easy then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe easy then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe easy then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe easy then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe at the ceiling then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe at the ceiling then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe at the ceiling then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe at the ceiling then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe at the ceiling then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe at the ceiling then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe at the ceiling then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe one over then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, under then unrated @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe half rated, under then easy @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe half rated, under then at the ceiling @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe half rated, under then one over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, under then all over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, under then half rated, half over @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, under then half rated, under @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
+      }
+    },
+    {
+      "name": "rpe unrated alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe easy alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 7
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe at the ceiling alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8.5
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe one over alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe all over alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9.5
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 10
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, half over alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "rpe half rated, under alone @15",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": null
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "one-more",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "bodyweight rated over the ceiling",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 16,
+              "rpe": 9
+            },
+            {
+              "weightKg": 0,
+              "reps": 16,
+              "rpe": 9
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 16,
+              "rpe": 9
+            },
+            {
+              "weightKg": 0,
+              "reps": 16,
+              "rpe": 9
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "no",
+        "ceiling": 15,
+        "suggestKg": null
+      }
+    },
+    {
+      "name": "a 0 kg row beside loaded work is not graded",
+      "input": {
+        "sessions": [
+          [
+            {
+              "weightKg": 0,
+              "reps": 20,
+              "rpe": 10
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ],
+          [
+            {
+              "weightKg": 0,
+              "reps": 20,
+              "rpe": 10
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            },
+            {
+              "weightKg": 65,
+              "reps": 15,
+              "rpe": 8
+            }
+          ]
+        ],
+        "ceiling": 15
+      },
+      "expected": {
+        "state": "ready",
+        "ceiling": 15,
+        "suggestKg": 67.5
       }
     }
   ]

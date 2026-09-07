@@ -1,0 +1,559 @@
+{
+  "module": "training/ceilings",
+  "fn": "LOAD_STEPS_KG / PROGRESSION_MAX_RPE / roundToStep",
+  "note": "The stepper's two steps are [2.5,1.25] — coarse first, and the first IS the progression jump (2.5). roundToStep snaps to the FINEST step by default (1.25) and keeps two decimals; a non-finite or non-positive step hands the value back untouched. The effort ceiling a progression may be earned at is 8.5, and an unrated set passes it.",
+  "cases": [
+    {
+      "name": "0 @ 2.5",
+      "input": {
+        "kg": 0,
+        "step": 2.5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ 2.5",
+      "input": {
+        "kg": 1.24,
+        "step": 2.5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.25 @ 2.5",
+      "input": {
+        "kg": 1.25,
+        "step": 2.5
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "1.875 @ 2.5",
+      "input": {
+        "kg": 1.875,
+        "step": 2.5
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "2.5 @ 2.5",
+      "input": {
+        "kg": 2.5,
+        "step": 2.5
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "13.75 @ 2.5",
+      "input": {
+        "kg": 13.75,
+        "step": 2.5
+      },
+      "expected": 15
+    },
+    {
+      "name": "13.8 @ 2.5",
+      "input": {
+        "kg": 13.8,
+        "step": 2.5
+      },
+      "expected": 15
+    },
+    {
+      "name": "47 @ 2.5",
+      "input": {
+        "kg": 47,
+        "step": 2.5
+      },
+      "expected": 47.5
+    },
+    {
+      "name": "49.5 @ 2.5",
+      "input": {
+        "kg": 49.5,
+        "step": 2.5
+      },
+      "expected": 50
+    },
+    {
+      "name": "62.4999 @ 2.5",
+      "input": {
+        "kg": 62.4999,
+        "step": 2.5
+      },
+      "expected": 62.5
+    },
+    {
+      "name": "-3.1 @ 2.5",
+      "input": {
+        "kg": -3.1,
+        "step": 2.5
+      },
+      "expected": -2.5
+    },
+    {
+      "name": "0 @ 1.25",
+      "input": {
+        "kg": 0,
+        "step": 1.25
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ 1.25",
+      "input": {
+        "kg": 1.24,
+        "step": 1.25
+      },
+      "expected": 1.25
+    },
+    {
+      "name": "1.25 @ 1.25",
+      "input": {
+        "kg": 1.25,
+        "step": 1.25
+      },
+      "expected": 1.25
+    },
+    {
+      "name": "1.875 @ 1.25",
+      "input": {
+        "kg": 1.875,
+        "step": 1.25
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "2.5 @ 1.25",
+      "input": {
+        "kg": 2.5,
+        "step": 1.25
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "13.75 @ 1.25",
+      "input": {
+        "kg": 13.75,
+        "step": 1.25
+      },
+      "expected": 13.75
+    },
+    {
+      "name": "13.8 @ 1.25",
+      "input": {
+        "kg": 13.8,
+        "step": 1.25
+      },
+      "expected": 13.75
+    },
+    {
+      "name": "47 @ 1.25",
+      "input": {
+        "kg": 47,
+        "step": 1.25
+      },
+      "expected": 47.5
+    },
+    {
+      "name": "49.5 @ 1.25",
+      "input": {
+        "kg": 49.5,
+        "step": 1.25
+      },
+      "expected": 50
+    },
+    {
+      "name": "62.4999 @ 1.25",
+      "input": {
+        "kg": 62.4999,
+        "step": 1.25
+      },
+      "expected": 62.5
+    },
+    {
+      "name": "-3.1 @ 1.25",
+      "input": {
+        "kg": -3.1,
+        "step": 1.25
+      },
+      "expected": -2.5
+    },
+    {
+      "name": "0 @ 0.5",
+      "input": {
+        "kg": 0,
+        "step": 0.5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ 0.5",
+      "input": {
+        "kg": 1.24,
+        "step": 0.5
+      },
+      "expected": 1
+    },
+    {
+      "name": "1.25 @ 0.5",
+      "input": {
+        "kg": 1.25,
+        "step": 0.5
+      },
+      "expected": 1.5
+    },
+    {
+      "name": "1.875 @ 0.5",
+      "input": {
+        "kg": 1.875,
+        "step": 0.5
+      },
+      "expected": 2
+    },
+    {
+      "name": "2.5 @ 0.5",
+      "input": {
+        "kg": 2.5,
+        "step": 0.5
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "13.75 @ 0.5",
+      "input": {
+        "kg": 13.75,
+        "step": 0.5
+      },
+      "expected": 14
+    },
+    {
+      "name": "13.8 @ 0.5",
+      "input": {
+        "kg": 13.8,
+        "step": 0.5
+      },
+      "expected": 14
+    },
+    {
+      "name": "47 @ 0.5",
+      "input": {
+        "kg": 47,
+        "step": 0.5
+      },
+      "expected": 47
+    },
+    {
+      "name": "49.5 @ 0.5",
+      "input": {
+        "kg": 49.5,
+        "step": 0.5
+      },
+      "expected": 49.5
+    },
+    {
+      "name": "62.4999 @ 0.5",
+      "input": {
+        "kg": 62.4999,
+        "step": 0.5
+      },
+      "expected": 62.5
+    },
+    {
+      "name": "-3.1 @ 0.5",
+      "input": {
+        "kg": -3.1,
+        "step": 0.5
+      },
+      "expected": -3
+    },
+    {
+      "name": "0 @ 5",
+      "input": {
+        "kg": 0,
+        "step": 5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ 5",
+      "input": {
+        "kg": 1.24,
+        "step": 5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.25 @ 5",
+      "input": {
+        "kg": 1.25,
+        "step": 5
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.875 @ 5",
+      "input": {
+        "kg": 1.875,
+        "step": 5
+      },
+      "expected": 0
+    },
+    {
+      "name": "2.5 @ 5",
+      "input": {
+        "kg": 2.5,
+        "step": 5
+      },
+      "expected": 5
+    },
+    {
+      "name": "13.75 @ 5",
+      "input": {
+        "kg": 13.75,
+        "step": 5
+      },
+      "expected": 15
+    },
+    {
+      "name": "13.8 @ 5",
+      "input": {
+        "kg": 13.8,
+        "step": 5
+      },
+      "expected": 15
+    },
+    {
+      "name": "47 @ 5",
+      "input": {
+        "kg": 47,
+        "step": 5
+      },
+      "expected": 45
+    },
+    {
+      "name": "49.5 @ 5",
+      "input": {
+        "kg": 49.5,
+        "step": 5
+      },
+      "expected": 50
+    },
+    {
+      "name": "62.4999 @ 5",
+      "input": {
+        "kg": 62.4999,
+        "step": 5
+      },
+      "expected": 60
+    },
+    {
+      "name": "-3.1 @ 5",
+      "input": {
+        "kg": -3.1,
+        "step": 5
+      },
+      "expected": -5
+    },
+    {
+      "name": "0 @ 0",
+      "input": {
+        "kg": 0,
+        "step": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ 0",
+      "input": {
+        "kg": 1.24,
+        "step": 0
+      },
+      "expected": 1.24
+    },
+    {
+      "name": "1.25 @ 0",
+      "input": {
+        "kg": 1.25,
+        "step": 0
+      },
+      "expected": 1.25
+    },
+    {
+      "name": "1.875 @ 0",
+      "input": {
+        "kg": 1.875,
+        "step": 0
+      },
+      "expected": 1.875
+    },
+    {
+      "name": "2.5 @ 0",
+      "input": {
+        "kg": 2.5,
+        "step": 0
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "13.75 @ 0",
+      "input": {
+        "kg": 13.75,
+        "step": 0
+      },
+      "expected": 13.75
+    },
+    {
+      "name": "13.8 @ 0",
+      "input": {
+        "kg": 13.8,
+        "step": 0
+      },
+      "expected": 13.8
+    },
+    {
+      "name": "47 @ 0",
+      "input": {
+        "kg": 47,
+        "step": 0
+      },
+      "expected": 47
+    },
+    {
+      "name": "49.5 @ 0",
+      "input": {
+        "kg": 49.5,
+        "step": 0
+      },
+      "expected": 49.5
+    },
+    {
+      "name": "62.4999 @ 0",
+      "input": {
+        "kg": 62.4999,
+        "step": 0
+      },
+      "expected": 62.4999
+    },
+    {
+      "name": "-3.1 @ 0",
+      "input": {
+        "kg": -3.1,
+        "step": 0
+      },
+      "expected": -3.1
+    },
+    {
+      "name": "0 @ -1",
+      "input": {
+        "kg": 0,
+        "step": -1
+      },
+      "expected": 0
+    },
+    {
+      "name": "1.24 @ -1",
+      "input": {
+        "kg": 1.24,
+        "step": -1
+      },
+      "expected": 1.24
+    },
+    {
+      "name": "1.25 @ -1",
+      "input": {
+        "kg": 1.25,
+        "step": -1
+      },
+      "expected": 1.25
+    },
+    {
+      "name": "1.875 @ -1",
+      "input": {
+        "kg": 1.875,
+        "step": -1
+      },
+      "expected": 1.875
+    },
+    {
+      "name": "2.5 @ -1",
+      "input": {
+        "kg": 2.5,
+        "step": -1
+      },
+      "expected": 2.5
+    },
+    {
+      "name": "13.75 @ -1",
+      "input": {
+        "kg": 13.75,
+        "step": -1
+      },
+      "expected": 13.75
+    },
+    {
+      "name": "13.8 @ -1",
+      "input": {
+        "kg": 13.8,
+        "step": -1
+      },
+      "expected": 13.8
+    },
+    {
+      "name": "47 @ -1",
+      "input": {
+        "kg": 47,
+        "step": -1
+      },
+      "expected": 47
+    },
+    {
+      "name": "49.5 @ -1",
+      "input": {
+        "kg": 49.5,
+        "step": -1
+      },
+      "expected": 49.5
+    },
+    {
+      "name": "62.4999 @ -1",
+      "input": {
+        "kg": 62.4999,
+        "step": -1
+      },
+      "expected": 62.4999
+    },
+    {
+      "name": "-3.1 @ -1",
+      "input": {
+        "kg": -3.1,
+        "step": -1
+      },
+      "expected": -3.1
+    },
+    {
+      "name": "13.8 default step",
+      "input": {
+        "kg": 13.8,
+        "step": null
+      },
+      "expected": 13.75
+    },
+    {
+      "name": "47.4 default step",
+      "input": {
+        "kg": 47.4,
+        "step": null
+      },
+      "expected": 47.5
+    },
+    {
+      "name": "0 default step",
+      "input": {
+        "kg": 0,
+        "step": null
+      },
+      "expected": 0
+    }
+  ]
+}

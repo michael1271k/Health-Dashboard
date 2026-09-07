@@ -34,6 +34,10 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         case amend(SetPatch)
         /// The set was deleted. Terminal: nothing resurrects a voided set.
         case void
+        /// The session clock stopped. Not about a set at all — see `Kind`.
+        case pause
+        /// The session clock started again.
+        case resume
 
         // ── THE WIRE SHAPE IS OURS, NOT THE COMPILER'S ──────────────────────
         // Synthesised `Codable` on an enum with associated values emits
@@ -54,6 +58,8 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
             case .append: self = .append(try container.decode(SetSnapshot.self, forKey: .payload))
             case .amend: self = .amend(try container.decode(SetPatch.self, forKey: .payload))
             case .void: self = .void
+            case .pause: self = .pause
+            case .resume: self = .resume
             }
         }
 
@@ -68,6 +74,10 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
                 try container.encode(patch, forKey: .payload)
             case .void:
                 try container.encode(Kind.void, forKey: .kind)
+            case .pause:
+                try container.encode(Kind.pause, forKey: .kind)
+            case .resume:
+                try container.encode(Kind.resume, forKey: .kind)
             }
         }
     }
@@ -80,6 +90,43 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         case append
         case amend
         case void
+        /// The session clock stopped, and started again.
+        ///
+        /// ── WHY THE CLOCK IS IN THE SAME LOG AS THE SETS ────────────────────
+        /// A pause is a fact about a session, produced by one of two devices,
+        /// that has to survive the app being killed and has to merge without a
+        /// last-writer-wins fight — which is the whole of the argument at the
+        /// top of this file. Giving it its own table would be a second merge
+        /// rule for the same problem, and `set_events` is local-only, so
+        /// nothing about it reaches a schema the server has an opinion on.
+        ///
+        /// These carry NO payload and no set. `setId` holds the SESSION's id —
+        /// a value no real set can collide with (set ids are `newOnyxID()`) —
+        /// so the column stays NOT NULL and the fold can recognise them without
+        /// decoding a blob. `SetEventFold` skips them, and `EventStore.commit`
+        /// keeps them out of the outbox: `duration_min` is what reaches the
+        /// server, not the clock that produced it.
+        case pause
+        case resume
+
+        /// True for the two kinds that are about the session's clock rather
+        /// than about a set.
+        public var isClock: Bool { self == .pause || self == .resume }
+
+        // ── ADDING A KIND IS A ONE-WAY DOOR, AND THIS ONE WAS TAKEN ─────────
+        // `Body.init(from:)` decodes this enum and switches on it with no
+        // fallback, so a build that predates a kind cannot decode a row that
+        // carries it — and `reproject` runs inside `commit`'s transaction, so
+        // the failure is not "one row is skipped", it is "no further set can be
+        // logged into that session at all".
+        //
+        // That is fine going forward (this build reads every kind it can write)
+        // and it is a real hazard BACKWARD: rolling the app back past P3 E4
+        // leaves any session that was ever paused unloggable until the store is
+        // reset. The alternative — a tolerant decoder — cannot help, because
+        // the build that needs the tolerance is the one already shipped. The
+        // next kind added here should come with a `Kind` fallback FIRST, in a
+        // release before the one that writes it.
     }
 
     /// This event's own identity. Two devices never generate the same one, so
@@ -120,6 +167,8 @@ public struct SetEvent: Codable, Identifiable, Sendable, Equatable {
         case .append: .append
         case .amend: .amend
         case .void: .void
+        case .pause: .pause
+        case .resume: .resume
         }
     }
 

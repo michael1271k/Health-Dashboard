@@ -19,6 +19,8 @@ private func event(
     let body: SetEvent.Body = switch kind {
     case "append": .append(snapshot ?? SetSnapshot(exerciseId: "bench", setIndex: 1, weightKg: 60, reps: 8))
     case "amend": .amend(patch ?? SetPatch(reps: 10))
+    case "pause": .pause
+    case "resume": .resume
     default: .void
     }
     return SetEvent(
@@ -333,3 +335,93 @@ struct SetEventFoldTests {
 // The clock's real behaviour is covered by `EventStoreTests.clockAdvances`,
 // `clockPersists` and `ingestAdvancesClock`, against the implementation that
 // actually runs.
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The session clock rides the same log (P3 E4). Rule 6: the fold skips it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+private func clock(_ kind: String, seq: Int64, at: Date, device: String = "phone") -> SetEvent {
+    SetEvent(
+        id: "\(device)-\(seq)-\(kind)", sessionId: "s1", setId: "s1",
+        deviceId: device, seq: seq, createdAt: at,
+        body: kind == "pause" ? .pause : .resume
+    )
+}
+
+@Suite("Session clock events")
+struct SessionClockEventTests {
+    private let t0 = Date(timeIntervalSince1970: 1_757_000_000)
+    private func at(_ minutes: Double) -> Date { t0.addingTimeInterval(minutes * 60) }
+
+    @Test("a pause is not a set — the fold ignores it")
+    func foldSkipsClockEvents() {
+        let sets = fold([
+            event("append", set: "a", seq: 1),
+            clock("pause", seq: 2, at: at(5)),
+            clock("resume", seq: 3, at: at(10)),
+        ])
+        #expect(sets.count == 1)
+        #expect(sets[0].id == "a")
+    }
+
+    @Test("a store written by an older build simply has none of them")
+    func olderStoreIsFine() {
+        // The tolerance the migration needs: no `pause` row means no pause, not
+        // a decode failure. Nothing here is optional-chained on the kind.
+        #expect(AppDatabase.pausedSeconds([event("append", set: "a", seq: 1)], now: at(30)) == 0)
+        #expect(AppDatabase.isPaused([event("append", set: "a", seq: 1)]) == false)
+    }
+
+    @Test("closed pauses add up")
+    func closedPauses() {
+        let events = [
+            clock("pause", seq: 1, at: at(5)), clock("resume", seq: 2, at: at(12)),
+            clock("pause", seq: 3, at: at(20)), clock("resume", seq: 4, at: at(23)),
+        ]
+        #expect(AppDatabase.pausedSeconds(events, now: at(60)) == 10 * 60)
+        #expect(AppDatabase.isPaused(events) == false)
+    }
+
+    @Test("an open pause counts up to now")
+    func openPause() {
+        let events = [clock("pause", seq: 1, at: at(5))]
+        #expect(AppDatabase.pausedSeconds(events, now: at(20)) == 15 * 60)
+        #expect(AppDatabase.isPaused(events))
+    }
+
+    @Test("a double pause banks the interval once")
+    func doublePause() {
+        // Two taps, or two devices pausing at the same moment. Counting from
+        // the SECOND would silently shorten the pause.
+        let events = [
+            clock("pause", seq: 1, at: at(5)),
+            clock("pause", seq: 2, at: at(9)),
+            clock("resume", seq: 3, at: at(15)),
+        ]
+        #expect(AppDatabase.pausedSeconds(events, now: at(60)) == 10 * 60)
+    }
+
+    @Test("a resume with no pause is not an interval")
+    func strayResume() {
+        #expect(AppDatabase.pausedSeconds([clock("resume", seq: 1, at: at(5))], now: at(60)) == 0)
+    }
+
+    @Test("a clock that stepped backwards cannot shorten the session")
+    func negativeInterval() {
+        let events = [clock("pause", seq: 1, at: at(20)), clock("resume", seq: 2, at: at(5))]
+        #expect(AppDatabase.pausedSeconds(events, now: at(60)) == 0)
+    }
+
+    @Test("the order is the Lamport clock, not the wall clock")
+    func lamportOrder() {
+        // The resume was WRITTEN second and stamped earlier — an NTP step on the
+        // other device. Sorting by `createdAt` would pair the wrong two events.
+        let events = [
+            clock("resume", seq: 4, at: at(3), device: "watch"),
+            clock("pause", seq: 2, at: at(10)),
+        ]
+        #expect(AppDatabase.pausedSeconds(events, now: at(60)) == 0)
+        #expect(AppDatabase.isPaused(events) == false)
+    }
+}
