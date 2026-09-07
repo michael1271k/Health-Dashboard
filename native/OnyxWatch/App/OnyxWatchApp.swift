@@ -33,7 +33,24 @@ struct OnyxWatchApp: App {
                 // all things that should be cancelled if the view goes away
                 // before they finish, and `start()` is idempotent so a second
                 // appearance costs nothing.
-                .task { model.start() }
+                .task {
+                    model.start()
+                    #if DEBUG
+                    // ── THE SHOT LOOP'S ONE HOOK ────────────────────────────
+                    // `ONYX_WATCH_AUTOSTART=1` in the launch environment
+                    // (`SIMCTL_CHILD_ONYX_WATCH_AUTOSTART` through simctl)
+                    // opens the session on appearing, so a screenshot can reach
+                    // `SetView` — the screen this whole client is about — on a
+                    // simulator that has no way to tap a button.
+                    //
+                    // Same convention as `ONYX_SESSION_FILE` on the phone:
+                    // DEBUG only, environment only, and it does exactly what
+                    // the Start button does rather than a special path.
+                    if ProcessInfo.processInfo.environment["ONYX_WATCH_AUTOSTART"] == "1" {
+                        model.beginSession()
+                    }
+                    #endif
+                }
         }
     }
 }

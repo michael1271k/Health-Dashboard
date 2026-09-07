@@ -82,11 +82,6 @@ struct StartView: View {
                         .foregroundStyle(WatchInk.primary)
                 }
 
-                NavigationLink { DashboardView() } label: {
-                    Label("Today", systemImage: "chart.bar.fill")
-                        .font(WatchType.label)
-                }
-                .tint(WatchInk.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -107,6 +102,21 @@ struct StartView: View {
         }
         .containerBackground(WatchInk.ground, for: .navigation)
         .navigationTitle("Onyx")
+        // ── THE DASHBOARD IS A TOOLBAR ITEM, NOT A SECOND BUTTON ────────────
+        // It was a filled `NavigationLink` under the copy, and the first 40 mm
+        // screenshot showed exactly why that was wrong: the pinned Start button
+        // sits in the bottom safe-area inset and drew straight over it. Even
+        // scrolled clear it was a second capsule competing with the one action
+        // this screen exists for.
+        //
+        // Same treatment as the deck list on `SetView`: a reference lives in the
+        // toolbar, and the screen keeps one button.
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { DashboardView() } label: { Image(systemName: "chart.bar.fill") }
+                    .tint(WatchInk.secondary)
+            }
+        }
     }
 }
 

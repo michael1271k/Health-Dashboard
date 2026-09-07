@@ -52,7 +52,10 @@ struct RestView: View {
     }
 
     var body: some View {
-        ScrollView {
+        // Same shape as `SetView`, and for the same reason: an inset that does
+        // not reserve space draws the button over the countdown.
+        VStack(spacing: OnyxSpace.xs) {
+            ScrollView {
             VStack(spacing: OnyxSpace.s) {
                 clock
                 ladder
@@ -69,8 +72,9 @@ struct RestView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, OnyxSpace.s)
+            }
+            skip
         }
-        .safeAreaInset(edge: .bottom) { skip }
         .containerBackground(WatchInk.ground, for: .navigation)
         .dimmedWhenLuminanceReduced()
         .focusable()
@@ -155,7 +159,7 @@ struct RestView: View {
                 .minimumScaleFactor(0.8)
         }
         .padding(.vertical, OnyxSpace.xs)
-        .containerRelativeFrame(.horizontal)
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
                 .fill(chosen == nil ? WatchInk.fill : WatchInk.fillActive)

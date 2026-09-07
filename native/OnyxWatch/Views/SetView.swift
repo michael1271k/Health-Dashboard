@@ -55,7 +55,13 @@ struct SetView: View {
             }
         }
         .containerBackground(WatchInk.ground, for: .navigation)
-        .navigationTitle(model.day?.label ?? "Onyx")
+        // ── THE TITLE IS THE SET POSITION, NOT THE SPLIT ────────────────────
+        // "Legs & Core A" truncates to "Legs & Co" at 40 mm and tells you
+        // nothing you did not know — you started the workout. "Set 1 of 4" is
+        // the fact that changes, it fits, and moving it up here buys back the
+        // ~24 pt row that was pushing the load numeral off the bottom of the
+        // scroll view. Two problems, one line.
+        .navigationTitle(setTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if model.sessionId != nil {
@@ -85,7 +91,19 @@ struct SetView: View {
         // a `Spacer()` — a Spacer inside a ScrollView collapses to zero, which
         // is the trap that jams every element to the top the moment this is
         // wrapped.
-        ScrollView {
+        // ── THE BUTTON IS A SIBLING, NOT AN INSET ───────────────────────────
+        // This was `ScrollView { … }.safeAreaInset(edge: .bottom) { tick }`, and
+        // the first 40 mm screenshot showed the inset failing to reserve any
+        // space: the tick floated over the load numeral and the reps row, hiding
+        // the two values it exists to commit.
+        //
+        // A `VStack` with the scroll view above and the button below is
+        // deterministic. It keeps the property that mattered — the tick never
+        // scrolls away — and it keeps the Larger Text answer too, because the
+        // ScrollView still takes all the flexible height and scrolls; only the
+        // button is fixed, and a button is one line at any type size.
+        VStack(spacing: OnyxSpace.xs) {
+            ScrollView {
             VStack(alignment: .leading, spacing: OnyxSpace.s) {
                 Text(cursor.movement.plan.name)
                     // Two lines, not the phone's three: at 146 pt with Bold Text
@@ -96,12 +114,23 @@ struct SetView: View {
                     .lineLimit(2)
                     .allowsTightening(true)
 
-                Text("Set \(cursor.setNumber) of \(cursor.movement.plannedSets)")
-                    .font(WatchType.label)
-                    .foregroundStyle(WatchInk.secondary)
-
-                loadRow(model: model)
-                repsRow(model: model)
+                // ── ONE ROW, TWO FOCUSABLE VALUES ───────────────────────
+                // They were two stacked rows and the 40 mm screenshot showed
+                // the cost: ~193 pt of content in ~165 pt of space, so the load
+                // numeral was cut off by the bottom of the scroll view on first
+                // paint — the one number the screen exists to set.
+                //
+                // Side by side they cost one row instead of two, and they read
+                // as the set itself: `70 kg x 8`. The ring still says which one
+                // the Crown drives, which is the whole legibility argument.
+                HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.xs) {
+                    loadRow(model: model)
+                    Text("x")
+                        .font(WatchType.label)
+                        .foregroundStyle(WatchInk.secondary)
+                        .accessibilityHidden(true)
+                    repsRow(model: model)
+                }
 
                 // The one line from the phone's card worth its width here. It is
                 // the number the next set is actually chosen from — worth more,
@@ -114,9 +143,17 @@ struct SetView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            tick
         }
-        .safeAreaInset(edge: .bottom) { tick }
         .dimmedWhenLuminanceReduced()
+    }
+
+    /// What the navigation bar says. The split's name is not it — see the
+    /// comment on `.navigationTitle`.
+    private var setTitle: String {
+        guard let cursor = model.cursor else { return model.day?.label ?? "Onyx" }
+        return "Set \(cursor.setNumber) of \(cursor.movement.plannedSets)"
     }
 
     // MARK: - The two values
@@ -246,14 +283,20 @@ private struct ValueRow: View {
             Text(unit)
                 .font(WatchType.label)
                 .foregroundStyle(WatchInk.secondary)
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, OnyxSpace.s)
-        .padding(.vertical, OnyxSpace.xs)
-        // `containerRelativeFrame`, never a hardcoded `.frame(width:)`:
-        // watchOS does not clip an over-wide child and does not warn — it draws
-        // it off the display.
-        .containerRelativeFrame(.horizontal)
+        .padding(.horizontal, OnyxSpace.xs)
+        .padding(.vertical, 2)
+        // ── IT SIZES TO ITS CONTENT, AND THAT IS THE POINT ──────────────────
+        // Never a hardcoded `.frame(width:)`: watchOS does not clip an over-wide
+        // child and does not warn — it draws it off the display.
+        // `containerRelativeFrame(.horizontal)` was the first cure and it was
+        // the wrong one, because it measures the SCROLL VIEW rather than the
+        // padded content area, so the row came out wider than the space it had
+        // and the `kg` went past the right edge.
+        //
+        // Now that the load and the reps share a row, neither may claim the
+        // width: they take what they need, `minimumScaleFactor` absorbs a long
+        // load, and the HStack does the arranging.
         .background(
             RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
                 .fill(isFocused ? WatchInk.fillActive : WatchInk.fill)
