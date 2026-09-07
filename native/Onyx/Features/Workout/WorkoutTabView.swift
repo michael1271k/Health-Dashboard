@@ -132,7 +132,16 @@ struct WorkoutTabView: View {
         }
         .sheet(isPresented: $loggingCardio) {
             if let week {
-                CardioLogSheet(userId: week.userId, date: week.today, onSave: week.addCardio)
+                CardioLogSheet(
+                    userId: week.userId,
+                    date: week.today,
+                    // Today's rows are what an import is deduplicated against,
+                    // and the tab is already holding them for the cardio card.
+                    existing: week.snapshot.todayCardio,
+                    onSave: week.addCardio,
+                    bouts: { [environment] in await environment.cardioBouts(on: week.today) },
+                    lastBout: week.snapshot.lastCardio
+                )
             }
         }
         // Re-read on dismissal: a swap rewrites today's day key, which changes
@@ -709,15 +718,26 @@ struct WorkoutTabView: View {
 
     // MARK: - The door
 
+    /// Nothing at all once the day is logged.
+    ///
+    /// ── WHY `.done` HAS NO FOOTER, NOT EVEN A QUIET ONE ─────────────────────
+    /// It had a "Session complete" strip. The card above it already says the
+    /// session is done, already carries its tonnage and sets, and already links
+    /// to the summary — so the strip restated the card in words and cost a 44 pt
+    /// band plus the material bar behind it to do it. A footer that only ever
+    /// agrees with the thing above it is a footer that has stopped being a
+    /// control, and the founder has now asked for it gone twice.
+    ///
+    /// The whole band goes with it, material and hairline included: leaving the
+    /// bar with an empty `Group` inside would still paint a 26 pt strip of glass
+    /// across the bottom of the screen with nothing in it.
     @ViewBuilder
     private var footer: some View {
-        if today != nil {
+        if today != nil, !isDone {
             Group {
                 switch state {
                 case .done:
-                    // The card above already links to the summary; a second CTA
-                    // for the same destination is a box repeating the box above.
-                    doneStrip
+                    EmptyView()
                 case let .live(sets, volumeKg):
                     startButton(title: "Resume workout", detail: liveSummary(sets: sets, volumeKg: volumeKg), icon: "play.fill")
                 case .none:
@@ -734,19 +754,6 @@ struct WorkoutTabView: View {
                 Color.onyx.hairline.frame(height: 0.5)
             }
         }
-    }
-
-    private var doneStrip: some View {
-        HStack(spacing: OnyxSpace.s) {
-            Image(systemName: "checkmark.seal.fill")
-                .foregroundStyle(Color.onyx.good)
-            Text("Session complete")
-                .onyxType(.body)
-                .foregroundStyle(Color.onyx.textPrimary)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, minHeight: 44)
-        .accessibilityElement(children: .combine)
     }
 
     private func startButton(title: String, detail: String?, icon: String) -> some View {

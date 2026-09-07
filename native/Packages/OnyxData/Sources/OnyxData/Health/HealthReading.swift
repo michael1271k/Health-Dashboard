@@ -46,17 +46,57 @@ public extension HealthReading {
     func workouts(start: Date, end: Date) async throws -> [WorkoutSample] { [] }
 }
 
-/// One `HKWorkout`, reduced to what `SessionMetrics` needs.
+/// One `HKWorkout`, reduced to what `SessionMetrics` and the cardio import need.
+///
+/// ── WHY THIS GREW RATHER THAN THE PROTOCOL ──────────────────────────────────
+/// The cardio import wants a bout's distance, energy, heart rate and ascent.
+/// A second protocol method would have been the obvious place and would have
+/// had to be written five times — `HealthKitReader`, `NoHealth`, and three test
+/// doubles that care about none of it. Widening the VALUE the one existing
+/// method already returns costs those five nothing: every field is optional,
+/// the initialiser defaults them, and a double that constructs a sample the old
+/// way still compiles and still means what it meant.
 public struct WorkoutSample: Sendable, Equatable {
     public var start: Date
     public var end: Date
     /// Traditional or functional strength training. Decided by the reader,
     /// which is the only place that can name an `HKWorkoutActivityType`.
     public var isLifting: Bool
+    /// The `cardio_logs.kind` this bout would be filed under, or nil when it is
+    /// an activity the app does not offer. Also decided by the reader, for the
+    /// same reason `isLifting` is: `HKWorkoutActivityType` cannot be named
+    /// anywhere else.
+    public var cardioKind: String?
+    public var distanceM: Double?
+    public var activeKcal: Double?
+    public var avgHr: Double?
+    /// Metres climbed. Read from the workout's metadata and DISPLAYED ONLY —
+    /// `cardio_logs` has no column for it and is not getting one, so it lives
+    /// as long as the import card is on screen and no longer. See
+    /// `CardioImport` for why the table is closed to new columns.
+    public var elevationM: Double?
 
-    public init(start: Date, end: Date, isLifting: Bool) {
+    public init(
+        start: Date,
+        end: Date,
+        isLifting: Bool,
+        cardioKind: String? = nil,
+        distanceM: Double? = nil,
+        activeKcal: Double? = nil,
+        avgHr: Double? = nil,
+        elevationM: Double? = nil
+    ) {
         self.start = start
         self.end = end
         self.isLifting = isLifting
+        self.cardioKind = cardioKind
+        self.distanceM = distanceM
+        self.activeKcal = activeKcal
+        self.avgHr = avgHr
+        self.elevationM = elevationM
     }
+
+    /// Wall-clock minutes. The bout's own duration, not its active time — the
+    /// figure a person recognises when they compare it to what their watch said.
+    public var durationMin: Double { end.timeIntervalSince(start) / 60 }
 }

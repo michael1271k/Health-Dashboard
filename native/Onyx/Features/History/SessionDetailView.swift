@@ -352,8 +352,10 @@ struct SessionDetailView: View {
     private func meta(_ page: SessionAnalysis.Page) -> String {
         let session = page.report.session
         var parts: [String] = []
-        if let n = page.split.firstIndex(where: { $0.sessionId == session.id }) {
-            parts.append("#\(n + 1)")
+        // The CAREER number, not the split's — see `Page.careerIndex`. A
+        // session that recorded nothing carries no number rather than a zero.
+        if let n = page.careerIndex {
+            parts.append("#\(n)")
         }
         if let date = LogicalDay.date(fromISO: session.date) {
             parts.append(date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
@@ -677,6 +679,7 @@ struct SessionDetailView: View {
     /// scroll past, rather than a header, a gap, a card, a gap and a tag row.
     private func ledger(_ ex: SessionAnalysis.ExerciseReport) -> some View {
         let family = Self.family(ex.canonical)
+        let assist = Self.assisting(ex.canonical)
         return VStack(alignment: .leading, spacing: 0) {
             ledgerHeader(ex, family: family)
             ForEach(Array(ex.rows.enumerated()), id: \.offset) { index, row in
@@ -692,6 +695,10 @@ struct SessionDetailView: View {
             }
         }
         .onyxGlass(.tile)
+        // AFTER the glass: the wash is the card's own material showing through,
+        // not a panel floating on it. Header and rows are inside one modified
+        // view here, which is the whole point — see `OnyxMuscleWash`.
+        .onyxMuscleWash(family, secondary: assist)
         .id(ex.id)
         .plainRow(edgeToEdge: true)
     }
@@ -778,25 +785,14 @@ struct SessionDetailView: View {
         // `Color.onyx.muscle`, and this is the fourth surface answering the
         // same question — it takes the same colour or it is decoration.
         //
-        // A 22 %→0 gradient behind glass rather than a tinted panel, for the
-        // reason the title band states: a filled colour block makes the
-        // material under it read as a different surface and puts a hard edge
-        // across the page.
-        //
-        // No glass and no clip of its own any more: the band is the top of one
-        // card now, and a second material inside the card's own would be the
-        // "translucent surface on a translucent surface" `OnyxGlass` warns
-        // about. The card clips it.
-        .background {
-            LinearGradient(
-                colors: [family.opacity(0.28), family.opacity(0.04)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        }
-        // A leading rule in the muscle's hue: the one thing that survives the
-        // gradient being nearly invisible on a pale family, and what makes a
-        // scrolled ledger scannable by colour.
-        .overlay(alignment: .leading) { family.frame(width: 3) }
+        // ── THE BAND NO LONGER PAINTS ITSELF ───────────────────────────────
+        // It used to carry a 28 %→4 % gradient left-to-right and a 3 pt rail of
+        // its own, which is exactly what made it read as a coloured header
+        // BOLTED TO a black list rather than as the top of one card. Both moved
+        // up to `onyxMuscleWash` on the card, where one gradient covers the
+        // header and the rows in a single run and the rail spans the whole
+        // movement. Nothing is drawn here now: the colour arrives through the
+        // card, which is the only way header and rows can agree on it.
     }
 
     /// Primary and assisting movers, deduped, capped at what a 375 pt line
@@ -868,6 +864,15 @@ struct SessionDetailView: View {
             return MuscleGroup.forExercise(canonical).domain.accent
         }
         return Color.onyx.muscle(landmark)
+    }
+
+    /// The assisting hue — the bottom half of the card's rail.
+    ///
+    /// Nil rather than a fallback when a movement has no secondary mover: the
+    /// rail then draws solid, and a gradient into an invented colour would be
+    /// the rail asserting a muscle the movement does not train.
+    private static func assisting(_ canonical: String) -> Color? {
+        MuscleMap.secondaryLandmarks(canonical).first.map { Color.onyx.muscle($0) }
     }
 
     /// The readings that used to be one grey sentence (§U4.3), now the third
@@ -1127,7 +1132,7 @@ struct SetRow: View {
     /// numbers rather than a row of controls.
     var body: some View {
         HStack(alignment: typeSize.isAccessibilitySize ? .top : .center, spacing: OnyxSpace.s) {
-            badge
+            badgeGroup
             VStack(alignment: .leading, spacing: 2) {
                 if typeSize.isAccessibilitySize {
                     valueLine
@@ -1146,28 +1151,70 @@ struct SetRow: View {
             }
         }
         .padding(.horizontal, OnyxSpace.l)
-        .padding(.vertical, OnyxSpace.xs)
+        // ── TALLER ROW, TIGHTER PADDING ────────────────────────────────────
+        // Two changes that pull in opposite directions and are meant to: the
+        // row grows 30 → 33 pt so a record's wash has room to read as a band
+        // rather than a line, and its own vertical padding drops from `xs` to
+        // 2 pt so the extra height goes to the AIR AROUND THE NUMBERS and not
+        // to the numbers' own margins. Net effect on a four-set card is +12 pt
+        // and a denser-looking row, which is the combination the review asked
+        // for and the reason neither value moved alone.
+        .padding(.vertical, 2)
         // The frame BEFORE the wash. A `.background` applied first sizes itself
         // to the CONTENT, so a record row's tint stopped short of the row's own
         // height and drew as a pale stripe with a dark margin under it.
-        .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 33, alignment: .leading)
         // ── A RECORD ROW IS WASHED IN THE MOVEMENT'S OWN COLOUR ─────────────
         // It was a 2 pt gold inset on the leading edge, which is invisible on a
         // scrolled page and says nothing about WHICH lift set the record. The
-        // trophy in the badge is the gold — the one place it appears in the
+        // trophy beside the badge is the gold — the one place it appears in the
         // ledger, so scanning for it still finds records and nothing else — and
-        // the row behind it takes the same hue as the card's rule and wash, so
+        // the row behind it takes the same hue as the card's rail and wash, so
         // a record reads as this movement's record.
-        .background(isRecord ? tint.opacity(0.14) : Color.clear)
+        //
+        // 0.10 and not the 0.14 it was: the card underneath is no longer black.
+        // `onyxMuscleWash` now carries 6 %→2 % of this same hue across every
+        // row, so a record's own tint is read as a STEP above its neighbours
+        // rather than against nothing, and the old value stepped far enough to
+        // reintroduce the banding the wash exists to remove.
+        .background(isRecord ? tint.opacity(0.10) : Color.clear)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spoken)
     }
 
-    /// The set, and the mark it earned.
+    /// The set. The mark it earned now travels with the ORDINAL rather than
+    /// with the value — see `badgeGroup`.
     private var valueLine: some View {
-        HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-            value
-            mark
+        value
+    }
+
+    /// The ordinal, and the trophy beside it when the set set a record.
+    ///
+    /// ── WHY THE TROPHY MOVED, AND WHY THE NUMBER STAYED ─────────────────────
+    /// The mark used to sit beside the VALUE, at the other end of the row from
+    /// the number. Scanning a session for its records therefore meant reading
+    /// down a ragged column whose x-position moved with the width of
+    /// `42kg × 10` — and the two facts a reader pairs ("which set" and "was it
+    /// a record") were 200 pt apart.
+    ///
+    /// Putting the trophy IN the badge, replacing the number, was tried and
+    /// reverted for a reason that still holds: every set on this page is
+    /// logged, so a card's rows read `W · 🏆 · 2 · 🏆` and the two rows most
+    /// worth placing were the two with no number left on them. Beside the
+    /// badge is the third answer, and it costs nothing either side gives up —
+    /// the ordinal column stays a column, and the mark is now the first thing
+    /// on the row instead of the last.
+    ///
+    /// FAILURE DOES NOT GET THIS SLOT. It keeps the effort column's own word,
+    /// where it has always been said, because a red glyph at the head of the
+    /// row would compete with the gold for the same glance and there is only
+    /// one fact here worth interrupting a scan for.
+    private var badgeGroup: some View {
+        HStack(spacing: OnyxSpace.xs) {
+            badge
+            if isRecord {
+                markSymbol("trophy.fill", Color.onyx.record)
+            }
         }
     }
 
@@ -1186,34 +1233,6 @@ struct SetRow: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .fixedSize(horizontal: false, vertical: true)
-    }
-
-    /// ── WHAT THE SET WAS, IN ONE GLYPH ──────────────────────────────────────
-    /// The record used to be up to two gold capsules spelling the AXES —
-    /// "Weight", "1RM" — which is the widest possible way to say the narrowest
-    /// thing: it made a record row 90 pt wider than a normal one on a 375 pt
-    /// phone, and the logger deck hit the identical wall and answered it the
-    /// identical way (`ExerciseCardView`: "the trophy now lives in the badge").
-    /// The axes survive where they cost nothing — in what VoiceOver reads.
-    ///
-    /// Failure is the same kind of fact and gets the same treatment: an `F`
-    /// beside the set, with the word still in the effort column, because the
-    /// glyph is the glance and the word is the reading.
-    ///
-    /// A record wins the slot when a set is both, which the last rep of a PR
-    /// often is: of the two, "this has never been done before" is the one worth
-    /// a mark.
-    @ViewBuilder
-    private var mark: some View {
-        if isRecord {
-            markSymbol("trophy.fill", Color.onyx.record)
-        } else if isFailure {
-            // `f.circle.fill` and not a `Text("F")`: it is the F IN a badge the
-            // brief asks for, it is the same kind of object as the trophy it
-            // shares a slot with, and being a symbol it takes the same one
-            // sizing rule instead of a second one.
-            markSymbol("f.circle.fill", Color.onyx.danger)
-        }
     }
 
     /// Scaled, and then capped.
@@ -1303,14 +1322,11 @@ struct SetRow: View {
 
     private var isRecord: Bool { !axes.isEmpty }
 
-    /// The top of `RpeLadder` — "missed or form broke". The badge says it with
-    /// an `F` and the effort column keeps the word, because the badge is a
-    /// glance and the word is the reading: an `F` alone is a grade.
-    ///
-    /// A record beats it in the badge. A set can be both — the last rep of a
-    /// PR is often the one that failed — and of the two facts, "this has never
-    /// been done before" is the one worth a gold disc.
-    private var isFailure: Bool { (rpe ?? 0) >= 10 }
+    // A failed set is named ONCE on this row, by the effort column's own word
+    // ("Failure", in `Color.onyx.danger`). It had a second `f.circle.fill`
+    // beside the value; that glyph is gone with the slot it shared with the
+    // trophy, which has moved to the badge. Saying it twice was affordable
+    // while the mark column existed and is not worth reintroducing one.
 
     private var current: String {
         if row.row.kind == "pair" {

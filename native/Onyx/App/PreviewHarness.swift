@@ -88,6 +88,38 @@ enum PreviewHarness {
         .init(id: "ex-hkr", name: "Hanging Knee Raise", setCount: 18, lastTrained: "2026-09-02"),
     ]
 
+    /// A morning walk and a lunchtime ride, as Health would hand them over.
+    ///
+    /// One of each shape the card has to survive: a bout with everything
+    /// (distance, pace, heart rate, ascent, energy) and one with no ascent,
+    /// because an indoor ride records none and the card must not print a dash
+    /// for it. Times are absolute so the shot does not move with the clock.
+    static let sampleBouts: [WorkoutSample] = {
+        let day = LogicalDay.date(fromISO: "2026-09-03") ?? Date()
+        let at: (Int, Int) -> Date = { hour, minute in
+            Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
+        }
+        return [
+            WorkoutSample(
+                start: at(7, 12), end: at(7, 53), isLifting: false,
+                cardioKind: CardioImport.walk, distanceM: 4_240, activeKcal: 218,
+                avgHr: 112, elevationM: 38
+            ),
+            WorkoutSample(
+                start: at(12, 40), end: at(13, 18), isLifting: false,
+                cardioKind: CardioImport.cycling, distanceM: 14_800, activeKcal: 340,
+                avgHr: 131, elevationM: nil
+            ),
+        ]
+    }()
+
+    /// The bout ghosted behind the empty state.
+    static let sampleLastBout = CardioLogRow(
+        id: "preview-bout", userId: "00000000-0000-0000-0000-000000000001", date: "2026-09-01", kind: CardioImport.walk,
+        distanceM: 3_980, durationMin: 39, fromHealthkit: true, createdAt: nil,
+        activeKcal: 201, avgHr: 108
+    )
+
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         let model = seededModel()
@@ -142,6 +174,27 @@ enum PreviewHarness {
         case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options",
              "set-row", "set-options", "effort-picker":
             LoggerPreviews.view(screen)
+        // ── THE CARDIO SHEET, IN BOTH OF ITS STATES ────────────────────────
+        // It had never had a shot, which is most of how it got to look the way
+        // it did. It has two now because the screen has two: what it draws when
+        // Health has bouts to offer, and what it draws when it has none. The
+        // second is the one that used to be four hundred points of black.
+        //
+        // The bouts are SEEDED rather than read. A HealthKit query on a
+        // simulator returns nothing, every time, so a shot of the live read
+        // would photograph the empty state twice and call one of them "import".
+        case "cardio":
+            CardioLogSheet(
+                userId: "preview", date: "2026-09-03", onSave: { _ in true },
+                bouts: { PreviewHarness.sampleBouts }
+            )
+            .environment(AppEnvironment.preview)
+        case "cardio-empty":
+            CardioLogSheet(
+                userId: "preview", date: "2026-09-03", onSave: { _ in true },
+                bouts: { [] }, lastBout: PreviewHarness.sampleLastBout
+            )
+            .environment(AppEnvironment.preview)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history",

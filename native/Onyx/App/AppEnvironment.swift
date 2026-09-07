@@ -370,6 +370,31 @@ public final class AppEnvironment {
         }
     }
 
+    /// The cardio bouts Apple Health holds for one logical day.
+    ///
+    /// ── WHY IT IS HERE AND NOT ON `HealthSync` ──────────────────────────────
+    /// `HealthSync` owns the reader for the daily ingest, and it is built INSIDE
+    /// `SyncCoordinator`, which is built inside `startSync`, which only runs once
+    /// a user has resolved. The cardio sheet is a read with no ingest, no
+    /// watermark and no outbox behind it, and threading it down through two
+    /// actors that exist for the write path would put the sheet's availability
+    /// at the mercy of whether a sync has started yet.
+    ///
+    /// `healthReader` is already the app's one answer to "which reader" — the
+    /// `ONYX_NO_HEALTH` gate included, which is what keeps a shot of this screen
+    /// from hanging on a permission sheet nobody can tap.
+    ///
+    /// Failure is an empty list, not a throw: Health being unavailable, denied
+    /// or empty are three states a person cannot act on differently, and all
+    /// three mean "there is nothing to import, type it in".
+    func cardioBouts(on iso: String) async -> [WorkoutSample] {
+        guard let day = LogicalDay.date(fromISO: iso) else { return [] }
+        let start = Calendar.current.startOfDay(for: day)
+        guard let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else { return [] }
+        let found = (try? await Self.healthReader.workouts(start: start, end: end)) ?? []
+        return found.filter { !$0.isLifting && $0.cardioKind != nil }
+    }
+
     /// `ONYX_NO_HEALTH=1` (DEBUG launch environment) reads no HealthKit at
     /// all, so the permission sheet — which nothing on a simulator can tap —
     /// never covers the screen a gate is photographing.
