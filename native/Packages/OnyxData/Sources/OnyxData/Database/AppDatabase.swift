@@ -953,6 +953,29 @@ extension AppDatabase {
         }
     }
 
+    /// Move the session's start instant.
+    ///
+    /// ── WHY THE CLOCK IS ALLOWED TO EDIT A FACT ─────────────────────────────
+    /// You start the deck, do a set, and only then notice you started it twenty
+    /// minutes after you started training — or you opened it early and it has
+    /// been running since. The hero's timer sheet corrects that, and the
+    /// correction has to land HERE or `closeSession` derives `duration_min`
+    /// from a start nobody believes: the timer would say 62 minutes and the
+    /// stored session 82.
+    ///
+    /// `started_at` is not free-floating — `Era.forDate`, the PR date and every
+    /// "when did you train" reader take it — so this is a correction and never
+    /// a rebase around a pause. The pause ledger is untouched, which is the
+    /// same rule `PauseControlling.setElapsed` states.
+    public func setSessionStart(id: String, startedAt: Date) throws {
+        try writer.write { db in
+            guard var session = try WorkoutSession.fetchOne(db, key: id) else { return }
+            session.startedAt = startedAt
+            try session.update(db)
+            try Self.enqueueSessionUpsert(sessionId: id, in: db)
+        }
+    }
+
     /// The two figures the athlete knows and the watch might not.
     ///
     /// ── WHY A HAND-ENTERED FIGURE IS STAMPED `estimated = false` ────────────

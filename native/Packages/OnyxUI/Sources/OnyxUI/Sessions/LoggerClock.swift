@@ -2,20 +2,19 @@ import Foundation
 import Observation
 import OnyxCore
 
-/// The logger's session clock, until `LoggerModel` owns one.
+/// An in-memory session clock: the previews' and the tests' `PauseControlling`.
 ///
-/// ── WHY THIS EXISTS AND WHAT ENDS IT ────────────────────────────────────────
-/// Wave U1 built the hero, the timer sheet and the Live Activity's paused face
-/// against `PauseControlling` (`OnyxUI/Sessions/LoggerSeams.swift`) while wave
-/// E4 was building the engine that will answer it — in `LoggerModel.swift`,
-/// which U1 may not touch. This is the honest stand-in: it implements the
-/// protocol's whole contract correctly, in memory, for the life of the screen.
+/// ── IT WAS THE APP'S CLOCK FOR ONE WAVE ─────────────────────────────────────
+/// U1 built the hero, the timer sheet and the Live Activity's paused face
+/// against `PauseControlling` while E4 built the engine that answers it, and
+/// this stood in between the two. Since E4, `LoggerModel` conforms: a pause is
+/// an event in `set_events`, so it survives a relaunch and `closeSession`
+/// subtracts it from `duration_min`.
 ///
-/// What it CANNOT do is the reason it is temporary: nothing here is written to
-/// `set_events`, so a pause does not survive a relaunch and `duration_min` at
-/// close is still `ended − started` with the pause inside it. E4 item 5 is what
-/// makes the number true; when `LoggerModel` conforms, this file is deleted and
-/// `LiveLoggerView` changes one line — the `@State` it builds.
+/// It is kept because it is still the right thing for a preview and a test —
+/// a correct clock with no store, no session row and no migration behind it,
+/// which is exactly what `#Preview` and `LoggerClockTests` want. What it must
+/// not be again is the app's: nothing here is written down.
 ///
 /// ── AND WHY IT IS NOT CALLED `SessionClock` ─────────────────────────────────
 /// `OnyxCore.SessionClock` is already taken, by the port of the web's REST

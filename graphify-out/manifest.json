@@ -690,8 +690,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useProgressionQueue.ts": {
-    "mtime": 1788618337.9169617,
-    "ast_hash": "19b5d89b8b01305643077d016460b03d",
+    "mtime": 1788767369.9532433,
+    "ast_hash": "b130cc1da2e2016594f5899cfc947d45",
     "semantic_hash": ""
   },
   "src/lib/hooks/useRecovery.ts": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/draft.ts": {
-    "mtime": 1788199489.286963,
-    "ast_hash": "73864173f0524906e88027f692bf7faa",
+    "mtime": 1788767369.953956,
+    "ast_hash": "2c930d7d6250ff7679c60b652ee87b3a",
     "semantic_hash": ""
   },
   "src/lib/sessions/resolveExercises.ts": {
@@ -875,13 +875,13 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/save.ts": {
-    "mtime": 1787904320.7943184,
-    "ast_hash": "5fa4bd5ef9829e77039092c05a1b3e21",
+    "mtime": 1788767369.9545105,
+    "ast_hash": "706063bac84b59e83e882344e475739c",
     "semantic_hash": ""
   },
   "src/lib/sessions/schema.ts": {
-    "mtime": 1788031991.6113021,
-    "ast_hash": "5abb9628f6d76b5bc0454bff1af7fafe",
+    "mtime": 1788767369.9552658,
+    "ast_hash": "924bffb2cd08e743a7f49870b4ba3fcc",
     "semantic_hash": ""
   },
   "src/lib/sessions/seedTemplates.ts": {
@@ -890,8 +890,8 @@
     "semantic_hash": ""
   },
   "src/lib/sessions/templateDraft.ts": {
-    "mtime": 1787854984.6413455,
-    "ast_hash": "39c355b2db8239c2df33f4a5cab8938d",
+    "mtime": 1788767369.9560173,
+    "ast_hash": "460d1fce9b6d5d1e355d554577f087d4",
     "semantic_hash": ""
   },
   "src/lib/sleep/nightWindow.ts": {
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/ceilings.ts": {
-    "mtime": 1786691338.4388683,
-    "ast_hash": "e1b5d528e720d3d79e2aaf3f4f113e45",
+    "mtime": 1788767369.956409,
+    "ast_hash": "6618dec0b7c024e5d0ba531136ce3d83",
     "semantic_hash": ""
   },
   "src/lib/training/landmarks.ts": {
@@ -935,8 +935,8 @@
     "semantic_hash": ""
   },
   "src/lib/types/workout.ts": {
-    "mtime": 1788117837.8071306,
-    "ast_hash": "a92f1032cc48ca4e6866629aff843035",
+    "mtime": 1788767369.9575386,
+    "ast_hash": "0c35ad1ac8c1eae229646bacc87929e8",
     "semantic_hash": ""
   },
   "src/lib/utils/authedFetch.ts": {
@@ -1540,8 +1540,8 @@
     "semantic_hash": ""
   },
   "src/tests/progression-scope.test.ts": {
-    "mtime": 1786782720.7152724,
-    "ast_hash": "b22d104abc7a02e3e4759f09b4d9c533",
+    "mtime": 1788767369.9601185,
+    "ast_hash": "d645f538fae6adba2e9187f54dd1c557",
     "semantic_hash": ""
   },
   "src/lib/body/weighIn.ts": {
@@ -1790,8 +1790,8 @@
     "semantic_hash": ""
   },
   "src/tests/routine-template.test.ts": {
-    "mtime": 1788625639.6320426,
-    "ast_hash": "5eeaed4f3716567a95d1b18961837034",
+    "mtime": 1788767369.9608743,
+    "ast_hash": "c499a5e5b0e766f89eb79d38d3ff8f05",
     "semantic_hash": ""
   },
   "src/lib/sessions/estimates.ts": {
@@ -2275,7 +2275,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788696240.3335445,
+    "mtime": 1788769275.639531,
     "ast_hash": "d94cffed264ff2c846a5f4abd603c06f",
     "semantic_hash": ""
   },
@@ -2305,7 +2305,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788696234.081712,
+    "mtime": 1788769228.8869157,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2340,7 +2340,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788696235.8268054,
+    "mtime": 1788769416.3896513,
     "ast_hash": "7a2ebabd8697d3a4559fc6e239b8da1e",
     "semantic_hash": ""
   },
@@ -2410,7 +2410,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788696237.6866426,
+    "mtime": 1788769243.8422117,
     "ast_hash": "85a747101884140eead57762604f3370",
     "semantic_hash": ""
   },
@@ -2945,8 +2945,8 @@
     "semantic_hash": ""
   },
   "src/lib/exercises/icons.ts": {
-    "mtime": 1788168155.0271025,
-    "ast_hash": "02f491130edf09c4cd7a13f32d7cef8a",
+    "mtime": 1788767369.952669,
+    "ast_hash": "0baef7b6a3c1b9016f660be76fa3a056",
     "semantic_hash": ""
   },
   "src/lib/hooks/usePreviousCardio.ts": {
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "src/tests/golden-vectors.test.ts": {
-    "mtime": 1788724314.8998735,
-    "ast_hash": "eca9928425bf815b6ae4b6e1ce5b01af",
+    "mtime": 1788767369.9590578,
+    "ast_hash": "427e3a43f880a2125bdaeb413b53d0aa",
     "semantic_hash": ""
   },
   "native/README.md": {
@@ -3660,8 +3660,8 @@
     "semantic_hash": ""
   },
   "src/lib/training/progressionQueue.ts": {
-    "mtime": 1788618337.9253645,
-    "ast_hash": "699d5c964d040940dfadca36e81a417d",
+    "mtime": 1788767369.9569488,
+    "ast_hash": "e01fefc5312131c597c881a907a74452",
     "semantic_hash": ""
   },
   "native/__screenshots__/history-week-ax5.png": {
@@ -3735,8 +3735,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/AppEnvironment.swift": {
-    "mtime": 1788688246.731114,
-    "ast_hash": "690739ed0c30cfd4bf92cafc8469f5c7",
+    "mtime": 1788767369.9398084,
+    "ast_hash": "b7b9caaa76938e1eb6677bd7bf62192b",
     "semantic_hash": ""
   },
   "native/Onyx/App/AppEnvironmentPreview.swift": {
@@ -3875,13 +3875,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LiveLoggerView.swift": {
-    "mtime": 1788766695.5058918,
-    "ast_hash": "ac6825b213b96e99ff63e36e4fdbf9e3",
+    "mtime": 1788767790.5623295,
+    "ast_hash": "4cfe65f2f4bc94bf2fdc3c6c9c5e3761",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerModel.swift": {
-    "mtime": 1788695652.8257716,
-    "ast_hash": "bb3c61efd1083d7d96bdbdbe790bb39a",
+    "mtime": 1788767739.0940993,
+    "ast_hash": "e2da8e1fd2cf76255de6ca1ac6d083e5",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviewData.swift": {
@@ -3890,8 +3890,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviews.swift": {
-    "mtime": 1788766695.5067418,
-    "ast_hash": "63bd3f58221f76eb3964745cb544257b",
+    "mtime": 1788767811.0627158,
+    "ast_hash": "d9588a8ff35f7fa014f45daeec9f8976",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/MuscleDistributionSheet.swift": {
@@ -3930,8 +3930,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Nutrition/NutritionTabView.swift": {
-    "mtime": 1788628437.0179398,
-    "ast_hash": "b41553ec0e139be3c4c66980b1eab148",
+    "mtime": 1788767369.9413822,
+    "ast_hash": "2336c0b84ba47d46e7c9e9c607a589f1",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/DomsMap.swift": {
@@ -4105,8 +4105,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutTabView.swift": {
-    "mtime": 1788766695.5077803,
-    "ast_hash": "720991d987bdde97a5f7583c7777f2bf",
+    "mtime": 1788767811.0825372,
+    "ast_hash": "6d0558ef7706f7d2803b3b65c5a89ce3",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Workout/WorkoutWeek.swift": {
@@ -4135,8 +4135,8 @@
     "semantic_hash": ""
   },
   "native/OnyxTests/LoggerModelTests.swift": {
-    "mtime": 1788625639.5627341,
-    "ast_hash": "9bf6cdbd5684c98903acf913565cfb7d",
+    "mtime": 1788767867.3826923,
+    "ast_hash": "56daa49f2bbfd4c27a83a78ba29c6a01",
     "semantic_hash": ""
   },
   "native/OnyxTests/RestCountdownTests.swift": {
@@ -4155,8 +4155,8 @@
     "semantic_hash": ""
   },
   "native/OnyxTests/WorkoutWeekTests.swift": {
-    "mtime": 1788625639.5632758,
-    "ast_hash": "6b11bfa175b290a0ca05e58bd53c5462",
+    "mtime": 1788767369.9424963,
+    "ast_hash": "ea2b3e405272e726d7bedd0c5d9107b5",
     "semantic_hash": ""
   },
   "native/OnyxWidgets/OnyxIntents.swift": {
@@ -4520,8 +4520,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Training/Ceilings.swift": {
-    "mtime": 1788625639.5724106,
-    "ast_hash": "e6b22b6bc3b57f3bdf94291b64cff984",
+    "mtime": 1788767369.943388,
+    "ast_hash": "be609f7c0ae1ae46594f40628c5a1875",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Training/Decks.swift": {
@@ -4580,8 +4580,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Training/ProgressionQueue.swift": {
-    "mtime": 1788625639.5739613,
-    "ast_hash": "7fef339d79a2333ecf0e6d2d89f2bb5e",
+    "mtime": 1788767369.9437697,
+    "ast_hash": "73c874e837269126042de00ceb4fa2f8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Training/RestTargets.swift": {
@@ -4660,8 +4660,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/ExercisesGoldenTests.swift": {
-    "mtime": 1788625639.5759015,
-    "ast_hash": "442ac866973ce0f62db0bd99778cadfc",
+    "mtime": 1788767369.94406,
+    "ast_hash": "18f4bc6f151460f4d601e1ad85bbefcf",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/ExtractedGoldenTests.swift": {
@@ -5290,8 +5290,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/progression-verdict.json": {
-    "mtime": 1788689261.1714702,
-    "ast_hash": "d7b7d82117f53d0a1e090d45ec70f3a3",
+    "mtime": 1788767369.9452028,
+    "ast_hash": "89f52e7aa9ca8040c5b9d666069e2188",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-schedule.json": {
@@ -5755,8 +5755,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/SessionsGoldenTests.swift": {
-    "mtime": 1788625639.5993965,
-    "ast_hash": "58d4c4c7ee6330807ce94d5b4eaffe1d",
+    "mtime": 1788767369.9463859,
+    "ast_hash": "416cf7fc313537f3c1690be9edcd2696",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/SmallModulesGoldenTests.swift": {
@@ -5770,8 +5770,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/TrainingGoldenTests.swift": {
-    "mtime": 1788625639.5998857,
-    "ast_hash": "0227e7986d85bee68124fa8c7f58f92e",
+    "mtime": 1788767369.946672,
+    "ast_hash": "8aa66b6fc0f6dbd609381f445b520bc2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/TrainingTests.swift": {
@@ -5820,8 +5820,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/AppDatabase.swift": {
-    "mtime": 1788693039.205423,
-    "ast_hash": "92122e452b7c4dbeab7abbe818dd4a0d",
+    "mtime": 1788767599.821555,
+    "ast_hash": "5b8233b1a9ba46c6492bcef3065e4b1f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/ExerciseCatalog.swift": {
@@ -5850,8 +5850,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/EventStore.swift": {
-    "mtime": 1788625639.6024566,
-    "ast_hash": "76db5bd7eecd4b3fbf4283883fdf0321",
+    "mtime": 1788767369.9477525,
+    "ast_hash": "d45457ca18adf559e2752737a1afe2d8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/LiveSessionOwner.swift": {
@@ -5865,13 +5865,13 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEvent.swift": {
-    "mtime": 1788692982.283508,
-    "ast_hash": "a41adb26251b76ec572aa19d21e63a18",
+    "mtime": 1788767369.947997,
+    "ast_hash": "54ef42ae20a063c74b73ccf55b623a99",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEventFold.swift": {
-    "mtime": 1788692993.7388127,
-    "ast_hash": "d98118ced18aa1a90ff62761e4a09064",
+    "mtime": 1788767369.949031,
+    "ast_hash": "237166192eb53454da07a4602605eb1c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEventRecord.swift": {
@@ -5930,13 +5930,13 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/ProgressionQueue.swift": {
-    "mtime": 1788625639.604562,
-    "ast_hash": "fbdbcd5507a4deb4dc193dc269222c9b",
+    "mtime": 1788767369.949326,
+    "ast_hash": "ec3b6b00fd835da3b097054a16ba1a0f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/SessionHistoryStore.swift": {
-    "mtime": 1788625639.6047344,
-    "ast_hash": "ec28af1fcb015394b2d5e1638a1ca5a2",
+    "mtime": 1788767369.9495678,
+    "ast_hash": "845c75a4e1ed16d521dfd812f6963206",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/TrainingTrendsStore.swift": {
@@ -6055,8 +6055,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/AppDatabaseTests.swift": {
-    "mtime": 1788625639.610821,
-    "ast_hash": "7eccc17cf496b7b51e515f0d175f0cd9",
+    "mtime": 1788767369.950472,
+    "ast_hash": "72c51c74f91758820245f8e70c5a1525",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/BackfillLiveTests.swift": {
@@ -6110,8 +6110,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/IngestTests.swift": {
-    "mtime": 1788692857.5653348,
-    "ast_hash": "4ba6f660d0b13037f910f613b50c30f6",
+    "mtime": 1788767369.9509656,
+    "ast_hash": "d5e28c80afe94c6c19143c7eb06cc9de",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/LiveSessionOwnerTests.swift": {
@@ -6130,8 +6130,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/ProgressionQueueTests.swift": {
-    "mtime": 1788625639.6135895,
-    "ast_hash": "20a1bf5c707c6e0de84b0a65a10cb3d1",
+    "mtime": 1788767369.9514513,
+    "ast_hash": "4451aeaaf6dc843bc463841a2ba71b4f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/RowPushTests.swift": {
@@ -6160,8 +6160,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/SetEventFoldTests.swift": {
-    "mtime": 1788625639.614445,
-    "ast_hash": "096801a4f950456019f4cdeb4026b690",
+    "mtime": 1788767369.9519246,
+    "ast_hash": "2f3b380cb393ec142f52852255b8bca9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/SyncCoordinatorTests.swift": {
@@ -6320,8 +6320,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Tests/OnyxUITests/OnyxUITests.swift": {
-    "mtime": 1788766695.5095274,
-    "ast_hash": "3e7be22c7747de78ad63dd50c6152541",
+    "mtime": 1788768141.0957348,
+    "ast_hash": "f516f09e1142170b9a6f1112dbcdf109",
     "semantic_hash": ""
   },
   "native/Shared/OnyxWorkoutAttributes.swift": {
@@ -6345,8 +6345,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Training/PrRecorder.swift": {
-    "mtime": 1788625639.610415,
-    "ast_hash": "47709bf000a9d1f4590fe1a43cc75a5b",
+    "mtime": 1788767369.950063,
+    "ast_hash": "d8278258ba6c0a73eeea3a7ac790b4e7",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/PrRecorderTests.swift": {
@@ -6815,8 +6815,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerStubs.swift": {
-    "mtime": 1788766695.5068827,
-    "ast_hash": "4f657798336ad7acc0fab370f7b915ca",
+    "mtime": 1788767851.0602477,
+    "ast_hash": "b07ee43b2344aa6b4cea46bfc6aa1a83",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/TimerSheet.swift": {
@@ -6835,8 +6835,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Sources/OnyxUI/Sessions/LoggerClock.swift": {
-    "mtime": 1788766695.5090241,
-    "ast_hash": "4aa5ce6699ced9ec445c1d2d7351e9ec",
+    "mtime": 1788767851.0472445,
+    "ast_hash": "228260e3aaab32aad9e0ca091f15d231",
     "semantic_hash": ""
   },
   "native/Packages/OnyxUI/Sources/OnyxUI/Sessions/LoggerSeams.swift": {
@@ -6862,6 +6862,86 @@
   "native/__screenshots__/logger-stats.png": {
     "mtime": 1788766695.5445602,
     "ast_hash": "7a81c7d4600c2604eeb0bc6c14d8f5b5",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Exercises/Tags.swift": {
+    "mtime": 1788767369.9427776,
+    "ast_hash": "9021cce8bb9715851da6f9d460628d72",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Sessions/SessionDuration.swift": {
+    "mtime": 1788767369.9429183,
+    "ast_hash": "1f52a2fc76f828bdff850f86d9703836",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Sessions/SessionSeed.swift": {
+    "mtime": 1788767369.9430804,
+    "ast_hash": "30fc01e3a60051a3562929bc9e788089",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/effort-ceiling.json": {
+    "mtime": 1788767369.944289,
+    "ast_hash": "ba1a787c27669b4204f4c44f3d2e1958",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-tags.json": {
+    "mtime": 1788767369.9445379,
+    "ast_hash": "dda7a08c62c0d0327deab9ffcb35e60c",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/load-steps.json": {
+    "mtime": 1788767369.9447486,
+    "ast_hash": "9258c966fd2e2c3d65c2bc44522ef97b",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-duration.json": {
+    "mtime": 1788767369.9455771,
+    "ast_hash": "1a238d1061d600e68f0fe28415141323",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-seed.json": {
+    "mtime": 1788767369.9458714,
+    "ast_hash": "3f1e123a336acf966b7a673c0cc332b6",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sessions-for-seed.json": {
+    "mtime": 1788767369.946109,
+    "ast_hash": "d480df0d74eaae3c6985b3affb6354e8",
+    "semantic_hash": ""
+  },
+  "src/lib/exercises/equipment.ts": {
+    "mtime": 1788767369.9522123,
+    "ast_hash": "d168283c1f92be9223c9ef9dda6e211d",
+    "semantic_hash": ""
+  },
+  "src/lib/exercises/tags.ts": {
+    "mtime": 1788767369.9527922,
+    "ast_hash": "5bb2b5264e951b58e5f370d304b0ae81",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/sessionDuration.ts": {
+    "mtime": 1788767369.9553976,
+    "ast_hash": "0492e4d1d10a073d313a67860e438009",
+    "semantic_hash": ""
+  },
+  "src/lib/sessions/sessionSeed.ts": {
+    "mtime": 1788767369.9555435,
+    "ast_hash": "c5c06d3f2f416c1a9e924c52af043b07",
+    "semantic_hash": ""
+  },
+  "src/tests/exercise-tags.test.ts": {
+    "mtime": 1788767369.9577649,
+    "ast_hash": "faa15b7c945b9267e177edc923236140",
+    "semantic_hash": ""
+  },
+  "src/tests/session-duration.test.ts": {
+    "mtime": 1788767369.9609926,
+    "ast_hash": "a1d4a700476c4b0d309929f5933b866a",
+    "semantic_hash": ""
+  },
+  "src/tests/session-seed.test.ts": {
+    "mtime": 1788767369.9611235,
+    "ast_hash": "81364b07045157247db216c9778c9e6b",
     "semantic_hash": ""
   }
 }

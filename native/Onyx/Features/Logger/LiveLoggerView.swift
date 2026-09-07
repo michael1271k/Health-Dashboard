@@ -62,14 +62,19 @@ struct LiveLoggerView: View {
     /// Which face, and how it got here — the animation travels with it.
     @State private var selection = LoggerFaceSelection()
 
-    /// The session clock. `LoggerClock` until wave E4 makes `LoggerModel`
-    /// conform to `PauseControlling`; at that point this `@State` goes and the
-    /// hero, the timer sheet and the Live Activity are handed `model` instead.
-    /// Nothing else on this screen changes, which is what the protocol bought.
-    @State private var clock: LoggerClock
-
-    /// Records claimed so far. `SeedPrProvider` until E4 lights `LivePrEngine`.
-    @State private var prs: SeedPrProvider
+    /// The session clock and the records are both `model` now.
+    ///
+    /// U1 built the hero, the timer sheet, the Records card and the Live
+    /// Activity's paused face against `PauseControlling` and `LivePrProviding`
+    /// while E4 built the engine that answers them, and this is where the two
+    /// waves meet: `LoggerModel` conforms, so the pause reaches `set_events`
+    /// and survives a relaunch, and the Records card draws
+    /// `PrEngine.detectSessionPrs` against the same baselines the ledger is
+    /// written from. Nothing else on this screen changed, which is what the
+    /// protocols bought. `LoggerClock` and `SeedPrProvider` remain as the
+    /// preview and test doubles they now only are.
+    private var clock: any PauseControlling { model }
+    private var prs: any LivePrProviding { model }
     /// Bumped when the rest clock reaches zero of its own accord — never when
     /// it is skipped or dragged into the past, both of which cancel the task
     /// below before it fires. §3.4 gives `.success` to "session finished"; a
@@ -119,19 +124,19 @@ struct LiveLoggerView: View {
     /// faces, and neither can be photographed by a shot script that can only
     /// launch it. They are ordinary parameters rather than debug flags because
     /// they are ordinary facts — which face is showing, and which clock is
-    /// running — and wave E4 hands `clock` the `LoggerModel` itself.
+    /// running. The clock is `model` itself since E4, so a harness that wants
+    /// a paused screen pauses the model.
     init(
         model: LoggerModel,
         activity: LiveActivityController? = nil,
         face: LoggerFace = .workout,
-        clock: LoggerClock? = nil
+        paused: Bool = false
     ) {
         _model = State(initialValue: model)
         _activity = State(initialValue: activity ?? LiveActivityController())
         _focus = State(initialValue: model.currentSet?.exercise.id ?? model.exercises.first?.id)
         _selection = State(initialValue: LoggerFaceSelection(face: face))
-        _clock = State(initialValue: clock ?? LoggerClock(startedAt: model.startedAt))
-        _prs = State(initialValue: SeedPrProvider(model: model))
+        if paused { model.pause() }
     }
 
     private var accent: Color { Color.onyx.day(model.day.key) }

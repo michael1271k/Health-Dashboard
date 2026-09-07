@@ -3,19 +3,18 @@ import Observation
 import OnyxCore
 import OnyxUI
 
-/// Records claimed so far, until `LivePrEngine` is lit.
+/// A `LivePrProviding` for a PREVIEW — one axis, from the program's own seed.
 ///
-/// ── WHAT IT CAN HONESTLY ANSWER TODAY ───────────────────────────────────────
-/// `LoggerModel.SetRow.isRecord` already carries a record signal, and its own
-/// header says what that signal IS: a set that beat the program's `wk1Kg` seed,
-/// not the ledger. `LoggerModel.beatsTheSeed` returns false today (finding F5),
-/// so in practice this list is empty on the device and the card draws its empty
-/// state — which is the truth, and better than a card that invents a trophy.
+/// ── THE DEVICE STOPPED USING IT IN E4 ───────────────────────────────────────
+/// `LoggerModel` conforms now: `PrEngine.detectSessionPrs` against the
+/// baselines `PrRecorder` writes the ledger from, four axes with the
+/// supersession between them resolved. The screen reads that.
 ///
-/// One axis, `weight`, because the seed is one number. E4 item 3 replaces this
-/// with `LivePrEngine.compute(draft:baselines:)`, which resolves four axes and
-/// the supersession between them; at that point `LoggerModel` conforms to
-/// `LivePrProviding` and this type is deleted.
+/// This survives for the Live Stats preview, which has no store and therefore
+/// no baselines, so the real engine would correctly answer "no records" and
+/// draw an empty card that photographs nothing. One axis off `wk1Kg` is a
+/// plausible card for a shot and an honest lie in a `#Preview`. It must never
+/// be handed to the screen again.
 @MainActor
 @Observable
 final class SeedPrProvider: LivePrProviding {

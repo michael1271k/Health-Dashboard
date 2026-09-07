@@ -130,10 +130,8 @@ enum LoggerPreviews {
             // Lock Screen has to agree with. Built here rather than reached by a
             // debug flag inside the view, for the same reason the finish sheet
             // is presented by the harness.
-            let clock = LoggerClock(startedAt: Date().addingTimeInterval(-22 * 60))
-            let _ = clock.pause()
             NavigationStack {
-                LiveLoggerView(model: .previewUpperB(logged: true, resting: true), clock: clock)
+                LiveLoggerView(model: .previewUpperB(logged: true, resting: true), paused: true)
             }
             .environment(AppEnvironment.preview)
             .preferredColorScheme(.dark)
