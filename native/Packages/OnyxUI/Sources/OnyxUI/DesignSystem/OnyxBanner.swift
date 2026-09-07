@@ -1,3 +1,8 @@
+// ── iOS ONLY ────────────────────────────────────────────────────────────────
+// `.textSelection(.enabled)` is unavailable on watchOS, and a banner you are
+// meant to select text out of is a phone affordance either way.
+#if os(iOS)
+
 import SwiftUI
 
 /// One row that says something went wrong, or that something is waiting.
@@ -126,4 +131,6 @@ public struct OnyxBanner: View {
     .padding(OnyxSpace.l)
     .onyxScreen(.recover)
 }
+#endif
+
 #endif

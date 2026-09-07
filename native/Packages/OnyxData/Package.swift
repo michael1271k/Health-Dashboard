@@ -25,6 +25,11 @@ let package = Package(
     platforms: [
         .iOS(.v18),
         .macOS(.v14),
+        // Wave 10. GRDB declares .watchOS(.v7) and supabase-swift
+        // .watchOS(.v9), so the store, the event log, the fold and the
+        // outbox all cross unchanged: the watch is simply a second
+        // `device_id` against the same migrations.
+        .watchOS(.v11),
     ],
     products: [
         .library(name: "OnyxData", targets: ["OnyxData"]),

@@ -393,6 +393,33 @@ public extension AppDatabase {
     /// this device made being silently overwritten by a pull it did not ask
     /// for — but it is wider than "stops the next delta pull from overwriting
     /// the edit", and a reader deserves to be told which.
+    /// Give these sessions a log, if they do not have one, from the rows they
+    /// already hold.
+    ///
+    /// ── WHY THE PULLER NEEDS THIS AND THE EDITOR ALREADY DID ────────────────
+    /// `seedEventLog` has been a private step of `editSession` since Wave 2: a
+    /// session pulled from the server has rows and no events, and the first
+    /// edit has to seed the log or the fold would rebuild the session from the
+    /// single event that edit produced — a thirty-set workout collapsing to one.
+    ///
+    /// The Watch adds the same shape from the other direction. A session can
+    /// straddle the day `set_events` was created server-side: the early sets
+    /// exist only as rows, the later ones as events. Ingesting the events alone
+    /// re-folds the session from the later half and the early sets disappear
+    /// from a workout that is complete on the server. Seeding first means the
+    /// fold sees all of it.
+    ///
+    /// Idempotent and cheap: `seedEventLog` returns immediately for any session
+    /// that already has an event, which is every session this device logged.
+    func seedEventLogs(sessionIds: Set<String>) throws {
+        guard !sessionIds.isEmpty else { return }
+        try writer.write { db in
+            for sessionId in sessionIds.sorted() {
+                try Self.seedEventLog(db, sessionId: sessionId)
+            }
+        }
+    }
+
     static func seedEventLog(_ db: Database, sessionId: String) throws {
         let existing = try Int.fetchOne(
             db, sql: "SELECT count(*) FROM set_events WHERE session_id = ?", arguments: [sessionId]

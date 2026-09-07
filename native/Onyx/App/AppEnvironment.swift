@@ -55,6 +55,16 @@ public final class AppEnvironment {
     /// to prevent.
     let sync = SyncStatus()
 
+    /// The watch link. Present on every phone; inert on one with no Apple Watch
+    /// paired, because every send checks `isPaired && isWatchAppInstalled`
+    /// first. See `PhoneWatchBridge`.
+    /// `@ObservationIgnored` because `@Observable` rewrites every stored
+    /// property into a computed one, and `lazy` cannot be computed. Correct
+    /// either way: nothing in the phone UI reads the bridge — it is a transport,
+    /// and its one piece of state (`lastError`) is for a diagnostics row that
+    /// does not exist yet.
+    @ObservationIgnored private(set) lazy var watchBridge = PhoneWatchBridge(database: database)
+
     /// The whole sync — `OnyxData`'s `SyncCoordinator`, one per signed-in
     /// user. It owns the HealthKit read, the outbox drain, the pulls, the
     /// score and the realtime socket, in that order. Nil while signed out.
@@ -226,6 +236,12 @@ public final class AppEnvironment {
         commitObserver = database.onCommit { [weak self] in
             Task { @MainActor in self?.scheduleWidgetReload() }
         }
+        // The watch link. It takes its own `onCommit` rather than sharing this
+        // one: this observer is debounced for the widget reload (a full snapshot
+        // build), and holding a set back for two seconds before handing it to a
+        // watch that is sitting six inches away is the wrong trade for a
+        // transfer that costs nothing.
+        watchBridge.start()
         authTask = Task { [weak self] in
             guard let self else { return }
             #if DEBUG
@@ -265,6 +281,10 @@ public final class AppEnvironment {
                 if case .signedIn(let userID) = self.auth {
                     self.startSync(userID: userID)
                     self.loadRole(userID: userID)
+                    // The watch cannot sign in — Wave 10 keeps every credential
+                    // on the phone — so this is the ONLY way it learns whose
+                    // data it is holding and what the plan says today is.
+                    self.pushWatchContext(userID: userID)
                 }
                 if case .signedOut = self.auth { self.role = nil }
             }
@@ -667,6 +687,18 @@ public final class AppEnvironment {
         }
     }
 
+    /// Hand the watch the resolved plan.
+    ///
+    /// Cheap, idempotent and lossy by design: `updateApplicationContext` keeps
+    /// exactly one slot, so a second call before the first is delivered simply
+    /// replaces it — which is the correct behaviour for a value where only the
+    /// newest has ever been wanted.
+    private func pushWatchContext(userID: UUID) {
+        let userId = OnyxJSON.canonicalUserID(userID)
+        guard let schedule = try? database.scheduleContext(userId: userId, today: today) else { return }
+        watchBridge.send(userId: userId, today: today, schedule: schedule)
+    }
+
     private func rollDay() {
         let day = LogicalDay.today()
         guard day != today else { return }
@@ -675,6 +707,11 @@ public final class AppEnvironment {
         // Yesterday's queue is about yesterday's routine day.
         publishProgression([], for: nil)
         startWeighInWatch()
+        // The watch resolves its split against the date the PHONE believes it
+        // is, not against its own clock — the two can disagree across midnight,
+        // and a watch that decided it was already Tuesday would open the wrong
+        // workout. So the roll has to travel.
+        if case .signedIn(let userID) = auth { pushWatchContext(userID: userID) }
     }
 
     /// The signed-in user's id as the store spells it.

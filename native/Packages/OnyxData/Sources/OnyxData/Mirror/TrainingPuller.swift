@@ -51,6 +51,44 @@ public actor TrainingPuller {
     ///
     /// `onTable` fires as each of the three tables lands, with its row count,
     /// so a progress sheet can tick rows in dependency order.
+    /// Pull `set_events` for these sessions and merge them.
+    ///
+    /// ── SEEDED FIRST, INGESTED SECOND, AND THE ORDER IS THE POINT ───────
+    /// A session can straddle the day this table was created: some of its sets
+    /// were logged before there were any server events, the rest after. Ingest
+    /// alone would give that session a log holding only the LATER half — and
+    /// `ingest` re-folds, so `reproject` would rewrite `workout_sets` from that
+    /// half and the earlier sets would vanish from a workout that is complete on
+    /// the server.
+    ///
+    /// `seedEventLog` is the existing answer to exactly this shape (it is what
+    /// the first edit of a web-logged session already does): it turns the rows
+    /// that ARE there into born-synced `.append`s. Run first, the fold then sees
+    /// the whole session; run at all, it is a no-op for any session that already
+    /// has events, which is the common case.
+    ///
+    /// ── AND THE WHOLE THING IS BEST-EFFORT ───────────────────────
+    /// `set_events` is applied by hand (`docs/sql/wave-10-set-events.sql`).
+    /// Until the SQL is run PostgREST answers 404, and a refresh that threw on
+    /// that would take the sessions and sets — which landed fine — down with
+    /// it. Returns 0 instead, and the pull starts working the day the table
+    /// exists, with no client change.
+    private func ingestRemoteEvents(sessionIds: [String]) async throws -> Int {
+        guard !sessionIds.isEmpty else { return 0 }
+        let rows: [RemoteSetEventRow]
+        do {
+            rows = try await remote.selectIn(
+                RemoteSetEventRow.self, table: "set_events", column: "session_id", values: sessionIds
+            )
+        } catch {
+            return 0
+        }
+        guard !rows.isEmpty else { return 0 }
+        try database.seedEventLogs(sessionIds: Set(rows.map(\.sessionId)))
+        try database.ingest(rows.map(\.event))
+        return rows.count
+    }
+
     @discardableResult
     public func refresh(
         now: Date = Date(), onTable: (@Sendable (String, Int) -> Void)? = nil
@@ -123,6 +161,27 @@ public actor TrainingPuller {
             report.tables += 1
             report.rowsByTable["workout_sets"] = landed
             onTable?("workout_sets", landed)
+
+            // ── AND THEN THE EVENTS THOSE ROWS ARE A FOLD OF ──────────────
+            // `applyPulledSets` above deliberately skips any session this device
+            // already has events for. That is correct for ROWS and it is exactly
+            // why a second writer's sets could never arrive: the phone has
+            // events, so the watch's set 4 — upserted to `workout_sets` by the
+            // watch's own drain — is filtered straight back out on the way down.
+            //
+            // The log is the path that is allowed in. `ingest` de-duplicates by
+            // event id, pulls the Lamport clock up, marks each event synced and
+            // re-folds, so a set from another device lands in the same list by
+            // the same merge rule both devices already use.
+            let landedEvents = try await ingestRemoteEvents(sessionIds: sessionIds)
+            report.rows += landedEvents
+            report.rowsByTable["set_events"] = landedEvents
+            // Reported even at zero. `set_events` is in `backfillOrder`, and the
+            // progress sheet marks a table LANDED when it is told a count — a
+            // table that only speaks up when it has rows sits at "pending"
+            // forever on a first launch that predates the log, which reads as a
+            // backfill that never finished.
+            onTable?("set_events", landedEvents)
         }
 
         // Now that the sets carry the surviving ids, the dead rows are

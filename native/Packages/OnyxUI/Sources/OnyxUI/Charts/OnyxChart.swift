@@ -1,3 +1,9 @@
+// ── iOS ONLY ────────────────────────────────────────────────────────────────
+// `UIAccessibility.isReduceMotionEnabled` is unavailable on watchOS. The
+// watch reads `@Environment(\.accessibilityReduceMotion)` instead — which it
+// has to anyway, because there it shares a branch with `isLuminanceReduced`.
+#if os(iOS)
+
 import SwiftUI
 import Charts
 
@@ -392,3 +398,5 @@ public struct OnyxChartEmpty: View {
         }
     }
 }
+
+#endif

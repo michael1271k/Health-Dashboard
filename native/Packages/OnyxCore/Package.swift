@@ -26,6 +26,10 @@ let package = Package(
         // on the command line; no product ships for it.
         .iOS(.v18),
         .macOS(.v14),
+        // The Watch client (Wave 10). Pure Foundation arithmetic, so this
+        // costs one line and the whole domain — the deck, the ladder, the
+        // rest targets — is on the wrist with no second implementation.
+        .watchOS(.v11),
     ],
     products: [
         .library(name: "OnyxCore", targets: ["OnyxCore"]),

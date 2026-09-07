@@ -194,6 +194,25 @@ extension AppDatabase {
             // would lose a set to enforce a UI rule.
             try Self.claimPencil(db, sessionId: sessionId, force: false)
 
+            // ── THE ROWS THIS SESSION ALREADY HAS BECOME EVENTS FIRST ───────
+            // A session can hold `workout_sets` and NO events: that is exactly
+            // what `TrainingPuller.applyPulledSets` produces for a workout this
+            // device did not log. `reproject` below rebuilds the table from the
+            // fold, so the first append into such a session would rewrite a
+            // thirty-set workout as one set — silently, and in the direction the
+            // whole event log exists to make impossible.
+            //
+            // `SessionEditing.editSession` has seeded for this reason since Wave
+            // 2. It belongs HERE, in the one funnel every append, amend and void
+            // passes through, because the Watch reaches the same state by a
+            // different road: it adopts the live session the phone opened, and
+            // then logs into it. A guard at one call site leaves the siblings
+            // broken.
+            //
+            // A no-op for every session that has an event already, which is
+            // every session either device logged — one indexed COUNT per write.
+            try Self.seedEventLog(db, sessionId: sessionId)
+
             let device = try Self.deviceId(db)
             let event = SetEvent(
                 sessionId: sessionId,

@@ -100,6 +100,13 @@ public/sw.js
 native/Onyx.xcodeproj/
 native/*.xcworkspace/
 .build/
+# SwiftPM ALSO writes a plain `build/` beside `.build/` when a package is built
+# through xcodebuild with an explicit `--triple`/`--sdk` — which is how the
+# watchOS cross-build in `scripts/check-swift.sh` and the Wave 10 gate run it.
+# Same artefact, different name, equally not ours to track.
+native/Packages/*/build/
+# And `xcodebuild`'s own, from building the OnyxWatch scheme on the command line.
+native/build/
 .swiftpm/
 DerivedData/
 # Supabase URL + anon key. See Secrets.example.xcconfig.

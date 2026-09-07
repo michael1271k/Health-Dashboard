@@ -12,7 +12,10 @@ import PackageDescription
 // that will, and the extension's read path has to stay the provider's alone.
 let package = Package(
     name: "OnyxUI",
-    platforms: [.iOS(.v18)],
+    // watchOS carries the DESIGN SYSTEM only — tokens, the type ramp, the
+    // springs, the atlas and `LoggerSeams`. Everything that draws a Home
+    // Screen widget is fenced with `#if os(iOS)`; see the tile files.
+    platforms: [.iOS(.v18), .watchOS(.v11)],
     products: [
         .library(name: "OnyxUI", targets: ["OnyxUI"]),
     ],
