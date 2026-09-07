@@ -15,7 +15,60 @@ enum LoggerPreviews {
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         switch screen {
-        case "logger-options":
+        case "set-row":
+            // The ROW, in every state it has — because the states are the
+            // design and a card of four identical unlogged rows photographs
+            // none of them. Top to bottom: a warm-up, a logged working set, a
+            // logged set that took a record, a set the seed bumped whose
+            // remembered rating no longer fits, and a skipped one.
+            //
+            // Shot as a bare card on the train screen rather than inside the
+            // deck: this is the shot the column widths are reviewed on, and a
+            // hero, a chip row and a rest capsule above it are three things
+            // between the reviewer and the thing being reviewed.
+            let model = LoggerModel.previewUpperB(logged: true)
+            let exercise = model.exercises[0]
+            let _ = {
+                while exercise.rows.count < 5 { model.addSet(to: exercise) }
+                exercise.rows[0].kind = .warmup
+                exercise.rows[2].isRecord = true
+                exercise.rows[3].weightKg = 42.5
+                exercise.rows[3].reps = 8
+                exercise.rows[3].rpe = 8.5
+                exercise.rows[3].progressed = true
+                exercise.rows[3].rpeStale = true
+                exercise.rows[3].previous = "40kg × 11"
+                exercise.rows[4].kind = .ghost
+                exercise.rows[4].reps = 12
+            }()
+            ScrollView {
+                ExerciseCardView(exercise: exercise, model: model, position: (0, model.exercises.count))
+                    .padding(.horizontal, OnyxSpace.m)
+            }
+            .onyxScreen(.train)
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
+        case "effort-picker":
+            // Over a set that was SEEDED and then out-grown — the pip state the
+            // sheet exists to explain. A picker shot with nothing chosen
+            // photographs the empty state and calls it the control.
+            let model = LoggerModel.previewUpperB(logged: true)
+            let exercise = model.exercises[1]
+            let row = exercise.rows[0]
+            let _ = { row.rpeStale = true }()
+            NavigationStack {
+                LiveLoggerView(model: model)
+                    .sheet(isPresented: .constant(true)) {
+                        EffortPickerSheet(
+                            ordinal: 1, exerciseName: exercise.name, row: row,
+                            wasStale: true,
+                            onPick: { row.rpe = $0; row.rpeStale = false }
+                        )
+                    }
+            }
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
+        case "set-options", "logger-options":
             // The set options sheet, over the card it belongs to. Presented by
             // the harness for the same reason the finish sheet is: a screen
             // that ships a way to open one of its own sheets for a screenshot
@@ -38,10 +91,10 @@ enum LoggerPreviews {
                 LiveLoggerView(model: model)
                     .sheet(isPresented: .constant(true)) {
                         SetOptionsSheet(
-                            ordinal: 2, row: row,
+                            ordinal: 2, exerciseName: exercise.name, row: row,
                             onKind: { model.setKind($0, on: row, in: exercise) },
                             onQuality: { model.setQuality($0, on: row, in: exercise) },
-                            onNote: {}, onDuplicate: {}, onDelete: {}
+                            onDelete: {}
                         )
                     }
             }

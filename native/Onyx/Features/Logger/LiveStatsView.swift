@@ -43,9 +43,16 @@ struct LiveStatsView: View {
         ScrollView(.vertical) {
             VStack(spacing: OnyxSpace.m) {
                 nowCard
+                // ── WHY RECORDS SITS SECOND ─────────────────────────────
+                // It was fourth, which put the one card worth flicking over
+                // for two screens below the fold: a PR lit on the deck and
+                // then had to be hunted for. The other three answer "how is
+                // this session going", which is a question you scroll to;
+                // this one announces something that just happened, and an
+                // announcement below the fold is not one.
+                recordsCard
                 exercisesCard
                 muscleCard
-                recordsCard
                 effortCard
             }
             .padding(.horizontal, OnyxSpace.l)
