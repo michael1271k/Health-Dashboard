@@ -34,22 +34,14 @@
 import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
 import { isTimedExercise } from '@/lib/exercises/timed'
 import { SET_QUALITY } from '@/lib/training/setTags'
-import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
+import { isUnloadedSet } from '@/lib/utils/setFormat'
 import { prAxisLabel, type PrAxis } from '@/lib/training/prEngine'
 import { rpeLabel } from '@/lib/training/effort'
 import { weighInSkipReason } from '@/lib/body/weighIn'
-import { exceptionTag, estimatedTag } from '@/lib/nutrition/exceptionDay'
-import { contextRangesIn, contextRangeLabel, contextFromDayLabel, CONTEXT_META } from '@/lib/nutrition/context'
-import { TEF_FACTOR, tefKcal, tdeeBreakdown } from '@/lib/nutrition/energy'
-import { volumeZone, type VolumeZone } from '@/lib/training/landmarks'
+import { TEF_FACTOR, tefKcal, tdeeKcal } from '@/lib/nutrition/energy'
 import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
-import { derivedWeek, type WeekDelta } from '@/lib/reports/derived'
+import { derivedWeek } from '@/lib/reports/derived'
 import type { TargetPeriod } from '@/lib/nutrition/levers'
-
-/** The export's wording for each zone. `na` never reaches here (target 0 → "—"). */
-const ZONE_WORD: Record<VolumeZone, string> = {
-  under: 'UNDER', building: 'building', optimal: 'on target', over: 'OVER', na: '—',
-}
 
 /**
  * One supplement as the export needs it — every field a value the user can
@@ -625,84 +617,14 @@ const DASH = '—'
 const exact = (v: number | null | undefined): string =>
   v == null || !Number.isFinite(v) ? DASH : String(Math.round(v * 1e6) / 1e6)
 
-/**
- * The weigh-in cell: the reading, or the stated reason there isn't one.
- *
- * "Skipped, and here is why" and "no data" are different facts. Saying so in
- * plain English keeps a protocol skip from being read as a missed measurement —
- * or, worse, as a plateau.
- *
- * The reason is read DYNAMICALLY from the day's stored value, never hardcoded
- * here: change a day to "Travel" in the Nexus and this line says Travel. An
- * unstated reason resolves to the protocol default rather than to "no reason
- * recorded", because skipping the scale before a bowel movement IS the protocol
- * and reporting it as a logging gap misreads a deliberate week as a sloppy one.
- */
-const weighIn = (kg: number | null, skipReason: string | null): string => {
-  if (kg != null && Number.isFinite(kg)) return `weight ${n(kg, 1)} kg`
-  return `weight ${DASH} [Skip: ${weighInSkipReason(skipReason)}]`
-}
-
 /** `walk` → `Walk`, `run` → `Run`; anything else passes through capitalised. */
 const cardioLabel = (kind: string): string =>
   kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Cardio'
-
-/** `+70` / `−70` / `0`. A typographic minus, matching the rest of the document. */
-const signed = (v: number): string => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 
 /** "Thu", from the day rows the export already carries. */
 function weekdayOf(date: string, days: readonly ExportDay[]): string {
   return days.find((d) => d.date === date)?.weekdayLabel ?? ''
 }
-
-/**
- * "Sun 16, Mon 17, Tue 18 & Wed 19 Aug" — a run of dates, said the way a person
- * would say it.
- *
- * Weekday AND day number, because neither alone is enough: "Sun–Wed" cannot be
- * checked against the daily rows below, and "16–19" makes the reader count. The
- * month is stated once at the end unless the run crosses one, which a
- * Sunday-start week can do.
- */
-function dayRangeLabel(dates: readonly string[], days: readonly ExportDay[]): string {
-  if (!dates.length) return '—'
-  const month = (iso: string) =>
-    new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })
-  const spans = new Set(dates.map(month)).size > 1
-  const parts = dates.map((iso) => {
-    const day = Number(iso.slice(8, 10))
-    const wd = weekdayOf(iso, days)
-    return `${wd} ${day}${spans ? ` ${month(iso)}` : ''}`.trim()
-  })
-  const joined = parts.length === 1
-    ? parts[0]
-    : `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}`
-  return spans ? joined : `${joined} ${month(dates[dates.length - 1])}`
-}
-
-/**
- * "7h 20m" — the spoken form, for the day's own vitals line.
- *
- * Distinct from `sleep` below, which packs the same minutes as "7h32" for the
- * weekly average and the trend table where the figure is one cell among many.
- * On a line already carrying five labelled readings the compact form reads as a
- * decimal, which 7h32 is not.
- */
-const sleepLong = (min: number | null | undefined): string => {
-  if (min == null || !Number.isFinite(min)) return DASH
-  const h = Math.floor(min / 60)
-  return `${h}h ${String(Math.round(min - h * 60)).padStart(2, '0')}m`
-}
-
-/**
- * A wrist-temperature DEVIATION, which is signed and usually near zero.
- * "+0.2°C" and "-0.2°C" are opposite findings; an unsigned "0.2" is neither.
- */
-const signedC = (v: number | null | undefined): string =>
-  v == null || !Number.isFinite(v) ? DASH : `${v > 0 ? '+' : ''}${v.toFixed(1)}°C`
-
-const sleep = (min: number | null | undefined): string =>
-  min == null ? '—' : `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`
 
 /**
  * The fatigue slot labels, IN THE ORDER A DAY HAPPENS, as the export names them.
@@ -746,14 +668,6 @@ const clock = (ts: string | null | undefined): string => {
   return Number.isFinite(d.getTime())
     ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     : DASH
-}
-
-/** Whole days between two ISO dates. Null when either is missing. */
-function daysBetween(from: string | null | undefined, to: string): number | null {
-  if (!from) return null
-  const a = Date.parse(`${from}T00:00:00Z`), b = Date.parse(`${to}T00:00:00Z`)
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return null
-  return Math.round((b - a) / 86_400_000)
 }
 
 /**
@@ -1096,13 +1010,31 @@ export function weeklySummary(input: WeeklyExportInput): WeeklySummary {
     ...(() => {
       let ratedSets = 0
       let workingSets = 0
-      for (const s of input.sessions) for (const ex of s.exercises) for (const set of ex.sets) {
-        // A ghost is not an unrated working set — it is a set that did not
-        // happen, and counting it here would drag the RPE-coverage figure down
-        // for doing exactly what a maintenance week asks.
-        if (set.warmup || set.ghost) continue
-        workingSets += 1
-        if (set.rpe != null && Number.isFinite(set.rpe)) ratedSets += 1
+      for (const s of input.sessions) for (const ex of s.exercises) {
+        /* ── A UNILATERAL PAIR IS ONE SET HERE, AS IT IS EVERYWHERE ELSE ─────
+           This loop used to walk `ex.sets` raw, so a single-arm exercise logged
+           per side counted double — and v3 prints the result as `working_sets`
+           on the `## WEEK` line, one line above a `## WEEK.MUSCLE` block that
+           collapses the same pairs correctly, and a few lines below a
+           `## SESSIONS` row whose `sets` comes from the app's own ledger, which
+           also collapses them. Three numbers describing the same work, one of
+           them disagreeing. `toSetRows` is the single grouper the token
+           renderer and the prose renderer already share; using it here makes
+           the fourth caller agree by construction rather than by care.
+
+           A pair counts as RATED when EITHER side carries a rating: the set was
+           rated, even if only one arm's effort was recorded. Counting it unrated
+           would report a coverage gap that the log does not have. */
+        for (const row of toSetRows(ex.sets)) {
+          const sides = [row.single, row.left, row.right].filter((x): x is ExportSet => x != null)
+          if (!sides.length) continue
+          // A ghost is not an unrated working set — it is a set that did not
+          // happen, and counting it here would drag the RPE-coverage figure down
+          // for doing exactly what a maintenance week asks.
+          if (sides.some((x) => x.warmup || x.ghost)) continue
+          workingSets += 1
+          if (sides.some((x) => x.rpe != null && Number.isFinite(x.rpe))) ratedSets += 1
+        }
       }
       return { ratedSets, workingSets }
     })(),
@@ -1243,9 +1175,9 @@ export function energyBalance(days: readonly ExportDay[]): EnergyBalance {
   }
   const measured = days.map((d) => (d.bmrKcal != null && Number.isFinite(d.bmrKcal) ? d.bmrKcal : null))
   // Forward fill, then backward fill — the nearest reading in either direction.
-  const filled = [...measured]
-  for (let i = 1; i < filled.length; i++) filled[i] ??= filled[i - 1]
-  for (let i = filled.length - 2; i >= 0; i--) filled[i] ??= filled[i + 1]
+  // `bmrCarry` is the ONE implementation of the carry; the `## DERIVED tdee`
+  // row reads the same array, so the footer cannot disagree with this estimate.
+  const filled = bmrCarry(days)
 
   let intake = 0, burn = 0, bmrSum = 0, activeSum = 0, tefSum = 0, counted = 0, carried = false
   const countedDates: string[] = []
@@ -1389,997 +1321,536 @@ export function trendLedger(weeks: readonly LedgerWeek[]): string[] {
   return markdownTable(header, body, align)
 }
 
-export function buildWeeklyExport(input: WeeklyExportInput): string {
-  const { days, sessions, volumeByMuscle, doms } = input
+/**
+ * ── EXPORT v3, THE DENSE TOKEN GRAMMAR ───────────────────────────────────────
+ *
+ * v2 was ~310 lines of prose and nested bullets for one week. It read well and
+ * it spent most of a model's context before the first question could be asked.
+ * v3 states the same facts in ≤ 120 lines by giving every record ONE line and
+ * naming its columns once, on the heading above it.
+ *
+ * THE WHOLE GRAMMAR, IN FOUR RULES:
+ *
+ *  1. A line beginning `#` is a heading. A `##` heading carries its section's
+ *     column legend after the heading word, in the same `·`-separated form as
+ *     the data under it. Read the legend, then read the rows positionally.
+ *  2. Every data line is fields joined by ` · `. No field value ever contains
+ *     `·`, so `line.split(' · ')` is the complete parser.
+ *  3. A missing value is `—`. Never blank, never 0, never an omitted field —
+ *     a section's column count is fixed, so a row can be zipped against its
+ *     legend by index.
+ *  4. Where a field holds a LIST, its items are joined by `;` and each item's
+ *     own parts by `:` (or `@` for a time). Those characters appear nowhere
+ *     else, which is what keeps rule 2 true.
+ *
+ * Sets get a fifth rule of their own, stated on the `## SESSIONS` heading.
+ *
+ * WHAT IS STILL TRUE FROM v2. Every number is one the app measured; `—` is a
+ * gap and never a zero; the document is deterministic and pure; and the only
+ * derived figures in it live under `## DERIVED`, below every measurement they
+ * are built from, behind a heading that says so.
+ *
+ * WHAT WENT. The four closing notes — they repeated the same paragraph every
+ * week to a reader who had already read it — the per-day battery breakdown, the
+ * volume ZONE words (a zone is a verdict, and this document holds no verdicts),
+ * and every nested bullet.
+ */
 
+/** Every data line is fields joined by this. No value may contain `·`. */
+const SEP = ' · '
+
+/** One data line. `null`/empty renders `—`; `0` renders `0`, which is a fact. */
+const fields = (...cells: Array<string | number | null | undefined>): string =>
+  cells.map((c) => (c == null || c === '' ? DASH : String(c))).join(SEP)
+
+/** A list field: items joined by `;`. Empty renders `—`. */
+const items = (xs: readonly string[]): string => (xs.length ? xs.join(';') : DASH)
+
+/** Minutes, whole. EVERY duration in v3 is minutes — one unit, no suffixes. */
+const minutes = (v: number | null | undefined): string => n(v, 0)
+
+/** Metres → km, 2 dp. */
+const kmOf = (m: number | null | undefined): string =>
+  m == null || !Number.isFinite(m) ? DASH : n(m / 1000, 2)
+
+/** Millilitres → litres, 2 dp. */
+const litresOf = (ml: number | null | undefined): string =>
+  ml == null || !Number.isFinite(ml) ? DASH : n(ml / 1000, 2)
+
+/**
+ * ── THE STAND RING IS TWO MEASUREMENTS, SO IT IS TWO COLUMNS ────────────────
+ * This was one `12h58` token, which read as "12 hours 58 minutes" and is not
+ * what the fields mean: `standHours` is how many hours held a stand, and
+ * `standMin` is total standing minutes across the day. They are independent —
+ * a real day carries `standHours: 3, standMin: 176`, and the composite
+ * rendered `3h176`, a token that is malformed under its own documented shape.
+ * It was also the only duration in the document not stated in plain minutes.
+ * Two columns, both plain numbers, and the legend names each.
+ */
+
+/**
+ * BMR carried across the days that have none — ONE implementation.
+ *
+ * `energyBalance` and the `## DERIVED tdee` row both need it, and two copies of
+ * a forward-then-backward fill is exactly the duplication that lets a document
+ * disagree with its own footer. Basal rate moves single-digit kcal across a
+ * week, so the nearest reading in either direction is a fill of a flat line
+ * rather than an invention.
+ */
+export function bmrCarry(days: readonly ExportDay[]): Array<number | null> {
+  const measured = days.map((d) => (d.bmrKcal != null && Number.isFinite(d.bmrKcal) ? d.bmrKcal : null))
+  // Forward fill, then backward fill — the nearest reading in either direction.
+  const filled = [...measured]
+  for (let i = 1; i < filled.length; i++) filled[i] ??= filled[i - 1]
+  for (let i = filled.length - 2; i >= 0; i--) filled[i] ??= filled[i + 1]
+  return filled
+}
+
+/**
+ * One set as a token: `75×12@9.5F`, or `L5×15@8|R5×17@9` for a pair.
+ *
+ * `<load>×<reps>` is the set. `@<rpe>` is present only when the set was RATED —
+ * an absent `@` means "not reported", which is a different fact from an easy
+ * set and the reason this grammar never prints `@—`. Flags follow with no
+ * separator, in a fixed order so one regex reads them all:
+ *
+ *   W warm-up · G ghost (planned, not performed) · D drop set · F to failure
+ *   Q:<key>   the reported set quality, under `SET_QUALITY`'s own key
+ *
+ * A timed movement carries `t` after the count, which is then seconds: `0×55t`.
+ */
+function setToken(s: ExportSet, timed: boolean): string {
+  const flags = `${s.warmup ? 'W' : ''}${s.ghost ? 'G' : ''}${s.dropset ? 'D' : ''}${s.failure ? 'F' : ''}`
+  const quality = s.quality && SET_QUALITY[s.quality] ? `Q:${s.quality}` : ''
+  const rpe = s.rpe != null && Number.isFinite(s.rpe) ? `@${String(s.rpe)}` : ''
+  return `${exact(s.weightKg)}×${exact(s.reps)}${timed ? 't' : ''}${rpe}${flags}${quality}`
+}
+
+/**
+ * An exercise's sets in order, pairs collapsed onto one token.
+ *
+ * `toSetRows` is the same grouper the prose renderer uses, so a unilateral pair
+ * is ONE set here exactly as it is one set there — decided per SET by `pairId`,
+ * never per exercise.
+ */
+function setTokens(ex: ExportExercise): string[] {
+  const timed = isTimedExercise(ex.name)
+  return toSetRows(ex.sets).map((r) => {
+    if (r.single) return setToken(r.single, timed)
+    return [
+      r.left ? `L${setToken(r.left, timed)}` : null,
+      r.right ? `R${setToken(r.right, timed)}` : null,
+    ].filter(Boolean).join('|')
+  })
+}
+
+export function buildWeeklyExport(input: WeeklyExportInput): string {
+  const { days, sessions } = input
+  const cardio = input.cardio ?? []
+  const bodyComp = input.bodyComp ?? []
   const L: string[] = []
 
-  // Pure data — no instruction/prompt header. Starts straight at the week.
-  L.push(`# WEEK ${input.weekStart} → ${input.weekEnd}${input.weekLabel ? ` · ${input.weekLabel}` : ''}`)
-  L.push('')
-  L.push(`**Program:** ${input.programLabel}`)
-  // The phase is the frame every target in this document sits inside — the same
-  // 1,955 kcal is an aggressive cut or a light surplus depending on it — and it
-  // was nowhere in the payload.
-  if (input.phaseLabel?.trim()) L.push(`**Phase:** ${input.phaseLabel.trim()}`)
-
-  // ── The week's CONTEXT, once, as a fact about the week ──
-  // Derived from the days themselves rather than from the current setting, so an
-  // export of a past week describes that week and not how you feel today. The
-  // per-day `[Exception: …]` tags still print; what this removes is the reader
-  // having to infer "he was ill from Tuesday" four times from four annotations.
-  const ranges = contextRangesIn(days.map((d) => ({ date: d.date, exception: d.nutritionException })))
-  for (const r of ranges) L.push(`**Context:** ${contextRangeLabel(r)}`)
-
-  L.push('')
-
-  // ── WHAT WAS ACTUALLY ASKED FOR, AND WHEN ──
-  //
-  // This was one line: `**Targets:** 1955 kcal · 170 g protein · …`, read off
-  // the CURRENT `user_goals` row with no lever applied. Two things were wrong
-  // with it, and they compound.
-  //
-  // A lever changes all four numbers at once, so a week in which one was pulled
-  // or released had two sets of targets and the line printed whichever happened
-  // to be current — attributing Thursday's numbers to Sunday. And it named no
-  // rung at all, so a reader seeing intake 70 kcal under target had no way to
-  // know whether that was drift or the plan.
-  //
-  // `targetPeriods` resolves the rung PER DAY and glues equal neighbours
-  // together (see `leverPeriods`), so the section states each instruction, its
-  // numbers, and exactly which days it governed.
-  L.push('## Targets & Levers')
-  L.push('')
+  // ── HEADER ────────────────────────────────────────────────────────────────
+  // Everything the week was ASKED for, on one line: which week, which
+  // programme, which phase, which rung. A week run under a single lever names
+  // it here and prints no `## LEVERS` section at all.
   const periods = input.targetPeriods ?? []
-  if (periods.length) {
-    periods.forEach((p, i) => {
-      const g = p.goals
-      L.push(`- **${p.label}** — ${n(g.calorie)} kcal · `
-        + `${n(g.protein)}P / ${n(g.carbs)}C / ${n(g.fat)}F · ${n(g.steps)} steps`)
-      // SPELLED OUT AS A SENTENCE, not a date range in brackets. A reader
-      // scanning for "when was Lever 1 on?" needs a clause they can lift whole;
-      // "Sun 16, Mon 17 & Tue 18 Aug" answers the question only after they work
-      // out that the list is exhaustive rather than a sample.
-      L.push(`    - **${p.label} was active on ${dayRangeLabel(p.dates, days)}**`
-        + ` — ${p.dates.length} day${p.dates.length === 1 ? '' : 's'}.`)
-      // The CHANGE is the interesting fact — a reader scanning the daily rows
-      // needs to know the target moved under them, and on which morning.
-      if (i > 0) {
-        const prev = periods[i - 1]
-        L.push(`    - Changed from **${prev.label}** on ${weekdayOf(p.dates[0], days)} ${p.dates[0]}`
-          + ` (${signed(g.calorie - prev.goals.calorie)} kcal, ${signed((g.steps ?? 0) - (prev.goals.steps ?? 0))} steps)`)
-      }
+  const rung = periods.length === 1
+    ? `lever=${periods[0].leverId} ${n(periods[0].goals.calorie)}kcal`
+      + ` ${n(periods[0].goals.protein)}P ${n(periods[0].goals.carbs)}C`
+      + ` ${n(periods[0].goals.fat)}F ${n(periods[0].goals.steps)}st`
+    : periods.length > 1 ? 'lever=mixed' : 'lever=—'
+  L.push(fields(
+    `# ONYX ${input.weekLabel?.trim() || 'WEEK'}`,
+    `${input.weekStart}→${input.weekEnd}`,
+    input.programLabel,
+    input.phaseLabel?.trim() || DASH,
+    rung,
+    `goals ${n(input.calorieGoal)}kcal ${n(input.proteinGoalG)}P`
+      + ` ${n(input.stepsGoal)}st ${n(input.sleepGoalHours, 1)}h`
+      + ` ${input.waterGoalMl == null ? DASH : `${n(input.waterGoalMl)}ml`}`,
+  ))
+
+  // ── LEVERS ────────────────────────────────────────────────────────────────
+  // Printed ONLY when the week ran under more than one rung, which is the one
+  // case the header line cannot state. `dates` is a run, first…last.
+  if (periods.length > 1) {
+    L.push('')
+    L.push('## LEVERS' + SEP + ['id', 'label', 'kcal', 'P', 'C', 'F', 'steps', 'dates'].join(SEP))
+    for (const p of periods) {
+      L.push(fields(
+        p.leverId, p.label, n(p.goals.calorie), n(p.goals.protein),
+        n(p.goals.carbs), n(p.goals.fat), n(p.goals.steps),
+        p.dates.length ? `${p.dates[0]}…${p.dates[p.dates.length - 1]}` : DASH,
+      ))
+    }
+  }
+
+  // ── DAYS ──────────────────────────────────────────────────────────────────
+  // One line per day, present even when the day is empty: an omitted row lets a
+  // gap read as a zero, which is the thing this document exists to prevent.
+  // Every duration is MINUTES, every distance km, every volume litres — one
+  // unit per dimension, so no cell needs a suffix to be read.
+  const bodyByDate = new Map(bodyComp.map((b) => [b.date, b]))
+  L.push('')
+  L.push('## DAYS' + SEP + [
+    'date', 'day', 'train', 'sleep_min', 'deep_min', 'rem_min', 'core_min', 'awake_min',
+    'bed', 'wake', 'onset', 'hrv_ms', 'rhr', 'avg_hr', 'spo2_pct', 'resp_bpm',
+    'wrist_temp_c', 'vo2max', 'daylight_min', 'exercise_min', 'stand_hours', 'stand_min',
+    'steps', 'dist_km', 'training_min', 'active_kcal',
+    'kcal', 'P', 'C', 'F', 'water_l',
+    'supp', 'supp_log', 'supp_skipped',
+    'weight_kg', 'fat_pct', 'smm_kg', 'bmr_kcal',
+    'fatigue', 'doms', 'tags',
+  ].join(SEP))
+  for (const day of days) {
+    const bc = bodyByDate.get(day.date)
+    // Each subjective slot NAMED rather than positional: a rest day and a
+    // training day ask different questions in the middle slots, and a bare
+    // triple cannot say which pair of questions was answered.
+    const fatigue = fatigueLabelsFor(day.isTrainingDay).map((slot) => {
+      const hit = (input.fatigue ?? []).find((f) => f.date === day.date && f.slot === slot)
+      return `${slot}:${hit ? String(hit.level) : DASH}`
     })
-    if (periods.length === 1) {
-      L.push('- Unchanged all week.')
-    }
-  } else {
-    // No resolved periods supplied — the headline goals are all there is.
-    L.push(`- **Targets:** ${n(input.calorieGoal)} kcal · ${n(input.proteinGoalG)} g protein · `
-      + `${n(input.stepsGoal)} steps`)
-  }
-  // The two targets no rung governs. They belong in the instruction all the
-  // same: a week's adherence cannot be read against goals the document omits.
-  L.push(`- Sleep target: ${n(input.sleepGoalHours, 1)} h`
-    + `${periods.length > 1 ? ' — unchanged all week' : ''}`)
-  if (input.waterGoalMl != null) {
-    L.push(`- Water target: ${n(input.waterGoalMl / 1000, 1)} L`
-      + `${periods.length > 1 ? ' — unchanged all week' : ''}`)
-  }
-  L.push('')
-
-  // Session labels per date — for the readable daily log below.
-  const labelsByDate = new Map<string, string[]>()
-  for (const s of sessions) {
-    const arr = labelsByDate.get(s.date) ?? []
-    arr.push(s.label)
-    labelsByDate.set(s.date, arr)
-  }
-
-  // The day's own sessions, so the day block can carry them.
-  const sessionsByDate = new Map<string, ExportSession[]>()
-  for (const s of sessions) {
-    const arr = sessionsByDate.get(s.date) ?? []
-    arr.push(s)
-    sessionsByDate.set(s.date, arr)
-  }
-
-  // Full body-composition reading per weigh-in date (nested under its day below).
-  const bodyByDate = new Map<string, ExportBodyComp>()
-  for (const b of input.bodyComp ?? []) bodyByDate.set(b.date, b)
-
-  // Walks / runs per date (nested under their day, flagged as already counted).
-  const cardioByDate = new Map<string, ExportCardio[]>()
-  for (const c of input.cardio ?? []) {
-    const arr = cardioByDate.get(c.date) ?? []
-    arr.push(c)
-    cardioByDate.set(c.date, arr)
+    // Soreness carries its cause where the log recorded one. Delayed onset is
+    // the whole point of the measurement: a symptom with no session attached is
+    // not a dose-response reading.
+    const doms = input.doms.filter((x) => x.date === day.date).map((x) =>
+      [x.muscle, String(x.severity), x.sourceLabel ?? '', x.sourceDate ?? '']
+        .join(':').replace(/:+$/, ''))
+    // Flags that change how a number on this line should be READ — never flags
+    // that discount it. Every aggregate keeps the real figure: a cut that shows
+    // a stall must still show the intake that caused it.
+    const tags: string[] = []
+    if (day.nutritionException) tags.push(`except:${day.nutritionException}`)
+    if (day.nutritionEstimated) tags.push('estimated')
+    if (day.targetProfile) tags.push(`profile:${day.targetProfile}`)
+    if (day.weightKg == null) tags.push(`skip:${weighInSkipReason(day.weighInSkipReason)}`)
+    if (day.trackCarbs === false) tags.push('untracked:C')
+    if (day.trackFat === false) tags.push('untracked:F')
+    L.push(fields(
+      day.date, day.weekdayLabel, day.isTrainingDay ? '1' : '0',
+      minutes(day.sleepMin), minutes(day.deepMin), minutes(day.remMin),
+      minutes(day.coreMin), minutes(day.awakeMin),
+      clock(day.bedTime), clock(day.wakeTime),
+      day.sleepOnsetTrouble == null ? DASH : day.sleepOnsetTrouble ? '1' : '0',
+      n(day.hrvMs, 1), n(day.restingHr), n(day.avgHr), n(day.bloodOxygenPct),
+      // `signedC` appends "°C"; the column is already named `_c`, and a unit
+      // inside a cell is the one thing this grammar promised not to do. The
+      // SIGN stays — a deviation of +0.2 and one of −0.2 are opposite findings.
+      n(day.respiratoryRate, 1), n(day.wristTempDeltaC, 1), n(day.vo2max, 1),
+      minutes(day.daylightMin), minutes(day.exerciseMin),
+      n(day.standHours), minutes(day.standMin),
+      n(day.steps), kmOf(day.distanceM), minutes(day.trainingMin), n(day.activeKcal),
+      n(day.calories), n(day.proteinG), n(day.carbsG), n(day.fatG), litresOf(day.waterMl),
+      day.supplementsPlanned == null && day.supplementsTaken == null
+        ? DASH : `${n(day.supplementsTaken)}/${n(day.supplementsPlanned)}`,
+      items((day.supplementsLog ?? []).map((s) => `${s.key}@${s.time ?? DASH}`)),
+      items(day.supplementsSkipped ?? []),
+      n(day.weightKg, 1), n(bc?.bodyFatPct, 1), n(bc?.skeletalMuscleMassKg, 1), n(day.bmrKcal),
+      items(fatigue), items(doms), items(tags),
+    ))
   }
 
-  // ── Weekly summary ──
-  // Sits ABOVE the daily log on purpose: it is the orientation, and the seven
-  // rows underneath are the evidence. Everything here is a mean, a total or a
-  // max the reader would otherwise compute by hand.
-  {
-    const w = weeklySummary(input)
-    const dLabel = ['none', 'mild', 'moderate', 'severe']
-    L.push('## Weekly summary')
+  // ── SESSIONS ──────────────────────────────────────────────────────────────
+  // A session line, then one line per exercise indented two spaces, then one
+  // per PR. That indent is what tells a reader — and a regex — which session an
+  // exercise belongs to, and it is the only structure left in the document.
+  if (sessions.length) {
     L.push('')
-    L.push(`- Sleep (avg): ${sleep(w.avgSleepMin)}`)
-    L.push(`- Resting HR (avg): ${n(w.avgRestingHr, 1)}${w.avgRestingHr != null ? ' bpm' : ''}`)
-    L.push(`- HRV (avg): ${n(w.avgHrvMs, 1)}${w.avgHrvMs != null ? ' ms' : ''}`)
-    L.push(`- Cardio: ${n(w.cardioMinutes)} min across ${w.cardioSessions} session${w.cardioSessions === 1 ? '' : 's'}`
-      + ` · ${n(w.cardioActiveKcal)} active kcal`)
-    // Borg CR10, averaged over the sessions that were RATED — the count is
-    // stated so one 9/10 out of five sessions can't read as the week's tone.
-    L.push(`- Average workout effort: ${w.avgSessionRpe != null
-      ? `${n(w.avgSessionRpe, 1)}/10 CR10 across ${w.ratedSessions} rated session${w.ratedSessions === 1 ? '' : 's'}`
-      : 'not rated'}`)
-    // Coverage, so the average above can be read for what it is worth. Stated
-    // even at zero — "0 of 96 rated" is a fact about the log, and silence here
-    // would let an unrated week look like a week with nothing to say.
-    L.push(`- Per-set effort coverage: ${w.ratedSets} of ${w.workingSets} working set${w.workingSets === 1 ? '' : 's'} rated`)
-    L.push(`- Highest DOMS: ${w.peakDoms
-      ? `${w.peakDoms.muscle} — ${dLabel[w.peakDoms.severity] ?? w.peakDoms.severity} (${w.peakDoms.date})`
-      : 'none reported'}`)
-    L.push('')
-  }
-
-  /* ── THE DAY IS THE UNIT (restructured 2026-08-22) ──────────────────────────
-     `## Days` and `## Sessions` used to be two sections forty lines apart, so
-     reading what happened on Monday meant reading Monday's row here and then
-     hunting for Monday's session further down. They are one thing: a session
-     happens ON a day, against that day's sleep, that day's food and that day's
-     weigh-in, and every question worth asking of this document crosses that
-     boundary.
-
-     So the day owns everything that happened inside it — vitals, the scale, the
-     session with all its sets, and the walk — and the sections below are only
-     what genuinely spans the week. */
-  L.push('## Days')
-  L.push('')
-  for (const d of days) {
-    // WHAT WAS DONE OUTRANKS WHAT WAS PLANNED. A logged session makes the day a
-    // training day whatever the template says, because a swap moves a workout
-    // onto a day the static plan calls rest — and calling that day "Rest · Legs
-    // & Core B" is the same misattribution that put a Wednesday Delts & Arms
-    // session into the Upper A curve. `isTrainingDay` only decides the label
-    // when nothing was logged, where the plan is the only evidence there is.
-    const performed = labelsByDate.get(d.date)
-    const offPlan = performed != null && !d.isTrainingDay
-    const workout = performed?.join(' + ') ?? (d.isTrainingDay ? 'not logged' : null)
-    /* An untracked macro still prints its INTAKE — what was eaten is a fact
-       either way — but is marked so the figure is never read as adherence. "88C
-       (untracked)" says both things a reader needs: how much, and that nobody
-       was aiming at a number. */
-    const carbsCell = d.trackCarbs === false ? `${n(d.carbsG)}C (untracked)` : `${n(d.carbsG)}C`
-    const fatCell = d.trackFat === false ? `${n(d.fatG)}F (untracked)` : `${n(d.fatG)}F`
-    const macros = [d.proteinG, d.carbsG, d.fatG].some((v) => v != null)
-      ? ` (${n(d.proteinG)}P / ${carbsCell} / ${fatCell})` : ''
-    /* The shape sits ON the intake it explains, ahead of the exception tag: the
-       shape says what was asked for and the exception says why it was missed, and
-       that is the order a reader needs them in. */
-    const shapeTag = d.targetProfile ? ` [${d.targetProfile}]` : ''
-
-    L.push(
-      // "Workout", not "Train" — the app calls this thing a workout on the tab,
-      // the tile, the session and the deck, and the export was the last surface
-      // still using a different word for it.
-      `- **${d.weekdayLabel} ${d.date}** · ${performed || d.isTrainingDay ? 'Workout' : 'Rest'}`
-      + `${offPlan ? ' (off-plan / swapped)' : ''}${workout ? ` · ${workout}` : ''}`,
-    )
-
-    // ── Sleep & vitals ──
-    // EVERY field named every time, `—` where there is no reading. Wrist
-    // temperature and blood oxygen appear here for the first time: the column
-    // and the query for the second both already existed and the value was
-    // simply never assigned to anything.
-    // The five original readings keep their exact wording and position; the four
-    // that follow are APPENDED, so a reader (or a parser) built against the old
-    // line still finds every field it knew where it left it. Avg HR is the
-    // DAYTIME average and sits beside Resting HR deliberately — the pair is the
-    // reading, and either one alone has been mistaken for the other.
-    L.push(`    - Sleep & Vitals: Sleep: ${sleepLong(d.sleepMin)} · HRV: ${n(d.hrvMs)} ms`
-      + ` · Resting HR: ${n(d.restingHr)} bpm`
-      + ` · Wrist Temp: ${signedC(d.wristTempDeltaC)}`
-      + ` · Blood O2: ${d.bloodOxygenPct != null ? `${n(d.bloodOxygenPct)}%` : DASH}`
-      + ` · Avg HR (daytime): ${d.avgHr != null ? `${n(d.avgHr)} bpm` : DASH}`
-      + ` · Respiratory Rate: ${d.respiratoryRate != null ? `${n(d.respiratoryRate, 1)} br/min` : DASH}`
-      + ` · VO2 Max: ${d.vo2max != null ? `${n(d.vo2max, 1)} ml/kg/min` : DASH}`)
-
-    /* ── SLEEP ARCHITECTURE ────────────────────────────────────────────────────
-       Its own line rather than more fields on the one above, because it is a
-       different measurement: that line says how the body was, this one says how
-       the night was built. Deep, REM and core sum to the duration printed above
-       minus time awake, so the reader can check it — and the bed and wake clock
-       times are here because WHEN a night happened is a separate fact from how
-       long it lasted, and the only one that shows a drifting schedule. */
-    L.push(`    - Sleep Stages: Deep: ${sleepLong(d.deepMin)} · REM: ${sleepLong(d.remMin)}`
-      + ` · Core: ${sleepLong(d.coreMin)} · Awake: ${sleepLong(d.awakeMin)}`
-      + ` · Bed: ${clock(d.bedTime)} · Wake: ${clock(d.wakeTime)}`
-      /* APPENDED, like every field added to a daily line before it, so a reader
-         or a parser built against the old wording still finds the six stage
-         readings where it left them. Named on EVERY night rather than only the
-         bad ones: a flag that appears seven times in fifty tells the reader it
-         is rarely true, where a flag that appears only when set tells them
-         nothing about the nights it is missing from. */
-      + ` · Onset: ${d.sleepOnsetTrouble == null ? DASH : d.sleepOnsetTrouble ? 'hard to fall asleep' : 'normal'}`)
-
-    // The exception tag sits ON the intake it explains, not at the end of the
-    // block — a reader meeting "3210 kcal" needs the reason in the same breath.
-    L.push(
-      `    - Macros: ${n(d.calories)} kcal${macros}${shapeTag}`
-      + `${exceptionTag(d.nutritionException)}${estimatedTag(d.nutritionEstimated)}`
-      + ` · water ${n(d.waterMl == null ? null : d.waterMl / 1000, 1)} L`,
-    )
-
-    /* ── MICROS, UNDER THE MACROS THEY BELONG TO ───────────────────────────────
-       Every target, every day, in the table's own order — including the ones
-       that were never measured, which print `—/target` rather than vanishing.
-       A nutrient that only appears on the days it was logged teaches the reader
-       that it is not tracked, which is the opposite of true. */
-    L.push(`    - Nutrients: ${nutrientLine(d.nutrientsFood, d.nutrientsStack)}`)
-    // Steps, distance and training minutes keep their original conditional
-    // form; the three ring metrics are appended and ALWAYS named, because a
-    // dropped field and a zero-minute stand day are not the same day.
-    L.push(`    - Activity: ${n(d.steps)} steps`
-      + `${d.distanceM != null ? ` · ${n(d.distanceM / 1000, 2)} km` : ''}`
-      + `${d.trainingMin != null ? ` · ${n(d.trainingMin)} min training` : ''}`
-      + ` · Exercise: ${d.exerciseMin != null ? `${n(d.exerciseMin)} min` : DASH}`
-      + ` · Stand: ${d.standHours != null ? `${n(d.standHours)} h` : DASH}`
-      + `${d.standMin != null ? ` (${n(d.standMin)} min)` : ''}`
-      + ` · Daylight: ${d.daylightMin != null ? `${n(d.daylightMin)} min` : DASH}`)
-
-    /* ── WHAT WAS ACTUALLY SWALLOWED ───────────────────────────────────────────
-       The protocol section at the foot of this document is a PRESCRIPTION. This
-       is compliance, and the two are routinely different — 9 of 9 on Thursday
-       and 4 of 9 on Wednesday is the single most likely explanation for a week
-       that otherwise looks identical to the one before it.
-
-       The times are the SCHEDULED slots. They used to be the ticks themselves
-       (`supplement_log.taken_at`), on the reasoning that a pre-workout taken at
-       19:00 was not taken pre-workout — true, and unsupported by the column,
-       which was written by the auto-log pass with the slot's own time as often
-       as by a tap. A stamp that means two things is worse than one that means
-       one, and the schedule is the half that is always true.
-
-       And a MISS is now explicit. Absence of a row used to read as a skip, so a
-       night the app was never opened after 22:00 reported three doses missed
-       that were swallowed on time — eight days in August 2026 alone. Only a
-       deliberate skip writes anything now, and only that reaches this line. */
-    {
-      const log = d.supplementsLog ?? []
-      const taken = d.supplementsTaken ?? (log.length || null)
-      const planned = d.supplementsPlanned
-      const count = `${taken != null ? n(taken) : DASH} of ${planned != null ? n(planned) : DASH} taken`
-      // Grouped by the time they are DUE, because that is how they are actually
-      // swallowed: citrulline and caffeine are both 11:45 items because they are
-      // one act, and listing them separately described two trips to the cupboard
-      // that never happened.
-      const byTime = new Map<string, string[]>()
-      for (const i of log) {
-        const t = i.time ?? '—'
-        const bucket = byTime.get(t) ?? []
-        bucket.push(i.key)
-        byTime.set(t, bucket)
+    L.push('## SESSIONS' + SEP + [
+      'date', 'day', 'label', 'session_no', 'started', 'ended', 'duration_min',
+      'avg_bpm', 'kcal', 'srpe', 'sets', 'failure_sets', 'tonnage_kg', 'prs', 'estimated',
+    ].join(SEP))
+    L.push('##   exercise' + SEP + ['name', 'rep_window', 'rest_target/plan_s', 'top_kg',
+      'set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds,'
+      + ' a unilateral pair is Lset|Rset'].join(SEP))
+    L.push('##   PR' + SEP + ['name', 'load×reps', 'axes', 'volume_kg', 'e1rm_kg (Epley,'
+      + ' weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)'].join(SEP))
+    for (const s of sessions) {
+      L.push(fields(
+        s.date, weekdayOf(s.date, days) || DASH, s.label,
+        s.sessionNumber == null ? DASH : `#${s.sessionNumber}`,
+        clock(s.startedAt), clock(s.endedAt), minutes(s.durationMin),
+        n(s.avgBpm), n(s.caloriesBurned), s.sessionRpe == null ? DASH : String(s.sessionRpe),
+        n(s.setCount), n(s.failureSets), exact(s.volumeKg), String(s.prs.length),
+        items([s.caloriesEstimated ? 'kcal' : '', s.avgBpmEstimated ? 'bpm' : ''].filter(Boolean)),
+      ))
+      for (const ex of s.exercises) {
+        const tokens = setTokens(ex)
+        L.push('  ' + fields(
+          ex.name,
+          ex.repWindow ? `[${ex.repWindow}]` : DASH,
+          ex.restTargetSec == null && ex.restPlanSec == null
+            ? DASH : `${n(ex.restTargetSec)}/${n(ex.restPlanSec)}`,
+          exact(ex.topKg),
+          ...(tokens.length ? tokens : [DASH]),
+        ))
       }
-      const items = byTime.size
-        ? ` · ${[...byTime.entries()].sort(([a], [b]) => a.localeCompare(b))
-            .map(([t, keys]) => `${t} ${keys.join(', ')}`).join(' · ')}`
-        : ''
-      const skipped = d.supplementsSkipped?.length
-        ? ` · SKIPPED: ${d.supplementsSkipped.join(', ')}`
-        : ''
-      L.push(`    - Supplements: ${count}${items}${skipped}`)
-    }
-
-    // ── The scale ──
-    // NO WEIGHT, NO READING. A scale reading is anchored on a bodyweight —
-    // every mass below is derived from one — so a row that has lost its weight
-    // is not a partial measurement, it is a fragment. 2026-08-02 carries a
-    // skeletal-muscle figure and a waist:hip ratio and nothing else, which
-    // printed two lines of twenty em-dashes: visually a catastrophic weigh-in,
-    // actually a sync that dropped the weight.
-    const b = bodyByDate.get(d.date)
-    if (b && b.weightKg != null && Number.isFinite(b.weightKg)) {
-      /* ── ONE LINE, EVERY COMPARTMENT, IN THE SCALE'S OWN ORDER ──
-         Percentage then mass, pair by pair, so a reader comparing weeks never
-         has to multiply by a bodyweight that is itself moving.
-
-         "Muscle Mass" carries its gloss because THREE different numbers on this
-         line could answer to that name and they are ~23 kg apart: skeletal
-         muscle (~27 kg, entered from the scale), lean soft tissue (~50 kg,
-         weight × muscle%) and fat-free mass (~53 kg, weight − fat, which
-         includes bone and water). Naming one of them "Muscle Mass" unqualified
-         is how a report ends up contradicting itself. */
-      L.push(
-        `    - Weight Data: Weight: ${n(b.weightKg, 1)} kg · BMI: ${n(b.bmi, 1)}`
-        + ` · Body Fat Percentage: ${n(b.bodyFatPct, 1)}% · Fat Mass: ${n(b.fatMassKg, 1)} kg`
-        + ` · Muscle Percentage: ${n(b.musclePercent, 1)}%`
-        + ` · Muscle Mass (Lean Soft Tissue): ${n(b.muscleMassKg, 1)} kg`
-        + ` · Water Percentage: ${n(b.waterPercent, 1)}% · Body Water Mass: ${n(b.waterMassKg, 1)} kg`
-        + ` · Protein Percentage: ${n(b.proteinPercent, 1)}% · Protein Mass: ${n(b.proteinMassKg, 1)} kg`
-        + ` · Bone Mineral Percentage: ${n(b.boneMineral, 1)}%`
-        + ` · Bone Mineral Content: ${n(b.boneMineralKg, 2)} kg`
-        + ` · Skeletal Muscle Mass: ${n(b.skeletalMuscleMassKg, 1)} kg`
-        + ` · Visceral Fat Rating: ${n(b.visceralFat)}`
-        + ` · Basal Metabolic Rate: ${n(b.bmr)}`
-        + ` · Estimated Waist to Hip Ratio: ${n(b.estimatedWaistToHipRatio, 2)}`
-        + ` · Fat-free body weight: ${n(b.fatFreeMassKg, 1)} kg.`,
-      )
-    } else {
-      // A day with no full reading still says what happened to the weigh-in —
-      // "skipped, as planned" and "never opened the app" are different facts.
-      L.push(`    - Weight Data: ${weighIn(d.weightKg, d.weighInSkipReason)}`)
-    }
-
-    // ── The session(s), inside the day ──
-    for (const s of sessionsByDate.get(d.date) ?? []) {
-      L.push('')
-      L.push(`    - **Session${s.sessionNumber != null ? ` #${s.sessionNumber}` : ''}: ${s.label}**`)
-      // Volume · sets · failures · time · kcal · avg HR · PRs · effort, in one
-      // labelled run. Every segment is printed even when empty: a missing one is
-      // indistinguishable from a session logged at zero.
-      // Clock times lead: they are the fact the duration cannot carry.
-      const window = s.startedAt
-        ? `Started: ${clock(s.startedAt)}${s.endedAt ? ` · Ended: ${clock(s.endedAt)}` : ''} · `
-        : ''
-      L.push(`        - Session Metadata: ${window}Duration: ${n(s.durationMin)} Minutes`
-        + ` · Volume: ${exact(s.volumeKg)} kg`
-        + ` · Sets: ${n(s.setCount)}${s.failureSets ? ` (${n(s.failureSets)} to failure)` : ''}`
-        + ` · Calories: ${n(s.caloriesBurned)} kcal${s.caloriesEstimated ? ' [Estimated]' : ''}`
-        + ` · Avg HR: ${s.avgBpm != null ? `${n(s.avgBpm)}${s.avgBpmEstimated ? ' [Estimated]' : ''}` : DASH}`
-        + ` · PRs: ${s.prs.length}`
-        + ` · Effort: ${s.sessionRpe != null ? `${n(s.sessionRpe, 1)}/10 CR10` : 'Not reported'}`)
-      for (const e of s.exercises) {
-        // Rest is stated only when it was CHANGED from the plan. The plan's
-        // own figure is already in the program the reader has; repeating it on
-        // every exercise would be noise on the busiest lines in the document,
-        // and the interesting fact is the adjustment.
-        const restNote = e.restTargetSec != null && e.restPlanSec != null && e.restTargetSec !== e.restPlanSec
-          ? ` · rest ${e.restTargetSec}s (adjusted from ${e.restPlanSec}s)`
-          : ''
-        L.push(`        - **${e.name}**${e.repWindow ? ` _(target ${e.repWindow})_` : ''}${restNote}:`)
-        // One set per line. The old single-line form packed a whole exercise
-        // into a bespoke notation (`60kg × 12,11,10`, `11@8.5`) a reader had to
-        // decode before they could read it.
-        for (const line of setDetail(e.sets, e.name)) L.push(`            - ${line}`)
-      }
-      if (s.prs.length) {
-        L.push('        - PRs:')
-        // A record set under a declared context is STILL A RECORD — PR detection
-        // deliberately ignores every gating flag, and suppressing one here would
-        // repeat that mistake downstream. It is tagged, because "he hit a 1RM on
-        // day three of the flu" is the most interesting fact on the page and
-        // reads as an ordinary Tuesday without the tag.
-        const dayContext = contextFromDayLabel(d.nutritionException)
-        const tag = dayContext === 'normal' ? '' : ` _(under ${CONTEXT_META[dayContext].label})_`
-        for (const p of s.prs) {
-          const timed = isTimedExercise(p.name)
-          /* ── THE AXIS IS THE LABEL OF ITS OWN VALUE ──
-             Naming the axes and then listing the numbers separately printed
-             each record twice — "— Volume, 1RM — Volume: 440, 1RM: 54.67 kg".
-             The axis names ARE the labels, so where an axis has a number it
-             carries it, and where it does not (a Weight or Reps record, whose
-             value is the lift already printed to the left) it stands alone. */
-          const axes = p.axes.map((a) => {
-            const label = prAxisLabel(a, timed)
-            if (a === 'volume' && p.volumeKg != null) return `${label}: ${exact(p.volumeKg)} kg`
-            if (a === 'e1rm' && p.e1rmKg != null) return `${label}: ${n(p.e1rmKg, 2)} kg`
-            return label
-          })
-          L.push(`            - **${p.name}** ${formatSet(p.weightKg, p.reps, { timed })}`
-            + `${axes.length ? ` — ${axes.join(', ')}` : ''}${tag}`)
-        }
+      for (const p of s.prs) {
+        L.push('  ' + fields(
+          'PR', p.name, `${exact(p.weightKg)}×${exact(p.reps)}`,
+          items(p.axes.map((a) => prAxisLabel(a))),
+          exact(p.volumeKg), exact(p.e1rmKg),
+        ))
       }
     }
-
-    // ── The walk ──
-    for (const c of cardioByDate.get(d.date) ?? []) {
-      // EVERY metric is named, EVERY time. This used to drop absent fields,
-      // which reads fine until you compare two walks: one showing "avg HR 112"
-      // and one not, with no way to tell whether the second had no heart-rate
-      // reading or the exporter simply didn't carry it. An em-dash says "not
-      // recorded" — which is information — while a 0 would be a lie.
-      const pace = paceMinPerKm(c.distanceM, c.durationMin)
-      const bits = [
-        `time ${c.durationMin != null ? `${n(c.durationMin)} min` : DASH}`,
-        `distance ${c.distanceM != null ? `${n(c.distanceM / 1000, 2)} km` : DASH}`,
-        `pace ${pace != null ? formatPace(pace) : DASH}`,
-        `active ${c.kcal != null ? `${n(c.kcal)} kcal` : DASH}`,
-        `total ${c.totalKcal != null ? `${n(c.totalKcal)} kcal` : DASH}`,
-        `avg HR ${c.avgHr != null ? n(c.avgHr) : DASH}`,
-        `effort ${c.effort != null ? `${n(c.effort, 1)}/10` : DASH}`,
-      ].join(' · ')
-      L.push('')
-      // The warning is OUT of its parentheses and emphasised. Parenthesised, it
-      // read as a footnote about provenance; it is in fact an instruction not to
-      // add these calories and steps to the day's totals, which a reader
-      // summing the document will otherwise do.
-      L.push(`    - Cardio: ${cardioLabel(c.kind)} · ${bits}`
-        + ' **(Already accounted for in daily steps and calories — do NOT add to the day.)**')
-    }
-    L.push('')
   }
 
-  /* ── SETS PER MUSCLE VS TARGET ──────────────────────────────────────────────
-     Vertical, one muscle per line: this is a list of sixteen comparisons and it
-     was being read as prose. The tonnage half moved to the aggregates block at
-     the foot of the document — sets are the DOSE the programme prescribes and
-     belong beside the week's training; kilograms are an aggregate. */
-  L.push('## Sets Targets')
+  // ── CARDIO ────────────────────────────────────────────────────────────────
+  // Pace is the one derived value the raw body is allowed: arithmetic over two
+  // exported facts, and the unit a run is actually read in. `active_kcal` here
+  // is ALREADY inside the day's own `active_kcal` and must not be added on top,
+  // which is why `total_kcal` sits beside it rather than replacing it.
+  if (cardio.length) {
+    L.push('')
+    L.push('## CARDIO' + SEP + ['date', 'day', 'kind', 'duration_min', 'dist_km',
+      'pace_min_km', 'avg_hr', 'active_kcal', 'total_kcal', 'effort_cr10'].join(SEP))
+    for (const c of cardio) {
+      L.push(fields(
+        c.date, weekdayOf(c.date, days) || DASH, cardioLabel(c.kind),
+        n(c.durationMin, 1), kmOf(c.distanceM),
+        formatPace(paceMinPerKm(c.distanceM, c.durationMin)),
+        n(c.avgHr), n(c.kcal), n(c.totalKcal),
+        c.effort == null ? DASH : String(c.effort),
+      ))
+    }
+  }
+
+  // ── BODY ──────────────────────────────────────────────────────────────────
+  // Every compartment in ABSOLUTE kg beside its percentage. A percentage of a
+  // falling bodyweight can rise while the tissue shrinks; kilograms cannot lie
+  // that way, and a cut is exactly where that matters.
+  if (bodyComp.length) {
+    L.push('')
+    L.push('## BODY' + SEP + ['date', 'weight_kg', 'bmi', 'fat_pct', 'muscle_pct',
+      'water_pct', 'visceral', 'bmr_kcal', 'smm_kg', 'muscle_mass_kg', 'ffm_kg',
+      'fat_mass_kg', 'protein_kg', 'protein_pct', 'bone_kg', 'water_kg', 'whr'].join(SEP))
+    for (const b of bodyComp) {
+      L.push(fields(
+        b.date, n(b.weightKg, 1), n(b.bmi, 1), n(b.bodyFatPct, 1), n(b.musclePercent, 1),
+        n(b.waterPercent, 1), n(b.visceralFat, 1), n(b.bmr), n(b.skeletalMuscleMassKg, 1),
+        n(b.muscleMassKg, 1), n(b.fatFreeMassKg, 1), n(b.fatMassKg, 1), n(b.proteinMassKg, 1),
+        n(b.proteinPercent, 1), n(b.boneMineralKg, 2), n(b.waterMassKg, 1),
+        n(b.estimatedWaistToHipRatio, 2),
+      ))
+    }
+  }
+
+  // ── NUTRIENTS ─────────────────────────────────────────────────────────────
+  // Food and stack kept APART on every key. "594 mg of vitamin C" means
+  // something different when a tablet supplied 470 of it, and merging the two
+  // is how a supplement gets read as a diet.
+  const microDays = days.filter((d) =>
+    Object.keys(d.nutrientsFood ?? {}).length || Object.keys(d.nutrientsStack ?? {}).length)
+  if (microDays.length) {
+    L.push('')
+    L.push('## NUTRIENTS' + SEP + 'date' + SEP
+      + 'key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit;'
+      + ' a key with no reading on either side is left off the line')
+    for (const day of microDays) {
+      L.push(fields(day.date, ...NUTRIENT_TARGETS.map((t) => {
+        const food = day.nutrientsFood?.[t.key]
+        const stack = day.nutrientsStack?.[t.key]
+        if (food == null && stack == null) return null
+        return `${t.key}=${exact(food ?? 0)}+${exact(stack ?? 0)}`
+      }).filter((x): x is string => x != null)))
+    }
+    // The doubt, stated once and only when the week actually has one. A ⚠ that
+    // appears every week is a caveat nobody reads. These are printed exactly as
+    // stored: `nutrition_entries` keeps one aggregate row per day with no item
+    // breakdown, so the duplicate is upstream, in the Health source. Treat a
+    // flagged figure as unmeasured, not as a day that went badly.
+    const flagged = flaggedNutrients(days)
+    if (flagged.length) L.push(fields('##   implausible', items(flagged)))
+  }
+
+  // ── SUPPS ─────────────────────────────────────────────────────────────────
+  // The protocol as `custom_supplements` holds it, never from a constant. What
+  // was actually TAKEN rides on each day's line; this is only what was asked
+  // for. One list, not a training column and a rest column — the differences
+  // ride inside the row they belong to.
+  const supps = supplementRows(input.supplementProtocol ?? [])
+  if (supps.length) {
+    L.push('')
+    L.push('## SUPPS' + SEP + ['time', 'name', 'dose', 'training_dose', 'rest_dose',
+      'training_only', 'notes'].join(SEP))
+    for (const s of supps) {
+      L.push(fields(s.time, s.name, s.dose, s.trainingDose, s.restDose,
+        s.trainingOnly ? '1' : '0', s.notes))
+    }
+  }
+
+  // ── WEEK ──────────────────────────────────────────────────────────────────
+  // Sums and means over the rows already printed. Means SKIP missing days
+  // rather than counting them as zero: three weigh-ins in a week average the
+  // three, and treating the other four as 0 kg would report a 27 kg bodyweight.
+  // The two totals are honest sums for the opposite reason — tonnage and cardio
+  // minutes are work that either happened or did not, and a rest day is a zero.
+  const totals = trendTotals(days, sessions, cardio)
+  const summary = weeklySummary(input)
+  const energy = energyBalance(days)
+  const weights = days.map((d) => d.weightKg)
+    .filter((v): v is number => v != null && Number.isFinite(v))
   L.push('')
-  for (const m of volumeByMuscle) {
-    // ONE grading rule, shared with the app (see landmarks.volumeZone): only the
-    // TOTAL can clear an UNDER, only the DIRECT work can earn an OVER. Rendering
-    // its own comparison here is how the export and the Command Center start
-    // disagreeing about the same week.
-    const status = m.target <= 0 ? '—'
-      : ZONE_WORD[volumeZone(m.sets, m.target, m.directSets ?? m.sets)]
-    const split = m.indirectSets != null && m.indirectSets > 0 && m.directSets != null
-      ? ` (${m.directSets} direct + ${m.indirectSets} indirect)`
-      : ''
-    L.push(`- ${m.muscle}: ${m.sets}/${m.target}${split} — ${status}`)
-  }
-  L.push('')
-  L.push('_A set credits 1.0 to each muscle a movement directly trains and 0.5 to'
-    + ' each it assists. Half sets are real and are not rounded away. Targets are'
-    + ' DIRECT-set landmarks, so the verdict is asymmetric on purpose: assistance'
-    + ' can lift a muscle out of UNDER, but only direct work can put one OVER._')
-  L.push('')
+  L.push('## WEEK' + SEP + ['tonnage_kg', 'working_sets', 'rated_sets', 'sessions',
+    'kcal_avg', 'P_avg', 'C_avg', 'F_avg', 'water_l_avg', 'steps_avg', 'sleep_min_avg',
+    'rhr_avg', 'hrv_avg', 'weight_avg_kg', 'weight_first_to_last_kg',
+    'srpe_avg', 'srpe_rated_sessions', 'cardio_min', 'cardio_kcal'].join(SEP))
+  L.push(fields(
+    exact(totals.totalVolumeKg), String(summary.workingSets), String(summary.ratedSets),
+    String(sessions.length),
+    n(totals.avgKcal), n(meanOf(days.map((d) => d.proteinG))),
+    n(meanOf(days.map((d) => d.carbsG))), n(meanOf(days.map((d) => d.fatG))),
+    litresOf(totals.avgWaterMl), n(totals.avgSteps), minutes(summary.avgSleepMin),
+    n(summary.avgRestingHr, 1), n(summary.avgHrvMs, 1), n(totals.avgWeightKg, 2),
+    // Plain `n()`, with no leading `+` on a gain. Every other signed number in
+    // this document — `balance_kcal`, `wrist_temp_c`, `strainZ` — comes out of
+    // `n()`, which is `toFixed` and spells only the minus. A second convention
+    // four columns away is one more thing a parser has to be told to tolerate,
+    // for a character that says nothing the number did not. The `## LEDGER`
+    // table keeps its typographic `−`: it is read by people, not split.
+    weights.length > 1 ? n(weights[weights.length - 1] - weights[0], 2) : DASH,
+    // How hard the week's workouts FELT, and across how many ratings — a mean
+    // of 9.0 from one session out of five is not the week's character, and the
+    // mean alone cannot say which it is.
+    n(summary.avgSessionRpe, 2), String(summary.ratedSessions),
+    n(totals.cardioMinutes, 1), n(summary.cardioActiveKcal),
+  ))
 
-  /* ── SORENESS ───────────────────────────────────────────────────────────────
-     ONE LINE PER DAY, every day of the week, formatted like the Fatigue block
-     below it — which is what these two sections should always have had in
-     common, being the same kind of reading taken on the same schedule.
-
-     What it replaces was one line per (date, muscle) and nothing at all for a
-     day with no rows. Both halves of that were wrong. A reader scanning for
-     Wednesday found no Wednesday and could not tell whether the day was
-     pain-free or simply never opened, and a week where four muscles were rated
-     on one day out-lined a week where one muscle was rated on four.
-
-     Muscles that were never rated are NOT padded in with em-dashes: the app
-     asks about the muscles a session trained, so silence on the other twelve is
-     the protocol rather than a gap. A day with no ratings at all says so in
-     words, once. */
-  {
-    const label = ['none', 'mild', 'moderate', 'severe']
-    L.push('## DOMS (soreness, 0–3)')
-    L.push('')
-    const byDate = new Map<string, ExportDoms[]>()
-    for (const r of doms) {
-      const bucket = byDate.get(r.date) ?? []
-      bucket.push(r)
-      byDate.set(r.date, bucket)
+  // Sets per muscle against the week's target, and the tonnage behind them. The
+  // GRADED figure is direct + indirect; the split rides alongside so a reader
+  // can see how much of a muscle's week was assistance work. A set credits 1.0
+  // to each muscle a movement directly trains and 0.5 to each it assists —
+  // assistance can lift a muscle out of under-target, and only direct work can
+  // put one over. Unilateral work is scored ONCE at the weaker side,
+  // min(weight) × min(reps), and the pair counts as one set.
+  if (input.volumeByMuscle.length || input.tonnageByMuscle?.length) {
+    const tonnage = new Map((input.tonnageByMuscle ?? []).map((t) => [t.muscle, t]))
+    const muscles = [...new Set([
+      ...input.volumeByMuscle.map((v) => v.muscle),
+      ...(input.tonnageByMuscle ?? []).map((t) => t.muscle),
+    ])]
+    L.push('## WEEK.MUSCLE' + SEP + ['muscle', 'sets', 'target', 'direct', 'indirect',
+      'tonnage_kg', 'direct_kg'].join(SEP))
+    for (const muscle of muscles) {
+      const v = input.volumeByMuscle.find((x) => x.muscle === muscle)
+      const t = tonnage.get(muscle)
+      L.push(fields(muscle, n(v?.sets, 1), n(v?.target, 1), n(v?.directSets, 1),
+        n(v?.indirectSets, 1), exact(t?.volumeKg), exact(t?.directKg)))
     }
-    for (const day of days) {
-      const rows = byDate.get(day.date) ?? []
-      if (!rows.length) {
-        L.push(`- ${day.weekdayLabel} ${day.date}: not logged`)
-        continue
-      }
-      const parts = rows.map((r) => {
-        const sev = `${r.muscle}: ${r.severity} (${label[r.severity] ?? r.severity})`
-        // The ATTRIBUTION, where the row carries one. Delayed onset is the
-        // entire content of the measurement: soreness two days after a session
-        // and soreness the morning after it are different readings of different
-        // things, and neither is legible without the session named.
-        if (!r.sourceLabel) return sev
-        const out = daysBetween(r.sourceDate, r.date)
-        // Weekday AND date, the way every other date in this document is
-        // stamped. A bare "Fri" is ambiguous across a fortnight, and a bare ISO
-        // date makes the reader count — and the source session is very often
-        // OUTSIDE this week, where the weekday is not even resolvable.
-        const wd = r.sourceDate ? weekdayOf(r.sourceDate, days) : ''
-        const when = r.sourceDate
-          ? `, ${wd ? `${wd} ${r.sourceDate}` : r.sourceDate}${out != null
-              ? ` (${out} day${out === 1 ? '' : 's'} out)` : ''}`
-          : ''
-        return `${sev} — from ${r.sourceLabel}${when}`
-      })
-      L.push(`- ${day.weekdayLabel} ${day.date}: ${parts.join(' · ')}`)
-    }
-    L.push('')
   }
 
-  // ── Fatigue ──
-  // Grouped by DAY rather than one line per reading: four rows per day would
-  // make this the longest section in the document to carry the least, and the
-  // shape of a day — where it started and where it ended — is the whole reading.
-  const fatigue = input.fatigue ?? []
-  {
-    L.push('## Fatigue (self-reported, not scored)')
-    L.push('')
-    const byDate = new Map<string, Map<string, ExportFatigue>>()
-    for (const f of fatigue) {
-      const bucket = byDate.get(f.date) ?? new Map<string, ExportFatigue>()
-      bucket.set(f.slot, f)
-      byDate.set(f.date, bucket)
-    }
-    /* ── SEVEN DAYS, FOUR SLOTS, NO EXCEPTIONS ────────────────────────────────
-       This block used to print only the readings that existed, on only the days
-       that had one, which quietly broke the rule the whole document is built
-       on: a gap must be VISIBLE. A week holding five readings printed two lines,
-       and a Saturday rated once in the morning printed a single cheerful
-       "Morning fresh" that read as the whole day.
-
-       Now the grid is complete and the em-dashes do the work they do everywhere
-       else here — "not asked" is a fact about the week, and on a self-reported
-       measure it is very nearly the most important one, because the days a
-       person stops logging fatigue are rarely the easy days. */
-    for (const day of days) {
-      const rows = byDate.get(day.date)
-      const labels = fatigueLabelsFor(day.isTrainingDay)
-      const parts = labels.map((slot) => {
-        const r = rows?.get(slot)
-        return `${slot} ${r ? r.label.toLowerCase() : DASH}`
-      })
-      /* ── THE SESSION'S COST ────────────────────────────────────────────────
-         After minus before, in scale steps. It is the one number this tracker
-         produces that is not a self-report on its own: both ends are, but the
-         DIFFERENCE between two readings taken hours apart on the same scale is
-         a measurement of what happened in between.
-
-         Only on a training day, and only when both ends exist — a delta against
-         a missing reading looks like a measurement and is not one. Signed
-         explicitly, because "2" and "−2" are opposite weeks. */
-      const pre = rows?.get('Before training')?.level
-      const post = rows?.get('After training')?.level
-      const cost = day.isTrainingDay && pre != null && post != null
-        ? ` · cost ${post - pre > 0 ? '+' : post - pre < 0 ? '−' : '±'}${Math.abs(post - pre)}`
-        : ''
-      L.push(`- ${day.weekdayLabel} ${day.date}: ${parts.join(' · ')}${cost}`)
-    }
-    L.push('')
-    L.push('_Three slots a day, every day. A training day asks Waking / Before training /'
-      + ' After training; a rest day asks Waking / Midday / Night._')
-    L.push('_`cost` is the after-training level minus the before-training one — how much the'
-      + ' session took, in scale steps. `—` means the question was not answered, which is a'
-      + ' fact about the week and not a neutral reading._')
-    L.push('')
-  }
-
-  // ── Supplements protocol (ONE list) ──
-  const protocol = input.supplementProtocol
-  if (protocol?.length) {
-    L.push('## Supplements protocol')
-    L.push('')
-    for (const s of consolidateSupplements(protocol)) L.push(`- ${s}`)
-    L.push('')
-  }
-
-  // ── The cumulative ledger ──
-  // The raw week comes first and the trajectory follows it: a reader who starts
-  // with the trend anchors on it and reads the evidence to confirm.
+  // ── LEDGER ────────────────────────────────────────────────────────────────
+  // The one table in the document, and the one place a table is right: a
+  // programme read downwards, oldest week at the top.
   if (input.ledger?.length) {
-    const label = input.weekLabel?.trim()
-    L.push(`## Week-over-Week Trends (${input.programLabel}${label ? ` · ${label}` : ''})`)
     L.push('')
+    L.push('## LEDGER' + SEP + 'every week of the programme, oldest first')
     L.push(...trendLedger(input.ledger))
-    L.push('')
-    L.push('_Every week of the programme, oldest first. Averages skip days with no'
-      + ' entry rather than counting them as zero; volume and cardio are totals, so'
-      + ' a short week is genuinely a smaller number. Δ is the change in average'
-      + ' bodyweight from the row above, and the arrow shows direction only —'
-      + ' whether a move is progress depends on the phase._')
-    L.push('')
   }
 
-  /* ── WEEKLY AGGREGATES ──────────────────────────────────────────────────────
-     Everything that is a sum, a mean or a shape across the seven days, gathered
-     under one heading instead of scattered across three.
-
-     These sit AFTER the daily log on purpose. Every number here is derived from
-     rows already printed above, and a reader who meets the totals first anchors
-     on them and reads the evidence to confirm rather than to check. The one
-     exception is the Weekly summary at the top, which is orientation — the means
-     a reader needs before they can tell whether a given Tuesday was unusual. */
-  L.push('## Weekly aggregates')
+  // ── DERIVED ───────────────────────────────────────────────────────────────
+  // The fence. Everything above is a measurement; everything here is arithmetic
+  // over those measurements, printed so it can be audited or ignored. Nothing
+  // here reaches for data the document has not already shown, and a key with no
+  // evidence prints `—` rather than a zero.
+  const derived = derivedWeek(input)
+  const bmrs = bmrCarry(days)
+  const batteryByDate = new Map(derived.battery.map((b) => [b.date, b]))
   L.push('')
+  L.push('## DERIVED' + SEP + 'computed by Onyx — not measured' + SEP + 'key'
+    + SEP + 'then one value per day, in DAYS order')
+  const keyRow = (key: string, value: (day: ExportDay, i: number) => string) =>
+    L.push(fields(key, ...days.map(value)))
+  keyRow('load', (d) => n(d.readiness?.load, 1))
+  keyRow('acwr', (d) => n(batteryByDate.get(d.date)?.acwr ?? d.readiness?.acwr, 3))
+  keyRow('strainZ', (d) => n(batteryByDate.get(d.date)?.strainZ ?? d.readiness?.strainZ, 2))
+  keyRow('wellness', (d) => n(batteryByDate.get(d.date)?.wellness, 2))
+  /* The stress index arrives with the E3 engine. Until then the key is present
+     and every day answers `—`, which is this document's own word for "no
+     reading". Dropping the row instead would let a reader conclude the app does
+     not compute stress at all, which is a different and wrong claim. */
+  keyRow('stress', () => DASH)
+  // `tdeeKcal` and not a fourth hand-rolled `bmr + active + tef`: energy.ts is
+  // the canonical arithmetic precisely so the Nexus, the dashboard and this
+  // document cannot disagree, and it carries the all-or-nothing null rule that
+  // keeps a missing active-energy sync from reading as a 400 kcal deficit.
+  keyRow('tdee', (d, i) => n(tdeeKcal(bmrs[i], d.activeKcal, d.calories)))
+  // ── DERIVED.WEEK ──────────────────────────────────────────────────────────
+  // The energy balance, and it lives HERE rather than in `## WEEK`.
+  //
+  // It sat above the fence for one draft, which was exactly the mistake the
+  // fence exists to prevent: intake is measured, active energy is a watch
+  // estimate, BMR is carried across the days that have none and TEF is a
+  // coefficient — three of those four are arithmetic, and the heading over
+  // `## WEEK` says everything under it was measured. `energy_excluded` names
+  // the days that did NOT enter the estimate, so its width is auditable rather
+  // than something the reader has to reconstruct from the day lines.
+  L.push('## DERIVED.WEEK' + SEP + ['balance_kcal', 'balance_kcal_day', 'tdee_avg',
+    'bmr_avg', 'active_avg', 'tef_avg', 'bmr_carried', 'energy_days', 'energy_excluded'].join(SEP))
+  L.push(fields(
+    n(energy.balanceKcal), n(energy.avgBalanceKcal),
+    energy.expenditureKcal == null
+      ? DASH : n(energy.expenditureKcal / energy.daysCounted),
+    n(energy.avgBmrKcal), n(energy.avgActiveKcal), n(energy.avgTefKcal),
+    energy.bmrCarried ? '1' : '0',
+    String(energy.daysCounted),
+    items(days.filter((d) => !energy.countedDates.includes(d.date)).map((d) => d.date)),
+  ))
 
-  // ── Total volume, and where it landed ──
-  {
-    const tonnage = input.tonnageByMuscle ?? []
-    const totalVolume = sum(sessions.map((s) => s.volumeKg))
-    if (totalVolume != null) {
-      L.push('### Total volume')
-      L.push('')
-      L.push(`- **Total volume:** ${exact(totalVolume)} kg across ${sessions.length}`
-        + ` session${sessions.length === 1 ? '' : 's'}`)
-      L.push('')
-      if (tonnage.length) {
-        L.push('### Volume by muscle group (kg)')
-        L.push('')
-        for (const t of tonnage) {
-          const assisted = t.directKg != null && t.directKg < t.volumeKg
-            ? ` (${exact(t.directKg)} direct)`
-            : ''
-          L.push(`- ${t.muscle}: ${exact(t.volumeKg)} kg${assisted}`)
-        }
-        // Said out loud because the arithmetic invites the opposite assumption.
-        L.push('')
-        L.push('_These rows sum to MORE than the total above: the same kilogram'
-          + ' is counted against every muscle that moved it. Unilateral pairs are'
-          + ' scored at the weaker side, identically to the session total._')
-        L.push('')
-      }
-    }
-  }
-
-  // ── Energy balance ──
-  // The answer to the question a cut is actually run on.
-  {
-    const energy = energyBalance(days)
-    if (energy.balanceKcal != null) {
-      const deficit = energy.balanceKcal < 0
-      const mag = Math.abs(energy.balanceKcal)
-      L.push('### Energy balance')
-      L.push('')
-      L.push(`- **Energy balance (estimated):** ${n(mag)} kcal ${deficit ? 'DEFICIT' : 'SURPLUS'}`
-        + ` over ${energy.daysCounted} day${energy.daysCounted === 1 ? '' : 's'}`
-        + ` · ${n(Math.abs(energy.avgBalanceKcal ?? 0))} kcal/day`
-        + ` ${deficit ? 'under' : 'over'} maintenance`)
-      L.push(`    - Intake ${n(energy.intakeKcal)} kcal vs expenditure ${n(energy.expenditureKcal)} kcal`
-        + ` (${tdeeBreakdown(energy.avgBmrKcal ?? 0, energy.avgActiveKcal ?? 0, energy.avgTefKcal ?? 0)}`
-        + ' kcal/day, averaged)')
-
-      /* ── WHICH DAYS WERE LEFT OUT, BY NAME ──
-         The arithmetic was already right — intake − (BMR + active + TEF), both
-         sides required per day so a half-logged day cannot masquerade as a
-         1,900 kcal deficit. What it did not do was say WHICH days it dropped.
-         "over 5 days" in a seven-day week is a fact about the estimate the
-         reader cannot act on without knowing whether the missing two were rest
-         days or the two biggest sessions of the week. */
-      const counted = new Set(energy.countedDates)
-      const skipped = days.filter((d) => !counted.has(d.date))
-      if (skipped.length) {
-        L.push(`    - Excluded: ${skipped.map((d) => `${d.weekdayLabel} ${d.date}`).join(', ')}`
-          + ' — no intake, or no Apple Watch active energy, or both. A day missing'
-          + ' either side is not a balance.')
-      }
-      L.push('    - _ESTIMATE, not a measurement. Only days holding both an intake'
-        + ' and an expenditure are counted.'
-        + ` TEF is the thermic effect of food, ${Math.round(TEF_FACTOR * 1000) / 10}% of intake —`
-        + ' the energy spent digesting it, which is expenditure like any other.'
-        + (energy.bmrCarried
-          ? ' BMR is a scale reading and exists only on weigh-in days; days without'
-            + ' one inherit the nearest reading (it moves ~2 kcal a week).'
-          : '')
-        + '_')
-      L.push('')
-    }
-  }
-
-  // ── Steps, and the week's shape ──
-  {
-    const stepDays = days.filter((d) => d.steps != null && Number.isFinite(d.steps))
-    const avgSteps = meanOf(days.map((d) => d.steps))
-
-    L.push('### Steps & daily shape')
-    L.push('')
-    // Spelled out because the question was asked directly: the average is over
-    // every day that logged a step count. It is read from the day's own step
-    // total and has never had anything to do with whether a walk was logged in
-    // the cardio ledger — a cardio entry is a subset of the day's steps, not a
-    // gate on them.
-    L.push(`- **Steps (avg/day):** ${n(avgSteps)} across ${stepDays.length}`
-      + ` day${stepDays.length === 1 ? '' : 's'} with a logged count`
-      + ' (every such day counts, cardio session or not)')
-
-    // The numbers above are the week's totals; these are its SHAPE. 22 000 kg
-    // spread evenly and 22 000 kg carried by one enormous Monday are different
-    // weeks that summarise identically, and seven glyphs say which it was
-    // without the reader reconstructing seven values from the daily log.
-    {
-      // Volume is per DAY, not per session, so a double-session day reads as
-      // the load it actually was and the bar count matches the step row exactly.
-      const volByDate = new Map<string, number>()
-      for (const s of sessions) {
-        if (s.volumeKg == null || !Number.isFinite(s.volumeKg)) continue
-        volByDate.set(s.date, (volByDate.get(s.date) ?? 0) + s.volumeKg)
-      }
-      // A rest day is a REAL zero here, not a gap — no training happened, which
-      // is a measurement. Missing STEPS is a gap, because the day may well have
-      // been walked and never synced.
-      const volSpark = sparkline(days.map((d) => volByDate.get(d.date) ?? 0))
-      const stepSpark = sparkline(days.map((d) => d.steps))
-      const dayLetters = days.map((d) => d.weekdayLabel[0] ?? '?').join('')
-      if (volSpark || stepSpark) {
-        L.push(`- **Daily shape** (${dayLetters}, scaled from zero · \`${SPARK_GAP}\` = not logged):`)
-        if (volSpark) L.push(`    - Volume: \`${volSpark}\``)
-        if (stepSpark) L.push(`    - Steps:  \`${stepSpark}\``)
-      }
-    }
-    L.push('')
-  }
-
-  /* ── DERIVED ────────────────────────────────────────────────────────────────
-     THE ONLY PLACE IN THIS DOCUMENT WHERE A NUMBER IS COMPUTED RATHER THAN
-     MEASURED, and it says so in its own heading.
-
-     The file's opening rule stands unchanged: nothing above this line is
-     derived, averaged into existence or estimated to fill a column. What
-     changed is that a reader wanting a week-over-week delta or an adherence
-     rate no longer has to recompute it by hand from the raw body — and get it
-     subtly different every time — because the arithmetic is stated once, here,
-     downstream of every measurement it is built from and behind a fence that
-     lets it be ignored entirely.
-
-     `derived.ts` owns the rules; this block only renders them. Every figure it
-     prints comes from a row already shown above. */
-  {
-    const d = derivedWeek(input)
-    L.push('## Derived (computed by Onyx — not measured)')
-    L.push('')
-    L.push('_Everything above this heading is a measurement. Everything below it is'
-      + ' arithmetic over those measurements — stated so it can be audited, or'
-      + ' ignored. No figure here reaches for data the document has not already'
-      + ' shown you, and a metric with no evidence prints `—` rather than a zero._')
-    L.push('')
-
-    // ── Week over week ──
-    if (d.deltas.some((x) => x.delta != null)) {
-      L.push('### Week over week')
-      L.push('')
-      // Tonnage prints at full precision; everything else at the decimal count
-      // its unit deserves. See `WeekDelta.exact`.
-      const fmt = (v: number | null, x: WeekDelta) => (x.exact ? exact(v) : n(v, x.digits))
-      for (const x of d.deltas) {
-        if (x.delta == null) {
-          /* WHY BOTH SIDES ARE NAMED WHEN THERE IS NO DELTA.
-             This used to print one figure and "no comparable previous week",
-             which was frequently a lie: the usual reason a delta is missing is
-             that THIS week has no reading, not that the previous week is
-             absent. Saying which side is empty is the difference between "the
-             programme just started" and "you stopped logging your water". */
-          L.push(`- ${x.label}: ${fmt(x.current, x)} this week`
-            + ` · ${fmt(x.previous, x)} previous — no comparison`)
-          continue
-        }
-        const pct = x.pct != null ? `, ${x.pct > 0 ? '+' : '−'}${n(Math.abs(x.pct), 1)}%` : ''
-        const dir = x.delta > 0 ? '+' : x.delta < 0 ? '−' : ''
-        L.push(`- ${x.label}: ${fmt(x.previous, x)} → ${fmt(x.current, x)} ${x.unit}`
-          + ` (${dir}${fmt(Math.abs(x.delta), x)}${pct})`)
-      }
-      L.push('')
-      L.push('_Against the most recent EARLIER week in the ledger, which is not always'
-        + ' the calendar week before if a week was not trained._')
-      L.push('')
-    }
-
-    // ── Training load ──
-    L.push('### Training load')
-    L.push('')
-    L.push(`- Mean working-set effort: ${d.meanWorkingSetRpe != null
-      ? `${n(d.meanWorkingSetRpe, 2)} RPE across ${d.ratedSets} rated set${d.ratedSets === 1 ? '' : 's'}`
-      : DASH}`)
-    // Distinct from the session ratings in the Weekly summary: one is how the
-    // workout felt afterwards, this is what the sets said at the time, and a
-    // week where the two disagree is the interesting kind.
-    L.push(`- Working sets: ${d.workingSets}`
-      + ` · mean per session: ${n(d.meanSetsPerSession, 1)}`
-      + ` · mean tonnage per session: ${exact(d.meanVolumePerSessionKg)} kg`)
-    L.push(`- Sets taken to failure: ${d.failureSetShare != null
-      ? `${n(d.failureSetShare, 1)}% of working sets` : DASH}`)
-    L.push(`- Technique flags: ${d.flaggedSets} set${d.flaggedSets === 1 ? '' : 's'} flagged`
-      + `${d.quality.length ? ` — ${d.quality.map((q) => `${q.label} ×${q.count}`).join(', ')}` : ''}`)
-    L.push('')
-
-    // ── Progression ──
-    if (d.progression.length) {
-      L.push('### Top-set movement within the week')
-      L.push('')
-      for (const e of d.progression) {
-        const arrow = e.deltaKg > 0 ? '+' : e.deltaKg < 0 ? '−' : '±'
-        L.push(`- ${e.name}: ${exact(e.firstKg)} → ${exact(e.lastKg)} kg`
-          + ` (${arrow}${exact(Math.abs(e.deltaKg))}) across ${e.sessions} sessions`)
-      }
-      L.push('')
-      L.push('_Only movements trained more than ONCE inside this week, compared'
-        + ' first-to-last. It is not progression against the last time the movement'
-        + ' was performed — that session may fall outside this payload, and this'
-        + ' section never reaches for data the document has not shown._')
-      L.push('')
-    }
-
-    // ── Adherence & coverage ──
-    // How much of this week is actually evidence. A document full of gaps and a
-    // document full of readings summarise identically without it.
-    L.push('### Adherence & coverage')
-    L.push('')
-    L.push(`- Supplements: ${d.supplementsTaken != null && d.supplementsPlanned
-      ? `${n(d.supplementsTaken)} of ${n(d.supplementsPlanned)} doses`
-        + ` (${n((d.supplementsTaken / d.supplementsPlanned) * 100)}%)`
-      : DASH}`)
-    L.push(`- Fatigue: ${d.fatigueReadings} of ${d.fatigueSlots} slots answered`)
-    L.push(`- Soreness: logged on ${d.domsDaysLogged} of ${days.length} days`)
-    L.push(`- Intake: logged on ${d.intakeDaysLogged} of ${days.length} days`)
-    L.push(`- Weigh-ins: ${d.weighInDays} of ${days.length} days`)
-    L.push(`- Per-set effort: ${d.ratedSets} of ${d.workingSets} working sets rated`)
-    L.push('')
-
-    // ── Sleep composition ──
-    L.push('### Sleep composition')
-    L.push('')
-    L.push(`- Deep: ${d.meanDeepPct != null ? `${n(d.meanDeepPct, 1)}% of time asleep` : DASH}`
-      + ` · REM: ${d.meanRemPct != null ? `${n(d.meanRemPct, 1)}%` : DASH}`
-      + ` · Awake (avg): ${d.meanAwakeMin != null ? `${n(d.meanAwakeMin)} min` : DASH}`)
-    L.push('')
-    L.push('_Shares, because the minutes are already above: 39 minutes of deep sleep'
-      + ' is a different night after 9h than after 5h30._')
-    L.push('')
-
-    // ── Battery ──
-    // The one HELIX opinion this document carries, and only under this fence:
-    // not the number (the app shows that) but the INPUTS behind it, so a
-    // reader sees the same figures the scorer saw and can tell a low battery
-    // that came from a short night from one that came from a suppressed HRV.
-    L.push('### Battery (v9 — the inputs behind the number the app showed)')
-    L.push('')
-    const z = (v: number | null) => (v == null ? DASH : `${v > 0 ? '+' : v < 0 ? '−' : ''}${n(Math.abs(v), 2)}`)
-    for (const b of d.battery) {
-      if (b.appPct == null) {
-        L.push(`- ${b.weekdayLabel} ${b.date}: ${DASH} (no score row)`)
-        continue
-      }
-      const wellnessItems = [
-        `fatigue ${b.fatigueLabel ?? DASH}`,
-        `soreness ${b.soreness == null ? DASH : n(b.soreness, 1)}`,
-        `onset ${b.onsetTrouble == null ? DASH : b.onsetTrouble ? 'yes' : 'no'}`,
-        `sleep ${n(b.ratio, 2)}`,
-      ]
-      L.push(`- ${b.weekdayLabel} ${b.date}: app ${n(b.appPct)}%`
-        + ` · wake ${n(b.morningCharge)} (sleep ${n(b.ratio, 2)} · stages ${n(b.stagesQ, 2)}`
-        + ` · HRV z ${z(b.hrvZ)} · RHR z ${z(b.rhrZ)})`
-        + ` · load ${n(b.loadDrain, 1)} (ACWR ${n(b.acwr, 2)} · monotony ${n(b.monotony, 2)}`
-        + ` · strain ${n(b.strain)} · z ${z(b.strainZ)})`
-        + ` · wellness ${n(b.wellnessDrain, 1)} (${wellnessItems.join(' · ')})`)
-    }
-    L.push('')
-    L.push('_Wake charge = 55 + 45·q, q = 0.45·sleep + 0.15·stages + 0.25·HRV + 0.15·RHR, each 0–1;'
-      + ' the HRV and RHR terms read a z-score of the 7-day rolling mean against the 42 days'
-      + ' before it (0.75 at baseline or unknown, 1 at +1 SD, 0.25 at −2 SD; the RHR sign is'
-      + ' flipped). Load drain (cap 8) = ACWR past 1.3 (EWMA 7:28 of session RPE × minutes)'
-      + ' plus this week\'s Foster strain above your own rolling normal. Wellness drain (cap 6)'
-      + ' = the mean of the answered Hooper-style items: fatigue, soreness, onset trouble,'
-      + ' short sleep. The app figure is the stored score, computed at whatever hour the day'
-      + ' was last synced._')
-    L.push('')
-
-    // ── Intake by day type ──
-    if (d.trainingDayKcal != null || d.restDayKcal != null) {
-      L.push('### Intake by day type')
-      L.push('')
-      L.push(`- Training days: ${d.trainingDayKcal != null ? `${n(d.trainingDayKcal)} kcal` : DASH}`
-        + ` · Rest days: ${d.restDayKcal != null ? `${n(d.restDayKcal)} kcal` : DASH}`)
-      L.push('')
-    }
-  }
-
-  /* ── THE MACHINE-READABLE WEEK IS GONE ─────────────────────────────────────
-     A `## Machine-readable week` section used to sit here: the whole
-     `WeeklyExportInput` serialised into a json fence, on the reasoning that a
-     tool could read it without parsing prose.
-
-     Nothing ever did. This export has exactly one consumer — it is copied into a
-     chat window by hand — and the fence was a verbatim second copy of every
-     number already stated above it, several times the length of the document it
-     was appended to. It cost the reader the end of the report and cost the model
-     its context window, to say nothing that the prose had not.
-
-     `weekJson.ts` survives and is still exercised by the tests: the payload it
-     serialises is the right shape for a future tool, and deleting the builder
-     because today's document does not print it would be throwing away the part
-     that was actually correct. */
-
-  // ── The doubt, stated once ──
-  // A ⚠ on a micro line is not an adherence finding and must not be read as one,
-  // so it gets a sentence rather than being left to look like a bad day. Printed
-  // only when something was actually flagged: a standing caveat about a problem
-  // the week does not have is noise.
-  const flagged = flaggedNutrients(input.days)
-  if (flagged.length) {
-    L.push('---')
-    L.push('')
-    L.push(`⚠ **Implausible micronutrient readings this week:** ${flagged.join(' · ')}.`)
-    L.push('')
-    L.push('_These are printed exactly as stored. `nutrition_entries` keeps one'
-      + ' aggregate row per day with no item breakdown, so neither this document nor'
-      + ' the app can identify what contributed them — the duplicate is upstream, in'
-      + ' the Health source. Treat a flagged figure as unmeasured rather than as a'
-      + ' day that went badly._')
-    L.push('')
-  }
-
-  // ── Provenance ──
-  // The absolute last lines, so they govern everything above them. Verbatim and
-  // hardcoded on purpose: standing statements about the instrument and about
-  // what is NOT in this document, neither of which is data.
-  L.push('---')
-  L.push('')
-  L.push(UNILATERAL_VOLUME_NOTE)
-  L.push('')
-  L.push(EPLEY_NOTE)
-  L.push('')
-  L.push(APPLE_WATCH_DISCLAIMER)
-  L.push('')
-  // ── THE VERY LAST LINE OF THE DOCUMENT ──
-  // It points at something OUTSIDE this payload — the prior week's report,
-  // pasted alongside by hand — so it is the one statement that has to survive
-  // being read last.
-  L.push(priorReportNote(input.weekLabel))
+  L.push(fields('##   how', `tdee = BMR (from the scale, carried across gaps) + Apple Watch`
+    + ` active energy + intake × ${TEF_FACTOR}`,
+    'load = session RPE × minutes',
+    'acwr = EWMA 7:28 of load',
+    'strainZ = z of Foster strain against your own rolling normal',
+    'wellness = mean of the answered Hooper items, 0–1',
+    'heart rate, calories and steps come off the Apple Watch and are estimates'))
 
   return L.join('\n')
 }
 
 /**
- * The closing line that replaces the embedded previous week.
+ * The stack, deduped and ordered — the shape BOTH renderers read.
  *
- * It exists so the absence is EXPLICIT. A model handed one week of data with no
- * word about the week before it will either assume none exists or invent a
- * comparison from the trend ledger and present it as a reading — both worse
- * than a sentence saying where the prior week actually is.
+ * NOTHING ABOUT ANY PARTICULAR SUPPLEMENT IS KNOWN HERE. An earlier version
+ * carried a verbatim multivitamin line and a `/citrulline|caffeine/i` regex, so
+ * the export stated two doses and one schedule rule that existed nowhere but in
+ * its own source. Every field below arrives from `custom_supplements`.
  *
- * The label is the one this payload is FOR — `weekLabel`, the same string the
- * document's own H1 carries, so the reader is being pointed at a report they
- * can actually identify. Falls back to unnumbered wording when the payload
- * carries no label, because "Week undefined" is worse than no number at all.
+ * Deduped by NAME so a row that somehow appears twice collapses instead of
+ * printing two lines with no way to tell which applied when; ordered by the
+ * scheduled time, which is the order the day happens in.
  */
-export function priorReportNote(weekLabel?: string | null): string {
-  const label = weekLabel?.trim()
-  const week = label ? label : 'The previous week\'s'
-  return `*Note: ${week} report is provided manually for reference and comparison.*`
+export interface SupplementRow {
+  time: string
+  name: string
+  dose: string
+  trainingDose: string | null
+  restDose: string | null
+  trainingOnly: boolean
+  notes: string | null
 }
 
-/**
- * The standing statement of the asymmetry rule.
- *
- * The rule was already stated once, inside the per-muscle tonnage block — but
- * that block only prints when there IS per-muscle tonnage, so a week whose
- * sessions were all bilateral, or whose muscle rows were empty, published every
- * volume figure with no account of how a two-sided set had been counted. A
- * reader comparing "L 5 kg × 10 · R 5 kg × 14" against a 100 kg session total
- * has to be able to find the arithmetic; guessing produces 120.
- *
- * Printed beside the instrument caveat, after the embedded previous week, so it
- * governs every number in the document rather than one section of it.
- */
-export const UNILATERAL_VOLUME_NOTE =
-  '*Note: Unilateral (single-arm / single-leg) work is logged per side and'
-  + ' scored ONCE at the WEAKER side: min(weight) × min(reps).'
-  + ' "L 5 kg × 10 · R 5 kg × 14" is 50 kg of volume, not 70 and not 100 —'
-  + ' crediting the strong side\'s extra reps to the weak one would inflate the'
-  + ' trend without the work being there, and doubling it would make the same'
-  + ' physical set weigh twice as much purely for having been recorded per side.'
-  + ' Each side keeps its own failure tag, and the pair counts as ONE set.*'
-
-/**
- * The standing caveat about instrument accuracy, printed at the very bottom of
- * every export.
- *
- * Heart rate, calories and steps all come off the watch, and a model reading
- * this data has no other way to know that a 900 kcal active-energy day is a
- * device estimate rather than a measured burn. Stating it once, last, is what
- * lets the numbers above be printed plainly.
- */
-/**
- * The estimator behind every "1RM:" figure in this document.
- *
- * The PR lines print the estimate's VALUE now, not only the name of the axis it
- * fell on, and a bare number invites the reader to compare it with Hevy's —
- * which is a different formula. Stating the method once, at the foot, is what
- * makes the numbers above safe to read.
- */
-export const EPLEY_NOTE =
-  '*Note: every "1RM" here is an ESTIMATE from the Epley formula '
-  + '(weight × (1 + reps/30)), not a lift that was performed. Hevy estimates it '
-  + 'differently, so the two will not agree exactly. Unloaded work has no 1RM '
-  + 'estimate at all and shows none.*'
-
-export const APPLE_WATCH_DISCLAIMER =
-  '*Note: Heart rate, calories, and steps data are sourced from the Apple Watch'
-  + ' and may not be entirely accurate.*'
+export function supplementRows(protocol: readonly ExportSupplement[]): SupplementRow[] {
+  const byName = new Map<string, SupplementRow>()
+  for (const s of protocol) {
+    const name = s.name.trim()
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (byName.has(key)) continue
+    byName.set(key, {
+      time: s.time?.trim() || DASH,
+      name,
+      dose: s.dose.trim(),
+      trainingDose: s.trainingDose?.trim() || null,
+      restDose: s.restDose?.trim() || null,
+      trainingOnly: s.trainingOnly === true,
+      notes: s.notes?.trim() || null,
+    })
+  }
+  return [...byName.values()].sort((a, b) => a.time.localeCompare(b.time))
+}
 
 /**
  * Render the stack as one chronological list.
@@ -2399,26 +1870,15 @@ export const APPLE_WATCH_DISCLAIMER =
  * condition — which is both shorter and more precise than two headed lists.
  */
 export function consolidateSupplements(protocol: readonly ExportSupplement[]): string[] {
-  // Deduped by NAME, so a row that somehow appears twice collapses instead of
-  // printing two lines with no way to tell which applied when.
-  const byName = new Map<string, { time: string; line: string }>()
-  for (const s of protocol) {
-    const name = s.name.trim()
-    if (!name) continue
-    const key = name.toLowerCase()
-    if (byName.has(key)) continue
-    const time = s.time?.trim() || '—'
+  return supplementRows(protocol).map((s) => {
     // A dose that differs by day is stated as the rule it is, rather than
     // arbitrarily picking one of the two columns.
     const dose = s.trainingDose && s.restDose && s.trainingDose !== s.restDose
       ? `${s.trainingDose} on training days / ${s.restDose} on rest days`
-      : s.dose.trim()
-    const parts = [`${time} · ${name} — ${dose}`]
+      : s.dose
+    const parts = [`${s.time} · ${s.name} — ${dose}`]
     if (s.trainingOnly) parts.push('(training days only)')
-    if (s.notes?.trim()) parts.push(`· ${s.notes.trim()}`)
-    byName.set(key, { time, line: parts.join(' ') })
-  }
-  return [...byName.values()]
-    .sort((a, b) => a.time.localeCompare(b.time))
-    .map((x) => x.line)
+    if (s.notes) parts.push(`· ${s.notes}`)
+    return parts.join(' ')
+  })
 }

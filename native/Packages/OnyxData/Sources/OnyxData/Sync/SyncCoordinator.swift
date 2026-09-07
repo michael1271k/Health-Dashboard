@@ -459,6 +459,17 @@ public actor SyncCoordinator: MirrorRefreshing {
         if let backfillProgress { onBackfillProgress?(backfillProgress) }
     }
 
+    /// Push whatever is still queued, and pull NOTHING.
+    ///
+    /// For sign-out. A full `syncNow` would also pull, refilling the store this
+    /// is about to be followed by erasing — and it would do it with a session
+    /// that is seconds from being revoked. The caller is expected to bound this
+    /// with a timeout: a queue that cannot reach the network must not be able
+    /// to hold a user on a screen they are trying to leave.
+    public func drainOutbox() async throws {
+        try await drainAll(now: .now)
+    }
+
     /// Drain until the queue is empty or the backoff is holding the rest.
     /// Bounded: `hasMore` is also what a concurrent drain answers, and a loop
     /// that trusted it forever would spin on another engine's work.

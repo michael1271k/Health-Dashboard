@@ -123,9 +123,23 @@ public struct PostgRESTMirrorRemote: MirrorRemote, MirrorPushRemote {
             .execute()
     }
 
+    /// ── WHY THE USER FILTER IS HERE AND NOT AT THE ELEVEN CALL SITES ────────
+    /// `key` is whatever `RowRef` carried, and for most tables that is a
+    /// NATURAL key — `{date: "2026-09-05"}` for a daily row, `{session_id: …,
+    /// exercise_id: …}` for a set. None of those name a user. RLS is what has
+    /// been keeping the request honest, which is the same argument
+    /// `exerciseCatalogue` above declined to accept.
+    ///
+    /// Filtering here rather than at each `enqueueRowDelete` is the smaller and
+    /// the safer change: eleven call sites in five files each have to remember,
+    /// and this one cannot forget. Every one of the 32 tables carries
+    /// `user_id`, so the column is always valid. A key that ALREADY names a
+    /// user is unaffected — PostgREST ANDs the filters, so an equal value is a
+    /// no-op and a different one matches nothing, which is the correct answer
+    /// to a delete aimed at somebody else's row.
     public func deleteRow(table: String, key: [String: String]) async throws {
         guard !key.isEmpty else { throw RowPushError.emptyKey(table: table) }
-        var query = client.from(table).delete(returning: .minimal)
+        var query = client.from(table).delete(returning: .minimal).eq("user_id", value: userId)
         // Sorted so the request is byte-identical on a replay; a dictionary's
         // order is not.
         for (column, value) in key.sorted(by: { $0.key < $1.key }) {

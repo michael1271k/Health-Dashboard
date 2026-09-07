@@ -4,10 +4,20 @@ import Foundation
 // "Export Week" — a dense, DRY-DATA payload of one training week. A port of
 // `src/lib/reports/weeklyExport.ts`, byte for byte.
 //
-// Deterministic and pure. Missing data is `—`, never omitted and never a zero.
-// Every number is one the app measured; nothing above the Derived heading is
-// computed (pace is the one arithmetic allowed — two exported facts). Day Score
-// and Battery are not exported: they are Onyx's opinions.
+// EXPORT v3, THE TOKEN GRAMMAR. A `#` line is a heading, and a `##` heading
+// carries its section's column legend after the heading word. Every data line
+// is fields joined by ` · `, so `split(" · ")` is the whole parser. A missing
+// value is `—` — never blank, never 0, never an omitted field. A list field
+// joins its items with `;` and each item's parts with `:` (or `@` for a time).
+//
+// Deterministic and pure. Every number is one the app measured; the only
+// derived figures live under `## DERIVED`, below every measurement they are
+// built from, behind a heading that says so. Pace is the one exception in the
+// raw body: arithmetic over two exported facts, and the unit a run is read in.
+//
+// `setDetail`, `nutrientLine` and `sparkline` are v2's prose renderers. v3's
+// document no longer calls them; they stay because the golden vectors pin them.
+// `markdownTable` survives inside `trendLedger`, which v3 still prints.
 // ─────────────────────────────────────────────────────────────────────────────
 
 public struct WeeklySummary: Codable, Equatable, Sendable {
@@ -57,61 +67,21 @@ public enum WeeklyExport {
 
     static func pad2(_ s: String) -> String { var t = s; while t.count < 2 { t = "0" + t }; return t }
 
-    static func plural(_ count: Int, _ word: String) -> String { "\(count) \(word)\(count == 1 ? "" : "s")" }
-
-    static func weighIn(_ kg: Double?, _ skipReason: String?) -> String {
-        if let kg, kg.isFinite { return "weight \(n(kg, 1)) kg" }
-        return "weight \(dash) [Skip: \(WeighIn.skipReason(skipReason))]"
-    }
-
     static func cardioLabel(_ kind: String) -> String {
         kind.isEmpty ? "Cardio" : kind.prefix(1).uppercased() + kind.dropFirst()
     }
-
-    /// `+70` / `−70` / `0`.
-    static func signed(_ v: Double) -> String { v > 0 ? "+\(js(v))" : v < 0 ? "−\(js(abs(v)))" : "0" }
 
     static func weekdayOf(_ date: String, _ days: [ExportDay]) -> String {
         days.first { $0.date == date }?.weekdayLabel ?? ""
     }
 
-    /// en-GB short month names as Node prints them ("Sept", not "Sep").
+    /// en-GB short month names as Node prints them ("Sept", not "Sep"). v3
+    /// prints no month name; `Format.dayAndMonth` is the one reader left.
     static let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
     static func month(_ iso: String) -> String {
         guard iso.count >= 7, let m = Int(iso.dropFirst(5).prefix(2)), (1...12).contains(m) else { return "" }
         return months[m - 1]
-    }
-
-    /// "Sun 16, Mon 17, Tue 18 & Wed 19 Aug" — the month once at the end unless the run crosses one.
-    static func dayRangeLabel(_ dates: [String], _ days: [ExportDay]) -> String {
-        if dates.isEmpty { return dash }
-        let spans = Set(dates.map(month)).count > 1
-        let parts = dates.map { iso -> String in
-            let day = Int(iso.count >= 10 ? String(iso.dropFirst(8).prefix(2)) : "") ?? 0
-            let wd = weekdayOf(iso, days)
-            return "\(wd) \(day)\(spans ? " \(month(iso))" : "")".trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        let joined = parts.count == 1 ? parts[0] : "\(parts.dropLast().joined(separator: ", ")) & \(parts[parts.count - 1])"
-        return spans ? joined : "\(joined) \(month(dates[dates.count - 1]))"
-    }
-
-    /// "7h 20m".
-    static func sleepLong(_ min: Double?) -> String {
-        guard let min, min.isFinite else { return dash }
-        let h = (min / 60).rounded(.down)
-        return "\(js(h))h \(pad2(js(jsRound(min - h * 60))))m"
-    }
-
-    static func signedC(_ v: Double?) -> String {
-        guard let v, v.isFinite else { return dash }
-        return "\(v > 0 ? "+" : "")\(jsToFixed(v, 1))°C"
-    }
-
-    /// "7h32" — the compact form for the summary.
-    static func sleep(_ min: Double?) -> String {
-        guard let min else { return dash }
-        return "\(js((min / 60).rounded(.down)))h\(pad2(js(jsRound(min.truncatingRemainder(dividingBy: 60)))))"
     }
 
     public static let fatigueSlotLabels = ["Waking", "Midday", "Before training", "After training", "Night"]
@@ -132,12 +102,6 @@ public enum WeeklyExport {
         let ns = ts as NSString
         guard let m = clockPattern.firstMatch(in: ts, range: NSRange(location: 0, length: ns.length)) else { return dash }
         return ns.substring(with: m.range(at: 1))
-    }
-
-    /// Whole days between two ISO dates. Nil when either is missing.
-    static func daysBetween(_ from: String?, _ to: String) -> Double? {
-        guard let from, !from.isEmpty, let a = ISODate.dayNumber(from), let b = ISODate.dayNumber(to) else { return nil }
-        return Double(b - a)
     }
 
     // MARK: - Nutrients
@@ -257,11 +221,18 @@ public enum WeeklyExport {
             if peak == nil || d.severity > peak!.severity { peak = .init(muscle: d.muscle, severity: d.severity, date: d.date) }
         }
         let rated = input.sessions.filter { $0.sessionRpe?.isFinite == true }
+        // A UNILATERAL PAIR IS ONE SET HERE, as it is everywhere else — the
+        // same `toSetRows` the token and prose renderers share, so the fourth
+        // caller agrees by construction. A pair counts as RATED when EITHER
+        // side carries a rating: the set was rated even if only one arm's
+        // effort was recorded. A ghost is not an unrated working set.
         var ratedSets = 0, workingSets = 0
-        for s in input.sessions { for ex in s.exercises { for set in ex.sets {
-            if set.isWarmup || set.isGhost { continue }
+        for s in input.sessions { for ex in s.exercises { for row in toSetRows(ex.sets) {
+            let sides = [row.single, row.left, row.right].compactMap { $0 }
+            if sides.isEmpty { continue }
+            if sides.contains(where: { $0.isWarmup || $0.isGhost }) { continue }
             workingSets += 1
-            if let r = set.rpe, r.isFinite { ratedSets += 1 }
+            if sides.contains(where: { $0.rpe?.isFinite == true }) { ratedSets += 1 }
         } } }
         return WeeklySummary(
             avgSleepMin: meanOf(input.days.map(\.sleepMin)),
@@ -310,11 +281,9 @@ public enum WeeklyExport {
     public static func energyBalance(_ days: [ExportDay]) -> EnergyBalance {
         let empty = EnergyBalance(daysCounted: 0, intakeKcal: nil, expenditureKcal: nil, balanceKcal: nil, avgBalanceKcal: nil, avgBmrKcal: nil, avgActiveKcal: nil, avgTefKcal: nil, bmrCarried: false, countedDates: [])
         let measured: [Double?] = days.map { $0.bmrKcal?.isFinite == true ? $0.bmrKcal : nil }
-        var filled = measured
-        if filled.count > 1 {
-            for i in 1..<filled.count where filled[i] == nil { filled[i] = filled[i - 1] }
-            for i in stride(from: filled.count - 2, through: 0, by: -1) where filled[i] == nil { filled[i] = filled[i + 1] }
-        }
+        // `bmrCarry` is the ONE implementation of the carry; the `## DERIVED
+        // tdee` row reads the same array, so the footer cannot disagree.
+        let filled = bmrCarry(days)
         var intake = 0.0, burn = 0.0, bmrSum = 0.0, activeSum = 0.0, tefSum = 0.0
         var counted = 0
         var carried = false
@@ -397,506 +366,485 @@ public enum WeeklyExport {
         return markdownTable(header: header, body: body, align: align)
     }
 
-    static let zoneWord: [VolumeZone: String] = [.under: "UNDER", .building: "building", .optimal: "on target", .over: "OVER", .na: "—"]
+    // MARK: - v3, the dense token grammar
+
+    /// Every data line is fields joined by this. No value may contain `·`.
+    static let sep = " · "
+
+    /// One data line. Nil/empty renders `—`; `0` renders `0`, which is a fact.
+    static func fields(_ cells: [String?]) -> String {
+        cells.map { $0 == nil || $0!.isEmpty ? dash : $0! }.joined(separator: sep)
+    }
+
+    /// A list field: items joined by `;`. Empty renders `—`.
+    static func items(_ xs: [String]) -> String { xs.isEmpty ? dash : xs.joined(separator: ";") }
+
+    /// Minutes, whole. EVERY duration in v3 is minutes — one unit, no suffixes.
+    static func minutes(_ v: Double?) -> String { n(v, 0) }
+
+    /// Metres → km, 2 dp.
+    static func kmOf(_ m: Double?) -> String {
+        guard let m, m.isFinite else { return dash }
+        return n(m / 1000, 2)
+    }
+
+    /// Millilitres → litres, 2 dp.
+    static func litresOf(_ ml: Double?) -> String {
+        guard let ml, ml.isFinite else { return dash }
+        return n(ml / 1000, 2)
+    }
+
+    /// A signed weight change, 2 dp. ASCII `-`, like every other v3 figure —
+    /// `n()` is `toFixed`, so the document spells one sign one way.
+
+    /// BMR carried across the days that have none — ONE implementation, read by
+    /// `energyBalance` and by the `## DERIVED tdee` row, so the document cannot
+    /// disagree with its own footer.
+    public static func bmrCarry(_ days: [ExportDay]) -> [Double?] {
+        var filled: [Double?] = days.map { $0.bmrKcal?.isFinite == true ? $0.bmrKcal : nil }
+        if filled.count > 1 {
+            for i in 1..<filled.count where filled[i] == nil { filled[i] = filled[i - 1] }
+            for i in stride(from: filled.count - 2, through: 0, by: -1) where filled[i] == nil { filled[i] = filled[i + 1] }
+        }
+        return filled
+    }
+
+    /// One set as a token: `75×12@9.5F`, or `L5×15@8|R5×17@9` for a pair. An
+    /// absent `@` means the set was NOT RATED, which is why `@—` never appears.
+    static func setToken(_ s: ExportSet, timed: Bool) -> String {
+        let flags = "\(s.isWarmup ? "W" : "")\(s.isGhost ? "G" : "")\(s.dropset == true ? "D" : "")\(s.failure ? "F" : "")"
+        var quality = ""
+        if let q = s.quality, !q.isEmpty, SetTags.quality[q] != nil { quality = "Q:\(q)" }
+        let rpe = s.rpe?.isFinite == true ? "@\(js(s.rpe!))" : ""
+        return "\(exact(s.weightKg))×\(exact(s.reps))\(timed ? "t" : "")\(rpe)\(flags)\(quality)"
+    }
+
+    /// An exercise's sets in order, pairs collapsed onto one token.
+    static func setTokens(_ ex: ExportExercise) -> [String] {
+        let timed = TimedExercise.isTimed(ex.name)
+        return toSetRows(ex.sets).map { r in
+            if let s = r.single { return setToken(s, timed: timed) }
+            return [
+                r.left.map { "L\(setToken($0, timed: timed))" },
+                r.right.map { "R\(setToken($0, timed: timed))" },
+            ].compactMap { $0 }.joined(separator: "|")
+        }
+    }
+
+    /// `s.replace(/:+$/, '')` — a DOMS token drops the parts nothing filled.
+    static func stripTrailingColons(_ s: String) -> String {
+        var t = Substring(s)
+        while t.last == ":" { t = t.dropLast() }
+        return String(t)
+    }
 
     // MARK: - The document
 
     public static func build(_ input: WeeklyExportInput) -> String {
         let days = input.days, sessions = input.sessions
+        let cardio = input.cardio ?? []
+        let bodyComp = input.bodyComp ?? []
         var L: [String] = []
 
-        L.append("# WEEK \(input.weekStart) → \(input.weekEnd)\(input.weekLabel.map { $0.isEmpty ? "" : " · \($0)" } ?? "")")
-        L.append("")
-        L.append("**Program:** \(input.programLabel)")
-        if let phase = input.phaseLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !phase.isEmpty { L.append("**Phase:** \(phase)") }
-
-        let ranges = Context.rangesIn(days.map { StampedDay(date: $0.date, exception: $0.nutritionException) })
-        for r in ranges { L.append("**Context:** \(Context.rangeLabel(r))") }
-        L.append("")
-
-        L.append("## Targets & Levers")
-        L.append("")
+        // ── HEADER ────────────────────────────────────────────────────────────
+        // Everything the week was ASKED for, on one line. A week run under a
+        // single lever names it here and prints no `## LEVERS` section at all.
         let periods = input.targetPeriods ?? []
-        if !periods.isEmpty {
-            for (i, p) in periods.enumerated() {
-                let g = p.goals
-                L.append("- **\(p.label)** — \(n(g.calorie)) kcal · \(n(g.protein))P / \(n(g.carbs))C / \(n(g.fat))F · \(n(g.steps)) steps")
-                L.append("    - **\(p.label) was active on \(dayRangeLabel(p.dates, days))** — \(plural(p.dates.count, "day")).")
-                if i > 0 {
-                    let prev = periods[i - 1]
-                    L.append("    - Changed from **\(prev.label)** on \(weekdayOf(p.dates[0], days)) \(p.dates[0]) (\(signed(g.calorie - prev.goals.calorie)) kcal, \(signed((g.steps ?? 0) - (prev.goals.steps ?? 0))) steps)")
-                }
-            }
-            if periods.count == 1 { L.append("- Unchanged all week.") }
+        let rung: String
+        if periods.count == 1 {
+            let g = periods[0].goals
+            rung = "lever=\(periods[0].leverId.rawValue) \(n(g.calorie))kcal"
+                + " \(n(g.protein))P \(n(g.carbs))C"
+                + " \(n(g.fat))F \(n(g.steps))st"
         } else {
-            L.append("- **Targets:** \(n(input.calorieGoal)) kcal · \(n(input.proteinGoalG)) g protein · \(n(input.stepsGoal)) steps")
+            rung = periods.count > 1 ? "lever=mixed" : "lever=—"
         }
-        let unchanged = periods.count > 1 ? " — unchanged all week" : ""
-        L.append("- Sleep target: \(n(input.sleepGoalHours, 1)) h\(unchanged)")
-        if let water = input.waterGoalMl { L.append("- Water target: \(n(water / 1000, 1)) L\(unchanged)") }
-        L.append("")
+        let label = input.weekLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let phase = input.phaseLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        L.append(fields([
+            "# ONYX \(label.isEmpty ? "WEEK" : label)",
+            "\(input.weekStart)→\(input.weekEnd)",
+            input.programLabel,
+            phase.isEmpty ? dash : phase,
+            rung,
+            "goals \(n(input.calorieGoal))kcal \(n(input.proteinGoalG))P"
+                + " \(n(input.stepsGoal))st \(n(input.sleepGoalHours, 1))h"
+                + " \(input.waterGoalMl == nil ? dash : "\(n(input.waterGoalMl))ml")",
+        ]))
 
-        var labelsByDate: [String: [String]] = [:]
-        var sessionsByDate: [String: [ExportSession]] = [:]
-        for s in sessions { labelsByDate[s.date, default: []].append(s.label); sessionsByDate[s.date, default: []].append(s) }
+        // ── LEVERS ────────────────────────────────────────────────────────────
+        // Printed ONLY when the week ran under more than one rung.
+        if periods.count > 1 {
+            L.append("")
+            L.append("## LEVERS" + sep + ["id", "label", "kcal", "P", "C", "F", "steps", "dates"].joined(separator: sep))
+            for p in periods {
+                L.append(fields([
+                    p.leverId.rawValue, p.label, n(p.goals.calorie), n(p.goals.protein),
+                    n(p.goals.carbs), n(p.goals.fat), n(p.goals.steps),
+                    p.dates.isEmpty ? dash : "\(p.dates[0])…\(p.dates[p.dates.count - 1])",
+                ]))
+            }
+        }
+
+        // ── DAYS ──────────────────────────────────────────────────────────────
+        // One line per day, present even when the day is empty: an omitted row
+        // lets a gap read as a zero. Every duration is MINUTES, every distance
+        // km, every volume litres — one unit per dimension, no suffixes.
         var bodyByDate: [String: ExportBodyComp] = [:]
-        for b in input.bodyComp ?? [] { bodyByDate[b.date] = b }
-        var cardioByDate: [String: [ExportCardio]] = [:]
-        for c in input.cardio ?? [] { cardioByDate[c.date, default: []].append(c) }
-
-        // ── Weekly summary ──
-        do {
-            let w = summary(input)
-            let dLabel = ["none", "mild", "moderate", "severe"]
-            L.append("## Weekly summary")
-            L.append("")
-            L.append("- Sleep (avg): \(sleep(w.avgSleepMin))")
-            L.append("- Resting HR (avg): \(n(w.avgRestingHr, 1))\(w.avgRestingHr != nil ? " bpm" : "")")
-            L.append("- HRV (avg): \(n(w.avgHrvMs, 1))\(w.avgHrvMs != nil ? " ms" : "")")
-            L.append("- Cardio: \(n(w.cardioMinutes)) min across \(plural(w.cardioSessions, "session")) · \(n(w.cardioActiveKcal)) active kcal")
-            L.append("- Average workout effort: \(w.avgSessionRpe != nil ? "\(n(w.avgSessionRpe, 1))/10 CR10 across \(plural(w.ratedSessions, "rated session"))" : "not rated")")
-            L.append("- Per-set effort coverage: \(w.ratedSets) of \(plural(w.workingSets, "working set")) rated")
-            if let p = w.peakDoms {
-                L.append("- Highest DOMS: \(p.muscle) — \(severityWord(p.severity, dLabel)) (\(p.date))")
-            } else {
-                L.append("- Highest DOMS: none reported")
-            }
-            L.append("")
-        }
-
-        // ── Days ──
-        L.append("## Days")
+        for b in bodyComp { bodyByDate[b.date] = b }
+        let fatigueRows = input.fatigue ?? []
         L.append("")
-        for d in days {
-            let performed = labelsByDate[d.date]
-            let offPlan = performed != nil && !d.isTrainingDay
-            let workout = performed?.joined(separator: " + ") ?? (d.isTrainingDay ? "not logged" : nil)
-            let carbsCell = d.trackCarbs == false ? "\(n(d.carbsG))C (untracked)" : "\(n(d.carbsG))C"
-            let fatCell = d.trackFat == false ? "\(n(d.fatG))F (untracked)" : "\(n(d.fatG))F"
-            let macros = [d.proteinG, d.carbsG, d.fatG].contains { $0 != nil } ? " (\(n(d.proteinG))P / \(carbsCell) / \(fatCell))" : ""
-            let shapeTag = d.targetProfile.map { $0.isEmpty ? "" : " [\($0)]" } ?? ""
-
-            L.append("- **\(d.weekdayLabel) \(d.date)** · \(performed != nil || d.isTrainingDay ? "Workout" : "Rest")\(offPlan ? " (off-plan / swapped)" : "")\(workout.map { " · \($0)" } ?? "")")
-
-            L.append("    - Sleep & Vitals: Sleep: \(sleepLong(d.sleepMin)) · HRV: \(n(d.hrvMs)) ms · Resting HR: \(n(d.restingHr)) bpm"
-                + " · Wrist Temp: \(signedC(d.wristTempDeltaC))"
-                + " · Blood O2: \(d.bloodOxygenPct != nil ? "\(n(d.bloodOxygenPct))%" : dash)"
-                + " · Avg HR (daytime): \(d.avgHr != nil ? "\(n(d.avgHr)) bpm" : dash)"
-                + " · Respiratory Rate: \(d.respiratoryRate != nil ? "\(n(d.respiratoryRate, 1)) br/min" : dash)"
-                + " · VO2 Max: \(d.vo2max != nil ? "\(n(d.vo2max, 1)) ml/kg/min" : dash)")
-
-            L.append("    - Sleep Stages: Deep: \(sleepLong(d.deepMin)) · REM: \(sleepLong(d.remMin)) · Core: \(sleepLong(d.coreMin)) · Awake: \(sleepLong(d.awakeMin))"
-                + " · Bed: \(clock(d.bedTime)) · Wake: \(clock(d.wakeTime))"
-                + " · Onset: \(d.sleepOnsetTrouble == nil ? dash : d.sleepOnsetTrouble! ? "hard to fall asleep" : "normal")")
-
-            L.append("    - Macros: \(n(d.calories)) kcal\(macros)\(shapeTag)\(ExceptionDay.tag(d.nutritionException))\(ExceptionDay.estimatedTag(d.nutritionEstimated))"
-                + " · water \(n(d.waterMl.map { $0 / 1000 }, 1)) L")
-
-            L.append("    - Nutrients: \(nutrientLine(food: d.nutrientsFood, stack: d.nutrientsStack))")
-            L.append("    - Activity: \(n(d.steps)) steps"
-                + (d.distanceM != nil ? " · \(n(d.distanceM! / 1000, 2)) km" : "")
-                + (d.trainingMin != nil ? " · \(n(d.trainingMin)) min training" : "")
-                + " · Exercise: \(d.exerciseMin != nil ? "\(n(d.exerciseMin)) min" : dash)"
-                + " · Stand: \(d.standHours != nil ? "\(n(d.standHours)) h" : dash)"
-                + (d.standMin != nil ? " (\(n(d.standMin)) min)" : "")
-                + " · Daylight: \(d.daylightMin != nil ? "\(n(d.daylightMin)) min" : dash)")
-
-            do {
-                let log = d.supplementsLog ?? []
-                let taken: Double? = d.supplementsTaken ?? (log.isEmpty ? nil : Double(log.count))
-                let count = "\(taken != nil ? n(taken) : dash) of \(d.supplementsPlanned != nil ? n(d.supplementsPlanned) : dash) taken"
-                var order: [String] = []
-                var byTime: [String: [String]] = [:]
-                for i in log {
-                    let t = i.time ?? "—"
-                    if byTime[t] == nil { order.append(t) }
-                    byTime[t, default: []].append(i.key)
-                }
-                let items = byTime.isEmpty ? "" : " · " + order.sorted { icuCompare($0, $1) < 0 }.map { "\($0) \(byTime[$0]!.joined(separator: ", "))" }.joined(separator: " · ")
-                let skipped = (d.supplementsSkipped?.isEmpty == false) ? " · SKIPPED: \(d.supplementsSkipped!.joined(separator: ", "))" : ""
-                L.append("    - Supplements: \(count)\(items)\(skipped)")
+        L.append("## DAYS" + sep + [
+            "date", "day", "train", "sleep_min", "deep_min", "rem_min", "core_min", "awake_min",
+            "bed", "wake", "onset", "hrv_ms", "rhr", "avg_hr", "spo2_pct", "resp_bpm",
+            "wrist_temp_c", "vo2max", "daylight_min", "exercise_min", "stand_hours", "stand_min",
+            "steps", "dist_km", "training_min", "active_kcal",
+            "kcal", "P", "C", "F", "water_l",
+            "supp", "supp_log", "supp_skipped",
+            "weight_kg", "fat_pct", "smm_kg", "bmr_kcal",
+            "fatigue", "doms", "tags",
+        ].joined(separator: sep))
+        for day in days {
+            let bc = bodyByDate[day.date]
+            // Each subjective slot NAMED rather than positional: a rest day and
+            // a training day ask different questions in the middle slots.
+            let fatigue = fatigueLabels(isTrainingDay: day.isTrainingDay).map { slot -> String in
+                let hit = fatigueRows.first { $0.date == day.date && $0.slot == slot }
+                return "\(slot):\(hit.map { js($0.level) } ?? dash)"
             }
-
-            if let b = bodyByDate[d.date], let w = b.weightKg, w.isFinite {
-                L.append("    - Weight Data: Weight: \(n(w, 1)) kg · BMI: \(n(b.bmi, 1))"
-                    + " · Body Fat Percentage: \(n(b.bodyFatPct, 1))% · Fat Mass: \(n(b.fatMassKg, 1)) kg"
-                    + " · Muscle Percentage: \(n(b.musclePercent, 1))%"
-                    + " · Muscle Mass (Lean Soft Tissue): \(n(b.muscleMassKg, 1)) kg"
-                    + " · Water Percentage: \(n(b.waterPercent, 1))% · Body Water Mass: \(n(b.waterMassKg, 1)) kg"
-                    + " · Protein Percentage: \(n(b.proteinPercent, 1))% · Protein Mass: \(n(b.proteinMassKg, 1)) kg"
-                    + " · Bone Mineral Percentage: \(n(b.boneMineral, 1))%"
-                    + " · Bone Mineral Content: \(n(b.boneMineralKg, 2)) kg"
-                    + " · Skeletal Muscle Mass: \(n(b.skeletalMuscleMassKg, 1)) kg"
-                    + " · Visceral Fat Rating: \(n(b.visceralFat))"
-                    + " · Basal Metabolic Rate: \(n(b.bmr))"
-                    + " · Estimated Waist to Hip Ratio: \(n(b.estimatedWaistToHipRatio, 2))"
-                    + " · Fat-free body weight: \(n(b.fatFreeMassKg, 1)) kg.")
-            } else {
-                L.append("    - Weight Data: \(weighIn(d.weightKg, d.weighInSkipReason))")
+            // Soreness carries its cause where the log recorded one — delayed
+            // onset is the whole point of the measurement.
+            let doms = input.doms.filter { $0.date == day.date }.map { x in
+                stripTrailingColons([x.muscle, js(x.severity), x.sourceLabel ?? "", x.sourceDate ?? ""].joined(separator: ":"))
             }
-
-            for s in sessionsByDate[d.date] ?? [] {
-                L.append("")
-                L.append("    - **Session\(s.sessionNumber != nil ? " #\(js(s.sessionNumber!))" : ""): \(s.label)**")
-                let window = (s.startedAt?.isEmpty == false)
-                    ? "Started: \(clock(s.startedAt))\((s.endedAt?.isEmpty == false) ? " · Ended: \(clock(s.endedAt))" : "") · "
-                    : ""
-                L.append("        - Session Metadata: \(window)Duration: \(n(s.durationMin)) Minutes"
-                    + " · Volume: \(exact(s.volumeKg)) kg"
-                    + " · Sets: \(n(s.setCount))\((s.failureSets ?? 0) != 0 ? " (\(n(s.failureSets)) to failure)" : "")"
-                    + " · Calories: \(n(s.caloriesBurned)) kcal\(s.caloriesEstimated == true ? " [Estimated]" : "")"
-                    + " · Avg HR: \(s.avgBpm != nil ? "\(n(s.avgBpm))\(s.avgBpmEstimated == true ? " [Estimated]" : "")" : dash)"
-                    + " · PRs: \(s.prs.count)"
-                    + " · Effort: \(s.sessionRpe != nil ? "\(n(s.sessionRpe, 1))/10 CR10" : "Not reported")")
-                for e in s.exercises {
-                    let restNote = (e.restTargetSec != nil && e.restPlanSec != nil && e.restTargetSec != e.restPlanSec)
-                        ? " · rest \(js(e.restTargetSec!))s (adjusted from \(js(e.restPlanSec!))s)" : ""
-                    L.append("        - **\(e.name)**\(e.repWindow.map { $0.isEmpty ? "" : " _(target \($0))_" } ?? "")\(restNote):")
-                    for line in setDetail(e.sets, exerciseName: e.name) { L.append("            - \(line)") }
-                }
-                if !s.prs.isEmpty {
-                    L.append("        - PRs:")
-                    let dayContext = Context.fromDayLabel(d.nutritionException)
-                    let tag = dayContext == .normal ? "" : " _(under \(Context.meta[dayContext]!.label))_"
-                    for p in s.prs {
-                        let timed = TimedExercise.isTimed(p.name)
-                        let axes = p.axes.map { a -> String in
-                            let label = PrEngine.axisLabel(a, timed: timed)
-                            if a == .volume, let v = p.volumeKg { return "\(label): \(exact(v)) kg" }
-                            if a == .e1rm, let e = p.e1rmKg { return "\(label): \(n(e, 2)) kg" }
-                            return label
-                        }
-                        L.append("            - **\(p.name)** \(SetFormat.format(weightKg: p.weightKg, reps: p.reps, timed: timed))\(axes.isEmpty ? "" : " — \(axes.joined(separator: ", "))")\(tag)")
-                    }
-                }
-            }
-
-            for c in cardioByDate[d.date] ?? [] {
-                let pace = CardioMetrics.paceMinPerKm(distanceM: c.distanceM, durationMin: c.durationMin)
-                let bits = [
-                    "time \(c.durationMin != nil ? "\(n(c.durationMin)) min" : dash)",
-                    "distance \(c.distanceM != nil ? "\(n(c.distanceM! / 1000, 2)) km" : dash)",
-                    "pace \(pace != nil ? CardioMetrics.formatPace(pace) : dash)",
-                    "active \(c.kcal != nil ? "\(n(c.kcal)) kcal" : dash)",
-                    "total \(c.totalKcal != nil ? "\(n(c.totalKcal)) kcal" : dash)",
-                    "avg HR \(c.avgHr != nil ? n(c.avgHr) : dash)",
-                    "effort \(c.effort != nil ? "\(n(c.effort, 1))/10" : dash)",
-                ].joined(separator: " · ")
-                L.append("")
-                L.append("    - Cardio: \(cardioLabel(c.kind)) · \(bits) **(Already accounted for in daily steps and calories — do NOT add to the day.)**")
-            }
-            L.append("")
+            // Flags that change how a number on this line should be READ —
+            // never flags that discount it. Every aggregate keeps the real figure.
+            var tags: [String] = []
+            if let e = day.nutritionException, !e.isEmpty { tags.append("except:\(e)") }
+            if day.nutritionEstimated { tags.append("estimated") }
+            if let p = day.targetProfile, !p.isEmpty { tags.append("profile:\(p)") }
+            if day.weightKg == nil { tags.append("skip:\(WeighIn.skipReason(day.weighInSkipReason))") }
+            if day.trackCarbs == false { tags.append("untracked:C") }
+            if day.trackFat == false { tags.append("untracked:F") }
+            L.append(fields([
+                day.date, day.weekdayLabel, day.isTrainingDay ? "1" : "0",
+                minutes(day.sleepMin), minutes(day.deepMin), minutes(day.remMin),
+                minutes(day.coreMin), minutes(day.awakeMin),
+                clock(day.bedTime), clock(day.wakeTime),
+                day.sleepOnsetTrouble == nil ? dash : (day.sleepOnsetTrouble! ? "1" : "0"),
+                n(day.hrvMs, 1), n(day.restingHr), n(day.avgHr), n(day.bloodOxygenPct),
+                // `signedC` appended "°C"; the column is already named `_c`, and a
+                // unit inside a cell is the one thing this grammar promised not to
+                // do. The SIGN stays — +0.2 and −0.2 are opposite findings.
+                n(day.respiratoryRate, 1), n(day.wristTempDeltaC, 1), n(day.vo2max, 1),
+                minutes(day.daylightMin), minutes(day.exerciseMin),
+                n(day.standHours), minutes(day.standMin),
+                n(day.steps), kmOf(day.distanceM), minutes(day.trainingMin), n(day.activeKcal),
+                n(day.calories), n(day.proteinG), n(day.carbsG), n(day.fatG), litresOf(day.waterMl),
+                day.supplementsPlanned == nil && day.supplementsTaken == nil
+                    ? dash : "\(n(day.supplementsTaken))/\(n(day.supplementsPlanned))",
+                items((day.supplementsLog ?? []).map { "\($0.key)@\($0.time ?? dash)" }),
+                items(day.supplementsSkipped ?? []),
+                n(day.weightKg, 1), n(bc?.bodyFatPct, 1), n(bc?.skeletalMuscleMassKg, 1), n(day.bmrKcal),
+                items(fatigue), items(doms), items(tags),
+            ]))
         }
 
-        // ── Sets Targets ──
-        L.append("## Sets Targets")
+        // ── SESSIONS ──────────────────────────────────────────────────────────
+        // A session line, then one line per exercise indented two spaces, then
+        // one per PR. That indent is the only structure left in the document.
+        if !sessions.isEmpty {
+            L.append("")
+            L.append("## SESSIONS" + sep + [
+                "date", "day", "label", "session_no", "started", "ended", "duration_min",
+                "avg_bpm", "kcal", "srpe", "sets", "failure_sets", "tonnage_kg", "prs", "estimated",
+            ].joined(separator: sep))
+            L.append("##   exercise" + sep + ["name", "rep_window", "rest_target/plan_s", "top_kg",
+                "set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds,"
+                + " a unilateral pair is Lset|Rset"].joined(separator: sep))
+            L.append("##   PR" + sep + ["name", "load×reps", "axes", "volume_kg", "e1rm_kg (Epley,"
+                + " weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)"].joined(separator: sep))
+            for s in sessions {
+                let weekday = weekdayOf(s.date, days)
+                L.append(fields([
+                    s.date, weekday.isEmpty ? dash : weekday, s.label,
+                    s.sessionNumber == nil ? dash : "#\(js(s.sessionNumber!))",
+                    clock(s.startedAt), clock(s.endedAt), minutes(s.durationMin),
+                    n(s.avgBpm), n(s.caloriesBurned), s.sessionRpe == nil ? dash : js(s.sessionRpe!),
+                    n(s.setCount), n(s.failureSets), exact(s.volumeKg), String(s.prs.count),
+                    items([s.caloriesEstimated == true ? "kcal" : "", s.avgBpmEstimated == true ? "bpm" : ""].filter { !$0.isEmpty }),
+                ]))
+                for ex in s.exercises {
+                    let tokens = setTokens(ex)
+                    L.append("  " + fields([
+                        ex.name,
+                        ex.repWindow?.isEmpty == false ? "[\(ex.repWindow!)]" : dash,
+                        ex.restTargetSec == nil && ex.restPlanSec == nil
+                            ? dash : "\(n(ex.restTargetSec))/\(n(ex.restPlanSec))",
+                        exact(ex.topKg),
+                    ] + (tokens.isEmpty ? [dash] : tokens)))
+                }
+                for p in s.prs {
+                    L.append("  " + fields([
+                        "PR", p.name, "\(exact(p.weightKg))×\(exact(p.reps))",
+                        items(p.axes.map { PrEngine.axisLabel($0) }),
+                        exact(p.volumeKg), exact(p.e1rmKg),
+                    ]))
+                }
+            }
+        }
+
+        // ── CARDIO ────────────────────────────────────────────────────────────
+        // Pace is the one derived value the raw body is allowed. `active_kcal`
+        // here is ALREADY inside the day's own figure and must not be added on
+        // top, which is why `total_kcal` sits beside it rather than replacing it.
+        if !cardio.isEmpty {
+            L.append("")
+            L.append("## CARDIO" + sep + ["date", "day", "kind", "duration_min", "dist_km",
+                "pace_min_km", "avg_hr", "active_kcal", "total_kcal", "effort_cr10"].joined(separator: sep))
+            for c in cardio {
+                let weekday = weekdayOf(c.date, days)
+                L.append(fields([
+                    c.date, weekday.isEmpty ? dash : weekday, cardioLabel(c.kind),
+                    n(c.durationMin, 1), kmOf(c.distanceM),
+                    CardioMetrics.formatPace(CardioMetrics.paceMinPerKm(distanceM: c.distanceM, durationMin: c.durationMin)),
+                    n(c.avgHr), n(c.kcal), n(c.totalKcal),
+                    c.effort == nil ? dash : js(c.effort!),
+                ]))
+            }
+        }
+
+        // ── BODY ──────────────────────────────────────────────────────────────
+        // Every compartment in ABSOLUTE kg beside its percentage: a percentage
+        // of a falling bodyweight can rise while the tissue shrinks.
+        if !bodyComp.isEmpty {
+            L.append("")
+            L.append("## BODY" + sep + ["date", "weight_kg", "bmi", "fat_pct", "muscle_pct",
+                "water_pct", "visceral", "bmr_kcal", "smm_kg", "muscle_mass_kg", "ffm_kg",
+                "fat_mass_kg", "protein_kg", "protein_pct", "bone_kg", "water_kg", "whr"].joined(separator: sep))
+            for b in bodyComp {
+                L.append(fields([
+                    b.date, n(b.weightKg, 1), n(b.bmi, 1), n(b.bodyFatPct, 1), n(b.musclePercent, 1),
+                    n(b.waterPercent, 1), n(b.visceralFat, 1), n(b.bmr), n(b.skeletalMuscleMassKg, 1),
+                    n(b.muscleMassKg, 1), n(b.fatFreeMassKg, 1), n(b.fatMassKg, 1), n(b.proteinMassKg, 1),
+                    n(b.proteinPercent, 1), n(b.boneMineralKg, 2), n(b.waterMassKg, 1),
+                    n(b.estimatedWaistToHipRatio, 2),
+                ]))
+            }
+        }
+
+        // ── NUTRIENTS ─────────────────────────────────────────────────────────
+        // Food and stack kept APART on every key: merging the two is how a
+        // supplement gets read as a diet.
+        let microDays = days.filter { !($0.nutrientsFood?.isEmpty ?? true) || !($0.nutrientsStack?.isEmpty ?? true) }
+        if !microDays.isEmpty {
+            L.append("")
+            L.append("## NUTRIENTS" + sep + "date" + sep
+                + "key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit;"
+                + " a key with no reading on either side is left off the line")
+            for day in microDays {
+                L.append(fields([day.date] + NutrientTargets.all.compactMap { t -> String? in
+                    let food = day.nutrientsFood?[t.key]
+                    let stack = day.nutrientsStack?[t.key]
+                    if food == nil && stack == nil { return nil }
+                    return "\(t.key)=\(exact(food ?? 0))+\(exact(stack ?? 0))"
+                }))
+            }
+            // The doubt, stated once and only when the week actually has one.
+            let flagged = flaggedNutrients(days)
+            if !flagged.isEmpty { L.append(fields(["##   implausible", items(flagged)])) }
+        }
+
+        // ── SUPPS ─────────────────────────────────────────────────────────────
+        // The protocol as `custom_supplements` holds it, never from a constant.
+        // What was actually TAKEN rides on each day's line.
+        let supps = supplementRows(input.supplementProtocol ?? [])
+        if !supps.isEmpty {
+            L.append("")
+            L.append("## SUPPS" + sep + ["time", "name", "dose", "training_dose", "rest_dose",
+                "training_only", "notes"].joined(separator: sep))
+            for s in supps {
+                L.append(fields([s.time, s.name, s.dose, s.trainingDose, s.restDose,
+                                 s.trainingOnly ? "1" : "0", s.notes]))
+            }
+        }
+
+        // ── WEEK ──────────────────────────────────────────────────────────────
+        // Means SKIP missing days rather than counting them as zero; the two
+        // totals are honest sums, because a rest day really is a zero.
+        let totals = trendTotals(days: days, sessions: sessions, cardio: cardio)
+        let week = summary(input)
+        let energy = energyBalance(days)
+        let weights = days.compactMap { $0.weightKg }.filter(\.isFinite)
         L.append("")
-        for m in input.volumeByMuscle {
-            let status = m.target <= 0 ? "—" : zoneWord[VolumeZone.of(weeklySets: m.sets, target: m.target, directSets: m.directSets ?? m.sets)]!
-            let split = (m.indirectSets ?? 0) > 0 && m.directSets != nil ? " (\(js(m.directSets!)) direct + \(js(m.indirectSets!)) indirect)" : ""
-            L.append("- \(m.muscle): \(js(m.sets))/\(js(m.target))\(split) — \(status)")
-        }
-        L.append("")
-        L.append("_A set credits 1.0 to each muscle a movement directly trains and 0.5 to each it assists. Half sets are real and are not rounded away. Targets are DIRECT-set landmarks, so the verdict is asymmetric on purpose: assistance can lift a muscle out of UNDER, but only direct work can put one OVER._")
-        L.append("")
+        L.append("## WEEK" + sep + ["tonnage_kg", "working_sets", "rated_sets", "sessions",
+            "kcal_avg", "P_avg", "C_avg", "F_avg", "water_l_avg", "steps_avg", "sleep_min_avg",
+            "rhr_avg", "hrv_avg", "weight_avg_kg", "weight_first_to_last_kg",
+            "srpe_avg", "srpe_rated_sessions", "cardio_min", "cardio_kcal"].joined(separator: sep))
+        L.append(fields([
+            exact(totals.totalVolumeKg), String(week.workingSets), String(week.ratedSets),
+            String(sessions.count),
+            n(totals.avgKcal), n(meanOf(days.map(\.proteinG))),
+            n(meanOf(days.map(\.carbsG))), n(meanOf(days.map(\.fatG))),
+            litresOf(totals.avgWaterMl), n(totals.avgSteps), minutes(week.avgSleepMin),
+            n(week.avgRestingHr, 1), n(week.avgHrvMs, 1), n(totals.avgWeightKg, 2),
+            // Plain `n()`, no leading `+` on a gain: every other signed number in
+            // this document comes out of `n()`, and one grammar wants one convention.
+            weights.count > 1 ? n(weights[weights.count - 1] - weights[0], 2) : dash,
+            // How hard the week's workouts FELT, and across how many ratings — a
+            // mean of 9.0 from one session out of five is not the week's
+            // character, and the mean alone cannot say which it is.
+            n(week.avgSessionRpe, 2), String(week.ratedSessions),
+            n(totals.cardioMinutes, 1), n(week.cardioActiveKcal),
+        ]))
 
-        // ── DOMS ──
-        do {
-            let label = ["none", "mild", "moderate", "severe"]
-            L.append("## DOMS (soreness, 0–3)")
-            L.append("")
-            var byDate: [String: [ExportDoms]] = [:]
-            for r in input.doms { byDate[r.date, default: []].append(r) }
-            for day in days {
-                let rows = byDate[day.date] ?? []
-                if rows.isEmpty { L.append("- \(day.weekdayLabel) \(day.date): not logged"); continue }
-                let parts = rows.map { r -> String in
-                    let sev = "\(r.muscle): \(js(r.severity)) (\(severityWord(r.severity, label)))"
-                    guard let source = r.sourceLabel, !source.isEmpty else { return sev }
-                    let out = daysBetween(r.sourceDate, r.date)
-                    var when = ""
-                    if let sd = r.sourceDate, !sd.isEmpty {
-                        let wd = weekdayOf(sd, days)
-                        when = ", \(wd.isEmpty ? sd : "\(wd) \(sd)")\(out != nil ? " (\(js(out!)) day\(out! == 1 ? "" : "s") out)" : "")"
-                    }
-                    return "\(sev) — from \(source)\(when)"
-                }
-                L.append("- \(day.weekdayLabel) \(day.date): \(parts.joined(separator: " · "))")
+        // Sets per muscle against the week's target, and the tonnage behind
+        // them. The GRADED figure is direct + indirect; the split rides
+        // alongside so a reader can see how much was assistance work.
+        if !input.volumeByMuscle.isEmpty || !(input.tonnageByMuscle?.isEmpty ?? true) {
+            var tonnage: [String: TonnageByMuscle] = [:]
+            for t in input.tonnageByMuscle ?? [] where tonnage[t.muscle] == nil { tonnage[t.muscle] = t }
+            var muscles: [String] = []
+            var seen = Set<String>()
+            for m in input.volumeByMuscle.map(\.muscle) + (input.tonnageByMuscle ?? []).map(\.muscle) where seen.insert(m).inserted {
+                muscles.append(m)
             }
-            L.append("")
-        }
-
-        // ── Fatigue ──
-        do {
-            L.append("## Fatigue (self-reported, not scored)")
-            L.append("")
-            var byDate: [String: [String: ExportFatigue]] = [:]
-            for f in input.fatigue ?? [] { byDate[f.date, default: [:]][f.slot] = f }
-            for day in days {
-                let rows = byDate[day.date]
-                let parts = fatigueLabels(isTrainingDay: day.isTrainingDay).map { slot in "\(slot) \(rows?[slot].map { $0.label.lowercased() } ?? dash)" }
-                var cost = ""
-                if day.isTrainingDay, let pre = rows?["Before training"]?.level, let post = rows?["After training"]?.level {
-                    let d = post - pre
-                    cost = " · cost \(d > 0 ? "+" : d < 0 ? "−" : "±")\(js(abs(d)))"
-                }
-                L.append("- \(day.weekdayLabel) \(day.date): \(parts.joined(separator: " · "))\(cost)")
+            L.append("## WEEK.MUSCLE" + sep + ["muscle", "sets", "target", "direct", "indirect",
+                "tonnage_kg", "direct_kg"].joined(separator: sep))
+            for muscle in muscles {
+                let v = input.volumeByMuscle.first { $0.muscle == muscle }
+                let t = tonnage[muscle]
+                L.append(fields([muscle, n(v?.sets, 1), n(v?.target, 1), n(v?.directSets, 1),
+                                 n(v?.indirectSets, 1), exact(t?.volumeKg), exact(t?.directKg)]))
             }
-            L.append("")
-            L.append("_Three slots a day, every day. A training day asks Waking / Before training / After training; a rest day asks Waking / Midday / Night._")
-            L.append("_`cost` is the after-training level minus the before-training one — how much the session took, in scale steps. `—` means the question was not answered, which is a fact about the week and not a neutral reading._")
-            L.append("")
         }
 
-        if let stack = input.supplementProtocol, !stack.isEmpty {
-            L.append("## Supplements protocol")
-            L.append("")
-            for s in consolidateSupplements(stack) { L.append("- \(s)") }
-            L.append("")
-        }
-
+        // ── LEDGER ────────────────────────────────────────────────────────────
+        // The one table in the document, and the one place a table is right.
         if let ledger = input.ledger, !ledger.isEmpty {
-            let label = input.weekLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            L.append("## Week-over-Week Trends (\(input.programLabel)\(label.isEmpty ? "" : " · \(label)"))")
             L.append("")
+            L.append("## LEDGER" + sep + "every week of the programme, oldest first")
             L.append(contentsOf: trendLedger(ledger))
-            L.append("")
-            L.append("_Every week of the programme, oldest first. Averages skip days with no entry rather than counting them as zero; volume and cardio are totals, so a short week is genuinely a smaller number. Δ is the change in average bodyweight from the row above, and the arrow shows direction only — whether a move is progress depends on the phase._")
-            L.append("")
         }
 
-        L.append("## Weekly aggregates")
+        // ── DERIVED ───────────────────────────────────────────────────────────
+        // The fence. Everything above is a measurement; everything here is
+        // arithmetic over those measurements, printed so it can be audited.
+        let derived = Derived.week(input)
+        let bmrs = bmrCarry(days)
+        var batteryByDate: [String: BatteryDay] = [:]
+        for b in derived.battery where batteryByDate[b.date] == nil { batteryByDate[b.date] = b }
         L.append("")
-
-        do {
-            let tonnage = input.tonnageByMuscle ?? []
-            if let totalVolume = sumOf(sessions.map(\.volumeKg)) {
-                L.append("### Total volume")
-                L.append("")
-                L.append("- **Total volume:** \(exact(totalVolume)) kg across \(plural(sessions.count, "session"))")
-                L.append("")
-                if !tonnage.isEmpty {
-                    L.append("### Volume by muscle group (kg)")
-                    L.append("")
-                    for t in tonnage {
-                        let assisted = (t.directKg != nil && t.directKg! < t.volumeKg) ? " (\(exact(t.directKg)) direct)" : ""
-                        L.append("- \(t.muscle): \(exact(t.volumeKg)) kg\(assisted)")
-                    }
-                    L.append("")
-                    L.append("_These rows sum to MORE than the total above: the same kilogram is counted against every muscle that moved it. Unilateral pairs are scored at the weaker side, identically to the session total._")
-                    L.append("")
-                }
-            }
+        L.append("## DERIVED" + sep + "computed by Onyx — not measured" + sep + "key"
+            + sep + "then one value per day, in DAYS order")
+        func keyRow(_ key: String, _ value: (ExportDay, Int) -> String) {
+            L.append(fields([key] + days.enumerated().map { value($1, $0) }))
         }
+        keyRow("load") { d, _ in n(d.readiness?.load, 1) }
+        keyRow("acwr") { d, _ in n(batteryByDate[d.date]?.acwr ?? d.readiness?.acwr, 3) }
+        keyRow("strainZ") { d, _ in n(batteryByDate[d.date]?.strainZ ?? d.readiness?.strainZ, 2) }
+        keyRow("wellness") { d, _ in n(batteryByDate[d.date]?.wellness, 2) }
+        // The stress index arrives with the E3 engine. Until then the key is
+        // present and every day answers `—`; dropping the row would let a reader
+        // conclude the app does not compute stress at all.
+        keyRow("stress") { _, _ in dash }
+        // `Energy.tdee` and not a fourth hand-rolled `bmr + active + tef`:
+        // energy.ts is the canonical arithmetic precisely so the Nexus, the
+        // dashboard and this document cannot disagree, and it carries the
+        // all-or-nothing null rule that keeps a missing active-energy sync
+        // from reading as a 400 kcal deficit.
+        keyRow("tdee") { d, i in n(Energy.tdee(bmr: bmrs[i], active: d.activeKcal, intakeKcal: d.calories)) }
+        // ── DERIVED.WEEK ──────────────────────────────────────────────────────
+        // The energy balance, and it lives HERE rather than in `## WEEK`. Intake
+        // is measured, but active energy is a watch estimate, BMR is carried
+        // across the days that have none and TEF is a coefficient — three of the
+        // four are arithmetic, and the heading over `## WEEK` says everything
+        // under it was measured. `energy_excluded` names the days that did NOT
+        // enter the estimate, so its width is auditable.
+        L.append("## DERIVED.WEEK" + sep + ["balance_kcal", "balance_kcal_day", "tdee_avg",
+            "bmr_avg", "active_avg", "tef_avg", "bmr_carried", "energy_days", "energy_excluded"].joined(separator: sep))
+        L.append(fields([
+            n(energy.balanceKcal), n(energy.avgBalanceKcal),
+            energy.expenditureKcal == nil ? dash : n(energy.expenditureKcal! / Double(energy.daysCounted)),
+            n(energy.avgBmrKcal), n(energy.avgActiveKcal), n(energy.avgTefKcal),
+            energy.bmrCarried ? "1" : "0",
+            String(energy.daysCounted),
+            items(days.filter { !energy.countedDates.contains($0.date) }.map(\.date)),
+        ]))
 
-        do {
-            let energy = energyBalance(days)
-            if let balance = energy.balanceKcal {
-                let deficit = balance < 0
-                L.append("### Energy balance")
-                L.append("")
-                L.append("- **Energy balance (estimated):** \(n(abs(balance))) kcal \(deficit ? "DEFICIT" : "SURPLUS") over \(plural(energy.daysCounted, "day")) · \(n(abs(energy.avgBalanceKcal ?? 0))) kcal/day \(deficit ? "under" : "over") maintenance")
-                L.append("    - Intake \(n(energy.intakeKcal)) kcal vs expenditure \(n(energy.expenditureKcal)) kcal (\(Energy.tdeeBreakdown(bmr: energy.avgBmrKcal ?? 0, active: energy.avgActiveKcal ?? 0, tef: energy.avgTefKcal ?? 0)) kcal/day, averaged)")
-                let counted = Set(energy.countedDates)
-                let skipped = days.filter { !counted.contains($0.date) }
-                if !skipped.isEmpty {
-                    L.append("    - Excluded: \(skipped.map { "\($0.weekdayLabel) \($0.date)" }.joined(separator: ", ")) — no intake, or no Apple Watch active energy, or both. A day missing either side is not a balance.")
-                }
-                L.append("    - _ESTIMATE, not a measurement. Only days holding both an intake and an expenditure are counted."
-                    + " TEF is the thermic effect of food, \(js(jsRound(Energy.tefFactor * 1000) / 10))% of intake —"
-                    + " the energy spent digesting it, which is expenditure like any other."
-                    + (energy.bmrCarried ? " BMR is a scale reading and exists only on weigh-in days; days without one inherit the nearest reading (it moves ~2 kcal a week)." : "")
-                    + "_")
-                L.append("")
-            }
-        }
+        L.append(fields(["##   how", "tdee = BMR (from the scale, carried across gaps) + Apple Watch"
+            + " active energy + intake × \(js(Energy.tefFactor))",
+            "load = session RPE × minutes",
+            "acwr = EWMA 7:28 of load",
+            "strainZ = z of Foster strain against your own rolling normal",
+            "wellness = mean of the answered Hooper items, 0–1",
+            "heart rate, calories and steps come off the Apple Watch and are estimates"]))
 
-        do {
-            let stepDays = days.filter { $0.steps?.isFinite == true }
-            L.append("### Steps & daily shape")
-            L.append("")
-            L.append("- **Steps (avg/day):** \(n(meanOf(days.map(\.steps)))) across \(plural(stepDays.count, "day")) with a logged count (every such day counts, cardio session or not)")
-            var volByDate: [String: Double] = [:]
-            for s in sessions { if let v = s.volumeKg, v.isFinite { volByDate[s.date, default: 0] += v } }
-            let volSpark = sparkline(days.map { volByDate[$0.date] ?? 0 })
-            let stepSpark = sparkline(days.map(\.steps))
-            let dayLetters = days.map { $0.weekdayLabel.first.map(String.init) ?? "?" }.joined()
-            if !volSpark.isEmpty || !stepSpark.isEmpty {
-                L.append("- **Daily shape** (\(dayLetters), scaled from zero · `\(sparkGap)` = not logged):")
-                if !volSpark.isEmpty { L.append("    - Volume: `\(volSpark)`") }
-                if !stepSpark.isEmpty { L.append("    - Steps:  `\(stepSpark)`") }
-            }
-            L.append("")
-        }
-
-        // ── Derived ──
-        do {
-            let d = Derived.week(input)
-            L.append("## Derived (computed by Onyx — not measured)")
-            L.append("")
-            L.append("_Everything above this heading is a measurement. Everything below it is arithmetic over those measurements — stated so it can be audited, or ignored. No figure here reaches for data the document has not already shown you, and a metric with no evidence prints `—` rather than a zero._")
-            L.append("")
-
-            if d.deltas.contains(where: { $0.delta != nil }) {
-                L.append("### Week over week")
-                L.append("")
-                func fmt(_ v: Double?, _ x: WeekDelta) -> String { x.exact ? exact(v) : n(v, x.digits) }
-                for x in d.deltas {
-                    guard let delta = x.delta else {
-                        L.append("- \(x.label): \(fmt(x.current, x)) this week · \(fmt(x.previous, x)) previous — no comparison")
-                        continue
-                    }
-                    let pct = x.pct != nil ? ", \(x.pct! > 0 ? "+" : "−")\(n(abs(x.pct!), 1))%" : ""
-                    let dir = delta > 0 ? "+" : delta < 0 ? "−" : ""
-                    L.append("- \(x.label): \(fmt(x.previous, x)) → \(fmt(x.current, x)) \(x.unit) (\(dir)\(fmt(abs(delta), x))\(pct))")
-                }
-                L.append("")
-                L.append("_Against the most recent EARLIER week in the ledger, which is not always the calendar week before if a week was not trained._")
-                L.append("")
-            }
-
-            L.append("### Training load")
-            L.append("")
-            L.append("- Mean working-set effort: \(d.meanWorkingSetRpe != nil ? "\(n(d.meanWorkingSetRpe, 2)) RPE across \(plural(d.ratedSets, "rated set"))" : dash)")
-            L.append("- Working sets: \(d.workingSets) · mean per session: \(n(d.meanSetsPerSession, 1)) · mean tonnage per session: \(exact(d.meanVolumePerSessionKg)) kg")
-            L.append("- Sets taken to failure: \(d.failureSetShare != nil ? "\(n(d.failureSetShare, 1))% of working sets" : dash)")
-            L.append("- Technique flags: \(plural(d.flaggedSets, "set")) flagged\(d.quality.isEmpty ? "" : " — \(d.quality.map { "\($0.label) ×\($0.count)" }.joined(separator: ", "))")")
-            L.append("")
-
-            if !d.progression.isEmpty {
-                L.append("### Top-set movement within the week")
-                L.append("")
-                for e in d.progression {
-                    let arrow = e.deltaKg > 0 ? "+" : e.deltaKg < 0 ? "−" : "±"
-                    L.append("- \(e.name): \(exact(e.firstKg)) → \(exact(e.lastKg)) kg (\(arrow)\(exact(abs(e.deltaKg)))) across \(e.sessions) sessions")
-                }
-                L.append("")
-                L.append("_Only movements trained more than ONCE inside this week, compared first-to-last. It is not progression against the last time the movement was performed — that session may fall outside this payload, and this section never reaches for data the document has not shown._")
-                L.append("")
-            }
-
-            L.append("### Adherence & coverage")
-            L.append("")
-            if let taken = d.supplementsTaken, let planned = d.supplementsPlanned, planned != 0 {
-                L.append("- Supplements: \(n(taken)) of \(n(planned)) doses (\(n((taken / planned) * 100))%)")
-            } else {
-                L.append("- Supplements: \(dash)")
-            }
-            L.append("- Fatigue: \(d.fatigueReadings) of \(d.fatigueSlots) slots answered")
-            L.append("- Soreness: logged on \(d.domsDaysLogged) of \(days.count) days")
-            L.append("- Intake: logged on \(d.intakeDaysLogged) of \(days.count) days")
-            L.append("- Weigh-ins: \(d.weighInDays) of \(days.count) days")
-            L.append("- Per-set effort: \(d.ratedSets) of \(d.workingSets) working sets rated")
-            L.append("")
-
-            L.append("### Sleep composition")
-            L.append("")
-            L.append("- Deep: \(d.meanDeepPct != nil ? "\(n(d.meanDeepPct, 1))% of time asleep" : dash) · REM: \(d.meanRemPct != nil ? "\(n(d.meanRemPct, 1))%" : dash) · Awake (avg): \(d.meanAwakeMin != nil ? "\(n(d.meanAwakeMin)) min" : dash)")
-            L.append("")
-            L.append("_Shares, because the minutes are already above: 39 minutes of deep sleep is a different night after 9h than after 5h30._")
-            L.append("")
-
-            L.append("### Battery (v9 — the inputs behind the number the app showed)")
-            L.append("")
-            func z(_ v: Double?) -> String {
-                guard let v else { return dash }
-                return "\(v > 0 ? "+" : v < 0 ? "−" : "")\(n(abs(v), 2))"
-            }
-            for b in d.battery {
-                guard let app = b.appPct else {
-                    L.append("- \(b.weekdayLabel) \(b.date): \(dash) (no score row)")
-                    continue
-                }
-                let wellnessItems = [
-                    "fatigue \(b.fatigueLabel ?? dash)",
-                    "soreness \(b.soreness == nil ? dash : n(b.soreness, 1))",
-                    "onset \(b.onsetTrouble == nil ? dash : b.onsetTrouble! ? "yes" : "no")",
-                    "sleep \(n(b.ratio, 2))",
-                ]
-                L.append("- \(b.weekdayLabel) \(b.date): app \(n(app))% · wake \(n(b.morningCharge)) (sleep \(n(b.ratio, 2)) · stages \(n(b.stagesQ, 2)) · HRV z \(z(b.hrvZ)) · RHR z \(z(b.rhrZ))) · load \(n(b.loadDrain, 1)) (ACWR \(n(b.acwr, 2)) · monotony \(n(b.monotony, 2)) · strain \(n(b.strain)) · z \(z(b.strainZ))) · wellness \(n(b.wellnessDrain, 1)) (\(wellnessItems.joined(separator: " · ")))")
-            }
-            L.append("")
-            L.append("_Wake charge = 55 + 45·q, q = 0.45·sleep + 0.15·stages + 0.25·HRV + 0.15·RHR, each 0–1; the HRV and RHR terms read a z-score of the 7-day rolling mean against the 42 days before it (0.75 at baseline or unknown, 1 at +1 SD, 0.25 at −2 SD; the RHR sign is flipped). Load drain (cap 8) = ACWR past 1.3 (EWMA 7:28 of session RPE × minutes) plus this week's Foster strain above your own rolling normal. Wellness drain (cap 6) = the mean of the answered Hooper-style items: fatigue, soreness, onset trouble, short sleep. The app figure is the stored score, computed at whatever hour the day was last synced._")
-            L.append("")
-
-            if d.trainingDayKcal != nil || d.restDayKcal != nil {
-                L.append("### Intake by day type")
-                L.append("")
-                L.append("- Training days: \(d.trainingDayKcal != nil ? "\(n(d.trainingDayKcal)) kcal" : dash) · Rest days: \(d.restDayKcal != nil ? "\(n(d.restDayKcal)) kcal" : dash)")
-                L.append("")
-            }
-        }
-
-        let flagged = flaggedNutrients(days)
-        if !flagged.isEmpty {
-            L.append("---")
-            L.append("")
-            L.append("⚠ **Implausible micronutrient readings this week:** \(flagged.joined(separator: " · ")).")
-            L.append("")
-            L.append("_These are printed exactly as stored. `nutrition_entries` keeps one aggregate row per day with no item breakdown, so neither this document nor the app can identify what contributed them — the duplicate is upstream, in the Health source. Treat a flagged figure as unmeasured rather than as a day that went badly._")
-            L.append("")
-        }
-
-        L.append("---")
-        L.append("")
-        L.append(unilateralVolumeNote)
-        L.append("")
-        L.append(epleyNote)
-        L.append("")
-        L.append(appleWatchDisclaimer)
-        L.append("")
-        L.append(priorReportNote(input.weekLabel))
         return L.joined(separator: "\n")
     }
 
-    /// `label[severity] ?? severity` — the word for an integral 0–3, else the number.
-    static func severityWord(_ severity: Double, _ labels: [String]) -> String {
-        if severity == severity.rounded(), severity >= 0, Int(severity) < labels.count { return labels[Int(severity)] }
-        return js(severity)
+    // MARK: - Supplements
+
+    /// The stack, deduped and ordered — the shape BOTH renderers read. Nothing
+    /// about any particular supplement is known here; every field arrives from
+    /// `custom_supplements`.
+    public struct SupplementRow: Codable, Equatable, Sendable {
+        public var time: String
+        public var name: String
+        public var dose: String
+        public var trainingDose: String?
+        public var restDose: String?
+        public var trainingOnly: Bool
+        public var notes: String?
     }
 
-    public static func priorReportNote(_ weekLabel: String?) -> String {
-        let label = weekLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let week = label.isEmpty ? "The previous week's" : label
-        return "*Note: \(week) report is provided manually for reference and comparison.*"
-    }
-
-    public static let unilateralVolumeNote =
-        "*Note: Unilateral (single-arm / single-leg) work is logged per side and scored ONCE at the WEAKER side: min(weight) × min(reps)."
-        + " \"L 5 kg × 10 · R 5 kg × 14\" is 50 kg of volume, not 70 and not 100 — crediting the strong side's extra reps to the weak one would inflate the"
-        + " trend without the work being there, and doubling it would make the same physical set weigh twice as much purely for having been recorded per side."
-        + " Each side keeps its own failure tag, and the pair counts as ONE set.*"
-
-    public static let epleyNote =
-        "*Note: every \"1RM\" here is an ESTIMATE from the Epley formula (weight × (1 + reps/30)), not a lift that was performed. Hevy estimates it "
-        + "differently, so the two will not agree exactly. Unloaded work has no 1RM estimate at all and shows none.*"
-
-    public static let appleWatchDisclaimer =
-        "*Note: Heart rate, calories, and steps data are sourced from the Apple Watch and may not be entirely accurate.*"
-
-    /// The stack as one chronological list, deduped by name.
-    public static func consolidateSupplements(_ items: [ExportSupplement]) -> [String] {
+    /// Deduped by NAME, ordered by the scheduled time — the order the day
+    /// happens in. Ties keep insertion order, as JavaScript's stable sort does.
+    public static func supplementRows(_ stack: [ExportSupplement]) -> [SupplementRow] {
+        func trimmed(_ v: String?) -> String? {
+            let t = v?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return t.isEmpty ? nil : t
+        }
         var order: [String] = []
-        var byName: [String: (time: String, line: String)] = [:]
-        for s in items {
+        var byName: [String: SupplementRow] = [:]
+        for s in stack {
             let name = s.name.trimmingCharacters(in: .whitespacesAndNewlines)
             if name.isEmpty { continue }
             let key = name.lowercased()
             if byName[key] != nil { continue }
-            let trimmedTime = s.time?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let time = trimmedTime.isEmpty ? "—" : trimmedTime
+            order.append(key)
+            byName[key] = SupplementRow(
+                time: trimmed(s.time) ?? dash,
+                name: name,
+                dose: s.dose.trimmingCharacters(in: .whitespacesAndNewlines),
+                trainingDose: trimmed(s.trainingDose),
+                restDose: trimmed(s.restDose),
+                trainingOnly: s.trainingOnly == true,
+                notes: trimmed(s.notes)
+            )
+        }
+        return order.map { byName[$0]! }.enumerated()
+            .sorted { a, b in
+                let c = icuCompare(a.element.time, b.element.time)
+                return c == 0 ? a.offset < b.offset : c < 0
+            }
+            .map(\.element)
+    }
+
+    /// The stack as ONE chronological list. A dose that differs by day is
+    /// stated as the rule it is rather than arbitrarily picking one column.
+    public static func consolidateSupplements(_ stack: [ExportSupplement]) -> [String] {
+        supplementRows(stack).map { s in
             let dose: String
-            if let t = s.trainingDose, let r = s.restDose, !t.isEmpty, !r.isEmpty, t != r {
+            if let t = s.trainingDose, let r = s.restDose, t != r {
                 dose = "\(t) on training days / \(r) on rest days"
             } else {
-                dose = s.dose.trimmingCharacters(in: .whitespacesAndNewlines)
+                dose = s.dose
             }
-            var parts = ["\(time) · \(name) — \(dose)"]
-            if s.trainingOnly == true { parts.append("(training days only)") }
-            if let notes = s.notes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty { parts.append("· \(notes)") }
-            order.append(key)
-            byName[key] = (time, parts.joined(separator: " "))
+            var parts = ["\(s.time) · \(s.name) — \(dose)"]
+            if s.trainingOnly { parts.append("(training days only)") }
+            if let notes = s.notes { parts.append("· \(notes)") }
+            return parts.joined(separator: " ")
         }
-        return order.map { byName[$0]! }.sorted { icuCompare($0.time, $1.time) < 0 }.map(\.line)
     }
 }

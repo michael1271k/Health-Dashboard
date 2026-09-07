@@ -192,21 +192,23 @@ struct ExportRenderersGoldenTests {
         }
     }
 
-    struct Note: Decodable { let label: String?; let note: String }
     struct NotesOut: Decodable {
-        let notes: [Note]; let training: [String]; let rest: [String]; let slots: [String]
-        let unilateral: String; let epley: String; let watch: String
+        let training: [String]; let rest: [String]; let slots: [String]
+        let supplements: [WeeklyExport.SupplementRow]
     }
 
+    /// The two fatigue triples, and the deduped stack both renderers read. The
+    /// four standing closing notes retired with export v2.
     @Test("the standing strings match")
     func notesMatch() throws {
         let e = try #require(try GoldenFixture<Empty, NotesOut>.load("report-notes").cases.first).expected
-        for n in e.notes { #expect(WeeklyExport.priorReportNote(n.label) == n.note, "priorReportNote — \(n.label ?? "nil")") }
         #expect(WeeklyExport.fatigueLabels(isTrainingDay: true) == e.training)
         #expect(WeeklyExport.fatigueLabels(isTrainingDay: false) == e.rest)
         #expect(WeeklyExport.fatigueSlotLabels == e.slots)
-        #expect(WeeklyExport.unilateralVolumeNote == e.unilateral)
-        #expect(WeeklyExport.epleyNote == e.epley)
-        #expect(WeeklyExport.appleWatchDisclaimer == e.watch)
+        // The vector's stack is the rich week's own, so it is read from there
+        // rather than restated — one payload, one source of truth.
+        let rich = try #require(try GoldenFixture<WeeklyExportInput, WeeklyExportGoldenTests.Out>
+            .load("weekly-export").cases.first { $0.name.hasPrefix("the rich week — every section lit") })
+        #expect(WeeklyExport.supplementRows(rich.input.supplementProtocol ?? []) == e.supplements)
     }
 }

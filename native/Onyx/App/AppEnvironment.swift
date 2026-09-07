@@ -32,6 +32,20 @@ public final class AppEnvironment {
     /// says so.
     public private(set) var startupError: String?
 
+    /// `profiles.role` for the signed-in user, read ONCE per session from the
+    /// local mirror. Nil until the first sync has landed the row.
+    ///
+    /// ── WHY IT FAILS CLOSED ─────────────────────────────────────────────────
+    /// It gates the developer-only Settings rows, so "unknown" must mean "not
+    /// an admin". A fresh sign-up sees no admin rows until its profile row
+    /// arrives, and if it never arrives it never sees them — which is the right
+    /// answer for a member and a recoverable inconvenience for the one admin.
+    /// Nothing SECURITY-relevant hangs off this: the rows it hides are
+    /// diagnostics, and the server's RLS does not consult it.
+    public private(set) var role: String?
+
+    public var isAdmin: Bool { role == "admin" }
+
     public let database: AppDatabase
     public let supabase: SupabaseClient
 
@@ -176,6 +190,11 @@ public final class AppEnvironment {
     /// user can fix.
     public static func live() throws -> AppEnvironment {
         let config = try SupabaseConfig.fromBundle()
+        // BEFORE the store is opened, and ONLY here. `sharedFolder()` is pure
+        // path resolution now and the widget extension calls it too; a
+        // migration running inside an extension could rename the database out
+        // from under a running app. Idempotent, so a second launch is a no-op.
+        AppDatabase.adoptLegacyStores()
         return AppEnvironment(
             database: try AppDatabase.onDisk(folderURL: AppDatabase.sharedFolder()),
             supabase: OnyxSupabase.makeClient(config: config)
@@ -234,7 +253,11 @@ public final class AppEnvironment {
                     continue
                 }
                 self.auth = session.map { .signedIn(userID: $0.user.id) } ?? .signedOut
-                if case .signedIn(let userID) = self.auth { self.startSync(userID: userID) }
+                if case .signedIn(let userID) = self.auth {
+                    self.startSync(userID: userID)
+                    self.loadRole(userID: userID)
+                }
+                if case .signedOut = self.auth { self.role = nil }
             }
         }
     }
@@ -405,10 +428,86 @@ public final class AppEnvironment {
         try await supabase.auth.signIn(email: email, password: password)
     }
 
+    /// Create an account. Returns `true` when the email still needs confirming.
+    ///
+    /// Email confirmation is ON in the project, so the usual result is a user
+    /// with no session: `signUp` returns the user and `session` is nil until
+    /// the link is followed. The screen has to say so — a sign-up that appears
+    /// to succeed and then leaves the user on the sign-in form reads as a bug.
+    /// When confirmation is off (or the address is already confirmed) a session
+    /// arrives immediately, `authStateChanges` fires, and `RootView` moves on
+    /// its own; `false` says that happened.
+    @discardableResult
+    public func signUp(email: String, password: String) async throws -> Bool {
+        let response = try await supabase.auth.signUp(email: email, password: password)
+        return response.session == nil
+    }
+
+    /// Delete the account, then sign out — in that order, and both halves.
+    ///
+    /// The RPC removes every row and the `auth.users` record itself. The JWT
+    /// already in memory stays VALID until it expires, so a client that skipped
+    /// the sign-out would keep making authorised requests as a user that no
+    /// longer exists. `signOut()` is what makes the deletion real on this
+    /// device: it revokes the session and erases the local store.
+    ///
+    /// The sign-out is not conditional on the RPC succeeding — see below. It is
+    /// conditional on it, deliberately: signing out after a FAILED delete would
+    /// leave the user with no session, no local data and an account still on
+    /// the server, and no way to retry from this phone.
+    public func deleteAccount() async throws {
+        try await supabase.rpc("delete_my_account").execute()
+        await signOut()
+    }
+
+    /// One read of `profiles.role`, from the mirror rather than the network.
+    /// Silent on failure: the property stays nil and `isAdmin` stays false.
+    private func loadRole(userID: UUID) {
+        let id = OnyxJSON.canonicalUserID(userID)
+        Task { [database] in
+            let value = try? database.role(userId: id)
+            await MainActor.run { self.role = value }
+        }
+    }
+
+    /// ── DRAIN, THEN ERASE. IN THAT ORDER, AND NEVER ONLY THE FIRST HALF ─────
+    ///
+    /// Sign-out used to stop the workers and leave every local row where it
+    /// was. Two things were wrong with that. Anything logged since the last
+    /// sync was silently thrown away — it sat in the outbox of a store nobody
+    /// would open again. And the widget reads `AppDatabase.sharedFolder()`
+    /// directly, with no session and no auth check at all, so it went on
+    /// drawing the previous user's week on the home screen of a signed-out
+    /// phone, and would have gone on drawing it to the NEXT user.
+    ///
+    /// The order below is the whole of it:
+    ///
+    ///  1. Push what is queued, while the session is still valid — bounded, so
+    ///     a dead network cannot trap someone on this screen.
+    ///  2. Stop every worker, AWAITED, so nothing writes after step 4.
+    ///  3. Revoke the session.
+    ///  4. Erase the local store.
+    ///  5. Redraw the widget immediately, against the now-empty store.
+    ///
+    /// A failure anywhere in 1–3 must not skip 4: a user who cannot reach the
+    /// network still gets to sign out, and still gets their data off the phone.
     public func signOut() async {
-        // A failed sign-out must still clear local state, or the user is stuck
-        // on a screen with no way forward.
-        try? await supabase.auth.signOut()
+        // 1. The last push. `stop()` below awaits the coordinator's own task,
+        //    which is what actually closes the race with the erase.
+        if let coordinator {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { try? await coordinator.drainOutbox() }
+                group.addTask { try? await Task.sleep(for: .seconds(5)) }
+                await group.next()
+                group.cancelAll()
+            }
+        }
+
+        // 2. Every worker down, each one awaited. Dropping a reference does not
+        //    stop a drain: it runs in an unstructured task that retains the
+        //    actor, so it would go on writing the PREVIOUS user's days into the
+        //    store the next one is signing in to, queueing upserts their RLS
+        //    will reject and bumping a generation that belongs to somebody else.
         if let coordinator {
             self.coordinator = nil
             await coordinator.stop()
@@ -418,11 +517,6 @@ public final class AppEnvironment {
         observers = nil
         #endif
         backfill = nil
-        // AWAITED, like the coordinator above. Dropping the reference does not
-        // stop the drain: it runs in an unstructured task that retains the
-        // actor, so it would go on writing the PREVIOUS user's days into the
-        // store the next one is signing in to, queueing upserts their RLS will
-        // reject and bumping a generation that belongs to somebody else.
         if let rescoreQueue {
             self.rescoreQueue = nil
             await rescoreQueue.stop()
@@ -433,7 +527,42 @@ public final class AppEnvironment {
         weighInTask?.cancel()
         weighInTask = nil
         weighInPending = false
+
+        // 3. A failed sign-out must still clear local state, or the user is
+        //    stuck on a screen with no way forward.
+        try? await supabase.auth.signOut()
+
+        // 4. Not optional and not deferred. This is the step that makes the
+        //    phone stop holding an account the user has left.
+        //
+        //    ── AND IT RUNS EVEN IF STEP 1 DID NOT FINISH ───────────────────
+        //    A drain that timed out means work is about to be discarded, and
+        //    the alternative — keeping it — is leaving one user's training log
+        //    on a signed-out device for the next person to open. Security wins
+        //    that trade. What it does not get to do is win it QUIETLY: the
+        //    count is read before the erase and reported after it, so "I lost
+        //    three sets" is something the user is told rather than something
+        //    they discover.
+        let unsynced = (try? database.outboxPendingCount()) ?? 0
+        do {
+            try database.eraseLocalData()
+            if unsynced > 0 {
+                startupError = "Signed out. \(unsynced) change\(unsynced == 1 ? "" : "s") had not"
+                    + " reached the server yet and could not be kept."
+            }
+        } catch {
+            startupError = "Signed out, but some local data could not be cleared."
+        }
+
         auth = .signedOut
+
+        // 5. NOT `scheduleWidgetReload()`. That debounces two seconds against a
+        //    commit storm, and the storm here is the erase itself — the user
+        //    would watch a stale week sit on their home screen for two seconds
+        //    after signing out. Cancel the pending one and redraw now.
+        widgetReload?.cancel()
+        widgetReload = nil
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - The weigh-in

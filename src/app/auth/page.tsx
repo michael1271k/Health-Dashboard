@@ -28,13 +28,35 @@ import { EMBER } from '@/lib/theme/palette'
  * install anyway.
  *
  * Nothing here reads `process.env`. That is the point; keep it that way.
+ *
+ * ── AND WHY IT IS NO LONGER SINGLE-USER ─────────────────────────────────────
+ * Sign-up is open as of wave E6, so this screen is now two modes on one form:
+ * the fields are identical and only the verb changes. A separate `/signup`
+ * route would have duplicated the input styling, the 16px zoom floor and the
+ * autocomplete tokens, and given the browser two pages to remember a credential
+ * against.
+ *
+ * The `autoComplete` token is the one thing that genuinely differs, and it
+ * matters: `current-password` asks the browser to FILL a saved credential,
+ * `new-password` asks it to GENERATE and save one. Getting that backwards is
+ * how a sign-up form ends up pre-filled with the last account's password.
+ *
+ * Email confirmation is ON, so a successful sign-up does NOT return a session.
+ * The success state says to check the inbox and stays there; redirecting to `/`
+ * would land on a signed-out shell that bounces straight back here, which reads
+ * as the sign-up having failed.
  */
 export default function AuthPage() {
   const router = useRouter()
+  const [mode, setMode] = useState<'in' | 'up'>('in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+
+  /** Supabase's own floor is 6; 8 is stated up front rather than after a trip. */
+  const MIN_PASSWORD = 8
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -42,6 +64,31 @@ export default function AuthPage() {
 
     setLoading(true)
     setError(null)
+
+    if (mode === 'up') {
+      if (password.length < MIN_PASSWORD) {
+        setError(`Choose a password of at least ${MIN_PASSWORD} characters.`)
+        setLoading(false)
+        return
+      }
+      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+      if (signUpError) {
+        setError(/already registered/i.test(signUpError.message)
+          ? 'That email already has an account. Sign in instead.'
+          : signUpError.message)
+        setLoading(false)
+        return
+      }
+      // No session means the address needs confirming — the normal path.
+      if (!data.session) {
+        setSent(true)
+        setLoading(false)
+        return
+      }
+      router.push('/')
+      router.refresh()
+      return
+    }
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -58,6 +105,26 @@ export default function AuthPage() {
   }
 
   const canSubmit = Boolean(email && password) && !loading
+
+  if (sent) {
+    return (
+      <LaunchSurface>
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)] space-y-3 text-center">
+          <h1 className="text-text font-bold">Check your inbox</h1>
+          <p className="text-muted text-sm leading-relaxed">
+            We sent a confirmation link to <span className="text-text">{email}</span>. Open it, then sign in.
+          </p>
+          <button
+            type="button"
+            onClick={() => { setSent(false); setMode('in'); setPassword('') }}
+            className="text-sm underline text-muted hover:text-text"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </LaunchSurface>
+    )
+  }
 
   return (
     <LaunchSurface>
@@ -100,9 +167,10 @@ export default function AuthPage() {
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete={mode === 'up' ? 'new-password' : 'current-password'}
               required
-              placeholder="Password"
+              minLength={mode === 'up' ? MIN_PASSWORD : undefined}
+              placeholder={mode === 'up' ? `Password (${MIN_PASSWORD}+ characters)` : 'Password'}
               aria-label="Password"
               className="w-full min-h-[52px] rounded-xl px-4 text-text placeholder:text-muted/70
                          border border-white/[0.08] bg-white/[0.03]
@@ -122,7 +190,17 @@ export default function AuthPage() {
           {loading
             ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
             : <Fingerprint className="w-4 h-4" aria-hidden="true" />}
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading
+            ? (mode === 'up' ? 'Creating…' : 'Signing in…')
+            : (mode === 'up' ? 'Create account' : 'Sign in')}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setError(null) }}
+          className="w-full text-sm text-muted hover:text-text underline underline-offset-4"
+        >
+          {mode === 'in' ? 'Create an account' : 'I already have an account'}
         </button>
 
         {error && (
@@ -131,7 +209,9 @@ export default function AuthPage() {
 
         {/* Standalone-PWA reassurance: this container keeps its own session. */}
         <p className="text-[11px] text-muted/80 text-center leading-relaxed">
-          You stay signed in on this device — sign in once and HELIX remembers you here.
+          {mode === 'up'
+            ? "We'll email you a link to confirm the address before you can sign in."
+            : 'You stay signed in on this device — sign in once and HELIX remembers you here.'}
         </p>
       </form>
     </LaunchSurface>

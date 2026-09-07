@@ -1,38 +1,12 @@
 {
   "module": "reports/weeklyExport",
-  "fn": "priorReportNote / fatigueLabelsFor / constants",
-  "note": "The closing line per label, the two fatigue slot triples, and the three standing notes verbatim.",
+  "fn": "fatigueLabelsFor / supplementRows",
+  "note": "The two fatigue slot triples, and the deduped supplement stack both renderers read. The four standing closing notes retired with export v2 — v3 states the same caveats once, inline, on the heading of the section they govern.",
   "cases": [
     {
       "name": "the strings",
       "input": {},
       "expected": {
-        "notes": [
-          {
-            "label": null,
-            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
-          },
-          {
-            "label": null,
-            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
-          },
-          {
-            "label": "",
-            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
-          },
-          {
-            "label": "  ",
-            "note": "*Note: The previous week's report is provided manually for reference and comparison.*"
-          },
-          {
-            "label": "Week 7",
-            "note": "*Note: Week 7 report is provided manually for reference and comparison.*"
-          },
-          {
-            "label": " Week 7 ",
-            "note": "*Note: Week 7 report is provided manually for reference and comparison.*"
-          }
-        ],
         "training": [
           "Waking",
           "Before training",
@@ -50,9 +24,71 @@
           "After training",
           "Night"
         ],
-        "unilateral": "*Note: Unilateral (single-arm / single-leg) work is logged per side and scored ONCE at the WEAKER side: min(weight) × min(reps). \"L 5 kg × 10 · R 5 kg × 14\" is 50 kg of volume, not 70 and not 100 — crediting the strong side's extra reps to the weak one would inflate the trend without the work being there, and doubling it would make the same physical set weigh twice as much purely for having been recorded per side. Each side keeps its own failure tag, and the pair counts as ONE set.*",
-        "epley": "*Note: every \"1RM\" here is an ESTIMATE from the Epley formula (weight × (1 + reps/30)), not a lift that was performed. Hevy estimates it differently, so the two will not agree exactly. Unloaded work has no 1RM estimate at all and shows none.*",
-        "watch": "*Note: Heart rate, calories, and steps data are sourced from the Apple Watch and may not be entirely accurate.*"
+        "supplements": [
+          {
+            "time": "—",
+            "name": "Omega-3",
+            "dose": "2 caps",
+            "trainingDose": null,
+            "restDose": null,
+            "trainingOnly": false,
+            "notes": null
+          },
+          {
+            "time": "07:00",
+            "name": "Creatine",
+            "dose": "5 g",
+            "trainingDose": null,
+            "restDose": null,
+            "trainingOnly": false,
+            "notes": null
+          },
+          {
+            "time": "07:00",
+            "name": "Vitamin D3 + K2",
+            "dose": "2000 IU",
+            "trainingDose": null,
+            "restDose": null,
+            "trainingOnly": false,
+            "notes": "with breakfast"
+          },
+          {
+            "time": "11:45",
+            "name": "L-Citrulline",
+            "dose": "3 g",
+            "trainingDose": null,
+            "restDose": null,
+            "trainingOnly": true,
+            "notes": null
+          },
+          {
+            "time": "11:45",
+            "name": "Caffeine",
+            "dose": "200 mg",
+            "trainingDose": "200 mg",
+            "restDose": "100 mg",
+            "trainingOnly": true,
+            "notes": "not after 14:00"
+          },
+          {
+            "time": "22:00",
+            "name": "Magnesium",
+            "dose": "400 mg",
+            "trainingDose": "400 mg",
+            "restDose": "400 mg",
+            "trainingOnly": false,
+            "notes": null
+          },
+          {
+            "time": "22:00",
+            "name": "Glycine",
+            "dose": "5 g",
+            "trainingDose": null,
+            "restDose": null,
+            "trainingOnly": false,
+            "notes": null
+          }
+        ]
       }
     }
   ]

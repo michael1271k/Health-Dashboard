@@ -375,6 +375,16 @@ export interface Database {
         Args: { p_exercise_id: string }
         Returns: Json
       }
+      /**
+       * Deletes every row belonging to `auth.uid()` across all 32 tables, then
+       * the `auth.users` record. `security definer`, granted to `authenticated`
+       * only. The caller MUST sign out immediately afterwards — the JWT it was
+       * called with stays valid until it expires. See `docs/sql/e6-auth-deletion.sql`.
+       */
+      delete_my_account: {
+        Args: Record<string, never>
+        Returns: undefined
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
