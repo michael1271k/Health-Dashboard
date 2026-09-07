@@ -520,14 +520,25 @@ final class LoggerModel: Identifiable {
 
     func removeSet(_ row: SetRow, from exercise: ExerciseState) {
         guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return }
-        if row.isDone { voidInStore(row) }
+        let wasDone = row.isDone
+        if wasDone { voidInStore(row) }
         exercise.rows.remove(at: index)
         restampFrom(index, in: exercise)
+        // Deleting a ticked set can PROMOTE a later one: a record is judged
+        // against everything before it in the session, so removing the set that
+        // was superseding it hands the axis back.
+        if wasDone { refreshLivePrs() }
     }
 
     func setKind(_ kind: SetKind, on row: SetRow, in exercise: ExerciseState) {
         row.kind = kind
-        if row.isDone { amendInStore(row, in: exercise) }
+        if row.isDone {
+            amendInStore(row, in: exercise)
+            // A warm-up and a ghost set no bar and win no record, so the badge
+            // has to clear — and the set that was standing behind this one may
+            // now win the axis it was losing.
+            refreshLivePrs()
+        }
     }
 
     /// Passing the value the set already carries WITHDRAWS it — the same rule
