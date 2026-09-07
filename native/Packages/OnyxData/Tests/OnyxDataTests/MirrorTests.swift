@@ -389,6 +389,84 @@ struct TrainingPullerTests {
         #expect(try db.exercises().contains { $0.id == "ex-1" && $0.name == "Hack Squat" })
     }
 
+    @Test("a movement merged away on the server stops being a second row in the library")
+    func aMergedExerciseIsReconciledAway() async throws {
+        // The `Lat Pulldown (Cable)` bug, end to end. `merge-exercise.mjs`
+        // re-points the sets and deletes the row, and touches NOTHING the sets
+        // pull has a delta on — so before this reconciliation the phone kept
+        // both the dead catalogue row and the sets naming it, and the library
+        // listed the movement twice.
+        let db = try store()
+        let remote = FakeMirror()
+        let started = iso(0)
+
+        func setRow(_ id: String, exercise: String) -> [String: Any] {
+            ["id": id, "session_id": "s1", "exercise_id": exercise, "user_id": "u1",
+             "set_number": 1, "weight_kg": 60.0, "reps": 10,
+             "created_at": "2026-09-02T09:00:00.000Z", "set_type": "normal"]
+        }
+
+        await remote.put("workout_sessions", [session("s1", startedAt: started, updatedAt: started)])
+        await remote.put("exercises", [
+            ["id": "ex-keep", "name": "Lat Pulldown"],
+            ["id": "ex-gone", "name": "Lat Pulldown (Cable)"],
+        ])
+        await remote.put("workout_sets", [
+            setRow("set-1", exercise: "ex-keep"),
+            setRow("set-2", exercise: "ex-gone"),
+        ])
+
+        _ = try await TrainingPuller(database: db, remote: remote, userId: "u1").refresh()
+        #expect(try db.exercises().count == 2, "both rows exist before the merge")
+
+        // The merge, server-side: the set moves, the row goes, and the SESSION
+        // is deliberately left untouched — that is the whole trap.
+        await remote.put("exercises", [["id": "ex-keep", "name": "Lat Pulldown"]])
+        await remote.put("workout_sets", [
+            setRow("set-1", exercise: "ex-keep"),
+            setRow("set-2", exercise: "ex-keep"),
+        ])
+
+        _ = try await TrainingPuller(database: db, remote: remote, userId: "u1").refresh()
+
+        let catalogue = try db.exercises()
+        #expect(catalogue.map(\.id) == ["ex-keep"], "the merged-away row is gone")
+        let sets = try db.sets(sessionId: "s1")
+        #expect(sets.count == 2)
+        #expect(sets.allSatisfy { $0.exerciseId == "ex-keep" }, "both sets moved to the surviving movement")
+    }
+
+    @Test("a catalogue row still named by a set is kept, dangling ids being worse than duplicates")
+    func aReferencedOrphanSurvives() throws {
+        let db = try store()
+        // Straight at the store: the puller cannot produce this state, and the
+        // guard is what stops it destroying a name if it ever could.
+        try db.applyPulledExercises([RemoteExerciseRow(id: "ex-gone", name: "Lat Pulldown (Cable)")])
+        #expect(try db.deleteUnreferencedExercises(ids: ["ex-gone"]) == 1)
+
+        try db.applyPulledExercises([RemoteExerciseRow(id: "ex-gone", name: "Lat Pulldown (Cable)")])
+        try db.writer.write { write in
+            // `workout_sets.session_id` still has its foreign key — only the
+            // one to `exercises` went in `v4`.
+            try WorkoutSession(
+                id: "s-x", userId: "u1", dayKey: "legs_a", date: "2026-09-02"
+            ).insert(write)
+            try WorkoutSet(
+                id: "set-x", sessionId: "s-x", exerciseId: "ex-gone",
+                setIndex: 1, weightKg: 60, reps: 10
+            ).insert(write)
+        }
+        #expect(try db.deleteUnreferencedExercises(ids: ["ex-gone"]) == 0, "a set still names it")
+        #expect(try db.exercises().contains { $0.id == "ex-gone" })
+    }
+
+    @Test("an empty catalogue pull is read as a failure, never as `everything was deleted`")
+    func anEmptySnapshotDeletesNothing() throws {
+        let db = try store()
+        try db.applyPulledExercises([RemoteExerciseRow(id: "ex-1", name: "Hack Squat")])
+        #expect(try db.exerciseIds(absentFrom: []).isEmpty)
+    }
+
     @Test("a session this device LOGGED is never overwritten by the pull")
     func theEventLogWins() async throws {
         // The invariant the whole event-sourcing design rests on: `workout_sets`

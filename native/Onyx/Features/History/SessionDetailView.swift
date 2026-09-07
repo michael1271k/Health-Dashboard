@@ -352,8 +352,10 @@ struct SessionDetailView: View {
     private func meta(_ page: SessionAnalysis.Page) -> String {
         let session = page.report.session
         var parts: [String] = []
-        if let n = page.split.firstIndex(where: { $0.sessionId == session.id }) {
-            parts.append("#\(n + 1)")
+        // The CAREER number, not the split's — see `Page.careerIndex`. A
+        // session that recorded nothing carries no number rather than a zero.
+        if let n = page.careerIndex {
+            parts.append("#\(n)")
         }
         if let date = LogicalDay.date(fromISO: session.date) {
             parts.append(date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))

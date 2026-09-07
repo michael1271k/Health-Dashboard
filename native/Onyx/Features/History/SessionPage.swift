@@ -39,6 +39,22 @@ extension SessionAnalysis {
         let report: Report
         /// Every session of this split, oldest first.
         let split: [SplitPoint]
+        /// This session's place in the CAREER, oldest first.
+        ///
+        /// ── WHY THIS IS NOT `split.firstIndex` ──────────────────────────────
+        /// The band's `#N` was the index within `split`, and `split` is filtered
+        /// to one `dayKey`. So a Legs A session logged after 113 workouts read
+        /// `#8` — arithmetically correct ("the 8th Legs A") and, printed bare
+        /// beside a date and a time, unreadable as anything but "your 8th
+        /// workout". It is worse than it looks, too: 74 of the 114 sessions on
+        /// record predate `day_key` entirely (the Notion-migrated era, Mar–Jun
+        /// 2026), so the per-split index cannot exceed 8 no matter how long the
+        /// user trains under it.
+        ///
+        /// A session that recorded no work at all is not counted and gets no
+        /// number — one such shell exists, and numbering it would put a gap in
+        /// every number after it.
+        let careerIndex: Int?
         /// The previous session of the SAME split. Every delta on the page is
         /// against this and nothing else — comparing a leg day against the
         /// upper day that happened to precede it turns a tonnage delta into
@@ -107,10 +123,16 @@ extension SessionAnalysis {
         // The split's line, oldest first. `summaries` replays the whole ledger
         // in order, so a record beaten last month still counts on the session
         // that set it — which is exactly what a gold point on the chart means.
-        let mine = summaries(sessions, ledger: ledger)
-            .filter { $0.dayKey == session.dayKey }
+        let everything = summaries(sessions, ledger: ledger)
             .sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
+        let mine = everything.filter { $0.dayKey == session.dayKey }
         let index = mine.firstIndex { $0.id == session.id }
+
+        // The career line. `sets` is the counted-set count `summaries` already
+        // computed (ghosts and warm-ups excluded), so "recorded work" is the
+        // same test the rest of the page applies rather than a second opinion.
+        let career = everything.filter { $0.sets > 0 }
+        let careerIndex = career.firstIndex { $0.id == session.id }.map { $0 + 1 }
 
         let goals: UserGoalRow? = (try? database.read { db in
             try UserGoalRow.filter(Column("user_id") == session.userId).fetchOne(db)
@@ -129,6 +151,7 @@ extension SessionAnalysis {
                     prCount: $0.prCount, isMaintenance: lens.callsIt($0.date)
                 )
             },
+            careerIndex: careerIndex,
             previous: index.flatMap { $0 > 0 ? mine[$0 - 1] : nil },
             calories: Estimates.estimateCalories(durationMin: session.durationMin, samples: [], bodyweightKg: bodyweight),
             avgBpm: nil,

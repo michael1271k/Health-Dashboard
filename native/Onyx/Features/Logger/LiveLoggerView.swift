@@ -344,7 +344,6 @@ struct LiveLoggerView: View {
                 onAdjustRest: { model.adjustRest(by: $0) }
             )
             if let storeError = model.storeError { banner(storeError) }
-            OnyxChipRow(chips)
             faces(page: page)
         }
         // One place, so the capsule arriving, the "Skip rest" chip arriving and
@@ -397,26 +396,22 @@ struct LiveLoggerView: View {
 
     // MARK: - Fast actions
 
-    /// Muscle focus · Phase · Skip rest · Note · Finish.
-    ///
-    /// ── WHY A ROW AND NOT THE MENU IT REPLACES ──────────────────────────────
-    /// These were behind `Menu { … }` in the toolbar: two taps and a system
-    /// popover — over the deck the popover was about — to skip a rest. A menu is
-    /// the right shape for a long, cold list. These are four verbs used every
-    /// session with wet hands.
-    ///
-    /// "Skip rest" is ABSENT rather than disabled when nothing is resting, and
-    /// the row springs closed around the gap. A control that is present and does
-    /// nothing is a control you have to read before you can ignore it.
-    private var chips: [OnyxChip] {
-        [
-            OnyxChip(title: "Muscle focus", systemImage: "figure.stand") { showDistribution = true },
-            OnyxChip(title: "Note", systemImage: "square.and.pencil") {
-                noteDraft = noteTarget?.note ?? ""
-                editingNote = true
-            },
-        ]
-    }
+    // ── THE CHIP ROW IS GONE ────────────────────────────────────────────────
+    // It held `Muscle focus` and `Note` — the last two of the five verbs that
+    // started as a toolbar menu, then a row of chips, then a row of two. The
+    // header now ends at the tabs, which is what the founder asked for: the
+    // band above the deck says which workout and how long, and stops.
+    //
+    // `Muscle focus` did not lose its door — the Live Stats face opens the same
+    // `MuscleDistributionSheet`, and that is the face the distribution belongs
+    // on anyway.
+    //
+    // ponytail: `Note` DID lose its only door. The note still renders on the
+    // exercise card and still syncs; nothing can now type one. The plumbing
+    // below (`noteDraft`, `editingNote`, `noteTarget`, the alert) is kept
+    // deliberately for one turn pending the founder's call on where the verb
+    // should live — the set options sheet is the obvious home. Delete it, or
+    // wire it up, rather than leaving it here indefinitely.
 
     /// Finish, in the navigation bar's trailing slot.
     ///

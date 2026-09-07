@@ -69,7 +69,34 @@ public actor TrainingPuller {
         report.rowsByTable["exercises"] = catalogue
         onTable?("exercises", catalogue)
 
-        let cursor = try database.mirrorCursor(table: "workout_sessions")
+        // ── ROWS THE SERVER NO LONGER HAS ───────────────────────────────────
+        // `applyPulledExercises` only ever inserts and updates, and the pull
+        // above is a FULL snapshot (`since: nil`) — so a movement DELETED on
+        // the server, which is what merging two duplicates does, survives here
+        // forever. `Lat Pulldown (Cable)` was merged into `Lat Pulldown` on the
+        // server and went on being a second row in the phone's library.
+        //
+        // It is a second row rather than a dead one because
+        // `scripts/merge-exercise.mjs` re-points `workout_sets.exercise_id`
+        // WITHOUT touching the parent session's `updated_at` — the only delta
+        // the sets pull below has. So the cursor skips exactly the rows that
+        // need re-pointing, the local sets keep the dead id, and
+        // `exerciseCatalogStream`'s `HAVING COUNT(s.id) > 0` duly lists the
+        // movement twice.
+        //
+        // Both halves have to move, in this order: pull every session's sets
+        // again so they carry the surviving id, THEN drop the rows nothing
+        // points at any more.
+        let orphans = try database.exerciseIds(absentFrom: exercises.map(\.id))
+        // ponytail: one full session re-pull per orphan discovery. A set that
+        // can never be re-pulled — a phone-logged session's own event fold —
+        // would keep an orphan alive and force a full pull every refresh.
+        // Those sets carry `helix5-` slugs rather than catalogue uuids, so
+        // today they cannot reference one; if that ever changes, this wants a
+        // "tried at" stamp beside the cursor rather than a bare `isEmpty`.
+        let cursor = orphans.isEmpty
+            ? try database.mirrorCursor(table: "workout_sessions")
+            : nil
         let request = MirrorRequest(
             table: "workout_sessions",
             userId: userId,
@@ -96,6 +123,16 @@ public actor TrainingPuller {
             report.tables += 1
             report.rowsByTable["workout_sets"] = landed
             onTable?("workout_sets", landed)
+        }
+
+        // Now that the sets carry the surviving ids, the dead rows are
+        // unreferenced and can go. Anything still referenced is LEFT alone — a
+        // dangling `exercise_id` costs the set its name everywhere history is
+        // drawn, which is worse than the duplicate this exists to remove.
+        if !orphans.isEmpty {
+            let dropped = try database.deleteUnreferencedExercises(ids: orphans)
+            report.rowsByTable["exercises_removed"] = dropped
+            onTable?("exercises_removed", dropped)
         }
 
         // Last, and only on success: a cursor moved before the sets landed
@@ -253,6 +290,45 @@ extension AppDatabase {
                 )
             }
             return rows.count
+        }
+    }
+
+    /// Local catalogue ids the server's snapshot does not contain.
+    ///
+    /// Only meaningful against a FULL snapshot, which is why the catalogue pull
+    /// carries no cursor. An EMPTY remote list returns nothing rather than
+    /// everything: a pull that came back empty is a failure far more often than
+    /// it is a catalogue somebody deleted, and the difference between those two
+    /// readings is the whole library.
+    func exerciseIds(absentFrom remote: [String]) throws -> [String] {
+        guard !remote.isEmpty else { return [] }
+        let live = Set(remote)
+        return try writer.read { db in
+            try String.fetchAll(db, sql: "SELECT id FROM exercises")
+        }.filter { !live.contains($0) }
+    }
+
+    /// Drop catalogue rows nothing logged points at any more.
+    ///
+    /// The `NOT EXISTS` is the entire safety of this. `v4` removed the foreign
+    /// key from `workout_sets.exercise_id`, so SQLite will happily delete a row
+    /// two hundred sets still name and leave every one of them anonymous.
+    @discardableResult
+    func deleteUnreferencedExercises(ids: [String]) throws -> Int {
+        guard !ids.isEmpty else { return 0 }
+        let marks = Array(repeating: "?", count: ids.count).joined(separator: ",")
+        return try writer.write { db in
+            try db.execute(
+                sql: """
+                    DELETE FROM exercises
+                     WHERE id IN (\(marks))
+                       AND NOT EXISTS (
+                           SELECT 1 FROM workout_sets WHERE exercise_id = exercises.id
+                       )
+                    """,
+                arguments: StatementArguments(ids)
+            )
+            return db.changesCount
         }
     }
 }

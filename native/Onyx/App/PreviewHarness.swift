@@ -142,6 +142,12 @@ enum PreviewHarness {
         case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options",
              "set-row", "set-options", "effort-picker":
             LoggerPreviews.view(screen)
+        // The cardio sheet, presented on its own. It is a `Form` and it has
+        // never had a shot, which is most of how it got to look the way it
+        // does — the review loop cannot see a screen it never photographs.
+        case "cardio":
+            CardioLogSheet(userId: "preview", date: "2026-09-03", onSave: { _ in true })
+                .environment(AppEnvironment.preview)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history",
