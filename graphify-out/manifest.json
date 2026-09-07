@@ -7200,8 +7200,8 @@
     "semantic_hash": ""
   },
   "native/OnyxWatch/App/OnyxWatchApp.swift": {
-    "mtime": 1788816647.4286761,
-    "ast_hash": "a22eb74567f18486038e0feccc86ada9",
+    "mtime": 1788817269.1462047,
+    "ast_hash": "3a9c9d5e68c4eb134d58de3db46b5d74",
     "semantic_hash": ""
   },
   "native/OnyxWatch/App/WatchModel.swift": {
@@ -7230,18 +7230,18 @@
     "semantic_hash": ""
   },
   "native/OnyxWatch/Views/RestView.swift": {
-    "mtime": 1788816647.432078,
-    "ast_hash": "37acece1a5bc35a090a58ca0655cfa4a",
+    "mtime": 1788817386.2632601,
+    "ast_hash": "a6b7d2ebb794601f631e2968b369407e",
     "semantic_hash": ""
   },
   "native/OnyxWatch/Views/RootView.swift": {
-    "mtime": 1788816647.4321902,
-    "ast_hash": "9854ea019de0def79d1484819dd4ee86",
+    "mtime": 1788817215.8542104,
+    "ast_hash": "e18a64b2f8360a58d799f03ccd1cbc6e",
     "semantic_hash": ""
   },
   "native/OnyxWatch/Views/SetView.swift": {
-    "mtime": 1788816647.43231,
-    "ast_hash": "997980bd16eac07884115e5938b06c1f",
+    "mtime": 1788817489.6117744,
+    "ast_hash": "6d85ebed9efb1562c22fa5319a11e050",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Sync/SetEventSync.swift": {
