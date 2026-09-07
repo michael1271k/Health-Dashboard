@@ -55,6 +55,24 @@ struct LoggerHero: View {
     /// Set when the deck is re-opened on a finished session (§U4.5) — the hero
     /// then states WHEN rather than HOW LONG SO FAR.
     var editing: LoggerModel.EditContext?
+    /// The phase the day is being run at, and the way to change it.
+    ///
+    /// The chip REPLACES the `Phase` fast-action chip that used to sit under the
+    /// tabs. It is the same sheet: the founder's note deletes the chip, not the
+    /// ability to switch phase, and a tag that states the phase is a better home
+    /// for the verb than a chip that only ever said the word.
+    var phase: ProgramPhase = .cut
+    var onPhase: () -> Void = {}
+    /// The rest countdown, ALREADY validated by `restCountdown(_:)` at the call
+    /// site — `Text(timerInterval:)` traps on a range that has already ended.
+    ///
+    /// It lives here rather than under the hero because it used to cost a full
+    /// row of its own between the tabs and the deck, which is the row the
+    /// founder asked back. In the trailing column it costs nothing: the clock's
+    /// column is 34 pt of number over empty space the rest of the session.
+    var restCountdown: ClosedRange<Date>?
+    var onSkipRest: () -> Void = {}
+    var onAdjustRest: (TimeInterval) -> Void = { _ in }
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -100,6 +118,7 @@ struct LoggerHero: View {
                 VStack(alignment: .leading, spacing: OnyxSpace.s) {
                     titleBlock
                     timerButton
+                    restLine
                 }
             } else {
                 // Centred, not baseline-aligned. Sitting a 34 pt clock on the
@@ -110,9 +129,17 @@ struct LoggerHero: View {
                 HStack(alignment: .center, spacing: OnyxSpace.m) {
                     titleBlock
                     Spacer(minLength: OnyxSpace.s)
-                    timerButton
+                    // Trailing COLUMN, not a bare clock: the rest countdown sits
+                    // under the elapsed reading, in the space the clock was
+                    // already reserving. `.trailing` so the two right edges line
+                    // up whatever the digits do.
+                    VStack(alignment: .trailing, spacing: 2) {
+                        timerButton
+                        restLine
+                    }
                 }
             }
+            tagRow
             LoggerFaceSwitch(selection: $selection, accent: accent)
         }
         .padding(.horizontal, OnyxSpace.l)
@@ -172,11 +199,133 @@ struct LoggerHero: View {
                         .foregroundStyle(Color.onyx.textSecondary)
                         .lineLimit(1)
                 }
-                if !typeSize.isAccessibilitySize { weekChip }
             }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(day.label). \(dateLabel ?? day.sub ?? ""). \(week)")
+    }
+
+    // MARK: - Tags
+
+    /// `[Cut] [Week 8] [Quads] [Hamstrings] [Core]`.
+    ///
+    /// ── WHY THE MUSCLES ARE HERE AND NOT IN THE SUB-LINE ────────────────────
+    /// `day.sub` says "Quad Focus" — an editorial label, written once per day
+    /// and true in the way a chapter title is true. The tags are DERIVED from
+    /// the movers of the exercises this phase actually prescribes, so a phase
+    /// that drops the hip adduction drops `Adductors` with it, and each one is
+    /// painted in the muscle's own colour — the same `Color.onyx.muscle` the
+    /// card rails, the atlas and the distribution sheet use, so a green tag up
+    /// here and a green rail 200 pt down are the same claim about the same
+    /// muscle rather than two decorations that happen to agree.
+    ///
+    /// ── AND WHY IT COLLAPSES AT AN ACCESSIBILITY SIZE ───────────────────────
+    /// The band's ceiling is 132 pt and AX5 has already spent it on a two-line
+    /// title. Phase and week are POSITIONS — which block, which week of it —
+    /// and cannot be re-derived by looking at the screen; the muscles are a
+    /// restatement of the split name directly above them. So the muscles are
+    /// what goes, which is the same rule the sub-line already follows.
+    @ViewBuilder
+    private var tagRow: some View {
+        HStack(spacing: OnyxSpace.xs) {
+            phaseChip
+            weekChip
+            if !typeSize.isAccessibilitySize {
+                ForEach(dayMuscles, id: \.self) { muscle in
+                    chip(muscle.displayName, tint: Color.onyx.muscle(muscle))
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .lineLimit(1)
+        // The row is a HEADER, not a control strip: VoiceOver reads it as one
+        // phrase and the phase chip publishes its own button separately.
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The muscles this day trains, primaries only, in deck order and
+    /// de-duplicated — three at most.
+    ///
+    /// PRIMARIES ONLY on purpose. Secondaries are half-credit assistance in
+    /// `MuscleCredit` and there are a dozen of them across a day: a row that
+    /// listed every muscle a leg session touches would name eight and inform
+    /// nobody. Three is what fits beside the phase and the week at 375 pt.
+    private var dayMuscles: [LandmarkMuscle] {
+        var seen: [LandmarkMuscle] = []
+        for exercise in day.exercises(for: phase) {
+            for token in exercise.movers.primary {
+                guard let muscle = LandmarkMuscle.from(token: token), !seen.contains(muscle)
+                else { continue }
+                seen.append(muscle)
+            }
+        }
+        return Array(seen.prefix(3))
+    }
+
+    /// The phase, as a tag that is also the way to change it.
+    private var phaseChip: some View {
+        Button(action: onPhase) {
+            chip(phase.label, tint: Color.onyx.textSecondary)
+        }
+        .onyxPress()
+        .accessibilityLabel("Phase, \(phase.label)")
+        .accessibilityHint("Opens the phase picker.")
+    }
+
+    /// One tag. The shape the week chip already had, so a row of them is one
+    /// visual family rather than a capsule beside three of something else.
+    private func chip(_ text: String, tint: Color) -> some View {
+        Text(text)
+            .onyxType(.caption).fontWeight(.semibold)
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            // NOT `.fixedSize()`. A chip that refuses to compress sets the
+            // hero's minimum width, and five of them at AX5 is how a 402 pt
+            // screen ends up proposing 510 — the trap `logger-chrome-u1`
+            // records. A scale factor bends instead.
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, OnyxSpace.s)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(tint.opacity(0.16)))
+            .overlay(Capsule().strokeBorder(tint.opacity(0.40), lineWidth: 0.5))
+    }
+
+    // MARK: - Rest
+
+    /// The countdown, on the line under the elapsed clock.
+    ///
+    /// `LoggerRestCapsule` is still the full control and still what the Live
+    /// Stats face shows; this is its inline reading, sized to sit inside the
+    /// clock's column without moving the band. Tapping skips, exactly as the
+    /// capsule does, and the long-press menu carries ±15 s so nothing was lost
+    /// when the row went.
+    @ViewBuilder
+    private var restLine: some View {
+        if let restCountdown {
+            Button(action: onSkipRest) {
+                HStack(spacing: OnyxSpace.xs) {
+                    Image(systemName: "timer").imageScale(.small)
+                    Text(timerInterval: restCountdown, countsDown: true)
+                        .onyxNumeral()
+                        // Reserved, so skipping from 1:00 to 59 does not move
+                        // the clock above it.
+                        .frame(minWidth: 42, alignment: .trailing)
+                }
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            }
+            .onyxPress()
+            .contextMenu {
+                Button("Add 15 seconds", systemImage: "plus") { onAdjustRest(15) }
+                Button("Take 15 seconds off", systemImage: "minus") { onAdjustRest(-15) }
+                Button("Skip rest", systemImage: "forward.end") { onSkipRest() }
+            }
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+            .accessibilityLabel("Resting")
+            .accessibilityHint("Tap to skip. Long press to add or remove fifteen seconds.")
+        }
     }
 
     /// The programme week, as a chip rather than another `·`-joined fragment.
@@ -184,15 +333,7 @@ struct LoggerHero: View {
     /// than a description of the day, and a chip is how the rest of the app says
     /// so already.
     private var weekChip: some View {
-        Text(week)
-            .onyxType(.caption).fontWeight(.semibold)
-            .foregroundStyle(accent)
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, OnyxSpace.s)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(accent.opacity(0.16)))
-            .overlay(Capsule().strokeBorder(accent.opacity(0.40), lineWidth: 0.5))
+        chip(week, tint: accent)
     }
 
     // MARK: - The clock

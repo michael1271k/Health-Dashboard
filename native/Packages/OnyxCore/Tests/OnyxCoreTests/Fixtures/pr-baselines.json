@@ -25,17 +25,17 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 14
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 13
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 12
           },
@@ -50,17 +50,17 @@
             "reps": 52
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 13
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 12
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 12
           },
@@ -83,23 +83,23 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             27.5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             14
           ],
           [
-            "Hip Thrust (Machine)|27.5",
+            "Hip Thrust|27.5",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             38.5
           ]
         ],
@@ -111,7 +111,7 @@
         ],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             350
           ]
         ]
@@ -122,24 +122,24 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 12
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 60,
             "reps": 30,
             "setType": "warmup"
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 55,
             "reps": 30,
             "setType": "dropset"
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 70,
             "reps": 30,
             "setType": "ghost"
@@ -153,26 +153,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             25
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             35
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             300
           ]
         ]
@@ -183,12 +183,12 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 12
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": 8,
             "setType": "failure"
@@ -202,30 +202,30 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             30
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             12
           ],
           [
-            "Hip Thrust (Machine)|30",
+            "Hip Thrust|30",
             8
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             38
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             300
           ]
         ]
@@ -386,7 +386,7 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 12,
             "est1rm": 99.9
@@ -400,26 +400,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             25
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             99.9
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             300
           ]
         ]
@@ -430,7 +430,7 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 12,
             "est1rm": null
@@ -444,26 +444,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             25
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             35
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             300
           ]
         ]
@@ -474,12 +474,12 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": null,
             "reps": 12
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": null
           }
@@ -492,7 +492,7 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             30
           ]
         ],
@@ -594,12 +594,12 @@
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 12
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 14
           },
@@ -609,7 +609,7 @@
             "reps": 15
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 22.5,
             "reps": 12
           }
@@ -622,7 +622,7 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             27.5
           ],
           [
@@ -632,11 +632,11 @@
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|27.5",
+            "Hip Thrust|27.5",
             12
           ],
           [
-            "Hip Thrust (Machine)|25",
+            "Hip Thrust|25",
             14
           ],
           [
@@ -644,20 +644,20 @@
             15
           ],
           [
-            "Hip Thrust (Machine)|22.5",
+            "Hip Thrust|22.5",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             38.5
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             350
           ],
           [
@@ -762,14 +762,14 @@
       "input": {
         "rows": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "side": "L",
             "pairId": "h1"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "side": "R",
@@ -784,26 +784,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Single Arm Lateral Raise (Cable)|5",
+            "Single Arm Lateral Raise|5",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             7
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             60
           ]
         ]
@@ -814,21 +814,21 @@
       "input": {
         "rows": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "side": "L",
             "pairId": "jul23"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 15,
             "side": "R",
             "pairId": "jul23"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 15
           }
@@ -841,26 +841,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Single Arm Lateral Raise (Cable)|5",
+            "Single Arm Lateral Raise|5",
             15
           ]
         ],
         "bestE1rm": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             7.5
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             75
           ]
         ]
@@ -871,7 +871,7 @@
       "input": {
         "rows": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "side": "L",
@@ -879,7 +879,7 @@
             "setType": "warmup"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 15,
             "side": "R",
@@ -894,26 +894,26 @@
       "expected": {
         "bestWeight": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Single Arm Lateral Raise (Cable)|5",
+            "Single Arm Lateral Raise|5",
             15
           ]
         ],
         "bestE1rm": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             7.5
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             65
           ]
         ]
@@ -1102,11 +1102,11 @@
       }
     },
     {
-      "name": "floor over one small row — Chest Press (Machine)",
+      "name": "floor over one small row — Chest Press",
       "input": {
         "rows": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "weightKg": 1,
             "reps": 1
           }
@@ -1119,13 +1119,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Chest Press (Machine)",
+            "Chest Press",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Chest Press (Machine)|1",
+            "Chest Press|1",
             1
           ]
         ],
@@ -1133,7 +1133,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Chest Press (Machine)",
+            "Chest Press",
             1
           ]
         ]
@@ -1221,11 +1221,11 @@
       }
     },
     {
-      "name": "floor over one small row — DB Shoulder Press",
+      "name": "floor over one small row — Shoulder Press",
       "input": {
         "rows": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "weightKg": 1,
             "reps": 1
           }
@@ -1238,37 +1238,37 @@
       "expected": {
         "bestWeight": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             31
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "DB Shoulder Press|1",
+            "Shoulder Press|1",
             1
           ]
         ],
         "bestE1rm": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             42.25
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             1
           ]
         ]
       }
     },
     {
-      "name": "floor over one small row — Single Arm Lateral Raise (Cable)",
+      "name": "floor over one small row — Single Arm Lateral Raise",
       "input": {
         "rows": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 1,
             "reps": 1
           }
@@ -1281,13 +1281,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Single Arm Lateral Raise (Cable)|1",
+            "Single Arm Lateral Raise|1",
             1
           ]
         ],
@@ -1295,18 +1295,18 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Single Arm Lateral Raise (Cable)",
+            "Single Arm Lateral Raise",
             1
           ]
         ]
       }
     },
     {
-      "name": "floor over one small row — Cable Overhead Extension",
+      "name": "floor over one small row — Overhead Triceps Extension",
       "input": {
         "rows": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "weightKg": 1,
             "reps": 1
           }
@@ -1319,13 +1319,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Cable Overhead Extension",
+            "Overhead Triceps Extension",
             12.5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Cable Overhead Extension|1",
+            "Overhead Triceps Extension|1",
             1
           ]
         ],
@@ -1333,7 +1333,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Cable Overhead Extension",
+            "Overhead Triceps Extension",
             1
           ]
         ]
@@ -1383,11 +1383,11 @@
       }
     },
     {
-      "name": "floor over one small row — Single Arm Triceps Pushdown (Cable)",
+      "name": "floor over one small row — Single Arm Triceps Pushdown",
       "input": {
         "rows": [
           {
-            "key": "Single Arm Triceps Pushdown (Cable)",
+            "key": "Single Arm Triceps Pushdown",
             "weightKg": 1,
             "reps": 1
           }
@@ -1400,13 +1400,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Single Arm Triceps Pushdown (Cable)",
+            "Single Arm Triceps Pushdown",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Single Arm Triceps Pushdown (Cable)|1",
+            "Single Arm Triceps Pushdown|1",
             1
           ]
         ],
@@ -1414,7 +1414,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Single Arm Triceps Pushdown (Cable)",
+            "Single Arm Triceps Pushdown",
             1
           ]
         ]
@@ -1702,11 +1702,11 @@
       }
     },
     {
-      "name": "floor over one small row — DB Hammer Curl",
+      "name": "floor over one small row — Hammer Curl",
       "input": {
         "rows": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 1,
             "reps": 1
           }
@@ -1719,13 +1719,13 @@
       "expected": {
         "bestWeight": [
           [
-            "DB Hammer Curl",
+            "Hammer Curl",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "DB Hammer Curl|1",
+            "Hammer Curl|1",
             1
           ]
         ],
@@ -1733,7 +1733,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "DB Hammer Curl",
+            "Hammer Curl",
             1
           ]
         ]
@@ -1778,11 +1778,11 @@
       }
     },
     {
-      "name": "floor over one small row — Preacher Curl (Machine)",
+      "name": "floor over one small row — Preacher Curl",
       "input": {
         "rows": [
           {
-            "key": "Preacher Curl (Machine)",
+            "key": "Preacher Curl",
             "weightKg": 1,
             "reps": 1
           }
@@ -1795,13 +1795,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Preacher Curl (Machine)",
+            "Preacher Curl",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Preacher Curl (Machine)|1",
+            "Preacher Curl|1",
             1
           ]
         ],
@@ -1809,7 +1809,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Preacher Curl (Machine)",
+            "Preacher Curl",
             1
           ]
         ]
@@ -1983,11 +1983,11 @@
       }
     },
     {
-      "name": "floor over one small row — Romanian Deadlift (DB)",
+      "name": "floor over one small row — Romanian Deadlift",
       "input": {
         "rows": [
           {
-            "key": "Romanian Deadlift (DB)",
+            "key": "Romanian Deadlift",
             "weightKg": 1,
             "reps": 1
           }
@@ -2000,13 +2000,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Romanian Deadlift (DB)",
+            "Romanian Deadlift",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Romanian Deadlift (DB)|1",
+            "Romanian Deadlift|1",
             1
           ]
         ],
@@ -2014,18 +2014,18 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Romanian Deadlift (DB)",
+            "Romanian Deadlift",
             1
           ]
         ]
       }
     },
     {
-      "name": "floor over one small row — Hip Thrust (Machine)",
+      "name": "floor over one small row — Hip Thrust",
       "input": {
         "rows": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 1,
             "reps": 1
           }
@@ -2038,13 +2038,13 @@
       "expected": {
         "bestWeight": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             1
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Hip Thrust (Machine)|1",
+            "Hip Thrust|1",
             1
           ]
         ],
@@ -2052,7 +2052,7 @@
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Hip Thrust (Machine)",
+            "Hip Thrust",
             1
           ]
         ]
@@ -2686,11 +2686,11 @@
       }
     },
     {
-      "name": "floor over the logged best — Cable Overhead Extension",
+      "name": "floor over the logged best — Overhead Triceps Extension",
       "input": {
         "rows": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "weightKg": 11.25,
             "reps": 12
           }
@@ -2701,37 +2701,37 @@
       "expected": {
         "bestWeight": [
           [
-            "Cable Overhead Extension",
+            "Overhead Triceps Extension",
             12.5
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "Cable Overhead Extension|11.25",
+            "Overhead Triceps Extension|11.25",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "Cable Overhead Extension",
+            "Overhead Triceps Extension",
             15.7
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "Cable Overhead Extension",
+            "Overhead Triceps Extension",
             135
           ]
         ]
       }
     },
     {
-      "name": "floor over the logged best — DB Shoulder Press",
+      "name": "floor over the logged best — Shoulder Press",
       "input": {
         "rows": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "weightKg": 30,
             "reps": 12
           }
@@ -2742,26 +2742,26 @@
       "expected": {
         "bestWeight": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             31
           ]
         ],
         "bestRepsAtWeight": [
           [
-            "DB Shoulder Press|30",
+            "Shoulder Press|30",
             12
           ]
         ],
         "bestE1rm": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             42.25
           ]
         ],
         "bestSeconds": [],
         "bestSetVolume": [
           [
-            "DB Shoulder Press",
+            "Shoulder Press",
             360
           ]
         ]

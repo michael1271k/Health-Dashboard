@@ -10,11 +10,12 @@ import GRDB
 /// (2026-09-02, re-confirmed 2026-09-03):
 ///
 ///   · `workout_sets` — ours says `set_index`, Postgres says **`set_number`**.
-///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL),
-///     `exercise_order` and `is_pr`, neither of which is here. (`rpe` WAS in
-///     that list; `v7.setRpe` added it. `quality` was too; `v14.setQuality`
-///     added it — locally only, see `SyncTranslation.RemoteSetRow`.) Its
-///     `exercise_id` is a uuid with a live foreign key; ours is a slug.
+///     Postgres also has `user_id` (NOT NULL), `created_at` (NOT NULL) and
+///     `is_pr`, none of which is here. (`rpe` WAS in that list; `v7.setRpe`
+///     added it. `quality` was too; `v14.setQuality` added it — locally only,
+///     see `SyncTranslation.RemoteSetRow`. `exercise_order` was too;
+///     `v16.exerciseOrder` added it, and it IS sent.) Its `exercise_id` is a
+///     uuid with a live foreign key; ours is a slug.
 ///   · `workout_sessions` — our `date` column **does not exist** server-side
 ///     (there is `started_at` and `day_key`). Postgres requires `split_day`
 ///     (NOT NULL, CHECK-constrained); `status` and `migrated_from_notion` are
@@ -217,6 +218,19 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// nobody claimed. Added locally in `v14`; Postgres has carried it all
     /// along. See `SetQuality` in the app target for the vocabulary.
     public var quality: String?
+    /// Where this set's MOVEMENT sat in the session — the deck position, dense
+    /// from 0, the same number `buildCommitPayload` writes on the web.
+    ///
+    /// A fact about the exercise, repeated on each of its sets, because that is
+    /// the shape Postgres has always had and the shape every reader on both
+    /// sides orders by (`useSessionDetail` sorts on it before `set_number`).
+    ///
+    /// **`nil` is "nobody said".** Every set this phone logged before
+    /// `v16.exerciseOrder` means exactly that, and so does every row of a
+    /// session the mirror pulled from a client that never wrote the column.
+    /// Defaulting it to 0 would claim every one of those movements opened the
+    /// workout, which is a claim about eleven cards at once.
+    public var exerciseOrder: Int?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -236,6 +250,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case est1rmKg = "est_1rm_kg"
         case rpe
         case quality
+        case exerciseOrder = "exercise_order"
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -244,7 +259,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         id: String, sessionId: String, exerciseId: String, setIndex: Int,
         weightKg: Double, reps: Int, setType: String = "normal",
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
-        rpe: Double? = nil, quality: String? = nil,
+        rpe: Double? = nil, quality: String? = nil, exerciseOrder: Int? = nil,
         isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
@@ -259,6 +274,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.est1rmKg = est1rmKg
         self.rpe = rpe
         self.quality = quality
+        self.exerciseOrder = exerciseOrder
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

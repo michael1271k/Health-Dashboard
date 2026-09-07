@@ -22,7 +22,6 @@ import Foundation
 
 public enum LeverId: String, Codable, Sendable, CaseIterable {
     case baseline
-    case baseline2 = "baseline-2"
     case lever1 = "lever-1"
     case lever2 = "lever-2"
     case maintenanceWeek = "maintenance-week"
@@ -83,15 +82,15 @@ public struct TargetPeriod: Codable, Equatable, Sendable {
 public enum Levers {
     /// The rungs, easiest first. `custom` is deliberately NOT here.
     public static let all: [NutritionLever] = [
+        // ── ONE BASELINE, RE-BASED (2026-09-07, founder's call) ──────────────
+        // `baseline2` was a second rung carrying these same figures so the cut
+        // could resume on 6 Sep without re-grading July and August. The founder
+        // chose one baseline over two, so the rung is deleted and this one holds
+        // its numbers — which DOES re-grade 2026-07-15 → 2026-08-15 from
+        // 1,955 / 195 C. Deliberate; stored scores were recomputed with it.
+        // 1,935 = 170·4 + 190·4 + 55·9, Atwater-exact like every rung.
         NutritionLever(id: .baseline, kind: .deficit, label: "Baseline",
-                       summary: "The plan as written — full carbs, 10k steps.",
-                       calorieGoal: 1955, proteinGoalG: 170, carbsGoalG: 195, fatGoalG: 55, stepsGoal: 10000),
-        // The Week 8 re-base (2026-09-06): 20 kcal under the original, all carbs,
-        // no lever pulled. A rung rather than a `custom` row so the schedule pins
-        // it — a `custom` stretch reads the live `user_goals` row and the next
-        // edit would re-grade every day since. 1,935 = 170·4 + 190·4 + 55·9.
-        NutritionLever(id: .baseline2, kind: .deficit, label: "Baseline 2",
-                       summary: "The Week 8 re-base — 190 g carbs, 10k steps, no lever.",
+                       summary: "The plan as written — 190 g carbs, 10k steps.",
                        calorieGoal: 1935, proteinGoalG: 170, carbsGoalG: 190, fatGoalG: 55, stepsGoal: 10000),
         NutritionLever(id: .lever1, kind: .deficit, label: "Lever 1",
                        summary: "−70 kcal off carbs and fat, steps to 10k.",
@@ -122,9 +121,9 @@ public enum Levers {
         LeverPeriod(from: "2026-08-20", leverId: .custom, goals: LeverGoals(calorie: 1999, protein: 170, carbs: 206, fat: 55, steps: 10000)),
         // The scheduled maintenance week, and its end. The second row is not optional.
         LeverPeriod(from: "2026-08-30", leverId: .maintenanceWeek),
-        // The cut resumes on its re-based rung (Phase 3, E0) — pinned, not an
-        // open `custom` stretch that would move with the next `user_goals` edit.
-        LeverPeriod(from: "2026-09-06", leverId: .baseline2),
+        // The cut resumes on the baseline itself — pinned, not an open `custom`
+        // stretch that would move with the next `user_goals` edit.
+        LeverPeriod(from: "2026-09-06", leverId: .baseline),
     ]
 
     /// The schedule row covering a date, or nil before the cut opened.

@@ -42,17 +42,26 @@ struct LiveStatsView: View {
     var body: some View {
         ScrollView(.vertical) {
             VStack(spacing: OnyxSpace.m) {
-                nowCard
-                // ── WHY RECORDS SITS SECOND ─────────────────────────────
-                // It was fourth, which put the one card worth flicking over
-                // for two screens below the fold: a PR lit on the deck and
-                // then had to be hunted for. The other three answer "how is
-                // this session going", which is a question you scroll to;
+                volumeCard
+                // ── WHY PRs SIT SECOND, AND ONLY WHEN THERE ARE ANY ─────
+                // They were fourth, which put the one card worth flicking
+                // over for two screens below the fold: a PR lit on the deck
+                // and then had to be hunted for. The other cards answer "how
+                // is this session going", which is a question you scroll to;
                 // this one announces something that just happened, and an
                 // announcement below the fold is not one.
-                recordsCard
-                exercisesCard
+                //
+                // And it is ABSENT rather than empty. Most of a session has
+                // no records in it, so the empty state WAS the state — a tile
+                // of prose in the second slot, above three cards that always
+                // have something to say, for most of every workout.
+                if !prs.livePrs.isEmpty { recordsCard }
                 muscleCard
+                // Superlatives before the per-movement list: "what was the
+                // hardest thing I did" is three lines, and the list under it
+                // is as long as the day.
+                topLiftsCard
+                exercisesCard
                 effortCard
             }
             .padding(.horizontal, OnyxSpace.l)
@@ -64,29 +73,74 @@ struct LiveStatsView: View {
         .task(id: model.physicalSets) { session = model.sessionRow }
     }
 
-    // MARK: - Now
+    // MARK: - Volume
 
-    /// The three clocks, the count, and the tonnage.
-    private var nowCard: some View {
-        card("Now") {
+    /// The tonnage, the count, and the clocks as one track.
+    ///
+    /// ── WHY VOLUME IS THE HEADLINE ──────────────────────────────────────────
+    /// The card led with the set count and was called "Now", which is the name
+    /// of a moment rather than of a measure. What this face is for is how much
+    /// work the session has become, and tonnage is that number — the count and
+    /// the clocks qualify it. Elapsed is also already the largest thing in the
+    /// hero, 230 pt up and visible at the same moment, so a card that opened
+    /// with it spent its best line saying nothing new.
+    private var volumeCard: some View {
+        card("Volume") {
             VStack(alignment: .leading, spacing: OnyxSpace.m) {
-                // Three clocks share a row until they cannot. At AX5 the labels
-                // broke to "ELA / PSE / D" — a register caption spelled down the
-                // page in three-letter pieces — so the row becomes a column,
-                // the same trade the totals strip made before it.
-                // Progress and tonnage FIRST. Elapsed is already the largest
-                // thing in the hero, 230 pt up and visible at the same moment;
-                // a card whose headline is a number the reader can see twice
-                // has spent its best line saying nothing new.
-                setsProgress
                 tonnage
-
-                if typeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: OnyxSpace.s) { clocks }
-                } else {
-                    HStack(alignment: .top, spacing: OnyxSpace.m) { clocks }
-                }
+                setsProgress
+                clockBar
             }
+        }
+    }
+
+    /// The clocks, over the track that is the one of them with a denominator.
+    ///
+    /// ── WHY A BAR AND NOT TWO FIGURES ───────────────────────────────────────
+    /// ELAPSED and REST were two bare numerals side by side, which reads as a
+    /// pair of readings with no relationship — and one of them was already in
+    /// the hero. Rest is a countdown against a length the timer sheet SET
+    /// (`restDuration`), so it has a fraction; elapsed does not, and inventing
+    /// a denominator for it would be the card making up a target. So the track
+    /// belongs to rest and the row above it is labelled at both ends: a filling
+    /// bar under a live countdown, an empty hairline when nothing is resting.
+    private var clockBar: some View {
+        VStack(alignment: .leading, spacing: OnyxSpace.s) {
+            // Two clocks share a row until they cannot. At AX5 the labels
+            // broke to "ELA / PSE / D" — a register caption spelled down the
+            // page in three-letter pieces — so the row becomes a column,
+            // the same trade the totals strip made before it.
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: OnyxSpace.s) { clocks }
+            } else {
+                HStack(alignment: .top, spacing: OnyxSpace.m) { clocks }
+            }
+            restTrack
+        }
+    }
+
+    /// `ProgressView(timerInterval:)`, which the SYSTEM counts — the same trade
+    /// `Text(_:style:.timer)` makes, and the reason a bar that moves every
+    /// second costs this card no redraws at all. A hand-rolled fraction would
+    /// need a per-second `TimelineView` to be anything but frozen.
+    @ViewBuilder
+    private var restTrack: some View {
+        if let countdown = restCountdown(model.restEndsAt) {
+            ProgressView(timerInterval: countdown, countsDown: true) {
+                EmptyView()
+            } currentValueLabel: {
+                EmptyView()
+            }
+            .progressViewStyle(.linear)
+            .tint(accent)
+            // The countdown is spoken by the cell above it; a bar that
+            // announced itself as well would say the same thing twice.
+            .accessibilityHidden(true)
+        } else {
+            // Not a `Capsule()` and not an `EmptyView()`: the first has no
+            // intrinsic height and grows to fill the card, the second makes the
+            // row jump by 4 pt every time a set is ticked.
+            OnyxProgressBar(fraction: 0, tint: accent)
         }
     }
 
@@ -329,15 +383,22 @@ struct LiveStatsView: View {
         .accessibilityValue("\(exercise.workingSets) of \(exercise.plan.sets(for: model.phase)) sets. \(topSetLabel(exercise))")
     }
 
-    /// The heaviest set ticked so far — the one number that says how the
-    /// movement is going without reading four rows of it.
+    /// The biggest set ticked so far BY VOLUME — the one number that says how
+    /// the movement is going without reading four rows of it.
+    ///
+    /// ── WHY VOLUME AND NOT (WEIGHT, REPS) ───────────────────────────────────
+    /// It used to sort on the pair, which is "heaviest, then longest at that
+    /// weight" — so a back-off set of 40 kg × 12 (480 kg) lost to a single at
+    /// 42.5 × 4 (170 kg), and the row reported the smaller piece of work as the
+    /// movement's top set. `Heaviest` is already its own row on the Top Lifts
+    /// card above; this card's question is which set did the most.
+    ///
+    /// `SetRow.volumeKg` is the same product `totalVolumeKg` sums, so the row
+    /// and the card's headline cannot disagree about what a set was worth.
     private func topSetLabel(_ exercise: LoggerModel.ExerciseState) -> String {
         let done = exercise.rows.filter { $0.isDone && $0.kind != .ghost }
-        guard let top = done.max(by: { lhs, rhs in
-            let l = (lhs.weightKg ?? 0, lhs.reps ?? 0)
-            let r = (rhs.weightKg ?? 0, rhs.reps ?? 0)
-            return l < r
-        }), let kg = top.weightKg, let reps = top.reps else {
+        guard let top = done.max(by: { $0.volumeKg < $1.volumeKg }),
+              top.volumeKg > 0, let kg = top.weightKg, let reps = top.reps else {
             // Nothing ticked yet. The question a row like that is actually
             // asking is "what am I meant to do", so it answers with the
             // prescription rather than with a dash — and a rep window carries
@@ -487,23 +548,167 @@ struct LiveStatsView: View {
         .accessibilityLabel("Heaviest muscles")
     }
 
-    // MARK: - Records
+    // MARK: - Top lifts
 
-    private var recordsCard: some View {
-        card("Records") {
-            let records = prs.livePrs
-            if records.isEmpty {
-                Text("No records yet. A set that beats your best lights up here and on the Lock Screen.")
+    /// One superlative per row: the hardest set, the heaviest thing moved, and
+    /// the best estimated single.
+    ///
+    /// ── WHY THREE, AND WHY NOT A LEADERBOARD ────────────────────────────────
+    /// "Top set by volume" below answers PER MOVEMENT and is as long as the
+    /// day's list. These three are about the SESSION, and they are three
+    /// different orderings of the same ticked rows rather than three questions
+    /// — which is why none of them is a store query: every number here is
+    /// already in `model.exercises`, the same rows the deck is drawing.
+    private var topLiftsCard: some View {
+        card("Top lifts") {
+            let lifts = topLifts
+            if lifts.isEmpty {
+                Text("Tick a set and the session's best three land here.")
                     .onyxType(.caption)
                     .foregroundStyle(Color.onyx.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(records) { record in
-                        recordRow(record)
-                        if record.id != records.last?.id {
+                    ForEach(lifts) { lift in
+                        topLiftRow(lift)
+                        if lift.id != lifts.last?.id {
                             Divider().overlay(Color.onyx.hairline)
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    /// A row of the Top Lifts card. `id` is the ROLE — there is exactly one
+    /// hardest set and exactly one heaviest, so the role is the identity and a
+    /// re-tick cannot make the list reshuffle.
+    private struct TopLift: Identifiable {
+        let id: String
+        let exercise: String
+        let figure: String
+    }
+
+    private var topLifts: [TopLift] {
+        let sets = model.exercises.flatMap { exercise in
+            exercise.rows
+                .filter { $0.isDone && $0.kind != .ghost }
+                .map { (name: exercise.name, row: $0) }
+        }
+        /// The ticked set that scores highest, or nil when none of them scores
+        /// at all. `max(by:)` keeps the LAST maximum, so a set that merely
+        /// EQUALS the leader does not take the row off it.
+        func best(
+            _ score: (LoggerModel.SetRow) -> Double?
+        ) -> (name: String, row: LoggerModel.SetRow, score: Double)? {
+            sets
+                .compactMap { entry in score(entry.row).map { (entry.name, entry.row, $0) } }
+                .max { $0.2 < $1.2 }
+        }
+
+        var out: [TopLift] = []
+        // ── HARDEST IS RATING × LOAD, NOT RATING ────────────────────────────
+        // An RPE 10 on a 7.5 kg cable crossover is a set that went to failure
+        // on the smallest weight in the room, and it is not the hardest thing
+        // that happened today. Neither is 100 kg at RPE 6. The product is the
+        // only one of the three that needs both columns, which is why an
+        // unrated set cannot win it — `rpe == nil` is UNRATED, never zero.
+        if let hardest = best({ row in
+            guard let rpe = row.rpe, let kg = row.weightKg, kg > 0 else { return nil }
+            return rpe * kg
+        }), let rpe = hardest.row.rpe, let kg = hardest.row.weightKg {
+            out.append(TopLift(
+                id: "Hardest", exercise: hardest.name,
+                // The product itself is a number with no unit and no meaning to
+                // anyone; the two figures it was made of are the reading.
+                figure: "RPE \(OnyxFormat.rpe(rpe)) · \(OnyxFormat.kg(kg)) kg"
+            ))
+        }
+        if let heaviest = best({ row in (row.weightKg ?? 0) > 0 ? row.weightKg : nil }) {
+            out.append(TopLift(
+                id: "Heaviest", exercise: heaviest.name,
+                figure: "\(OnyxFormat.kg(heaviest.score)) kg"
+            ))
+        }
+        // `SetRow.estimated1RM` is Epley through `OnyxCore`, which returns nil
+        // for an unloaded set rather than 0 — the same function the PR engine
+        // grades the e1rm axis with, so this card and a trophy agree.
+        if let single = best({ $0.estimated1RM }) {
+            out.append(TopLift(
+                id: "1RM", exercise: single.name,
+                figure: "\(OnyxFormat.kg(single.score)) kg"
+            ))
+        }
+        return out
+    }
+
+    /// No leading glyph. Three different SF symbols are three different glyph
+    /// widths, so the three movement names started at three different x — a
+    /// ragged left edge on a card whose whole job is to be read down.
+    ///
+    /// ── AND WHY IT IS A COLUMN AT AX5 ───────────────────────────────────────
+    /// "Neutral-Grip Lat Pulldown" beside "RPE 9.5 · 49.5 kg" is two ~24
+    /// character strings sharing 346 pt of card. At an accessibility size both
+    /// hit their scale floor and truncate, and the half that gets cut is the
+    /// movement's name — the answer, not the qualifier. Under it instead, with
+    /// the name free to take a second line, which is the same trade `tonnage`
+    /// makes with its delta chip two cards up.
+    @ViewBuilder
+    private func topLiftRow(_ lift: TopLift) -> some View {
+        let stacked = typeSize.isAccessibilitySize
+        let name = VStack(alignment: .leading, spacing: 1) {
+            Text(lift.exercise)
+                .onyxType(.body)
+                .foregroundStyle(Color.onyx.textPrimary)
+                .lineLimit(stacked ? 2 : 1)
+                .minimumScaleFactor(0.75)
+            Text(lift.id).onyxMicro()
+        }
+        // No `layoutPriority`, for the reason the records row spells out: both
+        // columns carry a scale factor, so they divide and both shrink rather
+        // than one taking its ideal width and truncating the other.
+        let figure = Text(lift.figure)
+            .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+            .foregroundStyle(Color.onyx.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+
+        Group {
+            if stacked {
+                // No `Spacer` here: in a column it is a VERTICAL one and it
+                // expands, which pushes the three rows apart until the card is
+                // a screen tall.
+                VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                    name
+                    figure
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                HStack(spacing: OnyxSpace.m) {
+                    name
+                    Spacer(minLength: OnyxSpace.s)
+                    figure
+                }
+            }
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(lift.id)
+        .accessibilityValue("\(lift.exercise), \(lift.figure)")
+    }
+
+    // MARK: - Records
+
+    /// Drawn only when there is one — the deck gates it, so this never has an
+    /// empty state to draw.
+    private var recordsCard: some View {
+        card("PRs") {
+            let records = prs.livePrs
+            VStack(spacing: 0) {
+                ForEach(records) { record in
+                    recordRow(record)
+                    if record.id != records.last?.id {
+                        Divider().overlay(Color.onyx.hairline)
                     }
                 }
             }

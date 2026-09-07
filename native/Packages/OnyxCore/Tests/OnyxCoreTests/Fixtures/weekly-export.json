@@ -1529,7 +1529,7 @@
             "sessionRpe": null,
             "exercises": [
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "topKg": 5,
                 "repWindow": "12–20",
                 "sets": [
@@ -1635,7 +1635,7 @@
                 ]
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "topKg": 20,
                 "repWindow": "10–12",
                 "sets": [
@@ -1671,7 +1671,7 @@
                 "e1rmKg": null
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "weightKg": 5,
                 "reps": 17,
                 "axes": [
@@ -1696,7 +1696,7 @@
             "sessionRpe": 8,
             "exercises": [
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "topKg": 18.75,
                 "repWindow": "8–12",
                 "sets": [
@@ -1720,7 +1720,7 @@
                 ]
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "topKg": 40,
                 "repWindow": "10–12",
                 "sets": [
@@ -1789,7 +1789,7 @@
             "sessionRpe": 6.5,
             "exercises": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "topKg": null,
                 "repWindow": "8–15",
                 "sets": []
@@ -1797,7 +1797,7 @@
             ],
             "prs": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "weightKg": 30,
                 "reps": 12,
                 "axes": [
@@ -2159,7 +2159,7 @@
         ]
       },
       "expected": {
-        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=mixed · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## LEVERS · id · label · kcal · P · C · F · steps · dates\nmaintenance-week · Maintenance Week · 2151 · 170 · 244 · 55 · 7500 · 2026-08-30…2026-09-02\ncustom · Custom · 1999 · 170 · 206 · 55 · 10000 · 2026-09-03…2026-09-05\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise (Cable) · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  DB Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise (Cable) · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl (Machine) · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press (Machine) · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust (Machine) · [8–15] · — · — · —\n  PR · Hip Thrust (Machine) · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg |  Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|------:|:-:|\n| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |     — | — |\n| Week 6 |     1999 |  25102.25 |      9800 |          — |        2.90 |      65.2 | −0.50 | ↓ |\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 | −0.67 | ↓ |\n| Week 8 |        — |         — |         — |          — |           — |         — |     — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
+        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=mixed · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## LEVERS · id · label · kcal · P · C · F · steps · dates\nmaintenance-week · Maintenance Week · 2151 · 170 · 244 · 55 · 7500 · 2026-08-30…2026-09-02\ncustom · Custom · 1999 · 170 · 206 · 55 · 10000 · 2026-09-03…2026-09-05\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust · [8–15] · — · — · —\n  PR · Hip Thrust · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg |  Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|------:|:-:|\n| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |     — | — |\n| Week 6 |     1999 |  25102.25 |      9800 |          — |        2.90 |      65.2 | −0.50 | ↓ |\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 | −0.67 | ↓ |\n| Week 8 |        — |         — |         — |          — |           — |         — |     — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
         "summary": {
           "avgSleepMin": 522.6666666666666,
           "avgRestingHr": 54.333333333333336,
@@ -3051,7 +3051,7 @@
               "sessionRpe": null,
               "exercises": [
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "topKg": 5,
                   "repWindow": "12–20",
                   "sets": [
@@ -3157,7 +3157,7 @@
                   ]
                 },
                 {
-                  "name": "DB Hammer Curl",
+                  "name": "Hammer Curl",
                   "topKg": 20,
                   "repWindow": "10–12",
                   "sets": [
@@ -3193,7 +3193,7 @@
                   "e1rmKg": null
                 },
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "weightKg": 5,
                   "reps": 17,
                   "axes": [
@@ -3218,7 +3218,7 @@
               "sessionRpe": 8,
               "exercises": [
                 {
-                  "name": "Preacher Curl (Machine)",
+                  "name": "Preacher Curl",
                   "topKg": 18.75,
                   "repWindow": "8–12",
                   "sets": [
@@ -3242,7 +3242,7 @@
                   ]
                 },
                 {
-                  "name": "Chest Press (Machine)",
+                  "name": "Chest Press",
                   "topKg": 40,
                   "repWindow": "10–12",
                   "sets": [
@@ -3311,7 +3311,7 @@
               "sessionRpe": 6.5,
               "exercises": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "topKg": null,
                   "repWindow": "8–15",
                   "sets": []
@@ -3319,7 +3319,7 @@
               ],
               "prs": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "weightKg": 30,
                   "reps": 12,
                   "axes": [
@@ -4488,7 +4488,7 @@
             "sessionRpe": null,
             "exercises": [
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "topKg": 5,
                 "repWindow": "12–20",
                 "sets": [
@@ -4594,7 +4594,7 @@
                 ]
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "topKg": 20,
                 "repWindow": "10–12",
                 "sets": [
@@ -4630,7 +4630,7 @@
                 "e1rmKg": null
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "weightKg": 5,
                 "reps": 17,
                 "axes": [
@@ -4655,7 +4655,7 @@
             "sessionRpe": 8,
             "exercises": [
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "topKg": 18.75,
                 "repWindow": "8–12",
                 "sets": [
@@ -4679,7 +4679,7 @@
                 ]
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "topKg": 40,
                 "repWindow": "10–12",
                 "sets": [
@@ -4748,7 +4748,7 @@
             "sessionRpe": 6.5,
             "exercises": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "topKg": null,
                 "repWindow": "8–15",
                 "sets": []
@@ -4756,7 +4756,7 @@
             ],
             "prs": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "weightKg": 30,
                 "reps": 12,
                 "axes": [
@@ -5068,7 +5068,7 @@
         ]
       },
       "expected": {
-        "markdown": "# ONYX WEEK · 2026-08-30→2026-09-05 · Onyx-5 · — · lever=— · goals 2151kcal 170P 7500st 8.0h —\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise (Cable) · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  DB Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise (Cable) · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl (Machine) · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press (Machine) · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust (Machine) · [8–15] · — · — · —\n  PR · Hip Thrust (Machine) · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
+        "markdown": "# ONYX WEEK · 2026-08-30→2026-09-05 · Onyx-5 · — · lever=— · goals 2151kcal 170P 7500st 8.0h —\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust · [8–15] · — · — · —\n  PR · Hip Thrust · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
         "summary": {
           "avgSleepMin": 522.6666666666666,
           "avgRestingHr": 54.333333333333336,
@@ -5926,7 +5926,7 @@
               "sessionRpe": null,
               "exercises": [
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "topKg": 5,
                   "repWindow": "12–20",
                   "sets": [
@@ -6032,7 +6032,7 @@
                   ]
                 },
                 {
-                  "name": "DB Hammer Curl",
+                  "name": "Hammer Curl",
                   "topKg": 20,
                   "repWindow": "10–12",
                   "sets": [
@@ -6068,7 +6068,7 @@
                   "e1rmKg": null
                 },
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "weightKg": 5,
                   "reps": 17,
                   "axes": [
@@ -6093,7 +6093,7 @@
               "sessionRpe": 8,
               "exercises": [
                 {
-                  "name": "Preacher Curl (Machine)",
+                  "name": "Preacher Curl",
                   "topKg": 18.75,
                   "repWindow": "8–12",
                   "sets": [
@@ -6117,7 +6117,7 @@
                   ]
                 },
                 {
-                  "name": "Chest Press (Machine)",
+                  "name": "Chest Press",
                   "topKg": 40,
                   "repWindow": "10–12",
                   "sets": [
@@ -6186,7 +6186,7 @@
               "sessionRpe": 6.5,
               "exercises": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "topKg": null,
                   "repWindow": "8–15",
                   "sets": []
@@ -6194,7 +6194,7 @@
               ],
               "prs": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "weightKg": 30,
                   "reps": 12,
                   "axes": [
@@ -7336,7 +7336,7 @@
             "sessionRpe": null,
             "exercises": [
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "topKg": 5,
                 "repWindow": "12–20",
                 "sets": [
@@ -7442,7 +7442,7 @@
                 ]
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "topKg": 20,
                 "repWindow": "10–12",
                 "sets": [
@@ -7478,7 +7478,7 @@
                 "e1rmKg": null
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "weightKg": 5,
                 "reps": 17,
                 "axes": [
@@ -7503,7 +7503,7 @@
             "sessionRpe": 8,
             "exercises": [
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "topKg": 18.75,
                 "repWindow": "8–12",
                 "sets": [
@@ -7527,7 +7527,7 @@
                 ]
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "topKg": 40,
                 "repWindow": "10–12",
                 "sets": [
@@ -7596,7 +7596,7 @@
             "sessionRpe": 6.5,
             "exercises": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "topKg": null,
                 "repWindow": "8–15",
                 "sets": []
@@ -7604,7 +7604,7 @@
             ],
             "prs": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "weightKg": 30,
                 "reps": 12,
                 "axes": [
@@ -7966,7 +7966,7 @@
         ]
       },
       "expected": {
-        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=maintenance-week 2151kcal 170P 244C 55F 7500st · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise (Cable) · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  DB Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise (Cable) · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl (Machine) · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press (Machine) · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust (Machine) · [8–15] · — · — · —\n  PR · Hip Thrust (Machine) · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg |  Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|------:|:-:|\n| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |     — | — |\n| Week 6 |     1999 |  25102.25 |      9800 |          — |        2.90 |      65.2 | −0.50 | ↓ |\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 | −0.67 | ↓ |\n| Week 8 |        — |         — |         — |          — |           — |         — |     — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
+        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=maintenance-week 2151kcal 170P 244C 55F 7500st · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust · [8–15] · — · — · —\n  PR · Hip Thrust · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg |  Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|------:|:-:|\n| Week 5 |     1885 |     26340 |     10850 |        120 |        3.05 |      65.7 |     — | — |\n| Week 6 |     1999 |  25102.25 |      9800 |          — |        2.90 |      65.2 | −0.50 | ↓ |\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 | −0.67 | ↓ |\n| Week 8 |        — |         — |         — |          — |           — |         — |     — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
         "summary": {
           "avgSleepMin": 522.6666666666666,
           "avgRestingHr": 54.333333333333336,
@@ -8842,7 +8842,7 @@
               "sessionRpe": null,
               "exercises": [
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "topKg": 5,
                   "repWindow": "12–20",
                   "sets": [
@@ -8948,7 +8948,7 @@
                   ]
                 },
                 {
-                  "name": "DB Hammer Curl",
+                  "name": "Hammer Curl",
                   "topKg": 20,
                   "repWindow": "10–12",
                   "sets": [
@@ -8984,7 +8984,7 @@
                   "e1rmKg": null
                 },
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "weightKg": 5,
                   "reps": 17,
                   "axes": [
@@ -9009,7 +9009,7 @@
               "sessionRpe": 8,
               "exercises": [
                 {
-                  "name": "Preacher Curl (Machine)",
+                  "name": "Preacher Curl",
                   "topKg": 18.75,
                   "repWindow": "8–12",
                   "sets": [
@@ -9033,7 +9033,7 @@
                   ]
                 },
                 {
-                  "name": "Chest Press (Machine)",
+                  "name": "Chest Press",
                   "topKg": 40,
                   "repWindow": "10–12",
                   "sets": [
@@ -9102,7 +9102,7 @@
               "sessionRpe": 6.5,
               "exercises": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "topKg": null,
                   "repWindow": "8–15",
                   "sets": []
@@ -9110,7 +9110,7 @@
               ],
               "prs": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "weightKg": 30,
                   "reps": 12,
                   "axes": [
@@ -10283,7 +10283,7 @@
             "sessionRpe": null,
             "exercises": [
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "topKg": 5,
                 "repWindow": "12–20",
                 "sets": [
@@ -10389,7 +10389,7 @@
                 ]
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "topKg": 20,
                 "repWindow": "10–12",
                 "sets": [
@@ -10425,7 +10425,7 @@
                 "e1rmKg": null
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "weightKg": 5,
                 "reps": 17,
                 "axes": [
@@ -10450,7 +10450,7 @@
             "sessionRpe": 8,
             "exercises": [
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "topKg": 18.75,
                 "repWindow": "8–12",
                 "sets": [
@@ -10474,7 +10474,7 @@
                 ]
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "topKg": 40,
                 "repWindow": "10–12",
                 "sets": [
@@ -10543,7 +10543,7 @@
             "sessionRpe": 6.5,
             "exercises": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "topKg": null,
                 "repWindow": "8–15",
                 "sets": []
@@ -10551,7 +10551,7 @@
             ],
             "prs": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "weightKg": 30,
                 "reps": 12,
                 "axes": [
@@ -10864,7 +10864,7 @@
         "ledger": []
       },
       "expected": {
-        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · — · lever=— · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise (Cable) · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  DB Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise (Cable) · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl (Machine) · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press (Machine) · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust (Machine) · [8–15] · — · — · —\n  PR · Hip Thrust (Machine) · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
+        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · — · lever=— · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust · [8–15] · — · — · —\n  PR · Hip Thrust · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
         "summary": {
           "avgSleepMin": 522.6666666666666,
           "avgRestingHr": 54.333333333333336,
@@ -11722,7 +11722,7 @@
               "sessionRpe": null,
               "exercises": [
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "topKg": 5,
                   "repWindow": "12–20",
                   "sets": [
@@ -11828,7 +11828,7 @@
                   ]
                 },
                 {
-                  "name": "DB Hammer Curl",
+                  "name": "Hammer Curl",
                   "topKg": 20,
                   "repWindow": "10–12",
                   "sets": [
@@ -11864,7 +11864,7 @@
                   "e1rmKg": null
                 },
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "weightKg": 5,
                   "reps": 17,
                   "axes": [
@@ -11889,7 +11889,7 @@
               "sessionRpe": 8,
               "exercises": [
                 {
-                  "name": "Preacher Curl (Machine)",
+                  "name": "Preacher Curl",
                   "topKg": 18.75,
                   "repWindow": "8–12",
                   "sets": [
@@ -11913,7 +11913,7 @@
                   ]
                 },
                 {
-                  "name": "Chest Press (Machine)",
+                  "name": "Chest Press",
                   "topKg": 40,
                   "repWindow": "10–12",
                   "sets": [
@@ -11982,7 +11982,7 @@
               "sessionRpe": 6.5,
               "exercises": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "topKg": null,
                   "repWindow": "8–15",
                   "sets": []
@@ -11990,7 +11990,7 @@
               ],
               "prs": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "weightKg": 30,
                   "reps": 12,
                   "axes": [
@@ -15031,7 +15031,7 @@
             "sessionRpe": null,
             "exercises": [
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "topKg": 5,
                 "repWindow": "12–20",
                 "sets": [
@@ -15137,7 +15137,7 @@
                 ]
               },
               {
-                "name": "DB Hammer Curl",
+                "name": "Hammer Curl",
                 "topKg": 20,
                 "repWindow": "10–12",
                 "sets": [
@@ -15173,7 +15173,7 @@
                 "e1rmKg": null
               },
               {
-                "name": "Single Arm Lateral Raise (Cable)",
+                "name": "Single Arm Lateral Raise",
                 "weightKg": 5,
                 "reps": 17,
                 "axes": [
@@ -15198,7 +15198,7 @@
             "sessionRpe": 8,
             "exercises": [
               {
-                "name": "Preacher Curl (Machine)",
+                "name": "Preacher Curl",
                 "topKg": 18.75,
                 "repWindow": "8–12",
                 "sets": [
@@ -15222,7 +15222,7 @@
                 ]
               },
               {
-                "name": "Chest Press (Machine)",
+                "name": "Chest Press",
                 "topKg": 40,
                 "repWindow": "10–12",
                 "sets": [
@@ -15291,7 +15291,7 @@
             "sessionRpe": 6.5,
             "exercises": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "topKg": null,
                 "repWindow": "8–15",
                 "sets": []
@@ -15299,7 +15299,7 @@
             ],
             "prs": [
               {
-                "name": "Hip Thrust (Machine)",
+                "name": "Hip Thrust",
                 "weightKg": 30,
                 "reps": 12,
                 "axes": [
@@ -15625,7 +15625,7 @@
         ]
       },
       "expected": {
-        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=mixed · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## LEVERS · id · label · kcal · P · C · F · steps · dates\nmaintenance-week · Maintenance Week · 2151 · 170 · 244 · 55 · 7500 · 2026-08-30…2026-09-02\ncustom · Custom · 1999 · 170 · 206 · 55 · 10000 · 2026-09-03…2026-09-05\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise (Cable) · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  DB Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise (Cable) · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl (Machine) · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press (Machine) · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust (Machine) · [8–15] · — · — · —\n  PR · Hip Thrust (Machine) · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg | Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|-----:|:-:|\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 |    — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
+        "markdown": "# ONYX Week 7 · 2026-08-30→2026-09-05 · Onyx-5 · Cut · lever=mixed · goals 2151kcal 170P 7500st 8.0h 3000ml\n\n## LEVERS · id · label · kcal · P · C · F · steps · dates\nmaintenance-week · Maintenance Week · 2151 · 170 · 244 · 55 · 7500 · 2026-08-30…2026-09-02\ncustom · Custom · 1999 · 170 · 206 · 55 · 10000 · 2026-09-03…2026-09-05\n\n## DAYS · date · day · train · sleep_min · deep_min · rem_min · core_min · awake_min · bed · wake · onset · hrv_ms · rhr · avg_hr · spo2_pct · resp_bpm · wrist_temp_c · vo2max · daylight_min · exercise_min · stand_hours · stand_min · steps · dist_km · training_min · active_kcal · kcal · P · C · F · water_l · supp · supp_log · supp_skipped · weight_kg · fat_pct · smm_kg · bmr_kcal · fatigue · doms · tags\n2026-08-30 · Sun · 0 · 551 · 62 · 118 · 350 · 21 · 23:10 · 08:21 · 0 · 61.5 · 52 · 71 · 97 · 14.5 · 0.2 · 46.1 · 42 · 31 · 12 · 58 · 7842 · 6.12 · — · 412 · 2151 · 172 · 244 · 55 · 3.10 · 6/7 · creatine@07:00;d3k2@07:00;omega3@12:30;magnesium@22:00;glycine@22:00;theanine@— · Caffeine · 64.9 · 16.8 · 26.9 · 1516 · Waking:1;Midday:2;Night:3 · — · —\n2026-08-31 · Mon · 1 · 470 · 40 · 95 · 320 · 15 · 23:50 · 07:55 · 1 · 48.0 · 54 · 84 · 96 · 15.1 · -0.1 · 46.1 · 12 · 78 · 14 · 40 · 11204 · 8.90 · 78 · 688 · 2160 · 175 · 250 · 52 · 3.50 · 7/9 · creatine@07:00;citrulline@11:45;caffeine@11:45 · — · 64.6 · — · — · 1514 · Waking:2;Before training:2;After training:4 · — · —\n2026-09-01 · Tue · 1 · 505 · 55 · 100 · 335 · 15 · — · — · 1 · 39.0 · 58 · — · 95 · — · 0.6 · — · — · — · — · — · 4100 · — · — · 210 · 1800 · 150 · 200 · 45 · 2.00 · —/9 · creatine@07:00 · — · — · — · — · — · Waking:4;Before training:—;After training:— · Quadriceps:2:Legs & Core A:2026-08-31;Glutes:1:Legs & Core B:2026-08-28 · except:Illness;skip:Sick\n2026-09-02 · Wed · 0 · 600 · — · — · — · — · — · — · — · 41.0 · 57 · — · — · — · — · — · — · — · — · — · 3000 · — · — · 150 · 1900 · 160 · 210 · 50 · 2.50 · 4/7 · — · — · 64.4 · — · — · 1512 · Waking:—;Midday:—;Night:— · Hamstrings:3;Quadriceps:0 · except:Illness\n2026-09-03 · Thu · 1 · 490 · 50 · 90 · 330 · 20 · — · — · — · 55.0 · 53 · — · 98 · — · 0.0 · — · — · — · — · — · 9500 · 7.40 · 65 · 590 · 2380 · 168 · 290 · 96 · 2.80 · 8/9 · — · — · — · — · 26.8 · — · Waking:—;Before training:3;After training:2 · — · estimated;profile:Restaurant;skip:As Planned;untracked:C;untracked:F\n2026-09-04 · Fri · 1 · 520 · — · — · — · — · — · — · — · 60.0 · 52 · — · — · — · — · — · — · — · — · — · 10200 · — · 70 · 620 · 2600 · 170 · 330 · 70 · 3.00 · 9/9 · — · — · 64.2 · 16.5 · 26.7 · 1511 · Waking:2;Before training:—;After training:2 · Biceps:1:Delts & Arms · except:Refeed\n2026-09-05 · Sat · 0 · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · — · Waking:—;Midday:—;Night:— · — · skip:Travel\n\n## SESSIONS · date · day · label · session_no · started · ended · duration_min · avg_bpm · kcal · srpe · sets · failure_sets · tonnage_kg · prs · estimated\n##   exercise · name · rep_window · rest_target/plan_s · top_kg · set…  — set = load×reps[t][@rpe][W|G|D|F][Q:key], `t` = the count is seconds, a unilateral pair is Lset|Rset\n##   PR · name · load×reps · axes · volume_kg · e1rm_kg (Epley, weight × (1 + reps/30) — an ESTIMATE, not a lift that happened)\n2026-08-31 · Mon · Legs & Core A · #41 · 09:02 · 10:20 · 78 · 118 · 512 · 8.5 · 9 · 1 · 8329.25 · 2 · —\n  Leg Press · [8–12] · 150/135 · 75 · 40×15W · 75×12@8.5 · 75×12@9.5Q:momentum · 75×10@10F\n  Hack Squat · [10–12] · 135/135 · 55 · 55×12@9 · 55×12G · 55×11F\n  Reverse Crunch · [12–15] · — · 0 · 0×17@8 · 0×15\n  Calf Press · — · — · 70 · —\n  PR · Leg Press · 75×12 · Weight;Volume;1RM · 900 · 105\n  PR · Reverse Crunch · 0×17 · Reps · 0 · —\n2026-09-01 · Tue · Delts & Arms · #42 · — · — · 55 · 110 · 380 · — · 6 · 0 · 1210.5 · 2 · kcal;bpm\n  Single Arm Lateral Raise · [12–20] · — · 5 · L2.5×15W|R2.5×15W · L5×15@8|R5×17@9 · L5×14@9.5F|R5×16 · L5×14G|R5×14G · 5×12@9\n  Side Plank · — · — · 0 · L0×55t@9|R0×60t@9.5\n  Hammer Curl · [10–12] · — · 20 · 20×12@10 · 20×10@9Q:form_breakdown\n  PR · Side Plank · 0×60 · Reps · — · —\n  PR · Single Arm Lateral Raise · 5×17 · Volume;1RM · 85 · 7.8\n2026-09-03 · Thu · Upper B · — · 18:30 · — · 65 · — · — · 8 · 7 · 0 · 5400 · 0 · —\n  Preacher Curl · [8–12] · — · 18.75 · 18.75×12@9.5 · 12.5×8@10D\n  Chest Press · [10–12] · — · 40 · 40×12 · 40×11 · 40×10\n  Leg Press · [12–15] · — · 72.5 · 72.5×14@8 · 72.5×13@8.5\n2026-09-04 · Fri · Legs & Core B · #43 · — · — · — · — · — · 6.5 · — · — · — · 1 · —\n  Hip Thrust · [8–15] · — · — · —\n  PR · Hip Thrust · 30×12 · Weight · 360 · 42\n\n## CARDIO · date · day · kind · duration_min · dist_km · pace_min_km · avg_hr · active_kcal · total_kcal · effort_cr10\n2026-08-31 · Mon · Walk · 48.0 · 4.20 · 11:26 /km · 104 · 190 · 260 · 3\n2026-09-03 · Thu · Run · 25.5 · 5.05 · 5:03 /km · — · — · — · —\n2026-09-03 · Thu · Cardio · 10.0 · — · — · 90 · 40 · 55 · 2.5\n\n## BODY · date · weight_kg · bmi · fat_pct · muscle_pct · water_pct · visceral · bmr_kcal · smm_kg · muscle_mass_kg · ffm_kg · fat_mass_kg · protein_kg · protein_pct · bone_kg · water_kg · whr\n2026-08-30 · 64.9 · 22.5 · 16.8 · 77.4 · 60.1 · 5.0 · 1516 · 26.9 · 50.2 · 54.0 · 10.9 · 11.1 · 17.1 · 3.18 · 39.0 · 0.83\n2026-09-03 · — · — · — · — · — · — · — · 26.8 · — · — · — · — · — · — · — · 0.83\n2026-09-04 · 64.2 · 22.2 · 16.5 · 77.6 · 60.3 · 5.0 · 1511 · 26.7 · 49.8 · 53.6 · 10.6 · 11.0 · — · 3.20 · 38.7 · —\n\n## NUTRIENTS · date · key=food+stack, in NUTRIENT_TARGETS order, each in that target’s own unit; a key with no reading on either side is left off the line\n2026-08-30 · fiber=31+0 · protein=172+0 · sodium=2400+0 · potassium=3100+0 · calcium=950+0 · iron=12+0 · magnesium=380+200 · vitaminC=124+470 · vitaminD=0+2000 · satFat=14+0 · sugar=22+0 · vitaminB12=0+300 · folate=0+680 · epa=0+600 · dha=0+300 · creatine=0+5000 · theanine=0+200 · glycine=0+5000\n2026-08-31 · fiber=28+0 · protein=175+0 · sodium=3100+0 · potassium=3000+0 · calcium=3074+0 · iron=9+0 · magnesium=300+0 · vitaminC=80+0 · satFat=24+0 · sugar=45+0 · creatine=0+5000 · citrulline=0+3000 · caffeine=0+200\n2026-09-01 · fiber=20+0 · protein=150+0\n2026-09-02 · vitaminD=0+2000 · creatine=0+5000\n##   implausible · Calcium 3074 mg on 2026-08-31\n\n## SUPPS · time · name · dose · training_dose · rest_dose · training_only · notes\n— · Omega-3 · 2 caps · — · — · 0 · —\n07:00 · Creatine · 5 g · — · — · 0 · —\n07:00 · Vitamin D3 + K2 · 2000 IU · — · — · 0 · with breakfast\n11:45 · L-Citrulline · 3 g · — · — · 1 · —\n11:45 · Caffeine · 200 mg · 200 mg · 100 mg · 1 · not after 14:00\n22:00 · Magnesium · 400 mg · 400 mg · 400 mg · 0 · —\n22:00 · Glycine · 5 g · — · — · 0 · —\n\n## WEEK · tonnage_kg · working_sets · rated_sets · sessions · kcal_avg · P_avg · C_avg · F_avg · water_l_avg · steps_avg · sleep_min_avg · rhr_avg · hrv_avg · weight_avg_kg · weight_first_to_last_kg · srpe_avg · srpe_rated_sessions · cardio_min · cardio_kcal\n14939.75 · 20 · 15 · 4 · 2165 · 166 · 254 · 61 · 2.82 · 7641 · 523 · 54.3 · 50.8 · 64.53 · -0.70 · 7.67 · 3 · 83.5 · 230\n## WEEK.MUSCLE · muscle · sets · target · direct · indirect · tonnage_kg · direct_kg\nQuadriceps · 12.0 · 10.0 · 12.0 · 0.0 · 9800.5 · 9800.5\nGlutes · 7.5 · 8.0 · 3.0 · 4.5 · 4200 · 1100.25\nSide delts · 14.0 · 10.0 · 14.0 · — · 1210.5 · —\nAdductors · 2.0 · 0.0 · — · — · — · —\nHamstrings · 3.0 · 10.0 · 1.0 · 2.0 · — · —\n\n## LEDGER · every week of the programme, oldest first\n| Week   | Kcal/day | Volume kg | Steps/day | Cardio min | Water L/day | Weight kg | Δ kg |   |\n|:-------|---------:|----------:|----------:|-----------:|------------:|----------:|-----:|:-:|\n| Week 7 |     2165 |  14939.75 |      7641 |         84 |        2.82 |      64.5 |    — | — |\n\n## DERIVED · computed by Onyx — not measured · key · then one value per day, in DAYS order\nload · 0.0 · 546.0 · 630.0 · — · — · — · —\nacwr · 0.882 · 0.977 · 1.075 · — · — · — · —\nstrainZ · -0.30 · 0.40 · 1.70 · — · — · — · —\nwellness · 0.17 · 0.59 · 0.56 · 0.25 · 0.13 · 0.19 · —\nstress · — · — · — · — · — · — · —\ntdee · 2154 · 2429 · 1913 · 1862 · 2352 · 2404 · —\n## DERIVED.WEEK · balance_kcal · balance_kcal_day · tdee_avg · bmr_avg · active_avg · tef_avg · bmr_carried · energy_days · energy_excluded\n-122 · -20 · 2186 · 1513 · 445 · 227 · 1 · 6 · 2026-09-05\n##   how · tdee = BMR (from the scale, carried across gaps) + Apple Watch active energy + intake × 0.105 · load = session RPE × minutes · acwr = EWMA 7:28 of load · strainZ = z of Foster strain against your own rolling normal · wellness = mean of the answered Hooper items, 0–1 · heart rate, calories and steps come off the Apple Watch and are estimates",
         "summary": {
           "avgSleepMin": 522.6666666666666,
           "avgRestingHr": 54.333333333333336,
@@ -16517,7 +16517,7 @@
               "sessionRpe": null,
               "exercises": [
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "topKg": 5,
                   "repWindow": "12–20",
                   "sets": [
@@ -16623,7 +16623,7 @@
                   ]
                 },
                 {
-                  "name": "DB Hammer Curl",
+                  "name": "Hammer Curl",
                   "topKg": 20,
                   "repWindow": "10–12",
                   "sets": [
@@ -16659,7 +16659,7 @@
                   "e1rmKg": null
                 },
                 {
-                  "name": "Single Arm Lateral Raise (Cable)",
+                  "name": "Single Arm Lateral Raise",
                   "weightKg": 5,
                   "reps": 17,
                   "axes": [
@@ -16684,7 +16684,7 @@
               "sessionRpe": 8,
               "exercises": [
                 {
-                  "name": "Preacher Curl (Machine)",
+                  "name": "Preacher Curl",
                   "topKg": 18.75,
                   "repWindow": "8–12",
                   "sets": [
@@ -16708,7 +16708,7 @@
                   ]
                 },
                 {
-                  "name": "Chest Press (Machine)",
+                  "name": "Chest Press",
                   "topKg": 40,
                   "repWindow": "10–12",
                   "sets": [
@@ -16777,7 +16777,7 @@
               "sessionRpe": 6.5,
               "exercises": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "topKg": null,
                   "repWindow": "8–15",
                   "sets": []
@@ -16785,7 +16785,7 @@
               ],
               "prs": [
                 {
-                  "name": "Hip Thrust (Machine)",
+                  "name": "Hip Thrust",
                   "weightKg": 30,
                   "reps": 12,
                   "axes": [

@@ -49,7 +49,7 @@ public enum MuscleMap {
     /// ORDER IS PART OF THE DATA. `movers(_:)` only replaces its best match on a
     /// STRICTLY longer token list, so of two entries with the same specificity
     /// the FIRST one written wins — `["overhead", "extension"]` beats
-    /// `["cable", "extension"]` for "Cable Overhead Extension" because it sits
+    /// `["cable", "extension"]` for "Overhead Triceps Extension" because it sits
     /// above it. The golden vector `muscle-map-dict.json` holds this array to
     /// the TypeScript one entry for entry, in this order.
     public static let dict: [Entry] = [

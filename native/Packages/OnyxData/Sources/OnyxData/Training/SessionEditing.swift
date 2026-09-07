@@ -185,11 +185,12 @@ public extension AppDatabase {
         setType: String? = nil,
         quality: String? = nil,
         est1rmKg: Double? = nil,
-        setIndex: Int? = nil
+        setIndex: Int? = nil,
+        exerciseOrder: Int? = nil
     ) throws -> SessionEditing.Outcome? {
         let patch = SetPatch(
             setIndex: setIndex, weightKg: weightKg, reps: reps, setType: setType,
-            est1rmKg: est1rmKg, rpe: rpe, quality: quality
+            est1rmKg: est1rmKg, rpe: rpe, quality: quality, exerciseOrder: exerciseOrder
         )
         // An amend that changes nothing is permanent noise in a log that is
         // never compacted — the rule `EventStore.amendSet` states. Checked HERE
@@ -324,7 +325,8 @@ public extension AppDatabase {
                 pairId: existing.pairId,
                 est1rmKg: existing.est1rmKg,
                 rpe: existing.rpe,
-                quality: existing.quality
+                quality: existing.quality,
+                exerciseOrder: existing.exerciseOrder
             )
             return patch.applied(to: before) != before
         }
@@ -421,7 +423,13 @@ public extension AppDatabase {
                         pairId: row.pairId,
                         est1rmKg: row.est1rmKg,
                         rpe: row.rpe,
-                        quality: row.quality
+                        quality: row.quality,
+                        // Carried, not re-derived. A pulled session's rows come
+                        // down with the web's own order on them, and seeding is
+                        // supposed to reproduce the session byte for byte —
+                        // dropping it here would blank the column on the first
+                        // edit of every workout logged on the other client.
+                        exerciseOrder: row.exerciseOrder
                     )
                 )
             )

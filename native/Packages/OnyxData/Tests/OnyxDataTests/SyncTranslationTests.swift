@@ -181,7 +181,7 @@ struct SyncTranslationTests {
         let full = try SyncTranslation.setRow(
             WorkoutSet(id: "b", sessionId: "s1", exerciseId: "helix5-pec-deck",
                        setIndex: 2, weightKg: 40, reps: 12, side: "left",
-                       pairId: "p1", est1rmKg: 55, rpe: 8),
+                       pairId: "p1", est1rmKg: 55, rpe: 8, exerciseOrder: 3),
             userId: "u1", exerciseId: "uuid-1"
         )
 
@@ -197,7 +197,10 @@ struct SyncTranslationTests {
         // cannot catch a key added to `CodingKeys` and forgotten in the
         // hand-written `encode(to:)` — both rows would be wrong together, and
         // the missing column would silently stop being written.
-        #expect(try keys(bare).count == 12, "every RemoteSetRow CodingKey is encoded")
+        // 13 since `v16.exerciseOrder`, and the bump is the point: a set with no
+        // order still writes the key as null, or a session logged half before
+        // the upgrade and half after would send two shapes in one batch.
+        #expect(try keys(bare).count == 13, "every RemoteSetRow CodingKey is encoded")
 
         // Same for the session row.
         let quiet = try SyncTranslation.sessionRow(session(), now: Date())
@@ -253,7 +256,11 @@ struct SyncTranslationTests {
         ) as? [String: Any]
         // An omitted column is left untouched by an upsert; `is_pr: false` would
         // overwrite a record the web app flagged.
-        for column in ["is_pr", "exercise_order", "quality", "created_at"] {
+        //
+        // `exercise_order` LEFT this list in `v16` — see `ExerciseOrderTests`.
+        // It is the one column here the phone has a real opinion about for
+        // every set it logs, because the opinion is the deck on screen.
+        for column in ["is_pr", "quality", "created_at"] {
             #expect(setJSON?[column] == nil, "\(column) must not be written yet")
         }
     }

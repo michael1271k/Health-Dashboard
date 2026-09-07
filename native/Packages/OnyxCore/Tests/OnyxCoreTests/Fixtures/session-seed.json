@@ -87,7 +87,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -495,7 +495,7 @@
         "dayKey": "arms",
         "exercises": [
           {
-            "name": "DB Shoulder Press",
+            "name": "Shoulder Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -529,7 +529,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -606,7 +606,7 @@
             ]
           },
           {
-            "name": "Cable Overhead Extension",
+            "name": "Overhead Triceps Extension",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -640,7 +640,7 @@
             ]
           },
           {
-            "name": "DB Hammer Curl",
+            "name": "Hammer Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -742,7 +742,7 @@
         "dayKey": "cb_b",
         "exercises": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -851,7 +851,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -885,7 +885,7 @@
             ]
           },
           {
-            "name": "Preacher Curl (Machine)",
+            "name": "Preacher Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -919,7 +919,7 @@
             ]
           },
           {
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "name": "Single Arm Triceps Pushdown",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -971,7 +971,7 @@
         "dayKey": "legs_b",
         "exercises": [
           {
-            "name": "Romanian Deadlift (Dumbbell)",
+            "name": "Romanian Deadlift",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1005,7 +1005,7 @@
             ]
           },
           {
-            "name": "Hip Thrust (Machine)",
+            "name": "Hip Thrust",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1268,7 +1268,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1721,7 +1721,7 @@
         "dayKey": "arms",
         "exercises": [
           {
-            "name": "DB Shoulder Press",
+            "name": "Shoulder Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1755,7 +1755,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1841,7 +1841,7 @@
             ]
           },
           {
-            "name": "Cable Overhead Extension",
+            "name": "Overhead Triceps Extension",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -1875,7 +1875,7 @@
             ]
           },
           {
-            "name": "DB Hammer Curl",
+            "name": "Hammer Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2002,7 +2002,7 @@
         "dayKey": "cb_b",
         "exercises": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2129,7 +2129,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2172,7 +2172,7 @@
             ]
           },
           {
-            "name": "Preacher Curl (Machine)",
+            "name": "Preacher Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2206,7 +2206,7 @@
             ]
           },
           {
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "name": "Single Arm Triceps Pushdown",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2258,7 +2258,7 @@
         "dayKey": "legs_b",
         "exercises": [
           {
-            "name": "Romanian Deadlift (Dumbbell)",
+            "name": "Romanian Deadlift",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2301,7 +2301,7 @@
             ]
           },
           {
-            "name": "Hip Thrust (Machine)",
+            "name": "Hip Thrust",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -2592,14 +2592,14 @@
           },
           {
             "sessionId": "sept6",
-            "exerciseName": "Chest Press (Machine)",
+            "exerciseName": "Chest Press",
             "order": 7,
             "weightKg": 40,
             "reps": 12
           },
           {
             "sessionId": "sept6",
-            "exerciseName": "Chest Press (Machine)",
+            "exerciseName": "Chest Press",
             "order": 8,
             "weightKg": 40,
             "reps": 11
@@ -2750,7 +2750,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "history",
             "seededFrom": "2026-09-06",
             "rows": [
@@ -2956,14 +2956,14 @@
           },
           {
             "sessionId": "sept6",
-            "exerciseName": "Chest Press (Machine)",
+            "exerciseName": "Chest Press",
             "order": 7,
             "weightKg": 40,
             "reps": 12
           },
           {
             "sessionId": "sept6",
-            "exerciseName": "Chest Press (Machine)",
+            "exerciseName": "Chest Press",
             "order": 8,
             "weightKg": 40,
             "reps": 11
@@ -3114,7 +3114,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "history",
             "seededFrom": "2026-09-06",
             "rows": [
@@ -3377,7 +3377,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -3622,7 +3622,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -3867,7 +3867,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -4112,7 +4112,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -4364,7 +4364,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -4623,7 +4623,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -4875,7 +4875,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -5148,7 +5148,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -5394,7 +5394,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -5654,7 +5654,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -5907,7 +5907,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6169,7 +6169,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6415,7 +6415,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6579,7 +6579,7 @@
         "sets": [
           {
             "sessionId": "p",
-            "exerciseName": "Single Arm Triceps Pushdown (Cable)",
+            "exerciseName": "Single Arm Triceps Pushdown",
             "order": 1,
             "weightKg": 7.5,
             "reps": 14,
@@ -6588,7 +6588,7 @@
           },
           {
             "sessionId": "p",
-            "exerciseName": "Single Arm Triceps Pushdown (Cable)",
+            "exerciseName": "Single Arm Triceps Pushdown",
             "order": 2,
             "weightKg": 7.5,
             "reps": 12,
@@ -6597,7 +6597,7 @@
           },
           {
             "sessionId": "p",
-            "exerciseName": "Single Arm Triceps Pushdown (Cable)",
+            "exerciseName": "Single Arm Triceps Pushdown",
             "order": 3,
             "weightKg": 7.5,
             "reps": 13,
@@ -6606,7 +6606,7 @@
           },
           {
             "sessionId": "p",
-            "exerciseName": "Single Arm Triceps Pushdown (Cable)",
+            "exerciseName": "Single Arm Triceps Pushdown",
             "order": 4,
             "weightKg": 6.25,
             "reps": 13,
@@ -6621,7 +6621,7 @@
         "dayKey": "cb_b",
         "exercises": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6730,7 +6730,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6764,7 +6764,7 @@
             ]
           },
           {
-            "name": "Preacher Curl (Machine)",
+            "name": "Preacher Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6798,7 +6798,7 @@
             ]
           },
           {
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "name": "Single Arm Triceps Pushdown",
             "source": "history",
             "seededFrom": "2026-09-06",
             "rows": [
@@ -6853,7 +6853,7 @@
         "sets": [
           {
             "sessionId": "p",
-            "exerciseName": "Single Arm Triceps Pushdown (Cable)",
+            "exerciseName": "Single Arm Triceps Pushdown",
             "order": 1,
             "weightKg": 5,
             "reps": 15,
@@ -6868,7 +6868,7 @@
         "dayKey": "cb_b",
         "exercises": [
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -6977,7 +6977,7 @@
             ]
           },
           {
-            "name": "Single Arm Lateral Raise (Cable)",
+            "name": "Single Arm Lateral Raise",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7011,7 +7011,7 @@
             ]
           },
           {
-            "name": "Preacher Curl (Machine)",
+            "name": "Preacher Curl",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7045,7 +7045,7 @@
             ]
           },
           {
-            "name": "Single Arm Triceps Pushdown (Cable)",
+            "name": "Single Arm Triceps Pushdown",
             "source": "history",
             "seededFrom": "2026-09-06",
             "rows": [
@@ -7181,7 +7181,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7358,7 +7358,7 @@
         "dayKey": "legs_b",
         "exercises": [
           {
-            "name": "Romanian Deadlift (Dumbbell)",
+            "name": "Romanian Deadlift",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7392,7 +7392,7 @@
             ]
           },
           {
-            "name": "Hip Thrust (Machine)",
+            "name": "Hip Thrust",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7688,7 +7688,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -7943,7 +7943,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -8219,7 +8219,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -8486,7 +8486,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -8720,7 +8720,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -8983,7 +8983,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -9253,7 +9253,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [
@@ -9521,7 +9521,7 @@
             ]
           },
           {
-            "name": "Chest Press (Machine)",
+            "name": "Chest Press",
             "source": "program",
             "seededFrom": null,
             "rows": [

@@ -5,8 +5,8 @@ describe('isUnilateralExercise', () => {
   it('matches every unilateral name in the program catalog', () => {
     for (const name of [
       'Single Arm Cable Crossover',
-      'Single Arm Lateral Raise (Cable)',
-      'Single Arm Triceps Pushdown (Cable)',
+      'Single Arm Lateral Raise',
+      'Single Arm Triceps Pushdown',
     ]) {
       expect(isUnilateralExercise(name), name).toBe(true)
     }
@@ -47,16 +47,16 @@ describe('isUnilateralExercise', () => {
   it('rejects the bilateral catalog — splitting these halves the session', () => {
     for (const name of [
       'Incline DB Press',
-      'DB Shoulder Press',
+      'Shoulder Press',
       'Lateral Raise DB',
-      'Chest Press (Machine)',
+      'Chest Press',
       'Leg Press',
       'Seated Leg Curl',
       'Lat Pulldown',
       'Neutral-Grip Lat Pulldown',
       'Seated Cable Row (V-Grip)',
       'Hip Thrust',
-      'Romanian Deadlift (Dumbbell)',
+      'Romanian Deadlift',
       'Rope Triceps Pushdown',
       'Hanging Knee Raise',
       'Reverse Crunch',

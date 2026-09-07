@@ -256,7 +256,29 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
 
         var volumeKg: Double { rows.reduce(0) { $0 + $1.volumeKg } }
-        var isComplete: Bool { !rows.isEmpty && rows.allSatisfy(\.isDone) }
+
+        /// Done when every set the PROGRAM asked for is ticked.
+        ///
+        /// ── WHY WARM-UPS AND GHOSTS ARE NOT PART OF THE TEST ────────────────
+        /// This was `rows.allSatisfy(\.isDone)`, over every row — and the deck
+        /// seeds a warm-up row on the leg days (`Leg Press` is `cutSets: 3` plus
+        /// the note "1 warm-up @40kg"). So the card counted 3/3 working sets,
+        /// which is what `workingSets` and `plannedSets` both mean, and STILL
+        /// refused to say Done, because the warm-up nobody performed was
+        /// outstanding. The header said finished and the card said not, over the
+        /// one row the program never counted in the first place.
+        ///
+        /// Ghosts go the same way for the same reason: a ghost is a row the
+        /// projection knows about and the program never prescribed.
+        ///
+        /// A movement that is ALL warm-up — nothing in this deck, but reachable
+        /// by deleting every working row — falls back to the old test rather
+        /// than reporting an exercise with rows in it as permanently unfinished.
+        var isComplete: Bool {
+            let prescribed = rows.filter { $0.kind != .warmup && $0.kind != .ghost }
+            guard !prescribed.isEmpty else { return !rows.isEmpty && rows.allSatisfy(\.isDone) }
+            return prescribed.allSatisfy(\.isDone)
+        }
     }
 
     // MARK: - State
@@ -649,6 +671,35 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         guard store != nil, sessionId != nil else { return }
         for row in exercise.rows[min(index, exercise.rows.count)...] where row.isDone {
             amendInStore(row, in: exercise)
+        }
+    }
+
+    /// Move a movement in the deck, and carry the new order into the store.
+    ///
+    /// ── A REORDER THAT DOES NOT PERSIST LOOKS LIKE ONE YOU DID NOT MAKE ─────
+    /// The array is what the deck draws, and the array alone survives exactly
+    /// as long as this object does. `exercise_order` on the rows is what the
+    /// session report reads back, on this device and on the web, so the two
+    /// have to move together or the drag is a piece of theatre.
+    ///
+    /// Only the movements BETWEEN the two positions shift, so only their logged
+    /// rows are re-amended — every other card's stored order is still correct,
+    /// and an amend that restates a row is permanent noise in a log that is
+    /// never compacted. In edit mode it is more than noise: each one is a seed,
+    /// a PR replay, a recount and an outbox upsert.
+    ///
+    /// `to` is a destination INDEX, not a `List.onMove` insertion offset. The
+    /// deck is a `LazyVStack`, there is no `onMove` here, and the off-by-one
+    /// between the two conventions is the kind that only shows up when you drag
+    /// downwards.
+    func moveExercise(from: Int, to: Int) {
+        guard exercises.indices.contains(from) else { return }
+        let target = min(max(to, 0), exercises.count - 1)
+        guard from != target else { return }
+        exercises.insert(exercises.remove(at: from), at: target)
+        guard store != nil, sessionId != nil else { return }
+        for exercise in exercises[min(from, target)...max(from, target)] {
+            for row in exercise.rows where row.isDone { amendInStore(row, in: exercise) }
         }
     }
 
@@ -1374,8 +1425,31 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             setType: row.kind.rawValue,
             est1rmKg: row.estimated1RM,
             rpe: row.rpe,
-            quality: row.quality?.rawValue
+            quality: row.quality?.rawValue,
+            exerciseOrder: deckOrder(of: exercise)
         )
+    }
+
+    /// Where a movement sits in the deck — the number every set of it is
+    /// written under, and the only place it is computed.
+    ///
+    /// ── ONE HELPER, BECAUSE FOUR CALL SITES WOULD DRIFT ─────────────────────
+    /// `appendInStore`, `amendInStore`, `restampFrom` and `moveExercise` all
+    /// need it, and all four reach it through `snapshot`. A value recomputed at
+    /// each would be four chances for a card to claim a position it is not in —
+    /// the same failure `storedId` exists to prevent one column over.
+    ///
+    /// Dense from 0, matching `buildCommitPayload` on the web: `exercise_order`
+    /// is one column read by both clients and two numbering schemes for it
+    /// would interleave a session logged half on each.
+    ///
+    /// The DECK's index and not the store's, in edit mode too, and that is
+    /// right there: `SessionDetailView.editorDay` builds the editing deck in
+    /// the session's own performed order, so the index already IS what the rows
+    /// carry — and where it is not (a movement the session never held), the
+    /// deck is the only thing that has an opinion at all.
+    private func deckOrder(of exercise: ExerciseState) -> Int? {
+        exercises.firstIndex { $0.id == exercise.id }
     }
 
     /// Which `exercise_id` this movement's sets are written under.
@@ -1456,7 +1530,8 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     weightKg: next.weightKg, reps: next.reps, rpe: next.rpe,
                     setType: next.setType,
                     quality: next.quality ?? SetPatch.clearedQuality,
-                    est1rmKg: next.est1rmKg, setIndex: next.setIndex
+                    est1rmKg: next.est1rmKg, setIndex: next.setIndex,
+                    exerciseOrder: next.exerciseOrder
                 ) != nil {
                     markDirty()
                 }
@@ -1469,7 +1544,8 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 // The sentinel, not nil: `nil` in a patch means UNCHANGED, so
                 // withdrawing a quality would otherwise be the one edit the
                 // amend could not express. See `SetPatch.clearedQuality`.
-                quality: next.quality ?? SetPatch.clearedQuality
+                quality: next.quality ?? SetPatch.clearedQuality,
+                exerciseOrder: next.exerciseOrder
             ))
             storeError = nil
         } catch EventStoreError.emptyPatch {

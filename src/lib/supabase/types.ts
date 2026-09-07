@@ -149,9 +149,21 @@ export interface Database {
           split_day: 'push' | 'pull' | 'legs' | 'upper' | 'lower'
           muscle_groups: string[] | null
           is_compound: boolean
+          /** Machine / DB / Cable. Added 2026-09-07 when the kit came out of
+           *  the titles — `equipment.ts` reads the name-keyed table rather than
+           *  this column, because the Swift twin has no database handle, but
+           *  the two must agree. `not null default '{}'`. */
+          equipment: string[]
+          /** Prescribed rest, seconds. The DECKS carry their own `restSec` in
+           *  `programs.ts` and its Swift twin and those are the authority for a
+           *  programmed lift; this is for a library movement no deck names. */
+          rest_sec: number | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['exercises']['Row'], 'id' | 'created_at'>
+        Insert: Omit<
+          Database['public']['Tables']['exercises']['Row'],
+          'id' | 'created_at' | 'equipment' | 'rest_sec'
+        > & { equipment?: string[]; rest_sec?: number | null }
         Update: Partial<Database['public']['Tables']['exercises']['Insert']>
       }
       workout_sessions: {
@@ -223,6 +235,14 @@ export interface Database {
           is_pr: boolean
           est_1rm_kg: number | null
           exercise_order: number | null
+          /** Seconds under load, for timed work. Added 2026-09-07 with the
+           *  treadmill. Historical timed rows (Side Plank) still carry their
+           *  duration in `reps`; this column is where new ones go. */
+          duration_sec: number | null
+          /** Treadmill incline, percent. */
+          incline: number | null
+          /** Distance covered, kilometres. */
+          distance_km: number | null
           set_type: string
           side: string | null
           pair_id: string | null

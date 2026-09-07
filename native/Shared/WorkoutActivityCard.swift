@@ -73,14 +73,16 @@ struct WorkoutLockCard: View {
                     WorkoutCountdown(state: state, startedAt: startedAt)
                 }
                 WorkoutTotals(state: state)
+                // ── AND `Skip rest` IS GONE FROM HERE ───────────────────
+                // It was a 44 pt capsule that appeared with the clock and left
+                // with it, so the card grew and shrank by a row every ninety
+                // seconds. The founder's call: the rest period's job on a Lock
+                // Screen is to TELL you something, not to give you a button you
+                // already have on the phone in your hand. The space it freed is
+                // the next lift, which is the one thing this surface knew and
+                // never said. `RestSkipIntent` survives — the expanded Dynamic
+                // Island still carries it, and the intent's own tests do.
                 WorkoutCurrentSet(state: state)
-                // Appears with the clock and leaves with it. The watch card
-                // below deliberately has no equivalent: watchOS cannot perform
-                // the iPhone app's intent, so the button there would be a
-                // control that does nothing.
-                if state.restEndsAt != nil {
-                    WorkoutSkipRest(dayKey: state.dayKey)
-                }
             }
             Spacer(minLength: 0)
             WorkoutSpark(values: state.spark, color: accent)
@@ -207,9 +209,31 @@ struct WorkoutTotals: View {
 struct WorkoutCurrentSet: View {
     let state: OnyxWorkoutAttributes.ContentState
 
+    /// Resting AND there is something to rest before. Both halves matter: the
+    /// last set of a session is a rest with no next lift, and naming a blank
+    /// one would be worse than naming the set just finished.
+    private var showsNext: Bool {
+        state.restEndsAt != nil && !(state.nextExercise ?? "").isEmpty
+    }
+
+    /// `currentSet` is the first UNTICKED row, so while you are resting the
+    /// card is already naming the set you are about to do. The only thing that
+    /// changes here is that it says so — and adds what that lift cost last
+    /// time, which is the decision the rest period is actually for.
+    private var name: String { state.nextExercise ?? state.exercise }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             HStack(spacing: 6) {
+                // `NEXT` rather than a different colour or a smaller name: the
+                // card changes SUBJECT here, and a label is the only channel
+                // that says so unambiguously at a glance on a locked screen.
+                if showsNext {
+                    Text("NEXT")
+                        .font(OnyxWidgetType.label(9, weight: .black))
+                        .tracking(0.8)
+                        .foregroundStyle(Color.onyx.day(state.dayKey))
+                }
                 // ── WHY IT SHRINKS RATHER THAN TRUNCATES ────────────────
                 // "Seated Cable Row (Wide Grip)" is 28 characters and the card
                 // is 360 pt wide with a sparkline in the other column, so a
@@ -218,12 +242,12 @@ struct WorkoutCurrentSet: View {
                 // and close grips as SEPARATE movements with separate records,
                 // so a card that ends at the bracket is a card that cannot tell
                 // you which of the two you are on.
-                Text(state.exercise)
+                Text(name)
                     .font(OnyxWidgetType.label(12))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                if !state.setLabel.isEmpty {
+                if !showsNext, !state.setLabel.isEmpty {
                     Text(state.setLabel)
                         .font(OnyxWidgetType.label(9, weight: .bold))
                         .tracking(0.6)
@@ -241,6 +265,19 @@ struct WorkoutCurrentSet: View {
                         .font(OnyxWidgetType.figure(11))
                         .foregroundStyle(Color.onyx.textSecondary)
                 }
+            }
+            // What this lift cost last time — the line the rest period is for.
+            // Only while resting: mid-set the card's job is the set in front of
+            // you, and a fourth line would cost the sparkline its column.
+            if showsNext, !state.lastTime.isEmpty {
+                Text(
+                    "prev \(state.lastTime)"
+                    + (state.lastRpe.map { $0.isEmpty ? "" : " · \($0)" } ?? "")
+                )
+                    .font(OnyxWidgetType.label(10))
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
         }
     }

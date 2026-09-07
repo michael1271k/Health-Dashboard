@@ -17,7 +17,7 @@ enum TrendsPreviews {
     private static let plan: [(dayKey: String, weekday: Int, lifts: [(String, Double, Int)])] = [
         ("cb_a",   0, [("Incline DB Press", 36, 10), ("Lat Pulldown", 52, 10), ("Cable Fly", 15, 12)]),
         ("legs_a", 1, [("Leg Press", 92, 10), ("Seated Leg Curl", 45, 12), ("Reverse Crunch", 0, 15)]),
-        ("arms",   2, [("Lateral Raise DB", 10, 15), ("Hammer Curl", 14, 12), ("Triceps Rope Pushdown", 20, 12)]),
+        ("arms",   2, [("Lateral Raise DB", 10, 15), ("Hammer Curl", 14, 12), ("Rope Triceps Pushdown", 20, 12)]),
         ("cb_b",   4, [("Incline DB Press", 36, 10), ("Seated Cable Row (V-Grip)", 45, 10)]),
         ("legs_b", 5, [("Leg Press", 92, 10), ("Leg Extension", 45, 12), ("Calf Raise", 60, 15)]),
     ]

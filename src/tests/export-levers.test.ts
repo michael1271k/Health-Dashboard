@@ -169,7 +169,7 @@ describe('the levers the week actually ran under', () => {
       targetPeriods: leverPeriods(flat, 'custom', '2026-08-14', OWN),
     })
     expect(headings(out)).not.toContain('## LEVERS')
-    expect(headerCells(out)[4]).toBe('lever=baseline 1955kcal 170P 195C 55F 10000st')
+    expect(headerCells(out)[4]).toBe('lever=baseline 1935kcal 170P 190C 55F 10000st')
     expect(headerCells(out)[4]).not.toBe('lever=mixed')
   })
 

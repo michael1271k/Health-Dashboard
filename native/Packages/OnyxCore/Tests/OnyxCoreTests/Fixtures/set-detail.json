@@ -208,7 +208,7 @@
             "pairId": null
           }
         ],
-        "exerciseName": "Single Arm Lateral Raise (Cable)"
+        "exerciseName": "Single Arm Lateral Raise"
       },
       "expected": [
         "Warm-up: L 2.5 kg × 15 (warm-up) · R 2.5 kg × 15 (warm-up)",
@@ -267,7 +267,7 @@
             "quality": "form_breakdown"
           }
         ],
-        "exerciseName": "DB Hammer Curl"
+        "exerciseName": "Hammer Curl"
       },
       "expected": [
         "Set 1: 20 kg × 12 (RPE 10 — Failure)",
@@ -296,7 +296,7 @@
             "dropset": true
           }
         ],
-        "exerciseName": "Preacher Curl (Machine)"
+        "exerciseName": "Preacher Curl"
       },
       "expected": [
         "Set 1: 18.75 kg × 12 (RPE 9.5 — Max Effort)",
@@ -332,7 +332,7 @@
             "pairId": null
           }
         ],
-        "exerciseName": "Chest Press (Machine)"
+        "exerciseName": "Chest Press"
       },
       "expected": [
         "Set 1: 40 kg × 12",
@@ -411,7 +411,7 @@
             "pairId": "p"
           }
         ],
-        "exerciseName": "Single Arm Lateral Raise (Cable)"
+        "exerciseName": "Single Arm Lateral Raise"
       },
       "expected": [
         "Set 1: L 5 kg × 12 (RPE 8 — Challenging)"
@@ -438,7 +438,7 @@
             "pairId": "p"
           }
         ],
-        "exerciseName": "Single Arm Lateral Raise (Cable)"
+        "exerciseName": "Single Arm Lateral Raise"
       },
       "expected": [
         "Set 1: L 5 kg × 12 (RPE 8 — Challenging) · R 5 kg × 14 (RPE 9 — Very Hard)"
@@ -457,7 +457,7 @@
             "pairId": null
           }
         ],
-        "exerciseName": "Single Arm Lateral Raise (Cable)"
+        "exerciseName": "Single Arm Lateral Raise"
       },
       "expected": [
         "Set 1: 5 kg × 12 (RPE 8 — Challenging)"
@@ -486,7 +486,7 @@
             "warmup": true
           }
         ],
-        "exerciseName": "Single Arm Lateral Raise (Cable)"
+        "exerciseName": "Single Arm Lateral Raise"
       },
       "expected": [
         "Warm-up: L 2 kg × 15 (RPE 5 — Very Easy, warm-up) · R 2 kg × 15 (warm-up)"

@@ -64,6 +64,37 @@ struct OnyxWorkoutAttributes: ActivityAttributes {
         /// Records claimed in THIS session. Zero renders as NOTHING: a permanent
         /// gold zero is how gold stops meaning a personal record.
         var prsThisSession: Int
+        /// The movement you are resting BEFORE, and what it asks for.
+        ///
+        /// ── WHY THE CARD CHANGES SUBJECT WHILE RESTING ──────────────────────
+        /// The set you just finished is the one fact you already know — you
+        /// were standing over it thirty seconds ago. What you cannot see from
+        /// the rack is what is next and what it cost last time, which is the
+        /// decision the rest period exists for. So while `restEndsAt` is set
+        /// the card names the NEXT lift; the moment rest ends it goes back to
+        /// the set in front of you.
+        ///
+        /// ── AND WHY ALL THREE ARE OPTIONAL ──────────────────────────────────
+        /// The same reason `timerOrigin` is, and it is not a style choice: a
+        /// running activity outlives an app update and ActivityKit decodes the
+        /// card it already holds with the NEW type. A synthesized `Decodable`
+        /// requires every non-optional key, so a required field added here
+        /// would fail that decode, `Activity.activities` would not hand the
+        /// card back, and the next launch would request a second card beside an
+        /// orphan nothing can end.
+        ///
+        /// They are also nil on the LAST set of the session, which has no next
+        /// lift — the card falls back to the current set, which is correct
+        /// rather than a placeholder.
+        var nextExercise: String?
+        /// What that lift cost last time, as a rating: "RPE 9". Nil when the
+        /// movement is new, or when the previous set was never rated.
+        ///
+        /// `lastTime` above already carries the previous LOAD and it has been
+        /// computed since the card existed — the Lock Screen simply never drew
+        /// it. The rating is the half that was genuinely missing: "40 kg × 12"
+        /// tells you what you lifted and nothing about whether it was close.
+        var lastRpe: String?
         /// When the current rest period ends, so the card can count it down
         /// itself with a `Text(_:style:)` timer. `nil` means not resting, which
         /// is not the same as a timer at zero.

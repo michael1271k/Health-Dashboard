@@ -77,7 +77,7 @@ describe('the rungs themselves', () => {
   it('baseline is the plan as written', () => {
     // 10k, not 8k — corrected 2026-08-22 to agree with NUTRITION_PRESETS.cut
     // and the live user_goals row, which had both said 10,000 all along.
-    expect(LEVERS[0]).toMatchObject({ id: 'baseline', calorieGoal: 1955, stepsGoal: 10000 })
+    expect(LEVERS[0]).toMatchObject({ id: 'baseline', calorieGoal: 1935, stepsGoal: 10000 })
   })
 })
 

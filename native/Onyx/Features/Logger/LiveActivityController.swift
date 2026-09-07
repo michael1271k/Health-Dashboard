@@ -156,6 +156,18 @@ final class LiveActivityController {
             setsDone: model.completedSets,
             setsPlanned: model.plannedSets,
             prsThisSession: model.recordCount,
+            // The upcoming movement, named so the card can say NEXT while the
+            // rest clock runs. It is `currentSet`'s own exercise: the cursor is
+            // the first UNTICKED row, so during a rest it is already the lift
+            // you are walking back to.
+            nextExercise: current?.exercise.name,
+            // ── AND WHY THE RATING IS READ OFF THE SEED ─────────────────────
+            // `row.rpe` on an unticked row is what E4's seed REMEMBERED from
+            // the last time this set number was performed, which is exactly
+            // "what did this cost me last time". Once the set is ticked it
+            // becomes this session's own rating and stops being a `prev`, so
+            // the card only ever draws it while resting.
+            lastRpe: current?.row.rpe.map { "RPE \(OnyxFormat.rpe($0))" },
             restEndsAt: model.restEndsAt,
             // The clock, mirrored. `timerOrigin` is already moved forward by
             // whatever has been banked in pauses, so the card counts the same

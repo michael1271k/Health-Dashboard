@@ -8,21 +8,21 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 14,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 13,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 13,
             "timed": false,
@@ -46,23 +46,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -74,7 +74,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -129,7 +129,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "volume",
               "e1rm"
@@ -145,7 +145,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "volume",
@@ -213,21 +213,21 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 40,
             "reps": 20,
             "timed": false,
             "setType": "warmup"
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 40,
             "reps": 20,
             "timed": false,
             "setType": "dropset"
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 40,
             "reps": 20,
             "timed": false,
@@ -237,23 +237,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -265,7 +265,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -299,7 +299,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 40,
             "reps": 20,
             "timed": false,
@@ -309,23 +309,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -337,7 +337,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -370,7 +370,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight",
               "volume",
@@ -381,7 +381,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -411,7 +411,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": 8,
             "timed": false,
@@ -421,23 +421,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -449,7 +449,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -472,7 +472,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight"
             ]
@@ -481,7 +481,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -499,7 +499,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": 10,
             "timed": false,
@@ -509,23 +509,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -537,7 +537,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -565,7 +565,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight",
               "e1rm"
@@ -575,7 +575,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -599,7 +599,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 12,
             "timed": false,
@@ -609,23 +609,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -637,7 +637,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -671,23 +671,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -699,7 +699,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -733,23 +733,23 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               38.5
             ]
           ],
@@ -761,7 +761,7 @@
           ],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -1641,21 +1641,21 @@
       "input": {
         "sets": [
           {
-            "key": "Romanian Deadlift (DB)",
+            "key": "Romanian Deadlift",
             "weightKg": 35,
             "reps": 12,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Romanian Deadlift (DB)",
+            "key": "Romanian Deadlift",
             "weightKg": 35,
             "reps": 12,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Romanian Deadlift (DB)",
+            "key": "Romanian Deadlift",
             "weightKg": 35,
             "reps": 12,
             "timed": false,
@@ -1665,26 +1665,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Romanian Deadlift (DB)",
+              "Romanian Deadlift",
               35
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Romanian Deadlift (DB)|35",
+              "Romanian Deadlift|35",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Romanian Deadlift (DB)",
+              "Romanian Deadlift",
               49
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Romanian Deadlift (DB)",
+              "Romanian Deadlift",
               420
             ]
           ]
@@ -1799,7 +1799,7 @@
       "input": {
         "sets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "weightKg": 37.5,
             "reps": 12,
             "timed": false,
@@ -1809,26 +1809,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               37.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Chest Press (Machine)|37.5",
+              "Chest Press|37.5",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               50
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               375
             ]
           ]
@@ -1856,7 +1856,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "volume",
               "e1rm"
@@ -1866,7 +1866,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "volume",
@@ -1890,7 +1890,7 @@
       "input": {
         "sets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "weightKg": 37.5,
             "reps": 12,
             "timed": false,
@@ -1900,26 +1900,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               35
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Chest Press (Machine)|35",
+              "Chest Press|35",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               49
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               420
             ]
           ]
@@ -1952,7 +1952,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight",
               "volume",
@@ -1963,7 +1963,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -1993,7 +1993,7 @@
       "input": {
         "sets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "weightKg": 55,
             "reps": 8,
             "timed": false,
@@ -2003,30 +2003,30 @@
         "baselines": {
           "bestWeight": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               100
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Chest Press (Machine)|100",
+              "Chest Press|100",
               3
             ],
             [
-              "Chest Press (Machine)|45",
+              "Chest Press|45",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               60
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               450
             ]
           ]
@@ -2049,7 +2049,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "e1rm"
             ]
@@ -2058,7 +2058,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "e1rm",
@@ -2432,7 +2432,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -2441,7 +2441,7 @@
             "pairId": "t1"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 14,
             "timed": false,
@@ -2453,26 +2453,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -2500,7 +2500,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm"
             ]
@@ -2509,7 +2509,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -2527,7 +2527,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -2536,7 +2536,7 @@
             "pairId": "t1"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -2548,26 +2548,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               6.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               50
             ]
           ]
@@ -2602,7 +2602,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm",
               "volume"
@@ -2612,7 +2612,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -2636,7 +2636,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -2645,7 +2645,7 @@
             "pairId": "t1"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -2657,26 +2657,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               6.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               50
             ]
           ]
@@ -2711,7 +2711,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm",
               "volume"
@@ -2721,7 +2721,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -2745,7 +2745,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 17,
             "timed": false,
@@ -2755,26 +2755,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               15
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7.5
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               75
             ]
           ]
@@ -2802,7 +2802,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "volume",
               "e1rm"
@@ -2812,7 +2812,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "volume",
@@ -2836,7 +2836,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -2848,26 +2848,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               6.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               50
             ]
           ]
@@ -2895,7 +2895,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "volume",
               "e1rm"
@@ -2905,7 +2905,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "volume",
@@ -2929,7 +2929,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -2939,7 +2939,7 @@
             "repFloor": 12
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 15,
             "timed": false,
@@ -2952,26 +2952,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               4
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|4",
+              "Single Arm Lateral Raise|4",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5.6
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               48
             ]
           ]
@@ -3016,7 +3016,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm",
@@ -3027,7 +3027,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -3057,7 +3057,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 12,
             "timed": false,
@@ -3066,7 +3066,7 @@
             "pairId": "p1"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 12,
             "timed": false,
@@ -3078,26 +3078,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -3137,7 +3137,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm",
@@ -3148,7 +3148,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -3178,7 +3178,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -3187,7 +3187,7 @@
             "pairId": "p"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -3199,26 +3199,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               6.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               50
             ]
           ]
@@ -3263,7 +3263,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "volume",
               "e1rm"
@@ -3273,7 +3273,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "volume",
@@ -3297,7 +3297,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 15,
             "timed": false,
@@ -3305,7 +3305,7 @@
             "pairId": ""
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 14,
             "timed": false,
@@ -3316,26 +3316,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               25
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               36.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -3385,7 +3385,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "volume",
               "e1rm",
@@ -3396,7 +3396,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "volume",
@@ -3426,7 +3426,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 15,
             "timed": false,
@@ -3434,7 +3434,7 @@
             "repFloor": 8
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 14,
             "timed": false,
@@ -3442,7 +3442,7 @@
             "repFloor": 8
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 13,
             "timed": false,
@@ -3453,30 +3453,30 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               27.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ],
             [
-              "Hip Thrust (Machine)|27.5",
+              "Hip Thrust|27.5",
               13
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               39.4
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               357.5
             ]
           ]
@@ -3519,7 +3519,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "volume",
               "e1rm"
@@ -3529,7 +3529,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "volume",
@@ -3553,7 +3553,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 15,
             "timed": false,
@@ -3561,7 +3561,7 @@
             "repFloor": 8
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 27.5,
             "reps": 14,
             "timed": false,
@@ -3572,26 +3572,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               25
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               14
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               36.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               350
             ]
           ]
@@ -3638,7 +3638,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight",
               "volume",
@@ -3649,7 +3649,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -3679,7 +3679,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 14,
             "timed": false,
@@ -3687,7 +3687,7 @@
             "repFloor": 8
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 14,
             "timed": false,
@@ -3698,26 +3698,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               25
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               35
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               300
             ]
           ]
@@ -3750,7 +3750,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "volume",
               "e1rm"
@@ -3760,7 +3760,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "volume",
@@ -3784,7 +3784,7 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": 10,
             "timed": false,
@@ -3792,7 +3792,7 @@
             "repFloor": 8
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 25,
             "reps": 15,
             "timed": false,
@@ -3803,26 +3803,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               25
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               35
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               300
             ]
           ]
@@ -3862,7 +3862,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight",
               "e1rm",
@@ -3873,7 +3873,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -3903,21 +3903,21 @@
       "input": {
         "sets": [
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 30,
             "reps": 10,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "weightKg": 45,
             "reps": 10,
             "timed": false,
             "setType": null
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "weightKg": 32.5,
             "reps": 8,
             "timed": false,
@@ -3927,42 +3927,42 @@
         "baselines": {
           "bestWeight": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               25
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               40
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Hip Thrust (Machine)|25",
+              "Hip Thrust|25",
               12
             ],
             [
-              "Chest Press (Machine)|40",
+              "Chest Press|40",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               35
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               53.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Hip Thrust (Machine)",
+              "Hip Thrust",
               300
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               400
             ]
           ]
@@ -4026,7 +4026,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight",
               "volume",
@@ -4034,7 +4034,7 @@
             ]
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "axes": [
               "weight",
               "e1rm"
@@ -4044,7 +4044,7 @@
         "prCount": 5,
         "recordSets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -4067,7 +4067,7 @@
             ]
           },
           {
-            "key": "Hip Thrust (Machine)",
+            "key": "Hip Thrust",
             "records": [
               {
                 "axis": "weight",
@@ -4091,13 +4091,13 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
@@ -4123,7 +4123,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4134,7 +4134,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4164,39 +4164,39 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 22.5,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 3
           }
         ],
         "baselines": {
           "bestWeight": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               16
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Hammer Curl|16",
+              "Hammer Curl|16",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               21.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               160
             ]
           ]
@@ -4220,13 +4220,13 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 11,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
@@ -4256,39 +4256,39 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 22.5,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-08-04",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
         "baselines": {
           "bestWeight": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               16
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Hammer Curl|16",
+              "Hammer Curl|16",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               21.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               160
             ]
           ]
@@ -4321,7 +4321,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4332,7 +4332,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4362,13 +4362,13 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-08-04",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
@@ -4398,46 +4398,46 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 22.5,
             "reps": 12,
             "timed": false,
             "setType": null
           },
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
         "baselines": {
           "bestWeight": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               16
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Hammer Curl|16",
+              "Hammer Curl|16",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               21.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               160
             ]
           ]
@@ -4475,7 +4475,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4486,7 +4486,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4516,39 +4516,39 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 22.5,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
         "baselines": {
           "bestWeight": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               16
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Hammer Curl|16",
+              "Hammer Curl|16",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               21.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               160
             ]
           ]
@@ -4581,7 +4581,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4592,7 +4592,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4687,7 +4687,7 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
@@ -4718,7 +4718,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4729,7 +4729,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4759,39 +4759,39 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
         "baselines": {
           "bestWeight": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               16
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Hammer Curl|16",
+              "Hammer Curl|16",
               10
             ]
           ],
           "bestE1rm": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               21.3
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Hammer Curl",
+              "Hammer Curl",
               160
             ]
           ]
@@ -4824,7 +4824,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4835,7 +4835,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4865,23 +4865,23 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           },
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 22.5,
             "reps": 12,
             "timed": false,
             "setType": null,
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 2
           }
         ],
@@ -4912,7 +4912,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4923,7 +4923,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -4953,13 +4953,13 @@
       "input": {
         "sets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "weightKg": 20,
             "reps": 12,
             "timed": false,
             "setType": "warmup",
             "date": "2026-07-21",
-            "exerciseName": "DB Hammer Curl",
+            "exerciseName": "Hammer Curl",
             "setNumber": 1
           }
         ],
@@ -4985,7 +4985,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "axes": [
               "weight",
               "volume",
@@ -4996,7 +4996,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "DB Hammer Curl",
+            "key": "Hammer Curl",
             "records": [
               {
                 "axis": "weight",
@@ -5086,8 +5086,8 @@
             "date": "2026-08-02"
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 1,
             "weightKg": 37.5,
             "reps": 12,
@@ -5096,8 +5096,8 @@
             "date": "2026-08-02"
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 2,
             "weightKg": 40,
             "reps": 8,
@@ -5213,7 +5213,7 @@
               35
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               37.5
             ],
             [
@@ -5243,11 +5243,11 @@
               12
             ],
             [
-              "Chest Press (Machine)|37.5",
+              "Chest Press|37.5",
               12
             ],
             [
-              "Chest Press (Machine)|35",
+              "Chest Press|35",
               12
             ],
             [
@@ -5289,7 +5289,7 @@
               49
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               52.5
             ],
             [
@@ -5320,7 +5320,7 @@
               420
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               450
             ],
             [
@@ -5467,7 +5467,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight"
             ]
@@ -5493,7 +5493,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -5571,8 +5571,8 @@
             "date": "2026-08-02"
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 1,
             "weightKg": 37.5,
             "reps": 12,
@@ -5581,8 +5581,8 @@
             "date": "2026-08-02"
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 2,
             "weightKg": 40,
             "reps": 8,
@@ -5698,7 +5698,7 @@
               63.75
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               37.5
             ],
             [
@@ -5732,11 +5732,11 @@
               12
             ],
             [
-              "Chest Press (Machine)|37.5",
+              "Chest Press|37.5",
               12
             ],
             [
-              "Chest Press (Machine)|35",
+              "Chest Press|35",
               12
             ],
             [
@@ -5778,7 +5778,7 @@
               89.3
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               52.5
             ],
             [
@@ -5809,7 +5809,7 @@
               765
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               450
             ],
             [
@@ -5956,7 +5956,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight"
             ]
@@ -5982,7 +5982,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -6060,8 +6060,8 @@
             "date": null
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 1,
             "weightKg": 37.5,
             "reps": 12,
@@ -6070,8 +6070,8 @@
             "date": null
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 2,
             "weightKg": 40,
             "reps": 8,
@@ -6187,7 +6187,7 @@
               63.75
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               37.5
             ],
             [
@@ -6221,11 +6221,11 @@
               12
             ],
             [
-              "Chest Press (Machine)|37.5",
+              "Chest Press|37.5",
               12
             ],
             [
-              "Chest Press (Machine)|35",
+              "Chest Press|35",
               12
             ],
             [
@@ -6267,7 +6267,7 @@
               89.3
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               52.5
             ],
             [
@@ -6298,7 +6298,7 @@
               765
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               450
             ],
             [
@@ -6438,7 +6438,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight"
             ]
@@ -6454,7 +6454,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -6549,8 +6549,8 @@
             "date": null
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 1,
             "weightKg": 37.5,
             "reps": 12,
@@ -6559,8 +6559,8 @@
             "date": null
           },
           {
-            "key": "Chest Press (Machine)",
-            "exerciseName": "Chest Press (Machine)",
+            "key": "Chest Press",
+            "exerciseName": "Chest Press",
             "setNumber": 2,
             "weightKg": 40,
             "reps": 8,
@@ -6676,7 +6676,7 @@
               35
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               37.5
             ],
             [
@@ -6706,11 +6706,11 @@
               12
             ],
             [
-              "Chest Press (Machine)|37.5",
+              "Chest Press|37.5",
               12
             ],
             [
-              "Chest Press (Machine)|35",
+              "Chest Press|35",
               12
             ],
             [
@@ -6752,7 +6752,7 @@
               49
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               52.5
             ],
             [
@@ -6783,7 +6783,7 @@
               420
             ],
             [
-              "Chest Press (Machine)",
+              "Chest Press",
               450
             ],
             [
@@ -6942,7 +6942,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "axes": [
               "weight"
             ]
@@ -6975,7 +6975,7 @@
             ]
           },
           {
-            "key": "Chest Press (Machine)",
+            "key": "Chest Press",
             "records": [
               {
                 "axis": "weight",
@@ -8256,11 +8256,11 @@
       }
     },
     {
-      "name": "floor — Cable Overhead Extension: returning to 12.5 kg is not a record",
+      "name": "floor — Overhead Triceps Extension: returning to 12.5 kg is not a record",
       "input": {
         "sets": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "weightKg": 12.5,
             "reps": 10,
             "timed": false,
@@ -8271,26 +8271,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               12.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Cable Overhead Extension|11.25",
+              "Overhead Triceps Extension|11.25",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               15.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               135
             ]
           ]
@@ -8313,7 +8313,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "axes": [
               "e1rm"
             ]
@@ -8322,7 +8322,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "records": [
               {
                 "axis": "e1rm",
@@ -8336,11 +8336,11 @@
       }
     },
     {
-      "name": "floor — Cable Overhead Extension: 15 kg still is",
+      "name": "floor — Overhead Triceps Extension: 15 kg still is",
       "input": {
         "sets": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "weightKg": 15,
             "reps": 10,
             "timed": false,
@@ -8351,26 +8351,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               12.5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Cable Overhead Extension|11.25",
+              "Overhead Triceps Extension|11.25",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               15.7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Cable Overhead Extension",
+              "Overhead Triceps Extension",
               135
             ]
           ]
@@ -8403,7 +8403,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "axes": [
               "weight",
               "volume",
@@ -8414,7 +8414,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Cable Overhead Extension",
+            "key": "Overhead Triceps Extension",
             "records": [
               {
                 "axis": "weight",
@@ -8440,11 +8440,11 @@
       }
     },
     {
-      "name": "floor — DB Shoulder Press: returning to 31 kg is not a record",
+      "name": "floor — Shoulder Press: returning to 31 kg is not a record",
       "input": {
         "sets": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "weightKg": 31,
             "reps": 10,
             "timed": false,
@@ -8455,26 +8455,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               31
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Shoulder Press|30",
+              "Shoulder Press|30",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               42.25
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               360
             ]
           ]
@@ -8494,11 +8494,11 @@
       }
     },
     {
-      "name": "floor — DB Shoulder Press: 33.5 kg still is",
+      "name": "floor — Shoulder Press: 33.5 kg still is",
       "input": {
         "sets": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "weightKg": 33.5,
             "reps": 10,
             "timed": false,
@@ -8509,26 +8509,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               31
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "DB Shoulder Press|30",
+              "Shoulder Press|30",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               42.25
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "DB Shoulder Press",
+              "Shoulder Press",
               360
             ]
           ]
@@ -8556,7 +8556,7 @@
         ],
         "axesByKey": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "axes": [
               "weight",
               "e1rm"
@@ -8566,7 +8566,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "DB Shoulder Press",
+            "key": "Shoulder Press",
             "records": [
               {
                 "axis": "weight",
@@ -17300,7 +17300,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17309,7 +17309,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17321,26 +17321,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17369,7 +17369,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17378,7 +17378,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17390,26 +17390,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17438,7 +17438,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17447,7 +17447,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17459,26 +17459,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17506,7 +17506,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm"
             ]
@@ -17515,7 +17515,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -17533,7 +17533,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17542,7 +17542,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17554,26 +17554,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17602,7 +17602,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17611,7 +17611,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17623,26 +17623,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17671,7 +17671,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17680,7 +17680,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17692,26 +17692,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17739,7 +17739,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm"
             ]
@@ -17748,7 +17748,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -17766,7 +17766,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17775,7 +17775,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -17787,26 +17787,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17834,7 +17834,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm"
             ]
@@ -17843,7 +17843,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -17861,7 +17861,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17870,7 +17870,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -17882,26 +17882,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -17929,7 +17929,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm"
             ]
@@ -17938,7 +17938,7 @@
         "prCount": 1,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -17956,7 +17956,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17965,7 +17965,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -17977,26 +17977,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18031,7 +18031,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "e1rm",
               "volume"
@@ -18041,7 +18041,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "e1rm",
@@ -18065,7 +18065,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 10,
             "timed": false,
@@ -18074,7 +18074,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -18086,26 +18086,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18138,7 +18138,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18148,7 +18148,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18172,7 +18172,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 10,
             "timed": false,
@@ -18181,7 +18181,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -18193,26 +18193,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18245,7 +18245,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18255,7 +18255,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18279,7 +18279,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 10,
             "timed": false,
@@ -18288,7 +18288,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -18300,26 +18300,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18352,7 +18352,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18362,7 +18362,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18386,7 +18386,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 12,
             "timed": false,
@@ -18395,7 +18395,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -18407,26 +18407,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18459,7 +18459,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18469,7 +18469,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18493,7 +18493,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 12,
             "timed": false,
@@ -18502,7 +18502,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -18514,26 +18514,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18566,7 +18566,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18576,7 +18576,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18600,7 +18600,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 12,
             "timed": false,
@@ -18609,7 +18609,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -18621,26 +18621,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18673,7 +18673,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18683,7 +18683,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18707,7 +18707,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 13,
             "timed": false,
@@ -18716,7 +18716,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 10,
             "timed": false,
@@ -18728,26 +18728,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18780,7 +18780,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18790,7 +18790,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18814,7 +18814,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 13,
             "timed": false,
@@ -18823,7 +18823,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 12,
             "timed": false,
@@ -18835,26 +18835,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -18887,7 +18887,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm"
@@ -18897,7 +18897,7 @@
         "prCount": 2,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",
@@ -18921,7 +18921,7 @@
       "input": {
         "sets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 6,
             "reps": 13,
             "timed": false,
@@ -18930,7 +18930,7 @@
             "pairId": "g"
           },
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "weightKg": 5,
             "reps": 13,
             "timed": false,
@@ -18942,26 +18942,26 @@
         "baselines": {
           "bestWeight": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               5
             ]
           ],
           "bestRepsAtWeight": [
             [
-              "Single Arm Lateral Raise (Cable)|5",
+              "Single Arm Lateral Raise|5",
               12
             ]
           ],
           "bestE1rm": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               7
             ]
           ],
           "bestSeconds": [],
           "bestSetVolume": [
             [
-              "Single Arm Lateral Raise (Cable)",
+              "Single Arm Lateral Raise",
               60
             ]
           ]
@@ -19001,7 +19001,7 @@
         ],
         "axesByKey": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "axes": [
               "weight",
               "e1rm",
@@ -19012,7 +19012,7 @@
         "prCount": 3,
         "recordSets": [
           {
-            "key": "Single Arm Lateral Raise (Cable)",
+            "key": "Single Arm Lateral Raise",
             "records": [
               {
                 "axis": "weight",

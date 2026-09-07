@@ -117,7 +117,7 @@ describe('exercise glyphs', () => {
   it('prefers the specific equipment when a name carries two', () => {
     expect(exerciseIconFor('Cable Lateral Raise (Machine)').label).toBe('Cable')
     expect(exerciseIconFor('Seated Cable Row').label).toBe('Cable')
-    expect(exerciseIconFor('Chest Press (Machine)').label).toBe('Machine')
+    expect(exerciseIconFor('Chest Press').label).toBe('Machine')
     expect(exerciseIconFor('Dumbbell Bench Press').label).toBe('Dumbbell')
   })
 

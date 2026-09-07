@@ -80,7 +80,7 @@
       "input": {
         "sets": [
           {
-            "exercise": "Chest Press (Machine)",
+            "exercise": "Chest Press",
             "day": "2026-08-05",
             "weightKg": 40,
             "reps": 12,
@@ -125,13 +125,13 @@
       "input": {
         "sets": [
           {
-            "exercise": "Chest Press (Machine)",
+            "exercise": "Chest Press",
             "day": "2026-08-02",
             "weightKg": 60,
             "reps": 10
           },
           {
-            "exercise": "Chest Press (Machine)",
+            "exercise": "Chest Press",
             "day": "2026-08-02",
             "weightKg": 60,
             "reps": 9
@@ -161,13 +161,13 @@
             "reps": 15
           },
           {
-            "exercise": "Romanian Deadlift (Dumbbell)",
+            "exercise": "Romanian Deadlift",
             "day": "2026-08-02",
             "weightKg": 24,
             "reps": 10
           },
           {
-            "exercise": "Shoulder Press (DB)",
+            "exercise": "Shoulder Press",
             "day": "2026-08-02",
             "weightKg": 16,
             "reps": 10

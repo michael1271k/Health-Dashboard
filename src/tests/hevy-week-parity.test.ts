@@ -77,12 +77,12 @@ const WEEK: Day[] = [
     date: '2026-08-18', dayKey: 'arms', label: 'Delts & Arms', physical: 20,
     hevy: { Biceps: 8, Shoulders: 7, Triceps: 6.5, Forearms: 2.5 },
     ex: [
-      { name: 'DB Shoulder Press', sets: 3 },
-      { name: 'Single Arm Lateral Raise (Cable)', sets: 6, pairs: 2 },
-      { name: 'DB Hammer Curl', sets: 3 },
+      { name: 'Shoulder Press', sets: 3 },
+      { name: 'Single Arm Lateral Raise', sets: 6, pairs: 2 },
+      { name: 'Hammer Curl', sets: 3 },
       { name: 'Seated Incline DB Curl', sets: 3 },
       { name: 'Reverse EZ-Bar Curl', sets: 2 },
-      { name: 'Cable Overhead Extension', sets: 3 },
+      { name: 'Overhead Triceps Extension', sets: 3 },
       { name: 'Rope Triceps Pushdown', sets: 2 },
     ],
   },
@@ -90,13 +90,13 @@ const WEEK: Day[] = [
     date: '2026-08-20', dayKey: 'cb_b', label: 'Upper B', physical: 18,
     hevy: { Biceps: 5, Chest: 5, Shoulders: 4.5, Triceps: 4.5, Lats: 3, 'Upper back': 3, Forearms: 2 },
     ex: [
-      { name: 'Chest Press (Machine)', sets: 3 },
+      { name: 'Chest Press', sets: 3 },
       { name: 'Neutral-Grip Lat Pulldown', sets: 2 },
       { name: 'Seated Cable Row (Wide Grip)', sets: 2 },
       { name: 'Single Arm Cable Crossover', sets: 2 },
-      { name: 'Preacher Curl (Machine)', sets: 3 },
-      { name: 'Single Arm Lateral Raise (Cable)', sets: 4, pairs: 1 },
-      { name: 'Single Arm Triceps Pushdown (Cable)', sets: 6, pairs: 3 },
+      { name: 'Preacher Curl', sets: 3 },
+      { name: 'Single Arm Lateral Raise', sets: 4, pairs: 1 },
+      { name: 'Single Arm Triceps Pushdown', sets: 6, pairs: 3 },
     ],
   },
   {
@@ -106,8 +106,8 @@ const WEEK: Day[] = [
       Forearms: 1.5, Adductors: 1.5, Lats: 1.5, 'Lower back': 1.5, 'Upper back': 1.5,
     },
     ex: [
-      { name: 'Romanian Deadlift (DB)', sets: 3 },
-      { name: 'Hip Thrust (Machine)', sets: 3 },
+      { name: 'Romanian Deadlift', sets: 3 },
+      { name: 'Hip Thrust', sets: 3 },
       { name: 'Leg Press', sets: 3, warmups: 1 },
       { name: 'Calf Press', sets: 3 },
       { name: 'Seated Leg Curl', sets: 2 },
@@ -120,7 +120,7 @@ const WEEK: Day[] = [
     hevy: { Chest: 7, Lats: 7, Shoulders: 5.5, Biceps: 4, Triceps: 4, 'Upper back': 3.5, Forearms: 2.5 },
     ex: [
       { name: 'Incline DB Press', sets: 3 },
-      { name: 'Chest Press (Machine)', sets: 2 },
+      { name: 'Chest Press', sets: 2 },
       { name: 'Pec Deck', sets: 2 },
       { name: 'Lat Pulldown', sets: 3 },
       { name: 'Seated Cable Row (V-Grip)', sets: 2 },
@@ -221,7 +221,7 @@ describe('the three deltoid credits that were wrong', () => {
   })
 
   it('a shoulder press is front delts + triceps — no side delt', () => {
-    const a = draftMuscleSets(setsOf('DB Shoulder Press', 3))
+    const a = draftMuscleSets(setsOf('Shoulder Press', 3))
     expect(a['Front delts']).toBe(3)
     expect(a.Triceps).toBe(1.5)
     expect(a['Side delts'] ?? 0).toBe(0)
@@ -235,7 +235,7 @@ describe('the three deltoid credits that were wrong', () => {
    */
   it('leaves the movements that DO train each head intact', () => {
     expect(draftMuscleSets(setsOf('Face Pull', 3))['Rear delts']).toBe(3)
-    expect(draftMuscleSets(setsOf('Single Arm Lateral Raise (Cable)', 3))['Side delts']).toBe(3)
+    expect(draftMuscleSets(setsOf('Single Arm Lateral Raise', 3))['Side delts']).toBe(3)
     expect(draftMuscleSets(setsOf('Incline DB Press', 3))['Front delts']).toBe(1.5)
   })
 })

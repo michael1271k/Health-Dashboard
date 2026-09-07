@@ -18,7 +18,7 @@
             },
             "sessionVolume": 1260
           },
-          "Chest Press (Machine)": {
+          "Chest Press": {
             "weight": 40,
             "e1rm": 53.33,
             "setVolume": {
@@ -45,7 +45,7 @@
             },
             "sessionVolume": 217.5
           },
-          "DB Shoulder Press": {
+          "Shoulder Press": {
             "weight": 31,
             "e1rm": 42.25,
             "setVolume": {
@@ -54,7 +54,7 @@
             },
             "sessionVolume": 990
           },
-          "Single Arm Lateral Raise (Cable)": {
+          "Single Arm Lateral Raise": {
             "weight": 5,
             "e1rm": 7.81,
             "setVolume": {
@@ -63,7 +63,7 @@
             },
             "sessionVolume": 272.5
           },
-          "Cable Overhead Extension": {
+          "Overhead Triceps Extension": {
             "weight": 12.5,
             "e1rm": 16.79,
             "setVolume": {
@@ -81,7 +81,7 @@
             },
             "sessionVolume": 795
           },
-          "Single Arm Triceps Pushdown (Cable)": {
+          "Single Arm Triceps Pushdown": {
             "weight": 6.25,
             "e1rm": 9.33,
             "setVolume": {
@@ -153,7 +153,7 @@
             },
             "sessionVolume": 512
           },
-          "DB Hammer Curl": {
+          "Hammer Curl": {
             "weight": 20,
             "e1rm": 28.17,
             "setVolume": {
@@ -171,7 +171,7 @@
             },
             "sessionVolume": 390
           },
-          "Preacher Curl (Machine)": {
+          "Preacher Curl": {
             "weight": 17.5,
             "e1rm": 24.65,
             "setVolume": {
@@ -216,7 +216,7 @@
             },
             "sessionVolume": 2137.5
           },
-          "Romanian Deadlift (DB)": {
+          "Romanian Deadlift": {
             "weight": 40,
             "e1rm": 53.33,
             "setVolume": {
@@ -225,7 +225,7 @@
             },
             "sessionVolume": 1260
           },
-          "Hip Thrust (Machine)": {
+          "Hip Thrust": {
             "weight": 27.5,
             "e1rm": 40.44,
             "setVolume": {
@@ -265,7 +265,7 @@
           }
         },
         "logged": {
-          "Cable Overhead Extension": {
+          "Overhead Triceps Extension": {
             "weight": 11.25,
             "e1rm": 16.9,
             "volume": 168.75,
@@ -277,7 +277,7 @@
             "volume": 1012.5,
             "sessionVolume": 3037.5
           },
-          "Chest Press (Machine)": {
+          "Chest Press": {
             "weight": 40,
             "e1rm": 53.3,
             "volume": 450,
@@ -289,13 +289,13 @@
             "volume": 690,
             "sessionVolume": 2040
           },
-          "DB Hammer Curl": {
+          "Hammer Curl": {
             "weight": 20,
             "e1rm": 28,
             "volume": 240,
             "sessionVolume": 658
           },
-          "DB Shoulder Press": {
+          "Shoulder Press": {
             "weight": 30,
             "e1rm": 42,
             "volume": 360,
@@ -319,7 +319,7 @@
             "sessionVolume": 0,
             "reps": 16
           },
-          "Hip Thrust (Machine)": {
+          "Hip Thrust": {
             "weight": 27.5,
             "e1rm": 40.3,
             "volume": 385,
@@ -361,7 +361,7 @@
             "volume": 750,
             "sessionVolume": 1300
           },
-          "Preacher Curl (Machine)": {
+          "Preacher Curl": {
             "weight": 17.5,
             "e1rm": 24.5,
             "volume": 210,
@@ -379,7 +379,7 @@
             "volume": 195,
             "sessionVolume": 390
           },
-          "Romanian Deadlift (DB)": {
+          "Romanian Deadlift": {
             "weight": 40,
             "e1rm": 53.3,
             "volume": 420,
@@ -424,13 +424,13 @@
             "volume": 112.5,
             "sessionVolume": 217.5
           },
-          "Single Arm Lateral Raise (Cable)": {
+          "Single Arm Lateral Raise": {
             "weight": 5,
             "e1rm": 7.8,
             "volume": 85,
             "sessionVolume": 272.5
           },
-          "Single Arm Triceps Pushdown (Cable)": {
+          "Single Arm Triceps Pushdown": {
             "weight": 6.25,
             "e1rm": 9.4,
             "volume": 93.75,

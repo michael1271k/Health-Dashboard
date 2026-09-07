@@ -220,6 +220,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case est1rmKg = "est_1rm_kg"
         case rpe
         case quality
+        case exerciseOrder = "exercise_order"
     }
 
     public var exerciseId: String
@@ -258,6 +259,19 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     /// Same story as `rpe`: Postgres has held the column all along, the local
     /// store gains it in `v14`.
     public var quality: String?
+    /// The MOVEMENT's position in the deck, dense from 0 — see
+    /// `WorkoutSet.exerciseOrder`.
+    ///
+    /// ── ADDING A FIELD HERE IS SAFE; ADDING A `Kind` IS NOT ─────────────────
+    /// `Body.init(from:)` switches on `Kind` with no fallback, which is why the
+    /// enum is a one-way door. This is not that: an extra optional key on the
+    /// payload decodes to `nil` on a build that has never heard of it, and is
+    /// ignored on the way back in. Exactly the trade `v7.setRpe` and
+    /// `v14.setQuality` made, and neither loses a set in either direction.
+    ///
+    /// **`nil` on a set logged before this build**, and on any set nobody could
+    /// place — a reorder that changed nothing writes nothing.
+    public var exerciseOrder: Int?
 
     public init(
         exerciseId: String,
@@ -269,7 +283,8 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         pairId: String? = nil,
         est1rmKg: Double? = nil,
         rpe: Double? = nil,
-        quality: String? = nil
+        quality: String? = nil,
+        exerciseOrder: Int? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -281,6 +296,7 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.est1rmKg = est1rmKg
         self.rpe = rpe
         self.quality = quality
+        self.exerciseOrder = exerciseOrder
     }
 }
 
@@ -308,6 +324,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         case est1rmKg = "est_1rm_kg"
         case rpe
         case quality
+        case exerciseOrder = "exercise_order"
     }
 
     public var setIndex: Int?
@@ -338,6 +355,13 @@ public struct SetPatch: Codable, Sendable, Equatable {
     /// would trust, and "" is not a legal quality — the database's CHECK holds
     /// six keys and none of them is empty.
     public var quality: String?
+    /// The movement's new deck position — what a drag writes onto every set of
+    /// every movement the drag shifted.
+    ///
+    /// `nil` is UNCHANGED here, like every field but `quality`, and it is the
+    /// right reading: an order can be corrected but it cannot be un-known, and
+    /// nothing in either client has a gesture for "forget where this came".
+    public var exerciseOrder: Int?
 
     /// Pass as `quality` to take an existing note off a set.
     public static let clearedQuality = ""
@@ -351,7 +375,8 @@ public struct SetPatch: Codable, Sendable, Equatable {
         pairId: String? = nil,
         est1rmKg: Double? = nil,
         rpe: Double? = nil,
-        quality: String? = nil
+        quality: String? = nil,
+        exerciseOrder: Int? = nil
     ) {
         self.setIndex = setIndex
         self.weightKg = weightKg
@@ -362,6 +387,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         self.est1rmKg = est1rmKg
         self.rpe = rpe
         self.quality = quality
+        self.exerciseOrder = exerciseOrder
     }
 
     /// True when the patch would change nothing. Used to reject empty amends
@@ -369,7 +395,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
     public var isEmpty: Bool {
         setIndex == nil && weightKg == nil && reps == nil && setType == nil
             && side == nil && pairId == nil && est1rmKg == nil && rpe == nil
-            && quality == nil
+            && quality == nil && exerciseOrder == nil
     }
 
     /// Apply to a snapshot, leaving `nil` fields alone.
@@ -384,6 +410,7 @@ public struct SetPatch: Codable, Sendable, Equatable {
         if let est1rmKg { next.est1rmKg = est1rmKg }
         if let rpe { next.rpe = rpe }
         if let quality { next.quality = quality == Self.clearedQuality ? nil : quality }
+        if let exerciseOrder { next.exerciseOrder = exerciseOrder }
         return next
     }
 }

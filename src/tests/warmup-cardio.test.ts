@@ -19,8 +19,8 @@ const set = (o: Partial<TemplateSourceSet> & Pick<TemplateSourceSet, 'exerciseNa
   ({ weightKg: 20, reps: 10, exerciseOrder: 0, ...o })
 
 const STORED = payloadToTemplate([
-  set({ exerciseName: 'Romanian Deadlift (Dumbbell)', exerciseOrder: 0, weightKg: 32.5, reps: 10 }),
-  set({ exerciseName: 'Hip Thrust (Machine)', exerciseOrder: 1, weightKg: 30, reps: 12 }),
+  set({ exerciseName: 'Romanian Deadlift', exerciseOrder: 0, weightKg: 32.5, reps: 10 }),
+  set({ exerciseName: 'Hip Thrust', exerciseOrder: 1, weightKg: 30, reps: 12 }),
 ])!
 
 const first = (d: SessionDraft) => d.exercises[0]
@@ -47,7 +47,7 @@ describe('buildTemplateDraft — the Treadmill opens every deck', () => {
   it('leaves the stored exercise ORDER intact behind it', () => {
     const d = buildTemplateDraft(legsB, '2026-08-15', undefined, STORED)
     expect(d.exercises.slice(1).map((e) => e.name)).toEqual([
-      'Romanian Deadlift (Dumbbell)', 'Hip Thrust (Machine)',
+      'Romanian Deadlift', 'Hip Thrust',
     ])
   })
 

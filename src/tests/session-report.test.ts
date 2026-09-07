@@ -54,7 +54,7 @@ describe('highlightsOf — one line per record, at the top of the report', () =>
   const kg = (v: number) => v
   const july31 = [
     ex({
-      name: 'Romanian Deadlift (DB)',
+      name: 'Romanian Deadlift',
       sets: [
         set({ setNumber: 1, weightKg: 35, reps: 12 }),
         set({ setNumber: 2, weightKg: 35, reps: 12 }),
@@ -63,7 +63,7 @@ describe('highlightsOf — one line per record, at the top of the report', () =>
       bestEst1rm: 49,
     }),
     ex({
-      name: 'Hip Thrust (Machine)',
+      name: 'Hip Thrust',
       sets: [
         set({ setNumber: 1, weightKg: 25, reps: 14 }),
         set({ setNumber: 2, weightKg: 27.5, reps: 13, isPr: true, prAxes: ['reps'] }),
@@ -80,8 +80,8 @@ describe('highlightsOf — one line per record, at the top of the report', () =>
 
   it('lists the record and the set that won it', () => {
     const h = highlightsOf(july31, kg, 'kg')
-    expect(h.map((x) => x.name)).toEqual(['Romanian Deadlift (DB)', 'Hip Thrust (Machine)'])
-    expect(h[1]).toEqual({ name: 'Hip Thrust (Machine)', axes: ['Reps'], detail: '27.5kg × 13' })
+    expect(h.map((x) => x.name)).toEqual(['Romanian Deadlift', 'Hip Thrust'])
+    expect(h[1]).toEqual({ name: 'Hip Thrust', axes: ['Reps'], detail: '27.5kg × 13' })
   })
 
   it('gives ONE line per exercise even when two sets are flagged', () => {

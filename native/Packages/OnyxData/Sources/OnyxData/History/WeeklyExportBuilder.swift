@@ -12,9 +12,13 @@ import OnyxCore
 /// the same rows render the same bytes.
 ///
 /// ── WHAT THE MIRROR DOES NOT HOLD ───────────────────────────────────────────
-/// `workout_sets.is_pr / quality / exercise_order`, `workout_sessions.split_day /
+/// `workout_sets.is_pr / quality`, `workout_sessions.split_day /
 /// total_volume_kg / set_count / avg_bpm / calories_burned`, `exercises.
 /// muscle_groups` and the localStorage rest-target overrides are not mirrored.
+/// (`exercise_order` WAS on that list. `v16.exerciseOrder` tracks it and
+/// `applyPulledSets` brings the web's down, so the mirror holds it now — this
+/// builder still does not read it, because the export orders its sets the way
+/// it always has and the vectors say so.)
 /// Each is handled where it is read, and none is invented: volumes and set
 /// counts are recomputed from the sets the way the web wrote them, PR lines are
 /// reconstructed from the standing `personal_records` rows for the session, and

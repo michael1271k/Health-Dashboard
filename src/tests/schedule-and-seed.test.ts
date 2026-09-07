@@ -26,7 +26,7 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
     expect(d.exercises[0]).toMatchObject({ name: 'Treadmill', kind: 'cardio', distanceKm: 0.37, durationSec: 300 })
     expect(d.exercises[0].note).toContain('Pace rising')
     expect(d.exercises[0].sets).toHaveLength(0)
-    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    const chest = d.exercises.find((e) => e.name === 'Chest Press')!
     expect(chest.sets).toEqual([{ weightKg: 35, reps: 12, done: false }, { weightKg: 37.5, reps: 12, done: false }, { weightKg: 37.5, reps: 12, done: false }])
   })
 
@@ -45,12 +45,12 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
   it('seeds each slot from the CORRESPONDING previous set, not one value fanned out', () => {
     // The ghost-data bug: history was a single set replicated across every slot,
     // so the deck showed three identical rows that were never actually lifted.
-    const history = new Map([['Chest Press (Machine)', {
+    const history = new Map([['Chest Press', {
       date: '2026-07-17',
       sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }, { weightKg: 37.5, reps: 10 }],
     }]])
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
-    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    const chest = d.exercises.find((e) => e.name === 'Chest Press')!
     expect(chest.sets).toEqual([
       { weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 11, done: false }, { weightKg: 37.5, reps: 10, done: false },
     ])
@@ -59,21 +59,21 @@ describe('buildTemplateDraft — per-set seed + cardio + memory override', () =>
 
   it('reproduces the EXACT set count from history — no padding to the template', () => {
     // Did 2 sets last time → deck opens with 2 sets, never the template's 3.
-    const history = new Map([['Chest Press (Machine)', {
+    const history = new Map([['Chest Press', {
       date: '2026-07-17', sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 11 }],
     }]])
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
-    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    const chest = d.exercises.find((e) => e.name === 'Chest Press')!
     expect(chest.sets).toEqual([{ weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 11, done: false }])
   })
 
   it('carries the failure tag from history into the seeded set', () => {
-    const history = new Map([['Chest Press (Machine)', {
+    const history = new Map([['Chest Press', {
       date: '2026-07-17',
       sets: [{ weightKg: 40, reps: 12 }, { weightKg: 40, reps: 8, setType: 'failure' as const }],
     }]])
     const d = buildTemplateDraft(cbB, '2026-07-16', history)
-    const chest = d.exercises.find((e) => e.name === 'Chest Press (Machine)')!
+    const chest = d.exercises.find((e) => e.name === 'Chest Press')!
     expect(chest.sets).toEqual([
       { weightKg: 40, reps: 12, done: false }, { weightKg: 40, reps: 8, setType: 'failure', done: false },
     ])

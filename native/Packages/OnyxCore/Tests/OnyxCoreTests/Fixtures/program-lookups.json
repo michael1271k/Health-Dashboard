@@ -228,9 +228,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · no day · cut",
+      "name": "Chest Press · no day · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": null,
         "phase": "cut"
       },
@@ -244,9 +244,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · cb_a · cut",
+      "name": "Chest Press · cb_a · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -260,9 +260,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · legs_a · cut",
+      "name": "Chest Press · legs_a · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -276,9 +276,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · arms · cut",
+      "name": "Chest Press · arms · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -292,9 +292,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · cb_b · cut",
+      "name": "Chest Press · cb_b · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -308,9 +308,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · legs_b · cut",
+      "name": "Chest Press · legs_b · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -324,9 +324,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · bogus · cut",
+      "name": "Chest Press · bogus · cut",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -1572,9 +1572,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · no day · cut",
+      "name": "Shoulder Press · no day · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": null,
         "phase": "cut"
       },
@@ -1588,9 +1588,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · cb_a · cut",
+      "name": "Shoulder Press · cb_a · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -1604,9 +1604,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · legs_a · cut",
+      "name": "Shoulder Press · legs_a · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -1620,9 +1620,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · arms · cut",
+      "name": "Shoulder Press · arms · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -1636,9 +1636,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · cb_b · cut",
+      "name": "Shoulder Press · cb_b · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -1652,9 +1652,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · legs_b · cut",
+      "name": "Shoulder Press · legs_b · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -1668,9 +1668,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · bogus · cut",
+      "name": "Shoulder Press · bogus · cut",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -1684,9 +1684,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · no day · cut",
+      "name": "Single Arm Lateral Raise · no day · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": null,
         "phase": "cut"
       },
@@ -1700,9 +1700,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · cb_a · cut",
+      "name": "Single Arm Lateral Raise · cb_a · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -1716,9 +1716,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · legs_a · cut",
+      "name": "Single Arm Lateral Raise · legs_a · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -1732,9 +1732,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · arms · cut",
+      "name": "Single Arm Lateral Raise · arms · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -1748,9 +1748,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · cb_b · cut",
+      "name": "Single Arm Lateral Raise · cb_b · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -1764,9 +1764,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · legs_b · cut",
+      "name": "Single Arm Lateral Raise · legs_b · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -1780,9 +1780,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · bogus · cut",
+      "name": "Single Arm Lateral Raise · bogus · cut",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -1908,9 +1908,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · no day · cut",
+      "name": "Overhead Triceps Extension · no day · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": null,
         "phase": "cut"
       },
@@ -1924,9 +1924,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · cb_a · cut",
+      "name": "Overhead Triceps Extension · cb_a · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -1940,9 +1940,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · legs_a · cut",
+      "name": "Overhead Triceps Extension · legs_a · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -1956,9 +1956,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · arms · cut",
+      "name": "Overhead Triceps Extension · arms · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -1972,9 +1972,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · cb_b · cut",
+      "name": "Overhead Triceps Extension · cb_b · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -1988,9 +1988,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · legs_b · cut",
+      "name": "Overhead Triceps Extension · legs_b · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -2004,9 +2004,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · bogus · cut",
+      "name": "Overhead Triceps Extension · bogus · cut",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -2020,9 +2020,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · no day · cut",
+      "name": "Hammer Curl · no day · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": null,
         "phase": "cut"
       },
@@ -2036,9 +2036,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · cb_a · cut",
+      "name": "Hammer Curl · cb_a · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -2052,9 +2052,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · legs_a · cut",
+      "name": "Hammer Curl · legs_a · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -2068,9 +2068,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · arms · cut",
+      "name": "Hammer Curl · arms · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -2084,9 +2084,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · cb_b · cut",
+      "name": "Hammer Curl · cb_b · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -2100,9 +2100,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · legs_b · cut",
+      "name": "Hammer Curl · legs_b · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -2116,9 +2116,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · bogus · cut",
+      "name": "Hammer Curl · bogus · cut",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -2692,9 +2692,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · no day · cut",
+      "name": "Preacher Curl · no day · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": null,
         "phase": "cut"
       },
@@ -2708,9 +2708,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · cb_a · cut",
+      "name": "Preacher Curl · cb_a · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -2724,9 +2724,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · legs_a · cut",
+      "name": "Preacher Curl · legs_a · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -2740,9 +2740,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · arms · cut",
+      "name": "Preacher Curl · arms · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -2756,9 +2756,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · cb_b · cut",
+      "name": "Preacher Curl · cb_b · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -2772,9 +2772,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · legs_b · cut",
+      "name": "Preacher Curl · legs_b · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -2788,9 +2788,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · bogus · cut",
+      "name": "Preacher Curl · bogus · cut",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -2804,9 +2804,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · no day · cut",
+      "name": "Single Arm Triceps Pushdown · no day · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": null,
         "phase": "cut"
       },
@@ -2820,9 +2820,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · cb_a · cut",
+      "name": "Single Arm Triceps Pushdown · cb_a · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -2836,9 +2836,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · legs_a · cut",
+      "name": "Single Arm Triceps Pushdown · legs_a · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -2852,9 +2852,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · arms · cut",
+      "name": "Single Arm Triceps Pushdown · arms · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -2868,9 +2868,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · cb_b · cut",
+      "name": "Single Arm Triceps Pushdown · cb_b · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -2884,9 +2884,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · legs_b · cut",
+      "name": "Single Arm Triceps Pushdown · legs_b · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -2900,9 +2900,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · bogus · cut",
+      "name": "Single Arm Triceps Pushdown · bogus · cut",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -2916,9 +2916,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · no day · cut",
+      "name": "Romanian Deadlift · no day · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": null,
         "phase": "cut"
       },
@@ -2932,9 +2932,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · cb_a · cut",
+      "name": "Romanian Deadlift · cb_a · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -2948,9 +2948,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · legs_a · cut",
+      "name": "Romanian Deadlift · legs_a · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -2964,9 +2964,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · arms · cut",
+      "name": "Romanian Deadlift · arms · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -2980,9 +2980,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · cb_b · cut",
+      "name": "Romanian Deadlift · cb_b · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -2996,9 +2996,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · legs_b · cut",
+      "name": "Romanian Deadlift · legs_b · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -3012,9 +3012,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · bogus · cut",
+      "name": "Romanian Deadlift · bogus · cut",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -3028,9 +3028,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · no day · cut",
+      "name": "Hip Thrust · no day · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": null,
         "phase": "cut"
       },
@@ -3044,9 +3044,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · cb_a · cut",
+      "name": "Hip Thrust · cb_a · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "cb_a",
         "phase": "cut"
       },
@@ -3060,9 +3060,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · legs_a · cut",
+      "name": "Hip Thrust · legs_a · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "legs_a",
         "phase": "cut"
       },
@@ -3076,9 +3076,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · arms · cut",
+      "name": "Hip Thrust · arms · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "arms",
         "phase": "cut"
       },
@@ -3092,9 +3092,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · cb_b · cut",
+      "name": "Hip Thrust · cb_b · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "cb_b",
         "phase": "cut"
       },
@@ -3108,9 +3108,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · legs_b · cut",
+      "name": "Hip Thrust · legs_b · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "legs_b",
         "phase": "cut"
       },
@@ -3124,9 +3124,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · bogus · cut",
+      "name": "Hip Thrust · bogus · cut",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "bogus",
         "phase": "cut"
       },
@@ -4694,9 +4694,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · no day · bulk",
+      "name": "Chest Press · no day · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -4710,9 +4710,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · cb_a · bulk",
+      "name": "Chest Press · cb_a · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -4726,9 +4726,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · legs_a · bulk",
+      "name": "Chest Press · legs_a · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -4742,9 +4742,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · arms · bulk",
+      "name": "Chest Press · arms · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -4758,9 +4758,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · cb_b · bulk",
+      "name": "Chest Press · cb_b · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -4774,9 +4774,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · legs_b · bulk",
+      "name": "Chest Press · legs_b · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -4790,9 +4790,9 @@
       }
     },
     {
-      "name": "Chest Press (Machine) · bogus · bulk",
+      "name": "Chest Press · bogus · bulk",
       "input": {
-        "name": "Chest Press (Machine)",
+        "name": "Chest Press",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -6038,9 +6038,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · no day · bulk",
+      "name": "Shoulder Press · no day · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -6054,9 +6054,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · cb_a · bulk",
+      "name": "Shoulder Press · cb_a · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -6070,9 +6070,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · legs_a · bulk",
+      "name": "Shoulder Press · legs_a · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -6086,9 +6086,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · arms · bulk",
+      "name": "Shoulder Press · arms · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -6102,9 +6102,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · cb_b · bulk",
+      "name": "Shoulder Press · cb_b · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -6118,9 +6118,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · legs_b · bulk",
+      "name": "Shoulder Press · legs_b · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -6134,9 +6134,9 @@
       }
     },
     {
-      "name": "DB Shoulder Press · bogus · bulk",
+      "name": "Shoulder Press · bogus · bulk",
       "input": {
-        "name": "DB Shoulder Press",
+        "name": "Shoulder Press",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -6150,9 +6150,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · no day · bulk",
+      "name": "Single Arm Lateral Raise · no day · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -6166,9 +6166,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · cb_a · bulk",
+      "name": "Single Arm Lateral Raise · cb_a · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -6182,9 +6182,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · legs_a · bulk",
+      "name": "Single Arm Lateral Raise · legs_a · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -6198,9 +6198,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · arms · bulk",
+      "name": "Single Arm Lateral Raise · arms · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -6214,9 +6214,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · cb_b · bulk",
+      "name": "Single Arm Lateral Raise · cb_b · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -6230,9 +6230,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · legs_b · bulk",
+      "name": "Single Arm Lateral Raise · legs_b · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -6246,9 +6246,9 @@
       }
     },
     {
-      "name": "Single Arm Lateral Raise (Cable) · bogus · bulk",
+      "name": "Single Arm Lateral Raise · bogus · bulk",
       "input": {
-        "name": "Single Arm Lateral Raise (Cable)",
+        "name": "Single Arm Lateral Raise",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -6374,9 +6374,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · no day · bulk",
+      "name": "Overhead Triceps Extension · no day · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -6390,9 +6390,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · cb_a · bulk",
+      "name": "Overhead Triceps Extension · cb_a · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -6406,9 +6406,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · legs_a · bulk",
+      "name": "Overhead Triceps Extension · legs_a · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -6422,9 +6422,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · arms · bulk",
+      "name": "Overhead Triceps Extension · arms · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -6438,9 +6438,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · cb_b · bulk",
+      "name": "Overhead Triceps Extension · cb_b · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -6454,9 +6454,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · legs_b · bulk",
+      "name": "Overhead Triceps Extension · legs_b · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -6470,9 +6470,9 @@
       }
     },
     {
-      "name": "Cable Overhead Extension · bogus · bulk",
+      "name": "Overhead Triceps Extension · bogus · bulk",
       "input": {
-        "name": "Cable Overhead Extension",
+        "name": "Overhead Triceps Extension",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -6486,9 +6486,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · no day · bulk",
+      "name": "Hammer Curl · no day · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -6502,9 +6502,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · cb_a · bulk",
+      "name": "Hammer Curl · cb_a · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -6518,9 +6518,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · legs_a · bulk",
+      "name": "Hammer Curl · legs_a · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -6534,9 +6534,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · arms · bulk",
+      "name": "Hammer Curl · arms · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -6550,9 +6550,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · cb_b · bulk",
+      "name": "Hammer Curl · cb_b · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -6566,9 +6566,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · legs_b · bulk",
+      "name": "Hammer Curl · legs_b · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -6582,9 +6582,9 @@
       }
     },
     {
-      "name": "DB Hammer Curl · bogus · bulk",
+      "name": "Hammer Curl · bogus · bulk",
       "input": {
-        "name": "DB Hammer Curl",
+        "name": "Hammer Curl",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -7158,9 +7158,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · no day · bulk",
+      "name": "Preacher Curl · no day · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -7174,9 +7174,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · cb_a · bulk",
+      "name": "Preacher Curl · cb_a · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -7190,9 +7190,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · legs_a · bulk",
+      "name": "Preacher Curl · legs_a · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -7206,9 +7206,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · arms · bulk",
+      "name": "Preacher Curl · arms · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -7222,9 +7222,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · cb_b · bulk",
+      "name": "Preacher Curl · cb_b · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -7238,9 +7238,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · legs_b · bulk",
+      "name": "Preacher Curl · legs_b · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -7254,9 +7254,9 @@
       }
     },
     {
-      "name": "Preacher Curl (Machine) · bogus · bulk",
+      "name": "Preacher Curl · bogus · bulk",
       "input": {
-        "name": "Preacher Curl (Machine)",
+        "name": "Preacher Curl",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -7270,9 +7270,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · no day · bulk",
+      "name": "Single Arm Triceps Pushdown · no day · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -7286,9 +7286,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · cb_a · bulk",
+      "name": "Single Arm Triceps Pushdown · cb_a · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -7302,9 +7302,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · legs_a · bulk",
+      "name": "Single Arm Triceps Pushdown · legs_a · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -7318,9 +7318,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · arms · bulk",
+      "name": "Single Arm Triceps Pushdown · arms · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -7334,9 +7334,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · cb_b · bulk",
+      "name": "Single Arm Triceps Pushdown · cb_b · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -7350,9 +7350,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · legs_b · bulk",
+      "name": "Single Arm Triceps Pushdown · legs_b · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -7366,9 +7366,9 @@
       }
     },
     {
-      "name": "Single Arm Triceps Pushdown (Cable) · bogus · bulk",
+      "name": "Single Arm Triceps Pushdown · bogus · bulk",
       "input": {
-        "name": "Single Arm Triceps Pushdown (Cable)",
+        "name": "Single Arm Triceps Pushdown",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -7382,9 +7382,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · no day · bulk",
+      "name": "Romanian Deadlift · no day · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -7398,9 +7398,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · cb_a · bulk",
+      "name": "Romanian Deadlift · cb_a · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -7414,9 +7414,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · legs_a · bulk",
+      "name": "Romanian Deadlift · legs_a · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -7430,9 +7430,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · arms · bulk",
+      "name": "Romanian Deadlift · arms · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -7446,9 +7446,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · cb_b · bulk",
+      "name": "Romanian Deadlift · cb_b · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -7462,9 +7462,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · legs_b · bulk",
+      "name": "Romanian Deadlift · legs_b · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -7478,9 +7478,9 @@
       }
     },
     {
-      "name": "Romanian Deadlift (Dumbbell) · bogus · bulk",
+      "name": "Romanian Deadlift · bogus · bulk",
       "input": {
-        "name": "Romanian Deadlift (Dumbbell)",
+        "name": "Romanian Deadlift",
         "dayKey": "bogus",
         "phase": "bulk"
       },
@@ -7494,9 +7494,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · no day · bulk",
+      "name": "Hip Thrust · no day · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": null,
         "phase": "bulk"
       },
@@ -7510,9 +7510,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · cb_a · bulk",
+      "name": "Hip Thrust · cb_a · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "cb_a",
         "phase": "bulk"
       },
@@ -7526,9 +7526,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · legs_a · bulk",
+      "name": "Hip Thrust · legs_a · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "legs_a",
         "phase": "bulk"
       },
@@ -7542,9 +7542,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · arms · bulk",
+      "name": "Hip Thrust · arms · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "arms",
         "phase": "bulk"
       },
@@ -7558,9 +7558,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · cb_b · bulk",
+      "name": "Hip Thrust · cb_b · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "cb_b",
         "phase": "bulk"
       },
@@ -7574,9 +7574,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · legs_b · bulk",
+      "name": "Hip Thrust · legs_b · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "legs_b",
         "phase": "bulk"
       },
@@ -7590,9 +7590,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine) · bogus · bulk",
+      "name": "Hip Thrust · bogus · bulk",
       "input": {
-        "name": "Hip Thrust (Machine)",
+        "name": "Hip Thrust",
         "dayKey": "bogus",
         "phase": "bulk"
       },

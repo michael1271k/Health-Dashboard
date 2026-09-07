@@ -730,9 +730,9 @@
       }
     },
     {
-      "name": "Hip Thrust (Machine)",
+      "name": "Hip Thrust",
       "input": {
-        "name": "Hip Thrust (Machine)"
+        "name": "Hip Thrust"
       },
       "expected": {
         "bodyweight": false,
