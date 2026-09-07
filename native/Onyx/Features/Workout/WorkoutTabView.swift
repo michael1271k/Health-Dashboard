@@ -56,7 +56,6 @@ struct WorkoutTabView: View {
     /// 1:30:00 — the hour of pause gone, from the number this whole wave exists
     /// to make true. Wave E4 folds it into `LoggerModel`, which is kept here
     /// already, and this property goes with the stand-in.
-    @State private var sessionClock: LoggerClock?
     @State private var showPhase = false
     @State private var loggingCardio = false
     /// The swap sheet. §5.2 item 3 puts rest and swap on the session card,
@@ -119,7 +118,7 @@ struct WorkoutTabView: View {
         // empty case stops being representable.
         .fullScreenCover(item: $presented, onDismiss: reload) { model in
             NavigationStack {
-                LiveLoggerView(model: model, activity: activity, clock: sessionClock)
+                LiveLoggerView(model: model, activity: activity)
             }
             .preferredColorScheme(.dark)
         }
@@ -800,7 +799,6 @@ struct WorkoutTabView: View {
                 store: environment.database, userId: environment.userIdString
             )
             session = model
-            sessionClock = LoggerClock(startedAt: model.startedAt)
         }
         // The logger graded today's queue while building its seed, and it is
         // the surface that knows the day key for certain. One array, read by
@@ -824,7 +822,6 @@ struct WorkoutTabView: View {
             // it is complete the moment it appears.
             if !wasDone, case let .done(id, _, _, _, _) = state {
                 session = nil
-                sessionClock = nil
                 finishes += 1
                 summary = id
             }

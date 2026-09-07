@@ -3,6 +3,7 @@ import Testing
 import GRDB
 import OnyxCore
 import OnyxData
+import OnyxUI
 @testable import Onyx
 
 /// The logger's own state machine.
@@ -20,6 +21,13 @@ import OnyxData
 @MainActor
 @Suite("Logger model")
 struct LoggerModelTests {
+
+    /// Total paused, open interval included. `PauseControlling` publishes the
+    /// two halves (`pausedTotal` banked, `pausedAt` open) and derives `elapsed`
+    /// from them; the sum is only ever wanted by a test.
+    private func pausedSecondsOf(_ model: LoggerModel, at now: Date) -> TimeInterval {
+        model.pausedTotal + (model.pausedAt.map { max(0, now.timeIntervalSince($0)) } ?? 0)
+    }
 
     private func armsBulk() -> LoggerModel {
         LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk)
@@ -234,18 +242,18 @@ struct LoggerModelTests {
         let start = Date(timeIntervalSince1970: 1_757_000_000)
         let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
         #expect(model.isPaused == false)
-        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
+        #expect(model.elapsed(at: start.addingTimeInterval(600)) == 600)
 
         model.pause(at: start.addingTimeInterval(600))
         #expect(model.isPaused)
         // Ten minutes in, paused: the number stops moving however long you wait.
-        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
-        #expect(model.activeSeconds(now: start.addingTimeInterval(3_000)) == 600)
-        #expect(model.pausedSeconds(now: start.addingTimeInterval(3_000)) == 2_400)
+        #expect(model.elapsed(at: start.addingTimeInterval(600)) == 600)
+        #expect(model.elapsed(at: start.addingTimeInterval(3_000)) == 600)
+        #expect(pausedSecondsOf(model, at: start.addingTimeInterval(3_000)) == 2_400)
 
         model.resume(at: start.addingTimeInterval(3_000))
         #expect(model.isPaused == false)
-        #expect(model.activeSeconds(now: start.addingTimeInterval(3_600)) == 1_200)
+        #expect(model.elapsed(at: start.addingTimeInterval(3_600)) == 1_200)
     }
 
     @Test("pausing twice does not bank the interval twice")
@@ -255,17 +263,17 @@ struct LoggerModelTests {
         model.pause(at: start.addingTimeInterval(60))
         model.pause(at: start.addingTimeInterval(120))
         model.resume(at: start.addingTimeInterval(180))
-        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+        #expect(pausedSecondsOf(model, at: start.addingTimeInterval(600)) == 120)
         // A stray resume is not an interval either.
         model.resume(at: start.addingTimeInterval(240))
-        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+        #expect(pausedSecondsOf(model, at: start.addingTimeInterval(600)) == 120)
     }
 
     @Test("the clock never runs backwards")
     func clockNeverNegative() {
         let start = Date(timeIntervalSince1970: 1_757_000_000)
         let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
-        #expect(model.activeSeconds(now: start.addingTimeInterval(-600)) == 0)
+        #expect(model.elapsed(at: start.addingTimeInterval(-600)) == 0)
     }
 
     // ── Live records (P3 E4) ────────────────────────────────────────────────

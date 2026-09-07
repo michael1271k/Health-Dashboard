@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import OnyxCore
 import OnyxData
+import OnyxUI
 
 /// The live session, as the logger sees it.
 ///
@@ -23,7 +24,7 @@ import OnyxData
 /// with one real implementation) is an abstraction bought for nothing.
 @MainActor
 @Observable
-final class LoggerModel: Identifiable {
+final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
 
     /// Identity, for `fullScreenCover(item:)`.
     ///
@@ -236,7 +237,14 @@ final class LoggerModel: Identifiable {
         }
     }
     private(set) var exercises: [ExerciseState] = []
-    let startedAt: Date
+    /// When the session began.
+    ///
+    /// `var`, because the timer sheet can correct it (`setStart`, `setElapsed`)
+    /// — a deck opened twenty minutes before the first set otherwise reports
+    /// twenty minutes of training that did not happen. Never rebased around a
+    /// pause: `Era.forDate`, the PR date and every "when did you train" reader
+    /// take this field.
+    private(set) var startedAt: Date
 
     /// When the current rest period ends. `nil` means no timer is running —
     /// which is not the same as a timer at zero, and the bar renders the two
@@ -276,20 +284,24 @@ final class LoggerModel: Identifiable {
     /// Distinct axis-records claimed so far — the Live Activity's count.
     private(set) var prsThisSession = 0
 
+    /// The records themselves, newest first — `LivePrProviding`, which the Live
+    /// Stats "Records" card draws. Filled by the same pass that lights the
+    /// badges, so the card and the badge can never disagree.
+    private(set) var livePrs: [LivePrRecord] = []
+
     // ── The session clock ───────────────────────────────────────────────────
 
-    /// True while the clock is stopped. A pause is an EVENT in the log, not a
-    /// flag on this object: it has to survive the app being killed mid-workout,
-    /// and it has to merge with the watch's.
-    private(set) var isPaused = false
+    /// When the CURRENT pause began, or nil while running.
+    ///
+    /// A pause is an EVENT in the log, not just a flag on this object: it has
+    /// to survive the app being killed mid-workout and it has to merge with the
+    /// watch's. This is the in-memory read of it — `PauseControlling.isPaused`
+    /// is `pausedAt != nil`, and the timer reads `elapsed(at:)` rather than
+    /// asking the store per tick.
+    private(set) var pausedAt: Date?
 
-    /// Seconds banked by pauses that have CLOSED. The one currently open is
-    /// derived from `pausedSince` on read, so the timer does not need a store
-    /// round trip per tick.
-    private(set) var bankedPausedSeconds: TimeInterval = 0
-
-    /// When the open pause began, or nil when the clock is running.
-    private(set) var pausedSince: Date?
+    /// Seconds banked by pauses that have CLOSED.
+    private(set) var pausedTotal: TimeInterval = 0
 
     private let store: AppDatabase?
     /// The `workout_sessions` row this device is writing into, once one exists.
@@ -688,12 +700,29 @@ final class LoggerModel: Identifiable {
         }
         guard !candidates.isEmpty else {
             prsThisSession = 0
+            livePrs = []
             return
         }
         let result = PrEngine.detectSessionPrs(candidates, baselines)
+        var records: [LivePrRecord] = []
         for (i, detected) in result.perSet.enumerated() where i < origin.count {
             origin[i].isRecord = !detected.axes.isEmpty
+            // ONE ENTRY PER AXIS, not per set: a single set can take the weight
+            // record and the e1RM record at once, and a card that collapsed
+            // them would say "1 PR" where the ledger written at close says two.
+            for axis in detected.axes {
+                guard let mark = detected.records[axis] else { continue }
+                records.append(LivePrRecord(
+                    id: "\(candidates[i].key)|\(candidates[i].setNumber ?? i + 1)|\(axis.rawValue)",
+                    exercise: candidates[i].exerciseName ?? candidates[i].key,
+                    setLabel: "Set \(candidates[i].setNumber ?? i + 1)",
+                    axis: axis,
+                    mark: mark
+                ))
+            }
         }
+        // Newest first — the deck is walked in session order.
+        livePrs = records.reversed()
         prsThisSession = result.prCount
     }
 
@@ -751,29 +780,31 @@ final class LoggerModel: Identifiable {
     /// before ticking anything, therefore wrote no event at all — the minutes
     /// went straight back into `duration_min`, which is the bug this whole
     /// mechanism exists to remove.
-    func pause(at now: Date = Date()) {
-        guard !isPaused else { return }
-        guard let store else { isPaused = true; pausedSince = now; return }
+    func pause() { pause(at: Date()) }
+
+    func pause(at now: Date) {
+        guard pausedAt == nil else { return }
+        guard let store else { pausedAt = now; return }
         do {
             guard let sessionId = try ensureSession() else { return }
             try store.pauseSession(sessionId)
-            isPaused = true
-            pausedSince = now
+            pausedAt = now
             storeError = nil
         } catch {
             storeError = String(describing: error)
         }
     }
 
-    func resume(at now: Date = Date()) {
-        guard isPaused else { return }
+    func resume() { resume(at: Date()) }
+
+    func resume(at now: Date) {
+        guard let since = pausedAt else { return }
         func bank() {
             // Banked from the local stamp rather than re-read: the store's own
             // answer is the same arithmetic over the two events this pair just
             // wrote, and a read per tap is a read for nothing.
-            if let since = pausedSince { bankedPausedSeconds += max(0, now.timeIntervalSince(since)) }
-            pausedSince = nil
-            isPaused = false
+            pausedTotal += max(0, now.timeIntervalSince(since))
+            pausedAt = nil
         }
         guard let store, let sessionId else { bank(); return }
         do {
@@ -785,18 +816,41 @@ final class LoggerModel: Identifiable {
         }
     }
 
-    /// Total seconds paused, open pause included.
-    func pausedSeconds(now: Date = Date()) -> TimeInterval {
-        guard let since = pausedSince else { return bankedPausedSeconds }
-        return bankedPausedSeconds + max(0, now.timeIntervalSince(since))
+    /// Correct the start instant. `PauseControlling`.
+    ///
+    /// Clamped exactly as `LoggerClock` clamps it — a start that would put the
+    /// clock in the future reads as "just started" rather than counting down —
+    /// and against `pausedAt ?? now`, the same instant `elapsed` anchors on, so
+    /// correcting the start DURING a pause cannot produce a negative elapsed
+    /// that `max(0, …)` then renders as a confident 0:00.
+    ///
+    /// It reaches the store, which is the difference between this and the stub:
+    /// `closeSession` derives `duration_min` from `started_at`, so a correction
+    /// that lived only in memory would leave the timer saying 62 minutes and
+    /// the stored session 82.
+    func setStart(_ date: Date) {
+        startedAt = min(date, (pausedAt ?? Date()).addingTimeInterval(-pausedTotal))
+        persistStart()
     }
 
-    /// Seconds of training so far — the clock, less every pause. The hero's
-    /// 34 pt timer reads this rather than `startedAt`, so a paused session's
-    /// number stops moving. Derived, never stored: an elapsed COUNT freezes at
-    /// whatever it held when iOS killed the app, and a timestamp does not.
-    func activeSeconds(now: Date = Date()) -> TimeInterval {
-        max(0, now.timeIntervalSince(startedAt) - pausedSeconds(now: now))
+    /// Move `startedAt` so that `elapsed` reads `seconds`. The pause ledger is
+    /// deliberately untouched — banking the difference there would make "edit
+    /// elapsed" also edit how long you had rested, and `duration_min` would
+    /// come out right for a reason nobody could find.
+    func setElapsed(_ seconds: TimeInterval) {
+        let anchor = pausedAt ?? Date()
+        startedAt = anchor.addingTimeInterval(-(max(0, seconds) + pausedTotal))
+        persistStart()
+    }
+
+    private func persistStart() {
+        guard let store, let sessionId else { return }
+        do {
+            try store.setSessionStart(id: sessionId, startedAt: startedAt)
+            storeError = nil
+        } catch {
+            storeError = String(describing: error)
+        }
     }
 
     // MARK: - Finishing
@@ -865,10 +919,10 @@ final class LoggerModel: Identifiable {
             // clearing the badges is not enough — the header and the Lock
             // Screen would keep reporting records on an empty deck.
             prsThisSession = 0
+            livePrs = []
             // The clock too: a discarded session's pause belongs to nothing.
-            isPaused = false
-            pausedSince = nil
-            bankedPausedSeconds = 0
+            pausedAt = nil
+            pausedTotal = 0
             storeError = nil
             return true
         } catch {
@@ -944,9 +998,12 @@ final class LoggerModel: Identifiable {
             sessionId = live
             baselines = bar
             if let paused {
-                isPaused = paused.0
-                pausedSince = paused.0 ? Date() : nil
-                bankedPausedSeconds = paused.1
+                // The store's total already includes the interval still open at
+                // this instant, so the local `pausedAt` is re-anchored to NOW
+                // rather than to when the pause began — otherwise the same
+                // minutes are counted in both.
+                pausedAt = paused.0 ? Date() : nil
+                pausedTotal = paused.1
             }
             try restoreLoggedSets()
             refreshLivePrs()

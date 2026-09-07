@@ -139,7 +139,11 @@ struct LoggerClockTests {
         // Negative is clamped rather than refused: a stepper held down at 0:00
         // must not run the clock backwards.
         clock.setElapsed(-60)
-        #expect(clock.elapsed() == 0)
+        // A tolerance, not `== 0`: `setElapsed` anchors on `Date()` and
+        // `elapsed()` reads a later one, so exact equality is a race with the
+        // wall clock that loses by a microsecond whenever the machine is busy.
+        // The neighbouring assertions already read this way.
+        #expect(clock.elapsed() < 0.05)
 
         // A start in the future would make `Text(_:style:.timer)` count DOWN.
         clock.setStart(Date().addingTimeInterval(3600))
