@@ -385,6 +385,52 @@ Privacy manifest (HealthKit reasons, UserDefaults reason codes) — `NSHealthSha
 
 ### Wave 10 — Watch 1.1 (3 weeks)
 
+**As shipped (2026-09-08).** Target `OnyxWatch` (watchOS 11 floor, single-target
+`WKApplication`, `WKBackgroundModes: [workout-processing]`, embedded in `Onyx`).
+All three packages gained `.watchOS(.v11)`; the fourteen Home Screen tile files
+in `OnyxUI` are fenced `#if os(iOS)` and the watch takes the tokens, the type
+ramp, the springs, the atlas and `LoggerSeams`.
+
+**The watch holds no Supabase session.** No refresh token leaves the phone. The
+watch has its own GRDB store, runs the same eighteen migrations, and is a second
+`device_id` in the same event log; `WatchLink` (`updateApplicationContext` for
+the schedule, `transferUserInfo` for events, `sendMessage` for the pencil and the
+rest clock) is its only road out, and the phone's outbox is what reaches
+Supabase. **Cost, stated rather than discovered: a watch that never sees its
+phone again keeps its sets locally and nowhere else.**
+
+**Appendix B's merge-point claim was false until this wave — see the correction
+at the end of it.** `set_events` now exists server-side
+(`docs/sql/wave-10-set-events.sql`, applied by hand), the drainer pushes events
+beside the row reconcile, and `TrainingPuller` pulls them into `ingest`.
+`WatchConvergenceTests` proves two devices converge through the server with no
+link between them, including a void — the half a row-only merge cannot do.
+
+**One defect the convergence suite found and fixed at the root:** appending to a
+session this device had only ever PULLED folded it down to that one set, because
+`reproject` rebuilds `workout_sets` from a log that knew about one event.
+`EventStore.record` now seeds the log from the existing rows first, the way
+`SessionEditing.editSession` always has. The Watch reaches that state every time
+it adopts a session the phone opened; the phone can reach it too.
+
+**UI:** one screen, no pager. A vertical `TabView` was the first design and could
+not have worked — `.digitalCrownRotation` is delivered to the FOCUSED view and a
+pager claims Crown focus, so the load binding and the container would have
+fought. Instead: `NavigationStack`, the Crown drives whichever value holds the
+focus ring, rest is a `fullScreenCover` rather than a page, and the RPE ladder
+lives on it (rest is the only free moment to rate, and a cover that dismisses
+itself makes *unrated* the outcome of doing nothing). One detent is **1.25 kg**
+(`Ceilings.loadStepFineKg`, not `Deck.fineStep`); the ladder is
+`Effort.ladder`'s eight non-uniform rungs as WORDS. No stepper — the Crown is the
+only adjuster and the tick is the only button, with
+`.handGestureShortcut(.primaryAction)` for a double-pinch. Budgeted for **40 mm**
+(162 × 197 pt), two ink levels only (`textTertiary` fails 4.5:1 by its own
+docstring and is unreadable dimmed), no mesh gradient and no glass.
+
+**Not verified, and it cannot be from a build machine:** the plan's own gate —
+"HR streams on-wrist for 20 min with screen off". `HKWorkoutSession` is wired and
+both apps build; the background mode needs a real wrist and a signed profile.
+
 Unchanged in substance from the 2026-09-02 §The Watch pivot: own GRDB store + own Supabase client in `HelixData`, `WCSession.transferUserInfo` for set events, `sendMessage` for timer + pencil, Supabase as the merge point, `HKWorkoutSession` + `workout-processing` **verified on the wrist before any UI**. Screens: session picker, set logger (Digital Crown for load, stepper for reps, RPE ladder), rest timer with haptics, live dashboard. Palette: `HelixTokens` only; the `ContentView.swift` private theme dies.
 
 | Task | Skills | Agents | Gate |
@@ -592,3 +638,38 @@ this way, and it is why Hevy never asks the user to resolve a conflict.
 stays foregrounded on-wrist and can read live heart rate. The entitlement is
 already held; `WKBackgroundModes: workout-processing` must be added and verified
 on a real device.
+
+---
+
+### Correction (Wave 10, 2026-09-08) — the merge point was aspirational
+
+The claim above that "Supabase is the merge point · WCSession is a latency
+optimisation and is never the source of truth" was **not true of the code** when
+it was written, and could not have been. Three facts, each verifiable:
+
+1. There was no `set_events` table on the server. `SyncEngine` reconciled
+   `workout_sets` ROWS: for each queued event it upserted or deleted the row the
+   event named.
+2. `TrainingPuller.applyPulledSets` refuses — correctly — to write pulled rows
+   into a session that has any local events, because those rows are a fold and
+   the next append would delete them.
+3. `AppDatabase.ingest(_:)`, the only path that merges a foreign event, had **no
+   production caller**. Tests only.
+
+So: the phone logs sets 1-3, the watch logs set 4, the server ends up holding all
+four, and neither device can adopt the other's. The workout is whole on the
+server and permanently partial on both clients — and permanently, not as a race:
+`v17.adoptRepairedSessions` is a hardcoded one-UUID migration that exists to dig
+one session out of exactly this state.
+
+Wave 10 makes the claim true rather than deleting it. `set_events` is a real
+server table (`docs/sql/wave-10-set-events.sql`); the drainer pushes events after
+the row reconcile, best-effort, so a database without the table costs one 404 per
+drain and nothing else; the puller reads them into `ingest`. The cursor is
+`inserted_at` and **not `seq`** — a Lamport value is per-device and two devices
+legitimately both emit 41, so a cursor on it steps over events.
+
+The one thing that is still narrower than the original wording: with the watch
+holding no Supabase session, WCSession is the watch's only road to the network.
+Supabase is the merge point between the phone and the web, and between the phone
+and any future device; the watch reaches it through the phone.

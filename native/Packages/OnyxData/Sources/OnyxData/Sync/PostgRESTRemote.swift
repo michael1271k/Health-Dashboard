@@ -62,6 +62,26 @@ public struct PostgRESTRemote: SyncRemote {
             .in("id", values: ids)
             .execute()
     }
+
+    /// The event log — `docs/sql/wave-10-set-events.sql`.
+    ///
+    /// `ignoreDuplicates: true` is `ON CONFLICT DO NOTHING`, and it is the only
+    /// legal setting: an event is immutable, so an id the server already holds
+    /// must be left exactly as it is. A real merge would let one device rewrite
+    /// history another device has already folded.
+    ///
+    /// ── AND IT MAY 404 UNTIL THE SQL IS RUN ─────────────────────────────────
+    /// The table is applied by hand. `SyncEngine` calls this AFTER the row
+    /// reconcile has already succeeded and swallows whatever comes back, so a
+    /// database without the table costs one failed request per drain and
+    /// changes nothing else.
+    public func upsertSetEvents(_ rows: [RemoteSetEventRow]) async throws {
+        guard !rows.isEmpty else { return }
+        try await client
+            .from("set_events")
+            .upsert(rows, onConflict: "id", returning: .minimal, ignoreDuplicates: true)
+            .execute()
+    }
 }
 
 /// `MirrorRemote` over the same client — the READ half of sync.

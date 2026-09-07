@@ -120,7 +120,11 @@ struct BackfillTests {
         #expect(Array(pulls.prefix(5)) == expected)
         #expect(pulls.count == SyncCoordinator.backfillOrder.count)
         #expect(SyncCoordinator.backfillOrder.prefix(5) == expected[...])
-        #expect(Set(SyncCoordinator.backfillOrder) == Set(MirrorCatalogue.tables.map(\.name) + ["exercises", "workout_sessions", "workout_sets"]))
+        // `set_events` is not a mirrored table — it is pulled by hand, beside
+        // the training trio, and merged through `ingest` rather than written as
+        // rows. It belongs in the head list for the same reason the other three
+        // do.
+        #expect(Set(SyncCoordinator.backfillOrder) == Set(MirrorCatalogue.tables.map(\.name) + ["exercises", "workout_sessions", "workout_sets", "set_events"]))
     }
 
     @Test("the history comes down BEFORE Apple is read, and what Apple wrote is still pushed")

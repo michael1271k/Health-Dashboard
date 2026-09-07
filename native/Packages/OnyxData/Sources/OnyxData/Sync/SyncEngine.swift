@@ -22,6 +22,19 @@ public protocol SyncRemote: Sendable {
     /// `DELETE … ?id=in.(…)`. Used for a voided set, and only ever for ids this
     /// device produced and then tombstoned.
     func deleteSets(ids: [String]) async throws
+
+    /// The append-only event log — `docs/sql/wave-10-set-events.sql`.
+    ///
+    /// ── IT IS A REQUIREMENT, NOT JUST AN EXTENSION ──────────────────────────
+    /// It has a default implementation (a no-op, in `SetEventSync`) so that
+    /// every conformer written before Wave 10 still compiles. It is declared
+    /// HERE anyway, and that is the whole difference between working and not:
+    /// a method that exists only in a protocol extension is dispatched
+    /// STATICALLY, so a call through `any SyncRemote` would run the extension's
+    /// no-op and never reach the conformer that overrode it. The events would
+    /// silently never leave the device — with a green build and a passing
+    /// drain.
+    func upsertSetEvents(_ rows: [RemoteSetEventRow]) async throws
 }
 
 /// What one drain did.
@@ -330,6 +343,16 @@ public actor SyncEngine {
             // leaves the server briefly disagreeing with the phone for no
             // reason.
             if !deletions.isEmpty { try await remote.deleteSets(ids: deletions) }
+            // ── AND THE EVENTS THEMSELVES, LAST AND BEST-EFFORT ────────────
+            // The rows above are what the web app reads and what this queue has
+            // always been about; the log is what lets a SECOND device adopt
+            // them (`SetEventSync`). It goes last, and inside the `do` so a
+            // network failure here is charged to the queue like any other — but
+            // `pushEvents` itself swallows the error, because `set_events` is
+            // applied BY HAND and until the SQL is run PostgREST answers 404.
+            // Backing the whole workout off over a table the user has not
+            // created yet would be the worse failure by a distance.
+            await pushEvents(entries, userId: session.userId)
         } catch {
             // Caught rather than thrown, for two reasons. One unreachable
             // session must not abandon the sessions behind it in the batch; and
@@ -347,6 +370,31 @@ public actor SyncEngine {
         // fold) rather than making the fold incremental.
         for item in ok { try database.outboxSucceeded(item.id) }
         return (ok.count, failed)
+    }
+
+    /// The queued events of one session, as server rows.
+    ///
+    /// Re-decoded from the outbox payload rather than threaded down from
+    /// `target(of:)`: the payload IS the event (`EventStore.commit` encodes it
+    /// whole), the decode is microseconds, and carrying it through two tuples
+    /// to save that would widen a signature every other caller has to read.
+    ///
+    /// Clock events are skipped here for the same reason `commit` never queues
+    /// them — they are local facts about this device's session timer, and
+    /// `duration_min` is what the server actually needs from a pause.
+    private func pushEvents(
+        _ entries: [(item: OutboxItem, setId: String?)], userId: String
+    ) async {
+        var rows: [RemoteSetEventRow] = []
+        for entry in entries where entry.item.kind.hasPrefix(SyncKind.setEventPrefix) {
+            guard let event = try? OnyxJSON.decoder.decode(SetEvent.self, from: entry.item.payload),
+                  !event.kind.isClock
+            else { continue }
+            rows.append(event.remoteRow(userId: userId))
+        }
+        guard !rows.isEmpty else { return }
+        // Deliberately swallowed. See the call site.
+        try? await remote.upsertSetEvents(rows)
     }
 
     // MARK: - Mirrored rows

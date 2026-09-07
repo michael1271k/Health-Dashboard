@@ -23,6 +23,10 @@ options:
   bundleIdPrefix: app.onyx.health.michael
   deploymentTarget:
     iOS: "18.0"
+    # Series 6 and SE 2 both run watchOS 11 and both ship a 40 mm case
+    # (162 x 197 pt) — which is why every watch screen is budgeted for 40 mm
+    # and not for the 41 mm this athlete happens to wear.
+    watchOS: "11.0"
   createIntermediateGroups: true
   groupSortPosition: top
 
@@ -65,6 +69,10 @@ targets:
       # app bundle. Without this the app can request an activity and the system
       # has nothing to draw it with.
       - target: OnyxWidgets
+      # And the watch app, which XcodeGen embeds under `Watch/` for us. A watch
+      # target that is not a dependency of its phone app builds and is never
+      # installed on the wrist.
+      - target: OnyxWatch
 
     # Secrets arrive as build settings and are surfaced through Info.plist, the
     # same convention the widget extension already uses for ONYX_SNAPSHOT_URL.
@@ -241,6 +249,96 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
 
+  # ── The Watch logging client (Wave 10) ───────────────────────────────────
+  #
+  # A SINGLE watchOS app target, not the old app-plus-extension pair: that
+  # split died in watchOS 7 and `WKApplication: true` is what declares the
+  # modern shape. The bundle id MUST be the phone's with `.watchkitapp`
+  # appended — the pairing is by name, not by a setting, and a mismatch
+  # installs an app that never sees its companion.
+  #
+  # It is a dependency of `Onyx` so XcodeGen writes the "Embed Watch Content"
+  # phase. Without that the watch app builds, signs, and is never delivered to
+  # the wrist.
+  #
+  # ── IT HAS ITS OWN STORE, AND IT HAS TO ──────────────────────────────────
+  # An App Group is shared between processes on ONE device, so there is no
+  # container the phone and the watch both see. `AppDatabase.sharedFolder()`
+  # already answers Application Support when there is no container, which is
+  # exactly right here: the watch runs the same migrations over its own
+  # `onyx.sqlite` and is simply a second `device_id` in the same event log.
+  OnyxWatch:
+    type: application
+    platform: watchOS
+
+    sources:
+      - path: OnyxWatch
+        excludes:
+          - "Support/Info.plist"
+          - "Support/OnyxWatch.entitlements"
+
+    dependencies:
+      - package: OnyxCore
+        product: OnyxCore
+      - package: OnyxData
+        product: OnyxData
+      # Tokens, the type ramp, the springs and `LoggerSeams` only. Every Home
+      # Screen tile in this package is fenced `#if os(iOS)`.
+      - package: OnyxUI
+        product: OnyxUI
+
+    # ── HealthKit ────────────────────────────────────────────────────────
+    # `HKWorkoutSession` is the app's RUNTIME, not a heart-rate feature:
+    # without one, watchOS suspends the app seconds after the wrist drops and
+    # the rest haptic never fires. It needs this entitlement, the two usage
+    # strings below, and `WKBackgroundModes: [workout-processing]`.
+    entitlements:
+      path: OnyxWatch/Support/OnyxWatch.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+
+    info:
+      path: OnyxWatch/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Onyx
+        CFBundleShortVersionString: "1.1"
+        CFBundleVersion: "1"
+        # The modern single-target watch app. Without it the build is treated
+        # as a legacy WatchKit extension host and will not launch.
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: app.onyx.health.michael.native
+        # THE reason the app keeps running between sets. Paired with the
+        # `HKWorkoutSession` in `WorkoutSessionController`; either without the
+        # other is a no-op.
+        WKBackgroundModes:
+          - workout-processing
+        # `WorkoutSessionController` asks to SHARE the workout type and to READ
+        # heart rate and active energy. `requestAuthorization` traps without
+        # both strings, and App Review rejects a generic one.
+        NSHealthShareUsageDescription: >-
+          Onyx reads your heart rate and active energy while you train so the
+          set you are on can show what your heart is doing, and so the finished
+          workout carries an average heart rate and a calorie figure.
+        NSHealthUpdateUsageDescription: >-
+          Onyx saves the strength workouts you log on your watch — their
+          duration, active energy and heart rate — back to Apple Health, so the
+          training you do here appears alongside the rest of your activity
+          rings.
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native.watchkitapp
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.1"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: W9UMPV973P
+        SWIFT_VERSION: "6.0"
+        # Same rule as the phone: strict from day one, because retrofitting it
+        # is what makes people give up on it.
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: NO
+
   # ── The app's own tests ──────────────────────────────────────────────────
   #
   # Almost everything provable lives in OnyxCore and OnyxData, which test on
@@ -266,11 +364,26 @@ targets:
         BUNDLE_LOADER: "$(TEST_HOST)"
 
 schemes:
+  # ── The Watch scheme ──────────────────────────────────────────────────────
+  # A target alone is not enough for `xcodebuild`: building `-target OnyxWatch`
+  # skips the package-graph resolution its three package products need, and the
+  # failure reads as four unrelated "unable to resolve module dependency" errors
+  # from inside supabase-swift's own checkouts. A scheme is what makes the
+  # watchOS build reproducible from the command line, which is what the ship
+  # gate needs.
+  OnyxWatch:
+    build:
+      targets:
+        OnyxWatch: all
+    run:
+      config: Debug
+
   Onyx:
     build:
       targets:
         Onyx: all
         OnyxWidgets: all
+        OnyxWatch: all
     run:
       config: Debug
     test:

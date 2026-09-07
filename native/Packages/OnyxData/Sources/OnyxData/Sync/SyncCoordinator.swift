@@ -134,7 +134,11 @@ public actor SyncCoordinator: MirrorRefreshing {
     /// Parents before children: the three the training tables reference,
     /// sessions before the sets that belong to them, everything else after.
     public static let backfillOrder: [String] = {
-        let head = ["user_goals", "plans", "exercises", "workout_sessions", "workout_sets"]
+        // `set_events` last of the training tables: it is pulled by
+        // `TrainingPuller` right after the sets it is a fold of, and `ingest`
+        // needs the session rows to exist first (`set_events.session_id` has a
+        // foreign key locally as well as on the server).
+        let head = ["user_goals", "plans", "exercises", "workout_sessions", "workout_sets", "set_events"]
         return head + MirrorCatalogue.tables.map(\.name).filter { !head.contains($0) }
     }()
     /// The catalogue tables pulled BEFORE the training three.

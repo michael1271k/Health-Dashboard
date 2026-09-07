@@ -1,3 +1,9 @@
+// ── iOS ONLY ────────────────────────────────────────────────────────────────
+// A Home Screen tile, and `WidgetFamily.systemSmall/Medium/Large` do not
+// exist on watchOS. The watch takes the tokens out of this package and draws
+// its own two screens; a 67-cell body atlas on a 40 mm case is not a feature.
+#if os(iOS)
+
 import WidgetKit
 import SwiftUI
 import OnyxCore
@@ -1702,3 +1708,5 @@ struct WellbeingFace: View {
     }
   }
 }
+
+#endif
