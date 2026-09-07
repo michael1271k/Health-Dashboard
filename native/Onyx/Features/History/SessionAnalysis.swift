@@ -353,7 +353,8 @@ enum SessionAnalysis {
     static func detailSet(_ r: HistorySetRow) -> DetailSet {
         CoreBridge.detailSet(
             setNumber: Double(r.setIndex), weightKg: r.weightKg, reps: Double(r.reps), rpe: r.rpe,
-            est1rmKg: r.est1rmKg, setType: r.setType, side: r.lr, pairId: r.pairId
+            est1rmKg: r.est1rmKg, setType: r.setType, side: r.lr, pairId: r.pairId,
+            durationSec: r.durationSec.map(Double.init), incline: r.incline, distanceKm: r.distanceKm
         )
     }
 

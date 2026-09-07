@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatSet, formatLoad, formatReps, isUnloadedSet } from '@/lib/utils/setFormat'
+import { formatSet, formatCardioSet, formatLoad, formatReps, isUnloadedSet } from '@/lib/utils/setFormat'
 import { setDetail, type ExportSet } from '@/lib/reports/weeklyExport'
 
 const s = (weightKg: number, reps: number, extra: Partial<ExportSet> = {}): ExportSet =>
@@ -54,6 +54,45 @@ describe('formatSet', () => {
     expect(formatLoad(0)).toBe('bodyweight')
     expect(formatReps(12)).toBe('12 reps')
     expect(formatReps(58, true)).toBe('58 sec')
+  })
+})
+
+/**
+ * ── A SET THAT IS NOT REPS AND KILOGRAMS ─────────────────────────────────────
+ *
+ * The treadmill that opens 2026-09-07 is `weight_kg 0, reps 0` with 300 s, 2%
+ * and 0.37 km beside it. `formatSet` renders that as "0 reps", which is the
+ * same class of lie as "0kg × 17" and the reason this file exists.
+ *
+ * It is a SIBLING, so every assertion above still holds byte for byte.
+ */
+describe('formatCardioSet', () => {
+  it('reads the treadmill as its own three numbers', () => {
+    expect(formatCardioSet(300, 0.37, 2)).toBe('5:00 · 0.37 km · 2%')
+  })
+
+  it('drops what the set does not say, in order', () => {
+    expect(formatCardioSet(300, null, null)).toBe('5:00')
+    expect(formatCardioSet(null, 0.37, null)).toBe('0.37 km')
+    expect(formatCardioSet(125, null, 15)).toBe('2:05 · 15%')
+  })
+
+  it('is null for a set with no cardio axis, which is how a lift stays a lift', () => {
+    expect(formatCardioSet(null, null, null)).toBeNull()
+    expect(formatCardioSet(0, 0, 0)).toBeNull()
+    expect(formatCardioSet(undefined, undefined, undefined)).toBeNull()
+    // Non-finite is absent, not "NaN%".
+    expect(formatCardioSet(Number.NaN, Number.NaN, Number.NaN)).toBeNull()
+    expect(formatCardioSet(Number.POSITIVE_INFINITY, 1, null)).toBe('1 km')
+  })
+
+  it('pads the seconds and keeps a decline', () => {
+    expect(formatCardioSet(45, null, null)).toBe('0:45')
+    expect(formatCardioSet(61, null, null)).toBe('1:01')
+    // A zero incline is the default and says nothing; a negative one is a
+    // setting somebody chose.
+    expect(formatCardioSet(60, null, 0)).toBe('1:00')
+    expect(formatCardioSet(60, null, -3)).toBe('1:00 · -3%')
   })
 })
 

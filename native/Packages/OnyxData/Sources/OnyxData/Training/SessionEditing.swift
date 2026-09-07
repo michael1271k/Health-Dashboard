@@ -429,7 +429,14 @@ public extension AppDatabase {
                         // supposed to reproduce the session byte for byte —
                         // dropping it here would blank the column on the first
                         // edit of every workout logged on the other client.
-                        exerciseOrder: row.exerciseOrder
+                        exerciseOrder: row.exerciseOrder,
+                        // Same argument, three more columns: a treadmill set
+                        // pulled from the server is five minutes at incline 2
+                        // for 0.37 km, and a seed that drops those re-renders
+                        // it as `0kg × 0` on the first edit of the session.
+                        durationSec: row.durationSec,
+                        incline: row.incline,
+                        distanceKm: row.distanceKm
                     )
                 )
             )

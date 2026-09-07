@@ -32,6 +32,11 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
     /// with `||`, never `??`. `PrEngine.buildBaselines` already does.
     public var est1rmKg: Double?
     public var rpe: Double?
+    /// The cardio axes — see `WorkoutSet.durationSec`. All three nil on a
+    /// lifted set, which is what `SetFormat.cardio` reads as "not a cardio set".
+    public var durationSec: Int?
+    public var incline: Double?
+    public var distanceKm: Double?
     /// The session's logical day, ISO.
     public var date: String
     public var dayKey: String?
@@ -50,6 +55,9 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
         case pairId = "pair_id"
         case est1rmKg = "est_1rm_kg"
         case rpe
+        case durationSec = "duration_sec"
+        case incline
+        case distanceKm = "distance_km"
         case date
         case dayKey = "day_key"
     }
@@ -76,6 +84,7 @@ public extension AppDatabase {
                COALESCE(e.name, s.exercise_id) AS exercise_name,
                s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                s.side, s.pair_id, s.est_1rm_kg, s.rpe,
+               s.duration_sec, s.incline, s.distance_km,
                sess.date, sess.day_key
         FROM workout_sets s
         JOIN workout_sessions sess ON sess.id = s.session_id

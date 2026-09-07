@@ -124,6 +124,9 @@ public enum SetEventFold {
                     rpe: snapshot.rpe,
                     quality: snapshot.quality,
                     exerciseOrder: snapshot.exerciseOrder,
+                    durationSec: snapshot.durationSec,
+                    incline: snapshot.incline,
+                    distanceKm: snapshot.distanceKm,
                     isPendingSync: isPendingSync
                 )
             }

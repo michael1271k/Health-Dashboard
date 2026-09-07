@@ -906,8 +906,21 @@ struct SessionDetailView: View {
                 tint: direction?.1
             ))
         }
-        tags.append(.init("Top " + SetFormat.format(weightKg: ex.stats.topKg, reps: ex.stats.topReps, timed: ex.timed)))
-        tags.append(.init("\(OnyxFormat.volume(ex.detail.volumeKg)) kg"))
+        // "Top" is a claim about the WORKING sets, so an exercise that has none
+        // does not get to make it. It used to print `Top 0 reps` — the same
+        // lie as `0kg × 0`, one line up — on any all-warm-up movement, which
+        // the treadmill block is by construction.
+        if ex.stats.topKg > 0 || ex.stats.topReps > 0 {
+            tags.append(.init("Top " + SetFormat.format(weightKg: ex.stats.topKg, reps: ex.stats.topReps, timed: ex.timed)))
+        }
+        // And tonnage is the same kind of claim. `0 kg` beside a treadmill —
+        // or beside a reverse crunch, which has been printing it far longer —
+        // is not a small number, it is a category error: the movement carries
+        // no load, so there is no tonnage to be zero of. The pill is absent
+        // rather than zero, exactly as "Top" is one line above.
+        if ex.detail.volumeKg > 0 {
+            tags.append(.init("\(OnyxFormat.volume(ex.detail.volumeKg)) kg"))
+        }
         if let rpe = ex.stats.avgRpe { tags.append(.init("RPE \(jsToFixed1(rpe))")) }
         if let cue = ex.cue { tags.append(.init(cue.short, tint: domain.accent)) }
         return tags
@@ -1159,6 +1172,13 @@ struct SetRow: View {
     }
 
     /// Never wrapped, and never scaled below legibility: it is the row.
+    ///
+    /// A three-component cardio value — `5:00 · 0.37 km · 2%` — is whole at
+    /// 375 pt and TRUNCATES at AX5, where the incline drops off the end. That
+    /// is the row's own rule and not an accident: it sheds the effort column at
+    /// the same sizes, and `spoken` carries the value in full to VoiceOver. If
+    /// a sighted AX5 reader ever needs the third component, this line is the
+    /// one to change — `lineLimit(typeSize.isAccessibilitySize ? 2 : 1)`.
     private var value: some View {
         Text(current)
             .onyxType(.body).onyxNumeral()
@@ -1294,10 +1314,10 @@ struct SetRow: View {
 
     private var current: String {
         if row.row.kind == "pair" {
-            return [row.row.left.map { "L " + fmt($0.weightKg, $0.reps) }, row.row.right.map { "R " + fmt($0.weightKg, $0.reps) }]
+            return [row.row.left.map { "L " + fmt($0) }, row.row.right.map { "R " + fmt($0) }]
                 .compactMap { $0 }.joined(separator: " · ")
         }
-        return lead.map { fmt($0.weightKg, $0.reps) } ?? "—"
+        return lead.map(fmt) ?? "—"
     }
 
     private var previous: String? {
@@ -1323,6 +1343,23 @@ struct SetRow: View {
 
     private func fmt(_ kg: Double, _ reps: Double) -> String {
         SetFormat.format(weightKg: kg, reps: reps, timed: timed)
+    }
+
+    /// The set as ITS OWN axes — `5:00 · 0.37 km · 2%` for the treadmill,
+    /// `42kg × 10` for everything else.
+    ///
+    /// `SetFormat.cardio` answers nil unless the set carries one of the three
+    /// columns `docs/sql/hotfix-polish.sql` added, so the fallback is the whole
+    /// of the previous behaviour and every lifted row renders byte for byte as
+    /// it did. Without it the treadmill that opens 2026-09-07 reads `0 reps` —
+    /// `weight_kg 0, reps 0` is exactly what that session stores.
+    ///
+    /// `previous` deliberately does NOT get this: `HistorySet` carries no
+    /// cardio axis, and the prev column only draws on a NUMBERED row — the
+    /// treadmill is a warm-up and has no number.
+    private func fmt(_ s: DetailSet) -> String {
+        SetFormat.cardio(durationSec: s.durationSec, distanceKm: s.distanceKm, incline: s.incline)
+            ?? fmt(s.weightKg, s.reps)
     }
 }
 

@@ -14,8 +14,10 @@ import GRDB
 ///     `is_pr`, none of which is here. (`rpe` WAS in that list; `v7.setRpe`
 ///     added it. `quality` was too; `v14.setQuality` added it — locally only,
 ///     see `SyncTranslation.RemoteSetRow`. `exercise_order` was too;
-///     `v16.exerciseOrder` added it, and it IS sent.) Its `exercise_id` is a
-///     uuid with a live foreign key; ours is a slug.
+///     `v16.exerciseOrder` added it, and it IS sent. `duration_sec`, `incline`
+///     and `distance_km` were too; `v18.cardioSetFields` added them, and they
+///     are sent.) Its `exercise_id` is a uuid with a live foreign key; ours is
+///     a slug.
 ///   · `workout_sessions` — our `date` column **does not exist** server-side
 ///     (there is `started_at` and `day_key`). Postgres requires `split_day`
 ///     (NOT NULL, CHECK-constrained); `status` and `migrated_from_notion` are
@@ -231,6 +233,25 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
     /// Defaulting it to 0 would claim every one of those movements opened the
     /// workout, which is a claim about eleven cards at once.
     public var exerciseOrder: Int?
+    /// A set that is not reps and kilograms.
+    ///
+    /// Seconds under load, treadmill incline as a percent, kilometres covered.
+    /// Postgres grew all three on 2026-09-07 (`docs/sql/hotfix-polish.sql`) for
+    /// the treadmill warm-up, which `workout_sets` had nowhere to put: it is
+    /// `weight_kg 0, reps 0`, and a reader with only those two columns renders
+    /// it as `0kg × 0` — a claim that five minutes of walking was nothing.
+    ///
+    /// **All three are `nil` on a lifted set and that is the normal case.** Nil
+    /// is "this axis does not apply", never zero: a `duration_sec` of 0 would
+    /// say the set took no time. `SetFormat.cardio` returns nil when all three
+    /// are absent, which is what hands the row back to `format`.
+    ///
+    /// These do NOT replace the reps-as-seconds convention Side Plank's
+    /// historical rows still use — nothing rewrites those, and `TimedExercise`
+    /// remains how a hold is read.
+    public var durationSec: Int?
+    public var incline: Double?
+    public var distanceKm: Double?
     public var isPendingSync: Bool
     /// The fold's arrival position, so a read can reproduce the fold's order
     /// even when two devices claim the same `setIndex`. Local only — derived
@@ -251,6 +272,9 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         case rpe
         case quality
         case exerciseOrder = "exercise_order"
+        case durationSec = "duration_sec"
+        case incline
+        case distanceKm = "distance_km"
         case isPendingSync = "is_pending_sync"
         case foldOrder = "fold_order"
     }
@@ -260,6 +284,7 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         weightKg: Double, reps: Int, setType: String = "normal",
         side: String? = nil, pairId: String? = nil, est1rmKg: Double? = nil,
         rpe: Double? = nil, quality: String? = nil, exerciseOrder: Int? = nil,
+        durationSec: Int? = nil, incline: Double? = nil, distanceKm: Double? = nil,
         isPendingSync: Bool = false, foldOrder: Int = 0
     ) {
         self.id = id
@@ -275,6 +300,9 @@ public struct WorkoutSet: Codable, FetchableRecord, PersistableRecord, Identifia
         self.rpe = rpe
         self.quality = quality
         self.exerciseOrder = exerciseOrder
+        self.durationSec = durationSec
+        self.incline = incline
+        self.distanceKm = distanceKm
         self.isPendingSync = isPendingSync
         self.foldOrder = foldOrder
     }

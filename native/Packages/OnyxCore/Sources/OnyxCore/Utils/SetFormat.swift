@@ -22,4 +22,36 @@ public enum SetFormat {
         let w: Double? = toDisplay.map { $0(weightKg!) } ?? weightKg
         return "\(w.map(jsIntegerString) ?? "null")\(unit) × \(ns)"
     }
+
+    /// A set that is not reps and kilograms — `5:00 · 0.37 km · 2%`.
+    ///
+    /// A SIBLING of `format`, not a branch inside it: `format` is parity-locked
+    /// by a golden vector and its contract is that a set has a load and a rep
+    /// count. A treadmill has neither (`weight_kg 0, reps 0`), so it would need
+    /// a third shape behind a fourth argument and every existing caller's
+    /// output would start depending on fields it does not pass.
+    ///
+    /// `nil` when the set carries no cardio axis at all — which is what hands
+    /// the row back to `format`, and is the ordinary case.
+    ///
+    /// A component is dropped when absent, non-finite or zero. Incline reads
+    /// `!= 0` rather than `> 0`: a DECLINE is a real treadmill setting and an
+    /// unstated one is not.
+    public static func cardio(durationSec: Double?, distanceKm: Double?, incline: Double?) -> String? {
+        func ok(_ v: Double?) -> Double? { v.flatMap { $0.isFinite ? $0 : nil } }
+        var parts: [String] = []
+        if let d = ok(durationSec), d > 0 {
+            // Rounded to the nearest second and split afterwards, for the
+            // reason `CardioMetrics.formatPace` gives: flooring twice loses a
+            // second to binary error.
+            let total = jsRound(d)
+            let mins = (total / 60).rounded(.down)
+            var ss = jsIntegerString(total.truncatingRemainder(dividingBy: 60))
+            while ss.count < 2 { ss = "0" + ss }
+            parts.append("\(jsIntegerString(mins)):\(ss)")
+        }
+        if let km = ok(distanceKm), km > 0 { parts.append("\(jsIntegerString(km)) km") }
+        if let i = ok(incline), i != 0 { parts.append("\(jsIntegerString(i))%") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 }

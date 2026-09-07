@@ -106,6 +106,7 @@ enum HistoryPreviews {
         ("ex-raise", "Single Arm Lateral Raise"),
         ("ex-hkr", "Hanging Knee Raise"),
         ("ex-hack", "Hack Squat"),
+        ("ex-treadmill", "Treadmill"),
     ]
 
     /// (weight, reps) per working set, per session, oldest first.
@@ -136,6 +137,25 @@ enum HistoryPreviews {
             func set(_ ex: String, _ i: Int, _ w: Double, _ r: Int, type: String = "normal", side: String? = nil, pair: String? = nil, rpe: Double? = nil) throws {
                 try WorkoutSet(id: "\(id)-\(ex)-\(i)\(side ?? "")", sessionId: id, exerciseId: ex, setIndex: i, weightKg: w, reps: r,
                                setType: type, side: side, pairId: pair, est1rmKg: Epley.oneRepMax(weight: w, reps: Double(r)), rpe: rpe, foldOrder: order).insert(db)
+                order += 1
+            }
+            // ── THE SET THAT IS NOT REPS AND KILOGRAMS ──────────────────
+            // 2026-09-07 opens with one, and it is the only row in the live
+            // database using `duration_sec` / `incline` / `distance_km`. A
+            // fixture without one photographs the fix as an unchanged screen:
+            // the ledger's job here is to render `5:00 · 0.37 km · 2%` where it
+            // used to render `0kg × 0`, and nothing else in six weeks of this
+            // seed carries a cardio axis.
+            //
+            // On the LAST session only, and as a warm-up — the same shape the
+            // real row has, so it earns no tonnage, no ordinal and no record,
+            // and the other six sessions' arithmetic is untouched.
+            if id == lastSession {
+                try WorkoutSet(
+                    id: "\(id)-treadmill", sessionId: id, exerciseId: "ex-treadmill", setIndex: 1,
+                    weightKg: 0, reps: 0, setType: "warmup",
+                    durationSec: 300, incline: 2, distanceKm: 0.37, foldOrder: order
+                ).insert(db)
                 order += 1
             }
             try set("ex-incline", 0, 20, 12, type: "warmup")

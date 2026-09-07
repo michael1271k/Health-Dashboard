@@ -223,6 +223,13 @@ extension AppDatabase {
                         // back over it — and it lets the report group a
                         // web-logged session the way it actually happened.
                         exerciseOrder: row.exerciseOrder,
+                        // The cardio axes. Without these the treadmill that
+                        // opens 2026-09-07 arrives as `weight_kg 0, reps 0` and
+                        // nothing else, and the report renders five minutes of
+                        // walking as `0kg × 0`.
+                        durationSec: row.durationSec,
+                        incline: row.incline,
+                        distanceKm: row.distanceKm,
                         isPendingSync: false,
                         foldOrder: order
                     ).save(db)

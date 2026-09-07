@@ -29,6 +29,22 @@ export interface DetailSet {
    * also crowding the title until long names wrapped.
    */
   prAxes: PrAxis[]
+  /**
+   * A set that is not reps and kilograms — seconds under load, treadmill
+   * incline as a percent, kilometres covered.
+   *
+   * `workout_sets` grew the three columns on 2026-09-07 for the treadmill that
+   * opens that session: `weight_kg 0, reps 0`, which every reader with only
+   * those two columns renders as `0kg × 0`. Distinct from `DetailCardio`, which
+   * is a `cardio_logs` row — this is a set INSIDE the deck, in set order, and
+   * it still earns no tonnage and no record because its load is zero.
+   *
+   * Optional, and nullish on every lifted set. `null` is "this axis does not
+   * apply", never 0.
+   */
+  durationSec?: number | null
+  incline?: number | null
+  distanceKm?: number | null
   /*
    * `restSec` USED to be here, and it is worth saying why it is not.
    *
@@ -160,6 +176,9 @@ type RawSet = {
   set_type: string | null
   side: string | null
   pair_id: string | null
+  duration_sec: number | null
+  incline: number | null
+  distance_km: number | null
   /** Absent on a database without the column, and on every historic row. */
   exercises: { name: string; muscle_groups: string[] | null; is_compound: boolean }
 }
@@ -197,7 +216,7 @@ export function useSessionDetail(sessionId: string | null) {
       // empty session, which is a fact rather than a schema question.
       const { data: setsRaw } = await supabase
         .from('workout_sets')
-        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, exercises!inner(name, muscle_groups, is_compound)')
+        .select('exercise_id, set_number, weight_kg, reps, rpe, is_pr, est_1rm_kg, exercise_order, set_type, side, pair_id, duration_sec, incline, distance_km, exercises!inner(name, muscle_groups, is_compound)')
         .eq('session_id', sessionId as string)
         .order('exercise_order', { ascending: true })
         .order('set_number', { ascending: true })
@@ -275,6 +294,8 @@ export function useSessionDetail(sessionId: string | null) {
           setNumber: r.set_number, weightKg: r.weight_kg, reps: r.reps,
           rpe: r.rpe, isPr: r.is_pr, est1rmKg: r.est_1rm_kg, setType,
           side: r.side ?? null, pairId: r.pair_id ?? null, prAxes: [],
+          durationSec: r.duration_sec ?? null, incline: r.incline ?? null,
+          distanceKm: r.distance_km ?? null,
         })
         // One set per landmark mover, deduped across a unilateral pair. Declared
         // out here because both the working-set count and the muscle credit
