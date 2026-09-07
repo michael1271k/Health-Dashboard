@@ -121,13 +121,41 @@ extension AppDatabase {
     /// than one hop later. The difference is a frame of the empty state on every
     /// appearance, which reads as a flicker on a list whose data is already on
     /// disk — and having it on disk is the entire reason this store exists.
+    ///
+    /// - important: call this from the main actor. `.immediate` traps otherwise
+    ///   — `ImmediateValueObservationScheduler.immediateInitialValue()` is a
+    ///   `GRDBPrecondition(Thread.isMainThread)`. Every caller today is a
+    ///   `@MainActor` model or a `@MainActor` test, which is why the rule has
+    ///   never been felt; it is a runtime rule, not a compile-time one.
     public func stream<T: Sendable>(
         _ observation: ValueObservation<ValueReducers.Fetch<T>>
     ) -> AsyncThrowingStream<T, any Error> {
         AsyncThrowingStream { continuation in
+            // ── WHY THE SCHEDULER IS BOUND TO AN EXISTENTIAL FIRST ───────────
+            // GRDB declares `start(in:scheduling:onError:onChange:)` TWICE, and
+            // `ImmediateValueObservationScheduler` conforms to both scheduler
+            // protocols — so a bare `.immediate` leaves the `@MainActor`
+            // overload viable, it wins as the more specialised candidate, and
+            // this nonisolated function cannot call it. Under Swift 6 that is
+            // an isolation violation held down to a warning only by GRDB's
+            // `@preconcurrency`; the day that attribute comes off, it is an
+            // error and the app target stops building.
+            //
+            // Binding to `any ValueObservationScheduler` opens the existential
+            // (SE-0352) into a type parameter whose only conformance is the
+            // BASE protocol, so `some ValueObservationMainActorScheduler` is
+            // unsatisfiable and the nonisolated overload is the only candidate
+            // left. The scheduler value is unchanged, so the synchronous first
+            // fetch the doc comment above promises still happens inside
+            // `start` — that was verified, not assumed.
+            //
+            // The `let` is load-bearing: existentials only open through a
+            // reference to a binding, so inlining this as a cast is a hard
+            // error, not a silent regression.
+            let scheduler: any ValueObservationScheduler = .immediate
             let cancellable = observation.start(
                 in: writer,
-                scheduling: .immediate,
+                scheduling: scheduler,
                 onError: { continuation.finish(throwing: $0) },
                 onChange: { continuation.yield($0) }
             )
