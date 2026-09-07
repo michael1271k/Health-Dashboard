@@ -206,6 +206,7 @@ import type { RoutineTemplate } from '@/lib/sessions/routineTemplate'
 import {
   sessionDuration, LONG_IDLE_MIN, DEFAULT_REST_TARGET_SEC, type SessionDurationResult,
 } from '@/lib/sessions/sessionDuration'
+import { exerciseTags, type ExerciseTag } from '@/lib/exercises/tags'
 import { debtBand, type SleepDebt } from '@/lib/sleep/debt'
 import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
 import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coach/scheduleReadiness'
@@ -7641,6 +7642,38 @@ describe('golden vectors — series builders', () => {
       fn: 'paddedWindow',
       note: 'Exactly `limit` buckets ending on endingOn, oldest first, value null where no point; duplicates last-wins; out-of-window points dropped. Empty for limit ≤ 0 or a non-ISO endingOn.',
       cases: windows.map(([name, endingOn, limit]) => ({ name, input: { series, endingOn, limit }, expected: paddedWindow(series, endingOn, limit) as PaddedPoint[] })),
+    })
+  })
+})
+
+describe('golden vectors — exercise tags', () => {
+  it('exports the chip row for every catalogue and typed name', () => {
+    interface TagIn { name: string | null; compound: boolean | null }
+    const names: Array<string | null> = [
+      ...new Set(activeProgram(HELIX5_ID, 'bulk').days.flatMap((d) => d.exercises.map((e) => e.name))),
+      // The collisions, the fallback and the shapes the rules argue about.
+      'Push-Up', 'Pull-Up', 'Dip', 'Side Plank', 'Plank', 'Dead Hang', 'Wall Sit',
+      'Farmer Carry', "Farmer's Walk", 'Suitcase Carry', 'Treadmill', 'Incline Walk',
+      'Reverse Crunch', 'Crunch', 'Lateral Raise', 'Hanging Knee Raise',
+      'Smith Squat', 'BB Row', 'DB Row', 'Chest Press (Machine)', 'Leg Press Sled',
+      'Bulgarian Split Squat', 'Walking Lunge', 'Double-Arm Cable Row',
+      'Reverse Hyper', 'Good Morning', '', '   ', null,
+    ]
+    const cases: Case<TagIn, ExerciseTag[]>[] = []
+    for (const name of names) {
+      for (const compound of [true, false, null]) {
+        cases.push({
+          name: `${name === null ? '<null>' : name === '' ? '<empty>' : name.trim() === '' ? '<blank>' : name} · ${compound === null ? 'unknown' : compound ? 'compound' : 'isolation'}`,
+          input: { name, compound },
+          expected: exerciseTags(name, { compound }),
+        })
+      }
+    }
+    emit('exercise-tags.json', {
+      module: 'exercises/tags',
+      fn: 'exerciseTags',
+      note: 'Fixed order: load class (only when `compound` is known — never guessed from the name), then the equipment label, then unilateral, bodyweight, timed. The equipment rules can answer "Bodyweight" and "Timed hold", which are the same claims as the last two tags; when the qualifier fires the equipment chip is DROPPED rather than deduped after, so the qualifier keeps its own place in the order. The "Exercise" fallback is not a chip.',
+      cases,
     })
   })
 })

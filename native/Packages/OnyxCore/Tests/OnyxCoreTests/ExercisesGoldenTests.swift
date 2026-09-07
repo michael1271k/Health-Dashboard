@@ -187,3 +187,36 @@ struct DeckMoverParityTests {
         #expect(vGrip.movers.secondary.contains("rear_delts") == false)
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tags (P3 E4) — the chip row, and the two labels that would otherwise print
+// themselves twice.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Suite("Exercise tags")
+struct ExerciseTagsGoldenTests {
+    struct TagIn: Decodable { let name: String?; let compound: Bool? }
+
+    @Test("exerciseTags matches — order, collisions and the fallback")
+    func tagsMatch() throws {
+        let fixture = try GoldenFixture<TagIn, [ExerciseTag]>.load("exercise-tags")
+        #expect(fixture.cases.count > 100)
+        for c in fixture.cases {
+            #expect(
+                ExerciseTags.tags(for: c.input.name, compound: c.input.compound) == c.expected,
+                "exerciseTags — \(c.name)"
+            )
+        }
+    }
+
+    @Test("labels is the labels of the same list")
+    func labelsMatch() throws {
+        for c in try GoldenFixture<TagIn, [ExerciseTag]>.load("exercise-tags").cases {
+            #expect(
+                ExerciseTags.labels(for: c.input.name, compound: c.input.compound) == c.expected.map(\.label),
+                "labels — \(c.name)"
+            )
+        }
+    }
+}
+

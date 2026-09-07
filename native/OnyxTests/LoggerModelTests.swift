@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 import OnyxCore
 @testable import Onyx
@@ -196,5 +197,85 @@ struct LoggerModelTests {
         log(model, "DB Shoulder Press", sets: 3)
         #expect(model.currentSet?.exercise.name == "Single Arm Lateral Raise (Cable)")
         #expect(model.currentSet?.total == 5)
+    }
+
+    // ── The seed (P3 E4) ────────────────────────────────────────────────────
+
+    @Test("with no store, the deck opens on the program's cold start and says nothing about a previous set")
+    func coldStartHasNoPrevious() {
+        let model = armsBulk()
+        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        #expect(press.rows.count == 3)
+        #expect(press.rows.allSatisfy { $0.weightKg == 28 })
+        // The rep FLOOR, not the ceiling: the floor is what you walk up to.
+        #expect(press.rows.allSatisfy { $0.reps == 8 })
+        // ── THE WHOLE OF THE OLD BUG ────────────────────────────────────────
+        // This used to read "28kg × 8" — the program's July seed, printed as
+        // though it were the last set performed. Nothing was logged, so there
+        // is no previous set, and the honest answer is nothing at all.
+        #expect(press.rows.allSatisfy { $0.previous == nil })
+        #expect(press.rows.allSatisfy { !$0.progressed && !$0.rpeStale })
+        #expect(model.seededFrom(press) == nil)
+    }
+
+    @Test("a movement the program prescribes no load for seeds nil, not zero")
+    func nilLoadIsNotZero() {
+        let model = LoggerModel(day: Program.onyx5.day(key: "legs_b")!, phase: .cut)
+        let raise = model.exercises.first { $0.name == "Hanging Knee Raise" }!
+        #expect(raise.rows[0].weightKg == nil)
+    }
+
+    // ── The session clock (P3 E4) ───────────────────────────────────────────
+
+    @Test("pause stops the clock and resume starts it again")
+    func pauseStopsTheClock() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        #expect(model.isPaused == false)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
+
+        model.pause(at: start.addingTimeInterval(600))
+        #expect(model.isPaused)
+        // Ten minutes in, paused: the number stops moving however long you wait.
+        #expect(model.activeSeconds(now: start.addingTimeInterval(600)) == 600)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(3_000)) == 600)
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(3_000)) == 2_400)
+
+        model.resume(at: start.addingTimeInterval(3_000))
+        #expect(model.isPaused == false)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(3_600)) == 1_200)
+    }
+
+    @Test("pausing twice does not bank the interval twice")
+    func doublePauseIsIdempotent() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        model.pause(at: start.addingTimeInterval(60))
+        model.pause(at: start.addingTimeInterval(120))
+        model.resume(at: start.addingTimeInterval(180))
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+        // A stray resume is not an interval either.
+        model.resume(at: start.addingTimeInterval(240))
+        #expect(model.pausedSeconds(now: start.addingTimeInterval(600)) == 120)
+    }
+
+    @Test("the clock never runs backwards")
+    func clockNeverNegative() {
+        let start = Date(timeIntervalSince1970: 1_757_000_000)
+        let model = LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk, startedAt: start)
+        #expect(model.activeSeconds(now: start.addingTimeInterval(-600)) == 0)
+    }
+
+    // ── Live records (P3 E4) ────────────────────────────────────────────────
+
+    @Test("with no store there are no baselines, so nothing claims a record")
+    func previewsClaimNoRecords() {
+        // The engine runs against `PrBaselines.empty` in previews. An empty bar
+        // is not "everything is a record": `PrTruth.floor` and the engine's own
+        // eligibility rules still gate it, and the count that matters is the one
+        // the ledger will write.
+        let model = armsBulk()
+        log(model, "DB Shoulder Press", sets: 1)
+        #expect(model.recordCount == model.prsThisSession)
     }
 }

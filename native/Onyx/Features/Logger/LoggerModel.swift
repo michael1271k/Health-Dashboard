@@ -282,9 +282,16 @@ final class LoggerModel: Identifiable {
     var totalVolumeKg: Double { exercises.reduce(0) { $0 + $1.volumeKg } }
     var completedSets: Int { exercises.reduce(0) { $0 + $1.workingSets } }
     var plannedSets: Int { day.plannedSets(for: phase) }
-    var recordCount: Int {
-        exercises.reduce(0) { $0 + $1.rows.filter { $0.isDone && $0.isRecord }.count }
-    }
+    /// Records claimed so far — AXES, not rows.
+    ///
+    /// ── WHY NOT `rows.filter(\.isRecord).count`, WHICH IS WHAT IT WAS ───────
+    /// One set can win two axes at once (a heaviest load that is also a best
+    /// e1RM), and two sets can win one axis between them. `pr_count` on the
+    /// session, the trophy chips and the web all count DISTINCT axis-records —
+    /// `PrEngine.detectSessionPrs(…).prCount` — so counting rows here made the
+    /// finish sheet, the Live Activity and the ledger disagree about the same
+    /// workout by one or two the moment a set won on two axes.
+    var recordCount: Int { prsThisSession }
     var physicalSets: Int { exercises.reduce(0) { $0 + $1.physicalSets } }
 
     /// Weighted set counts per landmark, for the distribution sheet.
