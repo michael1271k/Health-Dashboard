@@ -391,13 +391,18 @@ struct LiveLoggerView: View {
     /// 0.8 when the pill was thrown.
     ///
     /// ── AND WHY IT IS NOT A PAGING SCROLL VIEW ──────────────────────────────
-    /// It was, briefly. A horizontal `ScrollView` owns the paging geometry for
-    /// free, but the deck's set rows are swiped horizontally to log (wave U2
-    /// retires that; until then it is live) and a pager underneath competes for
-    /// the same finger on every row of every card. Turning the scrolling off to
-    /// stop that also stops `scrollPosition` from moving it — the Live Stats
-    /// face rendered as the deck, with the pill saying otherwise. So the offset
-    /// is ours, and the gesture stays on the pill.
+    /// It was, briefly, and turning its scrolling off — which is what a pager
+    /// driven from a segmented control has to do — also stops `scrollPosition`
+    /// from moving it. The Live Stats face rendered as the deck, with the pill
+    /// saying otherwise. So the offset is ours, and the gesture stays on the
+    /// pill.
+    ///
+    /// (The original reason was a second one: the deck's set rows were swiped
+    /// horizontally to log, and a pager underneath competed for the same finger
+    /// on every row of every card. Wave U2 retired that swipe — the set number
+    /// does both jobs now — so only the `scrollPosition` reason is left. It is
+    /// on its own sufficient, and a reader who checks the first reason and
+    /// finds it gone should not conclude the pager is back on the table.)
     ///
     /// ── AND WHY IT IS PINNED AND CLIPPED ────────────────────────────────────
     /// `frame(width:alignment: .leading)` puts a two-page strip inside a
@@ -439,11 +444,14 @@ struct LiveLoggerView: View {
     /// times. Every one of those is a scroll in a list and a page-flick hunt in
     /// a deck.
     ///
-    /// It also cost the rows a gesture. The card's set rows are swiped
+    /// It also cost the rows a gesture. The card's set rows were swiped
     /// horizontally to log, and a horizontal pager under them meant the two were
     /// competing for the same drag on every row of every card — which is why the
-    /// row's own swipe has to abandon itself the moment the finger goes
-    /// vertical. Vertical scrolling and horizontal rows do not overlap at all.
+    /// row's own swipe had to abandon itself the moment the finger went
+    /// vertical. Wave U2 retired the row swipe for its own reasons (it owned the
+    /// whole horizontal axis of a row that has no spare width), so this is now
+    /// history rather than a live constraint — but it is why the deck is
+    /// vertical, and the vertical deck is what made retiring the swipe cheap.
     ///
     /// ── AND WHY THE SCROLL FOLLOWS `focus` RATHER THAN REPORTING IT ─────────
     /// `.scrollPosition(id:)` is a two-way binding, which was exactly right when

@@ -129,15 +129,15 @@ final class LoggerModel: Identifiable {
         /// than the set it was seeded from. Distinct from `rpe == nil`, which
         /// is simply an unrated set.
         ///
-        /// STAGED for the set row's "rate this" pip (wave U2). Nothing draws it
-        /// in this build.
+        /// Drawn by the set row's "rate this" pip since wave U2 —
+        /// `ExerciseCardView.effort`.
         var rpeStale: Bool
 
         /// This row opens on a progression bump: `.ready` pre-filled the
         /// suggested load at the rep floor.
         ///
-        /// STAGED for the row's progression chip (wave U2). Nothing draws it in
-        /// this build.
+        /// Drawn since wave U2 by the card's progression chip and by the
+        /// bumped load's own ink — `ExerciseCardView.progression`.
         var progressed: Bool
 
         init(
@@ -527,29 +527,6 @@ final class LoggerModel: Identifiable {
             // does not contain a set number that has never been programmed.
             previous: seededPrevious(exercise.plan, workingIndex: exercise.rows.filter { $0.kind != .warmup }.count)
         ))
-    }
-
-    /// Copy a set, immediately below itself.
-    ///
-    /// Load, reps, effort and KIND all carry over; `isDone` and `isRecord` do
-    /// not. A duplicate that arrived already ticked would be a set the store
-    /// has an event for that nobody performed — and the whole point of the
-    /// gesture is the next set, which has not happened yet.
-    func duplicate(_ row: SetRow, in exercise: ExerciseState) {
-        guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return }
-        exercise.rows.insert(
-            SetRow(
-                weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
-                kind: row.kind, quality: row.quality, isDone: false, previous: row.previous
-            ),
-            at: index + 1
-        )
-        // Everything below just moved down one, and `set_index` is derived from
-        // the live array position. `SetEventFold` tolerates a collision by
-        // ordering the pair on ARRIVAL, so leaving them stale reorders the
-        // ledger relative to the screen — and `restoreLoggedSets` rebuilds in
-        // that order on the next launch.
-        restampFrom(index + 1, in: exercise)
     }
 
     /// Re-write the stored `set_index` of every logged row from `index` down.

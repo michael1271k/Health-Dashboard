@@ -72,8 +72,11 @@ shoot() {
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
   xcrun simctl launch "$UDID" "$BUNDLE_ID" --onyx-screen "$screen" >/dev/null
   # The launch returns as soon as the process exists; the first frame is a
-  # few hundred ms later. Shooting too early photographs the launch screen.
-  sleep 3.5
+  # few hundred ms later. Shooting too early photographs the launch screen —
+  # or, on the first launch after an install, a black window: 3.5 s was enough
+  # on a warm 402 pt device and produced eight solid-black PNGs on a freshly
+  # created one, which is a shot that reviews as "the screen is broken".
+  sleep 6
   xcrun simctl io "$UDID" screenshot --type=png "$OUT/$screen$suffix.png" >/dev/null
   echo "  $OUT/$screen$suffix.png"
 }
@@ -84,7 +87,7 @@ read -ra SCREENS <<< "$SCREEN"
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish logger-options day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
+  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish set-row set-options effort-picker day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a

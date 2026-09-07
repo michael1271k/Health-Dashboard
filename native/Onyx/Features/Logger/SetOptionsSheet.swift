@@ -10,34 +10,48 @@ import OnyxUI
 /// opens this; two gestures on one target, and the one you reach for constantly
 /// is the shorter one.
 ///
-/// ── WHAT REPLACED THE CONFIRMATION DIALOG ───────────────────────────────────
-/// This was a `confirmationDialog` — a column of nine full-width system rows
-/// with a Delete at the bottom, in which the set's type was five rows that each
-/// said only their own name, and the second axis did not exist at all. An action
-/// sheet is the right control for "choose one thing and leave"; it is the wrong
-/// one for a two-axis editor you might use twice in a row, and it cannot show
-/// what is currently selected.
-///
 /// ── TWO AXES, NOT ONE LONGER LIST ───────────────────────────────────────────
 /// "Warm-up" and "form broke" are both true of the same set. Folding technique
 /// into `set_type` would force a choice between two facts, and would give every
 /// consumer of "is this a working set" an opinion about form — see `SetQuality`.
-/// So the type is one row of chips and the quality is another, each with its own
-/// meaning line, and neither can express the other.
+/// So the type is one row of toggles and the quality is another, each with its
+/// own meaning line, and neither can express the other.
 ///
-/// ── AND WHY ONE ACCENT RATHER THAN FIVE ─────────────────────────────────────
-/// The web paints each type its own hue. §3.2 gives this app four domain meshes
-/// and gold, and gold means a personal record — five new colours for five chips
-/// would be five tokens nobody designed, in a sheet that is open for four
-/// seconds. The glyph carries the identity, exactly as it does on the row, and
-/// the accent carries one meaning only: this is the one you chose.
+/// ── WHAT LEFT IN WAVE U2, AND WHY ───────────────────────────────────────────
+/// **Duplicate**: it was here, on the row's long press, and in the VoiceOver
+/// rotor, and `LoggerModel.duplicate` existed to serve it. "Add set" is one tap
+/// away at the bottom of every card and carries the previous row's load and reps
+/// forward already, so duplicate was a second way to do the same thing with its
+/// own bug surface — it was the gesture that fired at 0.45 s while someone held
+/// `+` to ramp a load. It is deleted, model method and all.
+///
+/// **Note**: the note belongs to the EXERCISE, not to this set, and it was only
+/// here because the old confirmation dialog had nowhere else to put it. Wave U1
+/// gave the logger a chip row with `Note` in it, which is the right level and is
+/// reachable without first choosing a set. Two doors to one field, one of them
+/// mislabelled, is worse than one door.
+///
+/// **`Normal`**: there is no chip for it, because "normal" is the ABSENCE of a
+/// claim. Tapping the type a set already carries withdraws it, which is the same
+/// grammar the quality row has always used, and it makes the row four toggles
+/// rather than five radio buttons with a default nobody picks.
+///
+/// ── AND WHY THE FOUR TYPES ARE COLOURED NOW ─────────────────────────────────
+/// They were one accent — §3.2 gives this app four domain meshes and gold, and
+/// five invented hues for five chips would be five tokens nobody designed. But
+/// four of the colours the system ALREADY has say exactly these four things, so
+/// none of them is new: a warm-up is preparation (Lunar, the recover mesh),
+/// failure is the top of the effort ramp (`danger`, which is what
+/// `Color.onyx.effort` itself returns at 9.5 and above), a drop set is extra
+/// work in the working range (Solar, which is that same ramp's middle), and a
+/// skipped set is absent (tertiary ink, the token for "nothing was said"). The
+/// row now reads as a scale rather than as four identical chips.
 struct SetOptionsSheet: View {
     let ordinal: Int
+    let exerciseName: String
     @Bindable var row: LoggerModel.SetRow
     let onKind: (LoggerModel.SetKind) -> Void
     let onQuality: (SetQuality?) -> Void
-    let onNote: () -> Void
-    let onDuplicate: () -> Void
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -45,10 +59,14 @@ struct SetOptionsSheet: View {
 
     private var accent: Color { Color.onyx.accent(.train) }
 
-    /// Five across, until the type size says otherwise. At an accessibility size
-    /// five 66 pt chips is five truncated words, which is five chips that say
-    /// nothing in the space of five that said something.
-    private var typeColumns: Int { typeSize.isAccessibilitySize ? 2 : 5 }
+    /// The four types a set can be MARKED as. `normal` is not one of them: see
+    /// the note above.
+    private static let kinds: [LoggerModel.SetKind] = [.warmup, .failure, .dropset, .ghost]
+
+    /// Four across, until the type size says otherwise. At an accessibility size
+    /// four 74 pt chips is four truncated words, which is four chips that say
+    /// nothing in the space of four that said something.
+    private var kindColumns: Int { typeSize.isAccessibilitySize ? 2 : 4 }
     private var qualityColumns: Int { typeSize.isAccessibilitySize ? 1 : 3 }
 
     var body: some View {
@@ -57,20 +75,53 @@ struct SetOptionsSheet: View {
                 VStack(alignment: .leading, spacing: OnyxSpace.l) {
                     kindSection
                     qualitySection
-                    actions
+                    remove
                 }
                 .padding(OnyxSpace.l)
             }
             .onyxScreen(.train)
-            .navigationTitle("Set \(ordinal)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 0) {
+                        Text("Set \(ordinal)").onyxType(.body).fontWeight(.semibold)
+                        // `.onyxType(.micro)`, not `.onyxMicro()`: the register
+                        // role uppercases, and this is a proper noun —
+                        // `NEUTRAL-GRIP LAT PULLDOWN` is the movement shouted
+                        // rather than named.
+                        // ── AND WHY IT IS NOT A CAPTION ────────────────────
+                        // You reached this by long-pressing a 32 pt badge in a
+                        // five-row list with wet hands, and on a 375 pt phone
+                        // the sheet covers the card completely — so this line
+                        // is the ONLY evidence you opened the set you meant,
+                        // in front of a Delete. It was set smaller, dimmer and
+                        // tracked out: weaker than the title above it, for the
+                        // half of the title that actually disambiguates.
+                        Text(exerciseName)
+                            .onyxType(.secondary).fontWeight(.semibold)
+                            .foregroundStyle(Color.onyx.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }.fontWeight(.semibold)
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        // ── WHY 440 AND NOT THE PLAN'S 320 ─────────────────────────────────
+        // 320 was measured against the sheet this replaced, which had five type
+        // chips on one row and no meaning line under the quality. At 320 the
+        // rebuilt sheet cut off at the second row of quality chips and DELETE
+        // WAS BELOW THE FOLD — a destructive action reachable only by dragging
+        // a sheet nothing indicated could be dragged. 440 is what the content
+        // measures on a 375 pt phone; the content is what the plan asked for.
+        //
+        // And at an accessibility size there is no short detent at all: the
+        // same content is three times as tall, so 400 pt showed the title and
+        // the first row of chips. A sheet whose opening height hides its own
+        // controls is a sheet that has to be dragged before it can be used, by
+        // exactly the reader least able to guess that it can be.
+        .presentationDetents(typeSize.isAccessibilitySize ? [.large] : [.height(440), .large])
         .presentationDragIndicator(.visible)
     }
 
@@ -79,22 +130,37 @@ struct SetOptionsSheet: View {
     private var kindSection: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
             OnyxSectionHeader("What it was", .train)
-            grid(columns: typeColumns) {
-                ForEach(LoggerModel.SetKind.allCases) { kind in
+            grid(columns: kindColumns) {
+                ForEach(Self.kinds) { kind in
+                    let selected = row.kind == kind
                     chip(
                         label: kind.label,
-                        glyph: kind.badge ?? "#",
-                        selected: row.kind == kind,
+                        glyph: kind.badge,
+                        tint: Self.tint(kind),
+                        selected: selected,
                         hint: kind.hint
                     ) {
-                        // Picking does NOT dismiss. Making a set a warm-up and
-                        // then wanting to duplicate it is one errand, and a
-                        // sheet that closes on the first tap makes it two.
-                        onKind(kind)
+                        // Picking does NOT dismiss, and picking the one it
+                        // already carries withdraws it. Making a set a warm-up
+                        // and then marking it short of range is one errand, and
+                        // a sheet that closes on the first tap makes it two.
+                        onKind(selected ? .normal : kind)
                     }
                 }
             }
-            meaning(row.kind.hint, marked: true)
+            meaning(row.kind.hint, marked: row.kind != .normal, tint: Self.tint(row.kind))
+        }
+    }
+
+    /// The four types, in colours the design system has already spent. See the
+    /// note at the top of this file for why none of these is a new hue.
+    private static func tint(_ kind: LoggerModel.SetKind) -> Color {
+        switch kind {
+        case .normal:  Color.onyx.textSecondary
+        case .warmup:  OnyxDomain.recover.accent
+        case .failure: Color.onyx.danger
+        case .dropset: OnyxDomain.fuel.accent
+        case .ghost:   Color.onyx.textTertiary
         }
     }
 
@@ -108,6 +174,7 @@ struct SetOptionsSheet: View {
                     chip(
                         label: quality.label,
                         glyph: nil,
+                        tint: accent,
                         selected: row.quality == quality,
                         hint: quality.full
                     ) {
@@ -119,33 +186,30 @@ struct SetOptionsSheet: View {
                     }
                 }
             }
-            meaning(row.quality?.full ?? "Clean unless you say otherwise", marked: row.quality != nil)
+            meaning(
+                row.quality?.full ?? "Clean unless you say otherwise",
+                marked: row.quality != nil,
+                tint: accent
+            )
         }
     }
 
-    // MARK: - The two actions
+    // MARK: - The one action
 
-    private var actions: some View {
-        VStack(spacing: OnyxSpace.s) {
-            // The note belongs to the EXERCISE, not to this set, and it is here
-            // because this is where the old confirmation dialog kept it and
-            // there is nowhere else on the card to reach it from.
-            action("Note this exercise", systemImage: "square.and.pencil", tint: Color.onyx.textPrimary) {
-                onNote()
-                dismiss()
-            }
-            action("Duplicate set", systemImage: "plus.square.on.square", tint: Color.onyx.textPrimary) {
-                onDuplicate()
-                dismiss()
-            }
-            // Remove keeps its distance from the chips you came here for, and it
-            // is the only thing in the sheet that cannot be undone by tapping it
-            // again.
-            action("Delete set", systemImage: "trash", tint: Color.onyx.danger) {
-                onDelete()
-                dismiss()
-            }
+    /// Remove keeps its distance from the chips you came here for, and it is the
+    /// only thing in the sheet that cannot be undone by tapping it again.
+    private var remove: some View {
+        Button {
+            onDelete()
+            dismiss()
+        } label: {
+            Label("Delete set", systemImage: "trash")
+                .onyxType(.body).fontWeight(.semibold)
+                .foregroundStyle(Color.onyx.danger)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .onyxGlass(.row)
         }
+        .onyxPress(scale: 0.98)
     }
 
     // MARK: - Parts
@@ -162,18 +226,24 @@ struct SetOptionsSheet: View {
 
     /// One choice. The colour IS the state, so there is no tick to find.
     private func chip(
-        label: String, glyph: String?, selected: Bool, hint: String, action: @escaping () -> Void
+        label: String, glyph: String?, tint: Color,
+        selected: Bool, hint: String, action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
                 if let glyph {
+                    // The glyph wears its type's colour ALWAYS, and the fill
+                    // and label only when chosen. Colour-on-selection alone
+                    // made four identical grey chips whose colours nobody saw
+                    // until after they had picked one, which is the wrong way
+                    // round: the ramp is there to be read before the choice.
                     Text(glyph)
                         .onyxType(.body).fontWeight(.heavy).onyxNumeral()
-                        .foregroundStyle(selected ? accent : Color.onyx.textSecondary)
+                        .foregroundStyle(tint)
                 }
                 Text(label)
                     .onyxType(.caption).fontWeight(.semibold)
-                    .foregroundStyle(selected ? accent : Color.onyx.textSecondary)
+                    .foregroundStyle(selected ? tint : Color.onyx.textSecondary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .multilineTextAlignment(.center)
@@ -181,24 +251,24 @@ struct SetOptionsSheet: View {
             .frame(maxWidth: .infinity, minHeight: 52)
             .background(
                 RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
-                    .fill(selected ? accent.opacity(0.16) : Color.onyx.hairline.opacity(0.35))
+                    .fill(selected ? tint.opacity(0.16) : Color.onyx.hairline.opacity(0.35))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
-                    .strokeBorder(selected ? accent.opacity(0.55) : Color.clear, lineWidth: 1)
+                    .strokeBorder(selected ? tint.opacity(0.55) : Color.clear, lineWidth: 1)
             )
             .contentShape(.rect)
         }
         .onyxPress(scale: 0.95)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .accessibilityLabel(label)
-        .accessibilityHint(hint)
+        .accessibilityHint(selected ? "Selected. Tap to remove." : hint)
     }
 
     /// What the current answer MEANS, on a line that is always there. Its height
     /// is reserved so choosing a longer hint does not move the chips under the
     /// thumb that is still on them.
-    private func meaning(_ text: String, marked: Bool) -> some View {
+    private func meaning(_ text: String, marked: Bool, tint: Color) -> some View {
         Label {
             Text(text)
                 .onyxType(.caption)
@@ -207,22 +277,9 @@ struct SetOptionsSheet: View {
         } icon: {
             Image(systemName: "checkmark")
                 .onyxType(.micro)
-                .foregroundStyle(marked ? accent : .clear)
+                .foregroundStyle(marked ? tint : .clear)
         }
         .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
-    }
-
-    private func action(
-        _ title: String, systemImage: String, tint: Color, perform: @escaping () -> Void
-    ) -> some View {
-        Button(action: perform) {
-            Label(title, systemImage: systemImage)
-                .onyxType(.body).fontWeight(.semibold)
-                .foregroundStyle(tint)
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .onyxGlass(.row)
-        }
-        .onyxPress(scale: 0.98)
     }
 }
 
@@ -233,11 +290,10 @@ struct SetOptionsSheet: View {
     return Color.clear.sheet(isPresented: .constant(true)) {
         SetOptionsSheet(
             ordinal: 2,
+            exerciseName: exercise.name,
             row: exercise.rows[1],
             onKind: { model.setKind($0, on: exercise.rows[1], in: exercise) },
             onQuality: { model.setQuality($0, on: exercise.rows[1], in: exercise) },
-            onNote: {},
-            onDuplicate: {},
             onDelete: {}
         )
     }
