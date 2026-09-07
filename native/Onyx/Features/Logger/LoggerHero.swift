@@ -194,9 +194,16 @@ struct LoggerHero: View {
             }
             .foregroundStyle(clock.isPaused ? Color.onyx.textTertiary : Color.onyx.textPrimary)
             .lineLimit(1)
-            .fixedSize()
+            // NOT `fixedSize`. Both the running timer and `Clock.format` emit
+            // `H:MM:SS` with unbounded hours — the session this sheet exists for
+            // recorded 6:25:00 — and at AX5 that reading plus the glyph is ~371
+            // pt of a 375 pt screen. `fixedSize` would take the ideal and widen
+            // the band; the priority keeps the title from squeezing it first,
+            // and the scale factor is the fallback `fixedSize` forbids.
+            .minimumScaleFactor(0.6)
             .contentShape(Rectangle())
         }
+        .layoutPriority(1)
         .onyxPress()
         .animation(OnyxMotion.move, value: clock.isPaused)
         .accessibilityLabel(clock.isPaused ? "Paused" : "Elapsed")
@@ -299,11 +306,13 @@ struct LoggerFaceSwitch: View {
         // grew the control to 240 pt. Behind the labels it is proposed exactly
         // their height, which is also the only height this control has any
         // business being.
-        .background(alignment: .leading) { pill(width / 2) }
-        // The labels define the height and the track follows them. A fixed box
-        // put "Live Stats" outside its own capsule at AX5 and left the pill
-        // overhanging the track's corners, which reads as a rendering fault.
+        // The floor FIRST, then the pill. `trackHeight` is a `@ScaledMetric`
+        // and reaches ~122 pt at AX5 while the labels are ~60, so a background
+        // applied before the frame is proposed the labels' height and the pill
+        // ends up floating inside a track twice its size. Applied after, it is
+        // proposed the height the track actually has.
         .frame(minHeight: trackHeight)
+        .background(alignment: .leading) { pill(width / 2) }
         .contentShape(Capsule())
         .simultaneousGesture(gesture(width / 2))
         // The width is measured rather than proposed, because only the PILL

@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import OnyxCore
 
 /// The two seams the logger's chrome is built against.
@@ -41,8 +42,13 @@ import OnyxCore
 /// is counted by the SYSTEM, and shifting its origin forward by the time already
 /// banked in pauses is what makes a paused-and-resumed session read correctly
 /// without this view tree waking once a second to say so.
+/// `Observable` is part of the contract, not an implementation detail. Every
+/// view here reads these properties inside a `body` and expects the read to
+/// register — and a conformance that merely happened to be observable would
+/// work until the day it cached its answer, at which point the hero would stop
+/// counting with no diagnostic anywhere.
 @MainActor
-public protocol PauseControlling: AnyObject {
+public protocol PauseControlling: Observable, AnyObject {
     /// When the session began. Moves when the clock is corrected.
     var startedAt: Date { get }
     /// When the CURRENT pause began; `nil` while running. Not the same as a
@@ -118,8 +124,12 @@ public struct LivePrRecord: Identifiable, Equatable, Sendable {
 }
 
 /// Whatever knows which records this session has claimed so far.
+///
+/// `Observable` for the same reason `PauseControlling` is: the Records card
+/// redraws because reading `livePrs` registers, and nothing but this
+/// requirement makes that true of the next conformance.
 @MainActor
-public protocol LivePrProviding: AnyObject {
+public protocol LivePrProviding: Observable, AnyObject {
     /// Newest first. Empty is the honest answer for most of a session and the
     /// card says so in words rather than drawing a zero.
     var livePrs: [LivePrRecord] { get }

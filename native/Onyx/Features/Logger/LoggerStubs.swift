@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import OnyxCore
 import OnyxUI
 
@@ -16,6 +17,7 @@ import OnyxUI
 /// the supersession between them; at that point `LoggerModel` conforms to
 /// `LivePrProviding` and this type is deleted.
 @MainActor
+@Observable
 final class SeedPrProvider: LivePrProviding {
     private let model: LoggerModel
 

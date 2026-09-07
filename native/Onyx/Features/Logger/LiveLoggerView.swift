@@ -234,7 +234,19 @@ struct LiveLoggerView: View {
         // exactly the ±15 s case.
         .task(id: model.restEndsAt) {
             guard let endsAt = model.restEndsAt else { return }
-            try? await Task.sleep(for: .seconds(max(0, endsAt.timeIntervalSinceNow)))
+            // A deadline already in the PAST is cleared, not celebrated. It is
+            // reachable exactly as the paragraph above describes: the rest
+            // expires while you are on the Workout tab, this task is not
+            // running to clear it, and coming back used to `max(0, …)` the
+            // negative interval into a zero-length sleep that completed
+            // uncancelled — a `.success` haptic for a rest that ended minutes
+            // ago, on a screen you had only just opened.
+            let wait = endsAt.timeIntervalSinceNow
+            guard wait > 0 else {
+                model.stopRest()
+                return
+            }
+            try? await Task.sleep(for: .seconds(wait))
             guard !Task.isCancelled else { return }
             restExpiries += 1
             withAnimation(OnyxMotion.drawer) { model.stopRest() }

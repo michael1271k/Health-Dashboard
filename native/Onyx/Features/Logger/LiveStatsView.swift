@@ -530,9 +530,12 @@ struct LiveStatsView: View {
                     .onyxType(.caption).onyxNumeral()
                     .foregroundStyle(Color.onyx.textTertiary)
             }
+            // No `layoutPriority`: a priority-1 column takes its ideal width
+            // first and the name gets the remainder, which at AX5 is an
+            // ellipsis where the lift should be. Both columns carry
+            // `lineLimit(1)` and a scale factor, so they divide and both shrink.
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            .layoutPriority(1)
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)

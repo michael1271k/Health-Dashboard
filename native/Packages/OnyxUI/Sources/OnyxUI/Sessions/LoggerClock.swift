@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import OnyxCore
 
 /// The logger's session clock, until `LoggerModel` owns one.
