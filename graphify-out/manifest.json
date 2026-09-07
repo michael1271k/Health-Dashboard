@@ -2090,8 +2090,8 @@
     "semantic_hash": ""
   },
   "scripts/check-swift.sh": {
-    "mtime": 1788625639.6229417,
-    "ast_hash": "dac7a0ee821f5bf817ea92edc4ba1561",
+    "mtime": 1788790561.1523862,
+    "ast_hash": "8c1637fef929497bedafb94b1f953ad8",
     "semantic_hash": ""
   },
   "src/lib/reports/targetMatch.ts": {
@@ -3750,8 +3750,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/PreviewHarness.swift": {
-    "mtime": 1788788000.1005232,
-    "ast_hash": "b38c997679ea4c0931cad3a4286db43a",
+    "mtime": 1788790561.1496162,
+    "ast_hash": "9eaeafc0449d32b006ebcb1cbd481732",
     "semantic_hash": ""
   },
   "native/Onyx/App/SyncCoordinating.swift": {
@@ -3775,8 +3775,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Body/BodyTrendsPreviews.swift": {
-    "mtime": 1788780682.0581841,
-    "ast_hash": "02296df1a08012cae69d720b33719d87",
+    "mtime": 1788790561.15002,
+    "ast_hash": "5e49d624ec8f38a036cfd1a24d43a7e9",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Body/BodyTrendsView.swift": {
@@ -3880,8 +3880,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerModel.swift": {
-    "mtime": 1788788000.1039617,
-    "ast_hash": "e054ea9985c6741c07976feb5283c253",
+    "mtime": 1788790561.1506333,
+    "ast_hash": "ee6f4d799cacdc4bcfa9dd14fa05acb7",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Logger/LoggerPreviewData.swift": {
@@ -3955,8 +3955,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulsePreviews.swift": {
-    "mtime": 1788680013.8618052,
-    "ast_hash": "319b6e3ff42d715704b4141ad8e217a8",
+    "mtime": 1788790561.1513624,
+    "ast_hash": "63227d8cefb795cb6439c028b15168df",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseScale.swift": {
@@ -5970,13 +5970,13 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Mirror/MirrorRealtime.swift": {
-    "mtime": 1788625639.6063833,
-    "ast_hash": "4df9bc549f9f5de490393171d392c383",
+    "mtime": 1788790561.1517313,
+    "ast_hash": "a03eae694401284d8569b2f464c99ddd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Mirror/MirrorStore.swift": {
-    "mtime": 1788625639.607436,
-    "ast_hash": "475e46eafff8094c7c7b8f3403fae4a8",
+    "mtime": 1788790561.152011,
+    "ast_hash": "25cd0026f9292a934af979e4c8a18900",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Mirror/TrainingPuller.swift": {
@@ -7057,11 +7057,6 @@
   "native/Packages/OnyxData/Tests/OnyxDataTests/SessionEditingTests.swift": {
     "mtime": 1788780682.0662305,
     "ast_hash": "4b7168b97ace6cba41287bcc59afd64c",
-    "semantic_hash": ""
-  },
-  "docs/sql/e6-auth-deletion.sql": {
-    "mtime": 1788786462.1142554,
-    "ast_hash": "db94d14909bf86f64b0c002fb546fe8f",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Auth/SignUpView.swift": {
