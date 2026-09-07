@@ -78,10 +78,36 @@ public final class AppDatabase: Sendable {
     /// Where the store lives: the App Group container, so the widget extension
     /// can read it, with the app's own Application Support folder as the
     /// fallback when there is no container (a free-team build has no App
-    /// Groups). A store that predates the container is moved across ONCE,
-    /// with its WAL and SHM — a pool opened on the sqlite alone would replay a
-    /// stale checkpoint and the last unsynced sets would be gone.
+    /// Groups).
+    ///
+    /// ── PURE. IT RESOLVES A PATH AND TOUCHES NOTHING ────────────────────────
+    /// This used to perform the legacy-store migration as a side effect, and it
+    /// has TWO callers: the app at launch, and `OnyxProvider` in the widget
+    /// extension. So a widget refresh — a separate process, scheduled by the
+    /// system, with a read-only handle, possibly while the app is mid-write —
+    /// could rename the database out from under the app. It never fired in
+    /// practice only because the App Group entitlement is unsigned and the
+    /// legacy files do not exist; that is luck, not a design.
+    ///
+    /// The migration now lives in `adoptLegacyStores()`, which the APP calls
+    /// once at launch and the widget never calls at all.
     public static func sharedFolder() -> URL {
+        guard let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
+        else { return URL.applicationSupportDirectory.appending(path: "Onyx", directoryHint: .isDirectory) }
+        return container.appending(path: "Onyx", directoryHint: .isDirectory)
+    }
+
+    /// Rename and relocate any store an earlier build left behind. APP ONLY.
+    ///
+    /// Call once, at launch, BEFORE opening the store — never from an
+    /// extension. A store that predates the container is moved across with its
+    /// WAL and SHM: a pool opened on the sqlite alone would replay a stale
+    /// checkpoint and the last unsynced sets would be gone.
+    ///
+    /// Idempotent. Every step is a "move if the source exists and the
+    /// destination does not", so a second call after a successful first is a
+    /// series of no-ops.
+    public static func adoptLegacyStores() {
         let appSupport = URL.applicationSupportDirectory.appending(path: "Onyx", directoryHint: .isDirectory)
         // The rename first, in whichever container the store is actually in.
         // Application Support is the one that matters today; the App Group is
@@ -90,14 +116,13 @@ public final class AppDatabase: Sendable {
         // branch to remember.
         adoptLegacyStore(into: appSupport, from: URL.applicationSupportDirectory.appending(path: legacyFolderName, directoryHint: .isDirectory))
         guard let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
-        else { return appSupport }
+        else { return }
         let shared = container.appending(path: "Onyx", directoryHint: .isDirectory)
         adoptLegacyStore(into: shared, from: container.appending(path: legacyFolderName, directoryHint: .isDirectory))
         if let legacyContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: legacyAppGroupID) {
             adoptLegacyStore(into: shared, from: legacyContainer.appending(path: legacyFolderName, directoryHint: .isDirectory))
         }
         moveStoreIfNeeded(from: appSupport, to: shared)
-        return shared
     }
 
     /// `Helix/helix.sqlite` → `Onyx/onyx.sqlite`, once.
@@ -1125,6 +1150,44 @@ extension AppDatabase {
         }
     }
 
+    /// EVERY local row, gone. Called on sign-out, after the outbox has drained.
+    ///
+    /// ── WHY sqlite_master AND NOT A LIST OF TABLES ──────────────────────────
+    /// A hand-maintained list falls behind the schema silently, and the failure
+    /// is the worst kind: the next user signs in and finds one table still full
+    /// of somebody else's data, in a store the widget reads without any session
+    /// at all. The schema itself is the only list that cannot go stale.
+    /// `sqlite_master` is not user input, and the names are quoted regardless.
+    ///
+    /// The migration table is kept, deliberately: the schema is still correct,
+    /// only its contents are wrong, and dropping the migration record would
+    /// make the next open re-run every migration against tables that exist.
+    /// `defer_foreign_keys` lets the deletes run in whatever order the catalog
+    /// hands back rather than making this care about the reference graph.
+    public func eraseLocalData() throws {
+        try writer.write { db in
+            let tables = try String.fetchAll(db, sql: """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table'
+                  AND name NOT LIKE 'sqlite_%'
+                  AND name <> 'grdb_migrations'
+                """)
+            try db.execute(sql: "PRAGMA defer_foreign_keys = ON")
+            for table in tables {
+                try db.execute(sql: "DELETE FROM \"\(table)\"")
+            }
+        }
+    }
+
+    /// `profiles.role` for one user, from the mirror. Nil when the row has not
+    /// synced yet — which the caller must treat as "not an admin", not as an
+    /// error. See `AppEnvironment.role`.
+    public func role(userId: String) throws -> String? {
+        try writer.read { db in
+            try ProfileRow.filter(Column("user_id") == userId).fetchOne(db)?.role
+        }
+    }
+
     /// Return THESE reservations to the queue, if they are still reserved.
     ///
     /// The narrow twin of `resetInFlight`, for a drain to clean up after
@@ -1158,6 +1221,20 @@ extension AppDatabase {
     /// session's projection, so `is_pending_sync` on the affected sets stops
     /// being true and the "queued" badge disappears from the UI on its own —
     /// the `ValueObservation` on `workout_sets` sees the rewrite and pushes it.
+    /// How many rows are still waiting to reach the server.
+    ///
+    /// Read by sign-out, which erases the local store: work that never made it
+    /// off the device is about to be discarded, and a user is owed the number.
+    /// A bare count, with no status filter, because there is no terminal status
+    /// to exclude: `outboxSucceeded` DELETES the row. The only two statuses a
+    /// row can hold are `pending` and `in_flight`, and both mean "not yet on
+    /// the server", which is exactly what this is asking.
+    public func outboxPendingCount() throws -> Int {
+        try writer.read { db in
+            try Int.fetchOne(db, sql: "SELECT count(*) FROM outbox") ?? 0
+        }
+    }
+
     public func outboxSucceeded(_ id: String) throws {
         try writer.write { db in
             guard let item = try OutboxItem.fetchOne(db, key: id) else { return }

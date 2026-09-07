@@ -34,6 +34,11 @@ struct SignInView: View {
     /// Counts ATTEMPTS, not messages. Keying the haptic on the error string
     /// means two identical failures in a row buzz once.
     @State private var attempt = 0
+    /// Sign-up is a sheet rather than a push: this screen has no navigation
+    /// stack (RootView switches on `auth`, it does not navigate), and a modal
+    /// is also the honest shape — creating an account is a detour off signing
+    /// in, not a place further along the same path.
+    @State private var showSignUp = false
     @FocusState private var focused: Field?
 
     private enum Field { case email, password }
@@ -65,6 +70,7 @@ struct SignInView: View {
         // credential is one tap further away than it needs to be.
         .onAppear { focused = .email }
         .sensoryFeedback(.error, trigger: attempt) { _, _ in error != nil }
+        .sheet(isPresented: $showSignUp) { SignUpView() }
     }
 
     private var content: some View {
@@ -132,6 +138,10 @@ struct SignInView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 34, alignment: .top)
                 .accessibilityHidden(error == nil)
+
+            Button("Create an account") { showSignUp = true }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(OnyxDomain.train.accent)
 
             Spacer()
 

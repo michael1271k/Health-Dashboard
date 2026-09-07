@@ -60,6 +60,12 @@ private struct SettingsForm: View {
     let model: SettingsModel
 
     @State private var isSigningOut = false
+    @State private var isDeleting = false
+    /// Held while the RPC is in flight, so the row cannot be tapped twice.
+    @State private var isDeletingNow = false
+    /// Non-nil only when the delete FAILED — the account still exists and the
+    /// user still has a session, which is the recoverable state.
+    @State private var deleteError: String?
 
     var body: some View {
         Form {
@@ -141,16 +147,30 @@ private struct SettingsForm: View {
                 Text("Adds an RPE control to every logged set. Half of the double-progression rule reads it.")
             }
 
-            Section {
-                NavigationLink {
-                    SyncStatusView()
-                } label: {
-                    LabeledContent("Sync doctor", value: environment.sync.caption(at: .now) ?? "Never synced")
+            // ── ADMIN ONLY, AND FAILING CLOSED ──────────────────────────────
+            // The Sync doctor is a diagnostic: per-table row counts, cursors,
+            // the outbox backlog. It is the right screen for whoever maintains
+            // this and it is a wall of jargon to everyone else, and open
+            // sign-up means everyone else is now a real audience.
+            //
+            // `isAdmin` is false until `profiles.role` has synced, so a fresh
+            // account never sees it and the admin sees it a moment late. That
+            // asymmetry is deliberate — see `AppEnvironment.role`. Nothing
+            // security-relevant hangs on it: RLS does not consult this, and
+            // hiding a read-only diagnostic is a tidiness decision, not a
+            // permission boundary.
+            if environment.isAdmin {
+                Section {
+                    NavigationLink {
+                        SyncStatusView()
+                    } label: {
+                        LabeledContent("Sync doctor", value: environment.sync.caption(at: .now) ?? "Never synced")
+                    }
+                } header: {
+                    OnyxSectionHeader("Sync", .body)
+                } footer: {
+                    Text("What this device holds against what the server holds, table by table, and anything still waiting to get there.")
                 }
-            } header: {
-                OnyxSectionHeader("Sync", .body)
-            } footer: {
-                Text("What this device holds against what the server holds, table by table, and anything still waiting to get there.")
             }
 
             Section {
@@ -174,6 +194,13 @@ private struct SettingsForm: View {
 
             Section {
                 Button("Sign out", role: .destructive) { isSigningOut = true }
+                // App Store guideline 5.1.1(v): an account that can be created
+                // in the app has to be deletable in the app — not by email, not
+                // through a web form, here.
+                Button("Delete account", role: .destructive) { isDeleting = true }
+                    .disabled(isDeletingNow)
+            } footer: {
+                Text("Deleting your account removes every workout, night and reading from Onyx's servers and from this device. It cannot be undone.")
             }
         }
         .onyxFormBackground()
@@ -188,7 +215,40 @@ private struct SettingsForm: View {
                 Task { await environment.signOut() }
             }
         } message: {
-            Text("Logged sets already on this device stay until they sync.")
+            Text("Anything not yet synced is pushed first, then this device's copy of your data is cleared. Your account and everything on the server are untouched.")
+        }
+        // Two taps, and the second one spells out the word "delete" in its own
+        // label rather than saying "Continue". A destructive action a user can
+        // reach by muscle memory is one they will reach by accident.
+        .confirmationDialog(
+            "Delete your Onyx account?", isPresented: $isDeleting, titleVisibility: .visible
+        ) {
+            Button("Delete everything", role: .destructive) {
+                isDeletingNow = true
+                deleteError = nil
+                Task {
+                    do {
+                        // The RPC wipes the server; `deleteAccount` then signs
+                        // out, which revokes the session and erases this device.
+                        try await environment.deleteAccount()
+                    } catch {
+                        // Deliberately NOT signed out: an account that still
+                        // exists and a phone with no session is a state with no
+                        // way to retry. The user stays where they are, told why.
+                        deleteError = (error as? LocalizedError)?.errorDescription
+                            ?? error.localizedDescription
+                    }
+                    isDeletingNow = false
+                }
+            }
+        } message: {
+            Text("This permanently deletes your account and every workout, night, meal and measurement in it, on every device. It cannot be undone.")
+        }
+        .alert("Could not delete the account",
+               isPresented: .init(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+            Button("OK", role: .cancel) { deleteError = nil }
+        } message: {
+            Text(deleteError ?? "")
         }
     }
 
