@@ -369,6 +369,20 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     /// whatever order the set numbers imply — the incline press interleaved
     /// with the flye because both start at 1.
     public var exerciseOrder: Int?
+    /// A set that is not reps and kilograms: seconds under load, treadmill
+    /// incline as a percent, kilometres covered.
+    ///
+    /// Added to Postgres on 2026-09-07 and populated on exactly one row — the
+    /// treadmill that opens `b6a936a8`, `weight_kg 0, reps 0, duration_sec 300,
+    /// incline 2.0, distance_km 0.370`. Pulled AND sent: a session this device
+    /// adopts carries them into the local fold, and the next push has to write
+    /// them back or the first edit blanks the only row in the database that
+    /// uses the columns.
+    ///
+    /// `nil` on every lifted set, which is all but one of them.
+    public var durationSec: Int?
+    public var incline: Double?
+    public var distanceKm: Double?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -384,6 +398,9 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         case est1rmKg = "est_1rm_kg"
         case rpe
         case exerciseOrder = "exercise_order"
+        case durationSec = "duration_sec"
+        case incline
+        case distanceKm = "distance_km"
     }
 
     /// Same reason as `RemoteSessionRow`: nulls are written, never omitted, so
@@ -440,6 +457,18 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         try c.encode(est1rmKg, forKey: .est1rmKg)
         try c.encode(rpe, forKey: .rpe)
         try c.encode(exerciseOrder, forKey: .exerciseOrder)
+        // ── AND WHY THESE THREE SIT WITH `exercise_order`, NOT WITH `quality` ─
+        // The argument for omitting `quality` is that the web writes it and the
+        // phone would null it. Nothing writes these but the pull that put them
+        // there: the columns are three days old, one row in the database has a
+        // value in any of them, and that row reaches this device through
+        // `applyPulledSets` — which now carries all three. So a null here is
+        // this device saying "this set has no duration", which for a barbell
+        // row is the truth, and for the treadmill it never says, because the
+        // treadmill's own values came down and go back up.
+        try c.encode(durationSec, forKey: .durationSec)
+        try c.encode(incline, forKey: .incline)
+        try c.encode(distanceKm, forKey: .distanceKm)
     }
 }
 
@@ -534,7 +563,10 @@ public extension SyncTranslation {
             pairId: set.pairId,
             est1rmKg: set.est1rmKg,
             rpe: rpe(set.rpe),
-            exerciseOrder: set.exerciseOrder
+            exerciseOrder: set.exerciseOrder,
+            durationSec: set.durationSec,
+            incline: set.incline,
+            distanceKm: set.distanceKm
         )
     }
 

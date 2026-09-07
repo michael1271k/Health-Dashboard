@@ -147,7 +147,7 @@ import {
 import { derivedWeek, type DerivedWeek } from '@/lib/reports/derived'
 import { weekJsonBlock } from '@/lib/reports/weekJson'
 import { paceMinPerKm, formatPace } from '@/lib/cardio/metrics'
-import { formatSet, isUnloadedSet } from '@/lib/utils/setFormat'
+import { formatSet, formatCardioSet, isUnloadedSet } from '@/lib/utils/setFormat'
 import { weighInSkipReason, isDefaultSkipReason } from '@/lib/body/weighIn'
 import { NUTRIENT_TARGETS } from '@/lib/nutrition/nutrientTargets'
 import { volumeZone, programTargets, toLandmarkMuscle, LANDMARK_MUSCLES, type LandmarkMuscle, type VolumeZone } from '@/lib/training/landmarks'
@@ -4880,6 +4880,27 @@ describe('golden vectors — weekly export', () => {
       module: 'utils/setFormat', fn: 'formatSet / isUnloadedSet',
       note: '`60kg × 12` · `17 reps` (singular at 1) · `58 sec`; bare drops the unit words; null reps read 0; unloaded is ≤ 0 or absent.',
       cases: fmts,
+    })
+
+    interface CardioIn { durationSec: number | null; distanceKm: number | null; incline: number | null }
+    const cardios: Array<[number | null, number | null, number | null]> = [
+      [300, 0.37, 2], [300, null, null], [null, 0.37, null], [null, null, 2],
+      [null, null, null], [0, 0, 0], [45, null, null], [3600, 10, 12.5],
+      [59, 1.5, -3], [61, 0.005, 0.5], [90.6, 2, 1],
+      [0, 0.37, 0], [125, null, 15],
+    ]
+    // No NaN case: `JSON.stringify` writes it as `null`, so a vector could not
+    // tell the Swift port which of the two it was being asked about. The
+    // non-finite guard is asserted in `set-format.test.ts`, on both halves.
+
+    emit('cardio-set-format.json', {
+      module: 'utils/setFormat', fn: 'formatCardioSet',
+      note: '`5:00 · 0.37 km · 2%`, each component dropped when absent, non-finite or zero — except incline, which keeps a negative (a decline is a real setting). Duration rounds to the nearest SECOND then splits. Null when nothing survives, which is what hands the row back to formatSet.',
+      cases: cardios.map(([durationSec, distanceKm, incline]) => ({
+        name: `${durationSec} s / ${distanceKm} km / ${incline}%`,
+        input: { durationSec, distanceKm, incline } as CardioIn,
+        expected: formatCardioSet(durationSec, distanceKm, incline),
+      })),
     })
 
     const reasons: Array<string | null> = [null, '', '  ', 'No BM', 'Travel', ' Sick ', 'As Planned', 'anything']

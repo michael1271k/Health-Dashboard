@@ -76,3 +76,42 @@ export function formatReps(reps: number | null | undefined, timed = false): stri
   const n = reps ?? 0
   return timed ? `${n} sec` : `${n} rep${n === 1 ? '' : 's'}`
 }
+
+/**
+ * A set that is not reps and kilograms — `5:00 · 0.37 km · 2%`.
+ *
+ * ── WHY THIS IS A SIBLING AND NOT A BRANCH INSIDE `formatSet` ───────────────
+ * `formatSet` is parity-locked: a golden vector and a Swift port assert every
+ * one of its cases byte for byte, and its whole contract is that reps and load
+ * are the two numbers a set has. A treadmill has neither — `weight_kg 0,
+ * reps 0` — so folding it in would put a third shape behind a fourth optional
+ * argument and make every existing caller's output depend on fields it does
+ * not pass. Two functions, one call site that chooses: `cardioSet(...) ??
+ * formatSet(...)`.
+ *
+ * Returns `null` when the set carries no cardio axis at all, which is what
+ * hands the row back to `formatSet`. That is the ordinary case — three of the
+ * columns exist for one row in the whole database.
+ *
+ * A component is dropped when it is absent, non-finite or zero: an unstated
+ * distance and a zero distance are the same non-fact here. Incline is the one
+ * exception to the zero rule in the other direction — a DECLINE is a real
+ * setting, so the test is `!== 0` rather than `> 0`.
+ */
+export function formatCardioSet(
+  durationSec: number | null | undefined,
+  distanceKm: number | null | undefined,
+  incline: number | null | undefined,
+): string | null {
+  const ok = (v: number | null | undefined): v is number => v != null && Number.isFinite(v)
+  const parts: string[] = []
+  if (ok(durationSec) && durationSec > 0) {
+    // Rounded to the nearest second and split afterwards, for the reason
+    // `formatPace` gives: flooring twice loses a second to binary error.
+    const total = Math.round(durationSec)
+    parts.push(`${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`)
+  }
+  if (ok(distanceKm) && distanceKm > 0) parts.push(`${distanceKm} km`)
+  if (ok(incline) && incline !== 0) parts.push(`${incline}%`)
+  return parts.length ? parts.join(' · ') : null
+}

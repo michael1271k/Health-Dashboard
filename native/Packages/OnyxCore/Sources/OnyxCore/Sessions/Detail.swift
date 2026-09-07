@@ -15,6 +15,15 @@ public struct DetailSet: Codable, Sendable, Equatable {
     public var pairId: String?
     /// nil = a legacy row persisted before the field existed; read as empty.
     public var prAxes: [String]?
+    /// The cardio axes: seconds under load, incline percent, kilometres.
+    ///
+    /// Optional on the type as well as in value — the vectors written before
+    /// they existed carry no such key, and a non-optional would stop every one
+    /// of them decoding. All three nil is the ordinary case and means "score
+    /// this set as load × reps"; see `SetFormat.cardio`.
+    public var durationSec: Double?
+    public var incline: Double?
+    public var distanceKm: Double?
 }
 
 public struct DetailExercise: Codable, Sendable, Equatable {

@@ -221,6 +221,9 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         case rpe
         case quality
         case exerciseOrder = "exercise_order"
+        case durationSec = "duration_sec"
+        case incline
+        case distanceKm = "distance_km"
     }
 
     public var exerciseId: String
@@ -272,6 +275,21 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
     /// **`nil` on a set logged before this build**, and on any set nobody could
     /// place — a reorder that changed nothing writes nothing.
     public var exerciseOrder: Int?
+    /// The cardio axes — seconds under load, incline percent, kilometres.
+    ///
+    /// Three MORE optional keys on the same payload, for the same reason and
+    /// with the same guarantee as `exerciseOrder` above: a build that has never
+    /// heard of them decodes `nil` and re-encodes without them, and no set is
+    /// lost in either direction. No new `Kind` — that is the one-way door.
+    ///
+    /// They are here rather than only on `WorkoutSet` because the projection is
+    /// a FOLD: `seedEventLog` turns a pulled session's rows into `.append`
+    /// events and `reproject` rebuilds the rows from them, so an axis the
+    /// snapshot cannot carry is an axis the first edit of that session erases —
+    /// and then pushes back over the server's copy as null.
+    public var durationSec: Int?
+    public var incline: Double?
+    public var distanceKm: Double?
 
     public init(
         exerciseId: String,
@@ -284,7 +302,10 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         est1rmKg: Double? = nil,
         rpe: Double? = nil,
         quality: String? = nil,
-        exerciseOrder: Int? = nil
+        exerciseOrder: Int? = nil,
+        durationSec: Int? = nil,
+        incline: Double? = nil,
+        distanceKm: Double? = nil
     ) {
         self.exerciseId = exerciseId
         self.setIndex = setIndex
@@ -297,6 +318,9 @@ public struct SetSnapshot: Codable, Sendable, Equatable {
         self.rpe = rpe
         self.quality = quality
         self.exerciseOrder = exerciseOrder
+        self.durationSec = durationSec
+        self.incline = incline
+        self.distanceKm = distanceKm
     }
 }
 

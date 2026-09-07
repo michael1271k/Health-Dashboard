@@ -181,7 +181,8 @@ struct SyncTranslationTests {
         let full = try SyncTranslation.setRow(
             WorkoutSet(id: "b", sessionId: "s1", exerciseId: "helix5-pec-deck",
                        setIndex: 2, weightKg: 40, reps: 12, side: "left",
-                       pairId: "p1", est1rmKg: 55, rpe: 8, exerciseOrder: 3),
+                       pairId: "p1", est1rmKg: 55, rpe: 8, exerciseOrder: 3,
+                       durationSec: 300, incline: 2, distanceKm: 0.37),
             userId: "u1", exerciseId: "uuid-1"
         )
 
@@ -200,7 +201,14 @@ struct SyncTranslationTests {
         // 13 since `v16.exerciseOrder`, and the bump is the point: a set with no
         // order still writes the key as null, or a session logged half before
         // the upgrade and half after would send two shapes in one batch.
-        #expect(try keys(bare).count == 13, "every RemoteSetRow CodingKey is encoded")
+        // 16 since `v18.cardioSetFields`, for exactly the same reason: a
+        // barbell row and a treadmill walk go up in ONE batch, so the barbell
+        // row has to write `duration_sec`, `incline` and `distance_km` as null
+        // rather than omit them.
+        #expect(try keys(bare).count == 16, "every RemoteSetRow CodingKey is encoded")
+        for column in ["duration_sec", "incline", "distance_km"] {
+            #expect(try keys(bare).contains(column), "\(column) is on the wire")
+        }
 
         // Same for the session row.
         let quiet = try SyncTranslation.sessionRow(session(), now: Date())

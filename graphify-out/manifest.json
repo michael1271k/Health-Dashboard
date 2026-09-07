@@ -480,7 +480,7 @@
     "semantic_hash": ""
   },
   "src/components/providers/QueryProvider.tsx": {
-    "mtime": 1788803750.8318923,
+    "mtime": 1788804377.6145048,
     "ast_hash": "853d9d88cf76150e6be427cc7b5e958b",
     "semantic_hash": ""
   },
@@ -710,8 +710,8 @@
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDetail.ts": {
-    "mtime": 1788337822.6449778,
-    "ast_hash": "64df80b94c853324f2c97795b77681b8",
+    "mtime": 1788804844.6006348,
+    "ast_hash": "b3be287a098e194be6858ca25556a1c3",
     "semantic_hash": ""
   },
   "src/lib/hooks/useSessionDraft.ts": {
@@ -1430,8 +1430,8 @@
     "semantic_hash": ""
   },
   "src/lib/utils/setFormat.ts": {
-    "mtime": 1785786455.412957,
-    "ast_hash": "37d34b08d5afbeca7e1f108899e85056",
+    "mtime": 1788804870.9747689,
+    "ast_hash": "e36bdb109e37e42bb0b91bdea12b693d",
     "semantic_hash": ""
   },
   "src/tests/fmt-v2.test.ts": {
@@ -1440,8 +1440,8 @@
     "semantic_hash": ""
   },
   "src/tests/set-format.test.ts": {
-    "mtime": 1788800717.4989429,
-    "ast_hash": "c7fa81f4de676df2a92c02b8b9f628ad",
+    "mtime": 1788804947.5817745,
+    "ast_hash": "2b7edaaa5262258641f977c7bcd3167b",
     "semantic_hash": ""
   },
   "src/components/day/RestSuggestion.tsx": {
@@ -2275,7 +2275,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/set-rows.html": {
-    "mtime": 1788786493.4092875,
+    "mtime": 1788805879.6687474,
     "ast_hash": "d94cffed264ff2c846a5f4abd603c06f",
     "semantic_hash": ""
   },
@@ -2305,7 +2305,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-ledger.html": {
-    "mtime": 1788786484.4145658,
+    "mtime": 1788805877.3998559,
     "ast_hash": "3ddb93aca7b5901708c403bfb41afc10",
     "semantic_hash": ""
   },
@@ -2340,7 +2340,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/live-header.html": {
-    "mtime": 1788786479.8850873,
+    "mtime": 1788805873.603764,
     "ast_hash": "7a2ebabd8697d3a4559fc6e239b8da1e",
     "semantic_hash": ""
   },
@@ -2410,7 +2410,7 @@
     "semantic_hash": ""
   },
   "e2e/__fixtures__/session-summary-header.html": {
-    "mtime": 1788800717.3934002,
+    "mtime": 1788805878.167632,
     "ast_hash": "ebb6e3635c7754088e5fe459edb7bed6",
     "semantic_hash": ""
   },
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "src/tests/golden-vectors.test.ts": {
-    "mtime": 1788800717.4856107,
-    "ast_hash": "7d37f3247fd7bfa4635b89dc4854b458",
+    "mtime": 1788804914.9190485,
+    "ast_hash": "0a4e939140eaa457395385d8c8526939",
     "semantic_hash": ""
   },
   "native/README.md": {
@@ -3810,8 +3810,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/CoreBridge.swift": {
-    "mtime": 1788625639.5467396,
-    "ast_hash": "e135ad0c4142927459d6425f8610bdbf",
+    "mtime": 1788804960.8611877,
+    "ast_hash": "5d83a0127393e0a0dc5ad12d333f779d",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/E1rmTrendChart.swift": {
@@ -3820,8 +3820,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryPreviews.swift": {
-    "mtime": 1788800717.3944786,
-    "ast_hash": "a0c803e905224350a8c8d7c4e5ae43d8",
+    "mtime": 1788805034.7721589,
+    "ast_hash": "b2db15c6fb8ffe747c9f7f7c8c9e7d21",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/HistoryView.swift": {
@@ -3835,13 +3835,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/SessionAnalysis.swift": {
-    "mtime": 1788788000.1020465,
-    "ast_hash": "866b4fb645d872c3ecd2b7b2ec6869b5",
+    "mtime": 1788804960.8614316,
+    "ast_hash": "7445b9f56e2a6bf740625d4e70e8aefd",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/SessionDetailView.swift": {
-    "mtime": 1788800717.3950315,
-    "ast_hash": "f35aea7d989f5a05849d272d912dec64",
+    "mtime": 1788805866.2761123,
+    "ast_hash": "914f5caa23d50aedf1a32110401be4c3",
     "semantic_hash": ""
   },
   "native/Onyx/Features/History/SessionPage.swift": {
@@ -4440,8 +4440,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Sessions/Detail.swift": {
-    "mtime": 1788625639.5705957,
-    "ast_hash": "1b6f4e85c5627274a5e181e7c8dea34d",
+    "mtime": 1788804825.9169533,
+    "ast_hash": "a449dd66283400c3c13e083d831b73d4",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Sessions/Draft.swift": {
@@ -4620,8 +4620,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Utils/SetFormat.swift": {
-    "mtime": 1788625639.5746367,
-    "ast_hash": "8420f7c5d425ae4e0af173329cb13e8a",
+    "mtime": 1788804892.3852894,
+    "ast_hash": "66bf6ec01a447c34b878e4ff87eda7dc",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Widget/DeepLink.swift": {
@@ -4670,852 +4670,852 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/activity-score.json": {
-    "mtime": 1788689260.7041187,
+    "mtime": 1788804916.6325767,
     "ast_hash": "48c392ae5a3acfdc0b9274d8935b04c6",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/alerts.json": {
-    "mtime": 1788689260.7816057,
+    "mtime": 1788804916.6395843,
     "ast_hash": "9b78040d8740f8a1cfd6c77e82464d5f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/atwater.json": {
-    "mtime": 1788800717.3996644,
+    "mtime": 1788804916.6604333,
     "ast_hash": "d5266001dafb0dab048fe3153fe6750c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/battery-constants.json": {
-    "mtime": 1788689260.6653893,
+    "mtime": 1788804916.6192036,
     "ast_hash": "802d593f59ba989c4db066639237d00c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/battery.json": {
-    "mtime": 1788689260.6778433,
+    "mtime": 1788804916.6238425,
     "ast_hash": "1185c7ed8ede40c245dea753915daba2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/body-comp-derive.json": {
-    "mtime": 1788689261.3931527,
+    "mtime": 1788804916.7175422,
     "ast_hash": "b02121254fe0893b57e53110ff12feea",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/body-comp-gap.json": {
-    "mtime": 1788689261.398314,
+    "mtime": 1788804916.7187734,
     "ast_hash": "307765d339d2975e89d1718b6e61c28e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/body-merge.json": {
-    "mtime": 1788689261.656603,
+    "mtime": 1788804916.7834964,
     "ast_hash": "142ed56090b5223dd78d1155b106094a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/bodyweight-exercise.json": {
-    "mtime": 1788800717.4000585,
+    "mtime": 1788804916.6494606,
     "ast_hash": "e9bfae322f38e03cc861c5d5e9e6a5b5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/bpm-estimate.json": {
-    "mtime": 1788689261.1958377,
+    "mtime": 1788804916.6967368,
     "ast_hash": "61cbef56f52c5a0dfe6f6390df4c6694",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/calorie-estimate.json": {
-    "mtime": 1788689261.1955829,
+    "mtime": 1788804916.6966188,
     "ast_hash": "ea07ae45335176e3150ebd82a558bce0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/cardio-prs.json": {
-    "mtime": 1788689261.5438333,
+    "mtime": 1788804916.7631829,
     "ast_hash": "6ec550e042af52f9588cabcd0e1351f5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/cardio-summary.json": {
-    "mtime": 1788689261.1878803,
+    "mtime": 1788804916.6935213,
     "ast_hash": "4aee3bc876df0c1b2a0a3b026d8506cd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/cascade-set-edit.json": {
-    "mtime": 1788689261.183698,
+    "mtime": 1788804916.6924784,
     "ast_hash": "2eeb12968f3f9fb2ac82c0d72145f239",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/ceiling-session.json": {
-    "mtime": 1788689261.1681554,
+    "mtime": 1788804916.6874142,
     "ast_hash": "ee0ca12e3d75bf085b006ffe2d6f029f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/chart-scale.json": {
-    "mtime": 1788689261.5901537,
+    "mtime": 1788804916.7693388,
     "ast_hash": "b0f6ef71fea8d2f8fffc837abf1a6ec0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/clean-title.json": {
-    "mtime": 1788689261.188451,
+    "mtime": 1788804916.6937199,
     "ast_hash": "e92f5a2f5a6e530bb7b27f12769c16a0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/clock-format.json": {
-    "mtime": 1788689261.2801077,
+    "mtime": 1788804916.7045944,
     "ast_hash": "073d381d6bd876ed0f68ed0ba016856e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-from-label.json": {
-    "mtime": 1788689260.9962826,
+    "mtime": 1788804916.6651468,
     "ast_hash": "740c371092e66cb60bdcbcbdccd6b956",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-from-setting.json": {
-    "mtime": 1788689260.9965005,
+    "mtime": 1788804916.6653316,
     "ast_hash": "7ec7c89a7e9a78ca968eec85c39583a8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-meta.json": {
-    "mtime": 1788689260.9959533,
+    "mtime": 1788804916.6649299,
     "ast_hash": "e20dc018c12825148d231de2bb39765b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-range-covers.json": {
-    "mtime": 1788689260.9974296,
+    "mtime": 1788804916.665622,
     "ast_hash": "e2f3ef135e903028a6635d59c0619632",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-range-line.json": {
-    "mtime": 1788689260.9977953,
+    "mtime": 1788804916.6657434,
     "ast_hash": "c34e318256b2c7ae08cec3d497d8dd49",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/context-ranges-in.json": {
-    "mtime": 1788689261.0758336,
+    "mtime": 1788804916.6715279,
     "ast_hash": "ee6e812805860242a671c19d450986f4",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/cr10.json": {
-    "mtime": 1788689261.17345,
+    "mtime": 1788804916.6898546,
     "ast_hash": "eccd878dd7cebfa943d4657bb0d96ccb",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/daily-score.json": {
-    "mtime": 1788689260.7771852,
+    "mtime": 1788804916.6379845,
     "ast_hash": "0fd22276f79c08b7adf7068b836e6549",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/daily-target.json": {
-    "mtime": 1788689261.0772142,
+    "mtime": 1788804916.671976,
     "ast_hash": "92d24f00e0e5a1fd618e3ab1652e621d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/days-between.json": {
-    "mtime": 1788689260.9969375,
+    "mtime": 1788804916.6654418,
     "ast_hash": "819bdb43dbfa272e3d92577d7408bb66",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/deck-groups.json": {
-    "mtime": 1788689261.625631,
+    "mtime": 1788804916.7784746,
     "ast_hash": "c6bb294eedaab46169d6078e67985be8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/deck-ladder.json": {
-    "mtime": 1788689261.6265662,
+    "mtime": 1788804916.7788332,
     "ast_hash": "37a6c25e2ba99602cf145fa9aaceea6f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/deep-link.json": {
-    "mtime": 1788689261.6599772,
+    "mtime": 1788804916.785253,
     "ast_hash": "ea25ee41c10ecb80c9a439c89cf4433c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/delta-verdict.json": {
-    "mtime": 1788689261.3962803,
+    "mtime": 1788804916.7182803,
     "ast_hash": "ebfa710dd65b5bc89ab721f2ec1ff60c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/detail-rows.json": {
-    "mtime": 1788689261.6333156,
+    "mtime": 1788804916.7812417,
     "ast_hash": "1eaf9fef822a63d38ae91309cf73e078",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/draft-totals.json": {
-    "mtime": 1788800717.400387,
+    "mtime": 1788804916.6930726,
     "ast_hash": "9ecd784ae5633a447967458c0f6baa57",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/e1rm-series.json": {
-    "mtime": 1788689261.6751766,
+    "mtime": 1788804916.7881193,
     "ast_hash": "9218fdd150a4d381f729d3534c365604",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/effort-cr10.json": {
-    "mtime": 1788689261.173687,
+    "mtime": 1788804916.6899812,
     "ast_hash": "7754537c27db774de89845bcc4b5198d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/effort-suggest.json": {
-    "mtime": 1788689261.1740894,
+    "mtime": 1788804916.6901658,
     "ast_hash": "c8f8c28aff4bae741d0fcc7f698c279a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/effort-tables.json": {
-    "mtime": 1788689261.1727202,
+    "mtime": 1788804916.6895514,
     "ast_hash": "4b44439574932de3406f775aba09e7b0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/enumerate-weeks.json": {
-    "mtime": 1788689260.9794645,
+    "mtime": 1788804916.6600416,
     "ast_hash": "4a9e636b95e5806df8a0271f4e190eeb",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/epley.json": {
-    "mtime": 1788689260.6629274,
+    "mtime": 1788804916.6177032,
     "ast_hash": "2ba1ead6cac89550272a09452e2934d1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/estimated-tag.json": {
-    "mtime": 1788689260.6927714,
+    "mtime": 1788804916.628732,
     "ast_hash": "6d6267fadc82ed04f20d18814f164211",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exception-day.json": {
-    "mtime": 1788689260.6924567,
+    "mtime": 1788804916.6284559,
     "ast_hash": "f0341870f7c1b5411efc5c7fd3f5d016",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-aliases.json": {
-    "mtime": 1788800717.400873,
+    "mtime": 1788804916.6459885,
     "ast_hash": "3c2402d8da4ee7f1d21d3dbb49de5e3b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-canonical-name.json": {
-    "mtime": 1788800717.401115,
+    "mtime": 1788804916.646298,
     "ast_hash": "190d639d3c60af466a2a187822f7c47b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-flags.json": {
-    "mtime": 1788800717.4015107,
+    "mtime": 1788804916.7760081,
     "ast_hash": "30a16015b93818a2f5903b6f77460dbe",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/fatigue-slots.json": {
-    "mtime": 1788689261.5305054,
+    "mtime": 1788804916.7597833,
     "ast_hash": "9a1ffac717ee995a0f08dbfc96346552",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/hydration-score.json": {
-    "mtime": 1788689260.7086341,
+    "mtime": 1788804916.633841,
     "ast_hash": "17cdd7cb6d9bde6dbb540bbbe5da7c0b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/insight-math.json": {
-    "mtime": 1788689261.3994713,
+    "mtime": 1788804916.7191012,
     "ast_hash": "89f3a1bec5206e24ed1c0d681ef2e21a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/insights.json": {
-    "mtime": 1788689261.5015604,
+    "mtime": 1788804916.7475731,
     "ast_hash": "5c4a86f65b1e3a21026e735563ebf3a0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/intensity-calendar.json": {
-    "mtime": 1788689261.5865924,
+    "mtime": 1788804916.7678525,
     "ast_hash": "1de9454639e99a3b766c1456a266b592",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/kcal-median.json": {
-    "mtime": 1788689261.1951392,
+    "mtime": 1788804916.6964655,
     "ast_hash": "8f76d2e395fb3d007460f5278e7da43a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-can-stack.json": {
-    "mtime": 1788689260.8001573,
+    "mtime": 1788804916.6452258,
     "ast_hash": "e25989ef65b91f5c924a4999a796fc00",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-catalogue.json": {
-    "mtime": 1788689260.785563,
+    "mtime": 1788804916.6403384,
     "ast_hash": "8bee673e4541055fb6a3eee0a98c91fc",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-clamp-size.json": {
-    "mtime": 1788689260.7883093,
+    "mtime": 1788804916.6412866,
     "ast_hash": "b393349896ff096720b8cf41b91e2e04",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-defaults.json": {
-    "mtime": 1788689260.7895648,
+    "mtime": 1788804916.6416364,
     "ast_hash": "ac5cfa2512e511e3d51d6eadbfb8da48",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-from-stored.json": {
-    "mtime": 1788689260.7943704,
+    "mtime": 1788804916.6429024,
     "ast_hash": "e491de6cb7141a4d515d21d7c8a4f3ab",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-heights.json": {
-    "mtime": 1788689260.7891133,
+    "mtime": 1788804916.641536,
     "ast_hash": "144a1df412930a3d59f23621d33ccb89",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-ops.json": {
-    "mtime": 1788689260.7996168,
+    "mtime": 1788804916.6449559,
     "ast_hash": "96c88297dbac77bac161aaab1c957c37",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-queries.json": {
-    "mtime": 1788689260.800603,
+    "mtime": 1788804916.6453817,
     "ast_hash": "04531359a1158d0dd53e7283eec2ac3d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-serialize.json": {
-    "mtime": 1788689260.8015695,
+    "mtime": 1788804916.6457126,
     "ast_hash": "deb6d0cff2a40db30dd8b1c2d1e941a9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/layout-sizes-for.json": {
-    "mtime": 1788689260.786521,
+    "mtime": 1788804916.6405885,
     "ast_hash": "ecd8410276736d5f7c1f2ebf65e694ad",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/ledger-window.json": {
-    "mtime": 1788689261.631019,
+    "mtime": 1788804916.7802267,
     "ast_hash": "91526ca30e2f6773f759d495fa4bded3",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/lever-by-id.json": {
-    "mtime": 1788800717.4021096,
+    "mtime": 1788804916.6603389,
     "ast_hash": "ddcfa54740317eb634e928e89af587aa",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/lever-for-date.json": {
-    "mtime": 1788800717.4026124,
+    "mtime": 1788804916.6630266,
     "ast_hash": "65fed1bc05da4b7b05a59423d192e364",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/lever-periods.json": {
-    "mtime": 1788800717.4028275,
+    "mtime": 1788804916.6637607,
     "ast_hash": "d85805823eb139fab4be17ea33cd78e8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/levers-table.json": {
-    "mtime": 1788800717.4031687,
+    "mtime": 1788804916.660186,
     "ast_hash": "d9fea5c02009a66fb5f4d1ea6cdc4853",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/live-prs.json": {
-    "mtime": 1788800717.4033604,
+    "mtime": 1788804916.6960363,
     "ast_hash": "e0b4023e53127f92c8f0f1e8e774d089",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/macro-adherence-series.json": {
-    "mtime": 1788689261.679417,
+    "mtime": 1788804916.7892227,
     "ast_hash": "eefd2c2ae584cf9113157a6db8cff6df",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/macro-math.json": {
-    "mtime": 1788689261.6621165,
+    "mtime": 1788804916.785994,
     "ast_hash": "492f7391a7a4cacc13bd5764ae2c7222",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/maintenance-band.json": {
-    "mtime": 1788689261.3971093,
+    "mtime": 1788804916.7183745,
     "ast_hash": "55945aa2240ac471470b0137cf9832bc",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/maintenance-bands.json": {
-    "mtime": 1788689260.9951286,
+    "mtime": 1788804916.6645987,
     "ast_hash": "8ddce1a0144be14ad57f10d8172f8209",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/maintenance-span.json": {
-    "mtime": 1788689260.9937267,
+    "mtime": 1788804916.664035,
     "ast_hash": "e48c985e61f89901713cae1afd22a30e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/markdown-table.json": {
-    "mtime": 1788689261.3851259,
+    "mtime": 1788804916.7141085,
     "ast_hash": "c9951eccfdc67c97d76afc57ba0fd808",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/merged-profiles.json": {
-    "mtime": 1788689261.6643717,
+    "mtime": 1788804916.7869487,
     "ast_hash": "ff04e3093418f17c25d5a1acb6f496c5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/met-kcal-per-min.json": {
-    "mtime": 1788689261.1947517,
+    "mtime": 1788804916.6962707,
     "ast_hash": "f27bb5e1329024a40f070f8bc9eb3e2e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/metric-pct.json": {
-    "mtime": 1788689261.6372359,
+    "mtime": 1788804916.7822006,
     "ast_hash": "ff5ab7fce0770890740005fd1e086910",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-aggregate.json": {
-    "mtime": 1788689261.588935,
+    "mtime": 1788804916.7686245,
     "ast_hash": "67c7e4cbc43b2341d46ab87e56755487",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-dict.json": {
-    "mtime": 1788689261.6189892,
+    "mtime": 1788804916.7761889,
     "ast_hash": "d72e1875354411931b95dbaeea9bcb72",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-distribution.json": {
-    "mtime": 1788800717.4042265,
+    "mtime": 1788804916.779358,
     "ast_hash": "c5cde3ff91eada60a9ffd6748e735ef4",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-family.json": {
-    "mtime": 1788689261.6079302,
+    "mtime": 1788804916.7721722,
     "ast_hash": "db41ece2f58e8342b96b1a6240680bc1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-map-dict.json": {
-    "mtime": 1788689260.8045704,
+    "mtime": 1788804916.6465614,
     "ast_hash": "385337637a1a5871d26603ece44f7007",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-map-lookup.json": {
-    "mtime": 1788800717.40457,
+    "mtime": 1788804916.6484354,
     "ast_hash": "098e05161399137e6252b6a607316964",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-map-resolve.json": {
-    "mtime": 1788689260.8107278,
+    "mtime": 1788804916.6485617,
     "ast_hash": "218a09cdc9574cdd0769d4689050e42d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/muscle-map.json": {
-    "mtime": 1788689261.5875678,
+    "mtime": 1788804916.7681396,
     "ast_hash": "9321af4a7fadecab7f055871cd0502a1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/next-set-format.json": {
-    "mtime": 1788689261.1904783,
+    "mtime": 1788804916.694738,
     "ast_hash": "8fe42a6fe39ddd8acd6f977e24c63607",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/next-set.json": {
-    "mtime": 1788689261.189795,
+    "mtime": 1788804916.694408,
     "ast_hash": "ef88cfce5dfee0f0d04f6c215e239c7c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/night-window.json": {
-    "mtime": 1788689261.545831,
+    "mtime": 1788804916.763593,
     "ast_hash": "15e803bc54e5234929447e40f499ccc3",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrient-line.json": {
-    "mtime": 1788689261.389971,
+    "mtime": 1788804916.7156332,
     "ast_hash": "447f2a72a3ecf5eeb9516f0ea703762a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrient-targets.json": {
-    "mtime": 1788689261.3878725,
+    "mtime": 1788804916.7150118,
     "ast_hash": "705c3055ef2bf8a49d43643eb66490f5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrition-phase-derive.json": {
-    "mtime": 1788689260.6896973,
+    "mtime": 1788804916.6276164,
     "ast_hash": "1ada39a382a8fc63cc8a43833a50cd5f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrition-phase-resolve.json": {
-    "mtime": 1788689260.69169,
+    "mtime": 1788804916.6281836,
     "ast_hash": "20bb9055ccacbf50da26e8bcb80b2f27",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrition-presets.json": {
-    "mtime": 1788689261.6209118,
+    "mtime": 1788804916.7766888,
     "ast_hash": "f3c6fed18da36319e37049eb5366db18",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/nutrition-score.json": {
-    "mtime": 1788689260.7019053,
+    "mtime": 1788804916.632088,
     "ast_hash": "ad57d0ec29a45f29163836ee1d81a0b1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pace.json": {
-    "mtime": 1788689261.3856866,
+    "mtime": 1788804916.7142224,
     "ast_hash": "93f4b47512595c06d3182b567768e647",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/padded-window.json": {
-    "mtime": 1788689261.6817033,
+    "mtime": 1788804916.7897835,
     "ast_hash": "ef1475c7e9af7edfca9d6cb17fb90efd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pair-row.json": {
-    "mtime": 1788689261.1874423,
+    "mtime": 1788804916.6933446,
     "ast_hash": "5eaeeacd1b4058c7139577aed67a9cb7",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/phase-span.json": {
-    "mtime": 1788689260.9750679,
+    "mtime": 1788804916.6586337,
     "ast_hash": "76a6b9e30071ab6dd6adf2dafe3cb60d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/phases-table.json": {
-    "mtime": 1788689260.9730594,
+    "mtime": 1788804916.6581156,
     "ast_hash": "6dad68ccfd7bdef6ece85be5cc09a634",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/plan-catalogue.json": {
-    "mtime": 1788689261.0820248,
+    "mtime": 1788804916.672852,
     "ast_hash": "62d1d4933051fdb72fc595f3222361e2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/plan-normalize.json": {
-    "mtime": 1788689261.0827572,
+    "mtime": 1788804916.6729808,
     "ast_hash": "ad647c2d4083113d214a77cabf34cc9b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/plan-phase-goals.json": {
-    "mtime": 1788689261.0859802,
+    "mtime": 1788804916.67382,
     "ast_hash": "00a38d97fa3726382f3b343db160eaf5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/plan-phase-narrow.json": {
-    "mtime": 1788689261.0842052,
+    "mtime": 1788804916.6733706,
     "ast_hash": "8f1349bb1d3b5f22dbdef1440100f432",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-asserted-session.json": {
-    "mtime": 1788689260.8230247,
+    "mtime": 1788804916.6519,
     "ast_hash": "ca6ed20540e06e7b0090eb5d226b7e52",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-axis-label.json": {
-    "mtime": 1788689260.824565,
+    "mtime": 1788804916.6524746,
     "ast_hash": "d9a803252b0bca4dcf08e0c1afd993e0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-baselines.json": {
-    "mtime": 1788800717.4050462,
+    "mtime": 1788804916.6544816,
     "ast_hash": "2d16b8dcc9a2922bb4f614545c645a11",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-e1rm-eligible.json": {
-    "mtime": 1788689260.8236125,
+    "mtime": 1788804916.6521416,
     "ast_hash": "de9b46f095e56f76722140db090a188b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-floor.json": {
-    "mtime": 1788800717.4053972,
+    "mtime": 1788804916.650951,
     "ast_hash": "73128a0fd5e248e823f0559d79f5c9f9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-ineligible.json": {
-    "mtime": 1788689260.8237946,
+    "mtime": 1788804916.652306,
     "ast_hash": "636ffc46e547c9f238f8f22e5baba891",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-reps-eligible.json": {
-    "mtime": 1788689260.824054,
+    "mtime": 1788804916.6523814,
     "ast_hash": "e53638c1698b1920c396d14db1204f20",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-seed-book.json": {
-    "mtime": 1788800717.4056377,
+    "mtime": 1788804916.6512856,
     "ast_hash": "d1a6b0eb3c87b5810a0cd34f46678902",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-seeded-axes.json": {
-    "mtime": 1788800717.4058816,
+    "mtime": 1788804916.6517103,
     "ast_hash": "92eaeefa27f6c7734f59d90cb88fd86a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-session.json": {
-    "mtime": 1788800717.4063783,
+    "mtime": 1788804916.6579547,
     "ast_hash": "41d30f6dcfa2d9417294610289c5a399",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-truth-axis-value.json": {
-    "mtime": 1788800717.4065516,
+    "mtime": 1788804916.6511216,
     "ast_hash": "bb294d3b4baec574550a0bb2eb5d1474",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-truth-book.json": {
-    "mtime": 1788800717.406846,
+    "mtime": 1788804916.650751,
     "ast_hash": "f8230223ef5f7c29078874f4ec9c1780",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/pr-volume-credits.json": {
-    "mtime": 1788689260.8256738,
+    "mtime": 1788804916.6528528,
     "ast_hash": "87de7031f1966971e4de16e3ac313b3e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/prev-align.json": {
-    "mtime": 1788689261.1916213,
+    "mtime": 1788804916.6952085,
     "ast_hash": "10d368a26d0c9efc5562b3cfdc895c63",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/profile-by-key.json": {
-    "mtime": 1788689261.0779915,
+    "mtime": 1788804916.6722214,
     "ast_hash": "0eaf161a99761049e504980d5ca38030",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/profile-matches.json": {
-    "mtime": 1788689261.0796547,
+    "mtime": 1788804916.672452,
     "ast_hash": "248a43a88c7fd6fb8361a868b5a111ca",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/profile-to-daily-target.json": {
-    "mtime": 1788689261.0788486,
+    "mtime": 1788804916.6723006,
     "ast_hash": "5c29b4ef9c4010b3d5f7311c0375da69",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/profiles-table.json": {
-    "mtime": 1788689261.0776916,
+    "mtime": 1788804916.6721227,
     "ast_hash": "1fbfba3716bdc1cfa20f2cf7419039e5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/program-lookups.json": {
-    "mtime": 1788800717.4071436,
+    "mtime": 1788804916.6852894,
     "ast_hash": "5814b6609ae6724763f7a69c601f40bd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/program-targets.json": {
-    "mtime": 1788689261.0878475,
+    "mtime": 1788804916.6742868,
     "ast_hash": "dde4357192c439d6a47b8f35513665ce",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/progression-cue.json": {
-    "mtime": 1788689261.634515,
+    "mtime": 1788804916.7815454,
     "ast_hash": "54555dcee3513ec220e3e8d10301f36d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/progression-queue.json": {
-    "mtime": 1788800717.4082365,
+    "mtime": 1788804916.7938368,
     "ast_hash": "75751869728ac35f36ade82309798d4e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/progression-verdict.json": {
-    "mtime": 1788767369.9452028,
+    "mtime": 1788804916.688988,
     "ast_hash": "89f52e7aa9ca8040c5b9d666069e2188",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-schedule.json": {
-    "mtime": 1788689261.505104,
+    "mtime": 1788804916.7486718,
     "ast_hash": "0dde34f5cd6f7f37a11490ae5b214188",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness.json": {
-    "mtime": 1788689260.6807964,
+    "mtime": 1788804916.6251912,
     "ast_hash": "2e2b64ad0819edfb49e59971af24224d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/realtime-keys.json": {
-    "mtime": 1788689261.658092,
+    "mtime": 1788804916.784217,
     "ast_hash": "eb8a4fc165c8b778bcd9d9b908161e74",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/recovery-score.json": {
-    "mtime": 1788689260.7160246,
+    "mtime": 1788804916.6367261,
     "ast_hash": "b2083b3e372d7a1122b55e3985199bb5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rel-min.json": {
-    "mtime": 1788689260.6669772,
+    "mtime": 1788804916.6195722,
     "ast_hash": "c6570991f44898f9a5a282c79729030d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/relative-time.json": {
-    "mtime": 1788689261.6245894,
+    "mtime": 1788804916.7781417,
     "ast_hash": "6f39c4e72d5c0947e9785deec2640a87",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rep-window.json": {
-    "mtime": 1788689261.089053,
+    "mtime": 1788804916.6745443,
     "ast_hash": "6d2e2b5a8cb247260ee443a82d1dd219",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/report-notes.json": {
-    "mtime": 1788786462.1169627,
+    "mtime": 1788804916.7169907,
     "ast_hash": "b73d3024e1088373880cd4c3d9b5a3cf",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/report-targets.json": {
-    "mtime": 1788689261.5115488,
+    "mtime": 1788804916.7506945,
     "ast_hash": "ae521e126670a830e87f306c16c721a7",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/resolved-targets.json": {
-    "mtime": 1788800717.4085896,
+    "mtime": 1788804916.7868414,
     "ast_hash": "34a3aed8ca0a8c86481310986894365b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rest-clamp-format.json": {
-    "mtime": 1788689261.1778903,
+    "mtime": 1788804916.6911511,
     "ast_hash": "bbc1611f7732259192e85eab6fd69eb9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rest-constants.json": {
-    "mtime": 1788689261.177191,
+    "mtime": 1788804916.6909482,
     "ast_hash": "b71d6affe7f7fdc70bb9d52f34eb3175",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rest-keys.json": {
-    "mtime": 1788800717.4103422,
+    "mtime": 1788804916.6912913,
     "ast_hash": "6dc2add75ede11445fa7983d72b8c4d6",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/rpe-seed.json": {
-    "mtime": 1788689261.180322,
+    "mtime": 1788804916.691676,
     "ast_hash": "c4eb896b79184291687d1c17d1d684d2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/scale-metrics.json": {
-    "mtime": 1788689261.6570013,
+    "mtime": 1788804916.783733,
     "ast_hash": "13c7d94eb37078e2c9634c16de583b74",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/schedule-context.json": {
-    "mtime": 1788689261.5198479,
+    "mtime": 1788804916.7522273,
     "ast_hash": "bd5ee404c5219758d2f8496c38ebc841",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/schedule-layout.json": {
-    "mtime": 1788689261.5155396,
+    "mtime": 1788804916.7516012,
     "ast_hash": "055ca615c1fb05d5595ef52dd0d9da55",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/schedule-swap.json": {
-    "mtime": 1788689261.549169,
+    "mtime": 1788804916.7646496,
     "ast_hash": "f478eb75c508c7659d27c8997cb5f596",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/schedule-week.json": {
-    "mtime": 1788689261.573301,
+    "mtime": 1788804916.7670708,
     "ast_hash": "45d5e19f76bcba5eedb4b632d3422548",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/scope-to-day.json": {
-    "mtime": 1788689261.6586776,
+    "mtime": 1788804916.784384,
     "ast_hash": "1ebf1407cd5899ac2b369002f3ec3be9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-clock-ops.json": {
-    "mtime": 1788689261.279408,
+    "mtime": 1788804916.7043905,
     "ast_hash": "2891fae6cfd4c54ea50718ae81e8cd8f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-clock-parse.json": {
-    "mtime": 1788689261.274277,
+    "mtime": 1788804916.699239,
     "ast_hash": "798d1b453c1c4f6b9c0dc2884d515276",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-clock-read.json": {
-    "mtime": 1788689261.2749507,
+    "mtime": 1788804916.6994796,
     "ast_hash": "6108071cf5b8d5f14050502b338842ad",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-elapsed.json": {
-    "mtime": 1788689261.196637,
+    "mtime": 1788804916.6972055,
     "ast_hash": "907e1b0618e4f0f4497aa5b6ded96625",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-highlights.json": {
-    "mtime": 1788800717.410764,
+    "mtime": 1788804916.7820568,
     "ast_hash": "731caebdc8394f1b36e0b26b0bdd0675",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-rpe.json": {
-    "mtime": 1788689261.180965,
+    "mtime": 1788804916.6918445,
     "ast_hash": "618279b1fb6652d1da6e4b25b53d469d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-volume-series.json": {
-    "mtime": 1788689261.6775393,
+    "mtime": 1788804916.7887642,
     "ast_hash": "7bbe1e5b54b0247e32b37f4c990aa40d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-volume.json": {
-    "mtime": 1788689260.7842178,
+    "mtime": 1788804916.6401248,
     "ast_hash": "9a19ce4335ee47956b866f6da1d7498c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-composition.json": {
-    "mtime": 1788689261.1762583,
+    "mtime": 1788804916.6906505,
     "ast_hash": "08735ab551b43f3e2d63bb75f5c175ae",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-detail.json": {
-    "mtime": 1788800717.4116719,
+    "mtime": 1788804916.716204,
     "ast_hash": "209e89fb1b97bbc50c2bc060cceb5172",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-format.json": {
-    "mtime": 1788689261.3867526,
+    "mtime": 1788804916.7145197,
     "ast_hash": "08677e8a9573997840c3708f190f6a87",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-patch.json": {
-    "mtime": 1788689261.1825,
+    "mtime": 1788804916.6922054,
     "ast_hash": "9810a865c3d39edb81e826a55d3c5f21",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-tags-table.json": {
-    "mtime": 1788689261.1749644,
+    "mtime": 1788804916.6903694,
     "ast_hash": "1b60faa4e1fd6ac948af67d57b126651",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/set-type.json": {
-    "mtime": 1788689261.1756535,
+    "mtime": 1788804916.690512,
     "ast_hash": "b15a2d3e8e42bec976e8605ce3ecc9d1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sets-at-ceiling.json": {
-    "mtime": 1788689261.6756768,
+    "mtime": 1788804916.7882113,
     "ast_hash": "ffef03c33a557dd55754356d8ea1b9bd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-debt-bank.json": {
-    "mtime": 1788689261.6577358,
+    "mtime": 1788804916.7840781,
     "ast_hash": "3ab05d24ee7d809bc43559f3f5f741d1",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-debt.json": {
-    "mtime": 1788689261.5417342,
+    "mtime": 1788804916.7626598,
     "ast_hash": "e0abb70f58af69c76595e7c0914c6841",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-quality.json": {
-    "mtime": 1788689260.6684422,
+    "mtime": 1788804916.6202595,
     "ast_hash": "9c504fdcb390d800db7fdb9f51b10c05",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-recovery-multiplier.json": {
-    "mtime": 1788689260.7103345,
+    "mtime": 1788804916.6344094,
     "ast_hash": "e6941bdff1cbb0c400d938c738cc9743",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-score.json": {
-    "mtime": 1788689260.6960964,
+    "mtime": 1788804916.630184,
     "ast_hash": "ff1c847d508752cdd8c7da063851a842",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sparkline.json": {
-    "mtime": 1788689261.3843997,
+    "mtime": 1788804916.7139494,
     "ast_hash": "d4ef8b10e9bcbfacfb0ba4b993cb5ff2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stack-schedule.json": {
-    "mtime": 1788689261.632258,
+    "mtime": 1788804916.7806675,
     "ast_hash": "05455a9bfcdd1cf1b621794b62da0813",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/step-marks.json": {
-    "mtime": 1788689261.528539,
+    "mtime": 1788804916.7592273,
     "ast_hash": "55d0db9625532615c32e127b959615dc",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/supplement-stack.json": {
-    "mtime": 1788689261.5343006,
+    "mtime": 1788804916.7608387,
     "ast_hash": "7d618343939d4d87fba68ef9606d740e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/supplements-consolidate.json": {
-    "mtime": 1788689261.390867,
+    "mtime": 1788804916.7164094,
     "ast_hash": "92ee4c31380837006dfb3073b3b56c69",
     "semantic_hash": ""
   },
@@ -5525,162 +5525,162 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/swap.json": {
-    "mtime": 1788689261.527646,
+    "mtime": 1788804916.7589588,
     "ast_hash": "1444ee7db5d1a9c258a4ec5dcddeab6b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/tdee.json": {
-    "mtime": 1788689260.6647651,
+    "mtime": 1788804916.618833,
     "ast_hash": "95e1e621e25140782e904c3b7047a703",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/tef.json": {
-    "mtime": 1788689260.664197,
+    "mtime": 1788804916.618305,
     "ast_hash": "dee32ea2e18fe7d9dadf7075bf7f57f3",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/tiles-stats.json": {
-    "mtime": 1788689261.630201,
+    "mtime": 1788804916.779977,
     "ast_hash": "57664984dc93f64fa31c257b223140f8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/time-drain.json": {
-    "mtime": 1788689260.672783,
+    "mtime": 1788804916.6219158,
     "ast_hash": "63f65cda2b702914ddef1d1d5f607508",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/timed-exercise.json": {
-    "mtime": 1788800717.4118414,
+    "mtime": 1788804916.69534,
     "ast_hash": "1cd5edde81c844e131b9fff18ea86d88",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/timed-progression-verdict.json": {
-    "mtime": 1788689261.1720512,
+    "mtime": 1788804916.6891901,
     "ast_hash": "a0e629347145bb43f064c66de76304fe",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/trend-ledger.json": {
-    "mtime": 1788689261.3914068,
+    "mtime": 1788804916.7167041,
     "ast_hash": "565659a0f000b10922b28dfd7a5053b5",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/unilateral-exercise.json": {
-    "mtime": 1788800717.4120164,
+    "mtime": 1788804916.6505637,
     "ast_hash": "9ab8a362850fa7ebf7f19dbecb50852c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/utils-format.json": {
-    "mtime": 1788689261.6228888,
+    "mtime": 1788804916.7774622,
     "ast_hash": "3ed41059f4da0b0fbb29c250d3ea5cdd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/visceral-band.json": {
-    "mtime": 1788689261.3941483,
+    "mtime": 1788804916.7177517,
     "ast_hash": "5e60a5e1d84487a23c865c7256445385",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/vital-series.json": {
-    "mtime": 1788689261.6810431,
+    "mtime": 1788804916.789603,
     "ast_hash": "1a6da595825e378ce80eeec8789901d2",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/volume-split.json": {
-    "mtime": 1788689261.6554854,
+    "mtime": 1788804916.7831485,
     "ast_hash": "82378df7279bee0b2b9c2375789b5052",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/volume-zone.json": {
-    "mtime": 1788689261.3889315,
+    "mtime": 1788804916.7152035,
     "ast_hash": "83c2595741ac68afe627df4baea9cc65",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/week-number.json": {
-    "mtime": 1788689261.2824836,
+    "mtime": 1788804916.7054203,
     "ast_hash": "7e0c7fef4771534f43d8d6b5ee5893d8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/week-phase.json": {
-    "mtime": 1788689260.978388,
+    "mtime": 1788804916.6597152,
     "ast_hash": "d16381df889445714c81d7457947e2cd",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/week-so-far.json": {
-    "mtime": 1788689261.5034554,
+    "mtime": 1788804916.7481558,
     "ast_hash": "d9e980a6a2642e5592343861932cb279",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/week-window.json": {
-    "mtime": 1788689261.6669831,
+    "mtime": 1788804916.7875116,
     "ast_hash": "74329ce10219672e357f55e96750358c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/weekly-export.json": {
-    "mtime": 1788800717.4128761,
+    "mtime": 1788804916.713438,
     "ast_hash": "6819f69c62566db19e79df4d308b6697",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/weigh-in-skip.json": {
-    "mtime": 1788689261.3873122,
+    "mtime": 1788804916.7147841,
     "ast_hash": "737710000572a362dc2f93fa70283a81",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/whr-band.json": {
-    "mtime": 1788689261.3939028,
+    "mtime": 1788804916.717657,
     "ast_hash": "e7209f827c016cf7523d1889c8f5c1aa",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-cadence.json": {
-    "mtime": 1788689261.6094754,
+    "mtime": 1788804916.7727056,
     "ast_hash": "77eb6ce38424002e5611f1cb16d07b4a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-calendar.json": {
-    "mtime": 1788689261.6040049,
+    "mtime": 1788804916.770776,
     "ast_hash": "ca6fcf17c745b8d0ff823271d68df5fa",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-cardio.json": {
-    "mtime": 1788689261.6057677,
+    "mtime": 1788804916.7711198,
     "ast_hash": "085642ca1d23df32e2787f6451be5e77",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-e1rm.json": {
-    "mtime": 1788689261.607495,
+    "mtime": 1788804916.7719736,
     "ast_hash": "845438e1894d31f4ca0caa69dfb9fc9e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-family.json": {
-    "mtime": 1788800717.4133358,
+    "mtime": 1788804916.7725017,
     "ast_hash": "2aa4308bcd4dafbc011cbeecd5b08d9e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-records.json": {
-    "mtime": 1788689261.6065793,
+    "mtime": 1788804916.7714434,
     "ast_hash": "be3882784d17e485aa82b4d7dde32f24",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/widget-series.json": {
-    "mtime": 1788689261.5918334,
+    "mtime": 1788804916.7699058,
     "ast_hash": "7a2ba9bcb0b09e2d55cedb59c9ef4919",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/workout-drain.json": {
-    "mtime": 1788689260.6762092,
+    "mtime": 1788804916.623228,
     "ast_hash": "fc62c049a7fbff402c5121b545ead558",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/workout-max.json": {
-    "mtime": 1788689260.6662765,
+    "mtime": 1788804916.6194162,
     "ast_hash": "7af5f23336fd1307f8fc221edb9d454e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/workout-score.json": {
-    "mtime": 1788689260.7074728,
+    "mtime": 1788804916.6335187,
     "ast_hash": "a9ebcbd8625f04f12e5221227e426e10",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/zone2.json": {
-    "mtime": 1788689261.5446627,
+    "mtime": 1788804916.7633417,
     "ast_hash": "99efc68cf0c0abbc20eec1ee227b7f39",
     "semantic_hash": ""
   },
@@ -5735,8 +5735,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/ReportsGoldenTests.swift": {
-    "mtime": 1788786462.1186793,
-    "ast_hash": "64db5bf8bf515789ecc5e33d7b469f4e",
+    "mtime": 1788804932.4652312,
+    "ast_hash": "f722ed5d68949e6d70d33449ff43c0fe",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/ScheduleGoldenTests.swift": {
@@ -5820,8 +5820,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/AppDatabase.swift": {
-    "mtime": 1788800717.4139543,
-    "ast_hash": "88a4571f381e697ab1a59f86951afc89",
+    "mtime": 1788804694.534067,
+    "ast_hash": "e23de726df1b22fb4755df50707ab5eb",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/ExerciseCatalog.swift": {
@@ -5830,8 +5830,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/Models.swift": {
-    "mtime": 1788800717.4156926,
-    "ast_hash": "5be89f48a0dcdb2051211c243af6ca30",
+    "mtime": 1788804677.9057891,
+    "ast_hash": "5591387f76eccb99efbce32dbbece97f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Database/ReportsStore.swift": {
@@ -5865,13 +5865,13 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEvent.swift": {
-    "mtime": 1788800717.4160376,
-    "ast_hash": "a447a9f91a81e31ce992f1f6377f52f6",
+    "mtime": 1788804740.5292928,
+    "ast_hash": "ba86a24780aae9853b90dd370f07d363",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEventFold.swift": {
-    "mtime": 1788800717.4162843,
-    "ast_hash": "0ea7bf569a056c8f45eea5af65a83913",
+    "mtime": 1788804748.8473525,
+    "ast_hash": "25683551d70b1c212a7e0b06ac63f9ae",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Events/SetEventRecord.swift": {
@@ -5935,8 +5935,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/SessionHistoryStore.swift": {
-    "mtime": 1788767369.9495678,
-    "ast_hash": "845c75a4e1ed16d521dfd812f6963206",
+    "mtime": 1788804813.354416,
+    "ast_hash": "fa196514a529b6ecf4e6eec74d677060",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/TrainingTrendsStore.swift": {
@@ -5980,8 +5980,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Mirror/TrainingPuller.swift": {
-    "mtime": 1788800717.4167373,
-    "ast_hash": "106000e7dc132b140b0e0a93ed203a16",
+    "mtime": 1788804772.5737011,
+    "ast_hash": "bbf8f1c2e40e324c5753991fcdcc013c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Preferences/GoalsEditing.swift": {
@@ -6040,8 +6040,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Sync/SyncTranslation.swift": {
-    "mtime": 1788800717.4169765,
-    "ast_hash": "121b1d09b77283155a679f3522a6a04e",
+    "mtime": 1788804765.041758,
+    "ast_hash": "8a9531d53c7ef26a0fa4085c84ce56bc",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Targets/TargetResolver.swift": {
@@ -6175,8 +6175,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/SyncTranslationTests.swift": {
-    "mtime": 1788800717.417858,
-    "ast_hash": "9899a085fc1e16da6f6e5c6a82389bed",
+    "mtime": 1788804790.0000188,
+    "ast_hash": "0ffcee50ba083b44d1aa653151cfc2c8",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/TargetResolverTests.swift": {
@@ -6340,7 +6340,7 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/program-onyx5.json": {
-    "mtime": 1788800717.4074233,
+    "mtime": 1788804916.672655,
     "ast_hash": "61d0dcd506c112c4b7f3a165d464b621",
     "semantic_hash": ""
   },
@@ -6430,117 +6430,117 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/battery-breakdown.json": {
-    "mtime": 1788689260.6788497,
+    "mtime": 1788804916.6242363,
     "ast_hash": "2446350a2878e29a4932c0057e618556",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/battery-stack.json": {
-    "mtime": 1788689261.7409875,
+    "mtime": 1788804916.804305,
     "ast_hash": "69133cfa1022ef0f895daa8f33db8b16",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/body-comp-series.json": {
-    "mtime": 1788689261.743654,
+    "mtime": 1788804916.8053432,
     "ast_hash": "0ecd7e08c66820550efced3e5292db68",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/consistency-series.json": {
-    "mtime": 1788689261.725351,
+    "mtime": 1788804916.799263,
     "ast_hash": "3d5040d4d36bca8c3866583988b4a1e3",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/deficit-ledger.json": {
-    "mtime": 1788689261.73014,
+    "mtime": 1788804916.8009632,
     "ast_hash": "5cb1db41735ceaa159588eb34a3ca5da",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/era-window-days.json": {
-    "mtime": 1788689261.6902006,
+    "mtime": 1788804916.7971017,
     "ast_hash": "93ac68cbb4b33fb2843b6d77fc5fd7a0",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/era-window-keys.json": {
-    "mtime": 1788689261.6893845,
+    "mtime": 1788804916.7969615,
     "ast_hash": "f841b7408ce0206d7a597af33eec2e66",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/era-window.json": {
-    "mtime": 1788800717.4005582,
+    "mtime": 1788804916.796779,
     "ast_hash": "80db69c0891e722f90d2dbf4b33bc455",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-summary.json": {
-    "mtime": 1788689261.5400558,
+    "mtime": 1788804916.7623281,
     "ast_hash": "3055779036d54924b295163360f35a99",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/goal-board.json": {
-    "mtime": 1788689261.7339246,
+    "mtime": 1788804916.8020349,
     "ast_hash": "8275827bdfcba87ee3aca1cd4bfd686d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/load-drain.json": {
-    "mtime": 1788689260.6721983,
+    "mtime": 1788804916.6216214,
     "ast_hash": "696601d83af7ae5e3c65f3e8170dcfd9",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-cardio-load.json": {
-    "mtime": 1788689260.6832075,
+    "mtime": 1788804916.6261854,
     "ast_hash": "33425c0bff29675de43f8299b4f18b19",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-constants.json": {
-    "mtime": 1788689260.6886046,
+    "mtime": 1788804916.6273298,
     "ast_hash": "d8d874a2b6a52d29597916465a8a39ca",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-daily-loads.json": {
-    "mtime": 1788689260.6839442,
+    "mtime": 1788804916.626388,
     "ast_hash": "f8acc75b7fb486732854ada273ca4a01",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-load.json": {
-    "mtime": 1788689260.6868217,
+    "mtime": 1788804916.6270032,
     "ast_hash": "a13c15f2f630c13bd8aa9313745c94f6",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-session-load.json": {
-    "mtime": 1788689260.6827772,
+    "mtime": 1788804916.6259608,
     "ast_hash": "9b2eac3593a9391db56453a19fc5591b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-signals.json": {
-    "mtime": 1788689260.6882246,
+    "mtime": 1788804916.6272717,
     "ast_hash": "5a3e7dd987133e13e73ca2fc00d635cb",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/readiness-z.json": {
-    "mtime": 1788689260.6821294,
+    "mtime": 1788804916.62574,
     "ast_hash": "8331dc7d34f219447445d08d8c42759f",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stack-credit.json": {
-    "mtime": 1788689261.5376446,
+    "mtime": 1788804916.7617702,
     "ast_hash": "ab5e1ec8f9724b4a2aac66e4d420a76d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/trajectory-series.json": {
-    "mtime": 1788689261.7384193,
+    "mtime": 1788804916.8032782,
     "ast_hash": "ec323c953846a9bf993044f9198f2a03",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/weight-ewma.json": {
-    "mtime": 1788689261.736552,
+    "mtime": 1788804916.8027544,
     "ast_hash": "f56befcd389b57ab5552391f0ea6bf38",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/wellness-drain.json": {
-    "mtime": 1788689260.6702335,
+    "mtime": 1788804916.6209693,
     "ast_hash": "638fba01e0dba15726138b45d28d282a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/z-quality.json": {
-    "mtime": 1788689260.6688552,
+    "mtime": 1788804916.6203923,
     "ast_hash": "330c342966d3edb025670d05e7b8503a",
     "semantic_hash": ""
   },
@@ -6870,32 +6870,32 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/effort-ceiling.json": {
-    "mtime": 1788767369.944289,
+    "mtime": 1788804916.7925694,
     "ast_hash": "ba1a787c27669b4204f4c44f3d2e1958",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/exercise-tags.json": {
-    "mtime": 1788800717.4018214,
+    "mtime": 1788804916.7904792,
     "ast_hash": "f5b892d6d42e7d40a709da49a0be2d39",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/load-steps.json": {
-    "mtime": 1788767369.9447486,
+    "mtime": 1788804916.7921705,
     "ast_hash": "9258c966fd2e2c3d65c2bc44522ef97b",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-duration.json": {
-    "mtime": 1788767369.9455771,
+    "mtime": 1788804916.7918186,
     "ast_hash": "1a238d1061d600e68f0fe28415141323",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/session-seed.json": {
-    "mtime": 1788800717.4112492,
+    "mtime": 1788804916.796034,
     "ast_hash": "b611c1f51d1898309bede89506ad5d13",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sessions-for-seed.json": {
-    "mtime": 1788767369.946109,
+    "mtime": 1788804916.7962632,
     "ast_hash": "d480df0d74eaae3c6985b3affb6354e8",
     "semantic_hash": ""
   },
@@ -7045,8 +7045,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Training/SessionEditing.swift": {
-    "mtime": 1788800717.4171488,
-    "ast_hash": "669eb8e79b523bce88b1eacbce917a53",
+    "mtime": 1788804748.847594,
+    "ast_hash": "45db9effaf0a2dc6ede9e3917ea5ba53",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/RescoreTests.swift": {
@@ -7142,6 +7142,21 @@
   "native/Packages/OnyxData/Tests/OnyxDataTests/ExerciseOrderTests.swift": {
     "mtime": 1788800717.4176807,
     "ast_hash": "8e74d427c117db5dd77918cb59f3218d",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxData/Tests/OnyxDataTests/RepairedSessionTests.swift": {
+    "mtime": 1788804377.6143186,
+    "ast_hash": "e280ed06a11cfbca9b5b90758d5e79da",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/cardio-set-format.json": {
+    "mtime": 1788804916.7146988,
+    "ast_hash": "52239875512c3e7d676613b6826dd101",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxData/Tests/OnyxDataTests/CardioSetTests.swift": {
+    "mtime": 1788805087.1200755,
+    "ast_hash": "a82fc836d204c96422c8ccb1ecdeff9e",
     "semantic_hash": ""
   }
 }

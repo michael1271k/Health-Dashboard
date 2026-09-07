@@ -836,6 +836,43 @@ public final class AppDatabase: Sendable {
             )
         }
 
+        // ── v18 ─────────────────────────────────────────────────────────────
+        // A set that is not reps and kilograms.
+        //
+        // `docs/sql/hotfix-polish.sql` gave Postgres `duration_sec`, `incline`
+        // and `distance_km` on 2026-09-07 and wrote the first row that uses
+        // them — the treadmill that opens that session, five minutes at incline
+        // 2 for 0.37 km, carrying no load at all. None of it could reach this
+        // device: the local table has two columns for a set's content and the
+        // report renders them as `0kg × 0`, which states a load that does not
+        // exist and hides the only three numbers the set has.
+        //
+        // Exactly the shape of `v14.setQuality` and `v16.exerciseOrder`, and
+        // safe for the same reason: three NULLABLE columns, backfilled to
+        // nothing, on a table every reader already treats nulls in. There is no
+        // default to choose — a `duration_sec` of 0 would claim a set took no
+        // time, which is a claim about all 2,190 historical rows at once.
+        //
+        // No new `SetEvent.Kind` goes with this. `Body.init(from:)` switches on
+        // the kind with no fallback, so a kind is a one-way door; the axes ride
+        // as OPTIONAL keys on the existing `.append` payload instead, which is
+        // what `v7.setRpe` and `v16.exerciseOrder` both did.
+        //
+        // The projection is NOT rebuilt. `workout_sets` is a fold over
+        // `set_events` and no event that predates this carries the axes, so a
+        // `reprojectAll` would rewrite every row to put the same nulls back.
+        // The one session that HAS them has no local events at all — `v17`
+        // dropped them so the server copy could be adopted whole.
+        migrator.registerMigration("v18.cardioSetFields") { db in
+            let existing = Set(try db.columns(in: "workout_sets").map(\.name))
+            guard !existing.isSuperset(of: ["duration_sec", "incline", "distance_km"]) else { return }
+            try db.alter(table: "workout_sets") { t in
+                if !existing.contains("duration_sec") { t.add(column: "duration_sec", .integer) }
+                if !existing.contains("incline") { t.add(column: "incline", .double) }
+                if !existing.contains("distance_km") { t.add(column: "distance_km", .double) }
+            }
+        }
+
         return migrator
     }
 }
