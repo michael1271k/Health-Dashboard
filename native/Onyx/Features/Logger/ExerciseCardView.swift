@@ -66,6 +66,18 @@ struct ExerciseCardView: View {
         return Color.onyx.muscle(family)
     }
 
+    /// The bottom half of the rail — the movement's first ASSISTING mover.
+    ///
+    /// Read from `plan.movers.secondary`, the same place `family` reads its
+    /// primary, so the deck and the session ledger are answering one question
+    /// from one source rather than agreeing by coincidence.
+    private var assist: Color? {
+        guard let token = exercise.plan.movers.secondary.first,
+              let muscle = LandmarkMuscle.from(token: token)
+        else { return nil }
+        return Color.onyx.muscle(muscle)
+    }
+
     /// A movement with no external load — reps, or seconds, are the record.
     ///
     /// ── WHY THE NAME AND NOT `wk1Kg == nil` ────────────────────────────────
@@ -91,25 +103,20 @@ struct ExerciseCardView: View {
             Divider().overlay(Color.onyx.hairline)
             sets
         }
-        .background(alignment: .leading) {
-            // The rail, and the faintest wash of it across the card. A flat
-            // stripe reads as decoration; a stripe whose colour bleeds two
-            // millimetres into the surface reads as the card being MADE of that
-            // material, which is the thing that makes a deck feel sorted rather
-            // than striped.
-            LinearGradient(colors: [rail.opacity(0.10), .clear], startPoint: .leading, endPoint: .trailing)
-                .frame(width: 120)
-        }
         .onyxGlass(.tile)
-        .overlay(alignment: .leading) {
-            UnevenRoundedRectangle(
-                topLeadingRadius: OnyxCorner.tile, bottomLeadingRadius: OnyxCorner.tile,
-                bottomTrailingRadius: 0, topTrailingRadius: 0, style: .continuous
-            )
-            .fill(rail)
-            .frame(width: 3)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: OnyxCorner.tile, style: .continuous))
+        // ── THE SAME WASH THE SESSION LEDGER WEARS ──────────────────────────
+        // This card used to paint its own: a 10 %→0 gradient clamped to the
+        // first 120 pt, plus a solid 3 pt rail. The ledger's card painted a
+        // different one — 28 %→4 %, left to right, on the HEADER only. Two
+        // screens drawing the same object in two colour languages, and the
+        // review read them as belonging to different apps.
+        //
+        // `onyxMuscleWash` is now the single answer for both: 6 %→2 % top to
+        // bottom across the whole card, and a rail that carries the assisting
+        // muscle in its lower half. The card's own `clipShape` goes with the
+        // hand-rolled rail — the modifier clips to the same radius, and two
+        // clips of the same shape is one of them doing nothing.
+        .onyxMuscleWash(rail, secondary: assist)
         // The landing zone, lit only while something is over it.
         .overlay {
             RoundedRectangle(cornerRadius: OnyxCorner.tile, style: .continuous)

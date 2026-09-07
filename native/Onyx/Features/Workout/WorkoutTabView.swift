@@ -132,7 +132,16 @@ struct WorkoutTabView: View {
         }
         .sheet(isPresented: $loggingCardio) {
             if let week {
-                CardioLogSheet(userId: week.userId, date: week.today, onSave: week.addCardio)
+                CardioLogSheet(
+                    userId: week.userId,
+                    date: week.today,
+                    // Today's rows are what an import is deduplicated against,
+                    // and the tab is already holding them for the cardio card.
+                    existing: week.snapshot.todayCardio,
+                    onSave: week.addCardio,
+                    bouts: { [environment] in await environment.cardioBouts(on: week.today) },
+                    lastBout: week.snapshot.lastCardio
+                )
             }
         }
         // Re-read on dismissal: a swap rewrites today's day key, which changes

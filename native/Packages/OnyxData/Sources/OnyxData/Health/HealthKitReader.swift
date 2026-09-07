@@ -1,6 +1,7 @@
 #if canImport(HealthKit)
 import Foundation
 import HealthKit
+import OnyxCore
 
 /// `HealthReading` over a real `HKHealthStore`.
 ///
@@ -116,12 +117,7 @@ public struct HealthKitReader: HealthReading {
                     continuation.resume(throwing: error)
                     return
                 }
-                let out = (samples as? [HKWorkout] ?? []).map {
-                    WorkoutSample(
-                        start: $0.startDate, end: $0.endDate,
-                        isLifting: Self.liftingTypes.contains($0.workoutActivityType)
-                    )
-                }
+                let out = (samples as? [HKWorkout] ?? []).map(Self.sample)
                 continuation.resume(returning: out)
             }
             store.execute(query)
@@ -133,6 +129,91 @@ public struct HealthKitReader: HealthReading {
     static let liftingTypes: Set<HKWorkoutActivityType> = [
         .traditionalStrengthTraining, .functionalStrengthTraining,
     ]
+
+    /// `HKWorkoutActivityType` → the `cardio_logs.kind` the app files it under.
+    ///
+    /// This dictionary and `liftingTypes` are the only two places in the app
+    /// that may name an activity type, and they partition the same space: a
+    /// type in neither is a workout the app has no home for (yoga, a swim) and
+    /// is offered to nobody rather than filed under a guess.
+    static let cardioKinds: [HKWorkoutActivityType: String] = [
+        .walking: CardioImport.walk,
+        .running: CardioImport.run,
+        .cycling: CardioImport.cycling,
+        .rowing: CardioImport.rowing,
+        .elliptical: CardioImport.elliptical,
+        .highIntensityIntervalTraining: CardioImport.hiit,
+    ]
+
+    /// The distance type a given activity records against.
+    ///
+    /// HealthKit files distance under the LIMB doing the work, so asking a bike
+    /// ride for `distanceWalkingRunning` returns nothing — silently, which is
+    /// how a 40 km ride imports as a bout with no distance and a pace of "—".
+    static func distanceType(for activity: HKWorkoutActivityType) -> HKQuantityType? {
+        let identifier: HKQuantityTypeIdentifier?
+        switch activity {
+        case .walking, .running, .elliptical, .highIntensityIntervalTraining:
+            identifier = .distanceWalkingRunning
+        case .cycling:
+            identifier = .distanceCycling
+        case .rowing:
+            // `distanceRowing` is iOS 18 / macOS 15. The package still builds
+            // for an older macOS in tests, so the symbol is gated rather than
+            // the whole mapping — an erg bout on an older OS imports its
+            // duration, energy and heart rate and simply has no distance.
+            if #available(iOS 18.0, macOS 15.0, *) {
+                identifier = .distanceRowing
+            } else {
+                identifier = nil
+            }
+        default:
+            identifier = nil
+        }
+        return identifier.flatMap(HKQuantityType.quantityType(forIdentifier:))
+    }
+
+    /// One workout, read through `statistics(for:)` rather than the totals.
+    ///
+    /// `HKWorkout.totalDistance` and `totalEnergyBurned` are deprecated and,
+    /// more to the point, are whatever the writing app decided to stamp on the
+    /// sample. `statistics(for:)` reduces the workout's OWN samples the way the
+    /// Health app does, which is what makes an imported figure match the one the
+    /// founder can see in Health — and a figure that disagrees with Apple's is a
+    /// figure nobody will trust twice.
+    static func sample(_ workout: HKWorkout) -> WorkoutSample {
+        let distance = distanceType(for: workout.workoutActivityType)
+            .flatMap { workout.statistics(for: $0)?.sumQuantity()?.doubleValue(for: .meter()) }
+
+        let energy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)
+            .flatMap { workout.statistics(for: $0)?.sumQuantity()?.doubleValue(for: .kilocalorie()) }
+
+        // Average, not sum: a heart rate is a rate. `.count()/.minute()` is the
+        // unit HealthKit stores bpm in, and naming it wrong here would return a
+        // plausible number in the wrong scale — the failure the file header
+        // warns about.
+        let hr = HKQuantityType.quantityType(forIdentifier: .heartRate)
+            .flatMap {
+                workout.statistics(for: $0)?.averageQuantity()?
+                    .doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
+            }
+
+        // Ascent is metadata, not a sample type: only the app that recorded the
+        // workout can supply it, so an indoor treadmill bout simply has none.
+        let ascent = (workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?
+            .doubleValue(for: .meter())
+
+        return WorkoutSample(
+            start: workout.startDate,
+            end: workout.endDate,
+            isLifting: liftingTypes.contains(workout.workoutActivityType),
+            cardioKind: cardioKinds[workout.workoutActivityType],
+            distanceM: distance,
+            activeKcal: energy,
+            avgHr: hr,
+            elevationM: ascent
+        )
+    }
 
     // MARK: - Types and units
 
