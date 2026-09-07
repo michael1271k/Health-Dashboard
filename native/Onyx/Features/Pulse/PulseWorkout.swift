@@ -43,10 +43,18 @@ struct WorkoutSummaryCard: View {
         Button(action: onOpen) {
             VStack(alignment: .leading, spacing: OnyxSpace.s) {
                 header
-                figures
+                MetaTagRow(tags: tags)
             }
-            .padding(OnyxSpace.m)
+            .padding(OnyxSpace.l)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // The same wash the session page's ledger headers wear (§U4.6), in
+            // the split's own colour. It is the SAME card in two places — this
+            // one is the door and that one is the room — and two treatments of
+            // one object is the drift the tint tokens exist to stop.
+            .background(alignment: .top) {
+                LinearGradient(colors: [tint.opacity(0.22), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 64)
+            }
             .onyxGlass(.tile)
             .contentShape(.rect)
         }
@@ -81,28 +89,27 @@ struct WorkoutSummaryCard: View {
 
     /// Three figures, and never a fourth: PRs are a whole-ledger replay and
     /// belong to the page this card opens (`DayModel.WorkoutSummary`).
-    private var figures: some View {
-        // At AX5 three columns of a label over a numeral is three ellipses.
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: OnyxSpace.xs))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: OnyxSpace.m))
-        return layout {
-            figure("TONNAGE", "\(Format.volume(session.tonnageKg)) kg")
-            figure("SETS", "\(session.sets)")
-            figure("TIME", DayFormat.minutes(session.durationMin.map { Int($0.rounded()) }))
+    ///
+    /// ── WHY CAPSULES REPLACED THE THREE-COLUMN GRID (§U4.6) ─────────────────
+    /// It was `TONNAGE / SETS / TIME` as three labelled columns, which needed
+    /// an `AnyLayout` swap at the accessibility sizes because three columns of
+    /// a caption over a numeral is three ellipses on a 375 pt phone. A capsule
+    /// carries its unit INSIDE it — "1,160 kg" needs no register label above it
+    /// — so the row wraps instead of truncating and `FlowRow` handles the
+    /// accessibility sizes without a second layout to keep in step.
+    ///
+    /// It is also the same object the session page's ledger footers are now
+    /// made of, which is the point: the door and the room say a session's
+    /// numbers the same way.
+    private var tags: [MetaTagRow.Tag] {
+        var out: [MetaTagRow.Tag] = [
+            .init("\(Format.volume(session.tonnageKg)) kg"),
+            .init("\(session.sets) sets"),
+        ]
+        if let minutes = session.durationMin, minutes > 0 {
+            out.append(.init(DayFormat.minutes(Int(minutes.rounded()))))
         }
-    }
-
-    private func figure(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(label).onyxMicro()
-            Text(value)
-                .onyxType(.secondary).fontWeight(.semibold).onyxNumeral()
-                .foregroundStyle(Color.onyx.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: typeSize.isAccessibilitySize ? nil : .infinity, alignment: .leading)
+        return out
     }
 
     private var spoken: String {

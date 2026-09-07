@@ -144,7 +144,8 @@ enum PreviewHarness {
             LoggerPreviews.view(screen)
         case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
             TodayPreviews.view(screen)
-        case "history", "history-week", "session", "session-ledger", "exercise-history":
+        case "history", "history-week", "session", "session-ledger", "exercise-history",
+             "session-atlas", "session-edit":
             HistoryPreviews.view(screen)
         case "trends", "trends-empty", "trends-maintenance":
             TrendsPreviews.view(screen)

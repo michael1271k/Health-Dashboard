@@ -160,13 +160,29 @@ public enum PrRecorder {
     /// free (it builds baselines before inserting), and both callers here have
     /// the sets already in the store, so it has to be explicit: without it every
     /// set is measured against itself and nothing is ever a record.
+    /// ── `before` IS FOR A SESSION THAT IS ALREADY HISTORY ───────────────────
+    /// `save.ts` never needed it: it builds the bar at close, when there is by
+    /// definition nothing after. Re-opening a three-week-old session to correct
+    /// it (§U4.5) is the first caller for which "every other session" and
+    /// "every EARLIER session" are different sets — measured against the whole
+    /// ledger an August set is beaten by a September one and the deck shows no
+    /// records at all, on a session whose own summary page shows three. The
+    /// date lives on `workout_sessions`, so the bound is a subquery; nil keeps
+    /// the old behaviour exactly, which is what the live logger wants.
     static func baselines(
         _ db: Database, exerciseIds: Set<String>, excluding sessionId: String?,
+        before: String? = nil,
         dayKey: String?, name: @escaping (String) -> String
     ) throws -> PrBaselines {
         guard !exerciseIds.isEmpty else { return .empty }
         var query = WorkoutSet.filter(exerciseIds.contains(Column("exercise_id")))
         if let sessionId { query = query.filter(Column("session_id") != sessionId) }
+        if let before {
+            query = query.filter(
+                sql: "session_id IN (SELECT id FROM workout_sessions WHERE date < ?)",
+                arguments: [before]
+            )
+        }
         let prior = try query.fetchAll(db)
         return PrEngine.buildBaselines(
             prior.map {
@@ -404,12 +420,13 @@ extension AppDatabase {
     /// record anyway. Matching `record` exactly is the requirement; being
     /// cleverer than it would light a trophy the close then refuses to file.
     public func livePrBaselines(
-        exerciseIds: [String], excluding sessionId: String?, dayKey: String?
+        exerciseIds: [String], excluding sessionId: String?, before: String? = nil, dayKey: String?
     ) throws -> PrBaselines {
         try writer.read { db in
             let name = try PrRecorder.nameResolver(db)
             return try PrRecorder.baselines(
-                db, exerciseIds: Set(exerciseIds), excluding: sessionId, dayKey: dayKey, name: name
+                db, exerciseIds: Set(exerciseIds), excluding: sessionId,
+                before: before, dayKey: dayKey, name: name
             )
         }
     }

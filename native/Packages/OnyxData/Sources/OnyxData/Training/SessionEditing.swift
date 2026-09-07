@@ -119,10 +119,23 @@ public extension AppDatabase {
         sessionId: String,
         durationMin: Double? = nil,
         avgBpm: Int? = nil,
-        calories: Int? = nil
+        calories: Int? = nil,
+        sessionRpe: Double? = nil
     ) throws -> SessionEditing.Outcome? {
         try writer.write { db in
             guard var session = try WorkoutSession.fetchOne(db, key: sessionId) else { return nil }
+            // ── WHY THE EFFORT IS HERE AND NOT IN `closeSession` ────────────
+            // `closeSession` writes it because closing is when it is first
+            // asked. Re-opening a finished session for editing (§U4.5) asks
+            // again — the dial is the same dial — and closing a session that
+            // already ended would rewrite `ended_at` and re-derive a duration
+            // over a clock that has not been running for three weeks. Clamped
+            // to the CR-10 scale the dial can produce; a keyboard cannot reach
+            // this, but `session_rpe` is an ACWR input and every other write to
+            // it is clamped.
+            if let sessionRpe {
+                session.sessionRpe = min(10, max(0, sessionRpe))
+            }
             if let durationMin {
                 // Clamped, not trusted. A stepper cannot produce a negative and
                 // a keyboard can, and `duration_min` is an ACWR input.
@@ -156,6 +169,13 @@ public extension AppDatabase {
     /// clear a rating nobody touched. `SetPatch.clearedQuality` is the one
     /// sentinel that takes a value back off — see the field.
     @discardableResult
+    /// `est1rmKg` travels with a changed load on purpose: `PrEngine` reads the
+    /// STORED estimate with `||` — a value that is present and wrong is not
+    /// missing, so it does not fall through to Epley — and the ledger, the
+    /// sparkline and the next session's baselines would all keep the estimate of
+    /// the weight you just corrected. `setIndex` is here for the same class of
+    /// reason: the logger's deck knows a set's position within its exercise and
+    /// the patch is the only way to say so.
     func amendSet(
         sessionId: String,
         setId: String,
@@ -163,10 +183,13 @@ public extension AppDatabase {
         reps: Int? = nil,
         rpe: Double? = nil,
         setType: String? = nil,
-        quality: String? = nil
+        quality: String? = nil,
+        est1rmKg: Double? = nil,
+        setIndex: Int? = nil
     ) throws -> SessionEditing.Outcome? {
         let patch = SetPatch(
-            weightKg: weightKg, reps: reps, setType: setType, rpe: rpe, quality: quality
+            setIndex: setIndex, weightKg: weightKg, reps: reps, setType: setType,
+            est1rmKg: est1rmKg, rpe: rpe, quality: quality
         )
         // An amend that changes nothing is permanent noise in a log that is
         // never compacted — the rule `EventStore.amendSet` states. Checked HERE
@@ -174,7 +197,19 @@ public extension AppDatabase {
         // on the way in, and seeding is a ONE-WAY DOOR: a no-op amend would
         // permanently take a pulled session out of the mirror's reach (see
         // `seedEventLog`) and queue an upload for a session nothing touched.
+        //
+        // ── AND `isEmpty` IS NOT ENOUGH ─────────────────────────────────────
+        // `SetPatch.isEmpty` is "every field is nil", which the logger's own
+        // amend can never be: it sends the whole row on every commit, and
+        // `ExerciseCardView` commits on every focus LOSS, changed or not. So
+        // tapping into a set's weight field to read it and tapping away was a
+        // full edit — a seed, a PR replay, a recount, an outbox upsert and a
+        // forty-nine-day rescore, for a session nobody had touched, and it took
+        // that session permanently out of the mirror's reach. The patch is
+        // compared against the row it describes, which is the only check that
+        // can tell "I retyped 40" from "I changed 40 to 60".
         guard !patch.isEmpty else { return nil }
+        guard try changesSomething(patch, sessionId: sessionId, setId: setId) else { return nil }
         return try edit(sessionId: sessionId) { db, _ in
             guard let existing = try WorkoutSet.fetchOne(db, key: setId), existing.sessionId == sessionId
             else { throw SessionEditing.EditError.noSuchSet(setId) }
@@ -260,6 +295,38 @@ public extension AppDatabase {
             try session.update(db)
             try Self.enqueueSessionUpsert(sessionId: sessionId, in: db)
             return outcome
+        }
+    }
+
+    /// Would applying `patch` produce a different row?
+    ///
+    /// Read in its own transaction, before `edit` opens the write one. That is
+    /// a race in principle — the row could change in between — and it is the
+    /// harmless direction: the worst case is one redundant event, which is what
+    /// the check exists to reduce and not a correctness claim.
+    ///
+    /// `SetSnapshot` is the shape the fold applies a patch to, so this asks the
+    /// question with exactly the arithmetic `reproject` would use. Missing rows
+    /// answer `true` — `amendSet` throws `noSuchSet` inside the transaction and
+    /// that error belongs there, not swallowed here as a no-op.
+    private func changesSomething(_ patch: SetPatch, sessionId: String, setId: String) throws -> Bool {
+        try writer.read { db in
+            guard let existing = try WorkoutSet.fetchOne(db, key: setId),
+                  existing.sessionId == sessionId
+            else { return true }
+            let before = SetSnapshot(
+                exerciseId: existing.exerciseId,
+                setIndex: existing.setIndex,
+                weightKg: existing.weightKg,
+                reps: existing.reps,
+                setType: existing.setType,
+                side: existing.side,
+                pairId: existing.pairId,
+                est1rmKg: existing.est1rmKg,
+                rpe: existing.rpe,
+                quality: existing.quality
+            )
+            return patch.applied(to: before) != before
         }
     }
 

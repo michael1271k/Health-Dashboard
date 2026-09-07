@@ -35,6 +35,25 @@ enum HistoryPreviews {
             // and a shot of the top half reviews only the half that fits.
             NavigationStack { SessionDetailView(sessionId: lastSession, startAtLedger: true) }
                 .environment(environment())
+        // §U4.4's flip, opened. A sheet cannot be photographed by launching
+        // the screen under it, so the harness presents it directly — the same
+        // trick `day-swap` uses, and the reason `Presenting` exists.
+        case "session-atlas":
+            NavigationStack { SessionDetailView(sessionId: lastSession, startAtAtlas: true) }
+                .environment(environment())
+        // §U4.5's edit mode, re-opened on the logger's own deck. It is the ONLY
+        // way to see the edit hero — a shot script can launch a screen and
+        // cannot press a toolbar button.
+        //
+        // The LEG day, not `lastSession`: every Chest & Back session in this
+        // fixture carries the lateral raise as L/R pairs, and `canEdit` refuses
+        // a session holding pairs (see `SessionDetailView.canEdit` — the logger
+        // has no split concept and would score one lift twice). So the Upper A
+        // shot would photograph a disabled button, which is a true picture of
+        // that session and a useless one of this screen.
+        case "session-edit":
+            NavigationStack { SessionDetailView(sessionId: "s-2026-08-30", startAtEditor: true) }
+                .environment(environment())
         case "exercise-history":
             // The HISTORY segment — the two-column set grid §W7 rebuilt. The
             // Summary segment is `exercise`.

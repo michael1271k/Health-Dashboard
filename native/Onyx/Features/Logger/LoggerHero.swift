@@ -52,15 +52,42 @@ struct LoggerHero: View {
     @Binding var selection: LoggerFaceSelection
     /// Tapping the clock opens `TimerSheet`.
     let onTimer: () -> Void
+    /// Set when the deck is re-opened on a finished session (§U4.5) — the hero
+    /// then states WHEN rather than HOW LONG SO FAR.
+    var editing: LoggerModel.EditContext?
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private var accent: Color { Color.onyx.day(day.key) }
 
-    /// "Week 8". Derived from the session's own start rather than from today, so
-    /// a session left running past midnight keeps the week it was logged in.
+    /// "Week 8". The session's own week, never today's.
+    ///
+    /// ── THE LOGICAL DAY, NOT THE INSTANT ────────────────────────────────────
+    /// A live deck has only an instant to go on and `LogicalDay.iso` is the
+    /// right reading of it. An edited session has a stored `date` — its LOGICAL
+    /// day, as the day it was logged in decided — and that is the one to use:
+    /// `started_at` is a UTC instant, and re-reading it through the phone's
+    /// current time zone puts a 17:00 session on the next day for every reader
+    /// east of the meridian. The first shot of this hero said "Wed, 2 Sep" over
+    /// a session whose own summary page, ten points above, said "Tue, 1 Sep".
+    private var iso: String {
+        editing?.date ?? LogicalDay.iso(clock.startedAt)
+    }
+
     private var week: String {
-        Week.label(ofWeekStart: Week.start(of: LogicalDay.iso(clock.startedAt)))
+        Week.label(ofWeekStart: Week.start(of: iso))
+    }
+
+    /// "Sat 30 Aug" — the session's own date, which in edit mode takes the
+    /// sub-line's place.
+    ///
+    /// It is the fact a person correcting a three-week-old workout most needs on
+    /// screen and the one the live hero has no reason to carry: on a live deck
+    /// the date is today, and a screen that tells you today's date is a screen
+    /// spending its most valuable band on nothing.
+    private var dateLabel: String? {
+        guard editing != nil, let date = LogicalDay.date(fromISO: iso) else { return nil }
+        return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
     var body: some View {
@@ -130,6 +157,15 @@ struct LoggerHero: View {
                         .padding(.vertical, 2)
                         .background(Capsule().fill(Color.onyx.textPrimary.opacity(0.14)))
                         .transition(.scale(scale: 0.9).combined(with: .opacity))
+                } else if let dateLabel {
+                    // Kept at every type size, unlike `day.sub`: the split name
+                    // above already implies the muscle group, and nothing at all
+                    // implies which Saturday this was.
+                    Text(dateLabel)
+                        .onyxType(.secondary).onyxNumeral()
+                        .foregroundStyle(Color.onyx.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
                 } else if let sub = day.sub, !sub.isEmpty, !typeSize.isAccessibilitySize {
                     Text(sub)
                         .onyxType(.secondary)
@@ -140,7 +176,7 @@ struct LoggerHero: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(day.label). \(day.sub ?? ""). \(week)")
+        .accessibilityLabel("\(day.label). \(dateLabel ?? day.sub ?? ""). \(week)")
     }
 
     /// The programme week, as a chip rather than another `·`-joined fragment.
@@ -169,7 +205,45 @@ struct LoggerHero: View {
     /// you are also typing into. It counts from an instant and cannot be
     /// stopped — so a paused session draws its frozen reading as plain text
     /// instead, from the same arithmetic the Lock Screen is sent.
+    @ViewBuilder
     private var timerButton: some View {
+        if let editing {
+            storedDuration(editing)
+        } else {
+            liveTimer
+        }
+    }
+
+    /// What a finished session's clock reads: `duration_min`, as stored, and no
+    /// button under it.
+    ///
+    /// ── WHY IT IS NOT A TIMER AND NOT TAPPABLE ──────────────────────────────
+    /// `Text(_:style:.timer)` counts from an instant and cannot be stopped, so
+    /// on a three-week-old session it renders the wall-clock age of the workout
+    /// — `512:04:11` and climbing. And `TimerSheet` edits `started_at` and the
+    /// pause ledger, neither of which means anything once `closeSession` has
+    /// derived a duration from them: the duration is what is stored and it is
+    /// the finish sheet's Duration cell that edits it (§U3.2), which is also
+    /// the only write that sets `duration_edited`.
+    private func storedDuration(_ editing: LoggerModel.EditContext) -> some View {
+        HStack(spacing: OnyxSpace.xs) {
+            Image(systemName: "checkmark.seal")
+                .imageScale(.medium)
+                .foregroundStyle(accent)
+            Text(editing.durationMin.map { Clock.format($0 * 60) } ?? "—")
+                .onyxClock()
+        }
+        .foregroundStyle(Color.onyx.textPrimary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .layoutPriority(1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Duration")
+        .accessibilityValue(editing.durationMin.map { "\(Int($0.rounded())) minutes" } ?? "not recorded")
+        .accessibilityHint("Edit it from Finish.")
+    }
+
+    private var liveTimer: some View {
         Button(action: onTimer) {
             HStack(spacing: OnyxSpace.xs) {
                 // ── WHY THE GLYPH IS ALWAYS THERE ───────────────────────────
