@@ -136,6 +136,27 @@ struct OnyxWorkoutAttributes: ActivityAttributes {
         /// and a chart that grew without bound would cost more the longer the
         /// session ran, which is exactly backwards.
         var spark: [Double]
+        /// THIS set's effort as a NUMBER, so the badge can be tinted with the
+        /// same ramp the effort picker uses.
+        ///
+        /// ── WHY BOTH THIS AND `rpe` ─────────────────────────────────────────
+        /// `rpe` is the pre-formatted string and stays the thing that is DRAWN —
+        /// the producer owns formatting, and "RPE 8.5" must not become "8.5" or
+        /// "9" on the far side. This is the same fact in the one other register
+        /// the card needs it in: `Color.onyx.effort` takes a Double, and parsing
+        /// a number back out of a label the producer composed would be a second
+        /// implementation of a formatting rule, allowed to disagree.
+        ///
+        /// Optional, like every field added after the first release — see
+        /// `timerOrigin` for what a required key does to a running activity.
+        var rpeValue: Double?
+        /// How long the CURRENT rest was set to run, in seconds — the
+        /// prescription plus whatever ±15 s has been applied to this set.
+        ///
+        /// Sent so the card can draw a bar that is honest about the whole
+        /// period rather than about the slice it happened to be opened during.
+        /// Nil while not resting, and on a card encoded before this existed.
+        var restTotalSec: Int?
         /// The workout's own day key — "cb_b", "legs_a".
         ///
         /// ── WHY A KEY AND NOT A COLOUR ──────────────────────────────────────

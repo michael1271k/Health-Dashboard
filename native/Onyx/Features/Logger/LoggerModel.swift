@@ -132,9 +132,45 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         var rpe: Double?
         var kind: SetKind
         /// HOW the set went, as opposed to how hard — the second axis the set
-        /// options sheet asks about. `nil` is "not reported", never "clean":
+        /// options sheet asks about. EMPTY is "not reported", never "clean":
         /// see `SetQuality`.
-        var quality: SetQuality?
+        ///
+        /// ── WHY IT IS A LIST NOW ────────────────────────────────────────────
+        /// "Swung the last few AND cut the range short" is one set, and the
+        /// sheet used to make you pick which half to record. The column did not
+        /// change shape to allow it — see `SetQuality.join`.
+        var qualities: [SetQuality]
+
+        /// The first tag, in canonical order. Every reader that only wants to
+        /// know WHETHER the set was marked, or wants one word for a badge, goes
+        /// through here rather than indexing the array.
+        var quality: SetQuality? { qualities.first }
+
+        /// Which limb this row logged: `"left"` / `"right"`, or nil on an
+        /// ordinary two-sided set.
+        ///
+        /// ── THE LOCAL SPELLING, NOT THE WIRE'S ──────────────────────────────
+        /// `workout_sets.side` is `L`/`R` in Postgres and `left`/`right` in the
+        /// local mirror, and `SyncTranslation.side` is the one bridge between
+        /// them. Storing the wire's spelling here would push `L` into a column
+        /// whose reader (`SessionHistoryStore.lr`) maps only `left` — the pair
+        /// would then reach `SessionVolume` as two unsided rows and the session
+        /// would weigh nearly twice what it did.
+        var side: String?
+
+        /// The two sides of ONE physical set share this. A `pairId` without a
+        /// `side` (or the other way round) is not a pair to anything that
+        /// counts — see `SessionVolume.sessionVolumeKg`.
+        var pairId: String?
+
+        /// `L` / `R` for the badge and for VoiceOver, or nil.
+        var sideLabel: String? {
+            switch side {
+            case "left":  "L"
+            case "right": "R"
+            default:      nil
+            }
+        }
         var isDone: Bool
         /// What this set number was last time, pre-formatted: `"47kg × 12"`.
         /// Empty when the movement is new — a Lock Screen has no room to say
@@ -203,9 +239,11 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             id: String = newOnyxID(),
             storeId: String? = nil,
             weightKg: Double? = nil, reps: Int? = nil, rpe: Double? = nil,
-            kind: SetKind = .normal, quality: SetQuality? = nil, isDone: Bool = false,
+            kind: SetKind = .normal, quality: SetQuality? = nil,
+            qualities: [SetQuality]? = nil, isDone: Bool = false,
             previous: String? = nil, isRecord: Bool = false,
             rpeStale: Bool = false, progressed: Bool = false,
+            side: String? = nil, pairId: String? = nil,
             durationSec: Int? = nil, incline: Double? = nil, distanceKm: Double? = nil,
             elevationM: Double? = nil
         ) {
@@ -215,7 +253,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             self.reps = reps
             self.rpe = rpe
             self.kind = kind
-            self.quality = quality
+            // `quality:` is kept as the one-tag convenience every existing call
+            // site (and every preview) uses; `qualities:` wins when both are
+            // given, which is what the restore path passes.
+            self.qualities = qualities ?? [quality].compactMap { $0 }
+            self.side = side
+            self.pairId = pairId
             self.isDone = isDone
             self.previous = previous
             self.isRecord = isRecord
@@ -227,11 +270,26 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             self.elevationM = elevationM
         }
 
-        /// Tonnage this row contributes. A ghost contributes nothing; a warm-up
-        /// does, because the weight was still moved.
+        /// Tonnage this row contributes ON ITS OWN. A ghost contributes
+        /// nothing; a warm-up does, because the weight was still moved.
+        ///
+        /// ⚠️ Not the answer for a row that is half of a unilateral pair — two
+        /// sides summed is a set counted twice. `ExerciseState.volumeKg` routes
+        /// every row through `SessionVolume.sessionVolumeKg`, which is the one
+        /// implementation of the weaker-side rule, and this stays for the
+        /// unpaired case it is still exactly right for.
         var volumeKg: Double {
             guard kind != .ghost, isDone, let weightKg, let reps else { return 0 }
             return weightKg * Double(reps)
+        }
+
+        /// This row as the shared volume rule sees it, in the wire's spelling of
+        /// `side` — which is the spelling `SessionVolume` matches on.
+        var volumeSet: VolumeSet {
+            VolumeSet(
+                weightKg: weightKg ?? 0, reps: Double(reps ?? 0),
+                side: sideLabel, pairId: pairId, setType: kind.rawValue
+            )
         }
 
         var estimated1RM: Double? {
@@ -287,15 +345,24 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         /// press are two sets of leg press as far as the quads are concerned.
         /// It is also the number Hevy prints, and Hevy counts them.
         var physicalSets: Int {
-            rows.filter { $0.isDone && $0.kind != .ghost }.count
+            LoggerModel.physical(rows.filter { $0.isDone && $0.kind != .ghost })
         }
 
         /// WORKING sets — what the program prescribed and what the header counts.
         var workingSets: Int {
-            rows.filter { $0.isDone && $0.kind != .ghost && $0.kind != .warmup }.count
+            LoggerModel.physical(rows.filter { $0.isDone && $0.kind != .ghost && $0.kind != .warmup })
         }
 
-        var volumeKg: Double { rows.reduce(0) { $0 + $1.volumeKg } }
+        /// Σ tonnage, with a genuine L/R pair scored ONCE at its weaker side.
+        ///
+        /// Routed through `SessionVolume` rather than summed here: that
+        /// function is the rule, it is vector-equal with the web's
+        /// `sessionVolumeKg`, and it is what `closeSession` writes to
+        /// `total_volume_kg`. A second summation in the deck is a header that
+        /// disagrees with the row it wrote.
+        var volumeKg: Double {
+            SessionVolume.sessionVolumeKg(rows.filter(\.isDone).map(\.volumeSet))
+        }
 
         /// Done when every set the PROGRAM asked for is ticked.
         ///
@@ -317,6 +384,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         var isComplete: Bool {
             let prescribed = rows.filter { $0.kind != .warmup && $0.kind != .ghost }
             guard !prescribed.isEmpty else { return !rows.isEmpty && rows.allSatisfy(\.isDone) }
+            // Both sides, or the set is not done. Ticking only the left arm of a
+            // split set is a set half performed, and the card saying Done over
+            // it is the card lying about the one thing it is for.
             return prescribed.allSatisfy(\.isDone)
         }
     }
@@ -497,6 +567,40 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     var recordCount: Int { prsThisSession }
     var physicalSets: Int { exercises.reduce(0) { $0 + $1.physicalSets } }
 
+    /// How many SETS a list of rows is, once a set can be two rows.
+    ///
+    /// Each `pairId` once, every unpaired row once — the same rule as
+    /// `countCommittedSets` on the web and as the `count(distinct coalesce(
+    /// pair_id, id))` that `closeSession` writes to `set_count`. Three
+    /// implementations of one rule is how a deck says 6/3.
+    static func physical(_ rows: [SetRow]) -> Int { groups(rows).count }
+
+    /// The same rows, grouped into the SETS they are — a pair together, every
+    /// other row alone, in the order they appear.
+    ///
+    /// Anything that keeps or drops sets has to work on these and not on rows,
+    /// or it keeps half a pair: a lone side is not a set to `SessionVolume`, to
+    /// `physical`, or to the arm that did not get trained.
+    static func groups(_ rows: [SetRow]) -> [[SetRow]] {
+        var out: [[SetRow]] = []
+        var index: [String: Int] = [:]
+        for row in rows {
+            // A pairId without a side is not a pair to anything downstream —
+            // `SessionVolume` says so explicitly — so it is not one here.
+            guard let id = row.pairId, !id.isEmpty, row.sideLabel != nil else {
+                out.append([row])
+                continue
+            }
+            if let at = index[id] {
+                out[at].append(row)
+            } else {
+                index[id] = out.count
+                out.append([row])
+            }
+        }
+        return out
+    }
+
     /// Weighted set counts per landmark, for the distribution sheet.
     var muscleSets: [LandmarkMuscle: Double] {
         MuscleCredit.weightedSets(
@@ -524,11 +628,18 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     }
 
     /// The set you are standing in front of: the first one not yet ticked.
+    /// ── COUNTED IN SETS, NOT IN ROWS ────────────────────────────────────────
+    /// `ordinal` and `total` are what the Lock Screen renders as "Set 3 of 4".
+    /// A unilateral movement is two rows per set, so counting rows made the card
+    /// say "Set 7 of 10" for the fourth set of five — a sentence about a
+    /// prescription nobody wrote.
     var currentSet: (exercise: ExerciseState, row: SetRow, ordinal: Int, total: Int)? {
         for exercise in exercises {
-            if let index = exercise.rows.firstIndex(where: { !$0.isDone }) {
-                return (exercise, exercise.rows[index], index + 1, exercise.rows.count)
-            }
+            let groups = Self.groups(exercise.rows)
+            guard let at = groups.firstIndex(where: { $0.contains { !$0.isDone } }),
+                  let row = groups[at].first(where: { !$0.isDone })
+            else { continue }
+            return (exercise, row, at + 1, groups.count)
         }
         return nil
     }
@@ -619,16 +730,23 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // work done too, which is why the guard reads every row.
             guard prescribed > 0 || previous.rows.contains(where: \.isDone) else { return nil }
 
-            if logged.count >= prescribed {
+            // ── COUNTED IN SETS, AND TRIMMED IN SETS ────────────────────────
+            // `prescribed` is a number of SETS, and on a unilateral movement a
+            // set is two rows. Counting rows here made a cut that asks for four
+            // sets keep four ROWS — two sets, one arm each of the two it kept —
+            // and `prefix` could cut a pair in half, leaving a left side with
+            // no right that nothing downstream counts as a set at all.
+            let loggedSets = Self.physical(logged)
+            if loggedSets >= prescribed {
                 previous.rows = previous.rows.filter(\.isDone)
             } else {
                 // Trim the SURPLUS blanks, keeping the rows where they are.
                 // Rebuilding as `logged + blanks` sorts the ticked rows to the
                 // top, so a session where set 2 was skipped and set 3 logged
                 // reorders itself under the reader on a phase switch.
-                let blanks = working.filter { !$0.isDone }
-                let wanted = prescribed - logged.count
-                let keep = Set(blanks.prefix(wanted).map(\.id))
+                let blanks = Self.groups(working.filter { !$0.isDone })
+                let wanted = prescribed - loggedSets
+                let keep = Set(blanks.prefix(wanted).flatMap { $0.map(\.id) })
                 // A warm-up row survives whatever the prescription says — it
                 // was never counted against it.
                 previous.rows = previous.rows.filter { $0.isDone || $0.kind == .warmup || keep.contains($0.id) }
@@ -761,7 +879,27 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                 out.append(SetRow(weightKg: plan.wk1Kg))
             }
         }
-        return out
+        // ── A LUNGE OPENS AS TWO SIDES ──────────────────────────────────────
+        // Only for the movements `Unilateral` names, and only on rows the deck
+        // is proposing — a restored session is what it was, and re-splitting it
+        // here would invent rows the projection does not hold.
+        return Unilateral.isUnilateral(plan.name) ? Self.presplit(out) : out
+    }
+
+    /// Every row as an L/R pair, sharing a fresh `pairId`.
+    private static func presplit(_ rows: [SetRow]) -> [SetRow] {
+        rows.flatMap { row -> [SetRow] in
+            guard row.pairId == nil else { return [row] }
+            let pairId = newOnyxID()
+            return ["left", "right"].map { side in
+                SetRow(
+                    weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
+                    kind: row.kind, qualities: row.qualities,
+                    previous: row.previous, rpeStale: row.rpeStale,
+                    progressed: row.progressed, side: side, pairId: pairId
+                )
+            }
+        }
     }
 
     /// One seeded row, as the deck holds it.
@@ -862,12 +1000,107 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
     }
 
-    /// Passing the value the set already carries WITHDRAWS it — the same rule
+    /// Passing a value the set already carries WITHDRAWS it — the same rule
     /// the RPE ladder follows, and for the same reason: a claim about your form
     /// that you cannot take back is a claim you stop making.
+    ///
+    /// `nil` clears the lot, which is what the sheet's own "clear" path wants
+    /// and what the old one-value signature meant by it.
     func setQuality(_ quality: SetQuality?, on row: SetRow, in exercise: ExerciseState) {
-        row.quality = row.quality == quality ? nil : quality
+        guard let quality else {
+            row.qualities = []
+            if row.isDone { amendInStore(row, in: exercise) }
+            return
+        }
+        var next = Set(row.qualities)
+        if next.contains(quality) { next.remove(quality) } else { next.insert(quality) }
+        // Canonical order, always. The stored string is compared to decide
+        // whether an amend is worth appending, and a list that reordered itself
+        // would seed the event log on every tap.
+        row.qualities = SetQuality.allCases.filter(next.contains)
         if row.isDone { amendInStore(row, in: exercise) }
+    }
+
+    // MARK: - Unilateral
+
+    /// Split one set into an independent Left and Right.
+    ///
+    /// ── WHAT A PAIR IS, AND WHY IT IS NOT TWO SETS ──────────────────────────
+    /// Two rows sharing a `pairId`, one `side` each, are ONE set of work
+    /// everywhere it is counted: `SessionVolume` scores them at the weaker side
+    /// (`min(weight) × min(reps)`), `physical` counts the pairId once, and the
+    /// PR engine judges the pair rather than the arms. That is the whole reason
+    /// splitting is offered only on movements `Unilateral.isUnilateral` names —
+    /// a barbell press split in half is a session logged at half its size.
+    ///
+    /// The two sides open on the SAME numbers, and on the same `kind`: a warm-up
+    /// split into two `normal` sides is work the PR engine then judges, which is
+    /// the bug the web fixed in its own `splitSet` and left a comment on.
+    func splitSet(_ row: SetRow, in exercise: ExerciseState) {
+        guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return }
+        guard row.pairId == nil else { return }
+        // A ticked set is voided first: the pair is genuinely two new rows in
+        // the log, and re-using the id of the set they replace would put an
+        // append behind a tombstone (`SetEventFold` rule 3) and lose both.
+        let wasDone = row.isDone
+        if wasDone { voidInStore(row) }
+
+        let pairId = newOnyxID()
+        func half(_ side: String) -> SetRow {
+            SetRow(
+                weightKg: row.weightKg, reps: row.reps, rpe: row.rpe,
+                kind: row.kind, qualities: row.qualities, isDone: false,
+                previous: row.previous, rpeStale: row.rpeStale,
+                progressed: row.progressed, side: side, pairId: pairId
+            )
+        }
+        let sides = [half("left"), half("right")]
+        exercise.rows.replaceSubrange(index...index, with: sides)
+        // Re-ticked rather than carried: `toggleDone` is the only path that
+        // appends, and going through it is what keeps the rest timer, the live
+        // PR pass and the store in step with a row that says it is logged.
+        if wasDone { for side in sides { toggleDone(side, in: exercise) } }
+        restampFrom(index, in: exercise)
+        refreshLivePrs()
+    }
+
+    /// Collapse a pair back into one two-sided set.
+    ///
+    /// ── THE WEAKER SIDE SURVIVES ────────────────────────────────────────────
+    /// The web keeps LEFT's numbers, which is arbitrary and generous. The
+    /// founder's call here is the weaker side — `min` on each of load and reps,
+    /// which is exactly what `SessionVolume` already scored the pair at. So a
+    /// pair merged weighs what it weighed split, and un-splitting can never
+    /// invent tonnage that was not performed.
+    func mergeSet(pairId: String, in exercise: ExerciseState) {
+        let members = exercise.rows.filter { $0.pairId == pairId }
+        guard members.count > 1, let index = exercise.rows.firstIndex(where: { $0.pairId == pairId }) else { return }
+        let wasDone = members.contains(where: \.isDone)
+        for row in members where row.isDone { voidInStore(row) }
+
+        let merged = SetRow(
+            weightKg: members.compactMap(\.weightKg).min(),
+            reps: members.compactMap(\.reps).min(),
+            // The rating is the HARDER of the two: an arm that went to failure
+            // is what the set cost, and averaging two efforts describes neither.
+            rpe: members.compactMap(\.rpe).max(),
+            kind: members.first?.kind ?? .normal,
+            qualities: SetQuality.allCases.filter { q in members.contains { $0.qualities.contains(q) } },
+            isDone: false,
+            previous: members.first?.previous
+        )
+        exercise.rows.removeAll { $0.pairId == pairId }
+        exercise.rows.insert(merged, at: min(index, exercise.rows.count))
+        if wasDone { toggleDone(merged, in: exercise) }
+        restampFrom(index, in: exercise)
+        refreshLivePrs()
+    }
+
+    /// Whether this movement may be split at all. One question, one answer —
+    /// `Unilateral` is the ported catalogue rule and it is vector-equal with
+    /// `isUnilateralExercise` on the web.
+    func canSplit(_ exercise: ExerciseState) -> Bool {
+        Unilateral.isUnilateral(exercise.name)
     }
 
     /// Tick or untick a set.
@@ -1530,7 +1763,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     reps: set.reps,
                     rpe: set.rpe,
                     kind: SetKind(rawValue: set.setType) ?? .normal,
-                    quality: set.quality.flatMap(SetQuality.init(rawValue:)),
+                    qualities: SetQuality.parse(set.quality),
                     isDone: true,
                     // A logged set's Previous is the same seed the blank row
                     // would have shown — what this set number was LAST time,
@@ -1544,6 +1777,12 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                             .filter { $0.setType != "warmup" }.count
                     ),
                     isRecord: false,
+                    // A split set restores split. Dropped here, the pair would
+                    // come back as two unsided rows the moment anything on the
+                    // card was amended — and `SessionVolume` would then score
+                    // the two arms separately, very nearly doubling the session.
+                    side: set.side,
+                    pairId: set.pairId,
                     // A treadmill bout restores as a treadmill bout. Dropped
                     // here, the first amend of the session wrote them back as
                     // null — see `SetRow.durationSec`.
@@ -1601,9 +1840,13 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             weightKg: row.weightKg ?? 0,
             reps: row.reps ?? 0,
             setType: row.kind.rawValue,
+            // The local spelling — see `SetRow.side`. `SyncTranslation.side` is
+            // the only thing that turns it into the wire's `L`/`R`.
+            side: row.side,
+            pairId: row.pairId,
             est1rmKg: row.estimated1RM,
             rpe: row.rpe,
-            quality: row.quality?.rawValue,
+            quality: SetQuality.join(row.qualities),
             exerciseOrder: deckOrder(of: exercise),
             // Nil on every lifted row, which is what they are on a lifted set.
             // On a restored cardio bout they are the only content the set has.
@@ -1714,6 +1957,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     weightKg: next.weightKg, reps: next.reps, rpe: next.rpe,
                     setType: next.setType,
                     quality: next.quality ?? SetPatch.clearedQuality,
+                    side: next.side, pairId: next.pairId,
                     est1rmKg: next.est1rmKg, setIndex: next.setIndex,
                     exerciseOrder: next.exerciseOrder
                 ) != nil {
@@ -1724,7 +1968,8 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             }
             try store.amendSet(sessionId: sessionId, setId: row.storeId, SetPatch(
                 setIndex: next.setIndex, weightKg: next.weightKg, reps: next.reps,
-                setType: next.setType, est1rmKg: next.est1rmKg, rpe: next.rpe,
+                setType: next.setType, side: next.side, pairId: next.pairId,
+                est1rmKg: next.est1rmKg, rpe: next.rpe,
                 // The sentinel, not nil: `nil` in a patch means UNCHANGED, so
                 // withdrawing a quality would otherwise be the one edit the
                 // amend could not express. See `SetPatch.clearedQuality`.

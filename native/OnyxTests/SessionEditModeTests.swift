@@ -31,7 +31,7 @@ struct SessionEditModeTests {
     private func store() throws -> AppDatabase {
         let database = try AppDatabase.inMemory(deviceId: "edit-test")
         try database.seedRows { db in
-            try Exercise(id: "ex-chest-press", name: "Chest Press (Machine)").insert(db)
+            try Exercise(id: "ex-chest-press", name: "Chest Press").insert(db)
             let start = LogicalDay.date(fromISO: "2026-08-30")!.addingTimeInterval(17 * 3600)
             try WorkoutSession(
                 id: Self.sessionId, userId: Self.userId, dayKey: "cb_a", date: "2026-08-30",
@@ -42,7 +42,19 @@ struct SessionEditModeTests {
                 try WorkoutSet(
                     id: "set-\(index + 1)", sessionId: Self.sessionId, exerciseId: "ex-chest-press",
                     setIndex: index + 1, weightKg: 40, reps: reps, setType: "normal",
-                    est1rmKg: Epley.oneRepMax(weight: 40, reps: Double(reps)), foldOrder: index
+                    est1rmKg: Epley.oneRepMax(weight: 40, reps: Double(reps)),
+                    // `exercise_order` as the WEB writes it — dense from 0,
+                    // which `buildCommitPayload` has always done, and 2 is where
+                    // `Chest Press` sits in Upper A.
+                    //
+                    // Left nil (as it was), the deck's own index for this
+                    // movement was a genuine CHANGE, so the first "no-op" commit
+                    // legitimately seeded the log — `deckOrder` is documented as
+                    // the DECK's index in edit mode too. The fixture, not the
+                    // rule, is what made that look like a bug; this test never
+                    // reached the assertion to find out, because the movement it
+                    // looked up had been renamed out from under it.
+                    exerciseOrder: 2, foldOrder: index
                 ).insert(db)
             }
         }
@@ -59,8 +71,12 @@ struct SessionEditModeTests {
         return model
     }
 
+    /// `Chest Press`, not `Chest Press (Machine)`: the equipment-as-data wave
+    /// took the implement out of every title and put it in a column, and this
+    /// lookup was never updated — six tests in this suite have been requiring a
+    /// movement the programme stopped naming.
     private func chestPress(_ model: LoggerModel) throws -> LoggerModel.ExerciseState {
-        try #require(model.exercises.first { $0.name == "Chest Press (Machine)" })
+        try #require(model.exercises.first { $0.name == "Chest Press" })
     }
 
     @Test("a session logged on the web restores onto the deck, matched by name")

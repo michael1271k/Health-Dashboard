@@ -55,6 +55,14 @@ final class LiveActivityController {
             model.stopRest()
             self?.update(model: model, clock: clock)
         }
+        // The ±15 s buttons, on the same terms and through the SAME model call
+        // the exercise card's own nudge makes — so the Lock Screen and the deck
+        // cannot end up counting two different rests.
+        RestNudge.handler = { [weak self, weak model, weak clock] seconds in
+            guard let model, let clock else { return }
+            model.adjustRest(by: TimeInterval(seconds))
+            self?.update(model: model, clock: clock)
+        }
         guard isEnabled else { return }
         // Already holding a card — this controller is BORROWED from the Workout
         // tab, so re-entering the logger arrives here with one alive. Push the
@@ -118,6 +126,7 @@ final class LiveActivityController {
 
     func end() {
         RestSkip.handler = nil
+        RestNudge.handler = nil
         guard let activity else { return }
         self.activity = nil
         Task {
@@ -146,13 +155,27 @@ final class LiveActivityController {
             }
         }
 
+        // ── WHY EVERY VALUE IS A TYPED LOCAL ────────────────────────────────
+        // This was one literal. Two more fields took it past what the type
+        // checker will solve in one expression — "unable to type-check this
+        // expression in reasonable time", a build failure that names the whole
+        // initialiser and none of the code in it. Each value annotated, so the
+        // solver has nothing left to infer across.
+        let rpeValue: Double? = current?.row.rpe
+        let rpeText: String = rpeValue.map { "RPE \(OnyxFormat.rpe($0))" } ?? ""
+        let setLabel: String = current.map { "Set \($0.ordinal) of \($0.total)" } ?? ""
+        let volume: String = "\(OnyxFormat.volume(model.totalVolumeKg)) kg"
+        let restTotal: Int? = model.restEndsAt == nil
+            ? nil : Int(model.restDuration.rounded())
+        let elapsed: String = clock.isPaused ? Clock.format(clock.elapsed()) : ""
+
         return .init(
             exercise: current?.exercise.name ?? "Session complete",
-            setLabel: current.map { "Set \($0.ordinal) of \($0.total)" } ?? "",
+            setLabel: setLabel,
             load: load,
-            rpe: current?.row.rpe.map { "RPE \(OnyxFormat.rpe($0))" } ?? "",
+            rpe: rpeText,
             lastTime: current?.row.previous ?? "",
-            volume: "\(OnyxFormat.volume(model.totalVolumeKg)) kg",
+            volume: volume,
             setsDone: model.completedSets,
             setsPlanned: model.plannedSets,
             prsThisSession: model.recordCount,
@@ -167,7 +190,7 @@ final class LiveActivityController {
             // "what did this cost me last time". Once the set is ticked it
             // becomes this session's own rating and stops being a `prev`, so
             // the card only ever draws it while resting.
-            lastRpe: current?.row.rpe.map { "RPE \(OnyxFormat.rpe($0))" },
+            lastRpe: rpeValue.map { "RPE \(OnyxFormat.rpe($0))" },
             restEndsAt: model.restEndsAt,
             // The clock, mirrored. `timerOrigin` is already moved forward by
             // whatever has been banked in pauses, so the card counts the same
@@ -176,8 +199,14 @@ final class LiveActivityController {
             // formatting rule on this card.
             timerOrigin: clock.timerOrigin,
             isPaused: clock.isPaused,
-            elapsed: clock.isPaused ? Clock.format(clock.elapsed()) : "",
+            elapsed: elapsed,
             spark: model.volumeCurve,
+            // The same rating as `rpe` above, in the register the card needs to
+            // TINT with rather than to draw — see `ContentState.rpeValue`.
+            rpeValue: rpeValue,
+            // Nil when not resting, so the card's bar and the card's clock
+            // appear and leave together.
+            restTotalSec: restTotal,
             dayKey: model.day.key
         )
     }

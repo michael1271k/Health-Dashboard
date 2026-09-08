@@ -156,6 +156,17 @@ struct ExerciseCardView: View {
                     ordinal: target.ordinal, exerciseName: exercise.name, row: row,
                     onKind: { model.setKind($0, on: row, in: exercise) },
                     onQuality: { model.setQuality($0, on: row, in: exercise) },
+                    // Absent on a bilateral movement — see `SetOptionsSheet.split`
+                    // for why absent and not disabled.
+                    onSplit: model.canSplit(exercise) ? {
+                        withAnimation(OnyxMotion.move) {
+                            if let pairId = row.pairId {
+                                model.mergeSet(pairId: pairId, in: exercise)
+                            } else {
+                                model.splitSet(row, in: exercise)
+                            }
+                        }
+                    } : nil,
                     onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } }
                 )
             } else {
@@ -366,11 +377,19 @@ struct ExerciseCardView: View {
             .lineLimit(1)
         } else {
             HStack(spacing: OnyxSpace.xs) {
-                if let family {
-                    tag(family.displayName, Color.onyx.muscle(family))
-                }
-                if let first = tags.first {
-                    tag(first.label, Color.onyx.textSecondary)
+                // ── THE TAGS LEAVE WHILE THE CLOCK IS RUNNING ───────────────
+                // The rest control is about 130 pt and this line is already
+                // full at 375 pt. The tags are the least load-bearing thing on
+                // it — the same call this file already makes at an
+                // accessibility size, and for the same reason: "Compound" is
+                // not worth pushing a countdown off the screen.
+                if liveRest == nil {
+                    if let family {
+                        tag(family.displayName, Color.onyx.muscle(family))
+                    }
+                    if let first = tags.first {
+                        tag(first.label, Color.onyx.textSecondary)
+                    }
                 }
                 repWindow
                 progression
@@ -389,8 +408,103 @@ struct ExerciseCardView: View {
         ExerciseTags.tags(for: exercise.name, compound: exercise.plan.isCompound)
     }
 
+    /// The trailing slot of the header: the rest clock while this movement is
+    /// resting, the sets fraction the rest of the time.
+    ///
+    /// ── WHY THE FRACTION HIDES RATHER THAN MOVES OVER ───────────────────────
+    /// The header line is one line and it is already full — a family tag, a
+    /// movement tag, the rep window and the progression chip, at 375 pt. There
+    /// is no arrangement in which a countdown and two 44 pt targets JOIN that
+    /// row; something has to leave. The fraction is what the timer replaces
+    /// because they answer the same question at different moments ("where am I
+    /// in this movement" / "when does the next set start"), and because the
+    /// fraction is the one thing here that comes back the instant it matters
+    /// again. It returns in full when the clock stops — hidden, not deleted.
     @ViewBuilder
     private var progress: some View {
+        if let countdown = liveRest {
+            restControl(countdown)
+        } else {
+            setsProgress
+        }
+    }
+
+    /// Resting, and resting for THIS movement.
+    ///
+    /// `restingExercise` is the name the timer was started for, so the clock
+    /// appears on the card you just logged into rather than on all seven. It is
+    /// validated here, where the value is still optional: `Text(timerInterval:)`
+    /// traps on a range whose end is behind its start, and the deadline outlives
+    /// this view.
+    /// Named `liveRest` and not `restCountdown` on purpose: a property of that
+    /// name would shadow the free `restCountdown(_:)` in `Shared/` — the one
+    /// that keeps `Text(timerInterval:)` off a reversed range on four surfaces
+    /// — and shadow it into a call this type cannot make.
+    private var liveRest: ClosedRange<Date>? {
+        guard model.restingExercise == exercise.name else { return nil }
+        return restCountdown(model.restEndsAt)
+    }
+
+    /// ── WHY ±15 s ARE BUTTONS AND NOT A MENU ────────────────────────────────
+    /// They were a context menu on a caption in the hero: discoverable by
+    /// nobody, and a long press with a bar in your other hand. Two 44 pt
+    /// targets is the whole feature.
+    ///
+    /// ── AND WHY THE NUDGE DIES WITH THE SET ─────────────────────────────────
+    /// `adjustRest` moves `restEndsAt` and nothing else. `startRest` reads
+    /// `plan.restSec` fresh on every tick, so the NEXT set is prescribed by the
+    /// plan again — a longer breather after set 3 is a fact about set 3, not a
+    /// standing amendment to the programme. The plan is edited where plans are
+    /// edited, and never as a side effect of being tired.
+    private func restControl(_ countdown: ClosedRange<Date>) -> some View {
+        HStack(spacing: 0) {
+            nudge("minus", -15, "Take 15 seconds off the rest")
+            Button { model.stopRest() } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: "timer").imageScale(.small)
+                    Text(timerInterval: countdown, countsDown: true)
+                        .onyxNumeral()
+                        // Reserved, or the two buttons walk inwards as the
+                        // digits fall from 1:00 to 59 — under the thumb that is
+                        // reaching for one of them.
+                        .frame(minWidth: 40, alignment: .leading)
+                }
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(Color.onyx.day(model.day.key))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, 2)
+                .frame(minHeight: 44)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Resting")
+            .accessibilityHint("Tap to skip the rest")
+            nudge("plus", 15, "Add 15 seconds to the rest")
+        }
+        .transition(.scale(scale: 0.9).combined(with: .opacity))
+    }
+
+    private func nudge(_ glyph: String, _ seconds: TimeInterval, _ label: String) -> some View {
+        Button { model.adjustRest(by: seconds) } label: {
+            Image(systemName: glyph)
+                .onyxType(.caption).fontWeight(.bold)
+                .foregroundStyle(Color.onyx.day(model.day.key))
+                // 28 pt of ink inside a 44 pt target. The header band is 56 pt,
+                // so the target fits without moving anything; drawing it at 44
+                // would put two filled circles beside a rep window.
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(Color.onyx.day(model.day.key).opacity(0.16)))
+                .frame(width: 34, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: model.restEndsAt)
+        .accessibilityLabel(label)
+    }
+
+    @ViewBuilder
+    private var setsProgress: some View {
         if exercise.isComplete {
             Label("Done", systemImage: "checkmark.seal.fill")
                 .onyxType(.caption).fontWeight(.semibold)
@@ -846,7 +960,11 @@ private struct SetRowView: View {
                     .foregroundStyle(Color.onyx.base)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             } else {
-                Text(row.kind.badge ?? "\(ordinal)")
+                // The SIDE outranks the ordinal on a split row. Two rows both
+                // reading "3" is the one thing this badge must never say — the
+                // pair is one set, and which arm it is is the only fact that
+                // separates them.
+                Text(row.sideLabel ?? row.kind.badge ?? "\(ordinal)")
                     .onyxType(.caption).fontWeight(.bold).onyxNumeral()
                     .foregroundStyle(badgeInk)
                     // The badge is the one column that must NOT grow with the
@@ -865,7 +983,7 @@ private struct SetRowView: View {
         // than a chip: the row has no width for a sixth thing, and what the
         // note SAYS is a question, not a glance.
         .overlay(alignment: .topTrailing) {
-            if row.quality != nil {
+            if !row.qualities.isEmpty {
                 Circle()
                     .fill(Color.onyx.accent(.train))
                     .frame(width: 6, height: 6)
@@ -901,12 +1019,7 @@ private struct SetRowView: View {
             perform: { onOptions() }
         )
         .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(
-            (row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged")
-            + (row.kind == .normal ? "" : ", \(row.kind.label)")
-            + (row.quality.map { ", \($0.label)" } ?? "")
-            + (isRecord ? ". Personal record." : "")
-        )
+        .accessibilityLabel(spokenLabel)
         .accessibilityHint("Tap to log. Hold for set options.")
         .accessibilityAction { log() }
         // The actions hang off the BADGE, not off the row.
@@ -920,6 +1033,21 @@ private struct SetRowView: View {
             Button("Set options") { onOptions() }
             Button("Delete set") { onDelete() }
         }
+    }
+
+    /// Everything the badge means, in one sentence.
+    ///
+    /// A `let` chain and not an inline `+` chain: five optional interpolations
+    /// concatenated inside a view modifier is one expression the type checker
+    /// gives up on ("unable to type-check this expression in reasonable time"),
+    /// and it does not name the operand that tipped it over.
+    private var spokenLabel: String {
+        var parts: [String] = [row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged"]
+        if let side = row.side { parts.append(side) }
+        if row.kind != .normal { parts.append(row.kind.label) }
+        if let tags = SetQuality.summary(row.qualities) { parts.append(tags) }
+        let sentence = parts.joined(separator: ", ")
+        return isRecord ? sentence + ". Personal record." : sentence
     }
 
     private var isRecord: Bool { row.isRecord && row.isDone }

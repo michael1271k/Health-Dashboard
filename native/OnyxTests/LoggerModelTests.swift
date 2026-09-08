@@ -61,10 +61,16 @@ struct LoggerModelTests {
         #expect(survivor?.rows.count == 2)
         #expect(survivor?.rows.allSatisfy(\.isDone) == true)
         // ...and the blanks it no longer prescribes are gone. `Single Arm
-        // Lateral Raise (Cable)` is the arms lift the cut actually trims (5 → 4);
+        // Lateral Raise` is the arms lift the cut actually trims (5 → 4);
         // Cable Overhead Extension used to be one and stopped being one in
         // `ca9bcfa`, when Week 6's real set counts became the program's.
-        #expect(model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }?.rows.count == 4)
+        //
+        // Counted in SETS, not in rows: this movement is unilateral, so the
+        // deck opens it split and four sets is eight rows. `physical` is the
+        // rule — each `pairId` once — and it is the number the card, the
+        // header and `set_count` all use.
+        let trimmed = model.exercises.first { $0.name == "Single Arm Lateral Raise" }
+        #expect(trimmed.map { LoggerModel.physical($0.rows) } == 4)
     }
 
     @Test("a dropped lift with NO logged work does leave")
@@ -88,20 +94,23 @@ struct LoggerModelTests {
         // so a rebuild that sorts ticked rows to the top is visible. (DB Hammer
         // Curl was this test's lift until `ca9bcfa` made its cut count equal
         // its bulk count — a deck that trims nothing cannot show a reorder.)
-        let exercise = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
-        #expect(exercise.rows.count == 5)
+        let exercise = model.exercises.first { $0.name == "Single Arm Lateral Raise" }!
+        // Unilateral, so five prescribed sets are TEN rows — an L and an R
+        // each. The rule under test is about ORDER, and it holds per row.
+        #expect(LoggerModel.physical(exercise.rows) == 5)
+        #expect(exercise.rows.count == 10)
         let ids = exercise.rows.map(\.id)
-        let last = exercise.rows[4]
+        let last = exercise.rows[9]
         last.weightKg = 5
         last.reps = 15
         model.toggleDone(last, in: exercise)
 
         model.phase = .cut
 
-        let rebuilt = model.exercises.first { $0.name == "Single Arm Lateral Raise (Cable)" }!
-        #expect(rebuilt.rows.count == 4)
+        let rebuilt = model.exercises.first { $0.name == "Single Arm Lateral Raise" }!
+        #expect(LoggerModel.physical(rebuilt.rows) == 4)
         // The logged row is still LAST, not promoted to the front.
-        #expect(rebuilt.rows.last?.id == ids[4])
+        #expect(rebuilt.rows.last?.id == ids[9])
         #expect(rebuilt.rows.first?.id == ids[0])
     }
 
@@ -144,7 +153,7 @@ struct LoggerModelTests {
     @Test("warm-ups count for the body and not for the prescription")
     func warmupsCountOnlyWhereTheyShould() {
         let model = armsBulk()
-        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        let press = model.exercises.first { $0.name == "Shoulder Press" }!
         press.rows[0].weightKg = 12
         press.rows[0].reps = 15
         model.setKind(.warmup, on: press.rows[0], in: press)
@@ -163,7 +172,7 @@ struct LoggerModelTests {
     @Test("a ghost set counts for nothing, anywhere")
     func ghostSetsAreExcluded() {
         let model = armsBulk()
-        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        let press = model.exercises.first { $0.name == "Shoulder Press" }!
         press.rows[0].weightKg = 28
         press.rows[0].reps = 10
         model.toggleDone(press.rows[0], in: press)
@@ -177,14 +186,14 @@ struct LoggerModelTests {
     @Test("ticking a set starts the movement's own prescribed rest")
     func tickStartsRest() {
         let model = armsBulk()
-        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        let press = model.exercises.first { $0.name == "Shoulder Press" }!
         #expect(press.plan.restSec == 105)
         press.rows[0].weightKg = 28
         press.rows[0].reps = 10
         model.toggleDone(press.rows[0], in: press)
 
         #expect(model.restDuration == 105)
-        #expect(model.restingExercise == "DB Shoulder Press")
+        #expect(model.restingExercise == "Shoulder Press")
 
         // Pulling the clock below now ENDS it rather than counting negative.
         model.adjustRest(by: -600)
@@ -197,7 +206,7 @@ struct LoggerModelTests {
         let model = armsBulk()
         #expect(model.volumeCurve.isEmpty)
 
-        log(model, "DB Shoulder Press", sets: 1)
+        log(model, "Shoulder Press", sets: 1)
         // One point is not a trend; a single dot on an axis reads as a failure.
         #expect(model.volumeCurve.isEmpty)
 
@@ -211,11 +220,21 @@ struct LoggerModelTests {
     @Test("the current set is the first one not yet ticked")
     func currentSetWalksForward() {
         let model = armsBulk()
-        #expect(model.currentSet?.exercise.name == "DB Shoulder Press")
+        // The cursor opens on the TREADMILL, because the deck does — the five
+        // minutes at the top of every session is the first thing not yet ticked
+        // and the card the logger should be showing you. `withWarmupCardio` is
+        // where that block comes from.
+        #expect(model.currentSet?.exercise.name == WarmupCardio.name)
         #expect(model.currentSet?.ordinal == 1)
 
-        log(model, "DB Shoulder Press", sets: 3)
-        #expect(model.currentSet?.exercise.name == "Single Arm Lateral Raise (Cable)")
+        let warmup = model.exercises[0]
+        model.toggleDone(warmup.rows[0], in: warmup)
+        #expect(model.currentSet?.exercise.name == "Shoulder Press")
+
+        log(model, "Shoulder Press", sets: 3)
+        #expect(model.currentSet?.exercise.name == "Single Arm Lateral Raise")
+        // Five SETS, and the cursor counts sets: this movement is unilateral,
+        // so it is ten rows.
         #expect(model.currentSet?.total == 5)
     }
 
@@ -224,7 +243,7 @@ struct LoggerModelTests {
     @Test("with no store, the deck opens on the program's cold start and says nothing about a previous set")
     func coldStartHasNoPrevious() {
         let model = armsBulk()
-        let press = model.exercises.first { $0.name == "DB Shoulder Press" }!
+        let press = model.exercises.first { $0.name == "Shoulder Press" }!
         #expect(press.rows.count == 3)
         #expect(press.rows.allSatisfy { $0.weightKg == 28 })
         // The rep FLOOR, not the ceiling: the floor is what you walk up to.
@@ -295,7 +314,7 @@ struct LoggerModelTests {
         // eligibility rules still gate it, and the count that matters is the one
         // the ledger will write.
         let model = armsBulk()
-        log(model, "DB Shoulder Press", sets: 1)
+        log(model, "Shoulder Press", sets: 1)
         #expect(model.recordCount == model.prsThisSession)
     }
 
@@ -354,7 +373,7 @@ struct LoggerModelTests {
     @Test("a phase switch does not count ticked warm-ups against the prescription")
     func warmupsAreNotPrescribed() throws {
         // Upper A prescribes 3 working sets of Face Pull on a cut and 3 on a
-        // bulk, so `Single Arm Lateral Raise (Cable)` is the lift that trims —
+        // bulk, so `Single Arm Lateral Raise` is the lift that trims —
         // but the failure this guards is about the WARM-UP row, so Face Pull is
         // the case: tick the warm-up and one working set, switch phase, and a
         // rule that counts the warm-up sees 2 of 3 rather than 1 of 3.

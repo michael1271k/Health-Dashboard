@@ -222,12 +222,17 @@ public extension AppDatabase {
         rpe: Double? = nil,
         setType: String? = nil,
         quality: String? = nil,
+        /// `left` / `right` — the LOCAL spelling. See `SetSnapshot.side`.
+        side: String? = nil,
+        /// The two sides of one physical set share this.
+        pairId: String? = nil,
         est1rmKg: Double? = nil,
         setIndex: Int? = nil,
         exerciseOrder: Int? = nil
     ) throws -> SessionEditing.Outcome? {
         let patch = SetPatch(
             setIndex: setIndex, weightKg: weightKg, reps: reps, setType: setType,
+            side: side, pairId: pairId,
             est1rmKg: est1rmKg, rpe: rpe, quality: quality, exerciseOrder: exerciseOrder
         )
         // An amend that changes nothing is permanent noise in a log that is

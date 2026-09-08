@@ -168,16 +168,27 @@ struct OnyxWorkoutActivityWidget: Widget {
                         // the ring is the brand AND, tinted with the split's
                         // colour, it is the same coloured token every other
                         // surface uses to say which session is running.
+                        //
+                        // ── AND THE WORDMARK GAVE ITS SPACE TO THE CLOCK ────
+                        // Top-left now reads TOTAL WORKOUT TIME. It used to
+                        // read `ONYX` beside a ring that already says so, while
+                        // the only clock on the surface was in the opposite
+                        // corner and switched between two different durations.
                         OnyxMark(size: 12, tint: Color.onyx.day(context.state.dayKey), opacity: 1)
-                        Text("ONYX")
-                            .font(OnyxWidgetType.label(10, weight: .black))
-                            .tracking(1.2)
-                            .foregroundStyle(.white.opacity(0.9))
+                        WorkoutElapsed(
+                            state: context.state, startedAt: context.attributes.startedAt
+                        )
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    WorkoutCountdown(state: context.state, startedAt: context.attributes.startedAt)
+                    Text("\(context.state.setsDone)/\(context.state.setsPlanned)")
+                        .font(OnyxWidgetType.figure(12))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.onyx.textSecondary)
                         .frame(maxWidth: 62, alignment: .trailing)
+                        .accessibilityLabel(
+                            "\(context.state.setsDone) of \(context.state.setsPlanned) sets done"
+                        )
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 6) {
@@ -188,24 +199,32 @@ struct OnyxWorkoutActivityWidget: Widget {
                             WorkoutSpark(values: context.state.spark, color: Color.onyx.day(context.state.dayKey))
                                 .frame(width: 76, height: 30)
                         }
-                        if !context.state.lastTime.isEmpty {
-                            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                Text("LAST TIME")
-                                    .font(OnyxWidgetType.label(8, weight: .bold))
-                                    .tracking(1.1)
-                                    .foregroundStyle(Color.onyx.textTertiary)
-                                Text(context.state.lastTime)
-                                    .font(OnyxWidgetType.figure(11))
-                                    .foregroundStyle(Color.onyx.textSecondary)
-                            }
-                        }
-                        // Only while the clock is running: a skip button with
-                        // nothing to skip is dead chrome on a surface that has
-                        // no room for any.
-                        if context.state.restEndsAt != nil {
-                            WorkoutSkipRest(dayKey: context.state.dayKey)
+                        // ── `LAST TIME` LEFT WITH `prev` ────────────────────
+                        // Same call, same reason: the founder's, and the row it
+                        // occupied is what the rest controls now stand in. The
+                        // previous load is still on the wire and still drawn by
+                        // `WorkoutCurrentSet` while resting, which is the moment
+                        // it is a decision rather than a table.
+                        //
+                        // Only while the clock is running: controls with nothing
+                        // to control are dead chrome on a surface that has no
+                        // room for any.
+                        if let countdown = restCountdown(context.state.restEndsAt) {
+                            // No Skip here. Four 34 pt controls plus a bar do
+                            // not fit this region's width, and the phone in the
+                            // hand that just opened the island has the same
+                            // button on the card below.
+                            WorkoutRestBand(
+                                countdown: countdown, state: context.state, showsSkip: false
+                            )
                         }
                     }
+                    // ── THE CLIPPED BOTTOM CORNER ───────────────────────────
+                    // The expanded region draws to its own edge and the system
+                    // rounds that edge, so a 34 pt capsule sitting flush at the
+                    // bottom lost its lower corners to the mask. Two points of
+                    // inset is the whole fix; the region has the height.
+                    .padding(.bottom, 2)
                 }
             } compactLeading: {
                 // The one place the brand is visible while the phone is in a

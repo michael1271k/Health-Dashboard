@@ -148,7 +148,7 @@ enum SetQuality: String, CaseIterable, Identifiable, Sendable {
         case .momentum:      "Momentum"
         case .partialRom:    "Short ROM"
         case .formBreakdown: "Form broke"
-        case .neededWarmup:  "Cold"
+        case .neededWarmup:  "Cold start"
         case .assisted:      "Assisted"
         case .cutShort:      "Cut short"
         }
@@ -164,6 +164,58 @@ enum SetQuality: String, CaseIterable, Identifiable, Sendable {
         case .assisted:      "A spotter or the other arm helped"
         case .cutShort:      "Stopped before the target for a reason other than failure"
         }
+    }
+
+    // MARK: - More than one of them at a time
+
+    /// A set can be several of these at once — "used momentum AND cut the range
+    /// short" is one set, honestly described, and the sheet used to make you
+    /// pick the half that mattered more.
+    ///
+    /// ── WHY THE COLUMN DID NOT HAVE TO CHANGE SHAPE ─────────────────────────
+    /// `workout_sets.quality` is `text` with a CHECK constraint listing these
+    /// six keys, and it holds rows on both clients. A second column would have
+    /// meant a nullable array threaded through `SetSnapshot`, `SetPatch`,
+    /// `SetEventFold`, the projection, the puller, the pusher and two sets of
+    /// golden vectors — for a fact that is one short string.
+    ///
+    /// So the column keeps its shape and gains a grammar: keys joined by `+`,
+    /// always in `allCases` order. A set with ONE tag is byte-identical to what
+    /// this app has always written, which is what makes the change free — every
+    /// existing row still parses, every existing reader still reads, and the
+    /// only thing the database needs is a wider CHECK
+    /// (`docs/sql/set-quality-tags.sql`). Until that is applied a combination is
+    /// refused by Postgres and a single tag still syncs, which is the failure
+    /// worth having: partial, loud, and never silently wrong.
+    ///
+    /// ── AND WHY `+` AND NOT `·` ─────────────────────────────────────────────
+    /// The export's field separator is `·` and it has already produced two
+    /// malformed-token bugs (P3 E5). A separator that cannot appear in a key
+    /// AND cannot collide with a separator one layer up is the whole
+    /// requirement; `+` is in neither alphabet.
+    static let separator: Character = "+"
+
+    /// The stored string, in canonical order. `nil` for an empty list, because
+    /// "no tags" is the absence of a claim and NULL is how this column says so.
+    static func join(_ tags: [SetQuality]) -> String? {
+        let ordered = allCases.filter(tags.contains)
+        return ordered.isEmpty ? nil : ordered.map(\.rawValue).joined(separator: String(separator))
+    }
+
+    /// Read a stored value back. Unknown keys are DROPPED rather than failing
+    /// the row: a value written by a newer client must not make an old one
+    /// unable to draw the set at all.
+    static func parse(_ raw: String?) -> [SetQuality] {
+        guard let raw, !raw.isEmpty else { return [] }
+        let found = Set(raw.split(separator: separator).compactMap { SetQuality(rawValue: String($0)) })
+        return allCases.filter(found.contains)
+    }
+
+    /// What the row's dot and VoiceOver say when there are several.
+    static func summary(_ tags: [SetQuality]) -> String? {
+        let ordered = allCases.filter(tags.contains)
+        guard !ordered.isEmpty else { return nil }
+        return ordered.map(\.label).joined(separator: ", ")
     }
 }
 

@@ -52,6 +52,11 @@ struct SetOptionsSheet: View {
     @Bindable var row: LoggerModel.SetRow
     let onKind: (LoggerModel.SetKind) -> Void
     let onQuality: (SetQuality?) -> Void
+    /// Split this set into an independent Left and Right, or put a split one
+    /// back together. `nil` on a movement that is not trained one side at a
+    /// time — see `Unilateral`, and the note on `split` below for why the
+    /// button is absent rather than disabled there.
+    var onSplit: (() -> Void)?
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -75,7 +80,7 @@ struct SetOptionsSheet: View {
                 VStack(alignment: .leading, spacing: OnyxSpace.l) {
                     kindSection
                     qualitySection
-                    remove
+                    actions
                 }
                 .padding(OnyxSpace.l)
             }
@@ -84,7 +89,8 @@ struct SetOptionsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 0) {
-                        Text("Set \(ordinal)").onyxType(.body).fontWeight(.semibold)
+                        Text(row.sideLabel.map { "Set \(ordinal) · \($0)" } ?? "Set \(ordinal)")
+                            .onyxType(.body).fontWeight(.semibold)
                         // `.onyxType(.micro)`, not `.onyxMicro()`: the register
                         // role uppercases, and this is a proper noun —
                         // `NEUTRAL-GRIP LAT PULLDOWN` is the movement shouted
@@ -164,40 +170,96 @@ struct SetOptionsSheet: View {
         }
     }
 
-    // MARK: - How it went
+    // MARK: - Set quality
 
+    /// ── WHY SEVERAL AT ONCE ─────────────────────────────────────────────────
+    /// These are not a scale and never were. "Used momentum" and "cut the range
+    /// short" are two observations about one set, and a radio group made you
+    /// throw one away — so the set that most deserved describing was the one
+    /// described least. Tapping a chosen chip still withdraws it; there is still
+    /// no `Clean` chip, because clean is the ABSENCE of a claim and a chip for
+    /// it would write a value asserting the set was inspected and passed.
     private var qualitySection: some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
-            OnyxSectionHeader("How it went", .train)
+            OnyxSectionHeader("Set quality", .train)
             grid(columns: qualityColumns) {
                 ForEach(SetQuality.allCases) { quality in
                     chip(
                         label: quality.label,
                         glyph: nil,
                         tint: accent,
-                        selected: row.quality == quality,
+                        selected: row.qualities.contains(quality),
                         hint: quality.full
                     ) {
-                        // Tapping the chosen one withdraws it. There is no
-                        // "Clean" chip: clean is the ABSENCE of a claim, and a
-                        // chip for it would write a value asserting the set was
-                        // inspected and passed.
                         onQuality(quality)
                     }
                 }
             }
+            // One tag prints its whole sentence, as it always has. Several print
+            // their short labels: three full sentences is a paragraph under a
+            // grid of chips, and the reserved height would have to grow to fit
+            // the worst case on every set that has none.
             meaning(
-                row.quality?.full ?? "Clean unless you say otherwise",
-                marked: row.quality != nil,
+                row.qualities.count == 1
+                    ? (row.qualities[0].full)
+                    : (SetQuality.summary(row.qualities) ?? "Clean unless you say otherwise"),
+                marked: !row.qualities.isEmpty,
                 tint: accent
             )
         }
     }
 
-    // MARK: - The one action
+    // MARK: - The actions
 
-    /// Remove keeps its distance from the chips you came here for, and it is the
-    /// only thing in the sheet that cannot be undone by tapping it again.
+    /// Split beside Remove, and Remove keeps its distance from the chips you
+    /// came here for: it is the only thing in the sheet that cannot be undone by
+    /// tapping it again.
+    private var actions: some View {
+        HStack(spacing: OnyxSpace.s) {
+            if onSplit != nil { split }
+            remove
+        }
+    }
+
+    /// ── WHY THE BUTTON IS ABSENT AND NOT DISABLED ───────────────────────────
+    /// Splitting a BILATERAL set is not a cosmetic mistake. A pair is scored
+    /// once, at its weaker side, and counts as ONE set of work — so a barbell
+    /// press split in half is a session logged at half its size, silently, in
+    /// `total_volume_kg` and in every chart downstream. A greyed control invites
+    /// the question "why not"; an absent one does not raise it.
+    ///
+    /// The label is the OUTCOME, not the state: `Split L / R` on a whole set,
+    /// `Merge sides` on one already split. A toggle labelled with what it
+    /// currently is, on a sheet you reached by holding a 32 pt badge, is a
+    /// coin flip.
+    @ViewBuilder
+    private var split: some View {
+        if let onSplit {
+            Button {
+                onSplit()
+                dismiss()
+            } label: {
+                Label(
+                    row.pairId == nil ? "Split L / R" : "Merge sides",
+                    systemImage: row.pairId == nil
+                        ? "arrow.left.and.right.square" : "arrow.down.right.and.arrow.up.left"
+                )
+                    .onyxType(.body).fontWeight(.semibold)
+                    .foregroundStyle(accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .onyxGlass(.row)
+            }
+            .onyxPress(scale: 0.98)
+            .accessibilityHint(
+                row.pairId == nil
+                    ? "Splits this set into an independent left and right"
+                    : "Puts the two sides back together at the weaker side's numbers"
+            )
+        }
+    }
+
     private var remove: some View {
         Button {
             onDelete()
@@ -206,6 +268,8 @@ struct SetOptionsSheet: View {
             Label("Delete set", systemImage: "trash")
                 .onyxType(.body).fontWeight(.semibold)
                 .foregroundStyle(Color.onyx.danger)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .onyxGlass(.row)
         }
@@ -294,6 +358,7 @@ struct SetOptionsSheet: View {
             row: exercise.rows[1],
             onKind: { model.setKind($0, on: exercise.rows[1], in: exercise) },
             onQuality: { model.setQuality($0, on: exercise.rows[1], in: exercise) },
+            onSplit: { model.splitSet(exercise.rows[1], in: exercise) },
             onDelete: {}
         )
     }

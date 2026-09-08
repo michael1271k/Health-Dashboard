@@ -27,7 +27,11 @@ enum LoggerPreviews {
             // hero, a chip row and a rest capsule above it are three things
             // between the reviewer and the thing being reviewed.
             let model = LoggerModel.previewUpperB(logged: true)
-            let exercise = model.exercises[0]
+            // The first LIFT, not `exercises[0]`. The deck opens with the
+            // treadmill now (`withWarmupCardio`), and this shot is where the
+            // load, rep and effort column widths are reviewed — a cardio card
+            // has no loads to measure them against.
+            let exercise = model.exercises.first { !$0.rows.contains(where: \.isCardio) }!
             let _ = {
                 while exercise.rows.count < 5 { model.addSet(to: exercise) }
                 exercise.rows[0].kind = .warmup
@@ -74,19 +78,24 @@ enum LoggerPreviews {
             // that ships a way to open one of its own sheets for a screenshot
             // is a screen with a state nobody can reach and nobody maintains.
             //
-            // Over the SECOND set of the second movement, and that set is a
-            // warm-up carrying a quality — the sheet's whole job is to show two
-            // axes at once, and a shot of it with both unset would photograph
-            // the empty state and call it the control.
+            // Over the second set of a UNILATERAL movement, and that set is a
+            // warm-up carrying two qualities — the sheet's whole job is to show
+            // two axes at once, and a shot of it with both unset would
+            // photograph the empty state and call it the control.
+            //
+            // Unilateral so that `Split L / R` is IN the picture. It is absent
+            // on a bilateral movement by design (see `SetOptionsSheet.split`),
+            // and a control that only exists on some cards is a control no shot
+            // of the others can review.
             let model = LoggerModel.previewUpperB(logged: true)
-            let exercise = model.exercises[1]
+            let exercise = model.exercises.first { model.canSplit($0) } ?? model.exercises[1]
             let row = exercise.rows[min(1, exercise.rows.count - 1)]
             // Seeded HERE and not in a `.task`. This builder runs again on
             // every re-render and makes a fresh model each time, so a task that
             // mutates the model it captured is describing an object the next
             // frame has already replaced — which photographed as the empty
             // state, twice.
-            let _ = { row.kind = .warmup; row.quality = .formBreakdown }()
+            let _ = { row.kind = .warmup; row.qualities = [.formBreakdown, .momentum] }()
             NavigationStack {
                 LiveLoggerView(model: model)
                     .sheet(isPresented: .constant(true)) {
@@ -94,6 +103,7 @@ enum LoggerPreviews {
                             ordinal: 2, exerciseName: exercise.name, row: row,
                             onKind: { model.setKind($0, on: row, in: exercise) },
                             onQuality: { model.setQuality($0, on: row, in: exercise) },
+                            onSplit: model.canSplit(exercise) ? {} : nil,
                             onDelete: {}
                         )
                     }
