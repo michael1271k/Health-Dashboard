@@ -88,6 +88,19 @@ public enum ManualEntry {
         hkUuid?.hasPrefix("manual-water-") ?? false
     }
 
+    // MARK: - A night the user edited
+
+    /// `manual-sleep-<wakeDate>` — ported from `lib/sleep/manualSleep.ts`.
+    /// Keyed by the morning the night ended on (the night's own date), so two
+    /// edited nights never collide. Every sleep writer checks it: `writeSleep`
+    /// declines the night, `HealthSync` reads overnight HRV over the STORED
+    /// window rather than HealthKit's, and the web ingest leaves both stores.
+    public static func sleepSentinel(_ wakeDate: String) -> String { "manual-sleep-\(wakeDate)" }
+
+    public static func isManualSleep(_ hkUuid: String?) -> Bool {
+        hkUuid?.hasPrefix("manual-sleep-") ?? false
+    }
+
     // MARK: - A glass is not an override
 
     /// One tapped glass, in the day's ledger.

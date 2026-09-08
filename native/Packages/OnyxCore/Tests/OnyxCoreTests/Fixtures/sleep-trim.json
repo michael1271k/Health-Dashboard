@@ -1,0 +1,463 @@
+{
+  "module": "sleep/trim",
+  "fn": "trimStages",
+  "note": "Strategy B: operates on ASLEEP minutes, not window length. A trim removes awake minutes first, then the asleep stages in proportion (Math.round, remainder to core, never negative); an extension adds core only; a shift changes nothing. A window shorter than asleep + awake is read as exactly that long.",
+  "cases": [
+    {
+      "name": "a shift",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 480
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "ten minutes off — all awake",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 470
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 8,
+        "cutMin": 10,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "exactly the awake minutes off",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 462
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 0,
+        "cutMin": 18,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "an hour off — awake first, then the stages in proportion",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 420
+      },
+      "expected": {
+        "asleepMin": 389,
+        "deepMin": 67,
+        "remMin": 87,
+        "coreMin": 235,
+        "awakeMin": 0,
+        "cutMin": 60,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "two hours off",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 360
+      },
+      "expected": {
+        "asleepMin": 329,
+        "deepMin": 56,
+        "remMin": 73,
+        "coreMin": 200,
+        "awakeMin": 0,
+        "cutMin": 120,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "everything off",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 0
+      },
+      "expected": {
+        "asleepMin": 0,
+        "deepMin": 0,
+        "remMin": 0,
+        "coreMin": 0,
+        "awakeMin": 0,
+        "cutMin": 480,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a thirty-minute extension goes to core",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 510
+      },
+      "expected": {
+        "asleepMin": 461,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 291,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 30,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a two-hour extension goes to core",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 480,
+        "newSpanMin": 600
+      },
+      "expected": {
+        "asleepMin": 551,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 381,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 120,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a degenerate window read as its own minutes — shift",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 0,
+        "newSpanMin": 449
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a degenerate window read as its own minutes — trim",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 0,
+        "newSpanMin": 419
+      },
+      "expected": {
+        "asleepMin": 419,
+        "deepMin": 72,
+        "remMin": 93,
+        "coreMin": 254,
+        "awakeMin": 0,
+        "cutMin": 30,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a degenerate window read as its own minutes — extension",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 0,
+        "newSpanMin": 500
+      },
+      "expected": {
+        "asleepMin": 482,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 312,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 51,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a duration-only row trimmed",
+      "input": {
+        "stages": {
+          "asleepMin": 420,
+          "deepMin": 0,
+          "remMin": 0,
+          "coreMin": 420,
+          "awakeMin": 0
+        },
+        "oldSpanMin": 420,
+        "newSpanMin": 390
+      },
+      "expected": {
+        "asleepMin": 390,
+        "deepMin": 0,
+        "remMin": 0,
+        "coreMin": 390,
+        "awakeMin": 0,
+        "cutMin": 30,
+        "addedMin": 0,
+        "durationOnly": true
+      }
+    },
+    {
+      "name": "a duration-only row extended",
+      "input": {
+        "stages": {
+          "asleepMin": 420,
+          "deepMin": 0,
+          "remMin": 0,
+          "coreMin": 420,
+          "awakeMin": 0
+        },
+        "oldSpanMin": 420,
+        "newSpanMin": 450
+      },
+      "expected": {
+        "asleepMin": 450,
+        "deepMin": 0,
+        "remMin": 0,
+        "coreMin": 450,
+        "awakeMin": 0,
+        "cutMin": 0,
+        "addedMin": 30,
+        "durationOnly": true
+      }
+    },
+    {
+      "name": "a restless night trimmed inside its awake minutes",
+      "input": {
+        "stages": {
+          "asleepMin": 300,
+          "deepMin": 40,
+          "remMin": 50,
+          "coreMin": 210,
+          "awakeMin": 95
+        },
+        "oldSpanMin": 400,
+        "newSpanMin": 340
+      },
+      "expected": {
+        "asleepMin": 300,
+        "deepMin": 40,
+        "remMin": 50,
+        "coreMin": 210,
+        "awakeMin": 35,
+        "cutMin": 60,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a restless night trimmed past its awake minutes",
+      "input": {
+        "stages": {
+          "asleepMin": 300,
+          "deepMin": 40,
+          "remMin": 50,
+          "coreMin": 210,
+          "awakeMin": 95
+        },
+        "oldSpanMin": 400,
+        "newSpanMin": 260
+      },
+      "expected": {
+        "asleepMin": 255,
+        "deepMin": 34,
+        "remMin": 43,
+        "coreMin": 178,
+        "awakeMin": 0,
+        "cutMin": 140,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "rounding remainder lands in core",
+      "input": {
+        "stages": {
+          "asleepMin": 100,
+          "deepMin": 33,
+          "remMin": 33,
+          "coreMin": 34,
+          "awakeMin": 0
+        },
+        "oldSpanMin": 100,
+        "newSpanMin": 50
+      },
+      "expected": {
+        "asleepMin": 50,
+        "deepMin": 17,
+        "remMin": 17,
+        "coreMin": 16,
+        "awakeMin": 0,
+        "cutMin": 50,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a window shorter than the minutes it holds plus a real trim",
+      "input": {
+        "stages": {
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "oldSpanMin": 300,
+        "newSpanMin": 200
+      },
+      "expected": {
+        "asleepMin": 200,
+        "deepMin": 34,
+        "remMin": 45,
+        "coreMin": 121,
+        "awakeMin": 0,
+        "cutMin": 249,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "negative and non-finite inputs read as zero",
+      "input": {
+        "stages": {
+          "asleepMin": -5,
+          "deepMin": null,
+          "remMin": 10,
+          "coreMin": 0,
+          "awakeMin": -1
+        },
+        "oldSpanMin": 100,
+        "newSpanMin": 90
+      },
+      "expected": {
+        "asleepMin": 0,
+        "deepMin": 0,
+        "remMin": 0,
+        "coreMin": 0,
+        "awakeMin": 0,
+        "cutMin": 10,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "fractional minutes are rounded first",
+      "input": {
+        "stages": {
+          "asleepMin": 430.6,
+          "deepMin": 73.5,
+          "remMin": 96.4,
+          "coreMin": 260.7,
+          "awakeMin": 17.5
+        },
+        "oldSpanMin": 480.4,
+        "newSpanMin": 420.6
+      },
+      "expected": {
+        "asleepMin": 390,
+        "deepMin": 67,
+        "remMin": 87,
+        "coreMin": 236,
+        "awakeMin": 0,
+        "cutMin": 59,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    }
+  ]
+}

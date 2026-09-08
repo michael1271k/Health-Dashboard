@@ -97,7 +97,20 @@ public actor HealthSync {
         // is their mean. A statistics query, like every other metric, so the
         // iPhone/Watch dedupe is Apple's. No night, or no samples inside it,
         // and the calendar-day mean stands, flagged as such.
-        if let slept = payload.sleep, let bedStart = slept.bedStart, let bedEnd = slept.bedEnd, bedEnd > bedStart,
+        //
+        // ── A HAND-EDITED NIGHT IS READ OVER THE STORED WINDOW (E2) ─────────
+        // `writeSleep` already declines HealthKit's night when the user has
+        // trimmed it, but the HRV mean was still taken over HealthKit's bed
+        // window — so the next sync quietly re-widened the one number the trim
+        // was supposed to move. The stored window wins here for the same
+        // reason it wins there.
+        let stored = try? database.manualNightWindow(userId: userId, date: dateISO)
+        let hrvWindow: (start: Date, end: Date)? = stored
+            ?? payload.sleep.flatMap { slept in
+                guard let a = slept.bedStart, let b = slept.bedEnd, b > a else { return nil }
+                return (a, b)
+            }
+        if let (bedStart, bedEnd) = hrvWindow,
            let overnight = try? await reader.quantity(HealthCatalogue.hrvIdentifier, reduce: .average, start: bedStart, end: bedEnd),
            let value = HealthCatalogue.round(overnight, reduce: .average) {
             payload[.hrv] = value
@@ -111,6 +124,38 @@ public actor HealthSync {
         // signed out.
         try Task.checkCancellation()
         return try database.ingest(payload, userId: userId, now: now)
+    }
+
+    // MARK: - Editing a night (E2)
+
+    /// Re-window the night that ended on the morning of `dateISO`.
+    ///
+    /// Strategy A when the store has samples inside the new window — the
+    /// stages re-sum from what the watch recorded — and strategy B when it has
+    /// none (an unavailable store, or a night the watch never sampled)
+    /// (`SleepTrim`, proportional). Overnight HRV is re-read over the NEW
+    /// window and written to `daily_logs.hrv_ms`; no samples there leaves the
+    /// stored figure alone. The row is written under the sleep sentinel, so
+    /// `sync` cannot re-widen it. The caller runs the rescore cascade —
+    /// `AppEnvironment.rescore(from: dateISO, reason: .sleepEdit)` — which is
+    /// deliberately not this actor's to schedule.
+    @discardableResult
+    public func editSleepWindow(date dateISO: String, start: Date, end: Date, now: Date = Date()) async throws -> SleepSessionRow {
+        var night: SleepNight?
+        var hrv: Double?
+        if reader.isAvailable {
+            // NOT `try?`: a store that throws here would silently turn strategy A
+            // into B and stamp the proportional guess under the sentinel, where
+            // the next sync could never correct it. The edit is user-initiated;
+            // a thrown error is the honest outcome.
+            let samples = try await reader.sleepSamples(start: start, end: end)
+            night = Sleep.aggregate(samples, within: start, end)
+            if let overnight = try? await reader.quantity(HealthCatalogue.hrvIdentifier, reduce: .average, start: start, end: end) {
+                hrv = HealthCatalogue.round(overnight, reduce: .average)
+            }
+        }
+        try Task.checkCancellation()
+        return try database.editSleepWindow(userId: userId, date: dateISO, start: start, end: end, night: night, hrvMs: hrv, now: now)
     }
 
     /// Local midnight for a `yyyy-MM-dd`, in the device's own calendar — which

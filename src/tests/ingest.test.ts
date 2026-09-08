@@ -261,36 +261,88 @@ describe('ingest — nutrition uses explicit dietary energy, never derived', () 
   })
 })
 
-describe('ingest — sleep is an unconditional overwrite', () => {
-  it('deletes the night and re-inserts (upserted), never conflict-skips', async () => {
-    const ops: string[] = []
-    const db = mockDb(() => ({ error: null }), (t) => { if (t === 'sleep_sessions') ops.push(t) })
+/**
+ * A db whose `sleep_sessions` window read answers `existing`, and which records
+ * the insert or the update-by-id the ingest then issues.
+ */
+function sleepDb(existing: any[], onDailyLog?: (row: any) => void) {
+  const writes: { insert: any | null; update: { id: string; values: any } | null } = { insert: null, update: null }
+  const db: any = {
+    from(table: string) {
+      if (table === 'daily_logs') return { upsert: (row: any) => { onDailyLog?.(row); return Promise.resolve({ error: null }) } }
+      if (table === 'sleep_sessions') {
+        let pendingUpdate: any = null
+        const chain: any = {
+          select: () => chain, gte: () => chain,
+          // The window read ends on `.lt`; the update ends on `.eq('id', …)`.
+          lt: () => Promise.resolve({ data: existing }),
+          eq: (col: string, v: any) => {
+            if (pendingUpdate && col === 'id') { writes.update = { id: v, values: pendingUpdate }; return Promise.resolve({ error: null }) }
+            return chain
+          },
+          update: (values: any) => { pendingUpdate = values; return chain },
+          insert: (row: any) => { writes.insert = row; return Promise.resolve({ error: null }) },
+          delete: () => { throw new Error('the night is updated in place, never deleted') },
+        }
+        return chain
+      }
+      return noopChain()
+    },
+  }
+  return { db, writes }
+}
+
+describe('ingest — sleep is one row per night, updated in place', () => {
+  it('a night nobody has written yet is inserted (upserted), never conflict-skipped', async () => {
+    const { db, writes } = sleepDb([])
     const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-10', sleep_minutes: 420 } as any)
 
     expect(result.results.sleep.ok).toBe(true)
     expect(result.results.sleep.action).toBe('upserted')  // not 'skipped'
     expect(result.inserted).toContain('sleep_minutes')
+    expect(writes.insert).not.toBeNull()
+    expect(writes.update).toBeNull()
+  })
+
+  it('an existing night is UPDATED by id — the longest row in the window — not deleted and re-minted', async () => {
+    const { db, writes } = sleepDb([
+      { id: 'short', hk_uuid: null, duration_min: 90 },
+      { id: 'night', hk_uuid: null, duration_min: 431 },
+    ])
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-19', sleep_minutes: 462, deep_min: 68 } as any)
+    expect(writes.insert).toBeNull()
+    expect(writes.update?.id).toBe('night')
+    expect(writes.update?.values.duration_min).toBe(462)
+    expect(writes.update?.values.deep_min).toBe(68)
+  })
+
+  it('a hand-edited night (the sleep sentinel) is left alone, in both stores', async () => {
+    let dailyLog: any = null
+    const { db, writes } = sleepDb([{ id: 'night', hk_uuid: 'manual-sleep-2026-07-19', duration_min: 400 }], (row) => { dailyLog = row })
+    const result = await ingestDailyLog(db, 'user-1', { date: '2026-07-19', sleep_minutes: 462, steps: 100 } as any)
+    expect(writes.insert).toBeNull()
+    expect(writes.update).toBeNull()
+    expect(result.results.sleep.action).toBe('ignored')
+    expect('sleep_minutes' in dailyLog).toBe(false)
+    expect(dailyLog.steps).toBe(100)
+  })
+
+  it('a zero-minute push on a hand-edited night does not zero daily_logs.sleep_minutes either', async () => {
+    let dailyLog: any = null
+    const { db, writes } = sleepDb([{ id: 'night', hk_uuid: 'manual-sleep-2026-07-19', duration_min: 400 }], (row) => { dailyLog = row })
+    await ingestDailyLog(db, 'user-1', { date: '2026-07-19', sleep_minutes: 0, steps: 100 } as any)
+    expect(writes.insert).toBeNull()
+    expect(writes.update).toBeNull()
+    expect('sleep_minutes' in dailyLog).toBe(false)
   })
 
   it('writes real stage minutes + bed times when the native payload provides them', async () => {
-    let sleepRow: any = null
-    const db: any = {
-      from(table: string) {
-        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
-        if (table === 'sleep_sessions') {
-          const chain: any = {
-            eq: () => chain, gte: () => chain, lt: () => chain, delete: () => chain,
-            insert: (row: any) => { sleepRow = row; return Promise.resolve({ error: null }) },
-          }
-          return chain
-        }
-        return noopChain()
-      },
-    }
+    const { db, writes } = sleepDb([])
     await ingestDailyLog(db, 'user-1', {
       date: '2026-07-19', sleep_minutes: 462, deep_min: 68, rem_min: 96, core_min: 298, awake_min: 12,
       bed_start: '2026-07-18T23:10:00.000Z', bed_end: '2026-07-19T06:52:00.000Z',
     } as any)
+    const sleepRow = writes.insert
 
     expect(sleepRow.deep_min).toBe(68)
     expect(sleepRow.rem_min).toBe(96)
@@ -301,21 +353,9 @@ describe('ingest — sleep is an unconditional overwrite', () => {
   })
 
   it('falls back to all-core + synthetic bedtime for a stage-less payload', async () => {
-    let sleepRow: any = null
-    const db: any = {
-      from(table: string) {
-        if (table === 'daily_logs') return { upsert: () => Promise.resolve({ error: null }) }
-        if (table === 'sleep_sessions') {
-          const chain: any = {
-            eq: () => chain, gte: () => chain, lt: () => chain, delete: () => chain,
-            insert: (row: any) => { sleepRow = row; return Promise.resolve({ error: null }) },
-          }
-          return chain
-        }
-        return noopChain()
-      },
-    }
+    const { db, writes } = sleepDb([])
     await ingestDailyLog(db, 'user-1', { date: '2026-07-19', sleep_minutes: 462 } as any)
+    const sleepRow = writes.insert
 
     expect(sleepRow.core_min).toBe(462)
     expect(sleepRow.deep_min).toBe(0)

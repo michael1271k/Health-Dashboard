@@ -1,0 +1,231 @@
+{
+  "module": "sleep/trim",
+  "fn": "trimNight",
+  "note": "Strategy B over a stored row and the window the user chose: spans are whole minutes between the ISO instants (Date.parse). An edit that does not parse or does not end after it starts is not an edit: the row comes back as a shift.",
+  "cases": [
+    {
+      "name": "trim last night by 30 min at the start",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00+00:00",
+          "end": "2026-09-06T06:46:00+00:00",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-05T23:16:00Z",
+          "end": "2026-09-06T06:46:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 419,
+        "deepMin": 72,
+        "remMin": 93,
+        "coreMin": 254,
+        "awakeMin": 0,
+        "cutMin": 30,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "trim 20 min off the end",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:46:00Z",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:26:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 429,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 259,
+        "awakeMin": 0,
+        "cutMin": 20,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "extend the morning by an hour",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:46:00Z",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T07:46:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 491,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 321,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 60,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "move the whole night an hour later",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:46:00Z",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-05T23:46:00Z",
+          "end": "2026-09-06T07:46:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "a legacy row with end = start",
+      "input": {
+        "row": {
+          "start": "2026-07-18T23:00:00Z",
+          "end": "2026-07-18T23:00:00Z",
+          "asleepMin": 420,
+          "deepMin": 0,
+          "remMin": 0,
+          "coreMin": 420,
+          "awakeMin": 0
+        },
+        "edit": {
+          "start": "2026-07-18T23:00:00Z",
+          "end": "2026-07-19T05:30:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 390,
+        "deepMin": 0,
+        "remMin": 0,
+        "coreMin": 390,
+        "awakeMin": 0,
+        "cutMin": 30,
+        "addedMin": 0,
+        "durationOnly": true
+      }
+    },
+    {
+      "name": "fractional seconds and an offset",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:12.594+02:00",
+          "end": "2026-09-06T06:46:12.594+02:00",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-05T22:46:12.594+02:00",
+          "end": "2026-09-06T06:16:12.594+02:00"
+        }
+      },
+      "expected": {
+        "asleepMin": 419,
+        "deepMin": 72,
+        "remMin": 93,
+        "coreMin": 254,
+        "awakeMin": 0,
+        "cutMin": 30,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "an unparseable edit is not an edit — the night comes back unchanged",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:46:00Z",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "yesterday",
+          "end": "today"
+        }
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    },
+    {
+      "name": "an inverted edit is not an edit either",
+      "input": {
+        "row": {
+          "start": "2026-09-05T22:46:00Z",
+          "end": "2026-09-06T06:46:00Z",
+          "asleepMin": 431,
+          "deepMin": 74,
+          "remMin": 96,
+          "coreMin": 261,
+          "awakeMin": 18
+        },
+        "edit": {
+          "start": "2026-09-06T06:46:00Z",
+          "end": "2026-09-05T22:46:00Z"
+        }
+      },
+      "expected": {
+        "asleepMin": 431,
+        "deepMin": 74,
+        "remMin": 96,
+        "coreMin": 261,
+        "awakeMin": 18,
+        "cutMin": 0,
+        "addedMin": 0,
+        "durationOnly": false
+      }
+    }
+  ]
+}
