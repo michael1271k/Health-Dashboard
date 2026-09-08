@@ -354,8 +354,28 @@ final class WorkoutWeek {
         }
 
         // ── The footer's state ──────────────────────────────────────────────
+        //
+        // ── AN OPEN ROW WITH NOTHING IN IT DOES NOT BEAT A FINISHED ONE ─────
+        // `.live` used to win outright, so a single stray open session for
+        // today's split pinned the footer to "Resume workout" for good — the
+        // finished session sat right there in `finished[today]` and was never
+        // reached. Stray rows are easy to make: `openSession` is
+        // look-up-or-create over `ended_at IS NULL`, so ANY append after a
+        // close mints a second row beside the closed one.
+        //
+        // The test is whether the open session has WORK in it, not whether it
+        // exists. That keeps a real two-a-day live — finish the morning
+        // session, start the evening one, log a set, and the footer says Resume
+        // — while an empty row loses to the workout that actually happened.
+        // `finish` itself refuses a session with no working sets, so an open
+        // row with none is a session nobody could have finished anyway.
         if let key = out.todayKey {
-            if let live = sessions.first(where: { $0.date == today && $0.dayKey == key && $0.endedAt == nil }) {
+            let open = sessions.first { $0.date == today && $0.dayKey == key && $0.endedAt == nil }
+            let openWorking = open.map { session in
+                ((try? database.historySets(sessionId: session.id)) ?? [])
+                    .filter { SetTags.isWorkingSet($0.setType) }
+            } ?? []
+            if let live = open, !openWorking.isEmpty || finished[today] == nil {
                 let rows = (try? database.historySets(sessionId: live.id)) ?? []
                 let working = rows.filter { SetTags.isWorkingSet($0.setType) }
                 out.state = .live(

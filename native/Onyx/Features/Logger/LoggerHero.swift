@@ -121,7 +121,6 @@ struct LoggerHero: View {
                 VStack(alignment: .leading, spacing: OnyxSpace.s) {
                     titleBlock
                     timerButton
-                    restLine
                 }
             } else {
                 // Centred, not baseline-aligned. Sitting a 34 pt clock on the
@@ -132,14 +131,7 @@ struct LoggerHero: View {
                 HStack(alignment: .center, spacing: OnyxSpace.m) {
                     titleBlock
                     Spacer(minLength: OnyxSpace.s)
-                    // Trailing COLUMN, not a bare clock: the rest countdown sits
-                    // under the elapsed reading, in the space the clock was
-                    // already reserving. `.trailing` so the two right edges line
-                    // up whatever the digits do.
-                    VStack(alignment: .trailing, spacing: 2) {
-                        timerButton
-                        restLine
-                    }
+                    timerButton
                 }
             }
             tagRow
@@ -293,43 +285,16 @@ struct LoggerHero: View {
             .overlay(Capsule().strokeBorder(tint.opacity(0.40), lineWidth: 0.5))
     }
 
-    // MARK: - Rest
-
-    /// The countdown, on the line under the elapsed clock.
-    ///
-    /// `LoggerRestCapsule` is still the full control and still what the Live
-    /// Stats face shows; this is its inline reading, sized to sit inside the
-    /// clock's column without moving the band. Tapping skips, exactly as the
-    /// capsule does, and the long-press menu carries ±15 s so nothing was lost
-    /// when the row went.
-    @ViewBuilder
-    private var restLine: some View {
-        if let restCountdown {
-            Button(action: onSkipRest) {
-                HStack(spacing: OnyxSpace.xs) {
-                    Image(systemName: "timer").imageScale(.small)
-                    Text(timerInterval: restCountdown, countsDown: true)
-                        .onyxNumeral()
-                        // Reserved, so skipping from 1:00 to 59 does not move
-                        // the clock above it.
-                        .frame(minWidth: 42, alignment: .trailing)
-                }
-                .onyxType(.caption).fontWeight(.semibold)
-                .foregroundStyle(accent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            }
-            .onyxPress()
-            .contextMenu {
-                Button("Add 15 seconds", systemImage: "plus") { onAdjustRest(15) }
-                Button("Take 15 seconds off", systemImage: "minus") { onAdjustRest(-15) }
-                Button("Skip rest", systemImage: "forward.end") { onSkipRest() }
-            }
-            .transition(.scale(scale: 0.9).combined(with: .opacity))
-            .accessibilityLabel("Resting")
-            .accessibilityHint("Tap to skip. Long press to add or remove fifteen seconds.")
-        }
-    }
+    // ── THE REST CLOCK IS NOT HERE ANY MORE ─────────────────────────────────
+    // It was an inline reading under the elapsed clock, 110 pt above the card
+    // it was counting for, and adjusting it meant finding a context menu on a
+    // caption. It now lives in the exercise card, in the slot the "2 / 3 sets"
+    // fraction had — `ExerciseCardView.restControl`, with ±15 s as buttons you
+    // can hit rather than a menu you have to discover.
+    //
+    // `restCountdown`, `onSkipRest` and `onAdjustRest` stay on this type: the
+    // Live Stats face still draws `LoggerRestCapsule` from them, and the Lock
+    // Screen shares the same validated range.
 
     /// The programme week, as a chip rather than another `·`-joined fragment.
     /// It is the one piece of this line that is a POSITION in the block rather

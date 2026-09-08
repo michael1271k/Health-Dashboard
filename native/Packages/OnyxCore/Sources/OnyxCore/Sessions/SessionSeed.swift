@@ -168,6 +168,44 @@ public struct SessionSeed: Codable, Sendable, Equatable {
     public var exercises: [SeedExercise]
 }
 
+/// The treadmill bout that opens every deck.
+///
+/// ── WHY IT IS A CONSTANT AND NOT A PROGRAM ENTRY ────────────────────────────
+/// `ProgramExercise` describes sets, reps and a load. A five-minute walk at 2 %
+/// has none of those and all of its content — `durationSec`, `distanceKm`,
+/// `inclinePct` — is in fields the program type does not have. Putting it in
+/// `Program.onyx5` would also make it count: `plannedSets` is the program's own
+/// sum, so the header would read `0/13` on a twelve-set day and the progression
+/// engine would start grading a walk.
+///
+/// This is the Swift twin of `WARMUP_CARDIO` in `src/lib/sessions/seedTemplates.ts`
+/// and it carries the same three numbers, so a session opened on the phone and
+/// one opened on the web propose the same bout. It is logged as a WARM-UP, which
+/// is what `hotfix-polish.sql` wrote for the 7 September session and what keeps
+/// it out of tonnage, out of `workingSets` and out of the PR engine.
+///
+/// ── AND WHY IT IS NOT TICKED FOR YOU ────────────────────────────────────────
+/// The deck proposes; the athlete confirms. Every other row in the session
+/// works that way, and a session that recorded five minutes of walking nobody
+/// did would be a worse bug than the missing row this replaces. The web drops
+/// an unticked block at commit for the same reason (`draft.ts`'s `!ex.done`
+/// guard) — so on both clients the opener has to be tapped to become a fact.
+public enum WarmupCardio {
+    public static let name = "Treadmill"
+    public static let durationSec = 300
+    public static let distanceKm = 0.37
+    public static let inclinePct = 2.0
+    public static let note = "Pace rising 4.3 to 5.0"
+
+    /// Whether a deck already opens with cardio, by the same test the row
+    /// itself uses (`SetRow.isCardio`): time, distance or gradient rather than
+    /// reps and kilograms. Matching on the NAME would miss a bike or a rower
+    /// somebody put at the top, and then prepend a second warm-up above it.
+    public static func isCardio(durationSec: Int?, distanceKm: Double?, inclinePct: Double?) -> Bool {
+        durationSec != nil || distanceKm != nil || inclinePct != nil
+    }
+}
+
 public enum SessionSeedBuilder {
 
     /// The sessions a seed — and the progression verdict — may look at, newest
@@ -306,6 +344,19 @@ public enum SessionSeedBuilder {
         var readyByName: [String: SeedProgression] = [:]
         for r in ready { readyByName[canon(r.name)] = r }
 
+        // ── THE ORDER IS DELIBERATELY NOT APPLIED HERE ──────────────────────
+        // `SeedTemplateExercise` carries `order` and this walks the program's
+        // list instead, which looks like an oversight and is not: the seed's
+        // shape is a SHARED contract with the web (`sessionSeed.ts`, vectors in
+        // `session-seed.json`), and the template covers only the movements a
+        // past session logged. Ranking a two-entry template against a
+        // seven-movement day puts those two at the top of a deck neither client
+        // asked to reorder.
+        //
+        // The stored order is applied where the DECK is assembled — see
+        // `LoggerModel.inDeckOrder` and `AppDatabase.deckOrder(dayKey:userId:)`
+        // — which is also the only place that knows the live deck, the one
+        // thing that outranks a template mid-session.
         let exercises = day.exercises(for: phase).map { plan in
             seed(
                 plan, phase: phase, ordered: ordered, bySession: bySession,

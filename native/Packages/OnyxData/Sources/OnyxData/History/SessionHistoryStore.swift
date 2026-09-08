@@ -324,6 +324,27 @@ public extension AppDatabase {
         return try? OnyxJSON.decoder.decode(SeedTemplate.self, from: data)
     }
 
+    /// The day's stored deck order — movement names, first to last.
+    ///
+    /// ── WHY THIS IS SEPARATE FROM THE SEED ──────────────────────────────────
+    /// `SessionSeedBuilder` walks the PROGRAM's list on purpose: its output is a
+    /// shared contract with the web, checked by golden vectors, and a template
+    /// covering two of a day's seven movements cannot rank the other five. So it
+    /// reads the template for its numbers and never for its `order`.
+    ///
+    /// The deck is a different question, asked by one client, and this is the
+    /// answer to it: which movements the athlete put where, last time they
+    /// finished this split. `LoggerModel.inDeckOrder` applies it to the cards it
+    /// has, leaves anything unnamed in program position, and lets the live deck
+    /// outrank it mid-session.
+    ///
+    /// Empty when nothing has been stored, which is the cold start — and the
+    /// program's own order is the right answer there.
+    func deckOrder(dayKey: String, userId: String) throws -> [String] {
+        guard let template = try seedTemplate(dayKey: dayKey, userId: userId) else { return [] }
+        return template.exercises.sorted { $0.order < $1.order }.map(\.name)
+    }
+
     /// `left` / `right` → `L` / `R`. See `HistorySetRow.lr`.
     private static func domainSide(_ side: String?) -> String? {
         switch side {

@@ -55,6 +55,19 @@ public enum SessionEditing {
         case sessionIsLive(String)
     }
 
+    /// What a session-average heart rate can be and still be one.
+    ///
+    /// Deliberately absurd at both ends rather than physiologically tight: the
+    /// floor is below any resting rate ever recorded and the ceiling is above
+    /// any maximum, so the only thing this rejects is a figure nobody could
+    /// have measured. It exists because the finish sheet's `+` starts an empty
+    /// cell at zero and steps by one — `avg_bpm = 2` is two taps, and it was
+    /// stamped measured and therefore permanent.
+    public static let plausibleBpm = 25...260
+    /// Active energy for one lifting session. The ceiling is a Tour de France
+    /// mountain stage; the floor is one minute of standing up.
+    public static let plausibleCalories = 5...5000
+
     /// Σ tonnage and the committed-set count for a session's rows.
     ///
     /// Both are the WEB's definitions, because both columns are the web's:
@@ -114,13 +127,22 @@ public extension AppDatabase {
     /// Returns nil when the id names nothing — the set edits throw there
     /// instead, because a set edit that silently did nothing is a lost
     /// correction, while a metrics write is fire-and-forget from a sheet.
+    /// - Parameter measured: whether the figures are the athlete's own answer.
+    ///   `true` — the default, and what the finish sheet's steppers and every
+    ///   existing caller mean — stamps them measured, which takes the session
+    ///   out of `sessionsNeedingMetrics` so a later Health sync cannot replace
+    ///   what a person typed. `false` is the finish sheet's PRE-FILL: a figure
+    ///   carried over from the previous session of the same split is a good
+    ///   default and is not a measurement, so the watch must still be allowed
+    ///   to correct it when its workout arrives a day late.
     @discardableResult
     func updateMetrics(
         sessionId: String,
         durationMin: Double? = nil,
         avgBpm: Int? = nil,
         calories: Int? = nil,
-        sessionRpe: Double? = nil
+        sessionRpe: Double? = nil,
+        measured: Bool = true
     ) throws -> SessionEditing.Outcome? {
         try writer.write { db in
             guard var session = try WorkoutSession.fetchOne(db, key: sessionId) else { return nil }
@@ -142,13 +164,29 @@ public extension AppDatabase {
                 session.durationMin = max(0, durationMin)
                 session.durationEdited = true
             }
-            if let avgBpm {
+            // ── CLAMPED, FOR THE SAME REASON THE OTHER TWO ARE ──────────────
+            // `session_rpe` and `duration_min` are clamped here because a
+            // keyboard can reach them and they are ACWR inputs. These two were
+            // not, and a stepper CAN reach them: two taps on `+` from an empty
+            // Avg HR cell wrote `avg_bpm = 2` — and stamped it MEASURED, which
+            // takes the session out of `sessionsNeedingMetrics` and so forbids
+            // the watch from ever correcting it. A figure that survives the one
+            // mechanism built to fix it has to be plausible before it lands.
+            //
+            // The bounds are the widest a human body reaches, not a tight
+            // physiological window: rejecting an unusual truth is worse than
+            // storing one, and this only has to stop a mis-tap becoming
+            // permanent. A value outside them is DROPPED rather than clamped
+            // into range — a 2 clamped to 30 is still a number nobody measured,
+            // and leaving the column nil is what keeps the session in the
+            // Health sync's queue.
+            if let avgBpm, SessionEditing.plausibleBpm.contains(avgBpm) {
                 session.avgBpm = avgBpm
-                session.avgBpmEstimated = false
+                session.avgBpmEstimated = !measured
             }
-            if let calories {
+            if let calories, SessionEditing.plausibleCalories.contains(calories) {
                 session.caloriesBurned = calories
-                session.caloriesEstimated = false
+                session.caloriesEstimated = !measured
             }
             let outcome = try Self.recount(
                 db, session: &session, replayed: [],
@@ -184,12 +222,17 @@ public extension AppDatabase {
         rpe: Double? = nil,
         setType: String? = nil,
         quality: String? = nil,
+        /// `left` / `right` — the LOCAL spelling. See `SetSnapshot.side`.
+        side: String? = nil,
+        /// The two sides of one physical set share this.
+        pairId: String? = nil,
         est1rmKg: Double? = nil,
         setIndex: Int? = nil,
         exerciseOrder: Int? = nil
     ) throws -> SessionEditing.Outcome? {
         let patch = SetPatch(
             setIndex: setIndex, weightKg: weightKg, reps: reps, setType: setType,
+            side: side, pairId: pairId,
             est1rmKg: est1rmKg, rpe: rpe, quality: quality, exerciseOrder: exerciseOrder
         )
         // An amend that changes nothing is permanent noise in a log that is

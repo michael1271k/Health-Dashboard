@@ -47,10 +47,21 @@ func restCountdown(_ endsAt: Date?) -> ClosedRange<Date>? {
 
 /// The card on the Lock Screen and in the Notification Centre.
 ///
-/// Two columns: what the session IS on the left, what shape it has taken on the
-/// right. It omits "last time" that the expanded Dynamic Island carries — one
-/// reference is context, two is a table, and this surface is read at arm's
-/// length in the gap between sets.
+/// ── IT USED TO BE TWO COLUMNS, AND THE CHART OWNED ONE OF THEM ──────────────
+/// A 86 pt sparkline sat in the trailing column for the whole card's height,
+/// which cost the leading column a third of the width it needed for the one
+/// thing this surface is read for — the movement in front of you and what it
+/// asks. Full-width BANDS instead, in the order the questions are asked: what
+/// is running, how it is going, what is next, the shape of it, and (only while
+/// the clock runs) the controls for the rest. The chart is centred and short
+/// because it is the least urgent of the five, not because it is unimportant.
+///
+/// ── AND THE CLOCK AT THE TOP IS THE SESSION'S ───────────────────────────────
+/// It used to switch to the rest countdown, so the one number that was always
+/// on the card sometimes meant "eleven minutes into the workout" and sometimes
+/// "eleven seconds until the next set". Two facts through one slot, distinguished
+/// by a glyph. The rest clock has its own band now, and this reads total elapsed
+/// always.
 struct WorkoutLockCard: View {
     let title: String
     let startedAt: Date
@@ -59,34 +70,28 @@ struct WorkoutLockCard: View {
     private var accent: Color { Color.onyx.day(state.dayKey) }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: 6) {
-                    // The mark, carrying the split's colour, IS the dot that
-                    // used to sit here — a filled circle said "this app has a
-                    // colour", the ring says which app.
-                    OnyxMark(size: 11, tint: accent, opacity: 1)
-                    Text(title.uppercased())
-                        .font(OnyxWidgetType.label(10, weight: .black))
-                        .tracking(1.2)
-                        .foregroundStyle(accent)
-                    WorkoutCountdown(state: state, startedAt: startedAt)
-                }
-                WorkoutTotals(state: state)
-                // ── AND `Skip rest` IS GONE FROM HERE ───────────────────
-                // It was a 44 pt capsule that appeared with the clock and left
-                // with it, so the card grew and shrank by a row every ninety
-                // seconds. The founder's call: the rest period's job on a Lock
-                // Screen is to TELL you something, not to give you a button you
-                // already have on the phone in your hand. The space it freed is
-                // the next lift, which is the one thing this surface knew and
-                // never said. `RestSkipIntent` survives — the expanded Dynamic
-                // Island still carries it, and the intent's own tests do.
-                WorkoutCurrentSet(state: state)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                // The mark, carrying the split's colour, IS the dot that used to
+                // sit here — a filled circle said "this app has a colour", the
+                // ring says which app.
+                OnyxMark(size: 11, tint: accent, opacity: 1)
+                Text(title.uppercased())
+                    .font(OnyxWidgetType.label(10, weight: .black))
+                    .tracking(1.2)
+                    .foregroundStyle(accent)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                WorkoutElapsed(state: state, startedAt: startedAt)
             }
-            Spacer(minLength: 0)
+            WorkoutTotals(state: state)
+            WorkoutCurrentSet(state: state)
             WorkoutSpark(values: state.spark, color: accent)
-                .frame(width: 86, height: 44)
+                .frame(maxWidth: .infinity)
+                .frame(height: 26)
+            if let countdown = restCountdown(state.restEndsAt) {
+                WorkoutRestBand(countdown: countdown, state: state, showsSkip: true)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -137,10 +142,12 @@ struct WorkoutWatchCard: View {
 
 // MARK: - Pieces
 
-/// The rest clock while resting, the session's own elapsed time otherwise —
-/// and a stopped clock when the session is paused.
+/// TOTAL WORKOUT TIME — how long this session has been running, and nothing
+/// else. Never the rest clock: that has its own band now (`WorkoutRestBand`),
+/// and one slot that meant two different durations depending on a glyph is
+/// exactly the confusion this replaces.
 ///
-/// ── WHY THE ELAPSED CASE IS TWO CASES ───────────────────────────────────────
+/// ── WHY IT IS TWO CASES ─────────────────────────────────────────────────────
 /// `Text(_:style:.timer)` is counted by the SYSTEM, which is why a clock on a
 /// Lock Screen card is affordable at all: ActivityKit budgets updates and this
 /// one spends none. What the system cannot do is STOP it. So a running session
@@ -148,7 +155,7 @@ struct WorkoutWatchCard: View {
 /// been banked in pauses — and a paused one is the frozen string the phone
 /// computed, drawn beside a pause glyph so the reading is not mistaken for a
 /// clock that has died.
-struct WorkoutCountdown: View {
+struct WorkoutElapsed: View {
     let state: OnyxWorkoutAttributes.ContentState
     /// The activity's own fixed start, and the fallback for a card that was
     /// encoded before `timerOrigin` existed — see `ContentState.timerOrigin`.
@@ -156,14 +163,7 @@ struct WorkoutCountdown: View {
 
     var body: some View {
         Group {
-            if let countdown = restCountdown(state.restEndsAt) {
-                Label {
-                    Text(timerInterval: countdown, countsDown: true)
-                } icon: {
-                    Image(systemName: "timer")
-                }
-                .foregroundStyle(Color.onyx.day(state.dayKey))
-            } else if state.isPaused == true {
+            if state.isPaused == true {
                 Label {
                     Text(state.elapsed ?? "")
                 } icon: {
@@ -171,12 +171,89 @@ struct WorkoutCountdown: View {
                 }
                 .foregroundStyle(Color.onyx.textTertiary)
             } else {
-                Text(state.timerOrigin ?? startedAt, style: .timer)
-                    .foregroundStyle(Color.onyx.textSecondary)
+                Label {
+                    Text(state.timerOrigin ?? startedAt, style: .timer)
+                } icon: {
+                    Image(systemName: "stopwatch")
+                }
+                .foregroundStyle(Color.onyx.textSecondary)
             }
         }
         .font(OnyxWidgetType.figure(12))
         .monospacedDigit()
+        // A `.timer` text is as wide as its widest reading and no wider, so it
+        // grows a digit at the hour and shunts the title. Reserved.
+        .frame(minWidth: 62, alignment: .trailing)
+        .lineLimit(1)
+        .accessibilityLabel("Total workout time")
+    }
+}
+
+/// The rest period: how long is left, how much of it has gone, and the three
+/// things you can do about it.
+///
+/// ── WHY THE BAR IS A `ProgressView(timerInterval:)` ─────────────────────────
+/// It is drawn and advanced by the SYSTEM from a date range, exactly as
+/// `Text(timerInterval:)` is — so a bar that visibly empties over ninety
+/// seconds costs the same number of ActivityKit updates as a static rectangle,
+/// which is none. Computing a fraction on the producer would have needed an
+/// update per tick, and ActivityKit rations precisely that.
+///
+/// The range is validated by `restCountdown(_:)` at every call site for the
+/// reason that function documents: a reversed range traps, and `restEndsAt` is
+/// stale by construction on a locked phone.
+struct WorkoutRestBand: View {
+    let countdown: ClosedRange<Date>
+    let state: OnyxWorkoutAttributes.ContentState
+    /// The Lock Screen keeps Skip; the expanded Dynamic Island does not have the
+    /// width for four controls and drops it — the phone in your hand has the
+    /// same button 110 pt down the card.
+    var showsSkip: Bool = true
+
+    private var accent: Color { Color.onyx.day(state.dayKey) }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            nudge(-15, "minus", "Take 15 seconds off the rest")
+            VStack(alignment: .leading, spacing: 2) {
+                ProgressView(timerInterval: countdown, countsDown: true) {
+                    EmptyView()
+                } currentValueLabel: {
+                    EmptyView()
+                }
+                .progressViewStyle(.linear)
+                .tint(accent)
+                Text(timerInterval: countdown, countsDown: true)
+                    .font(OnyxWidgetType.figure(11))
+                    .monospacedDigit()
+                    .foregroundStyle(accent)
+            }
+            nudge(15, "plus", "Add 15 seconds to the rest")
+            if showsSkip { WorkoutSkipRest(dayKey: state.dayKey, compact: true) }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// 34 × 34 rather than 44: four controls at 44 do not fit the expanded
+    /// Dynamic Island's bottom region beside a progress bar, and this is the one
+    /// place in the app where the alternative is not a smaller target but no
+    /// control at all. The Lock Screen draws the same size so the two surfaces
+    /// are one control in two places.
+    private func nudge(_ seconds: Int, _ glyph: String, _ label: String) -> some View {
+        Button(intent: RestNudgeIntent(seconds: seconds)) {
+            Image(systemName: glyph)
+                .font(OnyxWidgetType.label(12, weight: .black))
+                .foregroundStyle(accent)
+                // `.frame` BEFORE `.background`, always. The other order sizes
+                // the shape to the glyph and then draws the frame around it, so
+                // the capsule is a circle behind a plus sign with its corners
+                // outside the padded box — which is what clipped the bottom of
+                // these buttons in the Dynamic Island.
+                .frame(width: 34, height: 34)
+                .background(accent.opacity(0.16), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
 
@@ -260,25 +337,36 @@ struct WorkoutCurrentSet: View {
                         .font(OnyxWidgetType.figure(17))
                         .foregroundStyle(.white)
                 }
+                // ── THE RATING WEARS THE EFFORT RAMP ────────────────────────
+                // It was secondary ink, which made a 9.5 and a 6 the same
+                // colour on a surface read at arm's length. `Color.onyx.effort`
+                // is the SAME function the effort picker's gradient is built
+                // from, so the badge and the sheet that wrote it cannot drift —
+                // and it degrades honestly: a card encoded before `rpeValue`
+                // existed has no number, and falls back to the ink it had.
                 if !state.rpe.isEmpty {
                     Text(state.rpe)
                         .font(OnyxWidgetType.figure(11))
-                        .foregroundStyle(Color.onyx.textSecondary)
+                        .foregroundStyle(
+                            state.rpeValue.map { Color.onyx.effort($0) } ?? Color.onyx.textSecondary
+                        )
+                        .padding(.horizontal, 6)
+                        .frame(height: 18)
+                        .background(
+                            (state.rpeValue.map { Color.onyx.effort($0) } ?? Color.onyx.textSecondary)
+                                .opacity(0.16),
+                            in: Capsule()
+                        )
                 }
             }
-            // What this lift cost last time — the line the rest period is for.
-            // Only while resting: mid-set the card's job is the set in front of
-            // you, and a fourth line would cost the sparkline its column.
-            if showsNext, !state.lastTime.isEmpty {
-                Text(
-                    "prev \(state.lastTime)"
-                    + (state.lastRpe.map { $0.isEmpty ? "" : " · \($0)" } ?? "")
-                )
-                    .font(OnyxWidgetType.label(10))
-                    .foregroundStyle(Color.onyx.textTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-            }
+            // ── AND `prev …` IS GONE ────────────────────────────────────────
+            // The founder's call, and the space it freed is the chart's. The
+            // word was doing the work of a label for a fact the surface can
+            // only be showing about the past: the card names the NEXT lift and
+            // then a second, smaller load underneath it. `lastTime` is still on
+            // the wire and still drawn where there is room to say what it is —
+            // it was never the number that was wrong, only the four characters
+            // in front of it and the line they cost.
         }
     }
 }
@@ -290,15 +378,27 @@ struct WorkoutCurrentSet: View {
 /// only sub-HIG control in the app.
 struct WorkoutSkipRest: View {
     let dayKey: String
+    /// Glyph only, sized to sit in the rest band beside the two nudges. The
+    /// worded capsule is still what a region with a whole row to itself draws.
+    var compact: Bool = false
 
     var body: some View {
         Button(intent: RestSkipIntent()) {
-            Label("Skip rest", systemImage: "forward.fill")
-                .font(OnyxWidgetType.label(12, weight: .bold))
-                .foregroundStyle(Color.onyx.day(dayKey))
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .background(Color.onyx.day(dayKey).opacity(0.16), in: Capsule())
+            Group {
+                if compact {
+                    Image(systemName: "forward.fill")
+                        .font(OnyxWidgetType.label(12, weight: .black))
+                        .frame(width: 34, height: 34)
+                } else {
+                    Label("Skip rest", systemImage: "forward.fill")
+                        .font(OnyxWidgetType.label(12, weight: .bold))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                }
+            }
+            .foregroundStyle(Color.onyx.day(dayKey))
+            // `.frame` before `.background` — see `WorkoutRestBand.nudge`.
+            .background(Color.onyx.day(dayKey).opacity(0.16), in: Capsule())
         }
         .buttonStyle(.plain)
         .buttonBorderShape(.capsule)

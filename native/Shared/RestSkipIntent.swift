@@ -12,6 +12,26 @@ import Foundation
 /// into both targets. The cost is that it may import nothing the extension does
 /// not have — no OnyxCore, no OnyxData, and above all no `LoggerModel`.
 
+/// Where the running logger leaves its "move the rest clock" closure.
+///
+/// ── WHY THIS IS NOT AN APP GROUP ────────────────────────────────────────────
+/// It was specified as one, and an App Group is the right answer for a widget
+/// that has to READ what the app wrote — which is why `OnyxProvider` uses one.
+/// This is the other direction and a different mechanism: a `LiveActivityIntent`
+/// is performed by the APP's own process (see `RestSkipIntent` below), so the
+/// button is already inside the address space that owns `LoggerModel`. Routing
+/// it through shared storage would mean writing a file, waking the app to read
+/// it, and reconciling it against the model that is already in memory — three
+/// steps and a race, to reach a value that is one call away.
+///
+/// The closure also keeps the nudge to ONE implementation: the Lock Screen and
+/// the exercise card both end up in `LoggerModel.adjustRest`, so the two
+/// surfaces cannot disagree about a clock they are both counting.
+@MainActor
+enum RestNudge {
+    static var handler: ((Int) -> Void)?
+}
+
 /// Where the running logger leaves its "stop the rest clock" closure.
 ///
 /// ── WHY A CLOSURE AND NOT A REFERENCE TO THE MODEL ──────────────────────────
@@ -33,6 +53,52 @@ enum RestSkip {
 /// `LiveActivityIntent` is documented to run in the app's own process, without
 /// foregrounding it, which is the entire reason this button can be a button
 /// rather than a deep link that yanks you into the app between sets.
+struct RestNudgeIntent: LiveActivityIntent {
+
+    static let title: LocalizedStringResource = "Adjust Rest"
+
+    /// Never offered as a Shortcuts action, for `RestSkipIntent`'s reason: it
+    /// does nothing without a running rest clock.
+    static let isDiscoverable = false
+
+    /// Signed seconds. One intent rather than a `plus` and a `minus`: the two
+    /// would be the same twelve lines twice, and `AppIntent` parameters exist
+    /// exactly so that a button can carry its own argument.
+    @Parameter(title: "Seconds")
+    var seconds: Int
+
+    init() {}
+
+    init(seconds: Int) {
+        self.seconds = seconds
+    }
+
+    func perform() async throws -> some IntentResult {
+        let delta = seconds
+        let handled = await MainActor.run { () -> Bool in
+            guard let nudge = RestNudge.handler else { return false }
+            nudge(delta)
+            return true
+        }
+        if handled { return .result() }
+
+        // The cold-launched-into-the-background case `RestSkipIntent` documents:
+        // this process owns the activity and has no workout in memory, so the
+        // card is the only thing there is to move. Pulling the clock to or past
+        // now ENDS the rest rather than showing a countdown going backwards —
+        // the same rule `LoggerModel.adjustRest` applies.
+        for activity in Activity<OnyxWorkoutAttributes>.activities {
+            var state = activity.content.state
+            guard let endsAt = state.restEndsAt else { continue }
+            let next = endsAt.addingTimeInterval(TimeInterval(delta))
+            state.restEndsAt = next > Date() ? next : nil
+            state.restTotalSec = state.restTotalSec.map { max(0, $0 + delta) }
+            await activity.update(ActivityContent(state: state, staleDate: nil))
+        }
+        return .result()
+    }
+}
+
 struct RestSkipIntent: LiveActivityIntent {
 
     static let title: LocalizedStringResource = "Skip Rest"

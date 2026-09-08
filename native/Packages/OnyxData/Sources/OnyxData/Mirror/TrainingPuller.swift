@@ -224,8 +224,36 @@ extension AppDatabase {
         guard !rows.isEmpty else { return nil }
         return try writer.write { db in
             var newest: Date?
+            // ── WHICH SESSIONS THIS DEVICE HAS NOT FINISHED TELLING THE
+            // SERVER ABOUT ──────────────────────────────────────────────────
+            // `closeSession` and `updateMetrics` both write their columns and
+            // then enqueue `session:<id>`. Until that item drains, the SERVER'S
+            // copy of this row predates the close — and this is a whole-row
+            // `save`, so pulling it back wrote `ended_at`, `session_rpe`,
+            // `duration_min`, `avg_bpm` and `calories_burned` as they stood
+            // BEFORE the workout was finished.
+            //
+            // That is the "Resume workout" loop: a session closed locally,
+            // pulled back open on the next foreground, the Train tab reading it
+            // as live again on every launch until the drain happened to win the
+            // race. The rating went with it — a finished session with an empty
+            // difficulty is the same write, one column over.
+            //
+            // Read once for the batch rather than per row: `idempotency_key` is
+            // UNIQUE, so this is an index scan of a queue that holds tens of
+            // rows, not thousands.
+            let queued = try Set(String.fetchAll(
+                db, sql: "SELECT idempotency_key FROM outbox WHERE idempotency_key LIKE 'session:%'"
+            ))
             for row in rows {
                 let existing = try WorkoutSession.fetchOne(db, key: row.id)
+                // `??`, not an override: where this device has nothing the
+                // server's answer still lands. It only refuses to replace a
+                // local value with an older remote one.
+                let unpushed = queued.contains("session:\(row.id)")
+                func local<T>(_ ours: T?, _ theirs: T?) -> T? {
+                    unpushed ? (ours ?? theirs) : theirs
+                }
                 var session = WorkoutSession(
                     id: row.id,
                     userId: row.userId,
@@ -236,14 +264,20 @@ extension AppDatabase {
                     // in Jerusalem belongs to Thursday.
                     date: SyncTranslation.sessionDate(for: row.startedAt),
                     startedAt: row.startedAt,
-                    endedAt: row.endedAt,
-                    durationMin: row.durationMin.map(Double.init),
-                    sessionRpe: row.sessionRpe,
-                    notes: row.notes,
-                    avgBpm: row.avgBpm,
-                    caloriesBurned: row.caloriesBurned,
-                    avgBpmEstimated: row.avgBpmEstimated,
-                    caloriesEstimated: row.caloriesEstimated,
+                    endedAt: local(existing?.endedAt, row.endedAt),
+                    durationMin: local(existing?.durationMin, row.durationMin.map(Double.init)),
+                    sessionRpe: local(existing?.sessionRpe, row.sessionRpe),
+                    notes: local(existing?.notes, row.notes),
+                    avgBpm: local(existing?.avgBpm, row.avgBpm),
+                    caloriesBurned: local(existing?.caloriesBurned, row.caloriesBurned),
+                    // The provenance flags travel with the figures they
+                    // describe, or a locally measured heart rate keeps the
+                    // server's "estimated" stamp and `sessionsNeedingMetrics`
+                    // overwrites it on the next Health sync.
+                    avgBpmEstimated: unpushed && existing?.avgBpm != nil
+                        ? existing!.avgBpmEstimated : row.avgBpmEstimated,
+                    caloriesEstimated: unpushed && existing?.caloriesBurned != nil
+                        ? existing!.caloriesEstimated : row.caloriesEstimated,
                     // ── A PULL MUST NOT ERASE WHAT THIS DEVICE COMPUTED ─────
                     // This is a whole-row `save`, so every column not carried
                     // here is written back as its default. The web computes

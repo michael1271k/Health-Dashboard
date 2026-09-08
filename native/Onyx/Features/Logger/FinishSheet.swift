@@ -67,6 +67,12 @@ struct FinishSheet: View {
     @State private var durationEdited = false
     @State private var bpmMeasured = false
     @State private var caloriesMeasured = false
+    /// Which of the three are still showing the PREVIOUS session's figure
+    /// rather than this one's. They are written as estimates, not as answers,
+    /// and they say so on the tile — see `loadMetrics` and `commitMetrics`.
+    /// Touching a cell takes it out of the set, because a carried-over number
+    /// that a person then corrected is a person's number.
+    @State private var prefilled: Set<Metric> = []
     /// Which cell is open as a stepper. One at a time: three steppers side by
     /// side on a phone is three two-point targets.
     @State private var open: Metric?
@@ -218,7 +224,12 @@ struct FinishSheet: View {
             ) {
                 metricCell(
                     "Duration", "timer", value: $durationMin, unit: "min", step: 5,
-                    field: .duration, provenance: durationEdited ? .edited : .measured
+                    field: .duration,
+                    // A duration carried over from the last session is not the
+                    // clock's reading of THIS one, and a green "measured" dot on
+                    // it would be the sheet vouching for a number it guessed.
+                    provenance: prefilled.contains(.duration) ? .estimated
+                        : (durationEdited ? .edited : .measured)
                 )
                 metricCell(
                     "Avg HR", "heart", value: $avgBpm, unit: "bpm", step: 1,
@@ -293,6 +304,12 @@ struct FinishSheet: View {
     }
 
     private var provenanceText: String {
+        if !prefilled.isEmpty {
+            // Say whose number it is. A figure carried from the last session
+            // reads exactly like one this session produced, and a default
+            // mistaken for a reading is a reading nobody took.
+            return "Carried over from your last \(model.day.label) session — tap to correct, or let the watch fill it in."
+        }
         if avgBpm == nil || calories == nil {
             return "Heart rate and calories fill in from Apple Health once the watch has synced — or tap to set them."
         }
@@ -402,6 +419,17 @@ struct FinishSheet: View {
         field: Metric, provenance: Provenance
     ) -> some View {
         let isOpen = open == field
+        // Every write to this cell — a stepper end, the keypad, a VoiceOver
+        // adjust — goes through here, so this is the one place that has to know
+        // the carried-over figure has been answered. A `Binding` wrapper rather
+        // than three call sites, because a fourth would be added without it.
+        let answered = Binding<Int?>(
+            get: { value.wrappedValue },
+            set: { next in
+                if next != value.wrappedValue { prefilled.remove(field) }
+                value.wrappedValue = next
+            }
+        )
         return VStack(alignment: .leading, spacing: OnyxSpace.xs) {
             HStack(spacing: OnyxSpace.xs) {
                 Label(label, systemImage: symbol)
@@ -421,7 +449,7 @@ struct FinishSheet: View {
                 }
             }
             if isOpen {
-                stepperRow(value: value, unit: unit, step: step, field: field)
+                stepperRow(value: answered, unit: unit, step: step, field: field)
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(value.wrappedValue.map(String.init) ?? "—")
@@ -470,8 +498,8 @@ struct FinishSheet: View {
         )
         .accessibilityAdjustableAction { direction in
             switch direction {
-            case .increment: bump(value, by: step)
-            case .decrement: bump(value, by: -step)
+            case .increment: bump(answered, by: step)
+            case .decrement: bump(answered, by: -step)
             default: break
             }
         }
@@ -495,12 +523,7 @@ struct FinishSheet: View {
             // `fixedSize` on a NUMBER, never on a sentence: three digits and a
             // unit have a bounded width, and the field would otherwise take
             // every point offered and push the unit to the far edge.
-            TextField("—", value: value, format: .number)
-                .keyboardType(.numberPad)
-                .onyxType(.body).fontWeight(.semibold).onyxNumeral()
-                .multilineTextAlignment(.center)
-                .foregroundStyle(Color.onyx.textPrimary)
-                .fixedSize()
+            WholeNumberField(value: value, placeholder: "—")
                 .frame(minWidth: 34)
                 .focused($editing, equals: field)
             Text(unit)
@@ -579,6 +602,36 @@ struct FinishSheet: View {
         calories = session.caloriesBurned
         bpmMeasured = session.avgBpm != nil && !session.avgBpmEstimated
         caloriesMeasured = session.caloriesBurned != nil && !session.caloriesEstimated
+
+        // ── AND WHAT THE LAST ONE OF THESE CAME TO ──────────────────────────
+        // Heart rate and calories arrive from the watch's own `HKWorkout`,
+        // which can be a day late — so the screen that asks for them is
+        // routinely the one screen in the app with nothing to show, and a
+        // stepper that starts at zero is not a way to answer. The previous
+        // session of the same split is: same movements, same rest, same person.
+        //
+        // It fills only what is EMPTY. A measured figure, an estimate the
+        // Health sync already wrote, and anything typed all outrank it — this
+        // is the floor under "—", not a proposal that argues with a reading.
+        //
+        // Tracked in `prefilled` because provenance is the whole point: these
+        // go to the store stamped ESTIMATED (`measured: false`), which keeps
+        // the session inside `sessionsNeedingMetrics` so the watch can still
+        // correct them. Stamping a carried-over number measured would make it
+        // permanent, which is the failure the `avg_bpm` clamp exists for.
+        let previous = model.previousMetrics()
+        if durationMin == nil || durationMin == 0, let minutes = previous.durationMin {
+            durationMin = max(0, Int(jsRound(minutes)))
+            prefilled.insert(.duration)
+        }
+        if avgBpm == nil, let bpm = previous.avgBpm {
+            avgBpm = bpm
+            prefilled.insert(.bpm)
+        }
+        if calories == nil, let kcal = previous.calories {
+            calories = kcal
+            prefilled.insert(.calories)
+        }
     }
 
     /// The word the sheet opens on. A PROPOSAL — `word` starts nil and this is
@@ -600,10 +653,31 @@ struct FinishSheet: View {
         let bpm = avgBpm != session.avgBpm ? avgBpm : nil
         let kcal = calories != session.caloriesBurned ? calories : nil
         guard duration != nil || bpm != nil || kcal != nil else { return }
-        model.setMetrics(durationMin: duration, avgBpm: bpm, calories: kcal)
-        if duration != nil { durationEdited = true }
-        if bpm != nil { bpmMeasured = true }
-        if kcal != nil { caloriesMeasured = true }
+        // ── TWO WRITES, BECAUSE THEY MEAN DIFFERENT THINGS ──────────────────
+        // A figure the athlete moved is their answer and is stamped MEASURED,
+        // which takes the session out of `sessionsNeedingMetrics` so a later
+        // Health sync cannot replace it. A figure still sitting where the
+        // pre-fill put it is a carried-over default and is stamped ESTIMATED,
+        // so the watch's own workout still overwrites it when it lands.
+        //
+        // `prefilled` is cleared per field the moment the value moves off what
+        // was carried over — see `bump` and the field's own binding.
+        let carried: (Double?, Int?, Int?) = (
+            prefilled.contains(.duration) ? duration : nil,
+            prefilled.contains(.bpm) ? bpm : nil,
+            prefilled.contains(.calories) ? kcal : nil
+        )
+        model.setMetrics(
+            durationMin: prefilled.contains(.duration) ? nil : duration,
+            avgBpm: prefilled.contains(.bpm) ? nil : bpm,
+            calories: prefilled.contains(.calories) ? nil : kcal
+        )
+        model.setMetrics(
+            durationMin: carried.0, avgBpm: carried.1, calories: carried.2, measured: false
+        )
+        if duration != nil { durationEdited = !prefilled.contains(.duration) }
+        if bpm != nil { bpmMeasured = !prefilled.contains(.bpm) }
+        if kcal != nil { caloriesMeasured = !prefilled.contains(.calories) }
         // ── THE CASCADE ─────────────────────────────────────────────────────
         // A duration is an ACWR input: `duration_min × session_rpe` is what
         // feeds load, monotony and strain, and readiness reads a 49-day window
@@ -643,6 +717,73 @@ struct FinishSheet: View {
                 )
         }
         .onyxPress(scale: 0.98)
+    }
+}
+
+// MARK: - Numeric entry
+
+/// A whole number, typed — and published on every keystroke.
+///
+/// ── WHY THIS EXISTS INSTEAD OF `TextField(value:format:)` ───────────────────
+/// A formatted `TextField` parses its text back through the binding when focus
+/// LEAVES, and that write lands on the next update pass — not synchronously
+/// inside whatever dropped the focus. The finish button dropped focus and then
+/// read the three `@State` values in the same turn, so a heart rate still under
+/// the cursor when Finish was tapped was read at its PREVIOUS value and the
+/// typed one was silently discarded. Exactly the shape of the stepper's
+/// press/release race one file over, and with the same consequence: the number
+/// on screen and the number committed disagreed, with nothing to see.
+///
+/// Owning the text removes the flush entirely — there is no pending write to
+/// lose, because the value is already correct before the button is tapped.
+///
+/// The clamp is `NumericField`'s and for the same reason: `.numberPad` has no
+/// length limit, `Double("99999999999999999999")` is 1e20, and an `Int` cast of
+/// that TRAPS. Holding a finger on the `9` key must not crash the app.
+private struct WholeNumberField: View {
+    @Binding var value: Int?
+    let placeholder: String
+
+    @State private var text: String = ""
+
+    private static let limit = 100_000.0
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .keyboardType(.numberPad)
+            .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Color.onyx.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .fixedSize()
+            .onAppear { text = Self.render(value) }
+            // Guarded on inequality: `onAppear` seeds `text` and fires this on
+            // the same cycle, which would otherwise write every cell back into
+            // the model — and `commitMetrics` compares against the store to
+            // decide what to send, so a write-back is a spurious upload that
+            // stamps an untouched estimate as measured.
+            .onChange(of: text) { _, next in
+                let parsed = Self.parse(next)
+                if parsed != value { value = parsed }
+            }
+            // A value changed from outside the field — the ± steppers, the
+            // pre-fill landing after the store read — has to reach the text, or
+            // the field goes on showing what it was seeded with.
+            .onChange(of: value) { _, next in
+                let rendered = Self.render(next)
+                if Self.parse(text) != next { text = rendered }
+            }
+    }
+
+    private static func render(_ value: Int?) -> String {
+        value.map(String.init) ?? ""
+    }
+
+    private static func parse(_ text: String) -> Int? {
+        let digits = text.filter(\.isNumber)
+        guard !digits.isEmpty, let value = Double(digits), value.isFinite else { return nil }
+        return Int(min(max(value, 0), limit))
     }
 }
 

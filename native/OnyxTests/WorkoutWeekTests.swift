@@ -26,7 +26,11 @@ struct WorkoutWeekTests {
     private func loggedSession(_ database: AppDatabase, day: ProgramDay, sets: Int) -> LoggerModel {
         let model = LoggerModel(day: day, phase: .cut, store: database, userId: Self.userId)
         model.attach()
-        let exercise = model.exercises[0]
+        // The first LIFT. `exercises[0]` is the treadmill the deck now opens
+        // with, whose rows are warm-ups — so logging into it would put three
+        // ticked rows on the deck and none of them in `workingSets`, which is
+        // the number every assertion below counts.
+        let exercise = model.exercises.first { !$0.rows.contains(where: \.isCardio) }!
         for index in 0..<sets {
             while exercise.rows.count <= index { model.addSet(to: exercise) }
             let row = exercise.rows[index]

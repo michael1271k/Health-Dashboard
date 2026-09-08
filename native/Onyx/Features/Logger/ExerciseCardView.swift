@@ -156,6 +156,17 @@ struct ExerciseCardView: View {
                     ordinal: target.ordinal, exerciseName: exercise.name, row: row,
                     onKind: { model.setKind($0, on: row, in: exercise) },
                     onQuality: { model.setQuality($0, on: row, in: exercise) },
+                    // Absent on a bilateral movement — see `SetOptionsSheet.split`
+                    // for why absent and not disabled.
+                    onSplit: model.canSplit(exercise) ? {
+                        withAnimation(OnyxMotion.move) {
+                            if let pairId = row.pairId {
+                                model.mergeSet(pairId: pairId, in: exercise)
+                            } else {
+                                model.splitSet(row, in: exercise)
+                            }
+                        }
+                    } : nil,
                     onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } }
                 )
             } else {
@@ -233,27 +244,19 @@ struct ExerciseCardView: View {
 
             prescription
 
-            if let previous = previousLabel {
-                // Secondary, not tertiary. This is the number the next set is
-                // decided from — the most useful line in the header — and it
-                // was the dimmest thing on the card, under the 4.5:1 floor on a
-                // screen read at arm's length under gym lighting.
-                // The seed's answer to "what did I do last time", for the set
-                // you are about to walk into — one line, and only while the
-                // session still has a set left to walk into.
-                // `.onyxType(.micro)` and not `.onyxMicro()`: the register
-                // role uppercases, and the value it would be uppercasing is a
-                // LOAD — `LAST · 40KG × 11`, where the unit has become a
-                // shout. The line is a reading, not a register label.
-                Text("last · \(previous)")
-                    .onyxType(.micro)
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    // Two lines where the type is large enough to need them: at
-                    // AX5 one line truncated to `last · 40kg ×…`, which is half
-                    // a fact — the load survives and the rep count, the half
-                    // double progression is actually about, does not.
-                    .lineLimit(typeSize.isAccessibilitySize ? 2 : 1)
-            }
+            // ── THE `last · 40kg × 11` LINE IS GONE ─────────────────────────
+            // It was the seed's answer to "what did I do last time", and the
+            // seed is ALSO what every unticked row in the table below is
+            // already showing: the row's own load and rep count open on exactly
+            // the numbers this line named. So on the card where it mattered
+            // most — a fresh movement, nothing ticked — it printed the first
+            // row's two figures a second time, eighteen points above them, and
+            // cost the header a line to do it.
+            //
+            // What it did carry that the rows do not is the DATE, and that has
+            // its own home: the seed's provenance is on the card's source chip,
+            // and the full history is one tap away in the exercise sheet.
+            // Founder asked for the line gone; it was restating the table.
 
             if !exercise.note.isEmpty {
                 Text(exercise.note)
@@ -374,14 +377,27 @@ struct ExerciseCardView: View {
             .lineLimit(1)
         } else {
             HStack(spacing: OnyxSpace.xs) {
-                if let family {
-                    tag(family.displayName, Color.onyx.muscle(family))
-                }
-                if let first = tags.first {
-                    tag(first.label, Color.onyx.textSecondary)
+                // ── THE TAGS LEAVE WHILE THE CLOCK IS RUNNING ───────────────
+                // The rest control is about 130 pt and this line is already
+                // full at 375 pt. The tags are the least load-bearing thing on
+                // it — the same call this file already makes at an
+                // accessibility size, and for the same reason: "Compound" is
+                // not worth pushing a countdown off the screen.
+                if liveRest == nil {
+                    if let family {
+                        tag(family.displayName, Color.onyx.muscle(family))
+                    }
+                    if let first = tags.first {
+                        tag(first.label, Color.onyx.textSecondary)
+                    }
                 }
                 repWindow
-                progression
+                // The progression chip is `fixedSize` — a bumped load that
+                // truncates is a number you cannot read — so it cannot share
+                // this line with the rest control either. At 375 pt the card's
+                // inner width is about 327: a rep window and the clock's three
+                // targets take ~214 of it, and the chip is ~150.
+                if liveRest == nil { progression }
                 Spacer(minLength: 0)
                 progress
             }
@@ -397,18 +413,103 @@ struct ExerciseCardView: View {
         ExerciseTags.tags(for: exercise.name, compound: exercise.plan.isCompound)
     }
 
-    /// The set the deck is pointing at, and what it was last time. `nil` once
-    /// every set is logged — at which point "last time" is a fact about a
-    /// movement you have finished.
-    private var previousLabel: String? {
-        guard let next = exercise.rows.first(where: { !$0.isDone && $0.kind != .ghost }),
-              let previous = next.previous, !previous.isEmpty
-        else { return nil }
-        return previous
+    /// The trailing slot of the header: the rest clock while this movement is
+    /// resting, the sets fraction the rest of the time.
+    ///
+    /// ── WHY THE FRACTION HIDES RATHER THAN MOVES OVER ───────────────────────
+    /// The header line is one line and it is already full — a family tag, a
+    /// movement tag, the rep window and the progression chip, at 375 pt. There
+    /// is no arrangement in which a countdown and two 44 pt targets JOIN that
+    /// row; something has to leave. The fraction is what the timer replaces
+    /// because they answer the same question at different moments ("where am I
+    /// in this movement" / "when does the next set start"), and because the
+    /// fraction is the one thing here that comes back the instant it matters
+    /// again. It returns in full when the clock stops — hidden, not deleted.
+    @ViewBuilder
+    private var progress: some View {
+        if let countdown = liveRest {
+            restControl(countdown)
+        } else {
+            setsProgress
+        }
+    }
+
+    /// Resting, and resting for THIS movement.
+    ///
+    /// `restingExercise` is the name the timer was started for, so the clock
+    /// appears on the card you just logged into rather than on all seven. It is
+    /// validated here, where the value is still optional: `Text(timerInterval:)`
+    /// traps on a range whose end is behind its start, and the deadline outlives
+    /// this view.
+    /// Named `liveRest` and not `restCountdown` on purpose: a property of that
+    /// name would shadow the free `restCountdown(_:)` in `Shared/` — the one
+    /// that keeps `Text(timerInterval:)` off a reversed range on four surfaces
+    /// — and shadow it into a call this type cannot make.
+    private var liveRest: ClosedRange<Date>? {
+        guard model.restingExercise == exercise.name else { return nil }
+        return restCountdown(model.restEndsAt)
+    }
+
+    /// ── WHY ±15 s ARE BUTTONS AND NOT A MENU ────────────────────────────────
+    /// They were a context menu on a caption in the hero: discoverable by
+    /// nobody, and a long press with a bar in your other hand. Two 44 pt
+    /// targets is the whole feature.
+    ///
+    /// ── AND WHY THE NUDGE DIES WITH THE SET ─────────────────────────────────
+    /// `adjustRest` moves `restEndsAt` and nothing else. `startRest` reads
+    /// `plan.restSec` fresh on every tick, so the NEXT set is prescribed by the
+    /// plan again — a longer breather after set 3 is a fact about set 3, not a
+    /// standing amendment to the programme. The plan is edited where plans are
+    /// edited, and never as a side effect of being tired.
+    private func restControl(_ countdown: ClosedRange<Date>) -> some View {
+        HStack(spacing: 0) {
+            nudge("minus", -15, "Take 15 seconds off the rest")
+            Button { model.stopRest() } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: "timer").imageScale(.small)
+                    Text(timerInterval: countdown, countsDown: true)
+                        .onyxNumeral()
+                        // Reserved, or the two buttons walk inwards as the
+                        // digits fall from 1:00 to 59 — under the thumb that is
+                        // reaching for one of them.
+                        .frame(minWidth: 40, alignment: .leading)
+                }
+                .onyxType(.caption).fontWeight(.semibold)
+                .foregroundStyle(Color.onyx.day(model.day.key))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, 2)
+                .frame(minHeight: 44)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Resting")
+            .accessibilityHint("Tap to skip the rest")
+            nudge("plus", 15, "Add 15 seconds to the rest")
+        }
+        .transition(.scale(scale: 0.9).combined(with: .opacity))
+    }
+
+    private func nudge(_ glyph: String, _ seconds: TimeInterval, _ label: String) -> some View {
+        Button { model.adjustRest(by: seconds) } label: {
+            Image(systemName: glyph)
+                .onyxType(.caption).fontWeight(.bold)
+                .foregroundStyle(Color.onyx.day(model.day.key))
+                // 28 pt of ink inside a 44 pt target. The header band is 56 pt,
+                // so the target fits without moving anything; drawing it at 44
+                // would put two filled circles beside a rep window.
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(Color.onyx.day(model.day.key).opacity(0.16)))
+                .frame(width: 34, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: model.restEndsAt)
+        .accessibilityLabel(label)
     }
 
     @ViewBuilder
-    private var progress: some View {
+    private var setsProgress: some View {
         if exercise.isComplete {
             Label("Done", systemImage: "checkmark.seal.fill")
                 .onyxType(.caption).fontWeight(.semibold)
@@ -672,7 +773,21 @@ private enum SetColumn {
     /// The narrowest a load is ever drawn. A floor and not a track: `137.5`
     /// takes more than this and is allowed to, on the stacked accessibility row
     /// where nothing is lining up under a header anyway.
-    static let weightFloor: CGFloat = 44
+    ///
+    /// ── WHY 56 AND NOT 44 ───────────────────────────────────────────────────
+    /// 44 was the tap-target minimum reused as a text width, and the two are
+    /// not the same question. A cable stack beaten by the fine step lands on
+    /// `11.25` and `13.75` — five glyphs of semibold body monospaced numerals,
+    /// which is about 45 pt before the field's own insets — so the number the
+    /// half-plate progression exists to produce was the one number the row
+    /// could not show, and it rendered `11…`. 56 fits six (`123.75`), which is
+    /// every load this app can propose. Past that `minimumScaleFactor` on the
+    /// field takes over, because a load that scales down is legible and a load
+    /// that ellipsises is not a load.
+    ///
+    /// It costs the row 12 pt out of the effort track: 375 pt still leaves it
+    /// 95 and 402 leaves 122, against the 68 that column needs for a word.
+    static let weightFloor: CGFloat = 56
     /// The whole rep group — the field and its two ends. The header names the
     /// GROUP, so it needs the group's width and not the field's. A FLOOR on
     /// both sides rather than a fixed width: three digits, or a non-accessibility
@@ -850,7 +965,11 @@ private struct SetRowView: View {
                     .foregroundStyle(Color.onyx.base)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             } else {
-                Text(row.kind.badge ?? "\(ordinal)")
+                // The SIDE outranks the ordinal on a split row. Two rows both
+                // reading "3" is the one thing this badge must never say — the
+                // pair is one set, and which arm it is is the only fact that
+                // separates them.
+                Text(row.sideLabel ?? row.kind.badge ?? "\(ordinal)")
                     .onyxType(.caption).fontWeight(.bold).onyxNumeral()
                     .foregroundStyle(badgeInk)
                     // The badge is the one column that must NOT grow with the
@@ -869,7 +988,7 @@ private struct SetRowView: View {
         // than a chip: the row has no width for a sixth thing, and what the
         // note SAYS is a question, not a glance.
         .overlay(alignment: .topTrailing) {
-            if row.quality != nil {
+            if !row.qualities.isEmpty {
                 Circle()
                     .fill(Color.onyx.accent(.train))
                     .frame(width: 6, height: 6)
@@ -905,12 +1024,7 @@ private struct SetRowView: View {
             perform: { onOptions() }
         )
         .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(
-            (row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged")
-            + (row.kind == .normal ? "" : ", \(row.kind.label)")
-            + (row.quality.map { ", \($0.label)" } ?? "")
-            + (isRecord ? ". Personal record." : "")
-        )
+        .accessibilityLabel(spokenLabel)
         .accessibilityHint("Tap to log. Hold for set options.")
         .accessibilityAction { log() }
         // The actions hang off the BADGE, not off the row.
@@ -924,6 +1038,21 @@ private struct SetRowView: View {
             Button("Set options") { onOptions() }
             Button("Delete set") { onDelete() }
         }
+    }
+
+    /// Everything the badge means, in one sentence.
+    ///
+    /// A `let` chain and not an inline `+` chain: five optional interpolations
+    /// concatenated inside a view modifier is one expression the type checker
+    /// gives up on ("unable to type-check this expression in reasonable time"),
+    /// and it does not name the operand that tipped it over.
+    private var spokenLabel: String {
+        var parts: [String] = [row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged"]
+        if let side = row.side { parts.append(side) }
+        if row.kind != .normal { parts.append(row.kind.label) }
+        if let tags = SetQuality.summary(row.qualities) { parts.append(tags) }
+        let sentence = parts.joined(separator: ", ")
+        return isRecord ? sentence + ". Personal record." : sentence
     }
 
     private var isRecord: Bool { row.isRecord && row.isDone }
@@ -1311,6 +1440,23 @@ private struct StepControl: View {
     /// touch-up cannot both commit — and the action's test is a comparison
     /// rather than a race: while they differ a press owns this control, and
     /// while they agree nothing does.
+    ///
+    /// ── AND WHY THE MATCH IS DEFERRED BY ONE TURN ───────────────────────────
+    /// The paragraph above assumed an order — action first, `isPressed` second
+    /// — and SwiftUI does not contract for one. Delivered the other way round,
+    /// the release matched the generations BEFORE the action ran, the action's
+    /// `guard !pressActive` then read false, and it applied the coarse step a
+    /// second time. Every tap moved the number twice: reps by 2 where the
+    /// control is declared `coarse: 1`, load by 5 where it is declared 2.5, and
+    /// a hold's fine step by 2.5 where `Ceilings.loadStepFineKg` is 1.25 —
+    /// three "wrong constant" bug reports with the right constants in the
+    /// source, and `onRelease` committing twice underneath them.
+    ///
+    /// Matching them on the NEXT main-actor turn makes the guard hold under
+    /// either order: whichever edge arrives first, anything else in the same
+    /// turn still sees the press as owning the step. An assistive activation
+    /// produces no press edges at all, so the two are equal from the start and
+    /// the action still falls through — which is the only reason it exists.
     @State private var pressGeneration = 0
     @State private var releasedGeneration = 0
 
@@ -1420,8 +1566,19 @@ private struct StepControl: View {
     private func release() {
         cancelRamp()
         guard pressActive else { return }
-        releasedGeneration = pressGeneration
+        let generation = pressGeneration
         onRelease()
+        // NOT `releasedGeneration = pressGeneration` here. Clearing the press's
+        // ownership inside the same turn is what let the `Button`'s own action
+        // — which may arrive after this — step the value a second time. One
+        // hop, and the guard holds whichever edge SwiftUI delivers first.
+        //
+        // Idempotent across a second release in between (a scroll steal
+        // followed by a real touch-up): `pressActive` is false by then, so this
+        // returns above. A press that starts before the hop lands bumps
+        // `pressGeneration` past `generation`, and the assignment then leaves
+        // the NEW press owning the control, which is correct.
+        Task { @MainActor in releasedGeneration = generation }
     }
 
     private func cancelRamp() {
@@ -1513,6 +1670,21 @@ private struct NumericField: View {
             .onyxType(prominent ? .body : .secondary)
             .fontWeight(prominent ? .semibold : .regular)
             .onyxNumeral()
+            // ── A LOAD MUST NEVER ELLIPSISE ─────────────────────────────────
+            // A `TextField` truncates by default, and the field is inside a
+            // FLEXIBLE track — so at 375 pt `11.25` and `13.75`, the two loads
+            // the fine step exists to produce, both rendered `11…`. Half a
+            // number is worse than a small one: `11…` and `13…` are the same
+            // glyph count and read as `11` and `13`, which are real loads two
+            // plates away from the truth.
+            //
+            // The floor stays at `SetColumn.weightFloor`, which now fits six
+            // glyphs — this only catches what is past it (a 1074 kg leg press
+            // at a large non-accessibility type size), and 0.6 keeps body-size
+            // numerals above the 11 pt the token discipline calls the smallest
+            // legible role.
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .foregroundStyle(
                 value == nil ? Color.onyx.textTertiary : (tint ?? Color.onyx.textPrimary)
             )
