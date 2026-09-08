@@ -189,6 +189,12 @@ final class DayModel {
         /// vitals do — the date changed, or the store did — and a tenth stream
         /// would be a tenth thing to keep in step with the other nine.
         var sessions: [WorkoutSummary] = []
+        /// The stress index over the fortnight ending on the selected date,
+        /// oldest first — the tile's sparkline and its headline reading, which
+        /// is the LAST entry (§U5.3). Computed on read: v1 stores no column.
+        var stress: [StressDay] = []
+        /// The selected day's index term by term, for the breakdown sheet.
+        var stressBreakdown: Stress.Breakdown?
         /// False until the first read lands, so the rows can say "—" honestly
         /// rather than draw a zero they have not read yet.
         var loaded = false
@@ -233,9 +239,10 @@ final class DayModel {
         let to = date
         let from = ISODate.addDays(to, -(Self.baselineDays - 1)) ?? to
         let database = database
+        let userId = userId
         Task { [weak self] in
             let window = await Task.detached(priority: .userInitiated) {
-                Self.readWindow(database: database, from: from, to: to)
+                Self.readWindow(database: database, userId: userId, from: from, to: to)
             }.value
             guard let self, self.date == to else { return }
             self.window = window
@@ -248,7 +255,7 @@ final class DayModel {
     private nonisolated static let baselineDays = 14
     private nonisolated static let trendDays = 7
 
-    private nonisolated static func readWindow(database: AppDatabase, from: String, to: String) -> Window {
+    private nonisolated static func readWindow(database: AppDatabase, userId: String, from: String, to: String) -> Window {
         // Unfiltered on `user_id`, like every other read in the app: the local
         // store is one user's mirror and the id is `""` until auth resolves.
         // See the long note in `WorkoutWeek.build`.
@@ -297,6 +304,19 @@ final class DayModel {
             )
         }
 
+        // ── THE STRESS INDEX IS COMPUTED, NOT STORED (§U5.3) ────────────────
+        // `stressSeries` builds fourteen days of `StressInputs` from the local
+        // store and `stressBreakdown` builds the fifteenth — the selected day
+        // again, kept because the SERIES only carries each term's z rounded to
+        // one decimal, and the breakdown sheet names the weights, the pieces
+        // and how many inputs answered. Fifteen `readinessHistory` reads on a
+        // local SQLite file, off the main actor, on the same schedule the rest
+        // of this window read runs on.
+        // ponytail: the documented upgrade is `daily_scores.stress_index` +
+        // `stress_breakdown`, written by the scorer — see `STRESS_MODEL.md` §6.
+        let stress = (try? database.stressSeries(userId: userId, endingOn: to, limit: 14)) ?? []
+        let stressBreakdown = try? database.stressBreakdown(userId: userId, date: to)
+
         return Window(
             vitals: OnyxSnapshot.Vitals(
                 hrvMs: vital { $0.hrvMs },
@@ -310,6 +330,8 @@ final class DayModel {
             activeKcal: block { $0.activeEnergy },
             score: score,
             sessions: sessions,
+            stress: stress,
+            stressBreakdown: stressBreakdown,
             loaded: true
         )
     }
@@ -402,6 +424,22 @@ final class DayModel {
     }
 
     var sleepGoalHours: Double { goals?.sleepGoalHours ?? 8 }
+
+    // MARK: - Stress (§U5.3)
+
+    /// The fortnight, oldest first. Empty while the window read is in flight.
+    var stressSeries: [StressDay] { window.stress }
+
+    /// The selected day's reading — the LAST entry in the series, by
+    /// construction (`StressSeries.build` ends on the date it was asked for).
+    /// Nil on a day where nothing answered, which the tile draws as a gap.
+    var stress: StressDay? {
+        guard let last = window.stress.last, !last.empty else { return nil }
+        return last
+    }
+
+    /// Term by term, for the breakdown sheet.
+    var stressBreakdown: Stress.Breakdown? { window.stressBreakdown }
 
     // MARK: - The now strip
 

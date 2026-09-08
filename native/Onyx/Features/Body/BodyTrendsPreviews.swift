@@ -14,7 +14,25 @@ enum BodyTrendsPreviews {
     static let userId = PulsePreviews.userId
 
     @MainActor
-    static func seeded() -> BodyVitalsSlice {
+    static func seeded() -> BodyVitalsSlice { seededStore().slice }
+
+    /// The store AND what this screen reads out of it.
+    ///
+    /// ── WHY THE STRESS SERIES CANNOT COME FROM THE ENVIRONMENT ──────────────
+    /// Every other chart here is fed the `BodyVitalsSlice` the harness built,
+    /// and the in-memory store behind it is thrown away. `StressSection` is the
+    /// one that reads the DATABASE (v1 computes the index on read), and the
+    /// preview environment's store is empty — so left to itself it photographs
+    /// the empty state on a screen where every chart above it has ninety days
+    /// of data. Reading the series out of the same store, once, is what keeps
+    /// the shot one account.
+    ///
+    /// The seed has no `sleep_sessions` and no sessions, so fragmentation and
+    /// load go unanswered and the index is carried by the autonomic term — a
+    /// real reading, and the "2 of 4 terms answered" callout is a state the
+    /// chart genuinely has to draw.
+    @MainActor
+    static func seededStore() -> (slice: BodyVitalsSlice, stress: [StressDay]) {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
         let today = LogicalDay.today()
         let from = ISODate.addDays(today, -89) ?? today
@@ -71,23 +89,31 @@ enum BodyTrendsPreviews {
                 }
             }
         }
-        return (try? database.bodyVitals(userId: userId, from: from, to: today)) ?? .empty
+        return (
+            slice: (try? database.bodyVitals(userId: userId, from: from, to: today)) ?? .empty,
+            stress: (try? database.stressSeries(userId: userId, endingOn: today, limit: StressSection.days)) ?? []
+        )
     }
 
     @MainActor @ViewBuilder
     static func view(_ screen: String) -> some View {
         switch screen {
         case "body-trends":
-            NavigationStack { BodyTrendsView(seeded: seeded()) }
+            let store = seededStore()
+            NavigationStack { BodyTrendsView(seeded: store.slice, seededStress: store.stress) }
                 .environment(AppEnvironment.preview)
         case "body-trends-empty":
-            NavigationStack { BodyTrendsView(seeded: .empty) }
+            // `[]`, not the environment's answer: an empty screen has to be
+            // empty all the way down, and a live read here would be the one
+            // section that went off and computed something.
+            NavigationStack { BodyTrendsView(seeded: .empty, seededStress: []) }
                 .environment(AppEnvironment.preview)
         case "body-trends-tooltip":
             // The ledger card, pinned. A scrub is a gesture and a screenshot
             // cannot perform one, so the harness banks the reading the finger
             // would have stopped on.
-            let slice = seeded()
+            let store = seededStore()
+            let slice = store.slice
             NavigationStack {
                 BodyTrendsView(
                     seeded: slice,
@@ -95,8 +121,23 @@ enum BodyTrendsPreviews {
                         .map(\.date)
                         .sorted()
                         .dropLast(3)
-                        .last
+                        .last,
+                    seededStress: store.stress
                 )
+            }
+            .environment(AppEnvironment.preview)
+        // The stress card on its own ground.
+        //
+        // On the full screen it is the fourth section down — below a 90-day
+        // composition chart and a steps chart — and a screenshot photographs
+        // the first screen only, so the chart §U5.3 adds cannot be reviewed
+        // there at all. Same reason `doms` shoots its tile alone.
+        case "body-trends-stress":
+            NavigationStack {
+                ScrollView { StressSection(days: seededStore().stress).padding(16) }
+                    .onyxScreen(.body)
+                    .navigationTitle("Trends")
+                    .navigationBarTitleDisplayMode(.inline)
             }
             .environment(AppEnvironment.preview)
         default:
@@ -107,4 +148,5 @@ enum BodyTrendsPreviews {
 
 #Preview("Body trends") { BodyTrendsPreviews.view("body-trends") }
 #Preview("Body trends — empty") { BodyTrendsPreviews.view("body-trends-empty") }
+#Preview("Body trends — stress") { BodyTrendsPreviews.view("body-trends-stress") }
 #endif
