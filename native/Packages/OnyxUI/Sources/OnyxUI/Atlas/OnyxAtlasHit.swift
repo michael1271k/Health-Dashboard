@@ -4,8 +4,8 @@ import OnyxCore
 /// Which muscle is under a finger.
 ///
 /// ── WHY THE PATHS ARE THE HIT TARGETS AND NOT A GRID OF BOXES ───────────────
-/// The obvious cheap answer is a table of rectangles over the figure — nine
-/// boxes for the nine groups, tuned by eye. It is cheap until the atlas is
+/// The obvious cheap answer is a table of rectangles over the figure — ten
+/// boxes for the ten groups, tuned by eye. It is cheap until the atlas is
 /// regenerated: `OnyxAtlas.swift` is emitted from `src/lib/body/atlas.ts` and
 /// `atlas-parity.test.ts` fails when the two disagree, so the DRAWING can never
 /// drift — but a hand-tuned box table is not in that contract and would drift

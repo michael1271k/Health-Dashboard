@@ -195,7 +195,9 @@ enum PreviewHarness {
                 bouts: { [] }, lastBout: PreviewHarness.sampleLastBout
             )
             .environment(AppEnvironment.preview)
-        case "today", "today-edit", "today-sheet", "today-sheet-vitals", "today-weighin", "today-board":
+        case "today", "today-edit", "today-sheet", "today-sheet-vitals",
+             "today-sheet-steps", "today-sheet-muscle", "today-sheet-records",
+             "today-weighin", "today-board":
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history",
              "session-atlas", "session-edit":

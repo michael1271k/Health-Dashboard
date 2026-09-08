@@ -9,7 +9,7 @@ import type { DomsMuscle } from '@/lib/hooks/useRecovery'
  *
  *   · raw program tokens   (`muscleMap.ts` — 'lats', 'inner_thigh', 'pecs')
  *   · 13 LANDMARK MUSCLES  (`landmarks.ts` — what volume is targeted against)
- *   · 9 DOMS muscles       (`useRecovery.ts` — what soreness is reported in)
+ *   · 10 DOMS muscles      (`useRecovery.ts` — what soreness is reported in)
  *
  * The atlas is keyed on the LANDMARK muscles, because those are the ones the
  * program actually prescribes and the only set that distinguishes the things a
@@ -165,13 +165,18 @@ export const MUSCLE_PATHS: readonly AtlasPath[] = [
   { muscle: 'Biceps', view: 'front', d: 'M81,62 C86,66 89,73 90,82 C91,91 91,100 90,108 L83,106 C84,98 84,90 82,81 C81,73 80,67 79,62 Z' },
   { muscle: 'Forearms', view: 'front', d: 'M30,112 C30,121 31,131 33,140 C34,144 35,146 36,148 L42,146 C40,139 39,131 38,123 C38,118 38,115 38,111 Z' },
   { muscle: 'Forearms', view: 'front', d: 'M90,112 C90,121 89,131 87,140 C86,144 85,146 84,148 L78,146 C80,139 81,131 82,123 C82,118 82,115 82,111 Z' },
-  { muscle: 'Quads', view: 'front', d: 'M41,153 C37,164 36,178 39,192 L52,192 C53,178 54,164 56,153 Z' },
-  { muscle: 'Quads', view: 'front', d: 'M79,153 C83,164 84,178 81,192 L68,192 C67,178 66,164 64,153 Z' },
-  // Adductors: the inner sliver of each thigh. Small on purpose — it is a small
-  // muscle, and drawing it larger to make it tappable would misstate the
-  // anatomy on the one surface whose job is to state the anatomy.
-  { muscle: 'Adductors', view: 'front', d: 'M57,153 C57,164 57,174 56,184 L59,184 C59,174 59,164 59,153 Z' },
-  { muscle: 'Adductors', view: 'front', d: 'M63,153 C63,164 63,174 64,184 L61,184 C61,174 61,164 61,153 Z' },
+  { muscle: 'Quads', view: 'front', d: 'M41,153 C37,164 36,178 39,192 L50,192 C51,178 52,164 52,153 Z' },
+  { muscle: 'Quads', view: 'front', d: 'M79,153 C83,164 84,178 81,192 L70,192 C69,178 68,164 68,153 Z' },
+  // ── THE ADDUCTORS TOOK THE MEDIAL THIRD BACK (2026-09-08) ─────────────────
+  // They used to be a two-unit sliver, drawn small "on purpose" and sitting
+  // OUTSIDE the leg silhouette by about a unit at the hip. At a 24 px thumbnail
+  // that is not a small muscle, it is no muscle: it could not be seen, could not
+  // be tapped, and its colour could not be read — so the Inner thighs rating
+  // would have had nothing to light. The quad's inner edge is pulled in by four
+  // units at the hip and two at the knee, and the adductor takes the strip it
+  // vacates, which is where the adductor group actually lies.
+  { muscle: 'Adductors', view: 'front', d: 'M52,153 C52,164 51,178 50,192 L54,192 C55,178 56,164 58,153 Z' },
+  { muscle: 'Adductors', view: 'front', d: 'M68,153 C68,164 69,178 70,192 L66,192 C65,178 64,164 62,153 Z' },
   { muscle: 'Calves', view: 'front', d: 'M37,200 C36,210 36,222 38,232 C39,236 40,238 42,239 L51,239 C52,228 52,214 51,200 Z' },
   { muscle: 'Calves', view: 'front', d: 'M83,200 C84,210 84,222 82,232 C81,236 80,238 78,239 L69,239 C68,228 68,214 69,200 Z' },
 
@@ -303,6 +308,9 @@ export const DOMS_TO_LANDMARK: Record<DomsMuscle, readonly LandmarkMuscle[]> = {
   Glutes: ['Glutes'],
   Quads: ['Quads'],
   Hamstrings: ['Hamstrings'],
+  // The adductors, which until 2026-09-08 were the only landmark the atlas
+  // drew that no reported soreness could ever light.
+  'Inner thighs': ['Adductors'],
   Calves: ['Calves'],
 }
 

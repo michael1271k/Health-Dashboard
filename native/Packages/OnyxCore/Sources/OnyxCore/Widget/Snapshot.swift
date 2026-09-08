@@ -263,12 +263,26 @@ public struct OnyxSnapshot: Codable, Sendable, Equatable {
     public let volumeKg: Double?
     public let setCount: Int?
     public let prCount: Int?
-    public init(durationMin: Int? = nil, sessionRpe: Double? = nil, volumeKg: Double? = nil, setCount: Int? = nil, prCount: Int? = nil) {
+    /// What the session cost, as `workout_sessions.calories_burned` holds it.
+    ///
+    /// Summed across the day's sessions, like volume: two sessions cost what
+    /// they both cost. Nil — never zero — when nothing measured or estimated
+    /// one, because a training day that reads `0 kcal` is a claim.
+    public let caloriesKcal: Double?
+    /// Mean heart rate over the session, `workout_sessions.avg_bpm`.
+    ///
+    /// Taken from the LONGEST session and never averaged across two, for the
+    /// reason duration and RPE are: the mean of two means is a number that
+    /// describes neither bout.
+    public let avgBpm: Int?
+    public init(durationMin: Int? = nil, sessionRpe: Double? = nil, volumeKg: Double? = nil, setCount: Int? = nil, prCount: Int? = nil, caloriesKcal: Double? = nil, avgBpm: Int? = nil) {
       self.durationMin = durationMin
       self.sessionRpe = sessionRpe
       self.volumeKg = volumeKg
       self.setCount = setCount
       self.prCount = prCount
+      self.caloriesKcal = caloriesKcal
+      self.avgBpm = avgBpm
     }
   }
 

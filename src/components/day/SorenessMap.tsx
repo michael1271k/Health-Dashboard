@@ -37,7 +37,7 @@ export const GROUP_MUSCLES: Record<SorenessGroup, readonly DomsMuscle[]> = {
   torso: ['Chest', 'Abs'],
   back: ['Back'],
   arms: ['Shoulders', 'Arms'],
-  legs: ['Glutes', 'Quads', 'Hamstrings', 'Calves'],
+  legs: ['Glutes', 'Quads', 'Hamstrings', 'Inner thighs', 'Calves'],
 }
 
 export const GROUP_LABEL: Record<SorenessGroup, string> = {
@@ -59,7 +59,7 @@ export function groupOf(muscle: DomsMuscle): SorenessGroup {
 /**
  * ── THE GEOMETRY MOVED ───────────────────────────────────────────────────────
  * The 21 hand-authored paths that used to live here are now `MUSCLE_PATHS` in
- * `lib/body/atlas.ts`, keyed on the 13 LANDMARK muscles rather than the 9 DOMS
+ * `lib/body/atlas.ts`, keyed on the 16 LANDMARK muscles rather than the 10 DOMS
  * ones. Same viewBox, same skeleton, same silhouette — this is a
  * reorganisation, not a redraw.
  *
@@ -77,17 +77,15 @@ export function groupOf(muscle: DomsMuscle): SorenessGroup {
 /**
  * The group a drawn muscle opens.
  *
- * Every landmark the atlas draws must lead somewhere, and one of them —
- * Adductors — has no DOMS muscle at all: soreness is reported in nine muscles
- * and the inner thigh is not one of them. Rather than invent a tenth rating (or
- * fold adductors into Quads, which would light the wrong belly whenever a leg
- * day was sore), the tap opens the Legs picker, where the muscles that ARE
- * rated live.
+ * Every landmark the atlas draws must lead somewhere, and Adductors used to be
+ * the one that led nowhere — it had no DOMS muscle, so it fell through to a
+ * hand-written special case pointing at the Legs picker. `Inner thighs` is that
+ * tenth rating, so the fold is total again and the special case is gone. The
+ * `torso` fallback stays as the unreachable default a total map still needs.
  */
 export function groupOfLandmark(muscle: LandmarkMuscle): SorenessGroup {
   const doms = landmarkToDoms(muscle)
-  if (doms) return groupOf(doms)
-  return muscle === 'Adductors' ? 'legs' : 'torso'
+  return doms ? groupOf(doms) : 'torso'
 }
 
 /** Every muscle drawn on a given view. Order follows DOMS_MUSCLES. */

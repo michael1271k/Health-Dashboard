@@ -63,6 +63,22 @@ public struct DailyLogRow: Codable, FetchableRecord, PersistableRecord, Sendable
     public var nutritionException: String?
     public var nutritionEstimated: Bool
     public var sleepOnsetTrouble: Bool
+    /// The watch got this night wrong — a phone left on the bed, a nap read as
+    /// a night, a workout counted as sleep. Self-reported, scored by nothing,
+    /// and carried into the export ONLY when it is true: a flag on every row
+    /// saying "this reading is fine" is six lines of noise a week.
+    ///
+    /// ── AND WHY IT IS OPTIONAL WHERE ITS NEIGHBOUR IS NOT ──────────────────
+    /// `upsertRow` encodes the WHOLE row and PostgREST rejects a body naming a
+    /// column the table does not have — the whole request, not the field. The
+    /// Postgres half of this is `docs/sql/dashboard-polish.sql` and the founder
+    /// runs it by hand, so until they do, a non-optional `Bool` would put
+    /// `"sleep_inaccurate": false` in every daily_logs push and 400 all of them
+    /// — steps, weight, HRV, the lot. Optional means `encodeIfPresent`, so a
+    /// nil is simply absent from the body and nothing else on the row is at
+    /// risk. Only the day someone actually flags travels early, and only that
+    /// day's push waits for the migration.
+    public var sleepInaccurate: Bool?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -115,6 +131,7 @@ public struct DailyLogRow: Codable, FetchableRecord, PersistableRecord, Sendable
         case nutritionException = "nutrition_exception"
         case nutritionEstimated = "nutrition_estimated"
         case sleepOnsetTrouble = "sleep_onset_trouble"
+        case sleepInaccurate = "sleep_inaccurate"
     }
 
     public init(
@@ -167,7 +184,8 @@ public struct DailyLogRow: Codable, FetchableRecord, PersistableRecord, Sendable
         estimatedWaistToHipRatio: Double? = nil,
         nutritionException: String? = nil,
         nutritionEstimated: Bool,
-        sleepOnsetTrouble: Bool
+        sleepOnsetTrouble: Bool,
+        sleepInaccurate: Bool? = nil
     ) {
         self.id = id
         self.userId = userId
@@ -219,6 +237,7 @@ public struct DailyLogRow: Codable, FetchableRecord, PersistableRecord, Sendable
         self.nutritionException = nutritionException
         self.nutritionEstimated = nutritionEstimated
         self.sleepOnsetTrouble = sleepOnsetTrouble
+        self.sleepInaccurate = sleepInaccurate
     }
 }
 

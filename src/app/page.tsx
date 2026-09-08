@@ -45,6 +45,7 @@ import { useCustomSupplements, customSlotsForDate } from '@/lib/hooks/useCustomS
 import { useBioSeries } from '@/lib/hooks/useBioStrips'
 import { SleepStages } from '@/components/dashboard/SleepStages'
 import { SleepOnsetToggle } from '@/components/day/SleepOnsetToggle'
+import { SleepInaccurateToggle } from '@/components/day/SleepInaccurateToggle'
 
 // Modal-only bodies (522 lines between them) that were in the dashboard's
 // first-load bundle even though they render only once the domain sheet opens.
@@ -617,6 +618,7 @@ export default function DashboardPage() {
                 today. One component, so the two surfaces cannot drift into
                 disagreeing about what the flag means or where it is written. */}
             <div className="mt-3"><SleepOnsetToggle date={logicalTodayISO()} /></div>
+            <div className="mt-2"><SleepInaccurateToggle date={logicalTodayISO()} /></div>
           </>
         )}
         {open === 'fuel' && (

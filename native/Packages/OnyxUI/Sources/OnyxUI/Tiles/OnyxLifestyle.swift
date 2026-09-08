@@ -1612,10 +1612,29 @@ struct WellbeingLedgerFace: View {
       VStack(spacing: 6) {
         ForEach(wellbeingParts(s, mono: mono), id: \.0) { name, value, color in
           HStack(spacing: 6) {
-            Text(name.prefix(4))
+            // ── THE WORD, NOT THE FIRST FOUR LETTERS ──────────────────────
+            // This was `name.prefix(4)` in a 30 pt column, which rendered the
+            // five sub-scores as SLEE · NUTR · ACTI · WORK · RECO. A truncated
+            // label is not a shorter label, it is a different word: "ACTI" and
+            // "RECO" are not readable as activity and recovery at a glance, and
+            // a glance is the entire budget a widget gets.
+            //
+            // So the label column is sized for the longest word in the set
+            // (NUTRITION) and the RAIL gives the width up — it is the one
+            // elastic thing in the row and the only one that loses nothing by
+            // being shorter, because a proportion reads the same at any length.
+            // Fixed, not intrinsic: every rail must start on the same line, and
+            // five labels sized to themselves is five different start points.
+            //
+            // `minimumScaleFactor` rather than a wider column, for the word
+            // that eventually will not fit: shrinking is legible and truncation
+            // is not, and the column keeps its width either way.
+            Text(name)
               .font(OnyxWidgetType.face(8, weight: .bold))
               .foregroundStyle(Color.onyx.textSecondary)
-              .frame(width: 30, alignment: .leading)
+              .lineLimit(1)
+              .minimumScaleFactor(0.7)
+              .frame(width: 52, alignment: .leading)
             Rail(progress: value.map { min(1, max(0, $0 / 100)) }, color: color, height: 4)
             Text(value.map { "\(Int($0.rounded()))" } ?? "—")
               .font(OnyxWidgetType.face(9, weight: .semibold, design: .monospaced))
@@ -1671,6 +1690,11 @@ struct WellbeingFace: View {
             Text(name)
               .font(OnyxWidgetType.face(8, weight: .bold))
               .foregroundStyle(Color.onyx.textSecondary)
+              // Same rule as the Medium: one alignment line for every rail,
+              // and a word that outgrows the column shrinks rather than losing
+              // its ending.
+              .lineLimit(1)
+              .minimumScaleFactor(0.7)
               .frame(width: 62, alignment: .leading)
             Rail(progress: value.map { min(1, max(0, $0 / 100)) }, color: color, height: 4)
             Text(value.map { "\(Int($0.rounded()))" } ?? "—")

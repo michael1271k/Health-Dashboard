@@ -93,17 +93,17 @@ struct SleepTile: View {
                     .onyxType(.secondary)
                     .foregroundStyle(Color.onyx.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                onsetRow
+                flagRows
             } else if stacked {
                 arc
                 stageRows
-                onsetRow
+                flagRows
             } else {
                 HStack(alignment: .top, spacing: OnyxSpace.m) {
                     arc.frame(width: arcWidth)
                     VStack(spacing: 0) {
                         stageRows
-                        onsetRow
+                        flagRows
                     }
                 }
             }
@@ -322,14 +322,45 @@ struct SleepTile: View {
     /// filled/hollow circle is what makes it read as a state rather than as a
     /// button that opens something; a bordered control with only a sentence in
     /// it is the one shape a two-state fact must not take.
+    /// The two nightly facts that come from you rather than from the watch.
+    ///
+    /// ── WHY THE SECOND ONE COSTS ALMOST NOTHING ─────────────────────────────
+    /// The budget note above is written against FOUR 22 pt stage rows beside a
+    /// ~110 pt arc, and one 32 pt toggle fitting in the slack. A second 32 pt
+    /// row does not fit that slack — so it is drawn only when there is a night
+    /// to dispute. On a night the watch reported nothing there is nothing to
+    /// call inaccurate, and the empty-state branch keeps its single control.
+    @ViewBuilder
+    private var flagRows: some View {
+        onsetRow
+        if night != nil { inaccurateRow }
+    }
+
     private var onsetRow: some View {
-        let on = model.log?.sleepOnsetTrouble ?? false
-        return Toggle(isOn: Binding(
-            get: { on },
+        flagRow(
+            "Trouble falling asleep",
+            on: model.log?.sleepOnsetTrouble ?? false,
             set: { model.setSleepOnsetTrouble($0) }
-        )) {
+        )
+    }
+
+    /// The dispute. HealthKit's sleep is the only reading on this screen with
+    /// no other source to check it against — a phone left on the bed reads as a
+    /// night, a nap folds into one — so it is the only one that needs a way to
+    /// be called wrong. It changes NO number here: it travels with the night
+    /// into the weekly export and lets the reader discount it.
+    private var inaccurateRow: some View {
+        flagRow(
+            "Watch data inaccurate",
+            on: model.log?.sleepInaccurate == true,
+            set: { model.setSleepInaccurate($0) }
+        )
+    }
+
+    private func flagRow(_ title: String, on: Bool, set: @escaping (Bool) -> Void) -> some View {
+        Toggle(isOn: Binding(get: { on }, set: set)) {
             Label {
-                Text("Trouble falling asleep")
+                Text(title)
                     .onyxType(.caption)
                     .lineLimit(stacked ? nil : 1)
                     .minimumScaleFactor(stacked ? 1 : 0.75)
@@ -346,7 +377,7 @@ struct SleepTile: View {
         .controlSize(.regular)
         .tint(accent)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityLabel("Trouble falling asleep")
+        .accessibilityLabel(title)
         // `ButtonToggleStyle` publishes `.isButton` + `.isSelected`, so the ON
         // state reads "selected" and the OFF state reads as a plain button with
         // nothing to say it has two states at all. The value is the fix; the

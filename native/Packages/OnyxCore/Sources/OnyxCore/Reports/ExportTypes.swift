@@ -82,6 +82,10 @@ public struct ExportDay: Codable, Equatable, Sendable {
     public var bedTime: String?
     public var wakeTime: String?
     public var sleepOnsetTrouble: Bool?
+    /// The night the wearer says the watch got wrong. Absent on every payload
+    /// that is not disputing one — the builder omits the key rather than
+    /// writing `false` seven times a week.
+    public var sleepInaccurate: Bool?
     /// The battery's inputs the raw body cannot show, and the stored
     /// `battery_pct`. Read only by the Derived section. The two seven-day
     /// baselines are v8's (the recovery score still reads them); `readiness`

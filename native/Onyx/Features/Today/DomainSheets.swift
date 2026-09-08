@@ -1,5 +1,6 @@
 import SwiftUI
 import OnyxCore
+import OnyxData
 import WidgetKit
 import OnyxUI
 
@@ -22,6 +23,13 @@ import OnyxUI
 ///     readings appeared twice and two appeared three times, in three different
 ///     box sizes, at 8 pt.
 ///
+/// Three more joined them in the dashboard-polish wave — Steps, Muscle focus
+/// and Records — for a different reason. Theirs are not the same answer twice;
+/// their Large faces answer a DIFFERENT question from the one the sheet is
+/// opened to ask, and `TileSheets.swift` carries the argument for each. Train
+/// is a fourth case and is not here at all: a logged day opens that SESSION's
+/// own page, which `TodayTabView.open` routes to directly.
+///
 /// Both are now purpose-built for the sheet rather than assembled out of widget
 /// faces: one arc, one list, app type throughout. A widget face is a GLANCE at
 /// a fixed size with no Dynamic Type; a sheet is a page you read. Reusing the
@@ -29,6 +37,10 @@ import OnyxUI
 struct DomainSheet: View {
     let id: WidgetId
     let entry: OnyxTileEntry
+    /// The week's sets against the week's targets — the one thing on any of
+    /// these sheets that the widget payload does not carry, because targets are
+    /// a (plan, phase) row and the payload is a day.
+    var muscleFocus: MuscleFocusSummary?
     let onStartWorkout: () -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -40,11 +52,16 @@ struct DomainSheet: View {
                 switch id {
                 case .sleep: SleepSheetBody(snapshot: s)
                 case .vitals: VitalsSheetBody(snapshot: s)
+                // Three more that are not their own Large face — see the header
+                // of `TileSheets.swift` for what each one was drawing instead.
+                case .steps: StepsSheetBody(snapshot: s)
+                case .muscle: MuscleFocusSheetBody(focus: muscleFocus ?? MuscleFocusSummary())
+                case .pr: RecordsSheetBody(snapshot: s)
                 default: stack
                 }
             }
             .onyxScreen(id.domain)
-            .navigationTitle(id.title)
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } } }
         }
@@ -55,6 +72,22 @@ struct DomainSheet: View {
         .presentationContentInteraction(.scrolls)
         .presentationDragIndicator(.visible)
         .presentationBackground(GlassLevel.sheet.material)
+    }
+
+    /// What the SHEET is called, which is not always what the TILE is called.
+    ///
+    /// A widget's title is written for a tile: "Latest PR" is exactly right on a
+    /// 158 pt square showing one record, and exactly wrong at the top of a page
+    /// listing every record ever set. The same for "Muscle Focus", which the
+    /// sheet answers over a whole week. Everything else keeps the catalogue's
+    /// name — a sheet that renames its tile is a sheet you have to work out you
+    /// opened from it.
+    private var title: String {
+        switch id {
+        case .pr: "Records"
+        case .muscle: "Weekly Muscle Focus"
+        default: id.title
+        }
     }
 
     /// The Large face, plus what it cannot hold. Every domain but the two above.

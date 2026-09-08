@@ -47,8 +47,12 @@ describe('toLandmarkMuscle', () => {
     expect(toLandmarkMuscle('anterior_delts')).toBe('Front delts')
   })
 
-  it('drops untracked tokens (abductors)', () => {
-    expect(toLandmarkMuscle('abductors')).toBeNull()
+  it('folds abductors onto Adductors — one inner-thigh region, one credit', () => {
+    // It returned null until 2026-09-08, on the argument that hip abductors are
+    // "not a tracked target" — the same argument that once threw away every
+    // `inner_thigh` set. The atlas draws ONE inner-thigh region and the soreness
+    // map asks ONE question about it, so the credit lands in one place too.
+    expect(toLandmarkMuscle('abductors')).toBe('Adductors')
   })
 })
 

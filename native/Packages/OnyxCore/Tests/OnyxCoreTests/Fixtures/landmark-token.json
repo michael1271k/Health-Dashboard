@@ -288,7 +288,7 @@
       "input": {
         "token": "abductors"
       },
-      "expected": null
+      "expected": "Adductors"
     },
     {
       "name": "\"neck\"",

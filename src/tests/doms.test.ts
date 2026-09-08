@@ -9,7 +9,7 @@ describe('DOMS_MUSCLES', () => {
     // Hip thrusts and RDLs are the two biggest lifts on Legs B; folding glute
     // soreness into Hamstrings meant one rating had to describe both.
     expect(DOMS_MUSCLES).toContain('Glutes')
-    expect(DOMS_MUSCLES).toHaveLength(9)
+    expect(DOMS_MUSCLES).toHaveLength(10)
   })
 
   it('tracks Abs — every Legs & Core day trains it and it had nowhere to report', () => {
@@ -18,8 +18,15 @@ describe('DOMS_MUSCLES', () => {
 
   it('orders upper, then trunk, then lower', () => {
     expect([...DOMS_MUSCLES]).toEqual([
-      'Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Calves',
+      'Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Inner thighs', 'Calves',
     ])
+  })
+
+  it('tracks Inner thighs — the adductors were drawn but could never be rated', () => {
+    // The atlas has drawn an adductor belly since it was written, and no
+    // reported soreness could ever light it: the tap fell through a special
+    // case to the Legs picker and the muscle itself stayed empty forever.
+    expect(DOMS_MUSCLES).toContain('Inner thighs')
   })
 })
 
@@ -50,6 +57,14 @@ describe('domsMuscleOf — program token → tracked muscle', () => {
     expect(domsMuscleOf('cardio')).toBeNull()
     expect(domsMuscleOf('grip')).toBeNull()
   })
+
+  it('folds BOTH hip tokens onto Inner thighs — one rating, one region', () => {
+    // Adduction and abduction are rated together because the figure draws one
+    // inner-thigh region and asks one question about it.
+    expect(domsMuscleOf('adductors')).toBe('Inner thighs')
+    expect(domsMuscleOf('inner thigh')).toBe('Inner thighs')
+    expect(domsMuscleOf('abductors')).toBe('Inner thighs')
+  })
 })
 
 describe('sorenessSummary — what the panel renders', () => {
@@ -66,10 +81,10 @@ describe('sorenessSummary — what the panel renders', () => {
     expect(s.sore.map((x) => x.muscle)).toEqual(['Chest', 'Glutes', 'Calves'])
   })
 
-  it('folds every unrated muscle into `clear` — 9 muscles cost 3 rows, not 9', () => {
+  it('folds every unrated muscle into `clear` — 10 muscles cost 3 rows, not 10', () => {
     const s = sorenessSummary(doms({ Quads: 3 }))
     expect(s.sore).toHaveLength(1)
-    expect(s.clear).toHaveLength(8)
+    expect(s.clear).toHaveLength(9)
     expect(s.clear).not.toContain('Quads')
   })
 
@@ -83,7 +98,7 @@ describe('sorenessSummary — what the panel renders', () => {
   it('handles no data at all — the pre-migration / untouched case', () => {
     const s = sorenessSummary(undefined)
     expect(s.sore).toEqual([])
-    expect(s.clear).toHaveLength(9)
+    expect(s.clear).toHaveLength(10)
     expect(s.peak).toBe(0)
   })
 })
@@ -100,13 +115,13 @@ describe('the soreness map', () => {
 
   it('gives every drawn muscle somewhere to go when tapped', () => {
     // The map is tappable, so a belly that highlights and then opens nothing is
-    // a dead region. Adductors is the interesting case: it is drawn, and it has
-    // no DOMS rating of its own, so it opens the Legs picker rather than
-    // pretending to be Quads.
+    // a dead region. Adductors WAS the interesting case: drawn, with no rating
+    // of its own, reached only through a hand-written special case. It has its
+    // own rating now, so the fold is total and the special case is gone.
     for (const p of MUSCLE_PATHS) {
       expect(GROUP_MUSCLES[groupOfLandmark(p.muscle)], p.muscle).toBeTruthy()
     }
-    expect(landmarkToDoms('Adductors')).toBeNull()
+    expect(landmarkToDoms('Adductors')).toBe('Inner thighs')
     expect(groupOfLandmark('Adductors')).toBe('legs')
   })
 
@@ -134,7 +149,7 @@ describe('the soreness map', () => {
   })
 
   it('shows the anterior chain on the front and the posterior chain on the back', () => {
-    expect(musclesOnSide('front')).toEqual(['Chest', 'Arms', 'Shoulders', 'Abs', 'Quads', 'Calves'])
+    expect(musclesOnSide('front')).toEqual(['Chest', 'Arms', 'Shoulders', 'Abs', 'Quads', 'Inner thighs', 'Calves'])
     expect(musclesOnSide('back')).toEqual(['Back', 'Arms', 'Shoulders', 'Glutes', 'Hamstrings', 'Calves'])
   })
 

@@ -127,7 +127,11 @@ struct TodayFace: View {
       TodayHeader(entry: entry, mono: mono, branded: !compact)
 
       Text(s?.workout.label ?? "—")
-        .font(OnyxWidgetType.label(compact ? 15 : 18, weight: .bold))
+        // 20 on the Medium, up from 18: the stat grid below it grew to two
+        // rows and a headline that stayed put would have read as the smaller
+        // half of its own tile. `lineLimit(2)` and the scale factor are what
+        // keep "Legs & Core B" inside 338 pt at the larger size.
+        .font(OnyxWidgetType.label(compact ? 15 : 20, weight: .bold))
         .foregroundStyle(.white)
         .lineLimit(2)
         .minimumScaleFactor(0.8)
@@ -335,18 +339,50 @@ private struct TodayPlanned: View {
   }
 }
 
+/// What the session cost, in six figures over two rows.
+///
+/// ── WHY SIX AND NOT FOUR ─────────────────────────────────────────────────
+/// Four figures across one row left the Medium with a band of obsidian above
+/// them that the `Spacer` was collecting — a tile reporting a finished session
+/// and using a third of itself to say nothing. The two readings that fill it
+/// are ones `workout_sessions` has carried all along and no surface but the
+/// session page ever showed: what the session cost in calories, and what the
+/// heart did during it.
+///
+/// ── AND WHY THREE ACROSS RATHER THAN SIX ─────────────────────────────────
+/// Six `Stat`s across a 338 pt Medium is ~56 pt a column, which is narrower
+/// than "1.4 t" plus its label wants at a readable size. Three across is 112,
+/// which is what pays for the type going up from 13 to 15 rather than down.
+///
+/// ── THE GRID IS FIXED, INCLUDING THE EMPTY CELLS ─────────────────────────
+/// A session with no heart rate draws "—" and keeps its cell. This file's own
+/// header is explicit that the three day-states are one layout on purpose —
+/// "a widget whose height and layout change with the day is one you have to
+/// re-read every morning" — and a row that collapses when a reading is
+/// missing is the same defect one axis down.
 private struct TodayStats: View {
   let done: OnyxSnapshot.Today
   let mono: Bool
 
   var body: some View {
-    HStack(spacing: 0) {
-      Stat(value: done.durationMin.map { "\($0)′" }, label: "TIME", color: .white)
-      Stat(value: done.sessionRpe.map { String(format: "%.0f/10", $0) },
-           label: "EFFORT", color: mono ? .white : OnyxDomain.train.accent)
-      Stat(value: OnyxSnapshot.tonnes(done.volumeKg), label: "VOLUME", color: .white)
-      Stat(value: done.prCount.map { "\($0)" }, label: "RECORDS",
-           color: (done.prCount ?? 0) > 0 ? (mono ? .white : Color.onyx.record) : Color.onyx.textSecondary)
+    VStack(spacing: 6) {
+      HStack(spacing: 0) {
+        Stat(value: done.durationMin.map { "\($0)′" }, label: "TIME", color: .white, size: 15)
+        Stat(value: OnyxSnapshot.tonnes(done.volumeKg), label: "VOLUME", color: .white, size: 15)
+        Stat(value: done.prCount.map { "\($0)" }, label: "RECORDS",
+             color: (done.prCount ?? 0) > 0 ? (mono ? .white : Color.onyx.record) : Color.onyx.textSecondary,
+             size: 15)
+      }
+      HStack(spacing: 0) {
+        Stat(value: done.sessionRpe.map { String(format: "%.0f/10", $0) },
+             label: "EFFORT", color: mono ? .white : OnyxDomain.train.accent, size: 15)
+        // No decimal and no thousands separator: it is a kilocalorie count in
+        // a 112 pt column, and "612" is the whole of what it has to say.
+        Stat(value: done.caloriesKcal.map { "\(Int($0.rounded()))" }, label: "CALORIES",
+             color: mono ? .white : OnyxDomain.fuel.accent, size: 15)
+        Stat(value: done.avgBpm.map { "\($0)" }, label: "AVG HR",
+             color: mono ? .white : OnyxDomain.recover.accent, size: 15)
+      }
     }
   }
 }
@@ -367,11 +403,26 @@ struct TodayLargeFace: View {
   private var s: OnyxSnapshot? { entry.snapshot }
   private var accent: Color { mono ? .white : Color.onyx.day(s?.workout.dayKey) }
 
-  /// This week's calendar days, oldest first. The window is 42 days ending
-  /// today, so the last seven ARE the trailing week.
+  /// The seven days ending TODAY.
+  ///
+  /// ── WHY `suffix(7)` WAS THE WRONG SEVEN ─────────────────────────────────
+  /// The docstring here claimed the payload window ends today. It does not:
+  /// `WidgetSnapshotBuilder` runs it to `lastDayOfMonth`, because the same
+  /// slice draws the month grid. So on the 8th the last seven entries were the
+  /// 24th to the 30th — seven days that have not happened, every one of them
+  /// scheduled, none of them logged, and `DayRow` therefore drawing all seven
+  /// as "missed". A widget reporting a week of failures that are actually next
+  /// week's sessions.
+  ///
+  /// Cutting at the snapshot's own date is the fix, and it is the fix for the
+  /// month grid's neighbour too — nothing else reads this property.
   private var recent: [OnyxSnapshot.CalendarDay] {
     let all = s?.calendar ?? []
-    return all.count > 7 ? Array(all.suffix(7)) : all
+    // No date to cut on is the old behaviour, which is right for a payload
+    // that genuinely ends today.
+    guard let today = s?.date else { return Array(all.suffix(7)) }
+    let upToToday = Array(all.prefix { $0.d <= today })
+    return upToToday.count > 7 ? Array(upToToday.suffix(7)) : upToToday
   }
 
   var body: some View {
@@ -491,16 +542,21 @@ struct Stat: View {
   let value: String?
   let label: String
   var color: Color = .white
+  /// 13 is what a row of FOUR can carry. A row of three has 112 pt a column
+  /// instead of 84 and can afford 15, which is the difference between a
+  /// figure you read and one you decode. Passed in rather than derived,
+  /// because the view cannot see how many siblings it has.
+  var size: CGFloat = 13
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       Text(value ?? "—")
-        .font(OnyxWidgetType.face(13, weight: .bold, design: .monospaced))
+        .font(OnyxWidgetType.face(size, weight: .bold, design: .monospaced))
         .foregroundStyle(color)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       Text(label)
-        .font(OnyxWidgetType.face(7, weight: .bold))
+        .font(OnyxWidgetType.face(size >= 15 ? 8 : 7, weight: .bold))
         .foregroundStyle(Color.onyx.textSecondary)
         .lineLimit(1)
     }

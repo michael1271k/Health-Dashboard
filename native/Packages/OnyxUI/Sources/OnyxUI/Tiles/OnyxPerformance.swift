@@ -39,10 +39,13 @@ import OnyxCore
 // unit and the AXIS gets named underneath, so the reader is told which of the
 // four kinds of record they are looking at.
 
+// Public since the dashboard's Records SHEET draws the same rows: a record
+// must read identically on the Home Screen and on the page listing the whole
+// book, and two formatters is how "440 kg" becomes "440.0 kg" on one of them.
 extension OnyxSnapshot.Record {
   /// The figure with the unit its axis implies — and nothing else, so it stays
   /// legible at 28pt.
-  var display: String {
+  public var display: String {
     switch axis {
     case "reps":    return "\(Int(value.rounded()))"
     case "seconds": return "\(Int(value.rounded()))s"
@@ -53,7 +56,7 @@ extension OnyxSnapshot.Record {
 
   /// Which KIND of record this is, in two words. This is the half that was
   /// missing, and the half that stops a set volume reading as a load.
-  var axisLabel: String {
+  public var axisLabel: String {
     switch axis {
     case "weight":  return "heaviest load"
     case "e1rm":    return "est. 1RM"
@@ -66,7 +69,7 @@ extension OnyxSnapshot.Record {
 
   /// The axis as a glyph. Four axes and four shapes, so a ROW says which kind of
   /// record it is without spending a word of its width on the label.
-  var axisSymbol: String {
+  public var axisSymbol: String {
     switch axis {
     case "weight": return "scalemass.fill"
     case "reps":   return "repeat"

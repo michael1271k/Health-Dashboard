@@ -630,6 +630,22 @@ final class DayModel {
         }
     }
 
+    /// "The watch got this night wrong."
+    ///
+    /// Written as `true` or as nil, never as `false`: nil is what keeps the
+    /// column out of the push body until Postgres has it (see `DailyLogRow`),
+    /// and every reader treats the two the same — the night was not disputed.
+    /// It moves NO score. Correcting a measurement by self-report is how a log
+    /// becomes a wish; this marks the reading and leaves it standing.
+    func setSleepInaccurate(_ on: Bool) {
+        log?.sleepInaccurate = on ? true : nil
+        write { [database, userId, date] in
+            try database.editDailyLog(userId: userId, date: date, clearing: on ? [] : ["sleep_inaccurate"]) {
+                $0.sleepInaccurate = on ? true : nil
+            }
+        }
+    }
+
     /// `nil` is "As Planned" and is STORED as nil — the default is resolved on
     /// read, never written, so it can change wording without rewriting history.
     func setWeighInSkipReason(_ reason: String?) {

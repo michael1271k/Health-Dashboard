@@ -67,8 +67,10 @@ struct DomsTile: View {
         }
         .sensoryFeedback(.selection, trigger: taps)
         // One `contextMenu`-shaped affordance for VoiceOver and for anyone who
-        // cannot aim at a 20 pt calf: the same nine groups as named actions,
-        // reachable from the rotor without a text list on screen.
+        // cannot aim at a 20 pt calf: the same ten groups as named actions,
+        // reachable from the rotor without a text list on screen. (Ten since
+        // `Inner thighs` — the adductors were drawn on this map from the day it
+        // was written and could never be rated.)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Soreness map, \(showingBack ? "back" : "front")")
         .accessibilityValue(spoken)

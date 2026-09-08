@@ -130,8 +130,17 @@ struct TodayTabView: View {
         }
         .sheet(item: $model.sheet) { which in
             switch which {
-            case .tile(let id): DomainSheet(id: id, entry: model.entry, onStartWorkout: onOpenTrain)
+            case .tile(let id):
+                DomainSheet(
+                    id: id, entry: model.entry,
+                    muscleFocus: model.feed?.muscleFocus,
+                    onStartWorkout: onOpenTrain
+                )
             case .stack(let slotId): StackEditSheet(slotId: slotId, model: model)
+            case .session(let sessionId):
+                NavigationStack { SessionDetailView(sessionId: sessionId) }
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -153,13 +162,24 @@ struct TodayTabView: View {
         }
     }
 
-    /// Three states for the Workout tile, every one about today: a training
-    /// day opens the logger, a logged or rest day opens the sheet.
+    /// Three states for the Workout tile, every one about today: a training day
+    /// still to do opens the logger, a LOGGED one opens that session's own page,
+    /// and a rest day opens the domain sheet.
+    ///
+    /// The middle case is new. It used to fall through to the sheet, which drew
+    /// the Large face — and the bottom half of that face is a seven-day list,
+    /// so a tile reporting today's session opened a page about the other six
+    /// days. The session you just finished has a page of its own.
+    ///
+    /// It falls back to the sheet when no session id resolves, which is the
+    /// honest answer for a day the mirror says is logged and the local store has
+    /// no row for — a state a pull can be in for a second or two.
     private func open(_ id: WidgetId, _ model: TodayModel) {
-        if id == .train, let w = model.feed?.snapshot.workout, !w.isRestDay, !w.logged {
-            onOpenTrain()
-        } else {
+        guard id == .train, let w = model.feed?.snapshot.workout, !w.isRestDay else {
             model.sheet = .tile(id)
+            return
         }
+        if !w.logged { onOpenTrain(); return }
+        model.sheet = model.todaySessionId.map { .session($0) } ?? .tile(id)
     }
 }
