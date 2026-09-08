@@ -338,9 +338,10 @@ struct SleepEditSheet: View {
             } catch let error as SleepEditError {
                 saving = false
                 failure = switch error {
-                case .emptyWindow:   "Awake has to come after asleep."
-                case .badDate:       "This day cannot hold a night."
-                case .outsideNight:  "That bedtime belongs to a different night."
+                case .emptyWindow:     "Awake has to come after asleep."
+                case .badDate:         "This day cannot hold a night."
+                case .outsideNight:    "That bedtime belongs to a different night."
+                case .impossibleNight: "That is too long to be one night."
                 }
             } catch {
                 saving = false

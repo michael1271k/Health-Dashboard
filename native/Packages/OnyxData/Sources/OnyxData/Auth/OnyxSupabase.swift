@@ -69,7 +69,33 @@ public enum OnyxSupabase {
             options: SupabaseClientOptions(
                 auth: SupabaseClientOptions.AuthOptions(
                     storage: storage,
-                    autoRefreshToken: true
+                    autoRefreshToken: true,
+                    // ── WHY THIS OPT-IN IS ON ───────────────────────────────
+                    // Left at its default `false`, supabase-swift 2.55 tries to
+                    // REFRESH the stored session before it emits
+                    // `.initialSession`, and says so on every launch:
+                    //
+                    //   "Initial session emitted after attempting to refresh the
+                    //    local stored session. This is incorrect behavior and
+                    //    will be fixed in the next major release…"
+                    //
+                    // It is a `reportIssue`, so it is a purple runtime warning in
+                    // Xcode rather than a build one, and it is the behaviour the
+                    // next major version drops. `true` emits what the Keychain
+                    // holds immediately and refreshes behind it.
+                    //
+                    // ── AND WHY THAT IS SAFE FOR THIS APP ───────────────────
+                    // `AppEnvironment`'s `authStateChanges` loop only reads
+                    // `session != nil` and `session.user.id`, so an expired
+                    // session paints the signed-in shell one launch early and
+                    // the refresh that follows either confirms it or emits
+                    // `.signedOut`, which the same loop already handles. That is
+                    // the trade `AuthGate.hasPersistedSession()` already makes on
+                    // the web: paint on the stored token, correct in the
+                    // background. Nothing here gates DATA on the initial event —
+                    // RLS does, and an expired token simply reads nothing until
+                    // the refresh lands.
+                    emitLocalSessionAsInitialSession: true
                 )
             )
         )

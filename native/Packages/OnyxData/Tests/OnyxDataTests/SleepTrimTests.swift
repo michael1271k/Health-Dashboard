@@ -155,6 +155,27 @@ struct SleepTrimTests {
         #expect(throws: SleepEditError.outsideNight(night)) {
             try db.editSleepWindow(userId: user, date: night, start: noon, end: noon.addingTimeInterval(7 * 3600))
         }
+        // The other end. Both of these pass the wake WHEEL's own bounds
+        // (`window.from ... window.to + 6h`), and both describe a night nobody
+        // slept: the store refused neither until W-GATE, and wrote the second
+        // as `duration_min = 1800`.
+        guard let window = NightWindow.range(night) else { Issue.record("no window"); return }
+        #expect(throws: SleepEditError.impossibleNight(night)) {
+            // Wake 7 h past the wheel's own close.
+            try db.editSleepWindow(
+                userId: user, date: night,
+                start: window.to.addingTimeInterval(-3600),
+                end: window.to.addingTimeInterval(7 * 3600)
+            )
+        }
+        #expect(throws: SleepEditError.impossibleNight(night)) {
+            // Inside both wheels, 30 hours long.
+            try db.editSleepWindow(
+                userId: user, date: night,
+                start: window.from,
+                end: window.to.addingTimeInterval(6 * 3600)
+            )
+        }
         #expect(try nightCount(db) == 0)
     }
 

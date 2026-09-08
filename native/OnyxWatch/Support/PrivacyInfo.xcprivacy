@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The watch app gets its OWN manifest for the reason OnyxWidgets does: the
+  required-reason API check runs per Mach-O binary at upload, not once per app,
+  and `OnyxWatch.app` is a separate binary inside the archive. It shipped
+  without one through Wave 10 and both Phase 3 tracks; the W-GATE preflight
+  found it.
+
+  It is the widget's list, not the phone's:
+
+  UserDefaults  CA92.1  `WatchModel`'s own suite — the pulled session and the
+                        last-seen day, so the wrist opens on what it had. Never
+                        leaves the watch.
+  FileTimestamp C617.1  GRDB stats the watch's OWN `onyx.sqlite` (and its -wal)
+                        when it opens it. Unlike the widget this store is
+                        writable — the wrist logs sets offline and the phone
+                        merges them later — but the API and the reason are the
+                        same.
+  DiskSpace     E174.1  SQLite checks free space before it writes.
+
+  Health and Fitness are collected (an `HKWorkoutSession` is the app's runtime
+  and the sets logged here are training data), Linked to the account they sync
+  into, and used for App Functionality only. Email is NOT here: the watch has
+  no auth surface — it inherits a session established on the phone.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeHealth</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeFitness</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+		</dict>
+	</array>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array><string>CA92.1</string></array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array><string>C617.1</string></array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array><string>E174.1</string></array>
+		</dict>
+	</array>
+</dict>
+</plist>

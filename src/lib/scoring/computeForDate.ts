@@ -585,7 +585,17 @@ export async function computeForDate(
     const { finalized: _drop, ...legacy } = scoreRow
     void _drop
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await supabase.from('daily_scores').upsert(legacy as unknown as any, { onConflict: 'user_id,date' })
+    const { error: retryError } = await supabase.from('daily_scores').upsert(legacy as unknown as any, { onConflict: 'user_id,date' })
+    // The retry's error was thrown away, and the row returned anyway. The
+    // trigger above matches ANY message containing "column", so a NOT NULL
+    // violation took this branch, failed identically without `finalized`, and
+    // `/api/compute-score` still counted the day as scored — a green recompute
+    // over days whose `daily_scores` row was never written. Same shape as the
+    // real path below: say so, and return null.
+    if (retryError) {
+      console.error(`[compute-score] upsert ${date} failed (legacy retry):`, retryError.message)
+      return null
+    }
   } else if (error) {
     console.error(`[compute-score] upsert ${date} failed:`, error.message)
     return null

@@ -2,6 +2,7 @@
 import SwiftUI
 import OnyxCore
 import OnyxData
+import OnyxUI
 
 /// Seeded Body & Vitals trends for `#Preview` and `scripts/native-shot.sh`.
 ///
@@ -134,7 +135,7 @@ enum BodyTrendsPreviews {
         // there at all. Same reason `doms` shoots its tile alone.
         case "body-trends-stress":
             NavigationStack {
-                ScrollView { StressSection(days: seededStore().stress).padding(16) }
+                ScrollView { StressSection(days: seededStore().stress).padding(OnyxSpace.l) }
                     .onyxScreen(.body)
                     .navigationTitle("Trends")
                     .navigationBarTitleDisplayMode(.inline)

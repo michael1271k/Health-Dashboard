@@ -360,6 +360,23 @@ public extension AppDatabase {
         // and found by NOBODY reading this night — and by the next night's
         // reader, whose real HealthKit row it would then block forever.
         guard start >= window.from, start < window.to else { throw SleepEditError.outsideNight(date) }
+        // ── AND THE OTHER END, WHICH NOTHING BOUNDED ────────────────────────
+        // Only the bedtime was checked, so `end` was free: the wake wheel
+        // reaches `window.to + 6h` on purpose (a night that ran to one in the
+        // afternoon is real), and a bedtime at the window's own opening noon
+        // made a THIRTY-hour "night" the store accepted and wrote as
+        // `duration_min = 1800`. Nothing downstream questions it — it feeds the
+        // sleep score, the debt gauge, and the stress fragmentation
+        // denominator, where a 30-hour asleep figure reads as an unusually calm
+        // night. Both halves of the picker's own stated range are enforced
+        // here, because the store is the trust boundary and the picker is not.
+        //
+        // ponytail: 24 h is the WINDOW's length, not a physiological claim —
+        // the cap only has to make an impossible night unrepresentable. A
+        // tighter figure is a founder decision, not a defensive one.
+        guard end <= window.to.addingTimeInterval(6 * 3600),
+              end.timeIntervalSince(start) <= 24 * 3600
+        else { throw SleepEditError.impossibleNight(date) }
         return try writer.write { db in
             let inWindow = try SleepSessionRow
                 .filter(Column("user_id") == userId
@@ -726,6 +743,9 @@ public enum SleepEditError: Error, Equatable, Sendable {
     /// `start` was not inside `NightWindow.range(date)` — the row would belong
     /// to no night, or to the wrong one.
     case outsideNight(String)
+    /// `end` reached past the wake wheel's own close, or the two together
+    /// described a span no night can have.
+    case impossibleNight(String)
 }
 
 /// One night's minutes, for the sleep-debt gauge.

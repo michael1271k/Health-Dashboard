@@ -4,6 +4,8 @@
 
 The battery is a phone-like charge that wakes high and only ever drains. v9 keeps that shape (see the header of `battery.ts` for v6's arithmetic failure and v7/v8's repairs) and changes two things: **what the charge reads** for the autonomic signals, and **what the drain budget holds** in place of v8's stress term.
 
+The signals this document defines are read by a second model that spends none of them: **[`STRESS_MODEL.md`](STRESS_MODEL.md)**, the report-only stress index (Phase 3 E3). It reuses §2's `zSignal` grammar and §3's `ACWR`/`strainZ` verbatim, adds sleep fragmentation and the day's fatigue slots, and answers a different question — how far from your own normal today sits, rather than how much charge is left. It is **not** an input here: see §6.
+
 ## 1. Inputs
 
 | Signal | Source | Notes |
@@ -127,6 +129,8 @@ maxTotalDrain = 35 + 12 + 32 + 8 + 6 = 93 < 100 − floor (95)
 ```
 
 The rule v6 broke: the drain budget must stay strictly under the charge budget, so a well-slept day can never floor and a floor reading therefore means something. Asserted in `src/tests/scoring.test.ts`, `src/tests/readiness-v9.test.ts` and `InvariantTests.swift`. v9's worst day on a perfect night ends at 7.
+
+**Five drains, and only five.** The stress index of [`STRESS_MODEL.md`](STRESS_MODEL.md) reads sleep fragmentation and self-reported fatigue that no term above spends, and it deliberately stays outside this budget — a sixth drain would reopen exactly the arithmetic v6 got wrong. The `stress-battery-isolation` golden vector holds the line: moving a stress input moves the index and leaves `battery_pct` byte-identical.
 
 ## 7. Outputs
 

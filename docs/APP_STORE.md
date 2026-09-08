@@ -46,6 +46,27 @@ manifests, the HealthKit usage strings, no iCloud health data, no tracking SDK,
 no placeholder or dead UI, the icon's alpha channel, and `Secrets.xcconfig`
 untracked.
 
+### Re-run at W-GATE (2026-09-08)
+
+Rows 1–5 above are **all still open.** Track U's wave U7 — the wave that was to
+close 1, 2 and 3 — never shipped: there is no `src/app/privacy` and no
+`src/app/support` route, so `OnyxLinks.privacyPolicy` still points at a 404, and
+`OnyxLinks` still has no `support` member. E6 landed the halves it owned (the
+`delete_my_account` RPC, `src/app/delete-account`, `SignUpView`, the AASA file at
+`public/.well-known/apple-app-site-association`, and `scripts/seed-demo-account.mjs`
+for row 3), so the gap is U7's web pages, the Settings rows and the metadata copy.
+
+Two findings the W-GATE preflight added:
+
+| # | What | Guideline | Where |
+|---|---|---|---|
+| 6 | **The watch app shipped with no privacy manifest.** The required-reason API check runs per Mach-O binary, and `OnyxWatch.app` uses `UserDefaults` and its own GRDB store. The app and the widget each carry one; the watch did not. **Fixed at W-GATE** — `native/OnyxWatch/Support/PrivacyInfo.xcprivacy`. | 5.1.1 / Privacy Manifest | fixed |
+| 7 | **`associated-domains` is not in the entitlements.** `public/.well-known/apple-app-site-association` is served and names both App IDs under `webcredentials`, but neither `Onyx.entitlements` nor `native/project.yml` claims `webcredentials:…`, so password autofill never associates. Deliberately NOT added here: the capability must be enabled on the App ID in the developer portal first, and adding it before that breaks signing. | — | U7 |
+
+Also unresolved and not a code change: `npm audit` reports 11 high and 1 critical,
+all transitive through build tooling (`tar` via `@capacitor/cli`, `sharp`, `postcss`,
+`browserslist`, `undici`). Verification item 6 of the Phase 3 plan asks for no highs.
+
 ---
 
 ## 1. Identity
