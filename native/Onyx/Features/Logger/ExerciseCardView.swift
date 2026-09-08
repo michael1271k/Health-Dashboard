@@ -392,7 +392,12 @@ struct ExerciseCardView: View {
                     }
                 }
                 repWindow
-                progression
+                // The progression chip is `fixedSize` — a bumped load that
+                // truncates is a number you cannot read — so it cannot share
+                // this line with the rest control either. At 375 pt the card's
+                // inner width is about 327: a rep window and the clock's three
+                // targets take ~214 of it, and the chip is ~150.
+                if liveRest == nil { progression }
                 Spacer(minLength: 0)
                 progress
             }
