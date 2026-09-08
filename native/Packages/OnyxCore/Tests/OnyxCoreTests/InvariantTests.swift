@@ -138,6 +138,86 @@ struct InvariantTests {
         #expect(Battery.computeBattery(base) == Battery.computeBattery(fed))
     }
 
+    // MARK: Stress (Phase 3 E3)
+
+    @Test("stress: a missing term is neutral — excluded, renormalised — and nothing answered is no reading")
+    func stressMissingTermsNeutral() {
+        #expect(Stress.breakdown(StressInputs()).index == nil)
+        #expect(Stress.breakdown(StressInputs()).weightSum == 0)
+        // One term alone at +2 is the full 90, whichever term it is.
+        #expect(Stress.index(StressInputs(hrvZ: -2)) == 90)
+        #expect(Stress.index(StressInputs(fragZ: 2)) == 90)
+        #expect(Stress.index(StressInputs(fatigueDayMean: 5)) == 90)
+        #expect(Stress.index(StressInputs(acwr: 2, strainZ: 2)) == 90)
+        // Non-finite is missing, never a number.
+        #expect(Stress.breakdown(StressInputs(hrvZ: .nan, rhrZ: .infinity)).terms.auto.answered == 0)
+    }
+
+    @Test("stress: load is never negative and never above the clamp")
+    func stressLoadNeverNegative() {
+        for acwr in [nil, 0, 0.5, 1.0, 1.29, 1.3, 1.65, 2.0, 3.0, 9.0] as [Double?] {
+            for strainZ in [nil, -9, -2, -1, 0, 1, 2, 9] as [Double?] {
+                let t = Stress.breakdown(StressInputs(acwr: acwr, strainZ: strainZ)).terms.load
+                if acwr == nil && strainZ == nil { #expect(t.z == nil); continue }
+                let z = t.z ?? -1
+                #expect(z >= 0 && z <= 2, "load z out of band at acwr \(String(describing: acwr)) strainZ \(String(describing: strainZ))")
+                #expect(t.acwrTerm >= 0 && t.strainTerm >= 0)
+            }
+        }
+        #expect(Stress.loadParts(acwr: 1.3, strainZ: nil).acwrTerm == 0)
+        #expect(Stress.loadParts(acwr: 2.0, strainZ: nil).acwrTerm == 2)
+        #expect(Stress.loadParts(acwr: 3.0, strainZ: nil).acwrTerm == 2)
+    }
+
+    @Test("stress: S stays in [10, 90], is an integer, and 50 is Baseline")
+    func stressStaysInBand() {
+        let grid: [Double?] = [nil, -9, -2, -1, 0, 1, 2, 9]
+        for hrv in grid { for rhr in grid { for frag in grid { for fatigue in [nil, -5, 1, 3, 5, 99] as [Double?] {
+            let b = Stress.breakdown(StressInputs(hrvZ: hrv, rhrZ: rhr, fragZ: frag, sleepOnsetTrouble: true, fatigueDayMean: fatigue, acwr: 9, strainZ: 9))
+            guard let s = b.index else { continue }
+            #expect(s >= Stress.constants.min && s <= Stress.constants.max)
+            #expect(s == s.rounded())
+        } } } }
+        #expect(Stress.band(50) == .baseline)
+        #expect(Stress.band(30) == .baseline && Stress.band(29) == .calm)
+        #expect(Stress.band(62) == .elevated && Stress.band(63) == .high)
+        #expect(Stress.band(75) == .high && Stress.band(76) == .overreached)
+        #expect(Stress.breakdown(StressInputs(hrvZ: 0, rhrZ: 0, fragZ: 0, sleepOnsetTrouble: false, fatigueDayMean: 3, acwr: 1, strainZ: 0)).index == 50)
+    }
+
+    @Test("stress: Battery.breakdown is mathematically isolated — no stress input reaches it, the budget is still 93")
+    func batteryIsolatedFromStress() {
+        let inputs = ScoringInputs(
+            sleepHours: 7, deepMinutes: 60, remMinutes: 90, hrvZ: -1, rhrZ: 1, acwr: 1.5, strainZ: 1,
+            sleepOnsetTrouble: true, fatigueLevel: 4, hoursAwake: 10
+        )
+        let before = Battery.breakdown(inputs)
+        for s in [
+            StressInputs(),
+            StressInputs(hrvZ: 0, rhrZ: 0, fragZ: 0, sleepOnsetTrouble: false, fatigueDayMean: 3, acwr: 1, strainZ: 0),
+            StressInputs(hrvZ: -2, rhrZ: 2, fragZ: 2, sleepOnsetTrouble: true, fatigueDayMean: 5, acwr: 2, strainZ: 2),
+        ] {
+            _ = Stress.breakdown(s)
+            #expect(Battery.breakdown(inputs) == before)
+        }
+        #expect(Battery.maxTotalDrain == 93)
+        // The type itself carries nothing the index reads that the battery does not: the
+        // two share `hrvZ`/`rhrZ`/`acwr`/`strainZ`/onset by design, and `fragZ` and
+        // `fatigueDayMean` exist on `StressInputs` only. A compile-time fact, stated.
+        let mirror = Mirror(reflecting: inputs)
+        #expect(!mirror.children.contains { $0.label == "fragZ" || $0.label == "fatigueDayMean" })
+    }
+
+    @Test("stress: fragmentation — a duration-only night is a hole, a still night with stages is a real zero")
+    func fragmentationRule() {
+        #expect(Stress.fragmentationRatio(.init(awakeMin: 0, asleepMin: 420, deepMin: 0, remMin: 0)) == nil)
+        #expect(Stress.fragmentationRatio(.init(awakeMin: 0, asleepMin: 420, deepMin: 60, remMin: 90)) == 0)
+        #expect(Stress.fragmentationRatio(.init(awakeMin: 42, asleepMin: 420)) == 0.1)
+        #expect(Stress.fragmentationRatio(.init(awakeMin: 42, asleepMin: 0)) == nil)
+        #expect(Fatigue.dayMean([:]) == nil)
+        #expect(Fatigue.dayMean([.waking: 1, .pre: 3, .post: 5]) == 3)
+    }
+
     // MARK: Epley
 
     @Test("unloaded work has no estimate — nil, never zero")

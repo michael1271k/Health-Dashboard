@@ -1,0 +1,3173 @@
+{
+  "module": "charts/stressSeries",
+  "fn": "stressSeries",
+  "note": "Exactly `limit` days ending on endingOn, oldest first; a day with no reading is present and empty. Term z one decimal, null where unanswered.",
+  "cases": [
+    {
+      "name": "seven readings in a fortnight window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "index": 50,
+          "band": "baseline",
+          "terms": {
+            "auto": 0,
+            "sleep": 0,
+            "self": 0,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "index": 28,
+          "band": "calm",
+          "terms": {
+            "auto": -1.7,
+            "sleep": -0.5,
+            "self": -1.5,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "index": 48,
+          "band": "baseline",
+          "terms": {
+            "auto": -0.1,
+            "sleep": 0,
+            "self": -0.3,
+            "load": 0.1
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "index": 59,
+          "band": "elevated",
+          "terms": {
+            "auto": 0.6,
+            "sleep": 0.2,
+            "self": 0.3,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "index": 70,
+          "band": "high",
+          "terms": {
+            "auto": 1.3,
+            "sleep": 1.1,
+            "self": 0.7,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "exactly the window",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 7
+      },
+      "expected": [
+        {
+          "d": "2026-08-31",
+          "index": 50,
+          "band": "baseline",
+          "terms": {
+            "auto": 0,
+            "sleep": 0,
+            "self": 0,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "index": 28,
+          "band": "calm",
+          "terms": {
+            "auto": -1.7,
+            "sleep": -0.5,
+            "self": -1.5,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "index": 48,
+          "band": "baseline",
+          "terms": {
+            "auto": -0.1,
+            "sleep": 0,
+            "self": -0.3,
+            "load": 0.1
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "index": 59,
+          "band": "elevated",
+          "terms": {
+            "auto": 0.6,
+            "sleep": 0.2,
+            "self": 0.3,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "index": 70,
+          "band": "high",
+          "terms": {
+            "auto": 1.3,
+            "sleep": 1.1,
+            "self": 0.7,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a shorter window than the data",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 3
+      },
+      "expected": [
+        {
+          "d": "2026-09-04",
+          "index": 70,
+          "band": "high",
+          "terms": {
+            "auto": 1.3,
+            "sleep": 1.1,
+            "self": 0.7,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a hole in the middle",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "index": 50,
+          "band": "baseline",
+          "terms": {
+            "auto": 0,
+            "sleep": 0,
+            "self": 0,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "index": 28,
+          "band": "calm",
+          "terms": {
+            "auto": -1.7,
+            "sleep": -0.5,
+            "self": -1.5,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "index": 48,
+          "band": "baseline",
+          "terms": {
+            "auto": -0.1,
+            "sleep": 0,
+            "self": -0.3,
+            "load": 0.1
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-04",
+          "index": 70,
+          "band": "high",
+          "terms": {
+            "auto": 1.3,
+            "sleep": 1.1,
+            "self": 0.7,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a day with nothing answered is empty",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": null,
+                  "weight": 0.35,
+                  "answered": 0,
+                  "hrv": null,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "fatigueDayMean": null
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0,
+              "composite": null,
+              "index": null,
+              "band": null
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "index": 50,
+          "band": "baseline",
+          "terms": {
+            "auto": 0,
+            "sleep": 0,
+            "self": 0,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "index": 28,
+          "band": "calm",
+          "terms": {
+            "auto": -1.7,
+            "sleep": -0.5,
+            "self": -1.5,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-03",
+          "index": 59,
+          "band": "elevated",
+          "terms": {
+            "auto": 0.6,
+            "sleep": 0.2,
+            "self": 0.3,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "index": 70,
+          "band": "high",
+          "terms": {
+            "auto": 1.3,
+            "sleep": 1.1,
+            "self": 0.7,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "a day with no breakdown at all",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": null
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "index": 50,
+          "band": "baseline",
+          "terms": {
+            "auto": 0,
+            "sleep": 0,
+            "self": 0,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-01",
+          "index": 28,
+          "band": "calm",
+          "terms": {
+            "auto": -1.7,
+            "sleep": -0.5,
+            "self": -1.5,
+            "load": 0
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-02",
+          "index": 48,
+          "band": "baseline",
+          "terms": {
+            "auto": -0.1,
+            "sleep": 0,
+            "self": -0.3,
+            "load": 0.1
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-03",
+          "index": 59,
+          "band": "elevated",
+          "terms": {
+            "auto": 0.6,
+            "sleep": 0.2,
+            "self": 0.3,
+            "load": 0.7
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-04",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-05",
+          "index": 88,
+          "band": "overreached",
+          "terms": {
+            "auto": 2,
+            "sleep": 1.5,
+            "self": 2,
+            "load": 2
+          },
+          "empty": false
+        },
+        {
+          "d": "2026-09-06",
+          "index": 10,
+          "band": "calm",
+          "terms": {
+            "auto": -2,
+            "sleep": null,
+            "self": -2,
+            "load": null
+          },
+          "empty": false
+        }
+      ]
+    },
+    {
+      "name": "nothing at all",
+      "input": {
+        "days": [],
+        "endingOn": "2026-09-06",
+        "limit": 14
+      },
+      "expected": [
+        {
+          "d": "2026-08-24",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-25",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-26",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-27",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-28",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-29",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-30",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-08-31",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-01",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-02",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-03",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-04",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-05",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        },
+        {
+          "d": "2026-09-06",
+          "index": null,
+          "band": null,
+          "terms": {
+            "auto": null,
+            "sleep": null,
+            "self": null,
+            "load": null
+          },
+          "empty": true
+        }
+      ]
+    },
+    {
+      "name": "zero limit",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": 0
+      },
+      "expected": []
+    },
+    {
+      "name": "negative limit",
+      "input": {
+        "days": [
+          {
+            "date": "2026-08-31",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": 0,
+              "index": 50,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-01",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -1.75,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -2,
+                  "rhr": -1.5
+                },
+                "sleep": {
+                  "z": -0.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": -1,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -1.5,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1.5
+                },
+                "load": {
+                  "z": 0,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 1,
+              "composite": -1.1124999999999998,
+              "index": 28,
+              "band": "calm"
+            }
+          },
+          {
+            "date": "2026-09-02",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -0.15,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": -0.3,
+                  "rhr": 0
+                },
+                "sleep": {
+                  "z": 0,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0,
+                  "onset": 0
+                },
+                "self": {
+                  "z": -0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 2.67
+                },
+                "load": {
+                  "z": 0.1,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0,
+                  "strainTerm": 0.2
+                }
+              },
+              "weightSum": 1,
+              "composite": -0.12000000000000001,
+              "index": 48,
+              "band": "baseline"
+            }
+          },
+          {
+            "date": "2026-09-03",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 0.55,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 0.6,
+                  "rhr": 0.5
+                },
+                "sleep": {
+                  "z": 0.2,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 0.4,
+                  "onset": 0
+                },
+                "self": {
+                  "z": 0.33000000000000007,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.33
+                },
+                "load": {
+                  "z": 0.6857142857142857,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.5714285714285713,
+                  "strainTerm": 0.8
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.4278571428571429,
+              "index": 59,
+              "band": "elevated"
+            }
+          },
+          {
+            "date": "2026-09-04",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 1.25,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 1.4,
+                  "rhr": 1.1
+                },
+                "sleep": {
+                  "z": 1.1,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 1.2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 0.6699999999999999,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 3.67
+                },
+                "load": {
+                  "z": 0.6642857142857141,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 0.4285714285714283,
+                  "strainTerm": 0.9
+                }
+              },
+              "weightSum": 1,
+              "composite": 0.9796428571428571,
+              "index": 70,
+              "band": "high"
+            }
+          },
+          {
+            "date": "2026-09-05",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": 2,
+                  "weight": 0.35,
+                  "answered": 2,
+                  "hrv": 2,
+                  "rhr": 2
+                },
+                "sleep": {
+                  "z": 1.5,
+                  "weight": 0.25,
+                  "answered": 2,
+                  "frag": 2,
+                  "onset": 1
+                },
+                "self": {
+                  "z": 2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 5
+                },
+                "load": {
+                  "z": 2,
+                  "weight": 0.15,
+                  "answered": 2,
+                  "acwrTerm": 2,
+                  "strainTerm": 2
+                }
+              },
+              "weightSum": 1,
+              "composite": 1.875,
+              "index": 88,
+              "band": "overreached"
+            }
+          },
+          {
+            "date": "2026-09-06",
+            "breakdown": {
+              "version": 1,
+              "terms": {
+                "auto": {
+                  "z": -2,
+                  "weight": 0.35,
+                  "answered": 1,
+                  "hrv": -2,
+                  "rhr": null
+                },
+                "sleep": {
+                  "z": null,
+                  "weight": 0.25,
+                  "answered": 0,
+                  "frag": null,
+                  "onset": null
+                },
+                "self": {
+                  "z": -2,
+                  "weight": 0.25,
+                  "answered": 1,
+                  "fatigueDayMean": 1
+                },
+                "load": {
+                  "z": null,
+                  "weight": 0.15,
+                  "answered": 0,
+                  "acwrTerm": 0,
+                  "strainTerm": 0
+                }
+              },
+              "weightSum": 0.6,
+              "composite": -2,
+              "index": 10,
+              "band": "calm"
+            }
+          }
+        ],
+        "endingOn": "2026-09-06",
+        "limit": -3
+      },
+      "expected": []
+    }
+  ]
+}

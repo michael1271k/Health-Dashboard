@@ -1,0 +1,2182 @@
+{
+  "module": "scoring/stress",
+  "fn": "batteryBreakdown",
+  "note": "Battery.breakdown(inputs) with the stress index computed alongside on every extreme: the battery breakdown is identical in every case, and the budget is still 93. The stress input is carried in the case for the record; nothing in the battery reads it.",
+  "cases": [
+    {
+      "name": "nothing answered",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {}
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": null
+      }
+    },
+    {
+      "name": "your normal — every term at zero",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": 0,
+          "rhrZ": 0,
+          "fragZ": 0,
+          "sleepOnsetTrouble": false,
+          "fatigueDayMean": 3,
+          "acwr": 1,
+          "strainZ": 0
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "calm — recovered and fresh",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": 2,
+          "rhrZ": -1.5,
+          "fragZ": -1,
+          "sleepOnsetTrouble": false,
+          "fatigueDayMean": 1.5,
+          "acwr": 0.8,
+          "strainZ": -1
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 28
+      }
+    },
+    {
+      "name": "baseline — a quiet ordinary day",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": 0.3,
+          "rhrZ": 0,
+          "fragZ": 0,
+          "sleepOnsetTrouble": false,
+          "fatigueDayMean": 2.67,
+          "acwr": 1.1,
+          "strainZ": 0.2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 48
+      }
+    },
+    {
+      "name": "elevated — a hard week showing",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": -0.6,
+          "rhrZ": 0.5,
+          "fragZ": 0.4,
+          "sleepOnsetTrouble": false,
+          "fatigueDayMean": 3.33,
+          "acwr": 1.5,
+          "strainZ": 0.8
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 59
+      }
+    },
+    {
+      "name": "high — 2026-09-01, ill",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "fragZ": 1.2,
+          "sleepOnsetTrouble": true,
+          "fatigueDayMean": 3.67,
+          "acwr": 1.45,
+          "strainZ": 0.9
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 70
+      }
+    },
+    {
+      "name": "overreached — everything at the clamp",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": -2,
+          "rhrZ": 2,
+          "fragZ": 2,
+          "sleepOnsetTrouble": true,
+          "fatigueDayMean": 5,
+          "acwr": 2,
+          "strainZ": 2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 88
+      }
+    },
+    {
+      "name": "the floor — two terms at −2, nothing else answered",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": 2,
+          "fatigueDayMean": 1
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 10
+      }
+    },
+    {
+      "name": "only HRV",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": -1.2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 74
+      }
+    },
+    {
+      "name": "only resting HR",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "rhrZ": 1.2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 74
+      }
+    },
+    {
+      "name": "HRV and resting HR disagree",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": 1,
+          "rhrZ": 1
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "onset alone, trouble",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "sleepOnsetTrouble": true
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 70
+      }
+    },
+    {
+      "name": "onset alone, calm — answered, zero",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "sleepOnsetTrouble": false
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "onset unreadable",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "sleepOnsetTrouble": null,
+          "fragZ": 0.5
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 60
+      }
+    },
+    {
+      "name": "fragmentation beyond the clamp",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "fragZ": 3.5
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 90
+      }
+    },
+    {
+      "name": "fatigue day mean off the scale",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "fatigueDayMean": 9
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 90
+      }
+    },
+    {
+      "name": "fatigue day mean below the scale",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "fatigueDayMean": 0
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 10
+      }
+    },
+    {
+      "name": "load: inside the sweet spot",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 1.25,
+          "strainZ": -0.5
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "load: the onset",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 1.3
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "load: halfway to saturation",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 1.65
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 60
+      }
+    },
+    {
+      "name": "load: saturated ratio",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 70
+      }
+    },
+    {
+      "name": "load: beyond saturation",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 3.2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 70
+      }
+    },
+    {
+      "name": "load: strain alone",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "strainZ": 1.5
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 65
+      }
+    },
+    {
+      "name": "load: both, clamped",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "acwr": 2.5,
+          "strainZ": 2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 90
+      }
+    },
+    {
+      "name": "load: strain only, negative — answered, zero",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "strainZ": -2
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 50
+      }
+    },
+    {
+      "name": "missing z is neutral: a term absent vs the same term at zero",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": -1,
+          "fatigueDayMean": 3
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 62
+      }
+    },
+    {
+      "name": "non-finite inputs read as missing",
+      "input": {
+        "inputs": {
+          "sleepHours": 8.416666666666666,
+          "deepMinutes": 55,
+          "remMinutes": 100,
+          "sleepGoalHours": 8,
+          "calories": 0,
+          "proteinG": 0,
+          "carbsG": 0,
+          "fatG": 0,
+          "calorieGoal": 0,
+          "proteinGoalG": 0,
+          "carbsGoalG": 0,
+          "fatGoalG": 0,
+          "steps": 0,
+          "activeCal": 0,
+          "stepsGoal": 10000,
+          "activeCalGoal": 500,
+          "workoutLogged": false,
+          "isRestDay": false,
+          "newPRsToday": 0,
+          "sessionVolumeKg": 0,
+          "trailingAvgVolumeKg": 0,
+          "waterMl": 0,
+          "waterGoalMl": 3000,
+          "hoursAwake": 12,
+          "hrvZ": -1.4,
+          "rhrZ": 1.1,
+          "acwr": 1.45,
+          "strainZ": 0.9,
+          "fatigueLevel": 3,
+          "domsSeverity": 1.5,
+          "sleepOnsetTrouble": true
+        },
+        "stress": {
+          "hrvZ": null,
+          "rhrZ": null,
+          "fragZ": 0.5
+        }
+      },
+      "expected": {
+        "battery": {
+          "version": 9,
+          "hoursAwake": 12,
+          "charge": {
+            "ratio": 1,
+            "stagesQ": 0.6820682068206821,
+            "hrvQ": 0.4,
+            "rhrQ": 0.475,
+            "quality": 0.7235602310231023,
+            "morningCharge": 88
+          },
+          "drains": {
+            "time": 26.249999999999996,
+            "activity": 0,
+            "workout": 0,
+            "load": 2.421428571428571,
+            "wellness": 3,
+            "total": 31.671428571428567
+          },
+          "loadParts": {
+            "acwrTerm": 1.0714285714285707,
+            "strainTerm": 1.35,
+            "drain": 2.421428571428571
+          },
+          "wellnessParts": {
+            "fatigue": 0.5,
+            "soreness": 0.5,
+            "onset": 1,
+            "sleep": 0,
+            "index": 0.5,
+            "drain": 3
+          },
+          "currentPct": 56
+        },
+        "maxTotalDrain": 93,
+        "stressIndex": 60
+      }
+    }
+  ]
+}

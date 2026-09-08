@@ -149,4 +149,13 @@ public enum Fatigue {
         }
         return nil
     }
+
+    /// `fatigueDayMean` — the mean over every slot logged: the stress index's
+    /// self-report term (E3), and deliberately NOT the tracker's summary. The
+    /// index asks how heavy the whole day felt; the shape of the curve is that
+    /// answer. Nil when nothing was logged; never a zero standing in.
+    public static func dayMean(_ day: FatigueDay) -> Double? {
+        let levels = slots.compactMap { day[$0] }
+        return levels.isEmpty ? nil : Double(levels.reduce(0, +)) / Double(levels.count)
+    }
 }
