@@ -96,6 +96,11 @@ struct DayScreen: View {
 
             NowStripPulse(model: model, date: title).plainRow()
             SleepTile(model: model).plainRow()
+            // Under Sleep, not above it: two of the index's four terms are the
+            // night above — its fragmentation and how hard it was to fall into
+            // — and a reading placed above the thing it is partly made of asks
+            // to be read as a cause of it.
+            StressTile(model: model).plainRow()
 
             Section {
                 VitalsGrid(model: model)

@@ -167,7 +167,8 @@ enum PreviewHarness {
                 ReportReaderView(report: PreviewReport.rows[0], seededBody: PreviewReport.body)
             }
             .environment(AppEnvironment.preview)
-        case "day", "day-rows", "day-past", "day-empty", "scale", "scale-first", "day-swap", "doms", "stack", "stack-add":
+        case "day", "day-rows", "day-past", "day-empty", "scale", "scale-first", "day-swap", "doms", "stack", "stack-add",
+             "sleep-edit", "stress":
             PulsePreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)
@@ -204,7 +205,7 @@ enum PreviewHarness {
             HistoryPreviews.view(screen)
         case "trends", "trends-empty", "trends-maintenance":
             TrendsPreviews.view(screen)
-        case "body-trends", "body-trends-empty", "body-trends-tooltip":
+        case "body-trends", "body-trends-empty", "body-trends-tooltip", "body-trends-stress":
             BodyTrendsPreviews.view(screen)
         case let s where s.hasPrefix("widgets"):
             WidgetPreviews.view(s)

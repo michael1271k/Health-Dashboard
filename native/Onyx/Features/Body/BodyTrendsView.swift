@@ -21,6 +21,11 @@ struct BodyTrendsView: View {
     /// reading. A scrub is a gesture, and a gesture is the one thing a
     /// screenshot cannot perform.
     var seededSelection: String?
+    /// Screenshot harness only — see `readStress` below. The one series on this
+    /// screen that is read from the DATABASE rather than handed in with the
+    /// slice, so the harness has to supply it separately or photograph an empty
+    /// card under ninety days of charts.
+    var seededStress: [StressDay]?
     /// History's Body segment shows this same screen INSIDE its own navigation
     /// (§5.9), where a second "Trends" title and a second background would both
     /// be wrong. Only the chrome differs — the charts are one implementation.
@@ -29,12 +34,15 @@ struct BodyTrendsView: View {
     @State private var slice: BodyVitalsSlice?
     @State private var window: EraWindow = .default
     @State private var input: EraWindowInput?
+    /// The stress index over `StressSection.days`, oldest first (§U5.3).
+    @State private var stress: [StressDay] = []
 
     var body: some View {
         Group {
             if let slice, let input {
                 BodyTrendsScreen(
-                    slice: slice, window: $window, input: input, seededSelection: seededSelection
+                    slice: slice, window: $window, input: input,
+                    stress: stress, seededSelection: seededSelection
                 )
             } else {
                 ProgressView().controlSize(.large)
@@ -56,7 +64,27 @@ struct BodyTrendsView: View {
             } else {
                 slice = (try? load(window.resolve(resolved))) ?? .empty
             }
+            if let seededStress {
+                stress = seededStress
+            } else {
+                stress = await Self.readStress(database: environment.database, userId: environment.userIdString)
+            }
         }
+    }
+
+    /// ── WHY THE STRESS SERIES IGNORES THE WINDOW PICKER ─────────────────────
+    /// v1 stores no column, so every day in the series is a `readinessHistory`
+    /// build over the 49 days behind it (`STRESS_MODEL.md` §6). At the picker's
+    /// "All" that is one such build per day of the account's whole life, and
+    /// the answer would be a year of dots two pixels apart. Eight weeks is the
+    /// same display window the vitals cards on this screen already keep, for
+    /// the same reason, and it is what the index is legible over.
+    // ponytail: window-driven once `daily_scores.stress_index` exists.
+    private static func readStress(database: AppDatabase, userId: String) async -> [StressDay] {
+        let limit = StressSection.days
+        return await Task.detached(priority: .userInitiated) {
+            (try? database.stressSeries(userId: userId, endingOn: LogicalDay.today(), limit: limit)) ?? []
+        }.value
     }
 
     /// ── WHY "ALL" IS SAFE HERE NOW ──────────────────────────────────────────
@@ -104,6 +132,7 @@ private struct BodyTrendsScreen: View {
     let slice: BodyVitalsSlice
     @Binding var window: EraWindow
     let input: EraWindowInput
+    let stress: [StressDay]
     let seededSelection: String?
 
     var body: some View {
@@ -132,6 +161,10 @@ private struct BodyTrendsScreen: View {
                     steps: BodyVitals.steps(metrics: slice.metrics.filter { $0.date >= recent }, logs: logs),
                     goal: slice.goals?.stepsGoal
                 )
+                // Above the vitals it is built from: the index is the ONE line
+                // on this screen that answers "how far from normal", and the
+                // four groups below it are the readings it folds.
+                StressSection(days: stress)
                 ForEach(VitalGroup.allCases) { VitalGroupCard(group: $0, logs: logs) }
             }
             .padding(.horizontal, 16)
@@ -547,5 +580,130 @@ private struct StepsSection: View {
         .chartXSelection(value: $selected)
         .onyxScrollable(days: 28)
         .onyxChart(.body)
+    }
+}
+
+// MARK: - D. Stress
+
+/// The stress index over eight weeks — `StressSeries` on a chart (§U5.3).
+///
+/// ── WHY THE AXIS IS FIXED AT 10–90 AND NOT TIGHT TO THE DATA ────────────────
+/// Every other chart on this screen plots a quantity whose interesting range is
+/// wherever the readings happen to sit, so `Trend.domain` crops to them. This
+/// one plots a SCALE: 50 is your normal by construction, the clamp is 10 and 90,
+/// and the band words partition that range. Cropping to a fortnight that never
+/// left 44–58 would draw the same picture as one that swung 20–80, and the
+/// dotted rule at 50 would stop meaning "the middle".
+///
+/// ── AND WHY THE POINTS ARE COLOURED BY BAND ─────────────────────────────────
+/// Redundantly with their height, deliberately: the band word is the thing a
+/// reader acts on, and reading it off a y-position means holding five
+/// thresholds in your head. Colour is the same fact said in the channel the eye
+/// answers first. No legend — the y-axis IS the legend, and a five-chip key for
+/// an encoding that repeats the axis is the legend trap `OnyxChartCard` grew a
+/// `legend:` slot to survive.
+struct StressSection: View {
+    let days: [StressDay]
+
+    /// Eight weeks — see `BodyTrendsView.readStress`.
+    static let days = 56
+
+    @State private var selected: Date?
+
+    /// The readings, as the shared chart arithmetic wants them. An empty day is
+    /// dropped, and `Trend.runs` then breaks the line across the hole rather
+    /// than drawing through it.
+    private var series: [TrendPoint] {
+        days.compactMap { day in day.index.map { TrendPoint(d: day.d, v: $0) } }
+    }
+
+    private var latest: StressDay? { days.last { !$0.empty } }
+
+    var body: some View {
+        let series = series
+        VStack(alignment: .leading, spacing: 8) {
+            OnyxSectionHeader("Stress", .recover)
+            OnyxChartCard(
+                "Stress index", domain: .recover,
+                headline: latest.flatMap { day in day.index.map { "\(Int($0)) \(day.band?.word ?? "")" } },
+                caption: "50 is your own normal. Report-only — it moves no score."
+            ) {
+                if series.isEmpty {
+                    OnyxChartEmpty("No stress readings yet — the index needs a fortnight of vitals behind it.")
+                } else {
+                    chart(series)
+                }
+            }
+        }
+    }
+
+    private func chart(_ series: [TrendPoint]) -> some View {
+        Chart {
+            // ── THE RULE CARRIES NO LABEL ───────────────────────────────────
+            // The goal rules on the charts above are labelled because their
+            // value is a setting the reader chose and cannot otherwise see.
+            // This one is at 50 on every chart forever, and the card's own
+            // caption — one line higher, in secondary ink — already says "50 is
+            // your own normal". A "normal" tag on the rule is that sentence
+            // said twice (§3.6), and it clipped against the y-axis labels at
+            // trailing and vanished off the plot's leading inset at leading.
+            RuleMark(y: .value("Normal", 50))
+                .lineStyle(Trend.dash)
+                .foregroundStyle(Color.onyx.textTertiary)
+            ForEach(Trend.runs(series), id: \.point.d) { run in
+                if let date = OnyxChart.date(run.point.d) {
+                    LineMark(
+                        x: .value("Day", date, unit: .day),
+                        y: .value("Stress", run.point.v),
+                        series: .value("Run", run.run)
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(Color.onyx.accent(.recover))
+                    PointMark(x: .value("Day", date, unit: .day), y: .value("Stress", run.point.v))
+                        .symbolSize(18)
+                        .foregroundStyle(Stress.band(run.point.v).tint)
+                }
+            }
+            if let selected, let hit = Trend.nearest(series, to: selected) {
+                RuleMark(x: .value("Day", hit.date, unit: .day))
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    // `.fit(to: .chart)` on BOTH axes: a `.top` annotation with
+                    // the vertical overflow unresolved is laid out above the
+                    // plot and clipped away entirely (the same trap the
+                    // composition tooltip hit).
+                    .annotation(
+                        position: .top, spacing: 4,
+                        overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+                    ) {
+                        callout(hit)
+                    }
+            }
+        }
+        // The reachable range, plus a hair so a 90 does not sit on the frame.
+        .chartYScale(domain: 8...92)
+        .chartXSelection(value: $selected)
+        .onyxScrollable(days: 28)
+        .onyxChart(.recover)
+    }
+
+    /// The reading, its word, and every term that answered — which is the whole
+    /// breakdown sheet in the two lines a callout has room for.
+    private func callout(_ hit: Trend.Hit) -> some View {
+        let day = days.first { $0.d == hit.point.d }
+        let band = day?.band ?? Stress.band(hit.point.v)
+        let terms = StressTermKey.display.compactMap { key in
+            day?.term(key).map { OnyxCallout.Line(key.title, signed($0)) }
+        }
+        return OnyxCallout(
+            OnyxChart.shortDate(hit.date),
+            lines: [OnyxCallout.Line(band.word, "\(Int(hit.point.v))", color: band.tint)] + terms,
+            footnote: terms.count == StressTermKey.display.count
+                ? nil
+                : "\(terms.count) of 4 terms answered"
+        )
+    }
+
+    private func signed(_ v: Double) -> String {
+        "\(v > 0 ? "+" : v < 0 ? "−" : "")\(jsToFixed(abs(v), 1))"
     }
 }

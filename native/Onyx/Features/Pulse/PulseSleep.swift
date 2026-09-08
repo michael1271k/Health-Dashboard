@@ -3,8 +3,8 @@ import OnyxUI
 import OnyxCore
 import OnyxData
 
-/// The night: one arc, four stages, the bank, and the one thing the watch
-/// cannot see.
+/// The night: one arc, four stages, the bank, and a door to the things the
+/// watch cannot see.
 ///
 /// ── ONE ARC, AND IT IS THE SAME ARC AS EVERYWHERE ELSE ──────────────────────
 /// `DepthArc` draws duration as SWEEP and the stage split as FILL, so a single
@@ -12,7 +12,8 @@ import OnyxData
 /// the Today sleep sheet draws it, and this tile draws it — one implementation,
 /// so the three can never disagree about how long a night was. What this tile
 /// adds is what only a full screen has room for: the bank (`SleepDebt`), and
-/// the toggle for the thing HealthKit does not record.
+/// the door to `SleepEditSheet` — where the window itself, and the two things
+/// HealthKit does not record, are edited.
 ///
 /// What went: a hand-rolled stacked bar of the same four stages under the arc,
 /// with the same four durations listed beside it in a second legend. Three
@@ -32,11 +33,6 @@ struct SleepTile: View {
     @ScaledMetric(relativeTo: .title) private var arcSize: CGFloat = 96
     private var arcWidth: CGFloat { min(arcSize, 300) }
 
-    /// One reading per row, 22 pt each — the height §U5.1 budgets so that four
-    /// stages and the onset toggle come to the same 110 pt the arc column does,
-    /// and the tile is `max` of the two rather than their sum.
-    private let stageRowHeight: CGFloat = 22
-
     /// At a large size a 96 pt gauge and a 22 pt row are both wrong, and the
     /// tile is allowed to be tall — the whole point of the setting. So the two
     /// columns become one and every row grows.
@@ -46,11 +42,16 @@ struct SleepTile: View {
     /// three settings below the one the accessibility test covers.
     private var stacked: Bool { typeSize >= .xxLarge }
 
-    @ScaledMetric(relativeTo: .caption) private var shareWidth: CGFloat = 34
-
     private let accent = Color.onyx.accent(.recover)
 
+    @State private var editing = false
+
     private var night: SleepSessionRow? { model.night }
+
+    /// The night carries the sleep sentinel — somebody re-windowed it by hand.
+    /// One glyph on the line the edit changed, because a trimmed night reads as
+    /// a short night and nothing else on the tile says which of the two it is.
+    private var edited: Bool { ManualEntry.isManualSleep(night?.hkUuid) }
 
     /// `(stage, minutes)` — a stage the watch never reported is ABSENT, not
     /// zero, so the arc does not draw a segment for a reading it does not have.
@@ -64,8 +65,6 @@ struct SleepTile: View {
         ].compactMap { stage, minutes in minutes.map { (stage, $0) } }
     }
 
-    private var staged: Int { segments.reduce(0) { $0 + $1.1 } }
-
     /// ── §U5.1: ONE TILE, TWO COLUMNS, 168 PT ────────────────────────────────
     /// It was a 180 pt gauge centred over its own window line and goal chip, a
     /// four-column stage grid, a sleep-debt gauge with a two-line footnote, and
@@ -75,8 +74,9 @@ struct SleepTile: View {
     ///
     /// Side by side, the two things a night IS — how long, and what of — come to
     /// the height of the taller one instead of the sum of both. The arc column
-    /// is 96 pt wide and about 110 tall; four 22 pt stage rows plus the onset
-    /// toggle is the same 110, so the toggle costs nothing.
+    /// is 96 pt wide and about 110 tall; four 22 pt stage rows come to 88, so
+    /// the tile measures the ARC — which is what let both flag toggles leave
+    /// for `SleepEditSheet` without the stage column noticing (§U5.1, below).
     ///
     /// ── AND WHY THE SLEEP-DEBT GAUGE IS IN THE HEADER NOW ───────────────────
     /// It was a `Gauge` plus a two-line explanation: ~55 pt for one number, and
@@ -89,27 +89,64 @@ struct SleepTile: View {
     var body: some View {
         DayTile("Sleep", .recover) {
             if night == nil {
-                Text("No sleep recorded for this night")
-                    .onyxType(.secondary)
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                flagRows
+                emptyDoor
             } else if stacked {
-                arc
+                door { arc }
                 stageRows
-                flagRows
             } else {
                 HStack(alignment: .top, spacing: OnyxSpace.m) {
-                    arc.frame(width: arcWidth)
-                    VStack(spacing: 0) {
-                        stageRows
-                        flagRows
-                    }
+                    door { arc }.frame(width: arcWidth)
+                    stageRows
                 }
             }
         } trailing: {
             header
         }
+        .sheet(isPresented: $editing) { SleepEditSheet(model: model) }
+    }
+
+    /// ── THE ARC COLUMN IS THE DOOR (§U5.2) ──────────────────────────────────
+    /// The plan asks for the onset→wake LINE to open the editor, and that line
+    /// is 16 pt of caption inside a 96 pt column — a third of §3.1's floor, on
+    /// a control you reach for in the dark. Wrapping the whole column instead
+    /// costs no height, keeps the named line inside the target, and reads
+    /// correctly: you tap the night to change the night.
+    ///
+    /// `arc` already publishes one accessibility element with the duration as
+    /// its label and the goal as its value, so the button adds the trait and a
+    /// hint rather than a second, competing label.
+    private func door<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        Button { editing = true } label: { content() }
+            .buttonStyle(.plain)
+            .onyxPress(scale: 0.99)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Edit the sleep window")
+    }
+
+    /// A night nobody has written yet still has to be reachable — the sheet is
+    /// the only way to mint one, and a sentence with no affordance is a dead
+    /// end on the one screen that can fix it.
+    private var emptyDoor: some View {
+        Button { editing = true } label: {
+            HStack(spacing: OnyxSpace.s) {
+                Text("No sleep recorded for this night")
+                    .onyxType(.secondary)
+                    .foregroundStyle(Color.onyx.textSecondary)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: OnyxSpace.s)
+                Image(systemName: "square.and.pencil")
+                    .onyxType(.secondary)
+                    .foregroundStyle(accent)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .onyxPress(scale: 0.99)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("No sleep recorded for this night")
+        .accessibilityHint("Set the sleep window")
+        .accessibilityAddTraits(.isButton)
     }
 
     /// Score and bank, in the row the tile's title already occupies.
@@ -163,17 +200,24 @@ struct SleepTile: View {
             )
             .frame(width: arcWidth, height: arcWidth * 0.72)
             if let window {
-                Text(window)
-                    .onyxType(.caption).onyxNumeral()
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                HStack(spacing: 3) {
+                    if edited {
+                        Image(systemName: "pencil")
+                            .onyxType(.micro)
+                            .foregroundStyle(Color.onyx.textSecondary)
+                    }
+                    Text(window)
+                        .onyxType(.caption).onyxNumeral()
+                        .foregroundStyle(Color.onyx.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
             goalChip
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Slept \(DayFormat.minutes(night?.durationMin))")
+        .accessibilityLabel("Slept \(DayFormat.minutes(night?.durationMin))\(edited ? ", window edited" : "")")
         .accessibilityValue(goalText ?? "")
     }
 
@@ -231,56 +275,136 @@ struct SleepTile: View {
     }
 
     /// What the arc cannot draw: each stage's SHARE of the night, which is the
-    /// number you compare between nights, beside the minutes behind it.
-    ///
-    /// ── FOUR ROWS, NOT FOUR COLUMNS (§U5.1) ─────────────────────────────────
-    /// W11 made this a four-column `LazyVGrid` of `StageCell`, which was the
-    /// right call while the tile was full width: four readings of one kind,
-    /// scanned across. In a column beside the gauge there is no width to scan
-    /// across — a quarter of 190 pt is 47, and "AWAKE 41m 9%" is three lines of
-    /// it. A row per stage reads down instead, and 22 pt each is what makes the
-    /// four of them plus the toggle add up to the arc beside them.
-    ///
-    /// A dot rather than `StageCell`'s bar: the arc IS the bar, drawn in the
-    /// same four colours, and a second length for the same fact beside it is
-    /// the "no box that only repeats the box above it" rule (§3.6).
-    private var stageRows: some View {
+    /// number you compare between nights, beside the minutes behind it. The
+    /// shape and the reasons for it are `SleepStageList`, which `SleepEditSheet`
+    /// draws too.
+    private var stageRows: some View { SleepStageList(segments: segments) }
+
+    // ── WHERE THE TWO FLAGS WENT (§U5.1) ────────────────────────────────────
+    // "Trouble falling asleep" and "Watch data inaccurate" were two 32 pt
+    // bordered toggles in the stage column. They are the only CONTROLS on a
+    // tile whose other eleven readings are all measurements, they are looked at
+    // once a night, and between them they were a fifth of the tile's 168 pt
+    // budget on the screen §W11 is trying to fit into a screen and a half.
+    //
+    // They live in `SleepEditSheet` now — behind the same tap that edits the
+    // window, which is the other thing about a night that comes from you rather
+    // than from the watch. Nothing on the tile reports their state: a flag that
+    // moves no number and has no glyph here cannot be misread as one that does,
+    // and the sheet is one tap away. The PENCIL is a different fact — the
+    // window itself was rewritten, which is why the arc is the shape it is —
+    // and it stays.
+}
+
+/// Deep · Core · REM · Awake — a dot, a name, its minutes and its share of the
+/// night, one 22 pt row each (§U5.1).
+///
+/// ── FOUR ROWS, NOT FOUR COLUMNS ─────────────────────────────────────────────
+/// W11 made this a four-column `LazyVGrid` of `StageCell`, which was the right
+/// call while the tile was full width: four readings of one kind, scanned
+/// across. In a column beside a 96 pt gauge there is no width to scan across —
+/// a quarter of 190 pt is 47, and "AWAKE 41m 9%" is three lines of it. A row
+/// per stage reads down instead, and 22 pt each is the height that keeps the
+/// four of them inside the arc column beside them.
+///
+/// A dot rather than `StageCell`'s bar: the arc IS the bar, drawn in the same
+/// four colours, and a second length for the same fact beside it is the "no box
+/// that only repeats the box above it" rule (§3.6).
+///
+/// Shared with `SleepEditSheet`, which previews what an edit does to the same
+/// four numbers — so a preview and the tile it is previewing cannot render one
+/// night two ways.
+struct SleepStageList: View {
+    /// `(stage, minutes)` — a stage nobody reported is ABSENT, not zero, and
+    /// draws an em dash rather than claiming the watch measured none of it.
+    let segments: [(OnyxSleepStage, Int)]
+
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .caption) private var shareWidth: CGFloat = 34
+
+    /// The share denominator: everything reported, asleep and awake alike.
+    private var staged: Int { segments.reduce(0) { $0 + $1.1 } }
+
+    /// See `SleepTile.stacked` — at a large size the row grows with the label
+    /// that wraps inside it.
+    private var tall: Bool { typeSize >= .xxLarge }
+
+    var body: some View {
         VStack(spacing: 0) {
             ForEach(OnyxSleepStage.allCases, id: \.self) { stage in
-                stageRow(stage)
+                row(stage)
             }
         }
     }
 
-    private func stageRow(_ stage: OnyxSleepStage) -> some View {
+    /// ── `ViewThatFits`, NOT A TYPE-SIZE THRESHOLD ───────────────────────────
+    /// "Awake 20m 5%" is three readings on one line, and at AX5 that is ~400 pt
+    /// of type in a 350 pt column however wide the column is — so the tile's
+    /// own `>= .xxLarge` switch, which only decides whether the list sits BESIDE
+    /// the gauge, cannot help: the first AX5 shot of the edit sheet drew
+    /// "1h…", "3h…", "20…" with the shares intact and the durations gone.
+    ///
+    /// What the row needs is to wrap when it genuinely does not fit, which is a
+    /// measurement rather than a setting — the same reason `DayTile` puts its
+    /// title and trailing word in a `ViewThatFits`. The name keeps its line and
+    /// the two figures take the next.
+    private func row(_ stage: OnyxSleepStage) -> some View {
         let minutes = segments.first(where: { $0.0 == stage })?.1
-        return HStack(spacing: OnyxSpace.s) {
-            Circle()
-                .fill(stage.color)
-                .frame(width: 7, height: 7)
-                .accessibilityHidden(true)
-            Text(stage.title)
-                .onyxType(.caption)
-                .foregroundStyle(Color.onyx.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Spacer(minLength: OnyxSpace.xs)
-            Text(minutes.map { DayFormat.minutes($0) } ?? "—")
-                .onyxType(.caption).fontWeight(.semibold).onyxNumeral()
-                .foregroundStyle(Color.onyx.textPrimary)
-                .lineLimit(1)
-            Text(share(minutes))
-                .onyxType(.caption).onyxNumeral()
-                .foregroundStyle(Color.onyx.textTertiary)
-                .frame(width: shareWidth, alignment: .trailing)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: OnyxSpace.s) {
+                dot(stage)
+                name(stage)
+                Spacer(minLength: OnyxSpace.xs)
+                figures(minutes, shareWidth: shareWidth)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: OnyxSpace.s) {
+                    dot(stage)
+                    name(stage)
+                    Spacer(minLength: 0)
+                }
+                // No fixed share column in the wrapped form: the whole reason
+                // it is wrapped is that the width was not there to align to.
+                HStack(spacing: OnyxSpace.s) {
+                    figures(minutes, shareWidth: nil)
+                    Spacer(minLength: 0)
+                }
+            }
         }
-        // A MINIMUM: at the accessibility sizes the label wraps and takes the
-        // row with it, which is the whole reason the two-column shape is
-        // abandoned there.
-        .frame(minHeight: stacked ? 32 : stageRowHeight)
+        // A MINIMUM: the row grows with whatever wraps inside it.
+        .frame(minHeight: tall ? 32 : 22)
         .accessibilityElement(children: .combine)
+    }
+
+    private func dot(_ stage: OnyxSleepStage) -> some View {
+        Circle()
+            .fill(stage.color)
+            .frame(width: 7, height: 7)
+            .accessibilityHidden(true)
+    }
+
+    private func name(_ stage: OnyxSleepStage) -> some View {
+        Text(stage.title)
+            .onyxType(.caption)
+            .foregroundStyle(Color.onyx.textSecondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+    }
+
+    /// The minutes and the share. `shareWidth` aligns the percentages into a
+    /// column when the four rows share one; nil lets it sit at its own width.
+    @ViewBuilder
+    private func figures(_ minutes: Int?, shareWidth: CGFloat?) -> some View {
+        Text(minutes.map { DayFormat.minutes($0) } ?? "—")
+            .onyxType(.caption).fontWeight(.semibold).onyxNumeral()
+            .foregroundStyle(Color.onyx.textPrimary)
+            .lineLimit(1)
+        Text(share(minutes))
+            .onyxType(.caption).onyxNumeral()
+            .foregroundStyle(Color.onyx.textTertiary)
+            .frame(width: shareWidth, alignment: .trailing)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
     }
 
     /// A stage with no reading has no share — 0 % would claim the watch
@@ -288,100 +412,5 @@ struct SleepTile: View {
     private func share(_ minutes: Int?) -> String {
         guard let minutes, staged > 0 else { return "—" }
         return "\(Int((Double(minutes) / Double(staged) * 100).rounded()))%"
-    }
-
-    /// The one fact on this tile that comes from you rather than from the
-    /// watch, so it is the one control.
-    ///
-    /// ── 32 PT, AND WHY THAT IS NOT A TAP-TARGET VIOLATION ───────────────────
-    /// §3.1's floor of 44 pt is about the TARGET, and the target here is the
-    /// switch, which keeps its own hit rectangle whatever the row around it
-    /// measures — a `Toggle` extends its target beyond its drawn bounds, and
-    /// the label is part of it. What 44 pt was buying was a band of empty glass
-    /// under a control that is looked at once a night, on the screen §W11 is
-    /// trying to fit into a screen and a half. `.mini` takes the switch down
-    /// with the row so a full-size control does not sit in a short one.
-    ///
-    /// `.mini` is a REQUEST — iOS draws its switch at one size and ignores it,
-    /// while a future platform or a Mac build honours it. It costs nothing and
-    /// it states the intent; the 32 pt is what actually does the work.
-    ///
-    /// It still GROWS: the frame is a minimum, and at the accessibility sizes
-    /// the label wraps and takes the row with it.
-    ///
-    /// ── WHY IT IS A CHECK AND NO LONGER A SWITCH (§U5.1) ────────────────────
-    /// iOS draws its switch at one size — `.mini` is a request the platform
-    /// ignores — and that size is ~31 pt tall. Beside four 22 pt stage rows it
-    /// was the loudest object in the column and it took the tile past its 168 pt
-    /// budget on its own.
-    ///
-    /// `.toggleStyle(.button)` is the system's own answer: a bordered control
-    /// that fills when it is on, sized by `controlSize` like every other button,
-    /// and still a `Toggle` — so VoiceOver announces a switch and the value, and
-    /// Switch Control and the pointer both reach it exactly as before. The
-    /// filled/hollow circle is what makes it read as a state rather than as a
-    /// button that opens something; a bordered control with only a sentence in
-    /// it is the one shape a two-state fact must not take.
-    /// The two nightly facts that come from you rather than from the watch.
-    ///
-    /// ── WHY THE SECOND ONE COSTS ALMOST NOTHING ─────────────────────────────
-    /// The budget note above is written against FOUR 22 pt stage rows beside a
-    /// ~110 pt arc, and one 32 pt toggle fitting in the slack. A second 32 pt
-    /// row does not fit that slack — so it is drawn only when there is a night
-    /// to dispute. On a night the watch reported nothing there is nothing to
-    /// call inaccurate, and the empty-state branch keeps its single control.
-    @ViewBuilder
-    private var flagRows: some View {
-        onsetRow
-        if night != nil { inaccurateRow }
-    }
-
-    private var onsetRow: some View {
-        flagRow(
-            "Trouble falling asleep",
-            on: model.log?.sleepOnsetTrouble ?? false,
-            set: { model.setSleepOnsetTrouble($0) }
-        )
-    }
-
-    /// The dispute. HealthKit's sleep is the only reading on this screen with
-    /// no other source to check it against — a phone left on the bed reads as a
-    /// night, a nap folds into one — so it is the only one that needs a way to
-    /// be called wrong. It changes NO number here: it travels with the night
-    /// into the weekly export and lets the reader discount it.
-    private var inaccurateRow: some View {
-        flagRow(
-            "Watch data inaccurate",
-            on: model.log?.sleepInaccurate == true,
-            set: { model.setSleepInaccurate($0) }
-        )
-    }
-
-    private func flagRow(_ title: String, on: Bool, set: @escaping (Bool) -> Void) -> some View {
-        Toggle(isOn: Binding(get: { on }, set: set)) {
-            Label {
-                Text(title)
-                    .onyxType(.caption)
-                    .lineLimit(stacked ? nil : 1)
-                    .minimumScaleFactor(stacked ? 1 : 0.75)
-            } icon: {
-                Image(systemName: on ? "checkmark.circle.fill" : "circle")
-                    .onyxType(.caption)
-            }
-        }
-        .toggleStyle(.button)
-        .buttonStyle(.bordered)
-        // `.regular`, not `.small`: `.small` came out ~28 pt, and this is a
-        // control you tap in the dark. The height the goal chip gave back
-        // above is what pays for it.
-        .controlSize(.regular)
-        .tint(accent)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityLabel(title)
-        // `ButtonToggleStyle` publishes `.isButton` + `.isSelected`, so the ON
-        // state reads "selected" and the OFF state reads as a plain button with
-        // nothing to say it has two states at all. The value is the fix; the
-        // trait is the platform's and is not ours to add.
-        .accessibilityValue(on ? "on" : "off")
     }
 }

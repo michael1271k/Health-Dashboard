@@ -117,6 +117,82 @@ enum PulsePreviews {
                 row.estimatedWaistToHipRatio = 0.86
                 row.muscleMassKg = 50.3; row.fatMassKg = 9.85; row.fatFreeMassKg = 54.95
             }
+            try seedStressHistory(db)
+        }
+    }
+
+    /// Days 14–48 behind the seeded date — what the STRESS index needs and the
+    /// vitals grid does not (§U5.3).
+    ///
+    /// Every one of the index's four terms is a `Readiness` z-score, and a z
+    /// needs 14 readings in the 42-day BASELINE behind the 7-day roll. The
+    /// fortnight above is what the vitals cards read and it is three times too
+    /// short for that, so a tile seeded from it alone draws a flat 50 with
+    /// three terms unanswered — a screenshot that reviews a state the app is
+    /// almost never in.
+    ///
+    /// So the baseline is laid steady here and the EXCURSION stays in the
+    /// fortnight above, where it already is: HRV falling to 41, resting HR
+    /// climbing to 56. This adds the two series that fortnight has no reason to
+    /// hold — the nights' awake fraction (fragmentation) and the week's
+    /// sessions (load) — and breaks the last seven nights so the reading is a
+    /// real Elevated rather than a synthetic one.
+    ///
+    /// Nothing here reaches the other Pulse shots: the vitals grid reads 14
+    /// days, `sleepDebt` reads `daily_logs.sleep_minutes` (untouched), and the
+    /// Workout summary card only draws sessions dated ON the selected day,
+    /// which is the one day this skips.
+    private static func seedStressHistory(_ db: AppDatabase) throws {
+        let hrv: [Double] = [47, 49, 52, 46, 50, 48, 51]
+        let rest: [Int] =   [52, 51, 53, 50, 52, 54, 51]
+        for i in 14...48 {
+            let d = ISODate.addDays(date, -i) ?? date
+            try db.editDailyLog(userId: userId, date: d) { row in
+                row.hrvMs = hrv[i % 7]
+                row.avgRestHeartRate = rest[i % 7]
+            }
+        }
+
+        // One night per date, filed by its BEDTIME inside the night's own UTC
+        // window — `readinessHistory` buckets by `NightWindow.nightOf`, so a
+        // row stamped anywhere else belongs to a night nobody reads. The last
+        // seven are broken (44 awake minutes in 395 asleep against a steady
+        // 19 in 430), which is the fragmentation the index exists to see.
+        try db.seedRows { db in
+            for i in 1...48 {
+                let d = ISODate.addDays(date, -i) ?? date
+                guard let bed = OnyxData.NightWindow.fallbackBedTime(d) else { continue }
+                let broken = i <= 7
+                let asleep = broken ? 395 : 430
+                let awake = broken ? 44 : 19
+                let deep = broken ? 52 : 71
+                let rem = broken ? 78 : 96
+                try SleepSessionRow(
+                    id: newOnyxID(), userId: userId, hkUuid: "seed-night-\(d)",
+                    startTime: bed, endTime: bed.addingTimeInterval(Double(asleep + awake) * 60),
+                    durationMin: asleep, deepMin: deep, remMin: rem,
+                    coreMin: asleep - deep - rem, awakeMin: awake,
+                    createdAt: bed
+                ).insert(db)
+            }
+        }
+
+        // Four sessions a week. The load term answers only with a chronic side
+        // built on real sessions (`minLoadDays`) and fourteen prior weekly
+        // strains behind it (`minStrainHistory`); the last week is longer and
+        // harder, which is what lifts the acute:chronic ratio off its floor.
+        try db.seedRows { db in
+            for i in 1...48 where [0, 1, 2, 4].contains(i % 7) {
+                let d = ISODate.addDays(date, -i) ?? date
+                let noon = LogicalDay.date(fromISO: d) ?? Date()
+                let heavy = i <= 7
+                try WorkoutSession(
+                    id: newOnyxID(), userId: userId, dayKey: nil, date: d,
+                    startedAt: noon.addingTimeInterval(-3 * 3600),
+                    endedAt: noon.addingTimeInterval(-3 * 3600 + Double(heavy ? 86 : 62) * 60),
+                    durationMin: heavy ? 86 : 62, sessionRpe: heavy ? 8.5 : 7
+                ).insert(db)
+            }
         }
     }
 
@@ -246,6 +322,18 @@ enum PulsePreviews {
         case "stack-add":
             Presenting(model: stackDay()) { SupplementEditSheet(model: $0, editing: nil) }
                 .environment(AppEnvironment.preview)
+        // The night's own editor, over the tile it changes. `fullDay` seeds a
+        // real night with stages, so the sheet opens on a window worth trimming
+        // rather than on the mint-a-night path.
+        case "sleep-edit":
+            Presenting(model: fullDay()) { SleepEditSheet(model: $0) }
+                .environment(AppEnvironment.preview)
+        // The index and its four terms. `Presenting` keeps the tile visible
+        // behind the sheet, which is the whole point of the shot: the tile says
+        // the number and the sheet says where it came from.
+        case "stress":
+            Presenting(model: fullDay()) { StressBreakdownSheet(model: $0) }
+                .environment(AppEnvironment.preview)
         case "doms":
             // The tile alone, at the size it actually gets: half of what §5.7
             // asks of it — the severity tints, the flip, the hit targets — is
@@ -285,7 +373,6 @@ enum PulsePreviews {
         }
     }
 
-    /// The screen with one of its sheets already up.
     /// A screen the tab PUSHES, rendered on its own. It needs the model's
     /// streams running — `PulseTabView` is what normally starts them, and a
     /// pushed screen photographed without it draws the seed protocol instead of
@@ -309,14 +396,35 @@ enum PulsePreviews {
         }
     }
 
+    /// A screen with one of its sheets already up.
+    ///
+    /// ── `@State`, FOR THE SAME REASON `Observing` IS ────────────────────────
+    /// The harness re-evaluates its switch on every observation tick, so a
+    /// `let model` was a NEW in-memory database on every pass — and the sheet
+    /// then rendered against a `DayModel` whose streams had never been started,
+    /// while `PulseTabView`'s own `@State` kept the first one. Sheets that read
+    /// the store synchronously (the InBody form's `latestBodyReading`) survived
+    /// that; the two §U5 sheets read STREAMED state — `night`, and the window
+    /// read behind `stressBreakdown` — and photographed "No sleep recorded" and
+    /// "No reading" over a tile that was showing both.
+    ///
+    /// One model, held, observed here as well as by the tab: `observe()` guards
+    /// re-entry, so the second call costs nothing and the sheet cannot be the
+    /// one surface with no streams behind it.
     private struct Presenting<Sheet: View>: View {
-        let model: DayModel
+        @State private var model: DayModel
         @ViewBuilder let sheet: (DayModel) -> Sheet
         @State private var shown = true
+
+        init(model: DayModel, @ViewBuilder sheet: @escaping (DayModel) -> Sheet) {
+            _model = State(initialValue: model)
+            self.sheet = sheet
+        }
 
         var body: some View {
             NavigationStack { PulseTabView(seeded: model) }
                 .sheet(isPresented: $shown) { sheet(model) }
+                .task { await model.observe() }
         }
     }
 }
@@ -326,4 +434,6 @@ enum PulsePreviews {
 #Preview("Pulse — empty") { PulsePreviews.view("day-empty") }
 #Preview("Pulse — InBody") { PulsePreviews.view("scale") }
 #Preview("Pulse — swap") { PulsePreviews.view("day-swap") }
+#Preview("Pulse — sleep edit") { PulsePreviews.view("sleep-edit") }
+#Preview("Pulse — stress") { PulsePreviews.view("stress") }
 #endif
