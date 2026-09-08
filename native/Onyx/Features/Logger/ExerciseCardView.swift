@@ -233,27 +233,19 @@ struct ExerciseCardView: View {
 
             prescription
 
-            if let previous = previousLabel {
-                // Secondary, not tertiary. This is the number the next set is
-                // decided from — the most useful line in the header — and it
-                // was the dimmest thing on the card, under the 4.5:1 floor on a
-                // screen read at arm's length under gym lighting.
-                // The seed's answer to "what did I do last time", for the set
-                // you are about to walk into — one line, and only while the
-                // session still has a set left to walk into.
-                // `.onyxType(.micro)` and not `.onyxMicro()`: the register
-                // role uppercases, and the value it would be uppercasing is a
-                // LOAD — `LAST · 40KG × 11`, where the unit has become a
-                // shout. The line is a reading, not a register label.
-                Text("last · \(previous)")
-                    .onyxType(.micro)
-                    .foregroundStyle(Color.onyx.textSecondary)
-                    // Two lines where the type is large enough to need them: at
-                    // AX5 one line truncated to `last · 40kg ×…`, which is half
-                    // a fact — the load survives and the rep count, the half
-                    // double progression is actually about, does not.
-                    .lineLimit(typeSize.isAccessibilitySize ? 2 : 1)
-            }
+            // ── THE `last · 40kg × 11` LINE IS GONE ─────────────────────────
+            // It was the seed's answer to "what did I do last time", and the
+            // seed is ALSO what every unticked row in the table below is
+            // already showing: the row's own load and rep count open on exactly
+            // the numbers this line named. So on the card where it mattered
+            // most — a fresh movement, nothing ticked — it printed the first
+            // row's two figures a second time, eighteen points above them, and
+            // cost the header a line to do it.
+            //
+            // What it did carry that the rows do not is the DATE, and that has
+            // its own home: the seed's provenance is on the card's source chip,
+            // and the full history is one tap away in the exercise sheet.
+            // Founder asked for the line gone; it was restating the table.
 
             if !exercise.note.isEmpty {
                 Text(exercise.note)
@@ -395,16 +387,6 @@ struct ExerciseCardView: View {
     /// is 56 pt and the tags are the least load-bearing thing on it.
     private var tags: [ExerciseTag] {
         ExerciseTags.tags(for: exercise.name, compound: exercise.plan.isCompound)
-    }
-
-    /// The set the deck is pointing at, and what it was last time. `nil` once
-    /// every set is logged — at which point "last time" is a fact about a
-    /// movement you have finished.
-    private var previousLabel: String? {
-        guard let next = exercise.rows.first(where: { !$0.isDone && $0.kind != .ghost }),
-              let previous = next.previous, !previous.isEmpty
-        else { return nil }
-        return previous
     }
 
     @ViewBuilder
@@ -672,7 +654,21 @@ private enum SetColumn {
     /// The narrowest a load is ever drawn. A floor and not a track: `137.5`
     /// takes more than this and is allowed to, on the stacked accessibility row
     /// where nothing is lining up under a header anyway.
-    static let weightFloor: CGFloat = 44
+    ///
+    /// ── WHY 56 AND NOT 44 ───────────────────────────────────────────────────
+    /// 44 was the tap-target minimum reused as a text width, and the two are
+    /// not the same question. A cable stack beaten by the fine step lands on
+    /// `11.25` and `13.75` — five glyphs of semibold body monospaced numerals,
+    /// which is about 45 pt before the field's own insets — so the number the
+    /// half-plate progression exists to produce was the one number the row
+    /// could not show, and it rendered `11…`. 56 fits six (`123.75`), which is
+    /// every load this app can propose. Past that `minimumScaleFactor` on the
+    /// field takes over, because a load that scales down is legible and a load
+    /// that ellipsises is not a load.
+    ///
+    /// It costs the row 12 pt out of the effort track: 375 pt still leaves it
+    /// 95 and 402 leaves 122, against the 68 that column needs for a word.
+    static let weightFloor: CGFloat = 56
     /// The whole rep group — the field and its two ends. The header names the
     /// GROUP, so it needs the group's width and not the field's. A FLOOR on
     /// both sides rather than a fixed width: three digits, or a non-accessibility
@@ -1311,6 +1307,23 @@ private struct StepControl: View {
     /// touch-up cannot both commit — and the action's test is a comparison
     /// rather than a race: while they differ a press owns this control, and
     /// while they agree nothing does.
+    ///
+    /// ── AND WHY THE MATCH IS DEFERRED BY ONE TURN ───────────────────────────
+    /// The paragraph above assumed an order — action first, `isPressed` second
+    /// — and SwiftUI does not contract for one. Delivered the other way round,
+    /// the release matched the generations BEFORE the action ran, the action's
+    /// `guard !pressActive` then read false, and it applied the coarse step a
+    /// second time. Every tap moved the number twice: reps by 2 where the
+    /// control is declared `coarse: 1`, load by 5 where it is declared 2.5, and
+    /// a hold's fine step by 2.5 where `Ceilings.loadStepFineKg` is 1.25 —
+    /// three "wrong constant" bug reports with the right constants in the
+    /// source, and `onRelease` committing twice underneath them.
+    ///
+    /// Matching them on the NEXT main-actor turn makes the guard hold under
+    /// either order: whichever edge arrives first, anything else in the same
+    /// turn still sees the press as owning the step. An assistive activation
+    /// produces no press edges at all, so the two are equal from the start and
+    /// the action still falls through — which is the only reason it exists.
     @State private var pressGeneration = 0
     @State private var releasedGeneration = 0
 
@@ -1420,8 +1433,19 @@ private struct StepControl: View {
     private func release() {
         cancelRamp()
         guard pressActive else { return }
-        releasedGeneration = pressGeneration
+        let generation = pressGeneration
         onRelease()
+        // NOT `releasedGeneration = pressGeneration` here. Clearing the press's
+        // ownership inside the same turn is what let the `Button`'s own action
+        // — which may arrive after this — step the value a second time. One
+        // hop, and the guard holds whichever edge SwiftUI delivers first.
+        //
+        // Idempotent across a second release in between (a scroll steal
+        // followed by a real touch-up): `pressActive` is false by then, so this
+        // returns above. A press that starts before the hop lands bumps
+        // `pressGeneration` past `generation`, and the assignment then leaves
+        // the NEW press owning the control, which is correct.
+        Task { @MainActor in releasedGeneration = generation }
     }
 
     private func cancelRamp() {
@@ -1513,6 +1537,21 @@ private struct NumericField: View {
             .onyxType(prominent ? .body : .secondary)
             .fontWeight(prominent ? .semibold : .regular)
             .onyxNumeral()
+            // ── A LOAD MUST NEVER ELLIPSISE ─────────────────────────────────
+            // A `TextField` truncates by default, and the field is inside a
+            // FLEXIBLE track — so at 375 pt `11.25` and `13.75`, the two loads
+            // the fine step exists to produce, both rendered `11…`. Half a
+            // number is worse than a small one: `11…` and `13…` are the same
+            // glyph count and read as `11` and `13`, which are real loads two
+            // plates away from the truth.
+            //
+            // The floor stays at `SetColumn.weightFloor`, which now fits six
+            // glyphs — this only catches what is past it (a 1074 kg leg press
+            // at a large non-accessibility type size), and 0.6 keeps body-size
+            // numerals above the 11 pt the token discipline calls the smallest
+            // legible role.
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .foregroundStyle(
                 value == nil ? Color.onyx.textTertiary : (tint ?? Color.onyx.textPrimary)
             )

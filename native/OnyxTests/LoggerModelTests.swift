@@ -72,7 +72,13 @@ struct LoggerModelTests {
         let model = armsBulk()
         model.phase = .cut
         #expect(model.exercises.contains { $0.name == "Seated DB Wrist Curl" } == false)
-        #expect(model.exercises.count == 7)
+        // Seven lifts plus the treadmill the deck now opens with — see
+        // `LoggerModel.withWarmupCardio`. Counted as "the program's movements
+        // plus the opener" rather than as a literal 8, so this reads as the
+        // prescription it is testing and not as a number somebody has to guess
+        // the provenance of.
+        #expect(model.exercises.count == 7 + 1)
+        #expect(model.exercises.first?.name == WarmupCardio.name)
     }
 
     @Test("trimming sets does not reorder the ones already logged")
@@ -102,7 +108,11 @@ struct LoggerModelTests {
     @Test("a set with no reps cannot be ticked")
     func repsAreRequiredToLog() {
         let model = armsBulk()
-        let exercise = model.exercises[0]
+        // The first LIFT, not `exercises[0]` — the deck opens with the
+        // treadmill, and a cardio row is deliberately tickable without reps
+        // (`toggleDone`'s `|| row.isCardio`). Asking the opener this question
+        // tests the exemption, not the rule.
+        let exercise = model.exercises.first { !$0.rows.contains(where: \.isCardio) }!
         let row = exercise.rows[0]
         row.weightKg = 28
         row.reps = nil

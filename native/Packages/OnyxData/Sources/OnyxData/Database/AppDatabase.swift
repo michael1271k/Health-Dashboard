@@ -1118,6 +1118,15 @@ extension AppDatabase {
             session.setCount = totals.count
             session.prCount = prs.prCount
             try session.update(db)
+            // ── AND THE DECK ORDER, WHICH IS THE ONE THING THE SETS CARRY
+            // AND THE NEXT SESSION DID NOT ────────────────────────────────
+            // `moveExercise` writes `exercise_order` on the rows, so a reorder
+            // reached the session report and stopped there: the next deck is
+            // built from `Program.onyx5`, which is a constant. `save.ts` has
+            // upserted `routine_templates` on every web commit since the day it
+            // was written, and this is the phone's half of it. In the same
+            // transaction as the close, for the reason the ledger is.
+            try RoutineOrder.save(db, session: session)
             return session
         }
     }
@@ -1218,12 +1227,61 @@ extension AppDatabase {
     /// different rules is exactly how the provenance flags drift apart.
     @discardableResult
     public func setSessionMetrics(
-        id: String, durationMin: Double? = nil, avgBpm: Int? = nil, caloriesBurned: Int? = nil
+        id: String, durationMin: Double? = nil, avgBpm: Int? = nil, caloriesBurned: Int? = nil,
+        measured: Bool = true
     ) throws -> SessionEditing.Outcome? {
         guard durationMin != nil || avgBpm != nil || caloriesBurned != nil else { return nil }
         return try updateMetrics(
-            sessionId: id, durationMin: durationMin, avgBpm: avgBpm, calories: caloriesBurned
+            sessionId: id, durationMin: durationMin, avgBpm: avgBpm, calories: caloriesBurned,
+            measured: measured
         )
+    }
+
+    /// The three figures the LAST session of this split came to.
+    ///
+    /// ── WHY THE FINISH SHEET WANTS THEM ─────────────────────────────────────
+    /// Heart rate and calories arrive from the watch's own `HKWorkout`, which
+    /// can be a day late — so the sheet that asks for them is routinely the one
+    /// screen in the app that has nothing to show, and "—" is not a default
+    /// anybody can improve on with a stepper that starts at zero. The previous
+    /// session of the same split is: the same movements, the same rest, the same
+    /// person, usually within a few percent.
+    ///
+    /// It is a DEFAULT and not a measurement, which is why the sheet writes it
+    /// back with `measured: false` — see `updateMetrics`. A carried-over figure
+    /// that stamped itself measured would take the session out of
+    /// `sessionsNeedingMetrics` and so forbid the watch from ever correcting it,
+    /// which is the exact failure the `avg_bpm = 2` clamp exists for.
+    ///
+    /// Finished sessions only, same `day_key`, strictly before `date`, most
+    /// recent first — the same shape as `effortHistory`, and for the same
+    /// reason: a Push day's cost tells you nothing about a Legs day's.
+    public func previousSessionMetrics(
+        userId: String, dayKey: String?, before date: String
+    ) throws -> (durationMin: Double?, avgBpm: Int?, calories: Int?) {
+        guard let dayKey else { return (nil, nil, nil) }
+        return try writer.read { db in
+            // Up to six back, not one: the figures are independently nullable,
+            // so the last session may carry a duration and no heart rate while
+            // the one before it has both. Each column takes the most recent
+            // session that HAS it, which is what makes the sheet arrive full
+            // rather than half full.
+            let sessions = try WorkoutSession
+                .filter(
+                    Column("user_id") == userId
+                        && Column("day_key") == dayKey
+                        && Column("date") < date
+                        && Column("ended_at") != nil
+                )
+                .order(Column("date").desc, Column("started_at").desc)
+                .limit(6)
+                .fetchAll(db)
+            return (
+                sessions.lazy.compactMap(\.durationMin).first,
+                sessions.lazy.compactMap(\.avgBpm).first,
+                sessions.lazy.compactMap(\.caloriesBurned).first
+            )
+        }
     }
 }
 

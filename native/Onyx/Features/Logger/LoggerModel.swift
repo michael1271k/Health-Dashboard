@@ -341,6 +341,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         }
     }
     private(set) var exercises: [ExerciseState] = []
+    /// The movement names in the order this split was last LEFT in, from
+    /// `routine_templates` — see `AppDatabase.deckOrder(dayKey:userId:)`.
+    /// Empty until a session has been finished on this day.
+    private let storedDeckOrder: [String]
     /// When the session began.
     ///
     /// `var`, because the timer sheet can correct it (`setStart`, `setElapsed`)
@@ -546,6 +550,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         let opened = Self.loadSeed(store: store, day: day, phase: phase, userId: userId)
         self.seed = opened.seed
         self.progressionAlerts = opened.alerts
+        // Read ONCE, at init. The stored order is last week's answer and the
+        // live deck is this week's; re-reading it on a phase switch would let a
+        // week-old template argue with a card the athlete has just dragged.
+        self.storedDeckOrder = (try? store?.deckOrder(dayKey: day.key, userId: userId)) as? [String] ?? []
         rebuildForPhase()
     }
 
@@ -579,6 +587,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// rule — the same mistake `ingest` is explicitly written not to make.
     private func rebuildForPhase() {
         let existing = Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0) })
+        // The order the deck is in RIGHT NOW, captured before it is rebuilt —
+        // `existing.keys` is a Dictionary's, which has none. See `inDeckOrder`.
+        let liveOrder = exercises.map(\.id)
         // Iterating the FULL deck rather than `day.exercises(for: phase)` is
         // what lets a dropped lift survive below — the filtered list does not
         // contain it to be rescued.
@@ -625,6 +636,91 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             }
             return previous
         }
+        exercises = Self.inDeckOrder(exercises, stored: storedDeckOrder, current: liveOrder.isEmpty ? nil : liveOrder)
+        exercises = Self.withWarmupCardio(exercises, existing: existing)
+    }
+
+    /// Put the deck in the order the athlete last left it.
+    ///
+    /// ── WHY THE PROGRAM'S ARRAY IS NOT THE ANSWER ───────────────────────────
+    /// `day.exercises` is a constant, so building the deck by walking it puts
+    /// every session back in the shipped order — which is what made a drag
+    /// survive into the session report (`exercise_order` on the rows) and into
+    /// nothing else. `SessionSeedBuilder` now orders its own list from
+    /// `routine_templates`, so the seed is the stored answer and this follows
+    /// it.
+    ///
+    /// `current` is the LIVE deck, and it wins where it has an opinion: a
+    /// phase switch happens mid-session, and re-sorting the cards under a
+    /// thumb that has just dragged one — to an order from last week, before the
+    /// close that would have stored today's — is the screen arguing with the
+    /// person using it.
+    ///
+    /// A movement neither knows keeps its program position, after the ones they
+    /// place. `enumerated` is load-bearing: `sorted(by:)` is not stable, and two
+    /// unplaced lifts must not swap between two builds of the same day.
+    /// Put the treadmill at the top, unless the deck already opens with cardio.
+    ///
+    /// ── WHY IT IS PREPENDED HERE AND NOT LISTED IN THE PROGRAM ──────────────
+    /// See `WarmupCardio` for why the program type cannot express it. This is
+    /// the phone's half of `withWarmupCardio` in `templateDraft.ts`, and it runs
+    /// on the same terms: once, at the top, only when nothing cardio is there
+    /// already — and never for a session being EDITED, where the deck is a
+    /// record of what happened and a movement the projection does not carry has
+    /// no business appearing in it.
+    ///
+    /// ── AND WHY THE ROW SURVIVES A REBUILD ──────────────────────────────────
+    /// `rebuildForPhase` runs on every phase switch and keys `existing` on
+    /// `plan.id`. The synthetic plan's id is its name, so a treadmill already on
+    /// the deck — ticked, with its five minutes logged — is found there and
+    /// handed back untouched. Minting a fresh one would replace a row that has
+    /// an id in `set_events` with one that does not, and the tick would be lost
+    /// with the log still holding it.
+    private static func withWarmupCardio(
+        _ exercises: [ExerciseState], existing: [String: ExerciseState]
+    ) -> [ExerciseState] {
+        guard !exercises.contains(where: { $0.rows.contains(where: \.isCardio) }) else {
+            return exercises
+        }
+        if let already = existing[WarmupCardio.name] { return [already] + exercises }
+        let plan = ProgramExercise(
+            WarmupCardio.name,
+            sets: 1,
+            wk1Kg: 0,
+            // The window this bout is judged in, in the register the card's
+            // prescription line already prints for a timed movement.
+            reps: "\(WarmupCardio.durationSec / 60) min",
+            restSec: 0
+        )
+        let row = SetRow(
+            weightKg: 0, reps: 0,
+            // A warm-up, which is what the 7 September backfill wrote and what
+            // keeps it out of tonnage, `workingSets` and the PR engine.
+            kind: .warmup,
+            durationSec: WarmupCardio.durationSec,
+            incline: WarmupCardio.inclinePct,
+            distanceKm: WarmupCardio.distanceKm
+        )
+        return [ExerciseState(plan: plan, rows: [row], note: WarmupCardio.note)] + exercises
+    }
+
+    private static func inDeckOrder(
+        _ exercises: [ExerciseState], stored: [String], current: [String]?
+    ) -> [ExerciseState] {
+        var rank: [String: Int] = [:]
+        for (i, name) in stored.enumerated() {
+            rank[ExerciseAliases.canonicalName(name)] = i
+        }
+        let live = current.map { ids in Dictionary(uniqueKeysWithValues: ids.enumerated().map { ($1, $0) }) }
+        let count = exercises.count
+        return exercises.enumerated()
+            .map { index, exercise -> (Int, Int, ExerciseState) in
+                let key = ExerciseAliases.canonicalName(exercise.plan.name)
+                let placed = live?[exercise.id] ?? rank[key]
+                return (placed ?? (count + index), index, exercise)
+            }
+            .sorted { ($0.0, $0.1) < ($1.0, $1.1) }
+            .map(\.2)
     }
 
     /// The seeded rows for one movement.
@@ -1169,16 +1265,32 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// replace what you typed with what the phone inferred. A typed DURATION
     /// goes further and sets `duration_edited`, which forbids `closeSession`
     /// from re-deriving it from the clock — see `AppDatabase.updateMetrics`.
-    func setMetrics(durationMin: Double? = nil, avgBpm: Int? = nil, calories: Int? = nil) {
+    func setMetrics(
+        durationMin: Double? = nil, avgBpm: Int? = nil, calories: Int? = nil, measured: Bool = true
+    ) {
         guard let store, let sessionId else { return }
         do {
             try store.setSessionMetrics(
-                id: sessionId, durationMin: durationMin, avgBpm: avgBpm, caloriesBurned: calories
+                id: sessionId, durationMin: durationMin, avgBpm: avgBpm, caloriesBurned: calories,
+                measured: measured
             )
             storeError = nil
         } catch {
             storeError = String(describing: error)
         }
+    }
+
+    /// What the last session of this split came to — the finish sheet's default
+    /// for the two figures the watch has usually not delivered yet.
+    ///
+    /// Empty in a preview and on a cold store, which is the correct answer:
+    /// nothing is a better default than a made-up one, and "—" is what the tile
+    /// already draws.
+    func previousMetrics() -> (durationMin: Double?, avgBpm: Int?, calories: Int?) {
+        guard let store else { return (nil, nil, nil) }
+        return (try? store.previousSessionMetrics(
+            userId: userId, dayKey: day.key, before: LogicalDay.today()
+        )) ?? (nil, nil, nil)
     }
 
     /// The word the finish sheet opens on, or nil when nothing was rated.
@@ -1303,6 +1415,17 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             // actually carry. A throw here leaves a restored, usable deck with
             // no live records rather than no deck at all.
             try restoreLoggedSets()
+            // ── THE OPENER IS A PROPOSAL, AND AN EDIT IS NOT ────────────────
+            // `rebuildForPhase` prepends the treadmill at init, before this
+            // knows the deck is a re-opened session — and `restoreLoggedSets`
+            // fills the existing cards rather than rebuilding the list, so it
+            // survives. On a workout from three weeks ago that is an empty card
+            // offering to add five minutes of walking to history. A bout that
+            // WAS walked comes back from the projection ticked, so this only
+            // removes the one nobody performed.
+            exercises.removeAll {
+                $0.plan.id == WarmupCardio.name && !$0.rows.contains(where: \.isDone)
+            }
         } catch {
             // ── THE ONE THROW THAT MUST UNWIND ──────────────────────────────
             // `openEditor`'s guard is `sessionId != nil`, so a failed restore
