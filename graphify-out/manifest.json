@@ -3080,8 +3080,8 @@
     "semantic_hash": ""
   },
   "scripts/native-shot.sh": {
-    "mtime": 1788879169.5927982,
-    "ast_hash": "215da81ffc8aa9247002a9ece23c153b",
+    "mtime": 1788888586.7971137,
+    "ast_hash": "91ec6ac842fe5fec122571e8e426593c",
     "semantic_hash": ""
   },
   "src/tests/native-token-discipline.test.ts": {
@@ -3215,8 +3215,8 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/day-ax5.png": {
-    "mtime": 1788788000.1111455,
-    "ast_hash": "c5ba50c80ded33f01ab1ecdbcf218bd3",
+    "mtime": 1788888586.7900076,
+    "ast_hash": "49414becc48fadbb061325a3582d842d",
     "semantic_hash": ""
   },
   "native/__screenshots__/day-empty-ax5.png": {
@@ -3240,8 +3240,8 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/day.png": {
-    "mtime": 1788788000.11621,
-    "ast_hash": "5dd414fbff96caa613d5c7f3f985d1e1",
+    "mtime": 1788888586.7927573,
+    "ast_hash": "aae8f69629fcda733d4f36a6e20270a3",
     "semantic_hash": ""
   },
   "native/__screenshots__/fuel-ax5.png": {
@@ -3475,8 +3475,8 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/body-trends-ax5.png": {
-    "mtime": 1788800717.4210005,
-    "ast_hash": "244a210e1829c50ab2569e8b91acf23a",
+    "mtime": 1788888586.7770855,
+    "ast_hash": "330e5d980d3ae7aa90ef709b40edd25f",
     "semantic_hash": ""
   },
   "native/__screenshots__/body-trends-empty-ax5.png": {
@@ -3490,8 +3490,8 @@
     "semantic_hash": ""
   },
   "native/__screenshots__/body-trends.png": {
-    "mtime": 1788800717.422885,
-    "ast_hash": "373f9e34d9e0fc7278981e7411b2f989",
+    "mtime": 1788888586.7855165,
+    "ast_hash": "8380c450a0a8d1ed3ff405a62409c504",
     "semantic_hash": ""
   },
   "native/__screenshots__/exercise-history-ax5.png": {
@@ -3750,8 +3750,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/PreviewHarness.swift": {
-    "mtime": 1788879169.5594232,
-    "ast_hash": "cfe9b30591b83dc5dc08d4debcf08812",
+    "mtime": 1788888586.7720277,
+    "ast_hash": "54b376809d155dfcd10acc0534326d16",
     "semantic_hash": ""
   },
   "native/Onyx/App/SyncCoordinating.swift": {
@@ -3775,13 +3775,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Body/BodyTrendsPreviews.swift": {
-    "mtime": 1788790561.15002,
-    "ast_hash": "5e49d624ec8f38a036cfd1a24d43a7e9",
+    "mtime": 1788888586.772374,
+    "ast_hash": "c070d5fe9dd7a2f8f778082e1c078188",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Body/BodyTrendsView.swift": {
-    "mtime": 1788780682.0586743,
-    "ast_hash": "4bd0f6b3b01e2973b520a9c3ed017324",
+    "mtime": 1788888586.7728047,
+    "ast_hash": "6eb13db52f89cf2717b86b15ed3a1252",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Body/VitalMetrics.swift": {
@@ -3950,13 +3950,13 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseModel.swift": {
-    "mtime": 1788879169.563563,
-    "ast_hash": "531e7ac448abeee8bcfdf13122b20fbc",
+    "mtime": 1788888586.773229,
+    "ast_hash": "541da2fe10e27fb6ac46e435c2e70686",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulsePreviews.swift": {
-    "mtime": 1788790561.1513624,
-    "ast_hash": "63227d8cefb795cb6439c028b15168df",
+    "mtime": 1788888586.7735927,
+    "ast_hash": "4153dea1a60d5f32758fa9165d1dfd07",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseScale.swift": {
@@ -3965,8 +3965,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseSleep.swift": {
-    "mtime": 1788879169.5655975,
-    "ast_hash": "98137b8c270c1db247271b7e6ecc262e",
+    "mtime": 1788888586.773905,
+    "ast_hash": "bfcddd2b536ac783f90415e5d3c164a1",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseStack.swift": {
@@ -3975,8 +3975,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseTabView.swift": {
-    "mtime": 1788724314.8911576,
-    "ast_hash": "847221048e79361b98bee9921411790e",
+    "mtime": 1788888586.7748556,
+    "ast_hash": "49c0cc3086ad07bab763602bdf793271",
     "semantic_hash": ""
   },
   "native/Onyx/Features/Pulse/PulseVitals.swift": {
@@ -7130,7 +7130,7 @@
     "semantic_hash": ""
   },
   "docs/sql/e6-auth-deletion.sql": {
-    "mtime": 1788795167.6512065,
+    "mtime": 1788886270.619617,
     "ast_hash": "db94d14909bf86f64b0c002fb546fe8f",
     "semantic_hash": ""
   },
@@ -7310,7 +7310,7 @@
     "semantic_hash": ""
   },
   "docs/sql/phase3-engines.sql": {
-    "mtime": 1788885884.3605072,
+    "mtime": 1788886270.6200788,
     "ast_hash": "86c409edcf14e32dcf244e6da38610dc",
     "semantic_hash": ""
   },
@@ -7417,6 +7417,76 @@
   "docs/STRESS_MODEL.md": {
     "mtime": 1788885884.3602643,
     "ast_hash": "111342a1df645ab315df7f9160708445",
+    "semantic_hash": ""
+  },
+  "docs/sql/cardio-elevation.sql": {
+    "mtime": 1788886270.61905,
+    "ast_hash": "6e15b3b4b4cd614814c2dca0701970bc",
+    "semantic_hash": ""
+  },
+  "docs/sql/dashboard-polish.sql": {
+    "mtime": 1788886270.6192906,
+    "ast_hash": "8fe57a2c604cae452bf3dda629baab2b",
+    "semantic_hash": ""
+  },
+  "docs/sql/hotfix-polish.sql": {
+    "mtime": 1788886270.6198554,
+    "ast_hash": "0694f8f334cf474f709da964bbd60335",
+    "semantic_hash": ""
+  },
+  "docs/sql/set-quality-tags.sql": {
+    "mtime": 1788886270.6203105,
+    "ast_hash": "b50d209c465421baf5721e4cd7bb6d07",
+    "semantic_hash": ""
+  },
+  "docs/sql/treadmill-backfill.sql": {
+    "mtime": 1788886270.6205456,
+    "ast_hash": "c1ee7fb7ace8a7a959746a65bf874d04",
+    "semantic_hash": ""
+  },
+  "docs/sql/wave-10-set-events.sql": {
+    "mtime": 1788886270.6207607,
+    "ast_hash": "77c43dba561c59326c8343ac5b8f97d9",
+    "semantic_hash": ""
+  },
+  "native/Onyx/Features/Pulse/PulseStress.swift": {
+    "mtime": 1788888586.7740812,
+    "ast_hash": "90d6d21fa3747008867c5a1b65a57ef8",
+    "semantic_hash": ""
+  },
+  "native/Onyx/Features/Pulse/SleepEditSheet.swift": {
+    "mtime": 1788888586.775054,
+    "ast_hash": "eaad4a01e2057d7c3460e49704e3c5e3",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends-stress-ax5.png": {
+    "mtime": 1788888586.7793891,
+    "ast_hash": "320908e7ebf1d008c345840b64e183d6",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/body-trends-stress.png": {
+    "mtime": 1788888586.7830665,
+    "ast_hash": "817d13350557b70ab0661f186b16dcd2",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/sleep-edit-ax5.png": {
+    "mtime": 1788888586.7936225,
+    "ast_hash": "e9bdda82bca95043f450a89e1a9e92c6",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/sleep-edit.png": {
+    "mtime": 1788888586.7947404,
+    "ast_hash": "40d8ef1861672da1892d4f5abebe0b4c",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/stress-ax5.png": {
+    "mtime": 1788888586.7956939,
+    "ast_hash": "59121338f6af12aac7b30d3014f6d5eb",
+    "semantic_hash": ""
+  },
+  "native/__screenshots__/stress.png": {
+    "mtime": 1788888586.79665,
+    "ast_hash": "fef136a5a660d9d978846d00bc8de9a9",
     "semantic_hash": ""
   }
 }
