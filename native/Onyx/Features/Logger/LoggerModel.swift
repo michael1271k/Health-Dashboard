@@ -664,7 +664,7 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         // Read ONCE, at init. The stored order is last week's answer and the
         // live deck is this week's; re-reading it on a phase switch would let a
         // week-old template argue with a card the athlete has just dragged.
-        self.storedDeckOrder = (try? store?.deckOrder(dayKey: day.key, userId: userId)) as? [String] ?? []
+        self.storedDeckOrder = (try? store?.deckOrder(dayKey: day.key, userId: userId)) ?? []
         rebuildForPhase()
     }
 
