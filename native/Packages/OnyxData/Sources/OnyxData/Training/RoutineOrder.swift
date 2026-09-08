@@ -89,7 +89,7 @@ enum RoutineOrder {
         }
         guard payload != existing?.payload.raw else { return }
 
-        var row = RoutineTemplateRow(
+        let row = RoutineTemplateRow(
             userId: session.userId,
             dayKey: dayKey,
             payload: JSONText(raw: payload),
