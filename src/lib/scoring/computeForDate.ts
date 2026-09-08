@@ -88,7 +88,10 @@ function nextDay(d: string): string {
  * compute-score route can fetch a whole backfill's window once.
  */
 export async function fetchReadinessHistory(supabase: DB, userId: string, from: string, to: string): Promise<HistoryRows> {
-  const [hLogs, hMetrics, hSessions, hCardio] = await Promise.all([
+  // The nights that END on the mornings `from…to`: bedtimes from the evening
+  // before `from` to noon on `to` — the union of every date's night window.
+  const nights = nightWindow(from)
+  const [hLogs, hMetrics, hSessions, hCardio, hNights] = await Promise.all([
     supabase.from('daily_logs').select('date, hrv_ms, avg_rest_heart_rate').eq('user_id', userId)
       .gte('date', from).lte('date', to),
     supabase.from('daily_metrics').select('date, rest_hr').eq('user_id', userId)
@@ -97,12 +100,15 @@ export async function fetchReadinessHistory(supabase: DB, userId: string, from: 
       .gte('started_at', `${from}T00:00:00Z`).lt('started_at', `${nextDay(to)}T00:00:00Z`),
     supabase.from('cardio_logs').select('date, effort, duration_min').eq('user_id', userId)
       .gte('date', from).lte('date', to),
+    supabase.from('sleep_sessions').select('start_time, duration_min, deep_min, rem_min, awake_min').eq('user_id', userId)
+      .gte('start_time', nights.from).lt('start_time', nightWindow(to).to),
   ])
   return {
     logs: (hLogs.error ? [] : (hLogs.data ?? [])) as Array<{ date: string; hrv_ms: number | null; avg_rest_heart_rate: number | null }>,
     metrics: (hMetrics.error ? [] : (hMetrics.data ?? [])) as Array<{ date: string; rest_hr: number | null }>,
     sessions: (hSessions.error ? [] : (hSessions.data ?? [])) as Array<{ started_at: string; session_rpe: number | null; duration_min: number | null }>,
     cardio: (hCardio.error ? [] : (hCardio.data ?? [])) as Array<{ date: string; effort: number | null; duration_min: number | null }>,
+    nights: (hNights.error ? [] : (hNights.data ?? [])) as HistoryRows['nights'],
   }
 }
 

@@ -32,6 +32,20 @@ struct ReadinessHistoryTests {
             try WorkoutSession(id: "s3", userId: user, dayKey: "legs_a", date: "2026-06-01", durationMin: 60, sessionRpe: 9).insert(conn)
             try CardioLogRow(id: "c1", userId: user, date: "2026-09-04", kind: "walk", durationMin: 30, effort: 3).insert(conn)
             try CardioLogRow(id: "c2", userId: user, date: "2026-09-03", kind: "walk", durationMin: 30, effort: nil).insert(conn)
+            // The nights (E3): the 5th holds two rows — the longest is the night;
+            // the 4th is a duration-only legacy row; the 3rd a still night WITH
+            // stages; a bedtime after noon on the 1st files under the 2nd.
+            func night(_ id: String, _ iso: String, _ dur: Int, deep: Int, rem: Int, awake: Int) throws {
+                let start = ISO8601DateFormatter().date(from: iso)!
+                try SleepSessionRow(id: id, userId: user, startTime: start, endTime: start.addingTimeInterval(TimeInterval(dur) * 60),
+                                    durationMin: dur, deepMin: deep, remMin: rem, coreMin: dur - deep - rem, awakeMin: awake, createdAt: now).insert(conn)
+            }
+            try night("n1", "2026-09-04T22:46:00Z", 431, deep: 74, rem: 96, awake: 18)
+            try night("n1b", "2026-09-04T23:30:00Z", 90, deep: 0, rem: 0, awake: 0)
+            try night("n2", "2026-09-03T23:00:00Z", 420, deep: 0, rem: 0, awake: 0)
+            try night("n3", "2026-09-02T22:00:00Z", 400, deep: 60, rem: 80, awake: 0)
+            try night("n4", "2026-09-01T13:00:00Z", 300, deep: 30, rem: 40, awake: 30)
+            try night("n5", "2026-06-01T23:00:00Z", 999, deep: 1, rem: 1, awake: 999)   // outside the window
             // Another user's rows never leak in.
             try DailyLogRow(id: "x1", userId: "u2", date: "2026-09-05", avgRestHeartRate: 99, createdAt: now, updatedAt: now,
                             hrvMs: 99, nutritionEstimated: false, sleepOnsetTrouble: false).insert(conn)
@@ -78,6 +92,41 @@ struct ReadinessHistoryTests {
         #expect(h.loads[47] == 7 * 50 + 3 * 30)
         #expect(h.loads[46] == 0)
         #expect(h.loads[..<46].allSatisfy { $0 == 0 })
+    }
+
+    @Test("the nights lie on the calendar: longest wins, duration-only has no awake, noon files under tomorrow")
+    func nights() throws {
+        let h = try history(try seeded())
+        let asleep = try #require(h.asleepMin)
+        let awake = try #require(h.awakeMin)
+        #expect(asleep.count == 49 && awake.count == 49)
+        #expect(asleep[48] == 431 && awake[48] == 18)
+        #expect(asleep[47] == 420 && awake[47] == nil)      // duration-only
+        #expect(asleep[46] == 400 && awake[46] == 0)        // a real still night
+        #expect(asleep[45] == 300 && awake[45] == 30)       // 2026-09-01T13:00Z → the 2nd
+        #expect(asleep[44] == nil)
+        #expect(!asleep.contains(999))
+    }
+
+    @Test("the stress inputs read the same scalars the battery does, plus the two it cannot see")
+    func stressInputs() throws {
+        let db = try seeded()
+        try db.writer.write { conn in
+            try FatigueLogRow(id: "f1", userId: user, date: day, slot: "waking", level: 2, createdAt: Date()).insert(conn)
+            try FatigueLogRow(id: "f2", userId: user, date: day, slot: "post", level: 4, createdAt: Date()).insert(conn)
+        }
+        let s = try db.stressInputs(userId: user, date: day)
+        let signals = Readiness.signals(try history(db))
+        #expect(s.hrvZ == signals.hrv.z && s.rhrZ == signals.rhr.z)
+        #expect(s.acwr == signals.load.acwr && s.strainZ == signals.load.strainZ)
+        #expect(s.fatigueDayMean == 3, "the mean of 2 and 4, not the latest")
+        #expect(s.sleepOnsetTrouble == false, "the column is NOT NULL DEFAULT false")
+        #expect(s.fragZ == nil, "four nights cannot make a baseline")
+        // The series is exactly the asked-for fortnight, computed on read.
+        let series = try db.stressSeries(userId: user, endingOn: day, limit: 5)
+        #expect(series.count == 5 && series.last?.d == day)
+        #expect(series.last?.empty == false)
+        #expect(series.last?.term(.selfReport) == 0)
     }
 
     @Test("the export's flat shape carries null for null")

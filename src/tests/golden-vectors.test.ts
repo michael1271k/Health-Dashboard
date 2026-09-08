@@ -207,6 +207,9 @@ import {
 } from '@/lib/sessions/sessionDuration'
 import { exerciseTags, type ExerciseTag } from '@/lib/exercises/tags'
 import { debtBand, type SleepDebt } from '@/lib/sleep/debt'
+import { trimStages, trimNight, type NightStages, type StoredNight, type NightWindowEdit } from '@/lib/sleep/trim'
+import { STRESS, stressBreakdown, stressIndex, fragmentationZ, type StressInputs } from '@/lib/scoring/stress'
+import { stressSeries, type StressDay, type StressDayIn } from '@/lib/charts/stressSeries'
 import { biggestChange, type WeekTotals } from '@/lib/dashboard/weekSoFar'
 import { scheduleAwareReadiness, type ScheduleReadinessContext } from '@/lib/coach/scheduleReadiness'
 
@@ -8524,6 +8527,171 @@ describe('golden vectors — body composition', () => {
       fn: 'bodyCompSeries',
       note: 'Four metrics — skeletal muscle, lean soft tissue, fat-free mass, body fat % — each walking its OWN readings inside the window, so a hole in one is not a hole in the others. The delta is the newest against the oldest reading present and `deltaDays` is the span it actually covers; a zero or a negative is a failed read, not a measurement.',
       cases,
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sleep trim — strategy B (Phase 3 E2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — sleep trim', () => {
+  it('exports strategy B over minute counts and over stored windows', () => {
+    const night = { asleepMin: 431, deepMin: 74, remMin: 96, coreMin: 261, awakeMin: 18 }
+    const legacy = { asleepMin: 420, deepMin: 0, remMin: 0, coreMin: 420, awakeMin: 0 }
+    const restless = { asleepMin: 300, deepMin: 40, remMin: 50, coreMin: 210, awakeMin: 95 }
+    const grid: Array<[string, NightStages, number, number]> = [
+      ['a shift', night, 480, 480],
+      ['ten minutes off — all awake', night, 480, 470],
+      ['exactly the awake minutes off', night, 480, 462],
+      ['an hour off — awake first, then the stages in proportion', night, 480, 420],
+      ['two hours off', night, 480, 360],
+      ['everything off', night, 480, 0],
+      ['a thirty-minute extension goes to core', night, 480, 510],
+      ['a two-hour extension goes to core', night, 480, 600],
+      ['a degenerate window read as its own minutes — shift', night, 0, 449],
+      ['a degenerate window read as its own minutes — trim', night, 0, 419],
+      ['a degenerate window read as its own minutes — extension', night, 0, 500],
+      ['a duration-only row trimmed', legacy, 420, 390],
+      ['a duration-only row extended', legacy, 420, 450],
+      ['a restless night trimmed inside its awake minutes', restless, 400, 340],
+      ['a restless night trimmed past its awake minutes', restless, 400, 260],
+      ['rounding remainder lands in core', { asleepMin: 100, deepMin: 33, remMin: 33, coreMin: 34, awakeMin: 0 }, 100, 50],
+      ['a window shorter than the minutes it holds plus a real trim', { asleepMin: 431, deepMin: 74, remMin: 96, coreMin: 261, awakeMin: 18 }, 300, 200],
+      ['negative and non-finite inputs read as zero', { asleepMin: -5, deepMin: Number.NaN, remMin: 10, coreMin: 0, awakeMin: -1 }, 100, 90],
+      ['fractional minutes are rounded first', { asleepMin: 430.6, deepMin: 73.5, remMin: 96.4, coreMin: 260.7, awakeMin: 17.5 }, 480.4, 420.6],
+    ]
+    emit('sleep-trim.json', {
+      module: 'sleep/trim',
+      fn: 'trimStages',
+      note: 'Strategy B: operates on ASLEEP minutes, not window length. A trim removes awake minutes first, then the asleep stages in proportion (Math.round, remainder to core, never negative); an extension adds core only; a shift changes nothing. A window shorter than asleep + awake is read as exactly that long.',
+      cases: grid.map(([name, stages, oldSpan, newSpan]) => ({
+        name, input: { stages, oldSpanMin: oldSpan, newSpanMin: newSpan }, expected: trimStages(stages, oldSpan, newSpan),
+      })),
+    })
+
+    const rows: Array<[string, StoredNight, NightWindowEdit]> = [
+      ['trim last night by 30 min at the start', { start: '2026-09-05T22:46:00+00:00', end: '2026-09-06T06:46:00+00:00', ...night }, { start: '2026-09-05T23:16:00Z', end: '2026-09-06T06:46:00Z' }],
+      ['trim 20 min off the end', { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:46:00Z', ...night }, { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:26:00Z' }],
+      ['extend the morning by an hour', { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:46:00Z', ...night }, { start: '2026-09-05T22:46:00Z', end: '2026-09-06T07:46:00Z' }],
+      ['move the whole night an hour later', { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:46:00Z', ...night }, { start: '2026-09-05T23:46:00Z', end: '2026-09-06T07:46:00Z' }],
+      ['a legacy row with end = start', { start: '2026-07-18T23:00:00Z', end: '2026-07-18T23:00:00Z', ...legacy }, { start: '2026-07-18T23:00:00Z', end: '2026-07-19T05:30:00Z' }],
+      ['fractional seconds and an offset', { start: '2026-09-05T22:46:12.594+02:00', end: '2026-09-06T06:46:12.594+02:00', ...night }, { start: '2026-09-05T22:46:12.594+02:00', end: '2026-09-06T06:16:12.594+02:00' }],
+      ['an unparseable edit is not an edit — the night comes back unchanged', { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:46:00Z', ...night }, { start: 'yesterday', end: 'today' }],
+      ['an inverted edit is not an edit either', { start: '2026-09-05T22:46:00Z', end: '2026-09-06T06:46:00Z', ...night }, { start: '2026-09-06T06:46:00Z', end: '2026-09-05T22:46:00Z' }],
+    ]
+    emit('sleep-trim-night.json', {
+      module: 'sleep/trim',
+      fn: 'trimNight',
+      note: 'Strategy B over a stored row and the window the user chose: spans are whole minutes between the ISO instants (Date.parse). An edit that does not parse or does not end after it starts is not an edit: the row comes back as a shift.',
+      cases: rows.map(([name, row, edit]) => ({ name, input: { row, edit }, expected: trimNight(row, edit) })),
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stress index v1 (Phase 3 E3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('golden vectors — stress index', () => {
+  it('exports the breakdown, one case per band, the load parts, the fragmentation z and the series', () => {
+    const grid: Array<[string, StressInputs]> = [
+      ['nothing answered', {}],
+      ['your normal — every term at zero', { hrvZ: 0, rhrZ: 0, fragZ: 0, sleepOnsetTrouble: false, fatigueDayMean: 3, acwr: 1.0, strainZ: 0 }],
+      ['calm — recovered and fresh', { hrvZ: 2, rhrZ: -1.5, fragZ: -1, sleepOnsetTrouble: false, fatigueDayMean: 1.5, acwr: 0.8, strainZ: -1 }],
+      ['baseline — a quiet ordinary day', { hrvZ: 0.3, rhrZ: 0, fragZ: 0, sleepOnsetTrouble: false, fatigueDayMean: 2.67, acwr: 1.1, strainZ: 0.2 }],
+      ['elevated — a hard week showing', { hrvZ: -0.6, rhrZ: 0.5, fragZ: 0.4, sleepOnsetTrouble: false, fatigueDayMean: 3.33, acwr: 1.5, strainZ: 0.8 }],
+      ['high — 2026-09-01, ill', { hrvZ: -1.4, rhrZ: 1.1, fragZ: 1.2, sleepOnsetTrouble: true, fatigueDayMean: 3.67, acwr: 1.45, strainZ: 0.9 }],
+      ['overreached — everything at the clamp', { hrvZ: -2, rhrZ: 2, fragZ: 2, sleepOnsetTrouble: true, fatigueDayMean: 5, acwr: 2, strainZ: 2 }],
+      ['the floor — two terms at −2, nothing else answered', { hrvZ: 2, fatigueDayMean: 1 }],
+      ['only HRV', { hrvZ: -1.2 }],
+      ['only resting HR', { rhrZ: 1.2 }],
+      ['HRV and resting HR disagree', { hrvZ: 1, rhrZ: 1 }],
+      ['onset alone, trouble', { sleepOnsetTrouble: true }],
+      ['onset alone, calm — answered, zero', { sleepOnsetTrouble: false }],
+      ['onset unreadable', { sleepOnsetTrouble: null, fragZ: 0.5 }],
+      ['fragmentation beyond the clamp', { fragZ: 3.5 }],
+      ['fatigue day mean off the scale', { fatigueDayMean: 9 }],
+      ['fatigue day mean below the scale', { fatigueDayMean: 0 }],
+      ['load: inside the sweet spot', { acwr: 1.25, strainZ: -0.5 }],
+      ['load: the onset', { acwr: 1.3 }],
+      ['load: halfway to saturation', { acwr: 1.65 }],
+      ['load: saturated ratio', { acwr: 2.0 }],
+      ['load: beyond saturation', { acwr: 3.2 }],
+      ['load: strain alone', { strainZ: 1.5 }],
+      ['load: both, clamped', { acwr: 2.5, strainZ: 2 }],
+      ['load: strain only, negative — answered, zero', { strainZ: -2 }],
+      ['missing z is neutral: a term absent vs the same term at zero', { hrvZ: -1, fatigueDayMean: 3 }],
+      ['non-finite inputs read as missing', { hrvZ: Number.NaN, rhrZ: Number.POSITIVE_INFINITY, fragZ: 0.5 }],
+    ]
+    emit('stress-breakdown.json', {
+      module: 'scoring/stress',
+      fn: 'stressBreakdown',
+      note: 'S = round(clamp(50 + 20·Σwz/Σw over ANSWERED terms, 10, 90)); w = auto .35 · sleep .25 · self .25 · load .15. auto = mean{−hrvZ, rhrZ}; sleep = mean{fragZ (±2), onset 0|1}; self = clamp(fatigue day mean − 3, ±2); load = clamp(½(max(0, strainZ) + 2·max(0, min(acwr, 2) − 1.3)/0.7), 0, 2). Nothing answered → index null. Bands: <30 calm · ≤50 baseline · ≤62 elevated · ≤75 high · else overreached.',
+      cases: grid.map(([name, input]) => ({ name, input, expected: stressBreakdown(input) })),
+    })
+    emit('stress-constants.json', {
+      module: 'scoring/stress',
+      fn: 'STRESS',
+      note: 'The v1 constants the port must not drift from. Band `upTo` is inclusive except Calm, whose 30 is already Baseline.',
+      cases: [{ name: 'constants', input: {}, expected: { ...STRESS, bands: STRESS.bands.map((b) => ({ ...b, upTo: Number.isFinite(b.upTo) ? b.upTo : null })) } }],
+    })
+
+    const fragGrid: Array<[string, Array<number | null>, Array<number | null>]> = [
+      ['empty', [], []],
+      ['a still baseline, a restless week', [...Array(42).fill(20).map((v, i) => v + (i % 2 ? 4 : -4)), ...Array(7).fill(60)], Array(49).fill(400)],
+      ['a restless baseline, a still week', [...Array(42).fill(60).map((v, i) => v + (i % 3 ? 6 : -12)), ...Array(7).fill(10)], Array(49).fill(400)],
+      ['duration-only nights are holes', [...Array(42).fill(30).map((v, i) => (i % 4 ? v + (i % 2 ? 3 : -3) : null)), null, 40, null, 45, null, 50, null], Array(49).fill(420)],
+      ['too thin a baseline', [...Array(10).fill(null), ...Array(32).fill(20), ...Array(7).fill(30)].map((v, i) => (i < 10 ? null : v)), Array(49).fill(400).map((v, i) => (i < 30 ? null : v))],
+      ['ratios, not minutes: the same awake over a shorter night reads higher', [...Array(42).fill(20).map((v, i) => v + (i % 2 ? 2 : -2)), ...Array(7).fill(20)], [...Array(42).fill(420), ...Array(7).fill(240)]],
+      ['a zero-length night is a hole', [10, 10, 10], [0, 400, -5]],
+      ['ragged lengths read the shorter', [1, 2, 3, 4], [100, 100]],
+    ]
+    emit('stress-fragmentation.json', {
+      module: 'scoring/stress',
+      fn: 'fragmentationZ',
+      note: 'awake/asleep per night through the readiness z-signal (raw, not logged): rolling 7 vs the 42 before, SWC 0.5·SD, ±2. A night with no ratio (no row, nothing asleep, duration-only — nulled upstream by the history builder) is a hole.',
+      cases: fragGrid.map(([name, awake, asleep]) => ({ name, input: { awakeMin: awake, asleepMin: asleep }, expected: fragmentationZ(awake, asleep) })),
+    })
+
+    const endingOn = '2026-09-06'
+    const scored = grid.slice(1, 8).map(([, input], i) => ({ date: isoAddDays(endingOn, -(6 - i)), breakdown: stressBreakdown(input) }))
+    const seriesCases: Case<{ days: StressDayIn[]; endingOn: string; limit: number }, StressDay[]>[] = []
+    const add = (name: string, days: StressDayIn[], limit = 14) => {
+      seriesCases.push({ name, input: { days, endingOn, limit }, expected: stressSeries(days, { endingOn, limit }) })
+    }
+    add('seven readings in a fortnight window', scored)
+    add('exactly the window', scored, 7)
+    add('a shorter window than the data', scored, 3)
+    add('a hole in the middle', scored.filter((_, i) => i !== 3))
+    add('a day with nothing answered is empty', scored.map((d, i) => (i === 2 ? { date: d.date, breakdown: stressBreakdown({}) } : d)))
+    add('a day with no breakdown at all', scored.map((d, i) => (i === 4 ? { date: d.date, breakdown: null } : d)))
+    add('nothing at all', [])
+    add('zero limit', scored, 0)
+    add('negative limit', scored, -3)
+    emit('stress-series.json', {
+      module: 'charts/stressSeries',
+      fn: 'stressSeries',
+      note: 'Exactly `limit` days ending on endingOn, oldest first; a day with no reading is present and empty. Term z one decimal, null where unanswered.',
+      cases: seriesCases,
+    })
+
+    // The battery is not listening: the same ScoringInputs produce the same
+    // breakdown whatever the stress index is handed. Emitted as a vector so the
+    // Swift side proves it against the SAME inputs rather than its own.
+    const battInputs = inputs({
+      sleepHours: 505 / 60, deepMinutes: 55, remMinutes: 100, hoursAwake: 12,
+      hrvZ: -1.4, rhrZ: 1.1, acwr: 1.45, strainZ: 0.9, fatigueLevel: 3, domsSeverity: 1.5, sleepOnsetTrouble: true,
+    })
+    emit('stress-battery-isolation.json', {
+      module: 'scoring/stress',
+      fn: 'batteryBreakdown',
+      note: 'Battery.breakdown(inputs) with the stress index computed alongside on every extreme: the battery breakdown is identical in every case, and the budget is still 93. The stress input is carried in the case for the record; nothing in the battery reads it.',
+      cases: grid.map(([name, stress]) => ({
+        name,
+        input: { inputs: battInputs, stress },
+        expected: { battery: batteryBreakdown(battInputs), maxTotalDrain: MAX_TOTAL_DRAIN, stressIndex: stressIndex(stress) },
+      })),
     })
   })
 })

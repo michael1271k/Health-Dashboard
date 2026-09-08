@@ -47,6 +47,18 @@ describe('readinessHistoryFor', () => {
       { date: '2026-09-04', effort: 3, duration_min: 30 },
       { date: '2026-09-03', effort: null, duration_min: 30 },
     ],
+    nights: [
+      // The night of the 5th: two rows in one window, the longest is the night.
+      { start_time: '2026-09-04T22:46:00+00:00', duration_min: 431, deep_min: 74, rem_min: 96, awake_min: 18 },
+      { start_time: '2026-09-04T23:30:00+00:00', duration_min: 90, deep_min: 0, rem_min: 0, awake_min: 0 },
+      // The 4th: a duration-only legacy row — asleep counts, awake does not.
+      { start_time: '2026-09-03T23:00:00+00:00', duration_min: 420, deep_min: 0, rem_min: 0, awake_min: 0 },
+      // The 3rd: a still night WITH stages — a real zero awake.
+      { start_time: '2026-09-02T22:00:00+00:00', duration_min: 400, deep_min: 60, rem_min: 80, awake_min: 0 },
+      // A bedtime after noon files under the NEXT morning (the 2nd → the 3rd is taken; this is the 2nd).
+      { start_time: '2026-09-01T13:00:00+00:00', duration_min: 300, deep_min: 30, rem_min: 40, awake_min: 30 },
+      { start_time: '2026-06-01T23:00:00+00:00', duration_min: 999, deep_min: 1, rem_min: 1, awake_min: 999 },  // outside the window
+    ],
   }
 
   it('lays every series on the 49-day calendar, newest last', () => {
@@ -74,6 +86,30 @@ describe('readinessHistoryFor', () => {
     expect(h.loads[47]).toBe(7 * 50 + 3 * 30)
     expect(h.loads[46]).toBe(0)
     expect(h.loads.slice(0, 46).every((v) => v === 0)).toBe(true)
+  })
+
+  it('lays the nights on the calendar: longest wins, duration-only has no awake, noon files under tomorrow', () => {
+    const h = readinessHistoryFor(date, rows)
+    expect(h.asleepMin).toHaveLength(49)
+    expect(h.awakeMin).toHaveLength(49)
+    expect(h.asleepMin![48]).toBe(431)
+    expect(h.awakeMin![48]).toBe(18)
+    expect(h.asleepMin![47]).toBe(420)
+    expect(h.awakeMin![47]).toBeNull()      // duration-only
+    expect(h.asleepMin![46]).toBe(400)
+    expect(h.awakeMin![46]).toBe(0)         // a real still night
+    expect(h.asleepMin![45]).toBe(300)      // 2026-09-01T13:00Z → the night of the 2nd
+    expect(h.awakeMin![45]).toBe(30)
+    expect(h.asleepMin![44]).toBeNull()
+    expect(h.asleepMin).not.toContain(999)
+  })
+
+  it('a caller with no nights gets an all-null fragmentation series, not a crash', () => {
+    const { nights: _drop, ...bare } = rows
+    void _drop
+    const h = readinessHistoryFor(date, bare)
+    expect(h.asleepMin!.every((v) => v == null)).toBe(true)
+    expect(h.awakeMin!.every((v) => v == null)).toBe(true)
   })
 
   it('flattens the signals to the export shape, null for null', () => {

@@ -24,6 +24,13 @@ public struct SleepNight: Sendable, Equatable {
     public var awakeMin: Int
     public var bedStart: Date?
     public var bedEnd: Date?
+
+    /// What `core_min` stores: the real per-stage split when present, else
+    /// everything asleep — which is what a legacy duration-only reading means.
+    /// One rule for `writeSleep` and the trim engine.
+    public var storedCoreMin: Int {
+        coreMin > 0 ? coreMin : max(0, sleepMinutes - deepMin - remMin)
+    }
 }
 
 /// The night window, and the union arithmetic that makes a night one number.
@@ -97,6 +104,29 @@ public enum Sleep {
             bedStart: bedStart,
             bedEnd: bedEnd
         )
+    }
+}
+
+// MARK: - Strategy A: the same samples, a narrower window
+
+public extension Sleep {
+    /// The samples INSIDE `[start, end]`, each clipped to it. A sample that
+    /// straddles an edge keeps only its inner part; one wholly outside is gone.
+    /// `aggregate` over the result is the trim engine's strategy A (E2): the
+    /// stages re-sum from what the watch actually recorded in the new window,
+    /// which is the one answer no proportional rule can reach.
+    static func clip(_ samples: [SleepSample], start: Date, end: Date) -> [SleepSample] {
+        guard end > start else { return [] }
+        return samples.compactMap { s in
+            let a = Swift.max(s.start, start)
+            let b = Swift.min(s.end, end)
+            return b > a ? SleepSample(value: s.value, start: a, end: b) : nil
+        }
+    }
+
+    /// Strategy A in one call — nil when nothing slept inside the window.
+    static func aggregate(_ samples: [SleepSample], within start: Date, _ end: Date) -> SleepNight? {
+        aggregate(clip(samples, start: start, end: end))
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import OnyxCore
 
 /// The Day and Fuel screens' read and write path — one logical day, eleven
 /// tables.
@@ -314,6 +315,110 @@ public extension AppDatabase {
         })
     }
 
+    /// The stored window of a night the user has edited, or nil. `HealthSync`
+    /// reads overnight HRV over it instead of HealthKit's bed window.
+    func manualNightWindow(userId: String, date: String) throws -> (start: Date, end: Date)? {
+        guard let window = NightWindow.range(date) else { return nil }
+        return try writer.read { db in
+            try SleepSessionRow
+                .filter(Column("user_id") == userId
+                        && Column("start_time") >= window.from
+                        && Column("start_time") < window.to)
+                .fetchAll(db)
+                .first { ManualEntry.isManualSleep($0.hkUuid) }
+                .map { ($0.startTime, $0.endTime) }
+        }
+    }
+
+    /// Re-window the night that ended on the morning of `date` (E2).
+    ///
+    /// ── WRITTEN BY `id`, UNDER THE SENTINEL ─────────────────────────────────
+    /// The row is found by its WINDOW (longest wins, the scorer's rule) and
+    /// then saved by primary key — the trim CHANGES `start_time`, so a natural-
+    /// key upsert would insert a second night beside the first. The outbox
+    /// already pushes `sleep_sessions` on `id`. `hk_uuid` becomes
+    /// `manual-sleep-<date>`, which is what makes `writeSleep` decline the
+    /// night from then on and `HealthSync` read HRV over this window.
+    ///
+    /// `night` is strategy A's answer (the samples inside the new window,
+    /// re-aggregated) when the caller has one; nil is strategy B — `SleepTrim`
+    /// over the stored minutes. A night nobody has written yet under B is all
+    /// core: no samples, no stage claim. `hrvMs` lands on `daily_logs.hrv_ms`
+    /// when the caller read one; nil leaves the stored figure alone.
+    ///
+    /// Does NOT rescore. `AppEnvironment.rescore(from:reason:)` is the one
+    /// entry point for the cascade, as it is for every other edit.
+    @discardableResult
+    func editSleepWindow(
+        userId: String, date: String, start: Date, end: Date,
+        night: SleepNight? = nil, hrvMs: Double? = nil, now: Date = Date()
+    ) throws -> SleepSessionRow {
+        guard end > start else { throw SleepEditError.emptyWindow }
+        guard let window = NightWindow.range(date) else { throw SleepEditError.badDate(date) }
+        // The store is the trust boundary, not the picker: a bedtime outside
+        // the night's own window would be written under THIS night's sentinel
+        // and found by NOBODY reading this night — and by the next night's
+        // reader, whose real HealthKit row it would then block forever.
+        guard start >= window.from, start < window.to else { throw SleepEditError.outsideNight(date) }
+        return try writer.write { db in
+            let inWindow = try SleepSessionRow
+                .filter(Column("user_id") == userId
+                        && Column("start_time") >= window.from
+                        && Column("start_time") < window.to)
+                .order(Column("duration_min").desc)
+                .fetchAll(db)
+            // A night nobody has written yet starts as a ZERO-LENGTH window
+            // holding nothing, so strategy B reads the edit as an extension
+            // from nothing — all core — rather than as a shift of nothing.
+            var row = inWindow.first ?? SleepSessionRow(
+                id: newOnyxID(), userId: userId, startTime: start, endTime: start, durationMin: 0,
+                deepMin: 0, remMin: 0, coreMin: 0, awakeMin: 0, createdAt: now
+            )
+
+            if let night {
+                row.durationMin = night.sleepMinutes
+                row.deepMin = night.deepMin
+                row.remMin = night.remMin
+                row.coreMin = night.storedCoreMin
+                row.awakeMin = night.awakeMin
+            } else {
+                let stages = NightStages(
+                    asleepMin: Double(row.durationMin), deepMin: Double(row.deepMin ?? 0), remMin: Double(row.remMin ?? 0),
+                    coreMin: Double(row.coreMin ?? 0), awakeMin: Double(row.awakeMin ?? 0)
+                )
+                let trimmed = SleepTrim.trimStages(
+                    stages,
+                    oldSpanMin: row.endTime.timeIntervalSince(row.startTime) / 60,
+                    newSpanMin: end.timeIntervalSince(start) / 60
+                )
+                row.durationMin = Int(trimmed.asleepMin)
+                row.deepMin = Int(trimmed.deepMin)
+                row.remMin = Int(trimmed.remMin)
+                row.coreMin = Int(trimmed.coreMin)
+                row.awakeMin = Int(trimmed.awakeMin)
+            }
+            row.startTime = start
+            row.endTime = end
+            row.hkUuid = ManualEntry.sleepSentinel(date)
+            try row.save(db)
+            try Self.enqueueRowUpsert(table: SleepSessionRow.databaseTableName, id: row.id, in: db)
+
+            // A second row in the same window is the duplicate the unique
+            // index exists to forbid; it goes, and its delete is queued.
+            for extra in inWindow.dropFirst() {
+                try extra.delete(db)
+                try Self.enqueueRowDelete(table: SleepSessionRow.databaseTableName, key: ["id": extra.id], in: db)
+            }
+
+            let minutes = row.durationMin
+            _ = try Self.patchDailyLog(db, userId: userId, date: date, now: now, clearing: []) {
+                $0.sleepMinutes = minutes
+                if let hrvMs { $0.hrvMs = hrvMs }
+            }
+            return row
+        }
+    }
+
     /// `(date, sleep_minutes)` for every day in `from...to`, oldest first — the
     /// input to `SleepDebt.compute`. Two columns of a fifty-column row, on
     /// purpose: the gauge redraws when a night changes, not when a step count does.
@@ -611,6 +716,16 @@ public extension AppDatabase {
     static func utcInstant(_ date: String, hour: Int) -> Date? {
         NightWindow.midnight(date)?.addingTimeInterval(TimeInterval(hour) * 3600)
     }
+}
+
+/// Why a sleep edit was refused before it touched the store.
+public enum SleepEditError: Error, Equatable, Sendable {
+    /// `end` was not after `start`.
+    case emptyWindow
+    case badDate(String)
+    /// `start` was not inside `NightWindow.range(date)` — the row would belong
+    /// to no night, or to the wrong one.
+    case outsideNight(String)
 }
 
 /// One night's minutes, for the sleep-debt gauge.

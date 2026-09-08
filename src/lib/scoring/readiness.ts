@@ -292,6 +292,16 @@ export interface ReadinessHistory {
   rhr: ReadonlyArray<number | null | undefined>
   /** sRPE load per day, oldest → today. Rest days are zeros. */
   loads: readonly number[]
+  /**
+   * The stress index's fragmentation series (Phase 3 E3), oldest → today.
+   * `awakeMin` is null for a night with no row AND for a duration-only row
+   * (awake = deep = rem = 0), whose zero is an absence of stage data rather
+   * than a still night; `asleepMin` is null only for a night with no row.
+   * Optional: the battery never reads them, and the `readiness-signals`
+   * vectors predate them.
+   */
+  awakeMin?: ReadonlyArray<number | null | undefined>
+  asleepMin?: ReadonlyArray<number | null | undefined>
 }
 
 export interface ReadinessSignals {

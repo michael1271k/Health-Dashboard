@@ -1,4 +1,6 @@
 import { READINESS, dailyLoads, type ReadinessHistory, type ReadinessSignals } from '@/lib/scoring/readiness'
+import { fragmentationRatio } from '@/lib/scoring/stress'
+import { nightOf } from '@/lib/sleep/nightWindow'
 import type { ExportReadiness } from '@/lib/reports/weeklyExport'
 
 /**
@@ -20,12 +22,26 @@ export interface HistoryLogRow { date: string; hrv_ms: number | null; avg_rest_h
 export interface HistoryMetricRow { date: string; rest_hr: number | null }
 export interface HistorySessionRow { started_at: string; session_rpe: number | null; duration_min: number | null }
 export interface HistoryCardioRow { date: string; effort: number | null; duration_min: number | null }
+/** A `sleep_sessions` row as the fragmentation series needs it (Phase 3 E3). */
+export interface HistoryNightRow {
+  start_time: string
+  duration_min: number | null
+  deep_min: number | null
+  rem_min: number | null
+  awake_min: number | null
+}
 
 export interface HistoryRows {
   logs: readonly HistoryLogRow[]
   metrics: readonly HistoryMetricRow[]
   sessions: readonly HistorySessionRow[]
   cardio: readonly HistoryCardioRow[]
+  /**
+   * Optional: only the stress index reads the nights, and a caller that does
+   * not compute it (the export until E5) need not fetch them. Absent, the
+   * fragmentation series is all null and the stress sleep term is neutral.
+   */
+  nights?: readonly HistoryNightRow[]
 }
 
 function addDays(dateISO: string, n: number): string {
@@ -82,10 +98,38 @@ export function readinessHistoryFor(date: string, rows: HistoryRows): ReadinessH
     rows.sessions.map((s) => ({ date: sessionDateOf(s.started_at), sessionRpe: s.session_rpe, durationMin: s.duration_min })),
     rows.cardio.map((c) => ({ date: c.date, effort: c.effort, durationMin: c.duration_min })),
   )
+
+  // ── THE NIGHTS, ONE PER DATE, LONGEST WINS ────────────────────────────────
+  // Filed under the morning they ended on (`nightOf`), which is the date the
+  // scorer reads them under; where a window holds two rows the longest is the
+  // night, as `computeForDate` and `sleepNightStream` already decide.
+  const nightByDate = new Map<string, HistoryNightRow>()
+  for (const n of rows.nights ?? []) {
+    const d = nightOf(n.start_time)
+    if (!inWindow.has(d)) continue
+    const held = nightByDate.get(d)
+    if (!held || (n.duration_min ?? 0) > (held.duration_min ?? 0)) nightByDate.set(d, n)
+  }
+  const asleepMin = dates.map((d) => {
+    const n = nightByDate.get(d)
+    return n && n.duration_min != null && n.duration_min > 0 ? n.duration_min : null
+  })
+  const awakeMin = dates.map((d) => {
+    const n = nightByDate.get(d)
+    if (!n || n.duration_min == null || n.duration_min <= 0) return null
+    // A duration-only row (awake = deep = rem = 0) has no stage data; its
+    // zero is an absence, not a still night. `fragmentationRatio` is the rule.
+    return fragmentationRatio({ awakeMin: n.awake_min, asleepMin: n.duration_min, deepMin: n.deep_min, remMin: n.rem_min }) == null
+      ? null
+      : n.awake_min
+  })
+
   return {
     hrv: dates.map((d) => hrvByDate.get(d) ?? null),
     rhr: dates.map((d) => rhrMetric.get(d) ?? rhrLog.get(d) ?? null),
     loads,
+    awakeMin,
+    asleepMin,
   }
 }
 

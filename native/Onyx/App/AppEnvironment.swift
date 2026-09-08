@@ -170,6 +170,27 @@ public final class AppEnvironment {
         return true
     }
 
+    /// Re-window a night, then rewrite every score it can move (E2).
+    ///
+    /// The ONE place a sleep edit runs from: `HealthSync.editSleepWindow` reads
+    /// the samples and the overnight HRV inside the new window and writes the
+    /// row under the sleep sentinel; the cascade is scheduled here, through
+    /// `rescore(from:reason:)`, like every other edit. A fresh `HealthSync` is
+    /// cheap — an actor holding three references — and the coordinator's own
+    /// is private to it on purpose.
+    /// Returns whether the edit was ACCEPTED — false while signed out, when
+    /// there is no user to write under — for the same reason `rescore` does:
+    /// a sheet that clears its dirty state on a request that went nowhere has
+    /// lost the edit and the only record that one was owed.
+    @discardableResult
+    func editSleepWindow(date: String, start: Date, end: Date) async throws -> Bool {
+        guard case .signedIn(let userID) = auth else { return false }
+        let userId = OnyxJSON.canonicalUserID(userID)
+        let health = HealthSync(database: database, reader: Self.healthReader, userId: userId)
+        try await health.editSleepWindow(date: date, start: start, end: end)
+        return rescore(from: date, reason: .sleepEdit)
+    }
+
     /// Publish the queue for a day. Passing a different `dayKey` replaces the
     /// list rather than merging: an alert is about a lift ON a routine day, and
     /// two days' alerts in one array is how the banner starts naming a lift

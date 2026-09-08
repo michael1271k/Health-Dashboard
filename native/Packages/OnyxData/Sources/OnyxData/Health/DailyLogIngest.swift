@@ -389,13 +389,22 @@ private extension AppDatabase {
         // no date column, and `start_time` is the previous evening. Any row
         // already in this half-open range is this same night from an earlier
         // sync, whoever wrote it.
-        var row = try SleepSessionRow
+        let inWindow = try SleepSessionRow
             .filter(
                 Column("user_id") == userId
                     && Column("start_time") >= window.from && Column("start_time") < window.to
             )
             .order(Column("duration_min").desc)
-            .fetchOne(db)
+            .fetchAll(db)
+        // ── A HAND-EDITED NIGHT WINS ────────────────────────────────────────
+        // The same rule as water: a window the user trimmed must not be
+        // re-widened by the next sync, silently and forever. Declined and
+        // REPORTED, so a correction that stops being honoured is visible.
+        if inWindow.contains(where: { ManualEntry.isManualSleep($0.hkUuid) }) {
+            report.declined.append("sleep — manual window present")
+            return
+        }
+        var row = inWindow.first
             ?? SleepSessionRow(
                 id: newOnyxID(), userId: userId,
                 startTime: sleep.bedStart ?? NightWindow.fallbackBedTime(payload.date) ?? window.from,
@@ -411,11 +420,7 @@ private extension AppDatabase {
         row.durationMin = sleep.sleepMinutes
         row.deepMin = sleep.deepMin
         row.remMin = sleep.remMin
-        // Real per-stage split when present; otherwise everything asleep counts
-        // as core, which is what a legacy duration-only reading means.
-        row.coreMin = sleep.coreMin > 0
-            ? sleep.coreMin
-            : max(0, sleep.sleepMinutes - sleep.deepMin - sleep.remMin)
+        row.coreMin = sleep.storedCoreMin
         row.awakeMin = sleep.awakeMin
         try row.save(db)
         try Self.enqueueRowUpsert(table: SleepSessionRow.databaseTableName, id: row.id, in: db)

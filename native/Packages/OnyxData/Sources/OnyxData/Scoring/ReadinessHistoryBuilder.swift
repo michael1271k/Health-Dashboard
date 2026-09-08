@@ -52,10 +52,46 @@ extension AppDatabase {
         let cardio = try CardioLogRow.filter(window).fetchAll(db).map {
             LoadCardio(date: $0.date, effort: $0.effort, durationMin: $0.durationMin)
         }
+
+        // ── THE NIGHTS, ONE PER DATE, LONGEST WINS (E3) ─────────────────────
+        // Filed under the morning they ended on (`NightWindow.nightOf`) — the
+        // date the scorer reads them under — and where a window holds two rows
+        // the longest is the night, as `scoringInputs` and `sleepNightStream`
+        // already decide. The union of the 49 night windows is one range.
+        var nightByDate: [String: SleepSessionRow] = [:]
+        if let first = NightWindow.range(start), let last = NightWindow.range(date) {
+            let nights = try SleepSessionRow
+                .filter(Column("user_id") == userId && Column("start_time") >= first.from && Column("start_time") < last.to)
+                .fetchAll(db)
+            for n in nights {
+                let d = NightWindow.nightOf(n.startTime)
+                guard d >= start, d <= date else { continue }
+                if let held = nightByDate[d], held.durationMin >= n.durationMin { continue }
+                nightByDate[d] = n
+            }
+        }
+        let asleepMin: [Double?] = dates.map { d in
+            guard let n = nightByDate[d], n.durationMin > 0 else { return nil }
+            return Double(n.durationMin)
+        }
+        let awakeMin: [Double?] = dates.map { d in
+            guard let n = nightByDate[d], n.durationMin > 0 else { return nil }
+            // A duration-only row (awake = deep = rem = 0) has no stage data;
+            // its zero is an absence, not a still night. `fragmentationRatio`
+            // is the one rule, on both platforms.
+            let night = Stress.FragmentationNight(
+                awakeMin: n.awakeMin.map(Double.init), asleepMin: Double(n.durationMin),
+                deepMin: n.deepMin.map(Double.init), remMin: n.remMin.map(Double.init)
+            )
+            return Stress.fragmentationRatio(night) == nil ? nil : n.awakeMin.map(Double.init)
+        }
+
         return ReadinessHistory(
             hrv: dates.map { hrvByDate[$0] ?? nil },
             rhr: dates.map { (rhrMetric[$0] ?? nil) ?? (rhrLog[$0] ?? nil) },
-            loads: Readiness.dailyLoads(dates: dates, sessions: sessions, cardio: cardio)
+            loads: Readiness.dailyLoads(dates: dates, sessions: sessions, cardio: cardio),
+            awakeMin: awakeMin,
+            asleepMin: asleepMin
         )
     }
 }

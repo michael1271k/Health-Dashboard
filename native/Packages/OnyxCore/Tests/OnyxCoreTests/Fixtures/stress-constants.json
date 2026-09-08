@@ -1,0 +1,52 @@
+{
+  "module": "scoring/stress",
+  "fn": "STRESS",
+  "note": "The v1 constants the port must not drift from. Band `upTo` is inclusive except Calm, whose 30 is already Baseline.",
+  "cases": [
+    {
+      "name": "constants",
+      "input": {},
+      "expected": {
+        "version": 1,
+        "weights": {
+          "auto": 0.35,
+          "sleep": 0.25,
+          "self": 0.25,
+          "load": 0.15
+        },
+        "center": 50,
+        "scale": 20,
+        "min": 10,
+        "max": 90,
+        "fatigueNeutral": 3,
+        "bands": [
+          {
+            "key": "calm",
+            "label": "Calm",
+            "upTo": 30
+          },
+          {
+            "key": "baseline",
+            "label": "Baseline",
+            "upTo": 50
+          },
+          {
+            "key": "elevated",
+            "label": "Elevated",
+            "upTo": 62
+          },
+          {
+            "key": "high",
+            "label": "High",
+            "upTo": 75
+          },
+          {
+            "key": "overreached",
+            "label": "Overreached",
+            "upTo": null
+          }
+        ]
+      }
+    }
+  ]
+}

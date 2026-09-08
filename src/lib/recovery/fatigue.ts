@@ -229,3 +229,18 @@ export function latestFatigue(day: FatigueDay): { slot: FatigueSlot; level: numb
   }
   return null
 }
+
+/**
+ * The day's MEAN reading over every slot logged — the stress index's self-report
+ * term (`scoring/stress.ts`), and deliberately NOT what the tracker shows.
+ *
+ * `latestFatigue` is the day's summary because a mean describes no moment. The
+ * stress index asks a different question — how heavy did the whole day feel —
+ * and for that the shape of the curve is the answer: "Fresh, Worn, Empty"
+ * averages to Worn, which is the honest one-number account of that day's load
+ * on the person. Null when nothing was logged; never a zero standing in.
+ */
+export function fatigueDayMean(day: FatigueDay): number | null {
+  const levels = FATIGUE_SLOTS.map((s) => day[s]).filter((v): v is number => v != null && Number.isFinite(v))
+  return levels.length ? levels.reduce((a, b) => a + b, 0) / levels.length : null
+}

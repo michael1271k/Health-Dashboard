@@ -7,6 +7,7 @@ import { isManualWaterHkUuid } from '@/lib/nutrition/manualWater'
 import { logicalTodayInTZ } from '@/lib/utils/day'
 import { MIN_VALID_WEIGHT_KG } from '@/lib/utils/measure'
 import { nightWindow, fallbackBedTime } from '@/lib/sleep/nightWindow'
+import { isManualSleepHkUuid } from '@/lib/sleep/manualSleep'
 import { deriveBodyComp } from '@/lib/body/composition'
 import type { IngestPayload } from './schema'
 
@@ -64,6 +65,25 @@ export interface IngestResult {
 }
 
 const skipped = (): SectionResult => ({ ok: true, action: 'skipped' })
+
+interface NightRowRef { id: string; hk_uuid: string | null; duration_min: number }
+
+/**
+ * Every `sleep_sessions` row already inside the night's window. Total by
+ * design, like `hasManualWater`: a read that fails degrades to "no rows", which
+ * is the pre-sentinel behaviour — an insert — never a lost push.
+ */
+async function sleepRowsInWindow(db: DB, userId: string, date: string): Promise<NightRowRef[]> {
+  try {
+    const night = nightWindow(date)
+    const { data } = await db.from('sleep_sessions')
+      .select('id, hk_uuid, duration_min').eq('user_id', userId)
+      .gte('start_time', night.from).lt('start_time', night.to)
+    return ((data ?? []) as NightRowRef[]).filter((r) => typeof r?.id === 'string')
+  } catch {
+    return []
+  }
+}
 
 /**
  * Has this day's hydration been corrected by hand?
@@ -186,13 +206,28 @@ export async function ingestDailyLog(
   // nothing on screen able to say so. See lib/nutrition/manualWater.ts.
   const manualWater = payload.water !== undefined && await hasManualWater(db, userId, date)
 
+  // ── THE NIGHT, READ ONCE ──────────────────────────────────────────────────
+  // The rows already in this night's window decide two things below: whether
+  // the night is a hand-edited one (sentinel → HealthKit's reading is declined,
+  // in BOTH `daily_logs.sleep_minutes` and the `sleep_sessions` row, for the
+  // same reason water is), and which row to UPDATE rather than delete and
+  // re-insert — a delete+insert minted a fresh id on every push and left two
+  // live nights duplicated when a push raced itself (F9).
+  // The probe runs for ANY reported sleep figure, zero included: a push saying
+  // "0 minutes" on a hand-edited night must not write that zero into
+  // `daily_logs.sleep_minutes` either. Only the `sleep_sessions` row needs a
+  // positive night to be worth writing.
+  const existingNights = payload.sleep_minutes !== undefined ? await sleepRowsInWindow(db, userId, date) : []
+  const manualSleep = existingNights.some((r) => isManualSleepHkUuid(r.hk_uuid))
+  const hasSleep = payload.sleep_minutes !== undefined && payload.sleep_minutes > 0
+
   // ── 1. daily_logs (canonical flat row) ──
   const row: Record<string, any> = { user_id: userId, date }
   const set = (k: string, v: number | undefined) => { if (v !== undefined) row[k] = v }
   set('steps', payload.steps)
   set('distance_m', payload.distance_m)
   set('water_ml', manualWater ? undefined : payload.water)
-  set('sleep_minutes', payload.sleep_minutes)
+  set('sleep_minutes', manualSleep ? undefined : payload.sleep_minutes)
   set('carbs_g', payload.carbs)
   set('protein_g', payload.protein)
   set('fats_g', payload.fats)
@@ -426,37 +461,45 @@ export async function ingestDailyLog(
     }
   }
 
-  // ── 6. Fan-out: sleep_sessions — UNCONDITIONAL OVERWRITE for the night ──
-  // A daily push must always reflect the latest reading, so the night is deleted
-  // then re-inserted. The window comes from nightWindow() — the SAME half-open
-  // [prev 12:00Z, this 12:00Z) range every reader uses.
+  // ── 6. Fan-out: sleep_sessions — ONE row per night, updated in place ──
+  // A daily push must always reflect the latest reading. The night is found by
+  // its WINDOW — nightWindow(), the SAME half-open [prev 12:00Z, this 12:00Z)
+  // range every reader uses — and the longest row in it is UPDATED by id. It
+  // used to be delete+insert, which minted a new id on every push and, when a
+  // push raced itself, left two rows for one night (F9: two live duplicates,
+  // 22 s apart). The `sleep_sessions_user_start` unique index is the backstop
+  // for that race; this write no longer depends on winning it.
   //
   // The upper bound is load-bearing. It used to be `${date}T23:59:59Z`, which
   // made consecutive nights' windows OVERLAP: the rolling sync pushes today and
-  // yesterday, and yesterday's DELETE covered tonight's bed_start. Whenever that
-  // delete landed after today's INSERT, tonight's row vanished and the scorer saw
-  // sleepHours = 0 → "Awaiting Sleep Data" straight after a pull-to-refresh.
-  if (payload.sleep_minutes !== undefined && payload.sleep_minutes > 0) {
-    const night = nightWindow(date)
-    await db.from('sleep_sessions').delete()
-      .eq('user_id', userId).gte('start_time', night.from).lt('start_time', night.to)
-
-    const dur = Math.round(payload.sleep_minutes)
-    const deep = payload.deep_min ?? 0
-    const rem = payload.rem_min ?? 0
-    const awake = payload.awake_min ?? 0
-    // Real per-stage split when present; else all sleep counts as core (legacy).
-    const core = payload.core_min ?? Math.max(0, dur - deep - rem)
-    // No reported bedtime → stamp INSIDE the night window, never past its end.
-    const startTime = payload.bed_start ?? fallbackBedTime(date)
-    const endTime = payload.bed_end ?? startTime
-    const { error } = await db.from('sleep_sessions').insert({
-      user_id: userId, hk_uuid: null,
-      start_time: startTime, end_time: endTime,
-      duration_min: dur, deep_min: deep, rem_min: rem, core_min: core, awake_min: awake, sleep_score: null,
-    } as any)
-    result.results.sleep = error ? { ok: false, action: 'upserted', error: error.message } : { ok: true, action: 'upserted' }
-    if (error) errors.push({ field: 'sleep_sessions', error: error.message })
+  // yesterday, and yesterday's write reached tonight's bed_start.
+  //
+  // A hand-edited night (E2's sentinel) is left exactly as the user saved it.
+  if (hasSleep) {
+    if (manualSleep) {
+      result.results.sleep = { ok: true, action: 'ignored', error: 'manual window present — HealthKit sleep skipped' }
+    } else {
+      const dur = Math.round(payload.sleep_minutes as number)
+      const deep = payload.deep_min ?? 0
+      const rem = payload.rem_min ?? 0
+      const awake = payload.awake_min ?? 0
+      // Real per-stage split when present; else all sleep counts as core (legacy).
+      const core = payload.core_min ?? Math.max(0, dur - deep - rem)
+      // No reported bedtime → stamp INSIDE the night window, never past its end.
+      const startTime = payload.bed_start ?? fallbackBedTime(date)
+      const endTime = payload.bed_end ?? startTime
+      const values = {
+        start_time: startTime, end_time: endTime,
+        duration_min: dur, deep_min: deep, rem_min: rem, core_min: core, awake_min: awake, sleep_score: null,
+      }
+      // Longest row wins — the scorer's own rule for which row IS the night.
+      const target = existingNights.slice().sort((a, b) => b.duration_min - a.duration_min)[0]
+      const { error } = target
+        ? await db.from('sleep_sessions').update(values as any).eq('id', target.id)
+        : await db.from('sleep_sessions').insert({ user_id: userId, hk_uuid: null, ...values } as any)
+      result.results.sleep = error ? { ok: false, action: 'upserted', error: error.message } : { ok: true, action: 'upserted' }
+      if (error) errors.push({ field: 'sleep_sessions', error: error.message })
+    }
   }
 
   // Finalize: everything present that didn't fail is confirmed inserted —

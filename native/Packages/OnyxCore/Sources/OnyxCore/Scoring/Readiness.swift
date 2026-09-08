@@ -118,10 +118,18 @@ public struct ReadinessHistory: Codable, Sendable, Equatable {
     public var rhr: [Double?]
     /// sRPE load per day, oldest → today. Rest days are zeros.
     public var loads: [Double]
-    public init(hrv: [Double?], rhr: [Double?], loads: [Double]) {
+    /// The stress index's fragmentation series (Phase 3 E3). `awakeMin` is nil
+    /// for a night with no row AND for a duration-only row (awake = deep = rem
+    /// = 0); `asleepMin` is nil only for a night with no row. Optional: the
+    /// battery never reads them and the `readiness-signals` vectors predate them.
+    public var awakeMin: [Double?]?
+    public var asleepMin: [Double?]?
+    public init(hrv: [Double?], rhr: [Double?], loads: [Double], awakeMin: [Double?]? = nil, asleepMin: [Double?]? = nil) {
         self.hrv = hrv
         self.rhr = rhr
         self.loads = loads
+        self.awakeMin = awakeMin
+        self.asleepMin = asleepMin
     }
 }
 
