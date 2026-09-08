@@ -51,7 +51,12 @@ public enum LandmarkMuscle: String, CaseIterable, Codable, Sendable, Hashable {
     ///   · a bare `shoulders` is SIDE delts, the common isolation case;
     ///   · `inner_thigh` is the adductor machine's own tag, and dropping it
     ///     left the Adductors target permanently unmeetable;
-    ///   · `abductors` really is nil — hip abduction is not a tracked target.
+    ///   · `abductors` folds onto Adductors too, since 2026-09-08. It resolved
+    ///     to nil for the same reason `inner_thigh` once did — "not a tracked
+    ///     target" — which discarded every abduction set instead of crediting
+    ///     the one landmark that covers the hip. The atlas draws ONE inner-thigh
+    ///     region and the soreness rating asks ONE question about it, so the
+    ///     credit lands in one place too.
     public static func from(token: String) -> LandmarkMuscle? {
         switch token.lowercased().replacingOccurrences(
             of: "[\\s-]+", with: "_", options: .regularExpression

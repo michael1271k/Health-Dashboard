@@ -58,9 +58,10 @@ struct TrainingTests {
         #expect(LandmarkMuscle.from(token: "back") == .lats)
         #expect(LandmarkMuscle.from(token: "Upper Back") == .upperBack)
         #expect(LandmarkMuscle.from(token: "inner_thigh") == .adductors)
-        // Hip abduction is genuinely not a tracked target — nil is the answer,
-        // not a fallback bucket.
-        #expect(LandmarkMuscle.from(token: "abductors") == nil)
+        // `abductors` folds onto Adductors (2026-09-08), matching `landmarks.ts`
+        // and the `landmark-tokens` vector: one inner-thigh region on the atlas,
+        // one soreness question, one place for the credit to land.
+        #expect(LandmarkMuscle.from(token: "abductors") == .adductors)
     }
 
     @Test("the tint floor keeps a single set visible")
