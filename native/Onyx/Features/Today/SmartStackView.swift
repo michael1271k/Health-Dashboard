@@ -24,8 +24,19 @@ struct SmartStackView: View {
     let slot: StackSlot
     let entry: OnyxTileEntry
     let paused: Bool
-
-    @State private var face = 0
+    /// Which face is up, owned by the GRID.
+    ///
+    /// ── WHY THIS IS NOT LOCAL STATE ANY MORE ────────────────────────────────
+    /// It was `@State`, so the only thing that knew which of a stack's faces was
+    /// on screen was the view drawing it — and the tap handler lives one level
+    /// up, on the tile's chrome. That handler opened `items.first`, always. A
+    /// Sleep/Vitals stack therefore opened Sleep from both sides: the rotation
+    /// turned the tile over, the tap did not turn over with it, and the sheet
+    /// that appeared was about the face you had just stopped looking at.
+    ///
+    /// Hoisting the index is the whole fix. Nothing else about the rotation, the
+    /// swipe or the hold-off changes — the grid simply knows what it is showing.
+    @Binding var face: Int
     @State private var touchedAt = Date.distantPast
     @State private var byClock = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

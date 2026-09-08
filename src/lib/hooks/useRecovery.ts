@@ -16,7 +16,12 @@ import { programDayByKey } from '@/lib/programs'
  */
 // Standardized display order: upper (Chest → Shoulders), trunk (Abs), then lower
 // (Glutes → Calves).
-export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Calves'] as const
+// `Inner thighs` is the tenth, added 2026-09-08. The adductors were the one
+// muscle the atlas DREW and soreness could never report: hip adduction is on
+// the deck, it gets sore like anything else, and a rating had nowhere to land.
+// It sits between Hamstrings and Calves so the lower-body block still reads
+// top to bottom.
+export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Inner thighs', 'Calves'] as const
 export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
@@ -28,6 +33,9 @@ export function domsMuscleOf(token: string): DomsMuscle | null {
     // one rating for both could not describe an actual leg day.
     case 'glutes': case 'glute': case 'hips': return 'Glutes'
     case 'hamstrings': return 'Hamstrings'
+    // Adductors and abductors report as ONE rating. They are the two halves of
+    // the same complaint on a leg day and nobody rates them apart.
+    case 'adductors': case 'adductor': case 'inner_thigh': case 'abductors': return 'Inner thighs'
     case 'calves': return 'Calves'
     case 'back': case 'lats': case 'upper_back': case 'lower_back': case 'traps': return 'Back'
     case 'chest': case 'pecs': return 'Chest'

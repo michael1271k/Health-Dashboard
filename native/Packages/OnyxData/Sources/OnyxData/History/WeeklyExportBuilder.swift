@@ -306,7 +306,7 @@ public struct WeeklyExportBuilder: Sendable {
         return try (0..<7).map { i in
             let date = ISODate.addDays(weekStart, i) ?? weekStart
             let l = logs[date], nt = nutri[date], sl = sleepByDate[date], shape = shapeByDate[date]
-            return try make([
+            var fields: [String: Any] = [
                 "date": date, "weekdayLabel": Self.weekdayLabels[i], "isTrainingDay": Schedule.isTrainingDayIn(ctx, date),
                 "weightKg": j(l?.weightKg), "calories": j(nt?.calories), "proteinG": j(nt?.proteinG),
                 "carbsG": j(nt?.carbsG), "fatG": j(nt?.fatG),
@@ -335,7 +335,12 @@ public struct WeeklyExportBuilder: Sendable {
                 "nutritionException": j((l?.nutritionException?.isEmpty == false) ? l?.nutritionException : nil),
                 "nutritionEstimated": l?.nutritionEstimated ?? false,
                 "targetProfile": j(shape?.label), "trackCarbs": shape?.carbs ?? true, "trackFat": shape?.fat ?? true,
-            ])
+            ]
+            // Present ONLY when the night is disputed. `false` on every row is a
+            // column of noise that says nothing happened six times a week, and the
+            // reader has to scan it anyway to find the one row that matters.
+            if l?.sleepInaccurate == true { fields["sleepInaccurate"] = true }
+            return try make(fields)
         }
     }
 

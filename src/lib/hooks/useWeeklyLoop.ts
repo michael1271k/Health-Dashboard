@@ -213,7 +213,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
        daily_logs, and a select that named it beside twenty live ones would cost
        the export every vital on the day its paste-SQL had not been run. On
        error the flag is simply unknown and the line prints an em-dash. */
-    supabase.from('daily_logs').select('date, sleep_onset_trouble')
+    supabase.from('daily_logs').select('date, sleep_onset_trouble, sleep_inaccurate')
       .gte('date', weekStart).lte('date', weekEnd),
     /* ── THE DAY'S NAMED SHAPE ────────────────────────────────────────────────
        `profile_key`, `track_carbs` and `track_fat` on `daily_targets`. Its own
@@ -294,7 +294,7 @@ async function fetchRange(weekStart: string, weekEnd: string) {
     // was hard" from "the question has never been askable" — the export prints
     // `normal` for the first and an em-dash for the second.
     onset: (onset.error ? null : (onset.data ?? [])) as Array<{
-      date: string; sleep_onset_trouble: boolean | null
+      date: string; sleep_onset_trouble: boolean | null; sleep_inaccurate?: boolean | null
     }> | null,
     // Null (not []) when the three profile columns are not there yet, so
     // `toDays` can leave the shape unstated rather than asserting every day was
@@ -451,6 +451,13 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
   const onsetByDate = d.onset === undefined || d.onset === null
     ? null
     : new Map(d.onset.map((r) => [r.date, r.sleep_onset_trouble === true]))
+  // A Set is right for THIS one where a Map was right above: the flag has no
+  // "normal" answer to distinguish from an unasked one. It is a dispute, and a
+  // night nobody disputed is a night that reads fine — so the export omits it
+  // rather than printing a `0` for six days a week.
+  const inaccurateDates = new Set<string>(
+    (d.onset ?? []).filter((r) => r.sleep_inaccurate === true).map((r) => r.date),
+  )
   /* The stored key is turned into the profile's LABEL here, from the same
      builtin list the picker falls back to. The export is read by a person, and
      `restaurant` is a database key where "Restaurant" is a word — but a key that
@@ -530,6 +537,7 @@ function toDays(weekStart: string, d: RangeData): ExportDay[] {
       // `false` — the column is NOT NULL DEFAULT false and a missing row is the
       // same statement as an unticked one. Only an unreadable column is `null`.
       sleepOnsetTrouble: onsetByDate === null ? null : (onsetByDate.get(date) ?? false),
+      sleepInaccurate: inaccurateDates.has(date) || undefined,
       restingHrBaseline: baselineOf(date, (r) => r.avg_rest_heart_rate),
       hrvBaseline: baselineOf(date, (r) => r.hrv_ms),
       batteryPct: scoreByDate.get(date) ?? null,

@@ -87,17 +87,17 @@ read -ra SCREENS <<< "$SCREEN"
 if [ "$SCREEN" = "all" ]; then
   # Keep in step with `PreviewHarness.Screen` — the harness is the authority and
   # an unknown name there renders a visible error rather than failing silently.
-  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish set-row set-options effort-picker day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
+  SCREENS=(signin backfill today today-edit today-sheet today-sheet-vitals today-sheet-steps today-sheet-muscle today-sheet-records today-weighin today-board train train-empty logger logger-stats logger-paused logger-finish set-row set-options effort-picker day day-rows day-past day-empty scale scale-first day-swap doms stack stack-add fuel fuel-over fuel-empty nutrients macro-edit you levers sync-status sync-doctor plan body volume library exercise reports report history history-week session session-ledger exercise-history trends trends-empty body-trends body-trends-empty widgets)
 fi
 
 # `widgets` is a contact sheet of every tile; the harness pages it because a
 # scroll view screenshots its first screen only. Page count = WidgetPreviews.pages,
-# which packs rows to 372pt and pages to 760pt — 23 since W12 added the Progress
-# family and its empty states. A page number past the end renders the whole
+# which packs rows to 372pt and pages to 760pt — 24 since the dashboard-polish
+# wave added the Today face's logged state. A page number past the end renders the whole
 # scroll view instead, so this bound is not free to be generous.
 if [ "$SCREEN" = "widgets" ] || [ "$SCREEN" = "all" ]; then
   SCREENS=("${SCREENS[@]/widgets}")
-  for i in $(seq 0 22); do SCREENS+=("widgets-$i"); done
+  for i in $(seq 0 23); do SCREENS+=("widgets-$i"); done
   SCREENS+=("widgets-activity")
 fi
 

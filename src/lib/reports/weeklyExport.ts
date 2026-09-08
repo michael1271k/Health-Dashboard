@@ -166,6 +166,18 @@ export interface ExportDay {
    */
   sleepOnsetTrouble?: boolean | null
   /**
+   * The night the wearer says the watch got wrong.
+   *
+   * HealthKit's sleep is the one reading here that nothing can dispute — a
+   * phone left on the bed reads as a night, a nap folds into one, and the
+   * figure lands with the same authority as a measured one. This says the
+   * reading is not to be trusted, and it deliberately does not CHANGE it:
+   * correcting a measurement by self-report is how a log becomes a wish.
+   * Absent or false on a night nobody disputed, and omitted from the export
+   * entirely in that case.
+   */
+  sleepInaccurate?: boolean | null
+  /**
    * The battery's inputs the app read for this day and the raw body cannot
    * show, and the `daily_scores.battery_pct` it stored. Read ONLY by the
    * Derived section, which prints them beside the arithmetic they feed.
@@ -1528,6 +1540,11 @@ export function buildWeeklyExport(input: WeeklyExportInput): string {
     if (day.weightKg == null) tags.push(`skip:${weighInSkipReason(day.weighInSkipReason)}`)
     if (day.trackCarbs === false) tags.push('untracked:C')
     if (day.trackFat === false) tags.push('untracked:F')
+    // The wearer disputes the night. A TAG and not a column, for the reason
+    // every other flag here is one: it is absent on almost every row, and a
+    // column of zeroes with a single 1 in it is the shape this grammar keeps
+    // for readings. `tags` is where "read this line differently" lives.
+    if (day.sleepInaccurate) tags.push('sleep:inaccurate')
     L.push(fields(
       day.date, day.weekdayLabel, day.isTrainingDay ? '1' : '0',
       minutes(day.sleepMin), minutes(day.deepMin), minutes(day.remMin),

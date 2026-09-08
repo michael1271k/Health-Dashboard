@@ -24,6 +24,9 @@ struct DashboardGrid: View {
     let onOpen: (WidgetId) -> Void
 
     @State private var mergeTarget: String?
+    /// Slot id → the face that is up, for the stacks that have more than one.
+    /// Held here rather than inside `SmartStackView` because the TAP is here.
+    @State private var faces: [String: Int] = [:]
     @State private var hover: Task<Void, Never>?
     @State private var drops = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -84,14 +87,24 @@ struct DashboardGrid: View {
             slot: slot, editing: model.editing,
             onTap: {
                 if model.editing { if slot.items.count > 1 { model.sheet = .stack(slot.id) } }
-                else { onOpen(slot.items.first!) }
+                // The face that is UP, not the first one in the slot. `min` because
+                // a face removed from a stack while it was the visible one leaves
+                // the index past the end until the next redraw.
+                else { onOpen(slot.items[min(faces[slot.id] ?? 0, slot.items.count - 1)]) }
             },
             onEdit: { withAnimation(OnyxMotion.flick) { model.editing = true } },
             onRemove: { model.remove(slot.id) },
             onResize: { model.resize(slot.id) }
         ) {
             if slot.items.count > 1 {
-                SmartStackView(slot: slot, entry: model.entry, paused: model.editing || !model.isActive)
+                SmartStackView(
+                    slot: slot, entry: model.entry,
+                    paused: model.editing || !model.isActive,
+                    face: Binding(
+                        get: { min(faces[slot.id] ?? 0, max(0, slot.items.count - 1)) },
+                        set: { faces[slot.id] = $0 }
+                    )
+                )
             } else {
                 OnyxTile.face(slot.items[0], entry: model.entry)
             }

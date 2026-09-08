@@ -91,6 +91,24 @@ final class TodayModel {
         OnyxTileEntry(date: Date(), snapshot: feed?.snapshot)
     }
 
+    /// The session behind today's Workout tile, when one actually landed.
+    ///
+    /// The LONGEST of the day's sessions, which is the one the tile's own
+    /// figures describe — `WidgetSnapshotBuilder` takes duration and RPE from
+    /// the same session, and a tap that opened the other one would be a page
+    /// disagreeing with the tile that opened it.
+    ///
+    /// A synchronous read on the main actor, deliberately: it is one indexed
+    /// row by date, it happens once per tap, and the alternative — carrying the
+    /// id through the feed — makes every rebuild pay for a value only a tap
+    /// ever needs.
+    var todaySessionId: String? {
+        guard feed?.snapshot.workout.logged == true else { return nil }
+        let date = feed?.snapshot.date ?? LogicalDay.today()
+        let sessions = (try? database.sessions(on: date)) ?? []
+        return sessions.max { ($0.durationMin ?? 0) < ($1.durationMin ?? 0) }?.id
+    }
+
     // MARK: - What the phone draws
 
     /// The slots with the faces the phone has, in grid order. A slot whose
@@ -170,11 +188,21 @@ enum TodaySheet: Identifiable, Hashable {
     case tile(WidgetId)
     /// The faces of one stack, for reordering.
     case stack(String)
+    /// One finished session, in full.
+    ///
+    /// Not a `.tile(.train)` variant: the Workout tile's sheet used to draw
+    /// `TodayLargeFace`, which ends in a seven-day list — so tapping a tile
+    /// that says "you trained today" opened a page whose bottom half was other
+    /// days, several of them labelled "missed". A finished session has its own
+    /// page already (`SessionDetailView`), with the exercises, the ledger, the
+    /// records and the atlas on it, and that is the page the tile means.
+    case session(String)
 
     var id: String {
         switch self {
         case .tile(let w): "tile-\(w.rawValue)"
         case .stack(let s): "stack-\(s)"
+        case .session(let s): "session-\(s)"
         }
     }
 }

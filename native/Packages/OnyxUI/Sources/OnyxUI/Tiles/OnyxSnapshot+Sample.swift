@@ -231,6 +231,39 @@ public extension OnyxSnapshot {
       readiness: s.readiness, vitals: s.vitals,
       consistency: nil, deficit: nil, trajectory: nil, batteryStack: nil, bodyComp: nil)
   }()
+
+  /// The same fixture with today's session FINISHED.
+  ///
+  /// ── WHY THE DONE STATE NEEDED A FIXTURE OF ITS OWN ──────────────────────
+  /// `TodayFace` has three states and the shipped sample photographs one of
+  /// them: a training day still due. The DONE state draws a completely
+  /// different body — `TodayStats`, six figures over two rows — and it is
+  /// therefore the half of that tile no contact sheet has ever shown. It is
+  /// also where the session's calories and mean heart rate landed, so a layout
+  /// fault in it would have shipped unseen. Same argument as
+  /// `sampleEmptySeries` one property up, one axis over.
+  static let sampleLogged: OnyxSnapshot = {
+    let s = sample
+    return OnyxSnapshot(
+      date: s.date, generatedAt: s.generatedAt, scope: s.scope, battery: s.battery, score: s.score,
+      sleep: s.sleep, weight: s.weight, macros: s.macros, water: s.water, steps: s.steps,
+      workout: Workout(
+        label: s.workout.label, dayKey: s.workout.dayKey, logged: true, isRestDay: false,
+        plannedExercises: s.workout.plannedExercises, plannedSets: s.workout.plannedSets,
+        lastVolumeKg: s.workout.lastVolumeKg),
+      week: s.week, weekPrev: s.weekPrev, records: s.records, e1rm: s.e1rm,
+      volumeByFamily: s.volumeByFamily,
+      // A real Onyx-5 arms session: 68 minutes, an 8 on the ladder, 5.8 t, two
+      // records, 412 kcal and a mean of 118. The last two are the readings
+      // `workout_sessions` has carried since W2 and no face had ever drawn.
+      today: Today(durationMin: 68, sessionRpe: 8, volumeKg: 5840, setCount: 21, prCount: 2,
+                   caloriesKcal: 412, avgBpm: 118),
+      streak: s.streak, context: s.context, cardio: s.cardio,
+      calendar: s.calendar, volumeTrend: s.volumeTrend, body: s.body, scores: s.scores,
+      readiness: s.readiness, vitals: s.vitals,
+      consistency: s.consistency, deficit: s.deficit, trajectory: s.trajectory,
+      batteryStack: s.batteryStack, bodyComp: s.bodyComp)
+  }()
 }
 
 #endif

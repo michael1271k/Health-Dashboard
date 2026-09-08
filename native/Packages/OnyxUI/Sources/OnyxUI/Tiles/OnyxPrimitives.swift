@@ -520,7 +520,24 @@ public struct DepthArc: View {
         .offset(y: d * 0.12)
       }
       .frame(width: d, height: d)
-      .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+      // ── THE GAUGE IS CENTRED ON WHAT IT DRAWS, NOT ON ITS CIRCLE ────────
+      // The construction square is `d × d` and the ink — the semicircle and
+      // the duration in its bowl — occupies the top ~0.72 of it. Pinning that
+      // whole square to `.top` therefore put the DRAWN gauge in the top 72 %
+      // of the top of the box, so every caller with height to spare drew an
+      // arc riding high with a band of nothing under it. That is what made
+      // the Sleep tile look like a gauge that had slipped its frame.
+      //
+      // Cropping to the drawn height first, THEN centring, is what makes the
+      // visible gauge the thing that is centred. `.top` on the inner frame is
+      // what keeps the crop off the arc: the quarter being cut is the empty
+      // one below the bowl, exactly as the `0.72` above already assumes.
+      //
+      // A caller that sizes its box to 0.72 of the width — the Sleep sheet —
+      // is unaffected: `d` is already the whole box there, so the centring
+      // has nothing to move.
+      .frame(width: d, height: d * 0.72, alignment: .top)
+      .frame(width: geo.size.width, height: geo.size.height)
     }
   }
 

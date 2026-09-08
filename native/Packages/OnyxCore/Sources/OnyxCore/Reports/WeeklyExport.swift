@@ -526,6 +526,11 @@ public enum WeeklyExport {
             if day.weightKg == nil { tags.append("skip:\(WeighIn.skipReason(day.weighInSkipReason))") }
             if day.trackCarbs == false { tags.append("untracked:C") }
             if day.trackFat == false { tags.append("untracked:F") }
+            // The wearer disputes the night. A TAG and not a column: the flag is
+            // false or absent on almost every row, and a column of zeroes with one
+            // 1 in it is the shape this grammar reserves for readings, not for
+            // exceptions. `tags` is where "read this line differently" lives.
+            if day.sleepInaccurate == true { tags.append("sleep:inaccurate") }
             L.append(fields([
                 day.date, day.weekdayLabel, day.isTrainingDay ? "1" : "0",
                 minutes(day.sleepMin), minutes(day.deepMin), minutes(day.remMin),

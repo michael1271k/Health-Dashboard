@@ -48,7 +48,31 @@ enum TodayPreviews {
                 sessionTarget: 5
             ),
             weeklySummaryReady: false,
-            lastWeekStart: "2026-08-23"
+            lastWeekStart: "2026-08-23",
+            // A mid-week body: the pushing muscles are done, the pulling ones
+            // are half done, and the legs have not been trained yet. That shape
+            // is the point of the shot — a week that is uniformly 60 % complete
+            // photographs as sixteen identical bars and reviews as nothing.
+            muscleFocus: MuscleFocusSummary(weekStart: "2026-08-30", rows: [
+                MuscleFocusRow(muscle: .chest, sets: 11, target: 11),
+                MuscleFocusRow(muscle: .lats, sets: 3.5, target: 6),
+                MuscleFocusRow(muscle: .upperBack, sets: 2, target: 4),
+                MuscleFocusRow(muscle: .lowerBack, sets: 1, target: 1),
+                MuscleFocusRow(muscle: .frontDelts, sets: 5.5, target: 4),
+                MuscleFocusRow(muscle: .sideDelts, sets: 4, target: 7),
+                MuscleFocusRow(muscle: .rearDelts, sets: 0.5, target: 2),
+                MuscleFocusRow(muscle: .biceps, sets: 6, target: 8),
+                MuscleFocusRow(muscle: .triceps, sets: 6.5, target: 6),
+                MuscleFocusRow(muscle: .forearms, sets: 1.5, target: 4),
+                MuscleFocusRow(muscle: .quads, sets: 0, target: 10),
+                MuscleFocusRow(muscle: .hamstrings, sets: 0, target: 8),
+                MuscleFocusRow(muscle: .glutes, sets: 0, target: 6),
+                // Zero of zero: on a cut the plan asks for none. The row has to
+                // read as "not asked for" and not as "behind".
+                MuscleFocusRow(muscle: .adductors, sets: 0, target: 0),
+                MuscleFocusRow(muscle: .calves, sets: 2, target: 6),
+                MuscleFocusRow(muscle: .absCore, sets: 7, target: 10),
+            ])
         )
         let model = TodayModel(database: database, userId: userId, feed: feed, layout: layout)
         model.editing = editing
@@ -75,6 +99,16 @@ enum TodayPreviews {
             NavigationStack { TodayTabView(seeded: model(sheet: .tile(.sleep))) }.environment(AppEnvironment.preview)
         case "today-sheet-vitals":
             NavigationStack { TodayTabView(seeded: model(sheet: .tile(.vitals))) }.environment(AppEnvironment.preview)
+        // The three the dashboard-polish wave gave purpose-built bodies. Each is
+        // photographed for the reason the two above are: the defect they fix —
+        // a sheet answering a question the tile did not ask — is invisible in a
+        // diff and obvious in a PNG.
+        case "today-sheet-steps":
+            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.steps))) }.environment(AppEnvironment.preview)
+        case "today-sheet-muscle":
+            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.muscle))) }.environment(AppEnvironment.preview)
+        case "today-sheet-records":
+            NavigationStack { TodayTabView(seeded: model(sheet: .tile(.pr))) }.environment(AppEnvironment.preview)
         // The weigh-in banner (§W5.4): Health landed a weight and the InBody
         // numbers it cannot know are still blank.
         // The Goal Board's three states. It lives under the grid on Today, which

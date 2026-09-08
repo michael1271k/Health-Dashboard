@@ -905,6 +905,33 @@ public final class AppDatabase: Sendable {
             }
         }
 
+        // ── v20 ─────────────────────────────────────────────────────────────
+        // "The watch got this night wrong."
+        //
+        // HealthKit's sleep is the one reading in the app with no way to be
+        // disputed. A phone left on the bed, a nap folded into the night, a long
+        // lie-in read as nine hours of core — the number lands, the score reads
+        // it, and nothing on any screen can say it is wrong. This column is that
+        // dispute, and it deliberately does NOT move the score: correcting a
+        // measurement by self-report is how a log becomes a wish. It marks the
+        // reading in the export so the reader discounts it themselves.
+        //
+        // NULLABLE, unlike `sleep_onset_trouble` beside it. Not a three-state
+        // fact — every reader treats nil and false identically — but a nil is
+        // what `encodeIfPresent` needs to keep the column OUT of the push body
+        // until Postgres grows it. See the note on `DailyLogRow`.
+        //
+        // `docs/sql/dashboard-polish.sql` is the Postgres half and the founder
+        // runs it by hand. Until they do, the flag lives on this device and the
+        // push drops it — see the note in that file.
+        migrator.registerMigration("v20.sleepInaccurate") { db in
+            let existing = Set(try db.columns(in: "daily_logs").map(\.name))
+            guard !existing.contains("sleep_inaccurate") else { return }
+            try db.alter(table: "daily_logs") { t in
+                t.add(column: "sleep_inaccurate", .boolean)
+            }
+        }
+
         return migrator
     }
 }

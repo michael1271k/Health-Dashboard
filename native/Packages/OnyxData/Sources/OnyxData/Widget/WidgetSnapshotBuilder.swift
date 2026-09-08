@@ -369,7 +369,16 @@ public struct WidgetSnapshotBuilder: Sendable {
                 sessionRpe: longest?.session.sessionRpe,
                 volumeKg: todaySessions.reduce(0) { $0 + $1.volumeKg },
                 setCount: todaySessions.reduce(0) { $0 + $1.sets },
-                prCount: todaySessions.reduce(0) { $0 + $1.prs }
+                prCount: todaySessions.reduce(0) { $0 + $1.prs },
+                // Summed like volume, and nil rather than 0 when no session
+                // carried a figure — `calories_burned` is null until HealthKit
+                // or `SessionMetrics` fills it, and a bout that cost nothing is
+                // not a bout.
+                caloriesKcal: {
+                    let all = todaySessions.compactMap { $0.session.caloriesBurned }
+                    return all.isEmpty ? nil : Double(all.reduce(0, +))
+                }(),
+                avgBpm: longest?.session.avgBpm
             ),
             streak: OnyxSnapshot.Streak(current: streak, best: streak),
             context: context,

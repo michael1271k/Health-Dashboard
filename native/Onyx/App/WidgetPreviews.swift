@@ -34,6 +34,9 @@ enum WidgetPreviews {
     static let entry = OnyxTileEntry(date: OnyxSnapshot.sampleDate, snapshot: .sample)
     /// The same date with every W12 series absent — the first-week state.
     static let emptyEntry = OnyxTileEntry(date: OnyxSnapshot.sampleDate, snapshot: .sampleEmptySeries)
+    /// The same date with today's session finished — the state `TodayStats`
+    /// draws and the shipped fixture never reaches.
+    static let loggedEntry = OnyxTileEntry(date: OnyxSnapshot.sampleDate, snapshot: .sampleLogged)
 
     static let cells: [Cell] = {
         let home: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
@@ -66,6 +69,12 @@ enum WidgetPreviews {
             add("fatigue-empty", fam, FatigueStackView(entry: emptyEntry))
             add("muscle-empty", fam, MuscleView(entry: emptyEntry))
             add("body-empty", fam, BodyView(entry: emptyEntry, focus: .composition))
+        }
+        // The Today face's DONE state. Two cells and not six: the Small drops
+        // the stat row by design ("no room for four figures under a headline"),
+        // so a logged Small is the same PNG as a due one.
+        for fam in [WidgetFamily.systemMedium, .systemLarge] {
+            add("training-today-logged", fam, TrainingView(entry: loggedEntry, focus: .today))
         }
         // Large only — the widget declares `.systemLarge` alone (see OnyxDaily).
         add("daily", .systemLarge, DailyView(entry: entry))

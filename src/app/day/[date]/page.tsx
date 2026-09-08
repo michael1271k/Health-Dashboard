@@ -8,6 +8,7 @@ import { CompletenessArc } from '@/components/day/CompletenessArc'
 import { BodyPanel } from '@/components/day/BodyPanel'
 import { SleepDebtGauge } from '@/components/day/SleepDebtGauge'
 import { SleepOnsetToggle } from '@/components/day/SleepOnsetToggle'
+import { SleepInaccurateToggle } from '@/components/day/SleepInaccurateToggle'
 import { SwapDayControl } from '@/components/day/SwapDayControl'
 import { RestSuggestion } from '@/components/day/RestSuggestion'
 import { DomsTracker } from '@/components/day/RecoveryTrackers'
@@ -437,6 +438,7 @@ export default function DailyNexusPage() {
             lay there — and the reason this drawer is the retroactive surface:
             it is the same component bound to whatever date the page is on. */}
         <div className="mt-3"><SleepOnsetToggle date={date} /></div>
+            <div className="mt-2"><SleepInaccurateToggle date={date} /></div>
         <div className="mt-3"><SleepDebtGauge /></div>
       </Sheet>
 

@@ -1,6 +1,6 @@
 import OnyxCore
 
-/// The nine DOMS muscle groups, their four severity words, and how each group
+/// The ten DOMS muscle groups, their four severity words, and how each group
 /// spreads across the atlas.
 ///
 /// Data, ported from `DOMS_MUSCLES` / `DOMS_LEVELS` in
@@ -11,7 +11,7 @@ import OnyxCore
 enum DomsMap {
 
     /// Display order: upper, trunk, lower — as the web lists them.
-    static let muscles = ["Chest", "Back", "Arms", "Shoulders", "Abs", "Glutes", "Quads", "Hamstrings", "Calves"]
+    static let muscles = ["Chest", "Back", "Arms", "Shoulders", "Abs", "Glutes", "Quads", "Hamstrings", "Inner thighs", "Calves"]
 
     /// Index IS the stored severity.
     static let levels = ["None", "Mild", "Moderate", "Severe"]
@@ -27,6 +27,9 @@ enum DomsMap {
         "Glutes": [.glutes],
         "Quads": [.quads],
         "Hamstrings": [.hamstrings],
+        // The adductors were the one landmark the atlas drew that no rating
+        // could light, on either surface. `Inner thighs` is that rating.
+        "Inner thighs": [.adductors],
         "Calves": [.calves],
     ]
 

@@ -69,7 +69,7 @@ public enum LandmarkMuscle: String, CaseIterable, Codable, Sendable, Hashable {
         case "quads", "quadriceps":                             return .quads
         case "hamstrings":                                      return .hamstrings
         case "glutes":                                          return .glutes
-        case "adductors", "inner_thigh", "adductor":            return .adductors
+        case "adductors", "inner_thigh", "adductor", "abductors": return .adductors
         case "calves":                                          return .calves
         case "abs", "abdominals", "core", "obliques":           return .absCore
         default:                                                return nil

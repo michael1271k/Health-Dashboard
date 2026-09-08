@@ -104,6 +104,7 @@ export const HEALTH_QUERY_KEYS: string[][] = [
   ['previous_cardio'],      // cardio_logs
   ['cardio_logs'],          // the log list itself
   ['sleep_onset'],          // daily_logs.sleep_onset_trouble
+  ['sleep_inaccurate'],     // daily_logs.sleep_inaccurate
   // The session report reads `cardio_logs` as well as `workout_sets` now — the
   // treadmill warm-up used to vanish from a session the moment it was committed
   // (see `SessionCardio`). It is already a WORKOUT key; it needs to be a health

@@ -27,19 +27,87 @@ public struct TodayFeed: Sendable, Equatable {
     /// one arrival date, one pace, drawn by the row and by the tile.
     public var goalBoard: GoalBoard
     public var weekSoFar: WeekSoFarSummary
+    /// The week's sets on the body, against what the plan asked for.
+    ///
+    /// The `muscle` tile draws this by FAMILY and against the week's own
+    /// busiest family, which answers "where did the week go". It cannot answer
+    /// "is the week done", because a family bar has no target behind it. That
+    /// second question is what the tile's sheet is for, and it needs the
+    /// landmark-level counts and the landmark-level targets the widget payload
+    /// has never carried.
+    public var muscleFocus: MuscleFocusSummary
     /// The week-complete CTA fires on the first day of a new week, once every
     /// training day the previous week asked for was logged.
     public var weeklySummaryReady: Bool
     /// Last week's start, for the CTA's destination.
     public var lastWeekStart: String
 
-    public init(snapshot: OnyxSnapshot, readiness: ReadinessResult?, goalBoard: GoalBoard, weekSoFar: WeekSoFarSummary, weeklySummaryReady: Bool, lastWeekStart: String) {
+    public init(snapshot: OnyxSnapshot, readiness: ReadinessResult?, goalBoard: GoalBoard, weekSoFar: WeekSoFarSummary, weeklySummaryReady: Bool, lastWeekStart: String, muscleFocus: MuscleFocusSummary = MuscleFocusSummary()) {
         self.snapshot = snapshot
         self.readiness = readiness
         self.goalBoard = goalBoard
         self.weekSoFar = weekSoFar
         self.weeklySummaryReady = weeklySummaryReady
         self.lastWeekStart = lastWeekStart
+        self.muscleFocus = muscleFocus
+    }
+}
+
+/// One muscle's week: what landed on it, and what the plan asked for.
+public struct MuscleFocusRow: Sendable, Equatable, Identifiable {
+    public let muscle: LandmarkMuscle
+    /// WEIGHTED sets — a primary mover earns 1.0 and a secondary 0.5
+    /// (`MuscleCredit.secondarySetCredit`), which is the same currency the
+    /// targets are denominated in. Fractional on purpose; rounding it here
+    /// would make five half-credits disappear.
+    public let sets: Double
+    /// The athlete's override for this (plan, phase), else the program's own
+    /// number. Zero is a real answer — Adductors is 0 on a cut — and a muscle
+    /// with a zero target is not behind, it is unasked-for.
+    public let target: Int
+    public var id: String { muscle.rawValue }
+    /// Never negative: work past the target is done, not "minus three left".
+    public var remaining: Double { max(0, Double(target) - sets) }
+
+    public init(muscle: LandmarkMuscle, sets: Double, target: Int) {
+        self.muscle = muscle
+        self.sets = sets
+        self.target = target
+    }
+}
+
+public struct MuscleFocusSummary: Sendable, Equatable {
+    public var weekStart: String
+    /// Every one of the sixteen landmarks, in the canonical order, present
+    /// whether or not the week touched it. A muscle that vanishes from the
+    /// list when it is untrained is the one you most need to see.
+    public var rows: [MuscleFocusRow]
+
+    public init(weekStart: String = "", rows: [MuscleFocusRow] = []) {
+        self.weekStart = weekStart
+        self.rows = rows
+    }
+
+    public var doneSets: Double { rows.reduce(0) { $0 + $1.sets } }
+    public var targetSets: Int { rows.reduce(0) { $0 + $1.target } }
+    public var remainingSets: Double { rows.reduce(0) { $0 + $1.remaining } }
+    /// Intensity per landmark for the atlas, 0…1 against its OWN target.
+    ///
+    /// Against the target and not against the busiest muscle, which is what
+    /// the tile does: this sheet's question is "is the week done", so a quad
+    /// at 10 of 10 and a bicep at 8 of 8 must both read full even though one
+    /// is a bigger number. An untargeted muscle grades against the biggest
+    /// target in the plan instead — it still HAPPENED, and fading it out
+    /// would report trained work as untrained.
+    public var worked: [LandmarkMuscle: Double] {
+        let fallback = Double(rows.map(\.target).max() ?? 0)
+        var out: [LandmarkMuscle: Double] = [:]
+        for row in rows where row.sets > 0 {
+            let against = row.target > 0 ? Double(row.target) : fallback
+            guard against > 0 else { continue }
+            out[row.muscle] = min(1, max(0.15, row.sets / against))
+        }
+        return out
     }
 }
 
@@ -104,7 +172,7 @@ public struct TodayFeedBuilder: Sendable {
         let windowFrom = ISODate.addDays(today, -Self.windowDays) ?? today
 
         let user = Column("user_id") == userId
-        let (weekCur, weekPrev, lastWeekLogged) = try database.writer.read { db in
+        let (weekCur, weekPrev, lastWeekLogged, weekSets, volumeOverrides) = try database.writer.read { db in
             // Sessions with their volume, the same way the snapshot totals them.
             let sessions = try WorkoutSession.filter(user && Column("date") >= windowFrom && Column("date") <= today)
                 .order(Column("date")).fetchAll(db)
@@ -125,7 +193,17 @@ public struct TodayFeedBuilder: Sendable {
                 return WeekTotals(volumeKg: wk.reduce(0) { $0 + $1.1 }, sessions: wk.count, sleepMin: mean(sl), score: mean(sc))
             }
             let logged = Set(sessions.filter { $0.date >= lastWeekStart && $0.date <= lastWeekEnd }.map(\.date))
-            return (totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged)
+            // THIS week's sets, for the muscle focus. The 28-day read above is
+            // already in hand; narrowing it costs a filter rather than a query.
+            let weekSessionIds = Set(sessions.filter { $0.date >= weekStart && $0.date <= today }.map(\.id))
+            let weekSets = sets.filter { weekSessionIds.contains($0.sessionId) }
+            let overrides = try PlanPhaseVolumeRow
+                .filter(user && Column("plan_id") == programId && Column("phase") == schedule.phase.rawValue)
+                .fetchAll(db)
+            return (
+                totals(weekStart, today), totals(lastWeekStart, lastWeekEnd), logged, weekSets,
+                Dictionary(overrides.map { ($0.muscle, $0.targetSets) }, uniquingKeysWith: { _, last in last })
+            )
         }
 
         let base = snapshot.readiness.flatMap { r in
@@ -158,10 +236,62 @@ public struct TodayFeedBuilder: Sendable {
                 Schedule.isTrainingDayIn(schedule, $0)
             }
 
+        let muscleFocus = Self.muscleFocus(
+            weekStart: weekStart, sets: weekSets, names: rows.exerciseNames,
+            phase: schedule.phase, overrides: volumeOverrides
+        )
+
         return TodayFeed(
             snapshot: snapshot, readiness: readiness, goalBoard: goalBoard,
-            weekSoFar: weekSoFar, weeklySummaryReady: weeklySummaryReady, lastWeekStart: lastWeekStart
+            weekSoFar: weekSoFar, weeklySummaryReady: weeklySummaryReady, lastWeekStart: lastWeekStart,
+            muscleFocus: muscleFocus
         )
+    }
+
+    /// The week's weighted sets per landmark, against the week's targets.
+    ///
+    /// ── THE SAME CREDIT RULE AS THE TILE, ONE LEVEL FINER ───────────────────
+    /// `WidgetDerive.volumeByFamily` is what the `muscle` tile draws: a primary
+    /// mover earns a full set, a secondary earns half, and a family never earns
+    /// both for one set. This is that function keyed on the landmark instead of
+    /// its family, so the sheet and the tile it opens from cannot disagree about
+    /// how much work a session was.
+    ///
+    /// A ghost set counts for nothing, here as everywhere. Warm-ups DO count —
+    /// see `MuscleDistribution`, which states the same rule for a live session.
+    static func muscleFocus(
+        weekStart: String, sets: [WorkoutSet], names: [String: String],
+        phase: ProgramPhase, overrides: [String: Int]
+    ) -> MuscleFocusSummary {
+        var credit: [LandmarkMuscle: Double] = [:]
+        for set in sets where set.setType != "ghost" {
+            guard let name = names[set.exerciseId], !name.isEmpty else { continue }
+            let movers = MuscleMap.resolveMovers(name)
+            func landmarks(_ tokens: [String]) -> [LandmarkMuscle] {
+                var out: [LandmarkMuscle] = []
+                for t in tokens {
+                    guard let m = LandmarkMuscle.from(token: t), !out.contains(m) else { continue }
+                    out.append(m)
+                }
+                return out
+            }
+            let primary = landmarks(movers.primary)
+            for m in primary { credit[m] = (credit[m] ?? 0) + 1 }
+            for m in landmarks(movers.secondary) where !primary.contains(m) {
+                credit[m] = (credit[m] ?? 0) + MuscleCredit.secondarySetCredit
+            }
+        }
+        let defaults = Programs.weeklySetTargets(phase)
+        let rows = LandmarkMuscle.allCases.map { muscle in
+            MuscleFocusRow(
+                muscle: muscle,
+                // One decimal: the credit is halves, and a raw Double prints
+                // 8.500000000000002 often enough to matter.
+                sets: ((credit[muscle] ?? 0) * 10).rounded() / 10,
+                target: overrides[muscle.rawValue] ?? Int(defaults[muscle] ?? 0)
+            )
+        }
+        return MuscleFocusSummary(weekStart: weekStart, rows: rows)
     }
 
     private var calendar: Calendar {

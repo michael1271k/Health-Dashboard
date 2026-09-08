@@ -115,8 +115,12 @@ export function toLandmarkMuscle(token: string): LandmarkMuscle | null {
     // resolved to null, so the Adductors target sat permanently at 0/N with the
     // work being done and logged — the only muscle in the list that could never
     // be satisfied.
-    case 'adductors': case 'inner_thigh': case 'adductor': return 'Adductors'
-    case 'abductors': return null // hip abductors aren't a tracked target
+    // `abductors` joined them on 2026-09-08. It resolved to null for the same
+    // reason `inner_thigh` once did — "not a tracked target" — which discarded
+    // every abduction set instead of crediting the one landmark that covers the
+    // hip. The atlas draws ONE inner-thigh region and the soreness rating asks
+    // ONE question about it; the credit has to land in the same place.
+    case 'adductors': case 'inner_thigh': case 'adductor': case 'abductors': return 'Adductors'
     case 'calves': return 'Calves'
     case 'abs': case 'abdominals': case 'core': case 'obliques': return 'Abs/core'
     default: return null
