@@ -775,8 +775,8 @@
     "semantic_hash": ""
   },
   "src/lib/ingest/dailyLog.ts": {
-    "mtime": 1786709394.7803583,
-    "ast_hash": "b3be666f52feae61619325d87ff6bd9d",
+    "mtime": 1788885884.3690279,
+    "ast_hash": "bf2694c00ecbc71d6375abda4fd8b5e1",
     "semantic_hash": ""
   },
   "src/lib/ingest/schema.ts": {
@@ -850,8 +850,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/readiness.ts": {
-    "mtime": 1788636860.9794965,
-    "ast_hash": "807f0e0cd32df767602ebed7c3d1b7f4",
+    "mtime": 1788885884.371969,
+    "ast_hash": "0514cc75d9b8437d3724474dcd843b7e",
     "semantic_hash": ""
   },
   "src/lib/scoring/score.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": "05ad503c74bf6d76b838f08fee526fcc"
   },
   "src/tests/ingest.test.ts": {
-    "mtime": 1786691338.4399605,
-    "ast_hash": "41fe089a0db827cca1445a1340018c0e",
+    "mtime": 1788885884.375547,
+    "ast_hash": "b4d1f07dd5cf84612a73506fd810ffca",
     "semantic_hash": ""
   },
   "src/tests/intel.test.ts": {
@@ -1925,8 +1925,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/computeForDate.ts": {
-    "mtime": 1788636860.979031,
-    "ast_hash": "d06d2ea1e0f92ec84e809aba84f4d5b9",
+    "mtime": 1788885884.3715184,
+    "ast_hash": "92e13702eecf2917ec06790e4e476341",
     "semantic_hash": ""
   },
   "src/lib/widget/derive.ts": {
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "src/tests/golden-vectors.test.ts": {
-    "mtime": 1788812204.2757077,
-    "ast_hash": "5ad2154b532984ef1c20329e1c24e6af",
+    "mtime": 1788885884.3744597,
+    "ast_hash": "4739618b1cca4691d3ef85a1949e9d9b",
     "semantic_hash": ""
   },
   "native/README.md": {
@@ -3705,8 +3705,8 @@
     "semantic_hash": ""
   },
   "src/lib/recovery/fatigue.ts": {
-    "mtime": 1788618337.9209225,
-    "ast_hash": "b9bc6314fc66fde97698b3c75cc245b1",
+    "mtime": 1788885884.370394,
+    "ast_hash": "19cd4b1075a4a789aff33a1c37daeef6",
     "semantic_hash": ""
   },
   "src/tests/api-auth.test.ts": {
@@ -3735,8 +3735,8 @@
     "semantic_hash": ""
   },
   "native/Onyx/App/AppEnvironment.swift": {
-    "mtime": 1788816647.428247,
-    "ast_hash": "381b57e549c16df7450213477ba7c7da",
+    "mtime": 1788885884.3609257,
+    "ast_hash": "b298568db695705e8e459443f88b8f2d",
     "semantic_hash": ""
   },
   "native/Onyx/App/AppEnvironmentPreview.swift": {
@@ -4360,8 +4360,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Recovery/Fatigue.swift": {
-    "mtime": 1788625639.5681946,
-    "ast_hash": "d9c029fb8a32f79fae3142b28e67ad69",
+    "mtime": 1788885884.3617423,
+    "ast_hash": "4ff823f148ba7bbc99c3e0ba8a021d18",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Recovery/SleepDebt.swift": {
@@ -4415,8 +4415,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Scoring/Readiness.swift": {
-    "mtime": 1788636860.9659944,
-    "ast_hash": "9271464b4568c2f68e70542c1d1f9262",
+    "mtime": 1788885884.3623803,
+    "ast_hash": "ef7b4b83b93720ac7c8f391c0ec5a83d",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Sources/OnyxCore/Scoring/Rounding.swift": {
@@ -5695,8 +5695,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/InvariantTests.swift": {
-    "mtime": 1788636860.9720283,
-    "ast_hash": "d4cb8f79defbfe4949ea5f781e70630f",
+    "mtime": 1788885884.3651805,
+    "ast_hash": "7dea073ecea661ea45af91b780fd8243",
     "semantic_hash": ""
   },
   "native/Packages/OnyxCore/Tests/OnyxCoreTests/LayoutGoldenTests.swift": {
@@ -5840,8 +5840,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Day/DayEditing.swift": {
-    "mtime": 1788692805.6995947,
-    "ast_hash": "45854201cb509205af0135664de7b94e",
+    "mtime": 1788885884.365926,
+    "ast_hash": "cdea2069880d1463d5e4677892aae3fe",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Day/NutritionWeek.swift": {
@@ -5880,8 +5880,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/DailyLogIngest.swift": {
-    "mtime": 1788692772.6656742,
-    "ast_hash": "b4cd435a54f4cab4c3fd73938aa6402e",
+    "mtime": 1788885884.3663518,
+    "ast_hash": "fdc3859839433c5c24e6fe76f3cae940",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/HealthKitReader.swift": {
@@ -5900,8 +5900,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/HealthPayload.swift": {
-    "mtime": 1788692703.3567374,
-    "ast_hash": "ec82b4b0c05950b3f666f8cb1c46bca7",
+    "mtime": 1788885884.3667753,
+    "ast_hash": "b5309b203ffd91611de1005099b9685a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/HealthReading.swift": {
@@ -5910,8 +5910,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/HealthSync.swift": {
-    "mtime": 1788636860.973352,
-    "ast_hash": "162143e9590093c9fd18a4eaa540e418",
+    "mtime": 1788885884.367134,
+    "ast_hash": "1e4a5734bde450df04a17dfa6820310c",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/SessionMetrics.swift": {
@@ -5920,8 +5920,8 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Health/SleepNight.swift": {
-    "mtime": 1788625639.6041849,
-    "ast_hash": "6ce8bea3552b5aa8250e688bf231275e",
+    "mtime": 1788885884.3674092,
+    "ast_hash": "b6e7d27c5e5d6cdadb832fc98317af4e",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/History/HistoryAccess.swift": {
@@ -6575,13 +6575,13 @@
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Sources/OnyxData/Scoring/ReadinessHistoryBuilder.swift": {
-    "mtime": 1788636860.973921,
-    "ast_hash": "0434138029659282901882262d9a1488",
+    "mtime": 1788885884.36781,
+    "ast_hash": "f2197663e49974a3e0f73deb9ed2649a",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/ReadinessHistoryTests.swift": {
-    "mtime": 1788636860.9747818,
-    "ast_hash": "cb4047094ce9dcea5be9eabaf2580146",
+    "mtime": 1788885884.3682518,
+    "ast_hash": "927ec0305b0b4f7135fdb15200321ab4",
     "semantic_hash": ""
   },
   "native/Packages/OnyxData/Tests/OnyxDataTests/StackPushTests.swift": {
@@ -6640,8 +6640,8 @@
     "semantic_hash": ""
   },
   "src/lib/scoring/readinessHistory.ts": {
-    "mtime": 1788636860.979711,
-    "ast_hash": "f2ec7baaf78e2d3e6a06ccf9f37e221a",
+    "mtime": 1788885884.3723373,
+    "ast_hash": "e171bbe15a65b14c268866edc8e476d5",
     "semantic_hash": ""
   },
   "src/lib/training/exerciseSummary.ts": {
@@ -6650,8 +6650,8 @@
     "semantic_hash": ""
   },
   "src/tests/readiness-history.test.ts": {
-    "mtime": 1788636860.9816613,
-    "ast_hash": "48f37381d90102bb696a058ada5ea8bb",
+    "mtime": 1788885884.37595,
+    "ast_hash": "7549c5a0f9030cbf77187f4d7cf72925",
     "semantic_hash": ""
   },
   "src/tests/readiness-v9.test.ts": {
@@ -7307,6 +7307,116 @@
   "native/Packages/OnyxData/Tests/OnyxDataTests/RoutineOrderTests.swift": {
     "mtime": 1788879338.0884192,
     "ast_hash": "08a9e5943038e09eb8e501a18a4585e0",
+    "semantic_hash": ""
+  },
+  "docs/sql/phase3-engines.sql": {
+    "mtime": 1788885884.3605072,
+    "ast_hash": "86c409edcf14e32dcf244e6da38610dc",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Charts/StressSeries.swift": {
+    "mtime": 1788885884.3613057,
+    "ast_hash": "a2234d035a036a392d6aa5d8cf4c2f9f",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Scoring/Stress.swift": {
+    "mtime": 1788885884.3625813,
+    "ast_hash": "d3418172a4d73ec97e1a31748fe061f7",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Sources/OnyxCore/Sleep/SleepTrim.swift": {
+    "mtime": 1788885884.3627923,
+    "ast_hash": "1747dfa20c9951d123403ec3f7652e29",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-trim-night.json": {
+    "mtime": 1788885884.3630455,
+    "ast_hash": "8821949ce9f0ce828660f2ea54540294",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/sleep-trim.json": {
+    "mtime": 1788885884.3631892,
+    "ast_hash": "78e5eb4edc0fabbcf05623000d2d028f",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stress-battery-isolation.json": {
+    "mtime": 1788885884.3634577,
+    "ast_hash": "cf118f967577779909170a56aeec2a0a",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stress-breakdown.json": {
+    "mtime": 1788885884.363675,
+    "ast_hash": "d03ea19f311d48157cffe42329166bb9",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stress-constants.json": {
+    "mtime": 1788885884.3638601,
+    "ast_hash": "06b3315b804ca872fb257b174b6352e1",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stress-fragmentation.json": {
+    "mtime": 1788885884.3644583,
+    "ast_hash": "ea12e65694fe3fb629213d0d3d459d2f",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/stress-series.json": {
+    "mtime": 1788885884.364732,
+    "ast_hash": "4137c975d291a0c997eae44be0550f57",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/SleepTrimGoldenTests.swift": {
+    "mtime": 1788885884.3653245,
+    "ast_hash": "c8ea3ef7eca6e48cd8e28e8d85cd8378",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxCore/Tests/OnyxCoreTests/StressGoldenTests.swift": {
+    "mtime": 1788885884.3654728,
+    "ast_hash": "a75ed166e829bd11b0bbf21b4bfeacc2",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxData/Sources/OnyxData/Scoring/StressInputsBuilder.swift": {
+    "mtime": 1788885884.3679411,
+    "ast_hash": "554c79edfbacccb94119db568a9c9188",
+    "semantic_hash": ""
+  },
+  "native/Packages/OnyxData/Tests/OnyxDataTests/SleepTrimTests.swift": {
+    "mtime": 1788885884.3684506,
+    "ast_hash": "a8b08411b12d3a367eeb10eb64232447",
+    "semantic_hash": ""
+  },
+  "src/lib/charts/stressSeries.ts": {
+    "mtime": 1788885884.3685892,
+    "ast_hash": "42a2d1dbdfd422e962136664ed300ba8",
+    "semantic_hash": ""
+  },
+  "src/lib/scoring/stress.ts": {
+    "mtime": 1788885884.3725817,
+    "ast_hash": "061bbb1d9597bf8da2ce342e85ce562f",
+    "semantic_hash": ""
+  },
+  "src/lib/sleep/manualSleep.ts": {
+    "mtime": 1788885884.3727515,
+    "ast_hash": "31e1cef7ad02f6908ec95150b1638633",
+    "semantic_hash": ""
+  },
+  "src/lib/sleep/trim.ts": {
+    "mtime": 1788885884.3729,
+    "ast_hash": "4db158cad89bf85d4951955516472ddd",
+    "semantic_hash": ""
+  },
+  "src/tests/sleep-trim.test.ts": {
+    "mtime": 1788885884.3761427,
+    "ast_hash": "a2f54688654368a7dc2a446b4b7e6e8d",
+    "semantic_hash": ""
+  },
+  "src/tests/stress.test.ts": {
+    "mtime": 1788885884.3762858,
+    "ast_hash": "0ff1e95814b52ae4614a633985146e50",
+    "semantic_hash": ""
+  },
+  "docs/STRESS_MODEL.md": {
+    "mtime": 1788885884.3602643,
+    "ast_hash": "111342a1df645ab315df7f9160708445",
     "semantic_hash": ""
   }
 }
