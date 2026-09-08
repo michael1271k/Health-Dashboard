@@ -85,7 +85,10 @@ struct UnilateralAndQualityTests {
         let sides = exercise.rows.filter { $0.pairId != nil }
         #expect(sides.count == 2)
         #expect(sides.allSatisfy { $0.weightKg == 60 && $0.reps == 10 })
-        #expect(sides.allSatisfy(\.isDone), "a set that was logged stays logged")
+        // A closure, not `\.isDone`: the `#expect` macro expands a key-path
+        // `allSatisfy` into a call it then thinks can throw, and the error names
+        // the generated file rather than this line.
+        #expect(sides.allSatisfy { $0.isDone }, "a set that was logged stays logged")
         #expect(Set(sides.compactMap(\.sideLabel)) == ["L", "R"])
         // The two sides are one set at the weaker side, so a set that was
         // 600 kg whole is 600 kg split. If this ever reads 1200 the pair has
