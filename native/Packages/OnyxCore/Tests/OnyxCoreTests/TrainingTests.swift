@@ -35,6 +35,9 @@ struct TrainingTests {
         #expect(!SetTags.isSetQuality("momentum+invented"))
         #expect(!SetTags.isSetQuality("+momentum") && !SetTags.isSetQuality("momentum+"))
         #expect(!SetTags.isSetQuality("Momentum"))
+        // The CHECK refuses a repeat and a non-canonical order; so does the guard.
+        #expect(!SetTags.isSetQuality("partial_rom+momentum"))
+        #expect(!SetTags.isSetQuality("momentum+momentum"))
     }
 
     // MARK: - The credit rule

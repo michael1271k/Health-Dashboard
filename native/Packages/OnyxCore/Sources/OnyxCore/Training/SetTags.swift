@@ -115,11 +115,12 @@ public enum SetTags {
     }
 
     /// Guards a value arriving from the DB or a draft before it is written
-    /// back: every token known, at least one, no empty token. A value the
-    /// CHECK constraint would refuse is refused here too.
+    /// back. A value the CHECK constraint would refuse is refused here too —
+    /// and the CHECK (`docs/sql/set-quality-tags.sql`) refuses an unknown key,
+    /// an empty token, a repeat AND a non-canonical order. "Valid" is therefore
+    /// exactly "survives a parse-and-join round trip unchanged".
     public static func isSetQuality(_ v: String?) -> Bool {
         guard let v, !v.isEmpty else { return false }
-        let tokens = v.split(separator: qualitySeparator, omittingEmptySubsequences: false).map(String.init)
-        return tokens.allSatisfy(qualityKeys.contains)
+        return joinQuality(parseQuality(v)) == v
     }
 }

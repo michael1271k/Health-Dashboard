@@ -97,6 +97,13 @@ struct SessionEditingTests {
             try SetEvent.filter(SetEvent.Columns.sessionId == "s-new").fetchAll(conn).map(\.createdAt)
         }
         #expect(Set(stamps) == [LogicalDay.date(fromISO: newer)!])
+
+        // And `closeSession` does not mistake that stamp for a last set: closed
+        // an hour in with nothing else logged, the answer is the hour, never
+        // one rest (the 2-minute bug by another road).
+        let start = LogicalDay.date(fromISO: newer)!
+        let closed = try db.closeSession(id: "s-new", endedAt: start.addingTimeInterval(3600), restTargetSec: 120)
+        #expect(closed?.durationMin == 60)
     }
 
     // MARK: - The engine rule the fixtures lean on

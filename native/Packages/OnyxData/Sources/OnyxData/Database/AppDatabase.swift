@@ -1088,8 +1088,14 @@ extension AppDatabase {
             let events = try SetEvent
                 .filter(SetEvent.Columns.sessionId == id)
                 .fetchAll(db)
+            // A seed with no clock to carry is stamped AT the session's start
+            // (`seedEventLog`): it says nothing about when the set was logged, so
+            // it must not become the "last set". Filtered out here, a session whose
+            // only events are clockless seeds has no last set, and `SessionDuration`
+            // then declines to cap rather than answering one rest.
+            let opened = session.startedAt ?? .distantPast
             let lastSetAt = events
-                .filter { $0.kind == .append || $0.kind == .amend }
+                .filter { ($0.kind == .append || $0.kind == .amend) && $0.createdAt > opened }
                 .map(\.createdAt)
                 .max()
             let derived = SessionDuration.compute(
