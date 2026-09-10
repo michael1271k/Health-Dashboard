@@ -66,8 +66,11 @@ public extension AppDatabase {
             .filter(Column("user_id") == userId && Column("date") == date)
             .fetchAll(db)
             .map { FatigueRow(slot: $0.slot, level: $0.level) }
-        let isTraining = Schedule.isTrainingDayIn(
-            try schedule ?? Self.scheduleContext(db, userId: userId), date
+        //
+        // And "the real kind" is the day as LOGGED, not as planned — a session
+        // on the calendar's rest day is a training day (`isTrainingDay`).
+        let isTraining = try Self.isTrainingDay(
+            db, userId: userId, date: date, schedule: try schedule ?? Self.scheduleContext(db, userId: userId)
         )
         let fatigueDayMean = Fatigue.dayMean(Fatigue.foldRows(fatigueRows, isTraining: isTraining))
 

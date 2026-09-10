@@ -1,4 +1,5 @@
 import Foundation
+import OnyxCore
 
 /// Effort, in words — the vocabulary the logger and the finish sheet share.
 ///
@@ -193,22 +194,19 @@ enum SetQuality: String, CaseIterable, Identifiable, Sendable {
     /// malformed-token bugs (P3 E5). A separator that cannot appear in a key
     /// AND cannot collide with a separator one layer up is the whole
     /// requirement; `+` is in neither alphabet.
-    static let separator: Character = "+"
+    /// The grammar itself lives in `SetTags` (OnyxCore) — ONE parser for the
+    /// column, shared with the store and the export. These two are the typed
+    /// view over it and add nothing.
+    static let separator: Character = SetTags.qualitySeparator
 
-    /// The stored string, in canonical order. `nil` for an empty list, because
-    /// "no tags" is the absence of a claim and NULL is how this column says so.
+    /// The stored string, in canonical order. `nil` for an empty list.
     static func join(_ tags: [SetQuality]) -> String? {
-        let ordered = allCases.filter(tags.contains)
-        return ordered.isEmpty ? nil : ordered.map(\.rawValue).joined(separator: String(separator))
+        SetTags.joinQuality(tags.map(\.rawValue))
     }
 
-    /// Read a stored value back. Unknown keys are DROPPED rather than failing
-    /// the row: a value written by a newer client must not make an old one
-    /// unable to draw the set at all.
+    /// Read a stored value back. Unknown keys are dropped, never fatal.
     static func parse(_ raw: String?) -> [SetQuality] {
-        guard let raw, !raw.isEmpty else { return [] }
-        let found = Set(raw.split(separator: separator).compactMap { SetQuality(rawValue: String($0)) })
-        return allCases.filter(found.contains)
+        SetTags.parseQuality(raw).compactMap(SetQuality.init(rawValue:))
     }
 
     /// What the row's dot and VoiceOver say when there are several.

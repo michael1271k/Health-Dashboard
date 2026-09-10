@@ -12,6 +12,31 @@ import Testing
 @Suite("Training — the deck and the credit rule")
 struct TrainingTests {
 
+    // MARK: - Set quality grammar
+
+    @Test("quality: keys joined by `+`, canonical order, unknown keys dropped, one parser")
+    func qualityGrammar() {
+        // A single key is byte-identical to what every row already holds.
+        for key in SetTags.qualityKeys {
+            #expect(SetTags.joinQuality([key]) == key)
+            #expect(SetTags.parseQuality(key) == [key])
+            #expect(SetTags.isSetQuality(key))
+        }
+        #expect(SetTags.parseQuality(nil).isEmpty && SetTags.parseQuality("").isEmpty)
+        #expect(SetTags.joinQuality([]) == nil, "absence is NULL, never an empty string")
+        // A combination is one set honestly described, and it is a valid value.
+        #expect(SetTags.parseQuality("partial_rom+momentum") == ["momentum", "partial_rom"])
+        #expect(SetTags.joinQuality(["partial_rom", "momentum"]) == "momentum+partial_rom")
+        #expect(SetTags.isSetQuality("momentum+partial_rom"))
+        // A newer client's key is dropped on READ, and refused as a VALUE: the
+        // CHECK constraint would refuse it too, and a guard that passes what
+        // Postgres rejects is not a guard.
+        #expect(SetTags.parseQuality("momentum+invented") == ["momentum"])
+        #expect(!SetTags.isSetQuality("momentum+invented"))
+        #expect(!SetTags.isSetQuality("+momentum") && !SetTags.isSetQuality("momentum+"))
+        #expect(!SetTags.isSetQuality("Momentum"))
+    }
+
     // MARK: - The credit rule
 
     @Test("the shipping sheet's own numbers: 2 physical sets, 5 weighted")

@@ -152,7 +152,13 @@ public extension AppDatabase {
                 .filter(Column("user_id") == userId && Column("date") == date)
                 .fetchAll(db)
                 .map { FatigueRow(slot: $0.slot, level: $0.level) }
-            let fatigueLevel = Fatigue.latest(Fatigue.foldRows(fatigueRows, isTraining: !isRestDay))?.level
+            // `isRestDay` is the plan's word; a session logged on the day is
+            // the athlete's, and it wins — the same rule `StressInputsBuilder`
+            // resolves through `isTrainingDay`, inlined here because the
+            // sessions are already in hand.
+            let fatigueLevel = Fatigue.latest(
+                Fatigue.foldRows(fatigueRows, isTraining: !isRestDay || !sessions.isEmpty)
+            )?.level
 
             // ── READINESS v9: THE 49 DAYS BEHIND THE DAY ────────────────────
             // `readinessHistory` lays the rows on the calendar exactly as the

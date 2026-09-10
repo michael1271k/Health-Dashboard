@@ -84,9 +84,42 @@ public enum SetTags {
         return quality[value]
     }
 
-    /// Guards a value arriving from the DB or a draft before it is written back.
+    // ── MORE THAN ONE OF THEM AT A TIME ─────────────────────────────────────
+    // `workout_sets.quality` is one `text` column. A set can be several of these
+    // at once — "used momentum AND cut the range short" is one set, honestly
+    // described — so the column has a GRAMMAR rather than a second shape: keys
+    // joined by `+`, always in `qualityKeys` order. One key is byte-identical to
+    // what every row already holds. `+` is in neither the key alphabet nor the
+    // export's `·` separator alphabet, which is the whole requirement.
+    //
+    // This is the ONE parser. The app target's `SetQuality` enum is a typed
+    // view over these strings and delegates here; the web read single keys
+    // only and re-saved a combination as null, which is why the grammar lives
+    // in OnyxCore and nowhere else.
+    public static let qualitySeparator: Character = "+"
+
+    /// A stored value → the known keys it names, in canonical order. An
+    /// unknown key is DROPPED rather than failing the row: a value written by
+    /// a newer client must not make an old one unable to draw the set at all.
+    public static func parseQuality(_ raw: String?) -> [String] {
+        guard let raw, !raw.isEmpty else { return [] }
+        let found = Set(raw.split(separator: qualitySeparator).map(String.init))
+        return qualityKeys.filter(found.contains)
+    }
+
+    /// Keys → the stored string, canonical order. `nil` for none: "no tags" is
+    /// the absence of a claim, and NULL is how the column says so.
+    public static func joinQuality(_ keys: [String]) -> String? {
+        let ordered = qualityKeys.filter(keys.contains)
+        return ordered.isEmpty ? nil : ordered.joined(separator: String(qualitySeparator))
+    }
+
+    /// Guards a value arriving from the DB or a draft before it is written
+    /// back: every token known, at least one, no empty token. A value the
+    /// CHECK constraint would refuse is refused here too.
     public static func isSetQuality(_ v: String?) -> Bool {
-        guard let v else { return false }
-        return qualityKeys.contains(v)
+        guard let v, !v.isEmpty else { return false }
+        let tokens = v.split(separator: qualitySeparator, omittingEmptySubsequences: false).map(String.init)
+        return tokens.allSatisfy(qualityKeys.contains)
     }
 }
