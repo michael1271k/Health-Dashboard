@@ -1,4 +1,9 @@
 import Foundation
+// For `PostgrestError.code` alone — see `isMissingRelation`. The protocol below
+// still keeps the SDK out of the drainer's RULES; this is the one wire fact the
+// engine has to be able to read, because it is the difference between an error
+// worth retrying and one that will never clear.
+import Supabase
 
 /// The half of sync that talks to PostgREST.
 ///
@@ -314,6 +319,10 @@ public actor SyncEngine {
             }
         }
 
+        /// The outbox items whose SET EVENT could not be delivered, and why.
+        /// They are not acknowledged below; everything else in the batch is.
+        var heldEvents: (ids: Set<String>, message: String)?
+
         do {
             // The session row goes first, always. `workout_sets.session_id` has
             // a foreign key to it, so a set that arrives before its parent is
@@ -337,22 +346,45 @@ public actor SyncEngine {
                 ignoreDuplicates: !carriesSessionFacts
             )
             try database.markSessionSynced(id: sessionId)
-            if !upserts.isEmpty { try await remote.upsertSets(upserts) }
+            // ── TWO BODIES, BECAUSE OF ONE CONDITIONAL COLUMN ───────────────
+            // `quality` is the only key `RemoteSetRow` encodes conditionally,
+            // and PostgREST rejects a bulk body whose objects disagree about
+            // keys (`PGRST102`). Splitting on exactly that condition gives two
+            // bodies that are each one shape: the tagged sets carry `quality`,
+            // the untagged ones do not carry the key at all — which is what
+            // leaves a tag the web app recorded untouched rather than nulling
+            // it from a device that was never asked. See `RemoteSetRow`.
+            let tagged = upserts.filter { $0.quality != nil }
+            let untagged = upserts.filter { $0.quality == nil }
+            if !untagged.isEmpty { try await remote.upsertSets(untagged) }
+            if !tagged.isEmpty { try await remote.upsertSets(tagged) }
             // Deletions last. Doing them first would drop a row that the upsert
             // in the same drain is about to restore, which is harmless but
             // leaves the server briefly disagreeing with the phone for no
             // reason.
             if !deletions.isEmpty { try await remote.deleteSets(ids: deletions) }
-            // ── AND THE EVENTS THEMSELVES, LAST AND BEST-EFFORT ────────────
+            // ── AND THE EVENTS THEMSELVES, LAST ────────────────────────────
             // The rows above are what the web app reads and what this queue has
             // always been about; the log is what lets a SECOND device adopt
             // them (`SetEventSync`). It goes last, and inside the `do` so a
-            // network failure here is charged to the queue like any other — but
-            // `pushEvents` itself swallows the error, because `set_events` is
-            // applied BY HAND and until the SQL is run PostgREST answers 404.
-            // Backing the whole workout off over a table the user has not
-            // created yet would be the worse failure by a distance.
-            await pushEvents(entries, userId: session.userId)
+            // network failure here is charged to the queue like any other.
+            //
+            // ── IT DOES NOT THROW, AND IT NO LONGER SWALLOWS ────────────────
+            // Throwing here would charge the session row and every set row a
+            // failure they did not earn — they already landed. So `pushEvents`
+            // reports instead: the ids it could not deliver, which are held
+            // back from the ack below and retried on the next drain.
+            //
+            // The one thing it still swallows is a MISSING TABLE. `set_events`
+            // is applied by hand and PostgREST answers 404 until the SQL is
+            // run; holding every set event of every session forever over a
+            // table the user has not created yet is the worse failure by a
+            // distance, and it is not transient — no number of retries makes
+            // the table appear. Everything else — a 503, a dropped connection,
+            // a timeout — is transient, and dropping a set event over one is
+            // how two devices stop converging with nothing queued to show for
+            // it.
+            heldEvents = await pushEvents(entries, userId: session.userId)
         } catch {
             // Caught rather than thrown, for two reasons. One unreachable
             // session must not abandon the sessions behind it in the batch; and
@@ -368,8 +400,23 @@ public actor SyncEngine {
         // is microseconds a set today; if a long session's finish ever hitches,
         // the fix is a batch ack (one transaction, one UPDATE … IN (…), one
         // fold) rather than making the fold incremental.
-        for item in ok { try database.outboxSucceeded(item.id) }
-        return (ok.count, failed)
+        //
+        // An item whose EVENT did not land is not acknowledged. Its set row
+        // did land, and re-sending that row on the next drain is a no-op —
+        // `upsertSets` is `ON CONFLICT DO UPDATE` over an identical
+        // projection — so the retry costs one duplicate row write and buys
+        // back an event that would otherwise be gone for good.
+        var pushed = 0
+        for item in ok {
+            if let held = heldEvents, held.ids.contains(item.id) {
+                try database.outboxFailed(item.id, error: held.message, now: now)
+                failed += 1
+            } else {
+                try database.outboxSucceeded(item.id)
+                pushed += 1
+            }
+        }
+        return (pushed, failed)
     }
 
     /// The queued events of one session, as server rows.
@@ -382,19 +429,49 @@ public actor SyncEngine {
     /// Clock events are skipped here for the same reason `commit` never queues
     /// them — they are local facts about this device's session timer, and
     /// `duration_min` is what the server actually needs from a pause.
+    ///
+    /// Returns the ids of the items whose event did NOT reach the server and
+    /// must therefore stay in the outbox, or `nil` when there is nothing to
+    /// hold back. It never throws: the rows the queue is really about have
+    /// already landed by the time this runs, and charging them for the event
+    /// log's failure would back the whole workout off.
     private func pushEvents(
         _ entries: [(item: OutboxItem, setId: String?)], userId: String
-    ) async {
+    ) async -> (ids: Set<String>, message: String)? {
         var rows: [RemoteSetEventRow] = []
+        var sent: Set<String> = []
         for entry in entries where entry.item.kind.hasPrefix(SyncKind.setEventPrefix) {
             guard let event = try? OnyxJSON.decoder.decode(SetEvent.self, from: entry.item.payload),
                   !event.kind.isClock
             else { continue }
             rows.append(event.remoteRow(userId: userId))
+            sent.insert(entry.item.id)
         }
-        guard !rows.isEmpty else { return }
-        // Deliberately swallowed. See the call site.
-        try? await remote.upsertSetEvents(rows)
+        guard !rows.isEmpty else { return nil }
+        do {
+            try await remote.upsertSetEvents(rows)
+            return nil
+        } catch {
+            // The ONE permanent failure, swallowed on purpose. See the call
+            // site: `set_events` is applied by hand, and a table that does not
+            // exist will not start existing because the queue asked again.
+            if Self.isMissingRelation(error) { return nil }
+            return (ids: sent, message: "set_events: \(describe(error))")
+        }
+    }
+
+    /// True when PostgREST is saying the TABLE or a COLUMN is not there, which
+    /// no retry can fix, as opposed to a 5xx, a timeout or a dropped socket,
+    /// which a retry usually does.
+    ///
+    /// Matched on `PostgrestError.code` rather than on a status or a message:
+    /// PostgREST answers a missing relation with `PGRST205` (not in the schema
+    /// cache) or Postgres's own `42P01`, and a missing column with `PGRST204`
+    /// — `DayEditing` already leans on that last one. A `URLError`, a
+    /// `CancellationError` or a 503 carries none of them and is held.
+    private static func isMissingRelation(_ error: any Error) -> Bool {
+        guard let code = (error as? PostgrestError)?.code else { return false }
+        return ["PGRST205", "PGRST204", "42P01", "42703"].contains(code)
     }
 
     // MARK: - Mirrored rows

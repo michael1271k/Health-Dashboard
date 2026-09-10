@@ -347,6 +347,13 @@ extension AppDatabase {
                         pairId: row.pairId,
                         est1rmKg: row.est1rmKg,
                         rpe: row.rpe,
+                        // The other half of the round trip the push half opened
+                        // (`RemoteSetRow.quality`). Without it a tag the web
+                        // recorded is invisible on the phone, and the first
+                        // edit here seeds an event log from a projection that
+                        // never had it — which is how a "Cheated" quietly
+                        // becomes no tag at all on the device that adopted it.
+                        quality: row.quality,
                         // The web's own deck order, kept rather than re-derived.
                         // `seedEventLog` carries it into the log on the first
                         // edit, which is what stops this device pushing a null

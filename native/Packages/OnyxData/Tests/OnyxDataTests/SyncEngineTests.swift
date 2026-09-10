@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import GRDB
 import OnyxCore
+import Supabase
 @testable import OnyxData
 
 /// A server that remembers what it was told.
@@ -29,6 +30,16 @@ private actor FakeRemote: SyncRemote {
     /// failure on `exercises` is not the same event as the network being gone,
     /// and the drainer is supposed to tell them apart.
     var catalogueFailure: (any Error)?
+    /// When set, ONLY the event-log write throws. `set_events` is applied by
+    /// hand, so a database that answers every other table happily and 404s on
+    /// this one is the ordinary state of a fresh install — not an edge case.
+    var eventFailure: (any Error)?
+    /// The event rows that actually landed, and the bodies `upsertSets` was
+    /// handed. The bodies matter as bodies: PostgREST rejects a bulk upsert
+    /// whose objects disagree about keys, so "one shape per request" is a
+    /// claim about the split and cannot be checked against a merged dictionary.
+    var events: [String: RemoteSetEventRow] = [:]
+    var setUpsertBodies: [[RemoteSetRow]] = []
 
     init(catalogue: [RemoteExercise]) {
         self.catalogue = catalogue
@@ -36,6 +47,16 @@ private actor FakeRemote: SyncRemote {
 
     func setFailure(_ error: (any Error)?) { failure = error }
     func setCatalogueFailure(_ error: (any Error)?) { catalogueFailure = error }
+    func setEventFailure(_ error: (any Error)?) { eventFailure = error }
+
+    func upsertSetEvents(_ rows: [RemoteSetEventRow]) async throws {
+        if let failure { throw failure }
+        if let eventFailure { throw eventFailure }
+        try Self.rejectDuplicates(rows.map(\.id))
+        // Append-only: `ignoreDuplicates: true` leaves an id already held
+        // exactly as it is.
+        for row in rows where events[row.id] == nil { events[row.id] = row }
+    }
 
     func exerciseCatalogue() async throws -> [RemoteExercise] {
         if let failure { throw failure }
@@ -57,8 +78,26 @@ private actor FakeRemote: SyncRemote {
     func upsertSets(_ rows: [RemoteSetRow]) async throws {
         if let failure { throw failure }
         try Self.rejectDuplicates(rows.map(\.id))
+        try Self.rejectMixedShapes(rows)
         setUpsertCalls += 1
+        setUpsertBodies.append(rows)
         for row in rows { sets[row.id] = row }
+    }
+
+    /// `PGRST102 — All object keys must match`.
+    ///
+    /// PostgREST refuses a bulk body whose objects do not agree about their
+    /// keys, and `RemoteSetRow` now has one CONDITIONAL key (`quality`). Without
+    /// this check a test could watch the drainer send one mixed body and call
+    /// it a pass, which is exactly the failure the split exists to prevent.
+    static func rejectMixedShapes(_ rows: [RemoteSetRow]) throws {
+        let shapes = Set(try rows.map { row -> Set<String> in
+            let object = try JSONSerialization.jsonObject(
+                with: try JSONEncoder().encode(row)
+            ) as? [String: Any] ?? [:]
+            return Set(object.keys)
+        })
+        guard shapes.count <= 1 else { throw AllObjectKeysMustMatch() }
     }
 
     /// `ON CONFLICT DO UPDATE command cannot affect row a second time`.
@@ -76,6 +115,23 @@ private actor FakeRemote: SyncRemote {
 private struct Offline: Error {}
 /// SQLSTATE 21000, as Postgres raises it on a duplicate constrained value.
 private struct CardinalityViolation: Error {}
+/// `PGRST102`, as PostgREST raises it on a bulk body of two shapes.
+private struct AllObjectKeysMustMatch: Error {}
+
+/// What PostgREST answers when `set_events` has never been created — the state
+/// of every install where `docs/sql/wave-10-set-events.sql` has not been run.
+/// Permanent: no retry makes a table appear.
+private func missingTable() -> PostgrestError {
+    PostgrestError(
+        details: nil, hint: nil, code: "PGRST205",
+        message: "Could not find the table 'public.set_events' in the schema cache"
+    )
+}
+
+/// A transient server failure. Carries no PostgREST code at all, because a
+/// gateway 503 never reaches PostgREST's own error body — which is precisely
+/// what makes it distinguishable from a missing table.
+private struct ServiceUnavailable: Error {}
 
 @Suite("Outbox drainer")
 struct SyncEngineTests {
@@ -453,5 +509,87 @@ struct SyncEngineTests {
         #expect(report.failed == 1)
         // A row nobody can read is still evidence of a set somebody logged.
         #expect(try db.pendingOutbox().count == 1)
+    }
+
+    // MARK: The event log is not best-effort any more
+
+    @Test("a transient failure on set_events keeps the item queued instead of dropping the event")
+    func transientEventFailureHoldsTheItem() async throws {
+        let db = try store()
+        let remote = FakeRemote(catalogue: Self.catalogue)
+        await remote.setEventFailure(ServiceUnavailable())
+        try db.appendSet(sessionId: "s1", setId: "set-1", squat(1))
+
+        let report = try await SyncEngine(database: db, remote: remote).drain()
+
+        // The rows the queue is really about DID land — this is not a rollback,
+        // it is a partial success — but the item is not acknowledged, because
+        // acknowledging it is what used to lose the event for good.
+        #expect(await remote.sets["set-1"] != nil, "the set row still uploads")
+        #expect(await remote.events.isEmpty)
+        #expect(report.pushed == 0)
+        #expect(report.failed == 1)
+
+        let queued = try #require(try db.pendingOutbox().first)
+        #expect(queued.attempts == 1, "the attempt is counted, so the retry backs off")
+        #expect(queued.lastError?.contains("set_events") == true)
+
+        // And the retry converges: the second drain re-sends the same set row
+        // (a no-op upsert) and this time carries the event.
+        await remote.setEventFailure(nil)
+        let second = try await SyncEngine(database: db, remote: remote).drain(now: Date().addingTimeInterval(3600))
+        #expect(second.pushed == 1)
+        #expect(await remote.events.count == 1)
+        #expect(try db.pendingOutbox().isEmpty)
+    }
+
+    @Test("a set_events table that does not exist is still swallowed — no retry can create it")
+    func missingEventTableIsAcknowledged() async throws {
+        let db = try store()
+        let remote = FakeRemote(catalogue: Self.catalogue)
+        await remote.setEventFailure(missingTable())
+        try db.appendSet(sessionId: "s1", setId: "set-1", squat(1))
+
+        let report = try await SyncEngine(database: db, remote: remote).drain()
+
+        // The whole point of the old `try?`. Holding these forever would grow
+        // the outbox without bound on every install where the SQL has not been
+        // pasted, and the set row itself is already safe on the server.
+        #expect(report.pushed == 1)
+        #expect(report.failed == 0)
+        #expect(try db.pendingOutbox().isEmpty)
+        #expect(await remote.sets["set-1"] != nil)
+    }
+
+    // MARK: Set quality reaches the wire
+
+    @Test("a set carrying a quality tag sends it, and one without does not send the key at all")
+    func qualityIsSentWithoutNullingTheRest() async throws {
+        let db = try store()
+        let remote = FakeRemote(catalogue: Self.catalogue)
+        var tagged = squat(1)
+        tagged.quality = "cheated"
+        try db.appendSet(sessionId: "s1", setId: "set-1", tagged)
+        try db.appendSet(sessionId: "s1", setId: "set-2", squat(2))
+
+        let report = try await SyncEngine(database: db, remote: remote).drain()
+        #expect(report.failed == 0)
+
+        #expect(await remote.sets["set-1"]?.quality == "cheated")
+        #expect(await remote.sets["set-2"]?.quality == nil)
+
+        // Two bodies, each one shape. `rejectMixedShapes` would already have
+        // thrown on a single mixed body; this pins the reason the split exists
+        // rather than only its symptom.
+        let bodies = await remote.setUpsertBodies
+        #expect(bodies.count == 2, "the tagged sets and the untagged ones go separately")
+
+        // And the untagged body must not name the column, or it would null the
+        // tag the web app recorded on a set this device was never asked about.
+        let untagged = try #require(bodies.first { $0.contains { $0.id == "set-2" } })
+        let keys = try #require(
+            try JSONSerialization.jsonObject(with: try JSONEncoder().encode(untagged[0])) as? [String: Any]
+        ).keys
+        #expect(!keys.contains("quality"))
     }
 }

@@ -398,6 +398,10 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     /// drain, and a batch that sometimes carries the key and sometimes does not
     /// is the two-shapes bug this type's `encode(to:)` exists to prevent.
     public var elevationM: Double?
+    /// The set-quality tag — `Cheated`, `Short ROM`, and the rest of the CHECK
+    /// on `workout_sets.quality`. `nil` means the phone has NOTHING to say
+    /// about this set, and a nil is never encoded: see `encode(to:)`.
+    public var quality: String?
 
     public enum CodingKeys: String, CodingKey {
         case id
@@ -417,15 +421,15 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         case incline
         case distanceKm = "distance_km"
         case elevationM = "elevation_m"
+        case quality
     }
 
     /// Same reason as `RemoteSessionRow`: nulls are written, never omitted, so
     /// every object in a bulk upsert carries an identical key set.
     ///
     /// ── `exercise_order` IS WRITTEN, NULLS AND ALL, AND WHY THAT IS SAFE ─────
-    /// It sits with `rpe` and `side` rather than with `quality`: the phone has
-    /// a real opinion about it for every set it logs, because the opinion IS
-    /// the deck the athlete is looking at. Omitting it per-row is not on the
+    /// The phone has a real opinion about it for every set it logs, because the
+    /// opinion IS the deck the athlete is looking at. Omitting it per-row is not on the
     /// table — a batch is one session's sets and PostgREST rejects a body whose
     /// objects disagree about keys, which fails the whole session rather than
     /// one column of one row.
@@ -448,16 +452,28 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     ///     replaying the stale one. It wants stamping over the whole session at
     ///     close, which is a different write from this one. Sending `false`
     ///     meanwhile would overwrite a record the web app flagged.
-    ///   · `quality` — the local store DOES hold it now (`v14.setQuality`), and
-    ///     it is still not sent. PostgREST wants an identical key set across
-    ///     every object of a bulk upsert, so sending it means sending NULL for
-    ///     every set nobody was asked about — which would wipe the quality the
-    ///     web app recorded on any set the phone later corrects. Same trade as
-    ///     `is_pr`, same decision: an omitted column is left untouched. When
-    ///     this axis earns a round trip it wants a single-row patch of its own,
-    ///     not a column bolted onto the batch.
     ///   · `created_at` — `NOT NULL DEFAULT now()`, and the server's clock is
     ///     the better one for a row's arrival time.
+    ///
+    /// ── AND `quality` IS SENT NOW, BUT ONLY WHERE THERE IS ONE ──────────────
+    /// It used to sit with `is_pr`, for a real reason: PostgREST wants an
+    /// identical key set across every object of a bulk upsert (`PGRST102`), so
+    /// unconditionally encoding it means sending NULL for every set nobody was
+    /// asked about — which wipes the quality the web app recorded on any set
+    /// the phone later corrects.
+    ///
+    /// The fix is not to omit the column, it is to stop mixing the two kinds
+    /// of row in one body. `nil` is not encoded here, and `SyncEngine` splits
+    /// the batch on exactly that line: the rows carrying a tag go up as one
+    /// homogeneous body WITH the key, the rest as another WITHOUT it. Neither
+    /// body has two shapes, and no set is nulled by a device that was never
+    /// asked about it.
+    ///
+    /// What this still does not do is CLEAR a tag the web app set. Locally the
+    /// fold collapses "never asked" and "tag removed" onto the same `nil`
+    /// (`SetEvent.clearedQuality` survives only as far as the fold), so the
+    /// phone cannot tell the server which one it means. Distinguishing them
+    /// wants a third state in the local column, not a fourth branch here.
     public func encode(to encoder: any Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
@@ -489,6 +505,11 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
         // measured, so this device's nil is "nobody measured it", which for a
         // barbell row is the truth and for the treadmill is what came down.
         try c.encode(elevationM, forKey: .elevationM)
+        // ── THE ONE CONDITIONAL KEY, AND THE ONE RULE IT IMPOSES ────────────
+        // `encodeIfPresent`, not `encode`: a nil must leave no key at all, or
+        // the split `SyncEngine.upsertSets` performs is pointless. That split
+        // is what keeps every body one shape — see the type's doc comment.
+        try c.encodeIfPresent(quality, forKey: .quality)
     }
 }
 
@@ -587,7 +608,12 @@ public extension SyncTranslation {
             durationSec: set.durationSec,
             incline: set.incline,
             distanceKm: set.distanceKm,
-            elevationM: set.elevationM
+            elevationM: set.elevationM,
+            // Straight through. `WorkoutSet.quality` is already the folded
+            // truth — `SetEventFold` has applied every `.clearedQuality`
+            // sentinel by the time a row reaches the projection — so a nil
+            // here is genuinely "no tag", and nils are not encoded.
+            quality: set.quality
         )
     }
 

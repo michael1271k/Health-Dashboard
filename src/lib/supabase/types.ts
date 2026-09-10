@@ -27,6 +27,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['daily_metrics']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['daily_metrics']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       supplement_log: {
         Row: {
@@ -39,6 +43,10 @@ export interface Database {
         }
         Insert: { user_id: string; date: string; item_key: string; taken?: boolean; taken_at?: string | null }
         Update: Partial<{ taken: boolean; taken_at: string | null }>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       sleep_sessions: {
         Row: {
@@ -57,6 +65,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['sleep_sessions']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['sleep_sessions']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       nutrition_entries: {
         Row: {
@@ -81,6 +93,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['nutrition_entries']['Row'], 'id' | 'created_at' | 'phase'> & { phase?: string | null }
         Update: Partial<Database['public']['Tables']['nutrition_entries']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       body_composition: {
         Row: {
@@ -111,6 +127,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['body_composition']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['body_composition']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       water_intake: {
         Row: {
@@ -124,6 +144,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['water_intake']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['water_intake']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       supplements: {
         Row: {
@@ -139,6 +163,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['supplements']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['supplements']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       exercises: {
         Row: {
@@ -165,6 +193,10 @@ export interface Database {
           'id' | 'created_at' | 'equipment' | 'rest_sec'
         > & { equipment?: string[]; rest_sec?: number | null }
         Update: Partial<Database['public']['Tables']['exercises']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       workout_sessions: {
         Row: {
@@ -221,6 +253,10 @@ export interface Database {
           next_session_flag?: string | null
         }
         Update: Partial<Database['public']['Tables']['workout_sessions']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       workout_sets: {
         Row: {
@@ -254,6 +290,10 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['workout_sets']['Row'], 'id' | 'created_at' | 'exercise_order' | 'set_type' | 'side' | 'pair_id'> & { exercise_order?: number | null; set_type?: string; side?: string | null; pair_id?: string | null }
         Update: Partial<Database['public']['Tables']['workout_sets']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       daily_scores: {
         Row: {
@@ -277,6 +317,10 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['daily_scores']['Row'], 'id' | 'computed_at'>
           & { computed_at?: string }
         Update: Partial<Database['public']['Tables']['daily_scores']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -288,6 +332,10 @@ export interface Database {
         }
         Insert: { user_id: string } & Partial<Omit<Database['public']['Tables']['profiles']['Row'], 'user_id' | 'created_at'>>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       user_goals: {
         Row: {
@@ -312,12 +360,32 @@ export interface Database {
           track_rpe: boolean
           active_program: string
           timezone: string
+          // ── ALSO LIVE, ALSO MISSING HERE ────────────────────────────────
+          // Optional rather than nullable-required on purpose: `Insert` is an
+          // `Omit` of this Row, so a plain `x: T | null` would make every one
+          // of these MANDATORY on the signup insert. The database self-fills
+          // them (see `docs/sql/e6-auth-deletion.sql` and the signup trigger),
+          // and `?` is what says "the row has it, the caller need not".
+          active_plan?: string | null
+          active_phase?: string | null
+          active_lever?: string | null
+          phase_started_on?: string | null
+          maintenance_until?: string | null
+          context_since?: string | null
+          target_weight_kg?: number | null
+          target_body_fat_pct?: number | null
+          target_muscle_mass_kg?: number | null
+          week_end_day?: number | null
           created_at: string
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['user_goals']['Row'], 'id' | 'created_at' | 'updated_at' | 'day_cutoff_hour' | 'unit_system' | 'reduce_motion' | 'auto_log_supplements' | 'track_rpe' | 'active_program'>
           & { day_cutoff_hour?: number; unit_system?: 'kg' | 'lb'; reduce_motion?: boolean; auto_log_supplements?: boolean; track_rpe?: boolean; active_program?: string; timezone?: string }
         Update: Partial<Database['public']['Tables']['user_goals']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       daily_logs: {
         Row: {
@@ -355,6 +423,30 @@ export interface Database {
           effort_rating: number | null
           mood: number | null
           journal_md: string | null
+          // ── COLUMNS THIS FILE WAS BEHIND ON ─────────────────────────────
+          // Every one of these is live in Postgres and already read by code
+          // in `src/lib/hooks`. While they were absent, PostgREST's type
+          // layer resolved those selects to `SelectQueryError<"column … does
+          // not exist">` — which is why a handful of hooks carried casts that
+          // looked defensive and were actually silencing a real disagreement.
+          distance_m: number | null
+          fat_free_mass_kg: number | null
+          fat_mass_kg: number | null
+          water_mass_kg: number | null
+          protein_mass_kg: number | null
+          protein_percent: number | null
+          bone_mineral_kg: number | null
+          muscle_mass_kg: number | null
+          skeletal_muscle_mass_kg: number | null
+          estimated_waist_to_hip_ratio: number | null
+          hrv_overnight: number | null
+          nutrition_estimated: boolean | null
+          nutrition_exception: string | null
+          sleep_onset_trouble: boolean | null
+          /** `docs/sql/dashboard-polish.sql`. Live in Postgres; deliberately
+           *  still absent from the local GRDB DDL. */
+          sleep_inaccurate: boolean | null
+          weighin_skip_reason: string | null
           created_at: string
           updated_at: string
         }
@@ -362,6 +454,10 @@ export interface Database {
           Omit<Database['public']['Tables']['daily_logs']['Row'], 'id' | 'user_id' | 'date' | 'created_at' | 'updated_at'>
         >
         Update: Partial<Database['public']['Tables']['daily_logs']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       reports: {
         Row: {
@@ -380,6 +476,10 @@ export interface Database {
           Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'user_id' | 'type' | 'period_start' | 'created_at'>
         >
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
       schedule_overrides: {
         // Live PK is composite (user_id, date) — no surrogate id.
@@ -391,6 +491,10 @@ export interface Database {
         }
         Insert: { user_id: string; date: string; day_key: string }
         Update: Partial<Database['public']['Tables']['schedule_overrides']['Insert']>
+        // Required by postgrest-js: a table without it does not satisfy
+        // `GenericTable`, the whole schema stops satisfying `GenericSchema`,
+        // and every `.update()` argument silently collapses to `never`.
+        Relationships: []
       }
     }
     Views: Record<string, never>

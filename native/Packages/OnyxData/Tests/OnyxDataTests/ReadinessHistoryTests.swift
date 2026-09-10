@@ -129,6 +129,42 @@ struct ReadinessHistoryTests {
         #expect(series.last?.term(.selfReport) == 0)
     }
 
+    @Test("a rest day's fatigue folds as a rest day, so a legacy row does not invent a second slot")
+    func fatigueFoldsByTheDayKind() throws {
+        let db = try seeded()
+        try db.writer.write { conn in
+            // The day is a rest day, stated the way the athlete states it.
+            try ScheduleOverrideRow(
+                userId: user, date: day, dayKey: Schedule.restOverride, updatedAt: Date()
+            ).insert(conn)
+            // A MIXED day: a stale row under the OLD vocabulary and the answer
+            // the athlete actually gave under the new one.
+            //
+            //   read as REST      `noon`→midday, `midday`→midday (modern wins,
+            //                     rank 99 over rank 1), `waking`→waking
+            //                     = {midday 1, waking 3}, mean 2.0
+            //   read as TRAINING  `noon`→pre, `midday`→midday, `waking`→waking
+            //                     = {pre 5, midday 1, waking 3}, mean 3.0
+            //
+            // The 5 is a reading the athlete superseded. Folding the day as a
+            // training day resurrects it as a slot of its own, and a whole
+            // point of mean fatigue is several points of Stress on a day that
+            // had none of it.
+            try FatigueLogRow(id: "f1", userId: user, date: day, slot: "noon", level: 5, createdAt: Date()).insert(conn)
+            try FatigueLogRow(id: "f2", userId: user, date: day, slot: "midday", level: 1, createdAt: Date()).insert(conn)
+            try FatigueLogRow(id: "f3", userId: user, date: day, slot: "waking", level: 3, createdAt: Date()).insert(conn)
+        }
+        #expect(try db.stressInputs(userId: user, date: day).fatigueDayMean == 2)
+
+        // And the series agrees with the single day — it hoists the schedule
+        // rather than resolving it per date, which is exactly where the two
+        // could drift apart.
+        let series = try db.stressSeries(userId: user, endingOn: day, limit: 3)
+        let direct = Stress.breakdown(try db.stressInputs(userId: user, date: day))
+        #expect(direct.terms.selfReport.fatigueDayMean == 2)
+        #expect(series.last?.term(.selfReport) == direct.terms.selfReport.z)
+    }
+
     @Test("the export's flat shape carries null for null")
     func flattened() throws {
         let flat = ExportReadiness(signals: Readiness.signals(try history(try seeded())))

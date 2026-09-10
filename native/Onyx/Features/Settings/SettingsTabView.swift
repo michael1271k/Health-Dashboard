@@ -176,6 +176,14 @@ private struct SettingsForm: View {
             Section {
                 LabeledContent("App", value: "Onyx")
                 LabeledContent("Version", value: OnyxLinks.versionString)
+                // Support sits ABOVE the policy: it is the row a person in
+                // trouble is looking for, and the policy is the one a reviewer
+                // is. Both are `Link`, which opens Safari rather than an
+                // in-app browser — an app that renders arbitrary web content
+                // answers a different set of App Review questions, and neither
+                // of these pages is worth that.
+                Link("Support", destination: OnyxLinks.support)
+                    .accessibilityHint("Opens in Safari")
                 Link("Privacy Policy", destination: OnyxLinks.privacyPolicy)
                     .accessibilityHint("Opens in Safari")
             } header: {
@@ -303,11 +311,21 @@ private struct SettingsForm: View {
 
 // ── App Store surfaces ──────────────────────────────────────────────────────
 // App Review requires a reachable privacy-policy URL for any app carrying the
-// HealthKit entitlement, and the SAME url goes in the App Store Connect
-// metadata field (docs/APP_STORE.md). It is a placeholder on the web app's
-// domain until that page is written; Wave 9 moves the domain, not this key.
+// HealthKit entitlement (5.1.1(i)) and a reachable support URL for every app
+// (1.5). The SAME two urls go in the App Store Connect metadata fields — see
+// `docs/APP_STORE.md` §2 — so they are stated once, here, and read from here.
+//
+// Both pages are live as of U7: `src/app/(legal)/privacy` and
+// `src/app/(legal)/support`, prerendered to static HTML and public (see
+// `PUBLIC_ROUTES` — a policy page behind a login is the rejection it exists to
+// prevent). Moving the app to its own domain is a change to `host` alone.
 enum OnyxLinks {
-    static let privacyPolicy = URL(string: "https://helix-health-fitness.netlify.app/privacy")!
+    /// The one place the domain is written down. A move is one line, and it
+    /// cannot leave the two urls below pointing at different hosts.
+    private static let host = "https://helix-health-fitness.netlify.app"
+
+    static let privacyPolicy = URL(string: "\(host)/privacy")!
+    static let support = URL(string: "\(host)/support")!
 
     /// `1.3.0 (10300)` — what a review note or a bug report needs to identify a build.
     static var versionString: String {
