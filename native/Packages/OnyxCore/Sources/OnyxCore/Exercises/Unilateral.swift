@@ -63,3 +63,52 @@ public enum Unilateral {
         return n.matchesAnyPattern(unilateralPatterns)
     }
 }
+
+/// How a PAIR is drawn — one set box, whatever the two sides say.
+///
+/// ── WHY THIS IS A RULE AND NOT A VIEW DECISION ──────────────────────────────
+/// A pair is ONE set everywhere it is counted (`SessionVolume` scores it at the
+/// weaker side, `set_count` folds it on `pair_id`, the card's progress counts
+/// it once) and it was TWO rows everywhere it was drawn. So a three-set lunge
+/// rendered six boxes, six checkmarks and — because the badge prints the side
+/// in place of the ordinal — a set list that ran `1, L, R, 4`. The deck was the
+/// only place in the app that disagreed with the rest of it about what a set is.
+///
+/// The layout is the decision, and it is arithmetic on four optionals, so it
+/// belongs here with a vector rather than inline in a `body` where the only
+/// test available is a screenshot.
+///
+/// ── AND WHY THREE CASES AND NOT TWO ─────────────────────────────────────────
+/// Two sides usually differ in ONE thing. Both arms press 12 kg × 10 and the
+/// left one was harder — that is the ordinary case, and drawing it as two value
+/// lines repeats `12 kg × 10` to say `9` instead of `8`. So the effort splits
+/// on its own, in the effort column, and the value lines only split when the
+/// numbers they hold actually differ.
+public enum SetPairLayout: String, Sendable, Equatable {
+    /// The sides agree on everything. Drawn as an ordinary set: no L, no R.
+    case unified
+    /// Same load and reps, different effort. One value line, and the two
+    /// ratings printed compactly beside each other.
+    case effortSplit
+    /// The load or the rep count differs. Two sub-lines inside ONE set box.
+    case valueSplit
+
+    /// The layout for one group of rows, in deck order.
+    ///
+    /// A group of one is `unified` by definition — there is nothing to compare
+    /// it against, and an unpaired row is not a pair.
+    public static func resolve(
+        weights: [Double?], reps: [Int?], rpes: [Double?]
+    ) -> SetPairLayout {
+        guard allEqual(weights), allEqual(reps) else { return .valueSplit }
+        return allEqual(rpes) ? .unified : .effortSplit
+    }
+
+    /// Every element equal to the first — `nil` included, because "unrated" is
+    /// a value the two sides can agree on and `nil != 8` is a disagreement
+    /// worth drawing.
+    private static func allEqual<T: Equatable>(_ values: [T?]) -> Bool {
+        guard let first = values.first else { return true }
+        return values.allSatisfy { $0 == first }
+    }
+}
