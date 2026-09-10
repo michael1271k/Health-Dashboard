@@ -113,10 +113,11 @@ struct MirrorTests {
 
     @Test("the catalogue covers the schema fixture, minus the three the logger owns")
     func catalogueIsComplete() {
-        // 28 tables in the fixture; `workout_sessions`, `workout_sets` and
+        // 32 tables in the fixture since W2 (routines, plan_phases,
+        // lever_periods, stress_logs); `workout_sessions`, `workout_sets` and
         // `exercises` are bespoke because they land in tables that already
         // exist locally in a different shape.
-        #expect(MirrorCatalogue.tables.count == 25)
+        #expect(MirrorCatalogue.tables.count == 29)
         let names = Set(MirrorCatalogue.tables.map(\.name))
         #expect(!names.contains("workout_sets"))
         // And the tape table is absent on purpose — ONYX does not do manual

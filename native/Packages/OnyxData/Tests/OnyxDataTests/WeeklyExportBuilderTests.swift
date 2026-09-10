@@ -98,13 +98,13 @@ struct WeeklyExportBuilderTests {
 
             try CustomSupplementRow(id: "c1", userId: user, name: "Creatine Monohydrate", dose: "5 g", time: "15:00",
                                     schedule: JSONText(raw: #"{"key":"creatine","slot":"Lunch"}"#),
-                                    micros: JSONText(raw: #"{"creatine":5000}"#), createdAt: iso("2026-08-01T00:00:00Z")).insert(conn)
+                                    micros: JSONText(raw: #"{"creatine":5000}"#), createdAt: iso("2026-08-01T00:00:00Z"), sortOrder: 0).insert(conn)
             try CustomSupplementRow(id: "c2", userId: user, name: "Caffeine", dose: "200 mg", time: "11:45",
                                     schedule: JSONText(raw: #"{"key":"caffeine","trainingOnly":true}"#),
-                                    createdAt: iso("2026-08-02T00:00:00Z")).insert(conn)
+                                    createdAt: iso("2026-08-02T00:00:00Z"), sortOrder: 0).insert(conn)
             try CustomSupplementRow(id: "c3", userId: user, name: "Omega-3", dose: "2 caps", time: "15:00",
                                     schedule: JSONText(raw: #"{"key":"omega3","days":[0,1]}"#),
-                                    createdAt: iso("2026-08-03T00:00:00Z")).insert(conn)
+                                    createdAt: iso("2026-08-03T00:00:00Z"), sortOrder: 0).insert(conn)
             try SupplementLogRow(userId: user, date: "2026-08-24", itemKey: "caffeine", taken: false, updatedAt: t).insert(conn)
             try SupplementLogRow(userId: user, date: "2026-08-23", itemKey: "creatine", taken: true, updatedAt: t).insert(conn)
 

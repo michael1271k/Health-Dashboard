@@ -44,9 +44,9 @@ struct TargetResolverTests {
     func storedProfile() throws {
         let db = try store()
         try db.writer.write { db in
-            try TargetProfileRow(userId: user, key: "restaurant", label: "Out", sort: 1, kcal: 2600, proteinG: 170, updatedAt: Date()).insert(db)
+            try TargetProfileRow(userId: user, key: "restaurant", label: "Out", sort: 1, kcal: 2600, proteinG: 170, updatedAt: Date(), kind: "day").insert(db)
             // Missing figures: skipped, not a 0 kcal day.
-            try TargetProfileRow(userId: user, key: "broken", label: "?", sort: 2, updatedAt: Date()).insert(db)
+            try TargetProfileRow(userId: user, key: "broken", label: "?", sort: 2, updatedAt: Date(), kind: "day").insert(db)
         }
         let snapshot = try db.targetSnapshot(userId: user)
         #expect(snapshot.storedProfiles.map(\.key) == ["restaurant"])

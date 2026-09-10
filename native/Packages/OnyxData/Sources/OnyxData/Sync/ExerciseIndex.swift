@@ -77,12 +77,19 @@ public struct ExerciseIndex: Sendable {
         guard let name = ExerciseSlug.nameBySlug[slug] else {
             throw SyncError.unknownExercise(slug: slug, name: nil)
         }
+        return try id(forName: name, slug: slug)
+    }
+
+    /// Resolve a movement's NAME to a catalogue uuid — rules 1–3 of the type
+    /// header. The slug path above is this with the name looked up first; a
+    /// routine payload (W2) carries the name itself and calls this directly.
+    public func id(forName name: String, slug: String? = nil) throws -> String {
         if let exact = byExactName[Self.exactKey(name)] { return exact }
 
         let candidates = byNormalised[Self.normalisedKey(name)] ?? []
         switch candidates.count {
         case 1: return candidates[0].id
-        case 0: throw SyncError.unknownExercise(slug: slug, name: name)
+        case 0: throw SyncError.unknownExercise(slug: slug ?? ExerciseSlug.id(name), name: name)
         default:
             throw SyncError.ambiguousExercise(
                 name: name,
