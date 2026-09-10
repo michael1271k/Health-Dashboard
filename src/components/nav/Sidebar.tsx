@@ -4,11 +4,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
-import { navItems, isNavActive } from '@/lib/nav-items'
+import { navItems, isNavActive, isPublicRoute } from '@/lib/nav-items'
 import { SNAPPY } from '@/lib/motion'
 
 export function Sidebar() {
   const pathname = usePathname()
+
+  // Public pages are opened with no session, and every item below is gated.
+  // See `PUBLIC_ROUTES`.
+  if (isPublicRoute(pathname)) return null
 
   return (
     <aside

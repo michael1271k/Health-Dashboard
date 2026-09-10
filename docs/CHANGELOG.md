@@ -47,6 +47,57 @@ _Nothing yet._
 
 ---
 
+## [1.4.0] — 2026-09-10 · Submittable
+
+The wave that makes the binary uploadable. Two pages App Review opens before it
+installs anything, the rows in the app that point at them, and the three sync
+and scoring defects the Phase 3 ship gate left open.
+
+### Added
+- **Privacy policy** at `/privacy` and **support** at `/support` — public,
+  prerendered, and written in the same vocabulary as the app's privacy manifest
+  so the policy, the manifest and the App Store questionnaire cannot disagree.
+  Both were 404s, which is the one thing that stops a HealthKit app being
+  reviewed at all (5.1.1(i), 1.5).
+- **Settings → About → Support**, beside the existing Privacy Policy row.
+  `OnyxLinks` now states the host once and derives both urls from it.
+- **Associated Domains** (`webcredentials:`) in the app's entitlements, matching
+  the `apple-app-site-association` file already served. iOS Password AutoFill
+  can now offer the credential the browser holds for the site. Needs the
+  capability enabled on the App ID in the developer portal.
+- App Store metadata in `docs/APP_STORE.md` §2 is written, not `⟨…⟩`.
+
+### Changed
+- **`/privacy`, `/support` and `/delete-account` are public.** `AuthGate` used
+  to redirect everything that was not `/auth` to the sign-in page, so all three
+  were a login form wearing a URL. One `PUBLIC_ROUTES` list now serves the gate
+  and both navigation bars.
+- **Sign-up's Close button is a toolbar item.** As a floating overlay the form
+  scrolled underneath it, and a `.footnote` label is a ~30 pt hit target where
+  the minimum is 44.
+
+### Fixed
+- **A set event is no longer lost to a transient failure.** `SyncEngine` used to
+  acknowledge an outbox item after a push whose error it had swallowed, so one
+  503 dropped the event permanently and two devices never converged again. The
+  item is now held and retried; a genuinely missing `set_events` table is still
+  swallowed, because no retry creates a table.
+- **Set quality tags reach the server.** `Cheated`, `Short ROM` and the rest
+  were held on the phone and never sent. The batch is split so the tagged rows
+  carry the column and the untagged ones omit it — which is what stops a device
+  that was never asked about a set nulling the tag the web app recorded.
+- **A rest day no longer folds its fatigue as a training day.** On a day mixing
+  a legacy slot key with a modern one this counted a superseded reading as a
+  slot of its own, adding several points of Stress to a day that had none. It
+  now resolves the day the way the scorer does.
+- **`npm run build` passes again.** Every table in the generated Supabase types
+  was missing `Relationships`, so the schema stopped satisfying postgrest-js's
+  `GenericSchema` and every `.update()` argument collapsed to `never` — which
+  had failed each deploy from `main` since 2026-09-08. Sixteen live columns
+  missing from `daily_logs` and `user_goals` are restored with it.
+
+---
+
 ## [1.3.0] — 2026-09-08 · UI/UX Pro-Max Polish
 
 The polish wave. Nothing new to learn, several things that had been quietly

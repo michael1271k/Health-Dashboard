@@ -53,23 +53,44 @@ struct SignUpView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                (sent ? AnyView(confirmation) : AnyView(form))
-                    .padding(OnyxSpace.xl)
-                    .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+        // ── THE DISMISS IS A TOOLBAR ITEM, NOT AN OVERLAY ───────────────────
+        // It was `.overlay(alignment: .topTrailing)` with a `.footnote` button.
+        // Two things wrong with that, and both only show up on a real device.
+        //
+        // A floating button sits OUTSIDE the scroll view's coordinate space, so
+        // the form — which scrolls the moment the keyboard is up on anything
+        // shorter than a Pro Max, and always at the larger accessibility sizes
+        // — slides its heading and its mark straight under a control with no
+        // background behind it. Two pieces of text, same pixels, neither
+        // readable.
+        //
+        // And a `.footnote` label with no frame is a ~30 pt hit target where
+        // the HIG minimum is 44. A `cancellationAction` toolbar item gets the
+        // platform's own hit area, the platform's own placement inside the
+        // sheet's safe area, a bar material for the content to pass under, and
+        // the leading position VoiceOver expects to reach first — none of which
+        // is worth hand-rolling.
+        NavigationStack {
+            GeometryReader { proxy in
+                ScrollView {
+                    (sent ? AnyView(confirmation) : AnyView(form))
+                        .padding(OnyxSpace.xl)
+                        .frame(minWidth: proxy.size.width, minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .onyxScreen(.train)
+            // The screen carries its own heading in the content; a second one
+            // in the bar would say it twice, to VoiceOver as well as on screen.
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
         }
-        .onyxScreen(.train)
         .onAppear { focused = .email }
         .sensoryFeedback(.error, trigger: attempt) { _, _ in error != nil }
-        .overlay(alignment: .topTrailing) {
-            Button("Close") { dismiss() }
-                .font(.footnote)
-                .foregroundStyle(Color.onyx.textSecondary)
-                .padding(OnyxSpace.xl)
-        }
     }
 
     private var form: some View {

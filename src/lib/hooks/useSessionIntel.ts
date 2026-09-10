@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import type { Tables } from '@/lib/supabase/types'
 import { eraForDate, programDayFor, programDayByKey, DEFAULT_PROGRAM_ID } from '@/lib/programs'
 import { epley1RM } from '@/lib/utils/epley'
 import { sessionVolumeKg, type VolumeSet } from '@/lib/sessions/volume'
@@ -241,8 +242,14 @@ export function useSessionIntel(sessionId: string | null) {
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<SessionIntel> => {
       // day_key is the exact program-day identity (null on legacy rows).
+      // `split_day` borrows the schema's own union rather than restating it as
+      // `string`: this row is fed straight back into `.eq('split_day', …)`
+      // below, and a widened local copy is the only thing that made the two
+      // disagree.
       type SessRow = {
-        id: string; started_at: string; split_day: string; total_volume_kg: number | null
+        id: string; started_at: string
+        split_day: Tables<'workout_sessions'>['split_day']
+        total_volume_kg: number | null
         day_key?: string | null; duration_min: number | null; calories_burned: number | null
         avg_bpm: number | null; set_count: number | null; pr_count: number | null
       }

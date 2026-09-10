@@ -37,21 +37,7 @@ public extension AppDatabase {
     func stackCredit(userId: String, date: String, today: String, now: Date = Date(), calendar: Calendar = .current) throws -> StackCredit {
         let user = Column("user_id") == userId
         return try writer.read { db in
-            let goals = try UserGoalRow.filter(user).fetchOne(db)
-            let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-            let layoutRaw = try ProgramDayLayoutRow
-                .filter(user && Column("program_id") == programId)
-                .fetchOne(db)?.layout.raw
-            var overrides: [String: String] = [:]
-            for row in try ScheduleOverrideRow.filter(user).fetchAll(db) {
-                overrides[row.date] = row.dayKey
-            }
-            let schedule = ScheduleContext(
-                programId: programId,
-                phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-                overrides: overrides,
-                layout: ScheduleLayout.parseLayout(layoutRaw.flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) })
-            )
+            let schedule = try AppDatabase.scheduleContext(db, userId: userId)
             let isTraining = Schedule.isTrainingDayIn(schedule, date)
 
             let customs = try CustomSupplementRow.filter(user).order(Column("time")).fetchAll(db).map(AppDatabase.custom)

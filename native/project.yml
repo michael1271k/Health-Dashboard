@@ -50,8 +50,8 @@ packages:
 # $(CURRENT_PROJECT_VERSION) rather than restating them.
 settings:
   base:
-    MARKETING_VERSION: "1.3.0"
-    CURRENT_PROJECT_VERSION: "10300"
+    MARKETING_VERSION: "1.4.0"
+    CURRENT_PROJECT_VERSION: "10400"
 
 targets:
   Onyx:
@@ -118,6 +118,27 @@ targets:
         # and Xcode refuses the profile for the target as a whole — so on-device
         # Health still waits on Gate 0 (buy the Developer Program).
         com.apple.developer.healthkit: true
+        # ── Associated Domains ───────────────────────────────────────────────
+        # `webcredentials` ONLY, and that is the whole feature: it lets iOS
+        # Password AutoFill offer the credential the browser already holds for
+        # the website, instead of treating the app and the site as two unrelated
+        # places to keep a password. `applinks` is deliberately absent — the app
+        # claims no URLs and opening one in it would be a behaviour nobody asked
+        # for.
+        #
+        # The domain matches the one `OnyxLinks` serves /privacy and /support
+        # from, and `public/.well-known/apple-app-site-association` already
+        # names this App ID under `webcredentials`. Both halves have to agree or
+        # the association silently never forms.
+        #
+        # ── THIS ONE NEEDS THE PORTAL FIRST ──────────────────────────────────
+        # W-GATE left it out on purpose: Associated Domains has to be enabled on
+        # the App ID in the developer portal before a provisioning profile will
+        # carry it, and a build signed against a profile that does not have it
+        # fails at the signing step rather than at compile. The founder has
+        # enabled it; if a signing error names this key, that is what regressed.
+        com.apple.developer.associated-domains:
+          - webcredentials:helix-health-fitness.netlify.app
 
     info:
       path: Onyx/Support/Info.plist

@@ -1,7 +1,34 @@
 import Foundation
+import GRDB
 import OnyxCore
 
 extension AppDatabase {
+
+    /// The same four stored values, read straight off an OPEN transaction.
+    ///
+    /// The instance method below borrows `WidgetSnapshotBuilder.fetch`, which
+    /// is the right trade when the caller wanted the whole snapshot anyway and
+    /// the wrong one for a caller that wants a single boolean: that fetch is a
+    /// fortnight of metrics, sleep, water and sessions. `StressInputsBuilder`
+    /// asks fourteen times per series, so it gets this instead — three narrow
+    /// reads, and the SAME normalisation, which is the part that has to match.
+    static func scheduleContext(_ db: Database, userId: String) throws -> ScheduleContext {
+        let user = Column("user_id") == userId
+        let goals = try UserGoalRow.filter(user).fetchOne(db)
+        let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram)
+            ?? Programs.defaultPlanId
+        var overrides: [String: String] = [:]
+        for row in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[row.date] = row.dayKey }
+        let layoutRaw = try ProgramDayLayoutRow
+            .filter(user && Column("program_id") == programId)
+            .fetchOne(db)?.layout.raw
+        return ScheduleContext(
+            programId: programId,
+            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
+            overrides: overrides,
+            layout: ScheduleLayout.parseLayout(layoutRaw.flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) })
+        )
+    }
 
     /// The plan, phase, dated overrides and weekday layout for this user — the
     /// value `Schedule.scheduleDayIn` turns into "today is Upper A".

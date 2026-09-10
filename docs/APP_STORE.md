@@ -28,16 +28,16 @@ reviewer hits before they ever open the app.
 
 | # | What | Guideline | Where |
 |---|---|---|---|
-| 1 | **The privacy-policy URL 404s.** `https://helix-health-fitness.netlify.app/privacy` is not a page — there is no `/privacy` route in `src/app/` and nothing in `public/`. Every app carrying the HealthKit entitlement gets this URL opened. | 5.1.1(i) | `SettingsTabView.swift:242` + the ASC field below |
-| 2 | **The support URL 404s** the same way. | 1.5 | the ASC field below |
-| 3 | **No demo account.** The app is a hard login wall with no in-app sign-up, so a reviewer cannot get past the first screen. Create and seed one, and put it in App Review Information. | 2.1 | §"App Review Information" |
-| 4 | **The metadata is still `⟨…⟩` placeholders** — subtitle, promotional text, description, keywords. | 2.1 | §2 |
-| 5 | **Apple Developer Program membership.** A free personal team cannot sign the App Group entitlement or upload. | — | §"Gate 0" |
+| 1 | ~~**The privacy-policy URL 404s.**~~ **CLOSED at U7 (2026-09-10).** `src/app/(legal)/privacy` is a prerendered static route, public (see `PUBLIC_ROUTES`), and its collected-data table is written in `PrivacyInfo.xcprivacy`'s own vocabulary so the policy, the manifest and §3 below cannot disagree. Verified 200 against `next start`. | 5.1.1(i) | `src/app/(legal)/privacy/page.tsx` · `OnyxLinks.privacyPolicy` |
+| 2 | ~~**The support URL 404s.**~~ **CLOSED at U7.** `src/app/(legal)/support`, same terms, plus a **Settings → About → Support** row that opens it. Verified 200. | 1.5 | `src/app/(legal)/support/page.tsx` · `OnyxLinks.support` |
+| 3 | ~~**No demo account.**~~ **CLOSED.** E6 opened in-app sign-up (`SignUpView`, and `/auth` on the web) and shipped `scripts/seed-demo-account.mjs`; U7 gave the sign-up sheet a real dismiss affordance. The account is `appreview@onyx.fitness` — see §"App Review Information" for how to seed it and where the password lives. | 2.1 | §"App Review Information" |
+| 4 | ~~**The metadata is still `⟨…⟩` placeholders.**~~ **CLOSED at U7** — §2 is written copy. | 2.1 | §2 |
+| 5 | **Apple Developer Program membership.** A free personal team cannot sign the App Group entitlement or upload. **Still open — it is a purchase, not a commit.** | — | §"Gate 0" |
 
-Two more that are decisions rather than defects:
+One more that is a decision rather than a defect:
 
-- **The policy would live on a differently-branded domain.** `helix-health-fitness.netlify.app` serves a product called HELIX. Either publish both pages there and accept that, or stand up an Onyx domain and change `SettingsTabView.swift:242` and both ASC fields in one commit.
-- **"Onyx is a single-user personal training log"** (§"App Review Information") must never appear in the metadata or the review notes — Apple rejects apps positioned for one person (4.2/4.3). If it genuinely is one, TestFlight avoids review entirely.
+- **The pages live on a differently-branded domain.** `helix-health-fitness.netlify.app` still serves a product called HELIX, and `/auth` still draws the HELIX wordmark. The two pages U7 added do NOT — they head themselves **ONYX** and are deliberately outside `LaunchSurface` for that reason — so a reviewer who only opens the two URLs sees one product. A reviewer who then opens the web app does not. Standing up an Onyx domain is one edit to `OnyxLinks.host` plus both ASC fields; renaming the web app's own lockup is a separate job and U7 did not do it.
+- **"Onyx is a single-user personal training log"** must never appear in the metadata or the review notes — Apple rejects apps positioned for one person (4.2/4.3). The copy in §2 and §4 is written accordingly, and the old single-user framing has been removed from both.
 
 Verified clean at the same pass, with values: bundle ids and the extension's
 parentage, matching versions across both targets, the App Group in all four
@@ -61,7 +61,7 @@ Two findings the W-GATE preflight added:
 | # | What | Guideline | Where |
 |---|---|---|---|
 | 6 | **The watch app shipped with no privacy manifest.** The required-reason API check runs per Mach-O binary, and `OnyxWatch.app` uses `UserDefaults` and its own GRDB store. The app and the widget each carry one; the watch did not. **Fixed at W-GATE** — `native/OnyxWatch/Support/PrivacyInfo.xcprivacy`. | 5.1.1 / Privacy Manifest | fixed |
-| 7 | **`associated-domains` is not in the entitlements.** `public/.well-known/apple-app-site-association` is served and names both App IDs under `webcredentials`, but neither `Onyx.entitlements` nor `native/project.yml` claims `webcredentials:…`, so password autofill never associates. Deliberately NOT added here: the capability must be enabled on the App ID in the developer portal first, and adding it before that breaks signing. | — | U7 |
+| 7 | ~~**`associated-domains` is not in the entitlements.**~~ **CLOSED at U7.** `native/project.yml` now claims `webcredentials:helix-health-fitness.netlify.app` on the app target, and `xcodegen generate` writes it into `Onyx/Support/Onyx.entitlements`. `applinks` is deliberately absent — the app claims no URLs. **The portal half is a founder step:** enable Associated Domains on the App ID before archiving, or signing fails on the entitlement rather than at compile. | — | closed |
 
 Also unresolved and not a code change: `npm audit` reports 11 high and 1 critical,
 all transitive through build tooling (`tar` via `@capacitor/cli`, `sharp`, `postcss`,
@@ -100,50 +100,96 @@ the two icons still tell themselves apart while both are installed.
 
 **Name** (30 chars) — `Onyx`
 
-**Subtitle** (30) — `⟨Training, fuel and recovery⟩`
+**Subtitle** (30) — `Train. Fuel. Recover. Repeat.` *(29)*
 
 **Promotional text** (170, editable without a review)
 
-> ⟨Week 8 of the cut. Every set, every meal and every night's sleep in one
-> place, with the numbers that actually move.⟩
+> Your body reports in every morning — sleep, heart, load, fuel. Onyx reads it,
+> scores it, and tells you what today is actually for. *(147)*
 
 **Description** (4000)
 
-> ⟨Onyx is a single-user training and nutrition system. It logs strength
-> sessions set by set, reads activity, heart, sleep, body-measurement and
-> nutrition data from Apple Health, and turns both into a daily readiness score,
-> a training battery and an energy balance you can act on the same morning.
+> Most training apps are a notebook with a timer. Onyx is an instrument.
 >
-> • Live logger — prescribed sets, double progression, rest timer on the Lock
->   Screen, RPE where you want it
-> • Today — one screen of the tiles you choose, in the order you choose
-> • Nutrition — targets that follow the phase you are actually in, not a fixed
->   number
-> • Pulse — sleep, heart, soreness and the recovery battery in one place
-> • History — every week back to the first session, day by day
-> • Charts — every metric back to the first session
+> It logs strength work set by set, reads your activity, heart, sleep,
+> body-composition and nutrition data from Apple Health, and turns the two into
+> a small number of figures you can act on before you have finished your coffee:
+> a readiness score, a training battery, a stress index and an energy balance.
+> Not a wall of charts. Four numbers, and the reason behind each one.
+>
+> BUILT FOR PEOPLE WHO ACTUALLY LIFT
+>
+> • Live logger — your prescribed sets, double progression, a rest timer that
+>   keeps running on the Lock Screen, and RPE only where you want it
+> • Progression that reads your last session, not a calendar. Load goes up when
+>   every working set hit the ceiling, and not before
+> • Personal records detected as they happen, and retracted honestly when a
+>   later set supersedes them
+> • Apple Watch — start, log and finish a session from your wrist, offline, and
+>   it merges cleanly when your phone comes back
+>
+> THE RECOVERY SIDE, MEASURED
+>
+> • Readiness from six weeks of your own baselines — HRV, resting heart rate,
+>   sleep and training load, never a population average
+> • A training battery that drains through the day and recharges with the night
+>   you actually had
+> • Sleep broken into its stages, with the nights your watch got wrong flagged
+>   rather than averaged in
+> • Soreness and fatigue by muscle, on a body map that fills in as you log
+>
+> FUEL THAT FOLLOWS THE PHASE YOU ARE IN
+>
+> • Targets that move with your block — cut, maintain, build — instead of one
+>   fixed number you stopped believing in week three
+> • Protein, carbs, fat and water, read from Health or entered in seconds
+> • Energy balance across the week, carried properly across the days you forgot
+>   to log
+>
+> AND EVERYTHING BACK TO THE FIRST SESSION
+>
+> • History week by week, day by day, with nothing summarised away
+> • Charts for every metric, over any window
+> • Weekly reports in plain text you can read, keep, or paste anywhere
 > • Home Screen and Lock Screen widgets for all of it
 >
-> Onyx does not sell your data, share it with anyone, or send it to an
-> advertising network. It talks to exactly one server: your own private
-> account.⟩
+> PRIVACY, PLAINLY
+>
+> Onyx does not sell your data, does not share it with anyone, and contains no
+> advertising or analytics code of any kind. It talks to exactly one server:
+> your own private account. You can delete that account, and everything in it,
+> from inside the app in two taps.
+>
+> Apple Health access is optional. Decline it and every screen still works — the
+> figures that need a reading you have not shared say so, rather than guessing.
 
 **Keywords** (100, comma-separated, no spaces)
 
-> `⟨gym,workout,lifting,strength,hypertrophy,macros,cutting,recovery,hrv,sleep,progressive,overload⟩`
+> `gym,workout,lifting,strength,hypertrophy,macros,cutting,recovery,hrv,sleep,readiness,overload`
 
-**Support URL** — `⟨https://helix-health-fitness.netlify.app/support⟩`
+*(93 characters. `fitness`, `training` and `health` are omitted on purpose —
+they are already in the app's name, subtitle and category, and App Store search
+indexes those fields; spending keyword characters on them buys nothing.)*
+
+**Support URL** — `https://helix-health-fitness.netlify.app/support`
 **Marketing URL** — *(optional; leave empty)*
 **Privacy Policy URL** — `https://helix-health-fitness.netlify.app/privacy`
 
-> **This page must exist and return 200 before you submit.** App Review opens it
-> for every app carrying the HealthKit entitlement, and a 404 is an instant
-> rejection under 5.1.1. The same URL is linked in-app from **Settings → About**
-> (`OnyxLinks.privacyPolicy`, `native/Onyx/Features/Settings/SettingsTabView.swift:242`) — change it in one place.
+> **Both pages exist and return 200 as of U7** — `src/app/(legal)/privacy` and
+> `src/app/(legal)/support`, prerendered to static HTML and reachable with no
+> session (`PUBLIC_ROUTES`). App Review opens the privacy URL for every app
+> carrying the HealthKit entitlement, and a 404 there is an instant rejection
+> under 5.1.1.
 >
-> It has to say, in plain language: what is collected (Health data, email),
-> why (to compute the scores the app displays), where it goes (this device and
-> one Supabase project), that it is never sold or shared, and how to delete it.
+> Both URLs are stated once in the app, in `OnyxLinks` — one `host` constant,
+> two derived URLs — and linked from **Settings → About**. Moving to an Onyx
+> domain is that one line plus these two fields.
+>
+> The policy says, in plain language: what is collected (Health, Fitness, email
+> address — the same three the privacy manifest declares, in the same words),
+> why (to compute the figures the app displays), where it goes (your devices and
+> one Supabase project), that it is never sold, shared or used for advertising,
+> and how to delete all of it.
 
 ---
 
@@ -179,15 +225,18 @@ Mach-O binary at upload, so the app's does not cover `OnyxWidgets.appex`.
 
 Paste into **App Review Information → Notes**:
 
-> Onyx is a single-user personal training log. There is no public sign-up — the
-> account is created server-side — so a demo account is provided below.
+> Onyx is a training, nutrition and recovery app. Anyone can create an account
+> from the first screen ("Create an account"), and any account can be deleted
+> from inside the app at Settings → Delete account.
 >
-> Sign in with:
->   Email: ⟨demo@…⟩
->   Password: ⟨…⟩
+> A pre-seeded demo account is provided so you do not have to wait for a
+> confirmation email or log a workout to see the app with real content:
 >
-> The account is seeded with several months of training, nutrition and body
-> data, so every tab has real content on first launch.
+>   Email: appreview@onyx.fitness
+>   Password: (see the App Review password field)
+>
+> It carries several months of training, nutrition, sleep and body data, so
+> every tab, chart and widget has content on first launch.
 >
 > Apple Health: the app asks for **read** access on first foreground and works
 > fully without it — the demo account's data is already on the server, so you
@@ -198,9 +247,30 @@ Paste into **App Review Information → Notes**:
 > Home Screen widgets: add any Onyx widget from the widget gallery. They read
 > the same local database the app writes and make no network requests.
 
-`Sign in required: Yes`. Demo credentials are a **hard** requirement here — the
-first screen is a login wall, and a reviewer who cannot get past it rejects
-under 2.1.
+> ⚠️ **The password is deliberately NOT written in this file.** `origin` is a
+> **public** GitHub repository, the Supabase project URL and anon key already
+> ship in the web bundle, and the demo account is a real account on the
+> production auth endpoint — so a literal here completes a working credential
+> pair for anyone who reads the repo. `docs/SECURITY_SWEEP_2026-09.md` row 1 is
+> the same finding against `seed-demo-account.mjs`, which is why that script now
+> refuses to invent a default.
+>
+> Seed the account, and set the password, in one step:
+>
+> ```bash
+> ONYX_DEMO_PASSWORD='<choose one>' \
+> SUPABASE_SERVICE_ROLE_KEY='<service key>' \
+>   node scripts/seed-demo-account.mjs
+> ```
+>
+> Then paste that same value straight into **App Review Information → Password**
+> in App Store Connect. That field is not public and is the correct place for it.
+> Rotate it after the review is approved.
+
+`Sign in required: Yes`. The first screen is a login wall, so credentials are a
+**hard** requirement under 2.1 — but as of E6 it is no longer the *only* way in:
+a reviewer can also create their own account from that screen, which is what
+2.1 actually asks for. The demo account is the faster path, not the only one.
 
 ---
 

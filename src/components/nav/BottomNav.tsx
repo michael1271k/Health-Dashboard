@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { m } from 'framer-motion'
 import { type LucideIcon } from 'lucide-react'
-import { coreNavItems, isNavActive } from '@/lib/nav-items'
+import { coreNavItems, isNavActive, isPublicRoute } from '@/lib/nav-items'
 import { SNAPPY } from '@/lib/motion'
 import { tapLight } from '@/lib/native/haptics'
 
@@ -25,7 +25,11 @@ export function BottomNav() {
   // The session deck is a fullscreen takeover — its own CommitBar owns the
   // bottom edge (and the safe area) there. The /session/[id] analysis page also
   // starts with /session, so it's a clean fullscreen deep-dive with a back button.
-  const hidden = pathname.startsWith('/session')
+  //
+  // A PUBLIC route hides it for a different reason: every tab in this bar is
+  // gated, so on a page opened without a session the bar is five taps that each
+  // bounce to sign-in. See `PUBLIC_ROUTES`.
+  const hidden = pathname.startsWith('/session') || isPublicRoute(pathname)
 
   // Tell the shell how much bottom chrome to clear. Without this the deck would
   // reserve ~90px for a bar that is not rendered. An attribute rather than

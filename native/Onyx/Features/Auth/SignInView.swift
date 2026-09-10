@@ -14,16 +14,20 @@ import OnyxUI
 /// The session then persists in the Keychain (`KeychainAuthStorage`), not in
 /// UserDefaults, which is the other half of the same argument.
 ///
-/// ── WHAT AUTOFILL STILL NEEDS, AND WHY IT IS NOT HERE YET ───────────────────
+/// ── WHAT AUTOFILL NEEDS, AND WHERE BOTH HALVES NOW ARE ──────────────────────
 /// The content types above are enough for iOS to OFFER to save a credential and
 /// to fill one already associated with this app. Filling the credential saved
-/// against the WEBSITE — the one the browser holds for onyx.health — needs an
-/// `Associated Domains` entitlement (`webcredentials:<domain>`) and an
-/// `apple-app-site-association` file served from that domain. Associated Domains
-/// is a paid-membership capability, so the entitlement cannot be added to
-/// `project.yml` before Gate 0 without failing the build for everyone. It is one
-/// line when the membership lands; the AASA file is already served (Netlify
-/// today, a static host at Wave 9).
+/// against the WEBSITE — the one the browser holds — needs two more things, and
+/// as of U7 both are in the repo: the `Associated Domains` entitlement
+/// (`com.apple.developer.associated-domains` in `native/project.yml`, claiming
+/// `webcredentials:` on the same host `OnyxLinks` serves from) and the
+/// `apple-app-site-association` file at `public/.well-known/`, which names this
+/// App ID.
+///
+/// The third half is not code: the capability has to be enabled on the App ID
+/// in the developer portal, or signing fails on the entitlement. If AutoFill
+/// offers nothing from the website, check the portal before checking this file
+/// — the two sides fail silently when they disagree.
 struct SignInView: View {
     @Environment(AppEnvironment.self) private var environment
 

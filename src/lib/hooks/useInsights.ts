@@ -57,18 +57,22 @@ export function useInsights() {
       // resting HR and weight — the inputs to most of the engine — because
       // `nutrition_exception` is not migrated yet would be a poor trade, so the
       // narrow select is retried on error.
-      let logsRows = logsRes.data
+      // Stated once, with `nutrition_exception` OPTIONAL, because that is the
+      // one column the two shapes disagree about — which is the whole reason
+      // the retry exists.
+      type LogRow = {
+        date: string; sleep_minutes: number | null; avg_rest_heart_rate: number | null
+        avg_heart_rate: number | null; respiratory_rate: number | null; weight_kg: number | null
+        nutrition_exception?: string | null
+      }
+      let logsRows: LogRow[] | null = logsRes.data
       if (logsRes.error) {
         const retry = await supabase.from('daily_logs')
           .select('date, sleep_minutes, avg_rest_heart_rate, avg_heart_rate, respiratory_rate, weight_kg')
           .gte('date', from).order('date', { ascending: true })
         logsRows = retry.data
       }
-      const logs = (logsRows ?? []) as Array<{
-        date: string; sleep_minutes: number | null; avg_rest_heart_rate: number | null
-        avg_heart_rate: number | null; respiratory_rate: number | null; weight_kg: number | null
-        nutrition_exception?: string | null
-      }>
+      const logs = logsRows ?? []
       const nutrition = (nutritionRes.data ?? []) as Array<{ date: string; calories: number | null; carbs_g: number | null }>
       const calByDate = new Map(nutrition.map((n) => [n.date, n.calories]))
       const carbsByDate = new Map(nutrition.map((n) => [n.date, n.carbs_g]))

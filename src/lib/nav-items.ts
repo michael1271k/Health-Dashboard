@@ -55,3 +55,28 @@ export function isNavActive(href: string, pathname: string): boolean {
   if (href === '/') return pathname === '/'
   return owns(href) || (ADOPTED[href] ?? []).some(owns)
 }
+
+/**
+ * The routes a signed-OUT visitor may reach.
+ *
+ * ── WHY THIS IS NOT JUST `/auth` ANY MORE ────────────────────────────────────
+ * App Review opens the privacy-policy URL of every app carrying the HealthKit
+ * entitlement, from a browser with no session, before they ever install the
+ * binary. `AuthGate` used to redirect anything that was not `/auth` straight to
+ * the sign-in page, so a policy page behind it is a 5.1.1 rejection wearing a
+ * login form. The support URL is opened the same way, and `/delete-account`
+ * (guideline 5.1.1(v)) is the one page a person whose phone is gone has to be
+ * able to reach — its own code already renders a "sign in first" card, which
+ * the redirect never let anyone see.
+ *
+ * It is also what the app CHROME keys off. A public page that still drew the
+ * bottom nav would hand a reviewer five taps that each bounce to sign-in.
+ *
+ * One list, because the gate and the two navs each had their own idea of
+ * "public" and only one of them would ever have been updated.
+ */
+export const PUBLIC_ROUTES = ['/auth', '/privacy', '/support', '/delete-account'] as const
+
+export function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))
+}
