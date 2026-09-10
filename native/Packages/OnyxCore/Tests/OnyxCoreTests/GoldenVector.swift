@@ -1,19 +1,29 @@
 import Foundation
 import Testing
 
-/// The replay harness for the golden vectors exported by the TypeScript
-/// implementation (`src/tests/golden-vectors.test.ts`, regenerated with
-/// `npm run golden`).
+/// The replay harness for the golden vectors — `Fixtures/*.json`, one file per
+/// domain function, `{ input, expected }` pairs the Swift must reproduce.
 ///
 /// ── WHAT THIS IS FOR ─────────────────────────────────────────────────────────
-/// The Swift port is not trusted because it looks right. It is trusted because
-/// it produces, case for case, the same numbers the shipping TypeScript
-/// produces. That is the only check that catches the failure mode this domain
-/// actually has: arithmetic that is slightly wrong and renders as a number
-/// nobody questions.
+/// The domain arithmetic here breaks SILENTLY: a formula that is 3 % wrong
+/// renders a number nobody questions. The fixtures are the written
+/// specification of every number the domain has ever been caught getting
+/// wrong, plus the grids around them, and `swift test` replays every case.
 ///
-/// The fixtures are checked into git. They are a specification, and a
-/// specification you have to run a build step to read is not one.
+/// ── SWIFT-OWNED SINCE W1 OF THE EPIC SPRINT (2026-09-10) ────────────────────
+/// They were exported from the shipping TypeScript by
+/// `src/tests/golden-vectors.test.ts` (`npm run golden`), which was the right
+/// oracle while the two implementations had to agree. From W2 the Swift
+/// domain deliberately diverges (founder constants become rows, the `+`
+/// quality grammar, the logged-beats-planned fold), so the TypeScript is no
+/// longer a definition of correct and the generator is gone with the script.
+///
+/// The fixtures are now frozen test resources, and the rule for changing one
+/// is the rule for changing any test: a NEW case is hand-computed, written
+/// into the JSON with a `note` naming the wave that added it, and reviewed by
+/// `invariant-auditor` like any other formula change. Regenerating is not an
+/// option any more, which is the point — a spec you can regenerate from the
+/// code under test is not a spec.
 struct GoldenFixture<Input: Decodable, Expected: Decodable>: Decodable {
     struct Case: Decodable {
         let name: String
@@ -45,8 +55,9 @@ enum GoldenError: Error, CustomStringConvertible {
         switch self {
         case .missing(let name):
             return """
-            Fixture "\(name).json" is not in the test bundle. Run `npm run golden` \
-            from the repo root to export it from the TypeScript implementation.
+            Fixture "\(name).json" is not in the test bundle. The fixtures are \
+            checked-in Swift test resources under Tests/OnyxCoreTests/Fixtures — \
+            add the file there (hand-computed cases; there is no generator).
             """
         }
     }

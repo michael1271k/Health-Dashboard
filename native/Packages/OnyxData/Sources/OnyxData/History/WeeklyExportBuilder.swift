@@ -77,9 +77,13 @@ public struct WeeklyExportBuilder: Sendable {
             }
         ) { (a: ExportDoms, b: ExportDoms) in (a.date, a.muscle) < (b.date, b.muscle) }
 
+        // The export folds each day the way the scorer does: a session logged
+        // on the day makes it a training day, whatever the calendar said.
+        let loggedDates = Set(rows.sessions.map(\.date))
         let fatigue: [ExportFatigue] = try Self.stableSorted(
             rows.fatigue.compactMap { r -> (date: String, key: FatigueSlot, level: Int)? in
-                guard let key = Fatigue.normalizeSlot(r.slot, isTraining: Schedule.isTrainingDayIn(ctx, r.date)) else { return nil }
+                let isTraining = loggedDates.contains(r.date) || Schedule.isTrainingDayIn(ctx, r.date)
+                guard let key = Fatigue.normalizeSlot(r.slot, isTraining: isTraining) else { return nil }
                 return (r.date, key, r.level)
             }
         ) { a, b in

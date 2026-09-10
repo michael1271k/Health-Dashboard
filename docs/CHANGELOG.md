@@ -47,6 +47,47 @@ _Nothing yet._
 
 ---
 
+## [1.6.0] — 2026-09-10 · The Truth Wave
+
+W1 of the epic sprint (`docs/EPIC_SPRINT_PLAN.md`). No new screens; six things
+the numbers were quietly getting wrong stop being wrong.
+
+### Fixed
+- **Muscle focus (dashboard sheet, Trends, widget tile)** — a set logged on the
+  phone now counts towards its muscles. Phone-logged sets carry `helix5-` slug
+  ids, not catalogue uuids, and the one map both readers share only knew the
+  catalogue: "Side delts 0/7" after an Upper B was every lateral raise dropped.
+- **Sync** — a PostgREST schema-cache miss (`PGRST205`/`PGRST204`/`42703`) is
+  held and retried, never acknowledged; only Postgres's own `42P01` is
+  permanent. The retry now jitters by up to a quarter-step so two devices
+  that failed together do not knock again together.
+- **Stress index, battery wellness, weekly export** — a day's fatigue folds by
+  the day the athlete HAD: a session logged on a scheduled rest day makes it a
+  training day, so a `noon` reading is "before training" and a stale legacy
+  row can no longer merge away the answer actually given.
+- **Set quality** — one parser in OnyxCore for the `+` grammar
+  (`momentum+partial_rom`); the logger's typed view delegates to it, and the
+  guard refuses exactly what the CHECK constraint refuses.
+- **Session duration** — a session pulled from the server and finished on the
+  phone is timed by its sets. Seeded events carry the server's `created_at`
+  instead of the seed's clock; the 2-minute Pec Deck session cannot recur.
+- **HealthKit ingest** — an HRV reading beyond the athlete's own 42-night band
+  (median ± max(3.5 MAD, half the median)) or outside 5–300 ms is declined and
+  reported, not stored. Body fat outside 2–70 %, muscle 10–70 %, visceral fat
+  1–30 are refused on ingest and on the InBody sheet.
+
+### Changed
+- **Golden fixtures are Swift-owned.** `npm run golden` and the TypeScript
+  generator are gone; `Fixtures/*.json` are frozen test resources with
+  hand-computed cases.
+
+### Removed
+- `docs/sql/w1-cleanup.sql` (founder pastes) drops `widget_tokens`,
+  `notion_credentials`, `notion_exports`, `body_measurements`,
+  the `_bak_20260723` backup schema and the `exercise_history()` RPC.
+
+---
+
 ## [1.5.0] — 2026-09-10 · One Set, One Box
 
 The live logger stops disagreeing with the rest of the app about what a set is.

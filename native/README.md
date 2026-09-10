@@ -13,7 +13,7 @@ native/
 ├── project.yml                  XcodeGen spec — the project file is GENERATED
 ├── Packages/
 │   ├── OnyxCore/               pure domain. Foundation only. No SwiftUI, no GRDB.
-│   │   └── Tests/.../Fixtures/  golden vectors, exported from the TypeScript
+│   │   └── Tests/.../Fixtures/  golden vectors — frozen, hand-maintained
 │   ├── OnyxData/               GRDB store + outbox + Keychain + Supabase session
 │   └── OnyxUI/                 design system, the generated atlas, the widget tiles
 ├── Onyx/                 the SwiftUI app target (views + entry point)
@@ -59,8 +59,6 @@ mistake everybody makes, and a `fatalError` would tell you nothing.
 ```bash
 npm run swift:core     # domain: golden vectors + invariants
 npm run swift:data     # store: migrations, outbox, Keychain
-npm run golden         # regenerate the golden vectors from the TypeScript
-npm test               # includes the golden-vector staleness check
 ```
 
 > **Use the npm scripts, not a bare `swift test`.** They pass `--scratch-path`
@@ -72,53 +70,39 @@ npm test               # includes the golden-vector staleness check
 
 ## The golden vectors
 
-This is the risk control that makes the whole migration safe, and it is the
-reason the domain port is trustworthy at all.
+`Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/*.json` — one file per domain
+function, `{ input, expected }` pairs that `swift test` replays case by case.
+They are the written specification of every number this domain has ever been
+caught getting wrong (the unloaded-work `weight == 0` blind spot that printed
+"1RM 0" for months, the TDEE that omitted TEF, the battery whose drain budget
+exceeded its charge budget), plus the grids around them. The arithmetic here
+breaks *silently* — a formula 3 % wrong renders a number nobody questions —
+and a fixture is the only thing that catches it.
 
-`src/tests/golden-vectors.test.ts` runs the **shipping TypeScript** over a fixed
-set of inputs and writes `{ input, expected }` pairs into
-`Packages/OnyxCore/Tests/OnyxCoreTests/Fixtures/`. `swift test` replays every
-one of them against the Swift port. Currently **1,849 cases** across Epley, TEF,
-TDEE, the whole battery model and readiness.
+**Swift-owned since W1 (2026-09-10).** They used to be exported from the
+shipping TypeScript (`npm run golden`) while the two implementations had to
+agree. From W2 the Swift domain deliberately diverges from the web, so the
+generator is gone and the fixtures are frozen test resources:
 
-Two rules:
+1. **A new case is hand-computed** and written into the JSON, with the file's
+   `note` naming the wave that added it. Named regressions from the module's
+   header comment, not just grids — every historical bug here lived at one
+   specific, unremarkable-looking input.
+2. **A formula change that moves an expected value is a spec change**, reviewed
+   by `invariant-auditor` before the number is edited.
+3. **Any domain module without a fixture does not ship.**
 
-1. **The TypeScript is the definition of correct.** Swift has to agree with it,
-   case by case, or the build fails.
-2. **`npm test` fails if the fixtures are stale.** Change a formula in `src/lib`
-   without running `npm run golden` and the suite tells you. Regenerating is a
-   deliberate act, and the diff is the list of behaviours the port must now match.
-
-This exists because the arithmetic here breaks *silently*. A formula that is 3%
-wrong renders a number nobody questions. Every entry in the repo's history of
-this — the unloaded-work `weight === 0` blind spot that printed "1RM 0" for
-months, the TDEE that omitted TEF and made every deficit ~200 kcal/day too small,
-the battery v6 whose drain budget exceeded its charge budget — was invisible on
-screen and would have been caught by a fixture.
-
-**Any domain module without golden vectors does not ship.**
-
-### Adding a module
-
-1. Import it in `src/tests/golden-vectors.test.ts`, build a grid of cases **plus
-   named regressions** taken from the module's own header comments — a grid alone
-   would have missed every historical bug in this codebase, because each lived at
-   a specific, unremarkable-looking input.
-2. `npm run golden`.
-3. Write the Swift port and a suite in `DomainGoldenTests.swift`.
-4. `npm run swift:core`.
-
-If a fixture's `input` is a partial object, emit the **full** object instead:
-Swift's synthesized `Decodable` requires every non-optional key, and a fixture the
-port cannot decode is a fixture that tests nothing.
+If a fixture's `input` is a partial object, write the **full** object: Swift's
+synthesized `Decodable` requires every non-optional key, and a fixture the
+domain cannot decode is a fixture that tests nothing.
 
 ### `jsRound`, and why it exists
 
 `Math.round` rounds a half towards **positive infinity**; Swift's `rounded()`
-rounds **away from zero**. They disagree on every negative half. Everything else
-is bit-identical — both languages are IEEE-754 binary64 — so rounding is the one
-place a shim is needed, and `Rounding.swift` is it. Use `jsRound`, never
-`rounded()`, anywhere the TypeScript calls `Math.round`.
+rounds **away from zero**. They disagree on every negative half. The fixtures
+were computed under the first rule and the stored scores on the server still
+are, so `Rounding.swift` keeps the shim: use `jsRound`, never `rounded()`, in
+domain arithmetic.
 
 ## Free-team constraints, and where they show up
 

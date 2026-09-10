@@ -129,6 +129,32 @@ struct ReadinessHistoryTests {
         #expect(series.last?.term(.selfReport) == 0)
     }
 
+    @Test("a session logged on a scheduled rest day makes it a training day for the fold")
+    func aLoggedSessionOutranksThePlan() throws {
+        let db = try seeded()   // `s1` is on `day`
+        try db.writer.write { conn in
+            // The plan said rest; the athlete trained anyway. The fatigue rows
+            // were answered under the day the athlete HAD, not the one the
+            // calendar promised: `noon` was taken before training.
+            try ScheduleOverrideRow(
+                userId: user, date: day, dayKey: Schedule.restOverride, updatedAt: Date()
+            ).insert(conn)
+            try FatigueLogRow(id: "f1", userId: user, date: day, slot: "noon", level: 5, createdAt: Date()).insert(conn)
+            try FatigueLogRow(id: "f2", userId: user, date: day, slot: "midday", level: 1, createdAt: Date()).insert(conn)
+            try FatigueLogRow(id: "f3", userId: user, date: day, slot: "waking", level: 3, createdAt: Date()).insert(conn)
+        }
+        // TRAINING fold: noon→pre 5, midday 1, waking 3 — three answers, mean 3.
+        // Read as REST it would be {midday 1, waking 3} = 2, with the pre-session
+        // 5 silently merged away under the later modern row.
+        #expect(try db.stressInputs(userId: user, date: day).fatigueDayMean == 3)
+        // The scorer's wellness item reads the same fold: the LATEST slot on a
+        // training day is `pre`, not `midday`.
+        let inputs = try #require(try db.scoringInputs(
+            userId: user, date: day, hoursAwake: 10, isRestDay: true, todayISO: day
+        ))
+        #expect(inputs.fatigueLevel == 5)
+    }
+
     @Test("a rest day's fatigue folds as a rest day, so a legacy row does not invent a second slot")
     func fatigueFoldsByTheDayKind() throws {
         let db = try seeded()
@@ -137,6 +163,9 @@ struct ReadinessHistoryTests {
             try ScheduleOverrideRow(
                 userId: user, date: day, dayKey: Schedule.restOverride, updatedAt: Date()
             ).insert(conn)
+            // And nothing was logged: a session on the day would make it a
+            // training day whatever the override says (see the next test).
+            try WorkoutSession.filter(Column("date") == day).deleteAll(conn)
             // A MIXED day: a stale row under the OLD vocabulary and the answer
             // the athlete actually gave under the new one.
             //

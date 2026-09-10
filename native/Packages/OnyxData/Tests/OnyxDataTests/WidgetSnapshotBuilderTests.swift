@@ -74,6 +74,31 @@ struct WidgetSnapshotBuilderTests {
         try WidgetSnapshotBuilder(database: db, userId: user, timeZone: utc).build(scope: scope, now: now)
     }
 
+    // ── A PHONE-LOGGED SET IS A SLUG, NOT A UUID ────────────────────────────
+    // `LoggerModel.exerciseId` stamps `helix5-<slug>` on every set logged on
+    // the phone, and `applyPulledSets` never repairs a session that has local
+    // events — so the slug is the id that set keeps. `exerciseNames` used to be
+    // the catalogue alone, which only ever holds server uuids, and every
+    // phone-logged set was dropped from muscle credit. "Side delts 0/7" after a
+    // logged Upper B was this: the lateral raise was the only side-delt source.
+    @Test("a phone-logged slug set credits its landmark on the sheet AND the tile")
+    func slugSetsCountTowardsMuscleCredit() throws {
+        let db = try seeded()
+        try db.writer.write { conn in
+            try WorkoutSet(
+                id: "t-lat", sessionId: "s-today", exerciseId: ExerciseSlug.id("Single Arm Lateral Raise"),
+                setIndex: 1, weightKg: 5, reps: 15
+            ).insert(conn)
+        }
+
+        let feed = try TodayFeedBuilder(database: db, userId: user, timeZone: utc).build(now: now)
+        let sideDelts = feed.muscleFocus.rows.first { $0.muscle == .sideDelts }
+        #expect(sideDelts?.sets == 1, "the sheet credits the slug set")
+
+        let families = try #require(build(db, .full).volumeByFamily)
+        #expect(families.contains { $0.family == "Shoulders" && $0.sets == 1 }, "the tile agrees: \(families)")
+    }
+
     @Test("the full scope carries the route's headline numbers")
     func fullScope() throws {
         let s = try build(try seeded(), .full)

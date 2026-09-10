@@ -454,16 +454,32 @@ public extension AppDatabase {
     ///
     /// Idempotent and cheap: `seedEventLog` returns immediately for any session
     /// that already has an event, which is every session this device logged.
-    func seedEventLogs(sessionIds: Set<String>) throws {
+    ///
+    /// - Parameter loggedAt: set id → the server's `created_at` for the row,
+    ///   when the caller has it (the puller does). See `seedEventLog`.
+    func seedEventLogs(sessionIds: Set<String>, loggedAt: [String: Date] = [:]) throws {
         guard !sessionIds.isEmpty else { return }
         try writer.write { db in
             for sessionId in sessionIds.sorted() {
-                try Self.seedEventLog(db, sessionId: sessionId)
+                try Self.seedEventLog(db, sessionId: sessionId, loggedAt: loggedAt)
             }
         }
     }
 
-    static func seedEventLog(_ db: Database, sessionId: String) throws {
+    /// ── A SEED IS NOT A LOGGING ACT, AND ITS CLOCK MUST NOT SAY IT WAS ──────
+    /// `closeSession` reads "when was the last set logged" off the append
+    /// events' `created_at`, and `SessionDuration`'s long-idle guard turns
+    /// that into the answer. Seeds used to be stamped with `Date()` — the
+    /// moment of the SEED — so a session pulled from the server and finished
+    /// on the phone was judged against a last set that happened at pull time.
+    /// Seeded as the session opened and closed later, `worked ≈ 0`, the guard
+    /// fired, and the duration came out as one rest: Pec Deck's 120 s, 2 min.
+    ///
+    /// The seed now carries the set's own clock: the server's `created_at`
+    /// when the caller pulled it (`RemoteSetRow.createdAt`), else the
+    /// session's start — the earliest instant the row can honestly claim, and
+    /// one that never outranks a set this device goes on to log.
+    static func seedEventLog(_ db: Database, sessionId: String, loggedAt: [String: Date] = [:]) throws {
         let existing = try Int.fetchOne(
             db, sql: "SELECT count(*) FROM set_events WHERE session_id = ?", arguments: [sessionId]
         ) ?? 0
@@ -475,6 +491,7 @@ public extension AppDatabase {
             .fetchAll(db)
         guard !rows.isEmpty else { return }
 
+        let fallback = try WorkoutSession.fetchOne(db, key: sessionId)?.startedAt ?? Date()
         let device = try deviceId(db)
         for row in rows {
             let event = SetEvent(
@@ -482,6 +499,7 @@ public extension AppDatabase {
                 setId: row.id,
                 deviceId: device,
                 seq: try tickClock(db),
+                createdAt: loggedAt[row.id] ?? fallback,
                 body: .append(
                     SetSnapshot(
                         exerciseId: row.exerciseId,

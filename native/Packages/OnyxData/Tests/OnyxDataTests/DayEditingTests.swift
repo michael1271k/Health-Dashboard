@@ -135,6 +135,25 @@ struct DayEditingTests {
         #expect(try kinds(db) == [SyncKind.rowDelete])
     }
 
+    @Test("a typed scale reading outside the physiologic bounds is refused, and nothing lands")
+    func bodyMetricsAreBounded() throws {
+        let db = try store()
+        try db.saveBodyMetrics(userId: user, date: date) { $0.weightKg = 64.8; $0.bodyFatPct = 14.1 }
+        #expect(throws: BodyMetricError.self) {
+            try db.saveBodyMetrics(userId: user, date: date) { $0.bodyFatPct = 141 }
+        }
+        #expect(throws: BodyMetricError.self) {
+            try db.saveBodyMetrics(userId: user, date: date) { $0.musclePercent = 4 }
+        }
+        #expect(throws: BodyMetricError.self) {
+            try db.saveBodyMetrics(userId: user, date: date) { $0.visceralFat = 55 }
+        }
+        // The refused write touched neither row.
+        let log = try db.writer.read { try DailyLogRow.fetchOne($0) }
+        #expect(log?.bodyFatPct == 14.1 && log?.musclePercent == nil && log?.visceralFat == nil)
+        #expect(try db.writer.read { try BodyCompositionRow.fetchOne($0) }?.bodyFatPct == 14.1)
+    }
+
     @Test("scale readings open the ledger only once a weight exists")
     func bodyMetricsMirror() throws {
         let db = try store()

@@ -55,8 +55,23 @@ public extension AppDatabase {
             weight = nil
         }
 
-        report.hrvOvernight = payload.hrvOvernight && payload[.hrv] != nil
         try writer.write { db in
+            // ── ARTIFACT GATES, ONE PER VITAL ───────────────────────────────
+            // Same shape as the weight floor: declined and reported, never
+            // stored. HRV is judged against the athlete's own band —
+            // `Readiness.constants.baselineDays` of prior nights, median and MAD — so a
+            // strap that slipped cannot move the z-score for six weeks.
+            var payload = payload
+            if let hrv = payload[.hrv], let why = VitalsGate.hrvArtifact(hrv, history: try Self.hrvHistory(db, userId: userId, before: date)) {
+                report.declined.append("hrv \(hrv)ms — \(why)")
+                payload[.hrv] = nil
+            }
+            if let bf = payload[.bodyFat], let why = VitalsGate.bodyFatArtifact(bf) {
+                report.declined.append("body fat \(bf)% — \(why)")
+                payload[.bodyFat] = nil
+            }
+            report.hrvOvernight = payload.hrvOvernight && payload[.hrv] != nil
+
             // ── A HAND-CORRECTED DAY WINS ───────────────────────────────────
             // ONE probe, TWO skips: `daily_logs.water_ml` and the `water_intake`
             // fan-out. They are read by different consumers — the UI renders the
@@ -184,6 +199,19 @@ extension AppDatabase {
         try row.save(db)
         try Self.enqueueRowUpsert(table: DailyLogRow.databaseTableName, id: row.id, in: db)
         report.tables.insert(DailyLogRow.databaseTableName)
+    }
+
+    /// The athlete's prior HRV readings inside the readiness baseline window,
+    /// the day itself excluded — the band `VitalsGate.hrvArtifact` judges by.
+    static func hrvHistory(_ db: Database, userId: String, before date: String) throws -> [Double] {
+        let from = ISODate.addDays(date, -Readiness.constants.baselineDays) ?? date
+        return try Double.fetchAll(
+            db, sql: """
+                SELECT hrv_ms FROM daily_logs
+                WHERE user_id = ? AND date >= ? AND date < ? AND hrv_ms IS NOT NULL
+                """,
+            arguments: [userId, from, date]
+        )
     }
 
     /// The day's row, or a fresh one.

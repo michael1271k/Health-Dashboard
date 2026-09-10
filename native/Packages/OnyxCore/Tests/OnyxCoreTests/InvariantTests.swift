@@ -218,6 +218,37 @@ struct InvariantTests {
         #expect(Fatigue.dayMean([.waking: 1, .pre: 3, .post: 5]) == 3)
     }
 
+    // MARK: Vitals gates
+
+    @Test("hrv: an artifact is a reading far outside the athlete's own band, judged by median and MAD")
+    func hrvArtifactGate() {
+        // A month of nights around 60 ms, spread ±6.
+        let history: [Double] = [58, 61, 55, 64, 60, 57, 63, 59, 66, 54, 62, 60, 58, 65]
+        #expect(VitalsGate.hrvArtifact(64, history: history) == nil, "inside the band")
+        #expect(VitalsGate.hrvArtifact(40, history: history) == nil, "a rough night is not an artifact")
+        #expect(VitalsGate.hrvArtifact(95, history: history) == nil, "a rebound after a deload is not an artifact either")
+        #expect(VitalsGate.hrvArtifact(180, history: history) != nil, "three times the median is a strap")
+        #expect(VitalsGate.hrvArtifact(12, history: history) != nil)
+        // Too little history to know the band: only the physiologic bounds bite.
+        #expect(VitalsGate.hrvArtifact(180, history: [60, 62]) == nil)
+        #expect(VitalsGate.hrvArtifact(2, history: [60, 62]) != nil)
+        #expect(VitalsGate.hrvArtifact(400, history: []) != nil)
+        // A flat history (MAD 0) still has a band — half the median — so a
+        // rough night passes and a doubled reading does not.
+        #expect(VitalsGate.hrvArtifact(35, history: Array(repeating: 60, count: 10)) == nil)
+        #expect(VitalsGate.hrvArtifact(25, history: Array(repeating: 60, count: 10)) != nil)
+        #expect(VitalsGate.hrvArtifact(115, history: Array(repeating: 60, count: 10)) == nil)
+        #expect(VitalsGate.hrvArtifact(130, history: Array(repeating: 60, count: 10)) != nil)
+    }
+
+    @Test("body: the percentages a scale can report have physiologic bounds")
+    func bodyPercentBounds() {
+        #expect(VitalsGate.bodyFatArtifact(18.2) == nil && VitalsGate.bodyFatArtifact(1.5) != nil && VitalsGate.bodyFatArtifact(71) != nil)
+        #expect(VitalsGate.musclePercentArtifact(41) == nil && VitalsGate.musclePercentArtifact(9) != nil && VitalsGate.musclePercentArtifact(70.1) != nil)
+        #expect(VitalsGate.visceralFatArtifact(6) == nil && VitalsGate.visceralFatArtifact(0) != nil && VitalsGate.visceralFatArtifact(31) != nil)
+        #expect(VitalsGate.bodyFatArtifact(.nan) != nil)
+    }
+
     // MARK: Epley
 
     @Test("unloaded work has no estimate — nil, never zero")

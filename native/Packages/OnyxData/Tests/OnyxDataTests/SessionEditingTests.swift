@@ -60,6 +60,52 @@ struct SessionEditingTests {
         }
     }
 
+    // ── THE 2-MINUTE SESSION ────────────────────────────────────────────────
+    // `seedEventLog` stamped every seed with `Date()` — the moment of the
+    // seed, not of the set. `closeSession` reads `lastSetAt` off exactly those
+    // stamps, so a session pulled from the server and closed on the phone was
+    // judged against a "last set" that happened at pull time: seeded at the
+    // start, closed later, the long-idle guard read `worked ≈ 0` and answered
+    // one rest — Pec Deck's 120 s, `duration_min = 2`.
+    @Test("a seeded event carries the set's own clock, so a pulled session's duration is its own")
+    func seedsCarryTheSetClock() throws {
+        let db = try store()
+        try history(db)
+        let start = LogicalDay.date(fromISO: older)!
+        // The server said when the two rows arrived: five and fifteen minutes in.
+        try db.seedEventLogs(
+            sessionIds: ["s-old"],
+            loggedAt: ["s-old-1": start.addingTimeInterval(300), "s-old-2": start.addingTimeInterval(900)]
+        )
+        let stamps = try db.writer.read { conn in
+            try SetEvent.filter(SetEvent.Columns.sessionId == "s-old").fetchAll(conn).map(\.createdAt)
+        }
+        #expect(Set(stamps) == [start.addingTimeInterval(300), start.addingTimeInterval(900)])
+
+        // Closed an hour in, 45 minutes after the last set: the guard fires and
+        // counts the work plus one rest — 15 + 2 — not the hour, not the rest alone.
+        let closed = try db.closeSession(id: "s-old", endedAt: start.addingTimeInterval(3600), restTargetSec: 120)
+        #expect(closed?.durationMin == 17)
+    }
+
+    @Test("a seed with no clock to carry is stamped at the session's start, never at the seed")
+    func seedsWithoutAClockFallBackToTheStart() throws {
+        let db = try store()
+        try history(db)
+        try db.seedEventLogs(sessionIds: ["s-new"])
+        let stamps = try db.writer.read { conn in
+            try SetEvent.filter(SetEvent.Columns.sessionId == "s-new").fetchAll(conn).map(\.createdAt)
+        }
+        #expect(Set(stamps) == [LogicalDay.date(fromISO: newer)!])
+
+        // And `closeSession` does not mistake that stamp for a last set: closed
+        // an hour in with nothing else logged, the answer is the hour, never
+        // one rest (the 2-minute bug by another road).
+        let start = LogicalDay.date(fromISO: newer)!
+        let closed = try db.closeSession(id: "s-new", endedAt: start.addingTimeInterval(3600), restTargetSec: 120)
+        #expect(closed?.durationMin == 60)
+    }
+
     // MARK: - The engine rule the fixtures lean on
 
     @Test("the first session on record sets the bar and wins nothing — a delta against nothing")

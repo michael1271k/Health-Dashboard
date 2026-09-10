@@ -73,7 +73,7 @@ public actor TrainingPuller {
     /// that would take the sessions and sets — which landed fine — down with
     /// it. Returns 0 instead, and the pull starts working the day the table
     /// exists, with no client change.
-    private func ingestRemoteEvents(sessionIds: [String]) async throws -> Int {
+    private func ingestRemoteEvents(sessionIds: [String], loggedAt: [String: Date]) async throws -> Int {
         guard !sessionIds.isEmpty else { return 0 }
         let rows: [RemoteSetEventRow]
         do {
@@ -84,7 +84,10 @@ public actor TrainingPuller {
             return 0
         }
         guard !rows.isEmpty else { return 0 }
-        try database.seedEventLogs(sessionIds: Set(rows.map(\.sessionId)))
+        // The seeds carry the server's clock for each row (see `seedEventLog`),
+        // so a session the watch logged and the phone finishes is timed by its
+        // sets, not by this pull.
+        try database.seedEventLogs(sessionIds: Set(rows.map(\.sessionId)), loggedAt: loggedAt)
         try database.ingest(rows.map(\.event))
         return rows.count
     }
@@ -173,7 +176,8 @@ public actor TrainingPuller {
             // event id, pulls the Lamport clock up, marks each event synced and
             // re-folds, so a set from another device lands in the same list by
             // the same merge rule both devices already use.
-            let landedEvents = try await ingestRemoteEvents(sessionIds: sessionIds)
+            let loggedAt = Dictionary(sets.compactMap { s in s.createdAt.map { (s.id, $0) } }, uniquingKeysWith: { a, _ in a })
+            let landedEvents = try await ingestRemoteEvents(sessionIds: sessionIds, loggedAt: loggedAt)
             report.rows += landedEvents
             report.rowsByTable["set_events"] = landedEvents
             // Reported even at zero. `set_events` is in `backfillOrder`, and the

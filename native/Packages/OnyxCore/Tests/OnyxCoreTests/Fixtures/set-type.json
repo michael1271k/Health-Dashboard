@@ -1,7 +1,7 @@
 {
   "module": "training/setTags",
   "fn": "isWorkingSet / setTagFor / setQualityFor / isSetQuality",
-  "note": "isWorkingSet excludes exactly warmup and ghost. setTagFor / setQualityFor read the table by exact key, null for a plain set. isSetQuality is a closed-vocabulary guard.",
+  "note": "isWorkingSet excludes exactly warmup and ghost. setTagFor / setQualityFor read the table by exact key, null for a plain set. isSetQuality is a closed-vocabulary guard. Cases after \"Momentum\" are hand-computed (W1, D7): the `+` grammar is native-only.",
   "cases": [
     {
       "name": "null",
@@ -81,7 +81,7 @@
         "working": false,
         "tag": {
           "label": "G",
-          "full": "Ghost set — logged, not counted"
+          "full": "Ghost set \u2014 logged, not counted"
         },
         "quality": null,
         "isQuality": false
@@ -193,7 +193,7 @@
         "tag": null,
         "quality": {
           "label": "Cold",
-          "full": "The first reps were poor — needed a longer warm-up"
+          "full": "The first reps were poor \u2014 needed a longer warm-up"
         },
         "isQuality": true
       }
@@ -244,6 +244,42 @@
       "name": "Momentum",
       "input": {
         "v": "Momentum"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "momentum+partial_rom",
+      "input": {
+        "v": "momentum+partial_rom"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": true
+      }
+    },
+    {
+      "name": "momentum+invented",
+      "input": {
+        "v": "momentum+invented"
+      },
+      "expected": {
+        "working": true,
+        "tag": null,
+        "quality": null,
+        "isQuality": false
+      }
+    },
+    {
+      "name": "+momentum",
+      "input": {
+        "v": "+momentum"
       },
       "expected": {
         "working": true,
