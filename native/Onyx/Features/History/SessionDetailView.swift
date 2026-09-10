@@ -198,16 +198,29 @@ struct SessionDetailView: View {
             .disabled(!canEdit)
             .accessibilityHint(canEdit
                 ? "Opens this workout on the logger, where its sets can be corrected."
-                : "This session cannot be edited on the phone yet.")
+                : "This session recorded no sets, so there is nothing to correct.")
         }
     }
 
     /// The program day this session was, PLUS whatever it actually contains.
     ///
-    /// A session with no `day_key`, or one whose key the program no longer has,
-    /// has no deck to fold onto — its sets would come up on a blank screen. The
-    /// button is disabled rather than absent, because a control that vanishes on
-    /// some sessions is a control nobody learns is there.
+    /// ── A SESSION THE PROGRAM CANNOT NAME IS STILL EDITABLE ─────────────────
+    /// This used to answer nil for a session with no `day_key`, or one whose
+    /// key the program no longer has, on the reasoning that its sets "would
+    /// come up on a blank screen". They would not: the loop below appends
+    /// EVERY movement the report holds as a one-off prescription, so a day the
+    /// program does not know contributes nothing to the deck and takes nothing
+    /// away from it. What the nil actually did was disable the Edit button on
+    /// the 74 Notion-era sessions (which carry no `day_key` at all) and on
+    /// every Onyx-4 and PPL session — a record the app will show you and
+    /// refuse to let you correct.
+    ///
+    /// So an unknown key gets an EMPTY day instead of no day. The label is the
+    /// one the rest of the page already prints for that key, and the accent is
+    /// unread on this path (the deck tints from `Color.onyx.day`, which has its
+    /// own answer for a key it does not know). A session with no movements at
+    /// all is still nil — there is nothing to correct, and `openEditor` would
+    /// put an empty deck on screen.
     ///
     /// ── WHY THE DECK IS EXTENDED AND NOT JUST LOOKED UP ─────────────────────
     /// The deck is the PROGRAM's list of movements and a session is what was
@@ -225,7 +238,13 @@ struct SessionDetailView: View {
     /// resolves from `MuscleMap` by name in `ProgramExercise.init`, so the card
     /// still gets its muscle bar and the session still gets its muscle credit.
     private func editorDay(_ report: SessionAnalysis.Report) -> ProgramDay? {
-        guard let key = report.session.dayKey, var day = Program.onyx5.day(key: key) else { return nil }
+        guard !report.exercises.isEmpty else { return nil }
+        let key = report.session.dayKey ?? ""
+        var day = Program.onyx5.day(key: key) ?? ProgramDay(
+            key: key,
+            label: SessionAnalysis.dayLabel(report.session.dayKey) ?? "Session",
+            accent: 0x8A8A8E, weekday: 0, exercises: []
+        )
         func normalised(_ name: String) -> String {
             ExerciseAliases.canonicalName(name).lowercased()
         }
@@ -270,26 +289,35 @@ struct SessionDetailView: View {
 
     /// Whether the button is live.
     ///
-    /// ── AND WHY A UNILATERAL SESSION IS NOT EDITABLE YET ────────────────────
-    /// The logger has no split concept: `LoggerModel.SetRow` carries no `side`
-    /// and no `pairId`, and `snapshot` writes neither. So a session holding L/R
-    /// pairs restores as two independent rows — the deck's own tonnage comes out
-    /// nearly double (`SessionVolume.sessionVolumeKg` collapses a pair to its
-    /// weaker side and the deck does not), amending one side rewrites its
-    /// `set_index` to its deck position and splits a pair that shared one set
-    /// number, and deleting one side leaves an orphan with a dangling `pair_id`
-    /// that every later reader scores as a lone side.
+    /// ── THE UNILATERAL GATE IS GONE, BECAUSE ITS REASON IS ──────────────────
+    /// This refused any session holding an L/R pair, and said why: "the logger
+    /// has no split concept — `LoggerModel.SetRow` carries no `side` and no
+    /// `pairId`, and `snapshot` writes neither". Every clause of that has since
+    /// stopped being true and the gate was never lifted with them:
     ///
-    /// Refusing is the honest answer while that is true. The summary page still
-    /// reads correctly — `SessionDetail.toRows` folds pairs properly — so what
-    /// is withheld is the correction, not the record.
+    ///   · `SetRow` carries `side` and `pairId` (and `sideLabel` bridges the
+    ///     mirror's `left`/`right` to the wire's `L`/`R`).
+    ///   · `restoreLoggedSets` restores both — "a split set restores split".
+    ///   · `snapshot` writes both back.
+    ///   · `ExerciseState.volumeKg` routes every row through
+    ///     `SessionVolume.sessionVolumeKg`, so the deck scores a pair at its
+    ///     weaker side exactly as the save path does. The doubling this gate
+    ///     was protecting against cannot happen.
+    ///   · `LoggerModel.physical`/`groups` count a `pairId` once, and
+    ///     `splitSet`/`mergeSet` are the deck's own controls for the pair.
     ///
-    /// ponytail: a whole-session gate, because one bad row poisons the
-    /// aggregates for the whole session. Per-exercise once `SetRow` carries a
-    /// side.
+    /// What the stale gate cost is the thing the user actually hit: every
+    /// Delts & Arms session is a Single Arm Lateral Raise session, so the whole
+    /// split was permanently uneditable — and the button gave a date-shaped
+    /// symptom ("I cannot edit Tuesday's workout") for a laterality-shaped
+    /// cause. There is no date restriction here and there never was one.
+    ///
+    /// What is left is the honest test: there has to be a deck to fold onto.
+    /// `editorDay` now builds one for any session with movements in it, so this
+    /// is nil only for a session that recorded no work at all.
     private var canEdit: Bool {
-        guard let report, editorDay(report) != nil else { return false }
-        return !report.exercises.contains { $0.rows.contains { $0.row.kind == "pair" } }
+        guard let report else { return false }
+        return editorDay(report) != nil
     }
 
     /// The phase this session was logged IN, not the one selected today.
@@ -1119,10 +1147,16 @@ private struct SplitVolumeChart: View {
 
 // MARK: - The set row
 
-/// One ledger row: the set as performed, the records it won, the RPE, and the
-/// same set from the previous session. A unilateral pair is one row.
+/// One ledger row: the set as performed, the records it won, and the RPE. A
+/// unilateral pair is one row.
+///
+/// ── AND NOTHING FROM ANY OTHER DAY ──────────────────────────────────────────
+/// The row used to end with `prev 5kg × 15` — the positionally-matched set from
+/// the last time this movement was trained. See `ExerciseReport.rows` for why
+/// it is gone: this is the page you land on when you finish a workout, and
+/// every row on it is now a set you actually performed today.
 struct SetRow: View {
-    let row: RowWithPrev
+    let row: DetailRow
     let timed: Bool
     /// The movement's muscle hue — what a record row is washed in. Defaulted so
     /// the row keeps working anywhere it is dropped without a family to take.
@@ -1133,16 +1167,17 @@ struct SetRow: View {
     @ScaledMetric(relativeTo: .footnote) private var markSide: CGFloat = 14
 
     /// ── WHY THE ROW HAS TWO SHAPES ──────────────────────────────────────────
-    /// Four things compete for one line: the badge, `42kg × 10`, what the set
-    /// beat last time and an effort word. At AX5 "Very hard" alone claimed
-    /// ~40 % of the width, the value was squeezed to nothing and
-    /// character-wrapped one glyph per line — `4` / `2k` / `g` / `×` / `1` /
-    /// `0` — because a `Text` given less than one glyph of width still draws at
-    /// its intrinsic size. One set took 500 pt and said nothing.
+    /// Three things compete for one line: the badge, `42kg × 10` and an effort
+    /// word. At AX5 "Very hard" alone claimed ~40 % of the width, the value was
+    /// squeezed to nothing and character-wrapped one glyph per line — `4` /
+    /// `2k` / `g` / `×` / `1` / `0` — because a `Text` given less than one
+    /// glyph of width still draws at its intrinsic size. One set took 500 pt
+    /// and said nothing.
     ///
     /// `minimumScaleFactor` cannot fix it: the row does not need smaller type,
-    /// it needs a second line. So at the accessibility sizes the previous set
-    /// and the effort word each get their own, and the value never wraps.
+    /// it needs a second line. So at the accessibility sizes the effort word
+    /// gets its own, and the value never wraps. (The prev column was the
+    /// fourth competitor here and is gone — see the type's own header.)
     ///
     /// ── AND WHY IT IS 30 pt TALL AND NOT 44 ─────────────────────────────────
     /// 44 is the tap target, and on THIS screen nothing in the row is tappable:
@@ -1156,16 +1191,8 @@ struct SetRow: View {
         HStack(alignment: typeSize.isAccessibilitySize ? .top : .center, spacing: OnyxSpace.s) {
             badgeGroup
             VStack(alignment: .leading, spacing: 2) {
-                if typeSize.isAccessibilitySize {
-                    valueLine
-                    if let previous { previousLine(previous) }
-                    if let effort { effort }
-                } else {
-                    HStack(alignment: .firstTextBaseline, spacing: OnyxSpace.s) {
-                        valueLine
-                        if let previous { previousLine(previous) }
-                    }
-                }
+                valueLine
+                if typeSize.isAccessibilitySize, let effort { effort }
             }
             if !typeSize.isAccessibilitySize {
                 Spacer(minLength: OnyxSpace.xs)
@@ -1277,18 +1304,6 @@ struct SetRow: View {
             .foregroundStyle(tint)
     }
 
-    /// The same set, last time. Inline rather than on a line of its own — two
-    /// columns that both carry `lineLimit(1)` and a scale factor divide the row
-    /// between them, and a second line per set was half the ledger's height
-    /// spent on a comparison the reader glances at.
-    private func previousLine(_ text: String) -> some View {
-        Text("prev \(text)")
-            .onyxType(.caption).onyxNumeral()
-            .foregroundStyle(Color.onyx.textTertiary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-    }
-
     /// The set's number, in the disc the logger's own deck draws it in — `W`
     /// for a warm-up, the ordinal for everything else.
     ///
@@ -1325,9 +1340,8 @@ struct SetRow: View {
     /// visible text no longer names the record axes, and "65 kg × 10" alone
     /// would make the session's best set sound like every other one.
     private var spoken: String {
-        var parts = [row.row.num.map { "Set \($0)" } ?? "Warm-up set", current]
+        var parts = [row.num.map { "Set \($0)" } ?? "Warm-up set", current]
         if !axes.isEmpty { parts.append("\(axes.joined(separator: ", ")) record") }
-        if let previous { parts.append("previously \(previous)") }
         if let rpe { parts.append(Effort.rpeLabel(rpe)) }
         return parts.joined(separator: ", ")
     }
@@ -1343,9 +1357,9 @@ struct SetRow: View {
         }
     }
 
-    private var ordinal: String { row.row.num.map(String.init) ?? "W" }
+    private var ordinal: String { row.num.map(String.init) ?? "W" }
 
-    private var lead: DetailSet? { row.row.set ?? row.row.left ?? row.row.right }
+    private var lead: DetailSet? { row.set ?? row.left ?? row.right }
 
     private var isRecord: Bool { !axes.isEmpty }
 
@@ -1356,24 +1370,16 @@ struct SetRow: View {
     // while the mark column existed and is not worth reintroducing one.
 
     private var current: String {
-        if row.row.kind == "pair" {
-            return [row.row.left.map { "L " + fmt($0) }, row.row.right.map { "R " + fmt($0) }]
+        if row.kind == "pair" {
+            return [row.left.map { "L " + fmt($0) }, row.right.map { "R " + fmt($0) }]
                 .compactMap { $0 }.joined(separator: " · ")
         }
         return lead.map(fmt) ?? "—"
     }
 
-    private var previous: String? {
-        guard row.row.num != nil, let p = row.prev else { return nil }
-        if row.row.kind == "pair", let r = row.prevRight {
-            return "L \(fmt(p.weightKg, p.reps)) · R \(fmt(r.weightKg, r.reps))"
-        }
-        return fmt(p.weightKg, p.reps)
-    }
-
     private var axes: [String] {
         var out: [String] = []
-        for a in [row.row.set, row.row.left, row.row.right].compactMap({ $0?.prAxes }).flatMap({ $0 }) {
+        for a in [row.set, row.left, row.right].compactMap({ $0?.prAxes }).flatMap({ $0 }) {
             let label = PrAxis(rawValue: a).map { PrEngine.axisLabel($0, timed: timed) } ?? a
             if !out.contains(label) { out.append(label) }
         }
@@ -1381,7 +1387,7 @@ struct SetRow: View {
     }
 
     private var rpe: Double? {
-        [row.row.set, row.row.left, row.row.right].compactMap { $0?.rpe }.max()
+        [row.set, row.left, row.right].compactMap { $0?.rpe }.max()
     }
 
     private func fmt(_ kg: Double, _ reps: Double) -> String {
@@ -1397,9 +1403,6 @@ struct SetRow: View {
     /// it did. Without it the treadmill that opens 2026-09-07 reads `0 reps` —
     /// `weight_kg 0, reps 0` is exactly what that session stores.
     ///
-    /// `previous` deliberately does NOT get this: `HistorySet` carries no
-    /// cardio axis, and the prev column only draws on a NUMBERED row — the
-    /// treadmill is a warm-up and has no number.
     private func fmt(_ s: DetailSet) -> String {
         SetFormat.cardio(
             durationSec: s.durationSec, distanceKm: s.distanceKm,

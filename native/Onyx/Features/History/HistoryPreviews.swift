@@ -45,12 +45,13 @@ enum HistoryPreviews {
         // way to see the edit hero — a shot script can launch a screen and
         // cannot press a toolbar button.
         //
-        // The LEG day, not `lastSession`: every Chest & Back session in this
-        // fixture carries the lateral raise as L/R pairs, and `canEdit` refuses
-        // a session holding pairs (see `SessionDetailView.canEdit` — the logger
-        // has no split concept and would score one lift twice). So the Upper A
-        // shot would photograph a disabled button, which is a true picture of
-        // that session and a useless one of this screen.
+        // The LEG day, not `lastSession`, and now only by habit: `canEdit` used
+        // to refuse any session holding L/R pairs, which every Chest & Back
+        // session in this fixture does, so the Upper A shot photographed a
+        // disabled button. That gate is gone (the logger carries `side` and
+        // `pairId` and has for some time — see `SessionDetailView.canEdit`), so
+        // either day shoots now. Left on the leg day so the shot is comparable
+        // with the ones already in `docs/shots`.
         case "session-edit":
             NavigationStack { SessionDetailView(sessionId: "s-2026-08-30", startAtEditor: true) }
                 .environment(environment())

@@ -62,7 +62,23 @@ struct ExerciseIndexTests {
             }
             seen[slug] = exercise.name
         }
-        #expect(ExerciseSlug.nameBySlug.count == seen.count)
+        // The program's movements PLUS the treadmill, which is deliberately
+        // not one of them and is still stamped onto rows by both decks.
+        #expect(ExerciseSlug.nameBySlug.count == seen.count + 1)
+        #expect(seen[ExerciseSlug.id(WarmupCardio.name)] == nil,
+                "the treadmill must not collide with a program movement's slug")
+    }
+
+    @Test("the treadmill resolves by slug — name and catalogue row alike")
+    func treadmillResolves() throws {
+        // Two bugs, one cause, both fixed by `nameBySlug` knowing the bout:
+        // the post-workout page titled the block `helix5-treadmill`, and the
+        // push threw `unknownExercise` on the one movement the deck adds for
+        // you — so a treadmill logged on the phone could not be uploaded.
+        #expect(ExerciseSlug.id(WarmupCardio.name) == "helix5-treadmill")
+        #expect(ExerciseSlug.nameBySlug["helix5-treadmill"] == "Treadmill")
+        let catalogue = [RemoteExercise(id: "uuid-treadmill", name: "Treadmill")]
+        #expect(try ExerciseIndex(catalogue).id(forSlug: "helix5-treadmill") == "uuid-treadmill")
     }
 
     @Test("the slug is byte-identical to LoggerModel's copy")

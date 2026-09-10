@@ -154,6 +154,28 @@ public struct ProgramDay: Identifiable, Sendable, Equatable {
     public var weekday: Int
     public var exercises: [ProgramExercise]
 
+    /// Public because the app target builds one.
+    ///
+    /// `SessionDetailView.editorDay` folds a logged session onto its program
+    /// day so it can be corrected on the logger's own deck. A session the
+    /// program cannot name — no `day_key` at all (the 74 Notion-era sessions
+    /// have none), or a key from a program that has since been retired — had
+    /// no day to fold onto and was therefore UNEDITABLE, which is a record the
+    /// app will show you and refuse to let you fix. The deck it needs is the
+    /// session's own movements, and that is a `ProgramDay` with an empty
+    /// `exercises` list for `editorDay` to fill.
+    public init(
+        key: String, label: String, sub: String? = nil,
+        accent: UInt32, weekday: Int, exercises: [ProgramExercise]
+    ) {
+        self.key = key
+        self.label = label
+        self.sub = sub
+        self.accent = accent
+        self.weekday = weekday
+        self.exercises = exercises
+    }
+
     public var id: String { key }
 
     /// The deck as this phase actually trains it: dropped lifts removed, set
