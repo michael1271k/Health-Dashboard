@@ -128,3 +128,38 @@ struct TrainingTests {
         #expect(Program.onyx5.day(weekday: 6) == nil)
     }
 }
+
+/// How a pair is drawn. The rule the deck's set box asks before it decides
+/// whether the reader is looking at one line or two.
+@Suite("Set pair layout — one box, and how much of it splits")
+struct SetPairLayoutTests {
+
+    @Test("two sides that agree about everything are an ordinary set")
+    func identicalIsUnified() {
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [8, 8]) == .unified)
+        // Unrated on BOTH sides is agreement, not a difference.
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [nil, nil]) == .unified)
+    }
+
+    @Test("same numbers, different effort splits only the effort")
+    func effortSplits() {
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [8, 9]) == .effortSplit)
+        // One side rated and the other not is a difference worth drawing: it
+        // is the state the "rate this" pip exists to ask about.
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 10], rpes: [8, nil]) == .effortSplit)
+    }
+
+    @Test("a load or a rep count that differs splits the value line")
+    func valuesSplit() {
+        #expect(SetPairLayout.resolve(weights: [12, 10], reps: [10, 10], rpes: [8, 8]) == .valueSplit)
+        #expect(SetPairLayout.resolve(weights: [12, 12], reps: [10, 8], rpes: [8, 8]) == .valueSplit)
+        // A weaker side that was also harder is still ONE split, not two.
+        #expect(SetPairLayout.resolve(weights: [12, 10], reps: [10, 8], rpes: [8, 10]) == .valueSplit)
+    }
+
+    @Test("an unpaired row has nothing to compare against")
+    func singleRowIsUnified() {
+        #expect(SetPairLayout.resolve(weights: [40], reps: [12], rpes: [nil]) == .unified)
+        #expect(SetPairLayout.resolve(weights: [], reps: [], rpes: []) == .unified)
+    }
+}

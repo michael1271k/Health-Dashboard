@@ -931,13 +931,28 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         // almost always is. Reps are NOT inherited: on double progression the
         // rep count is the thing you are trying to change.
         let last = exercise.rows.last
-        exercise.rows.append(SetRow(
-            weightKg: last?.weightKg ?? exercise.plan.wk1Kg,
-            kind: last?.kind == .warmup ? .normal : (last?.kind ?? .normal),
-            // The set beyond the prescription has no seeded previous — history
-            // does not contain a set number that has never been programmed.
-            previous: seededPrevious(exercise.plan, workingIndex: exercise.rows.filter { $0.kind != .warmup }.count)
-        ))
+        let weightKg = last?.weightKg ?? exercise.plan.wk1Kg
+        let kind: SetKind = last?.kind == .warmup ? .normal : (last?.kind ?? .normal)
+        // The set beyond the prescription has no seeded previous — history
+        // does not contain a set number that has never been programmed.
+        let previous = seededPrevious(
+            exercise.plan, workingIndex: Self.physical(exercise.rows.filter { $0.kind != .warmup })
+        )
+        // ── A SET ADDED TO A UNILATERAL MOVEMENT IS A PAIR ──────────────────
+        // The deck pre-splits every SEEDED row of a lunge (see `presplit`) and
+        // this added one plain, so the fourth set of a movement logged one arm
+        // at a time was the only bilateral set on the card — scored twice by
+        // `SessionVolume` where its neighbours are scored at the weaker side,
+        // and drawn as a single line under three split ones. It has to be the
+        // same shape as the sets it sits with.
+        guard canSplit(exercise) else {
+            exercise.rows.append(SetRow(weightKg: weightKg, kind: kind, previous: previous))
+            return
+        }
+        let pairId = newOnyxID()
+        exercise.rows.append(contentsOf: ["left", "right"].map { side in
+            SetRow(weightKg: weightKg, kind: kind, previous: previous, side: side, pairId: pairId)
+        })
     }
 
     /// Re-write the stored `set_index` of every logged row from `index` down.
@@ -1115,6 +1130,20 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             row.isRecord = false
             voidInStore(row)
             refreshLivePrs()
+            // ── AN UNTICK CANCELS THE REST IT STARTED ───────────────────────
+            // Ticking a set starts the countdown; unticking it — which is what
+            // you do the instant you realise you ticked the wrong row — left
+            // the clock running, the bar on the deck counting down and the
+            // watch showing a full-screen rest cover for a set that no longer
+            // exists. The only way out was `Skip rest`, which reads as a
+            // decision about your training rather than as an undo.
+            //
+            // Unconditional, and not "only when this row started it": the deck
+            // has ONE rest clock, `startRest` overwrites it on every tick, and
+            // nothing records which set it belongs to. A guard would therefore
+            // have to guess, and the guess is wrong exactly when two sets are
+            // ticked in quick succession — the case this is for.
+            stopRest()
             return false
         }
         // A set with no reps has not happened. Ticking it would put a zero into
@@ -1139,10 +1168,50 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         return true
     }
 
+    /// Tick or untick a whole SET — both arms of a pair, one badge.
+    ///
+    /// ── WHY THE VIEW CANNOT JUST CALL `toggleDone` TWICE ────────────────────
+    /// It can, and that is what this does — but only on the rows that are not
+    /// already in the state the box is moving to. A pair with one side ticked
+    /// (a restored session, a watch sync that landed mid-set) would otherwise
+    /// flip BOTH and end up exactly as split as it started, with the tick
+    /// having moved to the other arm.
+    ///
+    /// The rest timer takes care of itself: `startRest` overwrites one clock,
+    /// so ticking two rows in the same gesture sets the same deadline twice.
+    @discardableResult
+    func toggleGroup(_ rows: [SetRow], in exercise: ExerciseState) -> Bool {
+        let done = rows.allSatisfy(\.isDone)
+        var became = false
+        for row in rows where row.isDone == done {
+            became = toggleDone(row, in: exercise) || became
+        }
+        return became
+    }
+
     func commitEdit(_ row: SetRow, in exercise: ExerciseState) {
         guard row.isDone else { return }
         amendInStore(row, in: exercise)
         refreshLivePrs()
+    }
+
+    /// Every record these rows hold, for the sheet the trophy opens.
+    ///
+    /// Keyed exactly as `refreshLivePrs` writes the ids — `<exercise key>|<set
+    /// number>|<axis>` — because that is the only place the scheme is decided.
+    /// A second spelling of it in a view is a sheet that is empty for a reason
+    /// nobody can see.
+    ///
+    /// A PAIR asks for both sides: the two arms are two candidates with two set
+    /// numbers, and "what did this set beat" is the union of what they beat.
+    func records(for rows: [SetRow], in exercise: ExerciseState) -> [LivePrRecord] {
+        let key = exercise.storedExerciseId ?? Self.exerciseId(exercise.name)
+        let prefixes = rows.compactMap { row -> String? in
+            guard let index = exercise.rows.firstIndex(where: { $0.id == row.id }) else { return nil }
+            return "\(key)|\(index + 1)|"
+        }
+        guard !prefixes.isEmpty else { return [] }
+        return livePrs.filter { record in prefixes.contains { record.id.hasPrefix($0) } }
     }
 
     /// The Previous column for one WORKING set of a movement.

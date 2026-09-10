@@ -276,7 +276,11 @@ struct LiveLoggerView: View {
         // true.
         .onChange(of: model.physicalSets) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
         .onChange(of: model.totalVolumeKg) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
-        .onChange(of: model.restEndsAt) { _, _ in guard !model.isEditing else { return }; activity.update(model: model, clock: clock) }
+        .onChange(of: model.restEndsAt) { _, _ in
+            guard !model.isEditing else { return }
+            activity.update(model: model, clock: clock)
+            mirrorRestToWatch()
+        }
         // And the record count moves on paths none of the three above touch:
         // demoting a ticked set to a warm-up keeps its tonnage and its physical
         // count and takes its record away.
@@ -409,7 +413,30 @@ struct LiveLoggerView: View {
     /// cold verbs — and a filled, prominent chip beside two grey ones reads as
     /// the row's subject rather than as the way out. The bar is where iOS puts
     /// the way out, opposite the way back in, and it costs the band nothing.
+    ///
+    /// ── AND WHY IT HIDES THE BAR'S OWN BACKGROUND ───────────────────────────
+    /// Built against the iOS 26 SDK, a toolbar item is given a glass capsule of
+    /// its own — the platform's, sized to the item, drawn UNDER whatever the
+    /// item draws. This item draws its own filled capsule, so the result was
+    /// two stacked pills: a solid accent one inside a slightly larger
+    /// translucent box, out of register with it on every side. It read as a
+    /// rendering bug because it is one.
+    ///
+    /// The fix is to say the item supplies its own background rather than to
+    /// re-style ours to fit inside the platform's, which would put the word
+    /// back inside a shape the app does not control. `Visibility.hidden` on the
+    /// shared background is exactly that statement, and on iOS 18 — where no
+    /// such background exists — there is nothing to say.
+    @ToolbarContentBuilder
     private var finishItem: some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            finishToolbarItem.sharedBackgroundVisibility(.hidden)
+        } else {
+            finishToolbarItem
+        }
+    }
+
+    private var finishToolbarItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             // "Finish" on a session that finished three weeks ago is the wrong
             // verb: it reads as ending something, and what it does is write the
@@ -663,6 +690,32 @@ struct LiveLoggerView: View {
         guard model.isEditing, model.editDirty, let date = model.editing?.date else { return }
         guard environment?.rescore(from: date, reason: .sessionEdit) == true else { return }
         model.clearEditDirty()
+    }
+
+    /// Put the phone's rest clock on the wrist — including when it STOPS.
+    ///
+    /// ── WHY THIS DID NOT EXIST ──────────────────────────────────────────────
+    /// `PhoneWatchBridge.send(rest:)` and `WatchLink`'s whole rest channel have
+    /// been in the tree since Wave 10, and nothing on the phone ever called
+    /// them: the watch mirrored ITS own clock to the phone (which the phone
+    /// deliberately ignores) and the phone mirrored nothing back. So a rest
+    /// started on the phone never reached the watch, and — the case this wave
+    /// is about — a rest CANCELLED on the phone by unticking a set could not
+    /// reach it either. `nil` is the whole point of the payload being optional.
+    ///
+    /// Sent from the view rather than from the model on purpose: `LoggerModel`
+    /// is the session's arithmetic and has no transport in it, and the one
+    /// place that already watches this exact value for the Live Activity is
+    /// here. Two mirrors of one clock, driven off one `onChange`.
+    private func mirrorRestToWatch() {
+        guard let bridge = environment?.watchBridge, let sessionId = model.sessionId else { return }
+        guard let endsAt = model.restEndsAt else { return bridge.send(rest: nil) }
+        bridge.send(rest: RestPulse(
+            sessionId: sessionId,
+            endsAt: endsAt,
+            duration: model.restDuration,
+            exercise: model.restingExercise
+        ))
     }
 }
 

@@ -422,7 +422,19 @@ struct LiveStatsView: View {
     /// answer, so the row falls back to it rather than drawing a bar code.
     @ViewBuilder
     private func setDots(_ exercise: LoggerModel.ExerciseState) -> some View {
-        let planned = max(exercise.plan.sets(for: model.phase), exercise.rows.count)
+        // ── COUNTED IN SETS, BECAUSE `done` IS ─────────────────────────────
+        // `exercise.rows.count` is ROWS, and on a movement trained one side at
+        // a time a set is two of them. `workingSets` folds each `pairId` once,
+        // so a three-set lunge with all three ticked drew three filled dots
+        // out of SIX — a card reporting a finished movement as half done, on
+        // the one page whose whole job is to say how the session is going.
+        //
+        // `LoggerModel.physical` is the same fold `workingSets` uses, over the
+        // rows the prescription is about: warm-ups and ghosts are excluded
+        // there, so they are excluded here or the denominator counts rows the
+        // numerator never can.
+        let prescribed = exercise.rows.filter { $0.kind != .warmup && $0.kind != .ghost }
+        let planned = max(exercise.plan.sets(for: model.phase), LoggerModel.physical(prescribed))
         let done = exercise.workingSets
         if planned > 8 {
             Text("\(done)/\(planned)")
@@ -705,32 +717,98 @@ struct LiveStatsView: View {
 
     /// Drawn only when there is one — the deck gates it, so this never has an
     /// empty state to draw.
+    /// ── GROUPED BY THE LIFT, BECAUSE THE LIFT IS WHAT REPEATS ──────────────
+    /// One good set wins two axes and one good movement wins on three sets, so
+    /// a session with two strong lifts in it drew a flat list of six rows —
+    /// with the same exercise name set at body weight on four of them. The
+    /// name was the largest thing on the card and it was the one thing the
+    /// reader already knew from the row above.
+    ///
+    /// Now: a sub-card per movement, its name once at the top, and the axes it
+    /// won underneath. The name is a heading rather than a repeated label, the
+    /// axes lose the name they were carrying and get the width back, and the
+    /// card's height falls by a line per duplicate.
+    ///
+    /// Order is preserved — `livePrs` is newest first, and a group takes the
+    /// position of its newest record, so the lift you have just beaten stays at
+    /// the top where the announcement belongs.
     private var recordsCard: some View {
         card("PRs") {
-            let records = prs.livePrs
-            VStack(spacing: 0) {
-                ForEach(records) { record in
-                    recordRow(record)
-                    if record.id != records.last?.id {
-                        Divider().overlay(Color.onyx.hairline)
-                    }
+            let groups = groupedRecords
+            VStack(spacing: OnyxSpace.s) {
+                ForEach(groups, id: \.exercise) { group in
+                    recordGroup(group)
                 }
             }
         }
     }
 
+    /// `livePrs` folded onto the movement, newest group first.
+    private var groupedRecords: [(exercise: String, records: [LivePrRecord])] {
+        var order: [String] = []
+        var byExercise: [String: [LivePrRecord]] = [:]
+        for record in prs.livePrs {
+            if byExercise[record.exercise] == nil { order.append(record.exercise) }
+            byExercise[record.exercise, default: []].append(record)
+        }
+        return order.map { (exercise: $0, records: byExercise[$0] ?? []) }
+    }
+
+    /// One movement's records: the name once, then a row per axis it won.
+    private func recordGroup(_ group: (exercise: String, records: [LivePrRecord])) -> some View {
+        VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+            HStack(spacing: OnyxSpace.s) {
+                Image(systemName: "trophy.fill")
+                    .imageScale(.small)
+                    .foregroundStyle(Color.onyx.record)
+                Text(group.exercise)
+                    .onyxType(.body).fontWeight(.semibold)
+                    .foregroundStyle(Color.onyx.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Spacer(minLength: 0)
+                // How many claims this lift is carrying. A movement with three
+                // is the headline of the session and the card should not make
+                // you count rows to notice.
+                Text("\(group.records.count)")
+                    .onyxType(.caption).fontWeight(.bold).onyxNumeral()
+                    .foregroundStyle(Color.onyx.record)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(Color.onyx.record.opacity(0.14)))
+            }
+            VStack(spacing: 0) {
+                ForEach(group.records) { record in
+                    recordRow(record)
+                    if record.id != group.records.last?.id {
+                        Divider().overlay(Color.onyx.hairline)
+                    }
+                }
+            }
+        }
+        .padding(OnyxSpace.s)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .fill(Color.onyx.record.opacity(0.05))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
+                .strokeBorder(Color.onyx.record.opacity(0.16), lineWidth: 1)
+        }
+    }
+
     private func recordRow(_ record: LivePrRecord) -> some View {
         HStack(spacing: OnyxSpace.m) {
-            Image(systemName: "trophy.fill")
-                .imageScale(.small)
-                .foregroundStyle(Color.onyx.record)
             VStack(alignment: .leading, spacing: 1) {
-                Text(record.exercise)
+                // The exercise name is the GROUP's heading now, so the row
+                // leads with the thing that actually varies between rows.
+                Text(record.axis.displayName)
                     .onyxType(.body)
                     .foregroundStyle(Color.onyx.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
-                Text("\(record.axis.displayName) · \(record.setLabel)")
+                Text(record.setLabel)
                     .onyxType(.caption)
                     .foregroundStyle(Color.onyx.textTertiary)
                     .lineLimit(1)
@@ -755,6 +833,10 @@ struct LiveStatsView: View {
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)
+        // The lift's name is a visual heading over the group now, and a
+        // heading is not read with the row under it. Every row still says
+        // which movement it belongs to.
+        .accessibilityLabel("\(record.exercise), \(record.axis.displayName)")
     }
 
     private func mark(_ value: Double, _ axis: PrAxis) -> String {

@@ -173,7 +173,7 @@ enum PreviewHarness {
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)
         case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options",
-             "set-row", "set-options", "effort-picker":
+             "set-row", "set-row-split", "set-row-cardio", "set-row-records", "set-options", "effort-picker":
             LoggerPreviews.view(screen)
         // ── THE CARDIO SHEET, IN BOTH OF ITS STATES ────────────────────────
         // It had never had a shot, which is most of how it got to look the way

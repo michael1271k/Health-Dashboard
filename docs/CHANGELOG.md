@@ -47,6 +47,58 @@ _Nothing yet._
 
 ---
 
+## [1.5.0] — 2026-09-10 · One Set, One Box
+
+The live logger stops disagreeing with the rest of the app about what a set is.
+A movement trained one arm at a time is one row per set, the treadmill asks for
+the two numbers a walk actually has, and the trophy finally says what it beat.
+
+### Added
+- **A pair is one set box** (native logger). L and R share a set number, a
+  checkmark and a trophy. How much of the box splits depends on how much the two
+  sides disagree: nothing when they match, the effort alone when only the rating
+  differs (`L 9.5 · R 8.5`), and two value lines under one badge when the load
+  or the reps do. The rule is `SetPairLayout` in OnyxCore, with vectors.
+- **Duration and distance on a cardio set** (native logger). The treadmill block
+  asked for kilograms and reps and showed `0 kg × 0`; it now shows minutes and
+  kilometres, with the same coarse/fine stepper grammar as a load (1 min / 30 s,
+  100 m / 50 m) — and it can be ticked, which a zero-rep row could not.
+- **The record sheet, on the phone** (native logger). Tapping a set that holds a
+  record slides up what it won, by how much, and what it beat — the web's
+  `PrRecordSheet`, one for one.
+- **Add set on a unilateral movement adds a pair**, so the fourth set is the
+  same shape as the three the deck seeded.
+
+### Changed
+- **The PRs card groups by movement** (native Live Stats). One sub-card per
+  lift, its name once at the top, a count of the claims it is carrying, and the
+  axes underneath — instead of a flat list repeating the same exercise name on
+  every row.
+- **The Finish button lost its box** (native logger). Built against the iOS 26
+  SDK a toolbar item is given a glass capsule of its own, under the filled one
+  this item draws; the item now declares its own background.
+
+### Fixed
+- **A set list that read `1, L, R, 4`** (native logger). The deck numbered rows;
+  it numbers sets.
+- **Half-empty completion dots** (native Live Stats). A three-set unilateral
+  movement counted six rows against three ticks and reported a finished lift as
+  half done.
+- **The rest timer survived an untick** (native logger + watch). Ticking the
+  wrong set and immediately unticking it left the countdown running on the deck
+  and a full-screen rest cover on the wrist. The phone now also *mirrors* its
+  rest clock to the watch at all — `PhoneWatchBridge.send(rest:)` had no caller
+  since Wave 10, so a phone-started rest never reached the wrist either.
+- **A tap into a load selects it** (native logger). The caret used to land
+  behind the number, so changing 40 to 47 meant tap, Done, tap, backspace twice.
+- **The steppers stepped twice on a fast tap** (native logger). Touch-down and
+  touch-up inside one frame delivered the button's action before the press edge,
+  and both applied the step: reps by 2 where the control says 1, load by 5 where
+  it says 2.5. The coarse step is now idempotent within one activation instead
+  of dependent on a delivery order SwiftUI does not promise.
+
+---
+
 ## [1.4.1] — 2026-09-10 · What The Summary Says Happened
 
 Four defects on the post-workout page, and every one of them turned out to be

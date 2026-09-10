@@ -1,4 +1,8 @@
 import SwiftUI
+// The one UIKit type this screen reaches for: `UITextField`, so a tap into a
+// load selects the number instead of parking a caret behind it. SwiftUI has no
+// selection API for a `TextField` — see `NumericField`.
+import UIKit
 import OnyxUI
 import OnyxCore
 
@@ -45,6 +49,8 @@ struct ExerciseCardView: View {
     /// `LazyVStack` recycling a presenter out from under an open sheet.
     @State private var optionsFor: SetTarget?
     @State private var effortFor: SetTarget?
+    /// Which set's records the trophy sheet is about.
+    @State private var recordFor: SetTarget?
 
     /// A movement is being dragged over this card right now.
     ///
@@ -96,6 +102,20 @@ struct ExerciseCardView: View {
 
     /// Seconds rather than reps — a plank's `55s` window.
     private var isTimed: Bool { TimedExercise.isTimed(exercise.plan.name) }
+
+    /// This movement is measured in MINUTES AND KILOMETRES, not in plates.
+    ///
+    /// ── WHY IT IS READ OFF THE ROWS AND NOT OFF THE NAME ────────────────────
+    /// `TimedExercise` and `BodyweightExercise` are name predicates because a
+    /// plank is a plank whatever it carries. A cardio bout is not: the SAME
+    /// treadmill block is a duration-and-distance row here and a `cardio_logs`
+    /// import elsewhere, and what makes this one a bout is the content the row
+    /// actually holds. `SetRow.isCardio` is that test, and it is the one
+    /// `toggleDone` already uses to decide the set may be ticked with no reps.
+    ///
+    /// Asking the rows also means the column headers cannot disagree with the
+    /// fields under them: both read this.
+    private var isCardio: Bool { exercise.rows.contains(where: \.isCardio) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -151,11 +171,17 @@ struct ExerciseCardView: View {
             // that opened this and the frame that presents it, a watch sync or
             // a phase rebuild can have replaced `exercise.rows`. A stale
             // reference would edit a row that is no longer in the session.
-            if let row = exercise.rows.first(where: { $0.id == target.id }) {
+            //
+            // A PAIR resolves to two rows and the sheet edits both: it is one
+            // set, so "warm-up" and "form broke" are claims about the set, not
+            // about the left arm. The sheet DISPLAYS the first — they agree
+            // about everything it shows.
+            let group = resolve(target)
+            if let row = group.first {
                 SetOptionsSheet(
                     ordinal: target.ordinal, exerciseName: exercise.name, row: row,
-                    onKind: { model.setKind($0, on: row, in: exercise) },
-                    onQuality: { model.setQuality($0, on: row, in: exercise) },
+                    onKind: { kind in for r in group { model.setKind(kind, on: r, in: exercise) } },
+                    onQuality: { quality in for r in group { model.setQuality(quality, on: r, in: exercise) } },
                     // Absent on a bilateral movement — see `SetOptionsSheet.split`
                     // for why absent and not disabled.
                     onSplit: model.canSplit(exercise) ? {
@@ -167,7 +193,11 @@ struct ExerciseCardView: View {
                             }
                         }
                     } : nil,
-                    onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } }
+                    onDelete: {
+                        withAnimation(OnyxMotion.move) {
+                            for r in group { model.removeSet(r, from: exercise) }
+                        }
+                    }
                 )
             } else {
                 // The row went while the sheet was open — deleted, or replaced
@@ -178,22 +208,49 @@ struct ExerciseCardView: View {
             }
         }
         .sheet(item: $effortFor) { target in
-            if let row = exercise.rows.first(where: { $0.id == target.id }) {
+            let group = resolve(target)
+            if let row = group.first {
                 EffortPickerSheet(
                     ordinal: target.ordinal, exerciseName: exercise.name, row: row,
                     wasStale: target.wasStale,
                     onPick: { value in
-                        row.rpe = value
-                        // Rating a set answers the question the pip was asking,
-                        // whatever the answer is — including "not rated".
-                        row.rpeStale = false
-                        model.commitEdit(row, in: exercise)
+                        // Every row the target names. On a unified pair that is
+                        // both arms — rating a set the deck draws as ONE row and
+                        // moving one arm's rating is how a set that agreed with
+                        // itself silently becomes a split one.
+                        for r in group {
+                            r.rpe = value
+                            // Rating a set answers the question the pip was
+                            // asking, whatever the answer is — including "not
+                            // rated".
+                            r.rpeStale = false
+                            model.commitEdit(r, in: exercise)
+                        }
                     }
                 )
             } else {
                 Color.clear.onAppear { effortFor = nil }
             }
         }
+        .sheet(item: $recordFor) { target in
+            // What the trophy on the badge actually means — the web's
+            // `PrRecordSheet`, which the deck had no answer to until now.
+            PrRecordSheet(
+                exerciseName: exercise.name,
+                setLabel: "Set \(target.ordinal)",
+                records: model.records(for: resolve(target), in: exercise),
+                timed: isTimed
+            )
+        }
+    }
+
+    /// The rows a sheet's target names, live, in deck order.
+    ///
+    /// By ID and never by reference, for the reason `SetTarget` documents: the
+    /// session can replace `exercise.rows` between the tap and the frame that
+    /// presents the sheet.
+    private func resolve(_ target: SetTarget) -> [LoggerModel.SetRow] {
+        exercise.rows.filter { target.ids.contains($0.id) }
     }
 
     // MARK: - Header
@@ -602,25 +659,38 @@ struct ExerciseCardView: View {
     /// supposed to fix it. The card hugs its rows; the DECK PAGE around it is
     /// the scroll view, so a movement with eight sets still scrolls and one with
     /// two is two rows tall.
+    /// ── THE LOOP IS OVER SETS, NOT OVER ROWS ────────────────────────────────
+    /// A unilateral set is two rows sharing a `pairId` and it is ONE set to
+    /// everything that counts one: `SessionVolume` scores it at the weaker
+    /// side, `set_count` folds it, the card's own progress counts it once. The
+    /// deck was the last place that drew it as two — so a three-set lunge was
+    /// six boxes, six checkmarks, and (because the badge prints the side in
+    /// place of the ordinal on a split row) a set list numbered `1, L, R, 4`.
+    ///
+    /// `LoggerModel.groups` is the same fold `physical` counts through, so the
+    /// number of boxes on this card and the number in its header cannot
+    /// disagree any more. The ORDINAL is the group's, which is what makes the
+    /// column read 1, 2, 3 on a movement logged one arm at a time.
     private var sets: some View {
         VStack(spacing: OnyxSpace.xs) {
             columnHeaders
-            ForEach(Array(exercise.rows.enumerated()), id: \.element.id) { index, row in
+            ForEach(Array(LoggerModel.groups(exercise.rows).enumerated()), id: \.element.first?.id) { index, group in
                 SetRowView(
-                    row: row,
+                    rows: group,
                     ordinal: index + 1,
                     rail: rail,
                     isWeightless: isWeightless,
                     isTimed: isTimed,
-                    onLog: { model.toggleDone(row, in: exercise) },
-                    onCommit: { model.commitEdit(row, in: exercise) },
-                    onDelete: { withAnimation(OnyxMotion.move) { model.removeSet(row, from: exercise) } },
-                    onOptions: {
-                        optionsFor = SetTarget(id: row.id, ordinal: index + 1, wasStale: row.rpeStale)
+                    onLog: { model.toggleGroup(group, in: exercise) },
+                    onCommit: { row in model.commitEdit(row, in: exercise) },
+                    onDelete: {
+                        withAnimation(OnyxMotion.move) {
+                            for row in group { model.removeSet(row, from: exercise) }
+                        }
                     },
-                    onEffort: {
-                        effortFor = SetTarget(id: row.id, ordinal: index + 1, wasStale: row.rpeStale)
-                    }
+                    onOptions: { optionsFor = SetTarget(group, ordinal: index + 1) },
+                    onEffort: { targets in effortFor = SetTarget(targets, ordinal: index + 1) },
+                    onRecord: { recordFor = SetTarget(group, ordinal: index + 1) }
                 )
             }
 
@@ -696,12 +766,23 @@ struct ExerciseCardView: View {
                 // cannot be right. Dropping the whole track gives the two
                 // columns that DO mean something the width, which at 375 pt is
                 // the difference between "Max Effort" and "Max Eff…".
-                if !isWeightless {
-                    head("KG").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
+                // ── AND A CARDIO BOUT NAMES ITS OWN TWO ────────────────────
+                // A treadmill block has no plates and no rep count, and the
+                // row under this now says so — minutes and kilometres. It also
+                // has no effort column: the third track is what the two
+                // measurements need to stay legible at 375 pt, and a warm-up
+                // walk is not a set anybody rates.
+                if isCardio {
+                    head("MIN").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
+                    head("KM").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
+                } else {
+                    if !isWeightless {
+                        head("KG").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
+                    }
+                    head(isTimed ? "TIME" : "REPS").frame(minWidth: SetColumn.reps)
+                    head("EFFORT")
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                head(isTimed ? "TIME" : "REPS").frame(minWidth: SetColumn.reps)
-                head("EFFORT")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.horizontal, OnyxSpace.xs)
             .padding(.top, OnyxSpace.xs)
@@ -800,6 +881,15 @@ private enum SetColumn {
     /// is: the row is the one place in this app where a gap competes with a tap
     /// target, and the target wins.
     static let gap: CGFloat = OnyxSpace.xs
+    /// The `L` / `R` tag on a split sub-line — one glyph, and the only column
+    /// the split adds.
+    ///
+    /// It is paid for out of the EFFORT track and out of nothing else: a split
+    /// sub-line prints the rating as its number rather than as its word, which
+    /// gives back four times what the tag costs. At 375 pt the two sub-lines
+    /// come to 14 + 108 + 96 + 4 × 3 gaps against the 287 pt left beside the
+    /// badge, so the rating still has ~57 pt for two digits.
+    static let side: CGFloat = 14
 }
 
 // MARK: - Addressing a row
@@ -811,7 +901,9 @@ private enum SetColumn {
 /// held one would go on editing a row the session no longer contains, and the
 /// edit would land in the log as an amend to a set nobody performed.
 private struct SetTarget: Identifiable, Equatable {
-    let id: String
+    /// The rows this sheet acts on — one, or both sides of a pair. A sheet
+    /// opened from a set box is about the SET, and a set can be two rows.
+    let ids: [String]
     let ordinal: Int
     /// Whether the seeded rating had gone stale WHEN THE SHEET OPENED.
     ///
@@ -820,6 +912,18 @@ private struct SetTarget: Identifiable, Equatable {
     /// live, the sheet lost its note and shrank 80 pt under the thumb that was
     /// still on the ladder.
     let wasStale: Bool
+
+    /// Identity is the first row's, which is stable for as long as the sheet
+    /// can be open — `.sheet(item:)` re-presents when it changes.
+    var id: String { ids.first ?? "" }
+
+    /// `@MainActor` because `SetRow` is: the rows are read here, not stored.
+    @MainActor
+    init(_ rows: [LoggerModel.SetRow], ordinal: Int) {
+        self.ids = rows.map(\.id)
+        self.ordinal = ordinal
+        self.wasStale = rows.first?.rpeStale ?? false
+    }
 }
 
 // MARK: - One set
@@ -848,8 +952,16 @@ private struct SetTarget: Identifiable, Equatable {
 /// `.success` on a record, `.selection` on a detent — all landing on the same
 /// frame as the motion, because latency between the senses is what destroys the
 /// illusion that the gesture caused the feedback.
+/// ── AND WHY IT HOLDS A LIST OF ROWS ─────────────────────────────────────────
+/// One box is one SET. On a movement trained one side at a time that set is two
+/// rows, and everything the box draws is a statement about the pair: one
+/// ordinal, one checkmark, one trophy, one rest timer. What splits — and only
+/// when the sides actually disagree — is the line the numbers sit on. See
+/// `SetPairLayout`, which is that decision, tested in OnyxCore rather than
+/// inferred from a screenshot.
 private struct SetRowView: View {
-    @Bindable var row: LoggerModel.SetRow
+    /// One row, or the two sides of one set, in deck order.
+    let rows: [LoggerModel.SetRow]
     let ordinal: Int
     let rail: Color
     /// Resolved by the CARD, not the row: it is a property of the movement and
@@ -858,13 +970,16 @@ private struct SetRowView: View {
     /// 375 pt the last time this table was touched.
     var isWeightless = false
     var isTimed = false
+    /// Ticks or unticks the WHOLE set — both arms of a pair.
     let onLog: () -> Bool
-    let onCommit: () -> Void
+    let onCommit: (LoggerModel.SetRow) -> Void
     let onDelete: () -> Void
-    /// Both sheets belong to the CARD — see `ExerciseCardView.optionsFor`. The
-    /// row only says which one to open, and about which set.
+    /// Every sheet belongs to the CARD — see `ExerciseCardView.optionsFor`. The
+    /// row only says which one to open, and about which rows.
     let onOptions: () -> Void
-    let onEffort: () -> Void
+    let onEffort: ([LoggerModel.SetRow]) -> Void
+    /// The trophy's own tap: what this set actually beat.
+    let onRecord: () -> Void
 
     @State private var justLogged = false
     /// Which log the current flash belongs to. Two ticks inside 300 ms had the
@@ -880,7 +995,35 @@ private struct SetRowView: View {
     @State private var recordTicks = 0
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    private var canLog: Bool { (row.reps ?? 0) > 0 }
+    /// The row every one-sided fact is read off, and the one a sheet displays.
+    /// Never optional in practice — `LoggerModel.groups` yields no empty group
+    /// — and the fallback exists so the view has no crash to reason about.
+    private var row: LoggerModel.SetRow { rows.first ?? LoggerModel.SetRow() }
+
+    /// The set is done when EVERY side of it is. Ticking the left arm of a
+    /// split set is a set half performed, and one box claiming Done over it is
+    /// the box lying about the only thing it is for — `ExerciseState.isComplete`
+    /// says the same thing one level up.
+    private var isDone: Bool { rows.allSatisfy(\.isDone) }
+
+    /// How the two sides differ, if they do. One call, read by the value line,
+    /// by the effort column and by VoiceOver, so the three cannot disagree.
+    private var layout: SetPairLayout {
+        guard rows.count > 1 else { return .unified }
+        return SetPairLayout.resolve(
+            weights: rows.map(\.weightKg), reps: rows.map(\.reps), rpes: rows.map(\.rpe)
+        )
+    }
+
+    /// Minutes and kilometres rather than plates and reps.
+    private var isCardio: Bool { rows.contains(where: \.isCardio) }
+
+    /// A set with no reps has not happened — unless its content is not reps at
+    /// all. The same test `LoggerModel.toggleDone` applies: a view that refuses
+    /// a tap the model would have accepted is a treadmill bout that cannot be
+    /// ticked, and one that accepts a tap the model refuses is a haptic
+    /// claiming a set nobody logged.
+    private var canLog: Bool { rows.contains { ($0.reps ?? 0) > 0 || $0.isCardio } }
 
     var body: some View {
         content
@@ -889,10 +1032,27 @@ private struct SetRowView: View {
             .clipShape(RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous))
             .frame(minHeight: 44)
             .opacity(row.kind == .ghost ? 0.45 : 1)
-            .animation(OnyxMotion.move, value: row.isDone)
+            .animation(OnyxMotion.move, value: isDone)
             .animation(OnyxMotion.fade, value: justLogged)
             .sensoryFeedback(.impact(flexibility: .soft), trigger: commitTicks)
             .sensoryFeedback(.success, trigger: recordTicks)
+            // ── TAPPING A RECORD OPENS WHAT IT BEAT ─────────────────────────
+            // The web's behaviour, one for one: a set that holds a record is
+            // itself the way into `PrRecordSheet`. The trophy sat on the badge
+            // and said "Weight" and nothing else — by how much, and over what,
+            // existed nowhere on this device, because `personal_records` is
+            // upsert-on-conflict and the value it replaced is gone the moment
+            // it is written. `PrEngine` captures both, `livePrs` carries them.
+            //
+            // On the ROW and not on the badge, deliberately. The badge's tap is
+            // the log — the most-used gesture on this screen, and a destructive
+            // one in the other direction (unticking voids the set) — and moving
+            // it for the handful of rows that hold a trophy would mean the same
+            // target did two different things depending on how the set went.
+            // The gesture is only live where there is something to show, so it
+            // is not a dead tap anywhere else.
+            .contentShape(RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous))
+            .onTapGesture { if isRecord { onRecord() } }
             .accessibilityElement(children: .contain)
     }
 
@@ -901,35 +1061,91 @@ private struct SetRowView: View {
     private var content: some View {
         HStack(spacing: SetColumn.gap) {
             badge
-            // Side by side until the type size says otherwise: at AX5 a load, a
-            // rep count and four stepper targets cannot share one line, and a
-            // row that truncates its own numbers is worse than one that is two
-            // lines tall (§3.1 allows exactly that, and only that).
-            if typeSize.isAccessibilitySize {
-                // THE EFFORT COMES DOWN HERE TOO. It is a word now, and the
-                // widest of them — "Challenging" — cannot share a line with an
-                // AX5 load and its two steppers. A third line costs this row
-                // 30 pt at a size where it is already 120 tall.
-                VStack(alignment: .leading, spacing: OnyxSpace.xs) {
-                    if !isWeightless { weightField }
-                    repsField
-                    effort
+            // ── ONE VALUE LINE, OR TWO INSIDE THE SAME BOX ─────────────────
+            // `valueSplit` is the only case that draws two, and it draws them
+            // here — INSIDE the box, under one badge — rather than as two
+            // boxes. The badge, the tick and the trophy stay single because
+            // the set is single; what differs is the numbers, so the numbers
+            // are what gets a second line.
+            if layout == .valueSplit {
+                VStack(spacing: OnyxSpace.xs) {
+                    ForEach(rows) { side in
+                        valueLine([side], tag: side.sideLabel)
+                    }
                 }
-                .padding(.vertical, OnyxSpace.s)
-                Spacer(minLength: 0)
+                .padding(.vertical, OnyxSpace.xs)
             } else {
-                // No `×` between them any more. It was the row's way of saying
-                // which number was which, and the column headers say it better
-                // and once — where this said it on all forty rows, in the width
-                // that the effort word now uses to say something.
-                if !isWeightless { weightField }
-                repsField
-                effort
+                valueLine(rows, tag: nil)
             }
         }
         .padding(.horizontal, OnyxSpace.xs)
         .frame(minHeight: 44)
         .frame(maxWidth: .infinity)
+    }
+
+    /// The numbers, for one row or for both at once.
+    ///
+    /// `targets` is what a stepper, a field or a rating WRITES TO: on a unified
+    /// pair that is both arms, so moving the load moves the set rather than
+    /// silently splitting it. `tag` is the `L` / `R` a split sub-line wears.
+    @ViewBuilder
+    private func valueLine(_ targets: [LoggerModel.SetRow], tag: String?) -> some View {
+        // Side by side until the type size says otherwise: at AX5 a load, a
+        // rep count and four stepper targets cannot share one line, and a row
+        // that truncates its own numbers is worse than one that is two lines
+        // tall (§3.1 allows exactly that, and only that).
+        if typeSize.isAccessibilitySize {
+            HStack(spacing: SetColumn.gap) {
+                sideTag(tag)
+                // THE EFFORT COMES DOWN HERE TOO. It is a word now, and the
+                // widest of them — "Challenging" — cannot share a line with an
+                // AX5 load and its two steppers. A third line costs this row
+                // 30 pt at a size where it is already 120 tall.
+                VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                    if isCardio {
+                        durationField(targets)
+                        distanceField(targets)
+                    } else {
+                        if !isWeightless { weightField(targets) }
+                        repsField(targets)
+                        effort(targets)
+                    }
+                }
+                .padding(.vertical, OnyxSpace.s)
+                Spacer(minLength: 0)
+            }
+        } else {
+            HStack(spacing: SetColumn.gap) {
+                sideTag(tag)
+                // No `×` between them any more. It was the row's way of saying
+                // which number was which, and the column headers say it better
+                // and once — where this said it on all forty rows, in the width
+                // that the effort word now uses to say something.
+                if isCardio {
+                    durationField(targets)
+                    distanceField(targets)
+                } else {
+                    if !isWeightless { weightField(targets) }
+                    repsField(targets)
+                    effort(targets)
+                }
+            }
+        }
+    }
+
+    /// The `L` or the `R`, and nothing at all when the sides agree.
+    ///
+    /// Tertiary ink and a micro role: it labels a line rather than announcing
+    /// one, and the badge beside it is already carrying the set's identity.
+    @ViewBuilder
+    private func sideTag(_ tag: String?) -> some View {
+        if let tag {
+            Text(tag)
+                .onyxType(.micro).fontWeight(.bold)
+                .foregroundStyle(Color.onyx.textTertiary)
+                .frame(width: SetColumn.side)
+                .accessibilityHidden(true)
+        }
     }
 
     /// The ordinal — and the tap path.
@@ -944,7 +1160,7 @@ private struct SetRowView: View {
     private var badge: some View {
         ZStack {
             badgeSurface
-            if row.isDone && row.kind == .normal {
+            if isDone && row.kind == .normal {
                 // ── THREE OUTCOMES, ONE GLYPH SLOT ──────────────────────────
                 // A record outranks a failure: both are true of a set taken to
                 // the stop that beat something, and "you beat it" is the fact
@@ -952,24 +1168,41 @@ private struct SetRowView: View {
                 // the effort column ALSO says in words — deliberately, because
                 // the badge is what you see in peripheral vision scrolling the
                 // deck and the word is what you read when you stop.
-                Group {
-                    if isRecord {
-                        Image(systemName: "trophy.fill")
-                    } else if isFailure {
+                //
+                // ── AND WHEN IT IS BOTH ─────────────────────────────────────
+                // A set that beat something AND went to the stop is the best
+                // set in the session, and it must not have to choose which
+                // half of that to say. The slot keeps the trophy — the fact
+                // that is news — and the `F` becomes a pip in the corner, in
+                // the same red the failure chip uses. One glyph, one badge,
+                // both facts, and no second box.
+                ZStack(alignment: .bottomTrailing) {
+                    Group {
+                        if isRecord {
+                            Image(systemName: "trophy.fill")
+                        } else if isFailure {
+                            Text("F")
+                        } else {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                        .onyxType(.caption).fontWeight(.heavy)
+                        .foregroundStyle(Color.onyx.base)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    if isRecord && isFailure {
                         Text("F")
-                    } else {
-                        Image(systemName: "checkmark")
+                            .onyxType(.micro).fontWeight(.heavy)
+                            .foregroundStyle(Color.onyx.danger)
+                            .offset(x: 7, y: 5)
                     }
                 }
-                    .onyxType(.caption).fontWeight(.heavy)
-                    .foregroundStyle(Color.onyx.base)
-                    .transition(.scale(scale: 0.6).combined(with: .opacity))
             } else {
-                // The SIDE outranks the ordinal on a split row. Two rows both
-                // reading "3" is the one thing this badge must never say — the
-                // pair is one set, and which arm it is is the only fact that
-                // separates them.
-                Text(row.sideLabel ?? row.kind.badge ?? "\(ordinal)")
+                // ── THE ORDINAL, AND ONLY THE ORDINAL ───────────────────────
+                // The side used to outrank it, because a pair was two boxes
+                // and two boxes reading "3" would have been unreadable. There
+                // is one box now: the pair's own set number goes here, and the
+                // `L` / `R` moved to the sub-lines that actually differ.
+                Text(row.kind.badge ?? "\(ordinal)")
                     .onyxType(.caption).fontWeight(.bold).onyxNumeral()
                     .foregroundStyle(badgeInk)
                     // The badge is the one column that must NOT grow with the
@@ -1037,6 +1270,10 @@ private struct SetRowView: View {
         .accessibilityActions {
             Button("Set options") { onOptions() }
             Button("Delete set") { onDelete() }
+            // The row's own tap gesture is invisible to VoiceOver — a gesture
+            // on a container has no element to hang off. Same fix as the two
+            // above, and the same reason.
+            if isRecord { Button("Show records") { onRecord() } }
         }
     }
 
@@ -1047,15 +1284,24 @@ private struct SetRowView: View {
     /// gives up on ("unable to type-check this expression in reasonable time"),
     /// and it does not name the operand that tipped it over.
     private var spokenLabel: String {
-        var parts: [String] = [row.isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged"]
-        if let side = row.side { parts.append(side) }
+        var parts: [String] = [isDone ? "Set \(ordinal), logged" : "Set \(ordinal), not logged"]
+        // A pair says so, and says which way it splits — the two sub-lines are
+        // a visual distinction and VoiceOver cannot see them.
+        if rows.count > 1 {
+            parts.append("both sides")
+            if layout != .unified { parts.append("left and right differ") }
+        }
         if row.kind != .normal { parts.append(row.kind.label) }
         if let tags = SetQuality.summary(row.qualities) { parts.append(tags) }
         let sentence = parts.joined(separator: ", ")
         return isRecord ? sentence + ". Personal record." : sentence
     }
 
-    private var isRecord: Bool { row.isRecord && row.isDone }
+    /// A record on EITHER side is a record for the set.
+    ///
+    /// Both arms beating the same bar is one achievement, not two, and the old
+    /// row drew a trophy per side for it. One box, one trophy.
+    private var isRecord: Bool { isDone && rows.contains(where: \.isRecord) }
 
     /// Taken to failure — the ladder's top rung, `RpeLadder` value 10.
     ///
@@ -1064,8 +1310,11 @@ private struct SetRowView: View {
     /// failure set), the rating is how it went. A set rated 10 is one that
     /// missed a rep or lost position, whatever it was planned as, and that is
     /// the one worth marking on the badge.
+    ///
+    /// EITHER side, for the same reason a record is either side: an arm taken
+    /// to the stop is a set taken to the stop.
     private var isFailure: Bool {
-        row.isDone && row.rpe == RpeLadder.stops.last?.value
+        isDone && rows.contains { $0.rpe == RpeLadder.stops.last?.value }
     }
 
     /// ── STATE IS THE FILL TREATMENT, NOT THE HUE ────────────────────────────
@@ -1090,7 +1339,7 @@ private struct SetRowView: View {
                 style: StrokeStyle(lineWidth: 1.5, dash: [3, 3])
             )
         default:
-            shape.fill(row.isDone ? (isRecord ? Color.onyx.record : rail) : Color.onyx.hairline)
+            shape.fill(isDone ? (isRecord ? Color.onyx.record : rail) : Color.onyx.hairline)
         }
     }
 
@@ -1104,7 +1353,27 @@ private struct SetRowView: View {
         }
     }
 
-    private var weightField: some View {
+    /// A value that every target row carries the same, or nil when they differ.
+    ///
+    /// Only ever read on a line that is drawing ONE value for several rows, so
+    /// "they differ" cannot reach the screen — `SetPairLayout` has already sent
+    /// that case down the two-line path. It exists so the getter has an honest
+    /// answer rather than an arbitrary side's.
+    private func shared<T: Equatable>(_ targets: [LoggerModel.SetRow], _ key: (LoggerModel.SetRow) -> T?) -> T? {
+        guard let first = targets.first.map(key) else { return nil }
+        return targets.allSatisfy { key($0) == first } ? first : nil
+    }
+
+    /// Write one number to every row this line stands for, and commit each.
+    ///
+    /// The commit is per ROW because the log is per row: a pair is one set on
+    /// screen and two `set_events` in the store, and amending one of them is
+    /// how a pair's two halves end up disagreeing in the weekly export.
+    private func write(_ targets: [LoggerModel.SetRow], _ apply: (LoggerModel.SetRow) -> Void) {
+        for row in targets { apply(row) }
+    }
+
+    private func weightField(_ targets: [LoggerModel.SetRow]) -> some View {
         stepper(
             // ── THE UNIT MOVED UP ONE ROW ───────────────────────────────────
             // The header says `KG` once per card; printing it again on every
@@ -1120,22 +1389,31 @@ private struct SetRowView: View {
             coarse: Ceilings.loadStepKg, fine: Ceilings.loadStepFineKg,
             label: "weight",
             apply: { delta in
-                let next = max(0, (row.weightKg ?? 0) + delta)
-                guard next != row.weightKg else { return false }
-                row.weightKg = next
+                // The whole line moves together. On a unified pair both arms
+                // take the plate, which is what "one set" means when you add
+                // one to it; the sides only move apart down the split path,
+                // where each sub-line writes to its own row.
+                let next = max(0, (shared(targets, \.weightKg) ?? targets.first?.weightKg ?? 0) + delta)
+                guard next != shared(targets, \.weightKg) else { return false }
+                write(targets) { $0.weightKg = next }
                 return true
-            }
+            },
+            commit: { commit(targets) }
         ) {
             NumericField(
-                value: $row.weightKg, unit: "kilograms", decimals: true,
+                value: Binding(
+                    get: { shared(targets, \.weightKg) },
+                    set: { next in write(targets) { $0.weightKg = next } }
+                ),
+                unit: "kilograms", decimals: true,
                 minWidth: SetColumn.weightFloor, fills: !typeSize.isAccessibilitySize,
                 prominent: true,
                 // The one number on the card that CHANGED today, in the same
                 // green as the header chip that explains why. The chip is four
                 // rows and 180 pt away from the load it is about; without this
                 // the bumped row is drawn exactly like the three that were not.
-                tint: row.progressed && !row.isDone ? Color.onyx.good : nil,
-                onCommit: onCommit
+                tint: row.progressed && !isDone ? Color.onyx.good : nil,
+                onCommit: { commit(targets) }
             )
         }
         // Flexible only while there ARE columns. On the stacked accessibility
@@ -1147,7 +1425,7 @@ private struct SetRowView: View {
 
     /// Reps take no printed unit while there is a header saying `REPS`: "7.5 kg
     /// × 12 reps" says the same thing twice on a 44 pt row.
-    private var repsField: some View {
+    private func repsField(_ targets: [LoggerModel.SetRow]) -> some View {
         stepper(
             // Printed only where the header is not: on the stacked row `40kg`
             // is labelled and a bare `12` beside it is not, which leaves the
@@ -1159,22 +1437,99 @@ private struct SetRowView: View {
             coarse: 1, fine: nil,
             label: "reps",
             apply: { delta in
-                let next = max(0, (row.reps ?? 0) + Int(delta))
-                guard next != row.reps else { return false }
-                row.reps = next
+                let next = max(0, (shared(targets, \.reps) ?? targets.first?.reps ?? 0) + Int(delta))
+                guard next != shared(targets, \.reps) else { return false }
+                write(targets) { $0.reps = next }
                 return true
-            }
+            },
+            commit: { commit(targets) }
         ) {
             NumericField(
                 value: Binding(
-                    get: { row.reps.map(Double.init) },
-                    set: { row.reps = $0.map { Int($0.rounded()) } }
+                    get: { shared(targets, \.reps).map(Double.init) },
+                    set: { next in write(targets) { $0.reps = next.map { Int($0.rounded()) } } }
                 ),
                 unit: "reps", decimals: false,
                 minWidth: SetColumn.repsField, fills: false,
-                prominent: false, tint: nil, onCommit: onCommit
+                prominent: false, tint: nil, onCommit: { commit(targets) }
             )
         }
+    }
+
+    /// ── A BOUT IS MINUTES, NOT PLATES ───────────────────────────────────────
+    /// The treadmill block asked for a load and a rep count and got `0 kg × 0`,
+    /// which is not a set that happened — and the row would not tick, because
+    /// zero reps is how the deck says "this has not been performed". The three
+    /// numbers it actually carries were readable nowhere and editable nowhere:
+    /// `SetRow` has carried `durationSec`, `distanceKm` and `incline` since the
+    /// restore path needed them, and the deck simply never drew them.
+    ///
+    /// Minutes rather than seconds, because the machine is set in minutes and
+    /// `5` is the number in the founder's head. The step is one minute, and a
+    /// hold drops to thirty seconds — the same coarse/fine grammar the load has.
+    private func durationField(_ targets: [LoggerModel.SetRow]) -> some View {
+        stepper(
+            unit: "min", showsUnit: typeSize.isAccessibilitySize,
+            coarse: 1, fine: 0.5,
+            label: "duration",
+            apply: { delta in
+                let current = shared(targets, \.durationSec).map { Double($0) / 60 } ?? 0
+                let next = max(0, current + delta)
+                let seconds = Int((next * 60).rounded())
+                guard seconds != shared(targets, \.durationSec) else { return false }
+                write(targets) { $0.durationSec = seconds }
+                return true
+            },
+            commit: { commit(targets) }
+        ) {
+            NumericField(
+                value: Binding(
+                    get: { shared(targets, \.durationSec).map { Double($0) / 60 } },
+                    set: { next in write(targets) { $0.durationSec = next.map { Int(($0 * 60).rounded()) } } }
+                ),
+                unit: "minutes", decimals: true,
+                minWidth: SetColumn.weightFloor, fills: !typeSize.isAccessibilitySize,
+                prominent: true, tint: nil, onCommit: { commit(targets) }
+            )
+        }
+        .frame(maxWidth: typeSize.isAccessibilitySize ? nil : .infinity)
+    }
+
+    /// Kilometres, to two places — 0.37 is a real distance and `0.4` is not the
+    /// same walk. The coarse step is 100 m and the fine one 50, which is the
+    /// resolution a treadmill's own display has.
+    private func distanceField(_ targets: [LoggerModel.SetRow]) -> some View {
+        stepper(
+            unit: "km", showsUnit: typeSize.isAccessibilitySize,
+            coarse: 0.1, fine: 0.05,
+            label: "distance",
+            apply: { delta in
+                let next = max(0, (shared(targets, \.distanceKm) ?? 0) + delta)
+                // Two places, or a chain of 0.1s lands on 0.30000000000000004
+                // and the field renders six digits of floating-point noise.
+                let rounded = (next * 100).rounded() / 100
+                guard rounded != shared(targets, \.distanceKm) else { return false }
+                write(targets) { $0.distanceKm = rounded }
+                return true
+            },
+            commit: { commit(targets) }
+        ) {
+            NumericField(
+                value: Binding(
+                    get: { shared(targets, \.distanceKm) },
+                    set: { next in write(targets) { $0.distanceKm = next } }
+                ),
+                unit: "kilometres", decimals: true,
+                minWidth: SetColumn.weightFloor, fills: !typeSize.isAccessibilitySize,
+                prominent: true, tint: nil, onCommit: { commit(targets) }
+            )
+        }
+        .frame(maxWidth: typeSize.isAccessibilitySize ? nil : .infinity)
+    }
+
+    /// Commit every row a line stands for — the store's unit is the row.
+    private func commit(_ targets: [LoggerModel.SetRow]) {
+        for row in targets { onCommit(row) }
     }
 
     /// A number with a minus and a plus around it.
@@ -1183,6 +1538,9 @@ private struct SetRowView: View {
         coarse: Double, fine: Double?,
         label: String,
         apply: @escaping (Double) -> Bool,
+        /// Writes the line's rows to the store — one commit per row it stands
+        /// for. Passed in rather than read off `onCommit`, which is per-row.
+        commit: @escaping () -> Void,
         @ViewBuilder field: () -> Field
     ) -> some View {
         // Zero in a column — the two ends and the field ARE the control, and a
@@ -1192,7 +1550,7 @@ private struct SetRowView: View {
         HStack(spacing: typeSize.isAccessibilitySize ? OnyxSpace.xs : 0) {
             StepControl(
                 symbol: "minus", coarse: coarse, fine: fine, label: label,
-                sign: -1, apply: apply, onRelease: onCommit
+                sign: -1, apply: apply, onRelease: commit
             )
             // Swipe up and down to adjust, which is the gesture the platform's
             // own `Stepper` teaches — on the FIELD, because that is the element
@@ -1202,8 +1560,8 @@ private struct SetRowView: View {
             field()
                 .accessibilityAdjustableAction { direction in
                     switch direction {
-                    case .increment: _ = apply(coarse); onCommit()
-                    case .decrement: _ = apply(-coarse); onCommit()
+                    case .increment: _ = apply(coarse); commit()
+                    case .decrement: _ = apply(-coarse); commit()
                     @unknown default: break
                     }
                 }
@@ -1222,7 +1580,7 @@ private struct SetRowView: View {
             }
             StepControl(
                 symbol: "plus", coarse: coarse, fine: fine, label: label,
-                sign: 1, apply: apply, onRelease: onCommit
+                sign: 1, apply: apply, onRelease: commit
             )
         }
         .accessibilityElement(children: .contain)
@@ -1243,8 +1601,83 @@ private struct SetRowView: View {
     /// this scale IS: an ordered ramp where the neighbours matter. Picking
     /// "Hard" when you meant "Very Hard" is a one-notch mistake and the menu
     /// made it look like any other. See `EffortPickerSheet`.
-    private var effort: some View {
-        Button { onEffort() } label: {
+    /// ── AND WHY A PAIR'S TWO RATINGS FIT IN ONE COLUMN ──────────────────────
+    /// Two arms usually move the same load for the same reps and one of them
+    /// is harder. That is a difference in ONE number, and drawing it as two
+    /// value lines repeats `12 kg × 10` in order to say `9` instead of `8`. So
+    /// the effort splits on its own, compactly, inside the track it already
+    /// owns: `L 8 · R 9`, each half its own target. See `SetPairLayout`.
+    @ViewBuilder
+    private func effort(_ targets: [LoggerModel.SetRow]) -> some View {
+        if targets.count > 1 && layout == .effortSplit {
+            HStack(spacing: 2) {
+                ForEach(targets) { side in
+                    if side.id != targets.first?.id {
+                        Text("·")
+                            .onyxType(.micro)
+                            .foregroundStyle(Color.onyx.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    compactEffort(side, showsTag: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: typeSize.isAccessibilitySize ? .leading : .trailing)
+        } else if targets.count == 1 && rows.count > 1 {
+            // A sub-line of a split pair. The word does not fit beside two
+            // number groups and an `L`, and the number does — see
+            // `SetColumn.side`, which is paid for out of exactly this.
+            // No side letter here: the sub-line already prints one, and the
+            // same `L` twice on one line reads as two different facts.
+            compactEffort(targets[0], showsTag: false)
+                .frame(maxWidth: .infinity, alignment: typeSize.isAccessibilitySize ? .leading : .trailing)
+        } else {
+            wordEffort(targets)
+        }
+    }
+
+    /// One side's rating as its number, with its own side letter.
+    ///
+    /// A number rather than a word here, and that is not a downgrade: the row
+    /// is already telling you this is the left arm and the right arm, so the
+    /// question has narrowed from "how hard was that" to "which of the two was
+    /// harder" — and two numbers answer a comparison better than two words.
+    private func compactEffort(_ side: LoggerModel.SetRow, showsTag: Bool) -> some View {
+        Button { onEffort([side]) } label: {
+            HStack(spacing: 1) {
+                if let tag = side.sideLabel, showsTag {
+                    Text(tag)
+                        .onyxType(.micro).fontWeight(.bold)
+                        .foregroundStyle(Color.onyx.textTertiary)
+                }
+                // An unrated side says so in a word. It was a dash, which on a
+                // line that already contains two `−` stepper ends reads as a
+                // third one — the empty slot has to be a different KIND of
+                // thing from the controls beside it, which is the same
+                // argument the full-width column's stroked "Rate" capsule
+                // makes one size up.
+                if let rpe = side.rpe {
+                    Text(OnyxFormat.kg(rpe))
+                        .onyxType(.caption).fontWeight(.bold).onyxNumeral()
+                        .foregroundStyle(Color.onyx.effort(rpe))
+                } else {
+                    Text("Rate")
+                        .onyxType(.micro).fontWeight(.semibold)
+                        .foregroundStyle(Color.onyx.textTertiary)
+                }
+            }
+            .lineLimit(1)
+            .fixedSize()
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Effort, \(side.sideLabel == "L" ? "left" : "right")")
+        .accessibilityValue(RpeLadder.readout(side.rpe) ?? "Not rated")
+        .accessibilityHint("Opens the effort picker")
+    }
+
+    private func wordEffort(_ targets: [LoggerModel.SetRow]) -> some View {
+        Button { onEffort(targets) } label: {
             // ── WHY "RATE" WEARS AN OUTLINE ─────────────────────────────────
             // Effort below 8 is drawn in secondary ink on purpose, so an
             // unrated set and a set rated 6.5 rendered as the same grey word in
@@ -1323,7 +1756,7 @@ private struct SetRowView: View {
         RoundedRectangle(cornerRadius: OnyxCorner.row, style: .continuous)
             .fill(justLogged ? Color.onyx.good.opacity(0.22)
                   : isRecord ? rail.opacity(0.20)
-                  : row.isDone ? rail.opacity(0.10)
+                  : isDone ? rail.opacity(0.10)
                   : Color.onyx.hairline.opacity(0.35))
     }
 
@@ -1355,12 +1788,12 @@ private struct SetRowView: View {
         // a warm-up before you perform it is exactly the moment you want the
         // options. So the refusal lives here, where it only stops the tap: no
         // event, and no haptic claiming one was written.
-        guard canLog || row.isDone else { return }
-        let wasRecord = row.isRecord
+        guard canLog || isDone else { return }
+        let wasRecord = isRecord
         let became = onLog()
         commitTicks += 1
         guard became else { return }
-        if row.isRecord && !wasRecord { recordTicks += 1 }
+        if isRecord && !wasRecord { recordTicks += 1 }
         justLogged = true
         let token = UUID()
         flashToken = token
@@ -1484,7 +1917,7 @@ private struct StepControl: View {
             // path owns the step and the commit, so this returns. An assistive
             // activation produces no press edges at all and falls through.
             guard !pressActive else { return }
-            _ = apply(sign * coarse)
+            coarseStep()
             onRelease()
         } label: {
             Image(systemName: symbol)
@@ -1524,6 +1957,37 @@ private struct StepControl: View {
     /// the result down. A press cancelled by the deck scrolling out from under
     /// the thumb arrives here as an up, which is the point of driving this from
     /// a button's own press state.
+    /// ── ONE COARSE STEP PER ACTIVATION, WHOEVER GETS THERE FIRST ────────────
+    /// The generation counters above make the button's ACTION defer to a press
+    /// that is already open. They cannot help when the two edges arrive the
+    /// other way round, and on a quick tap they do: `configuration.isPressed`
+    /// is state, so `onChange` runs on the next update pass, while the
+    /// button's action runs synchronously inside the gesture. Tap fast enough
+    /// that touch-down and touch-up land in the same frame and the order is
+    /// action (no press yet → steps) THEN `isPressed = true` (steps again).
+    /// Reps moved by 2 where the control is declared `coarse: 1` and a load by
+    /// 5 where it is declared 2.5 — the "wrong constant" report, with the right
+    /// constants in the source, for the second time.
+    ///
+    /// So the step is idempotent within a window instead of ordered: whichever
+    /// path arrives first takes the step and the other finds it already taken.
+    /// 60 ms is well under the ~100 ms floor of a human double-tap and well
+    /// over one frame at 120 Hz, and a ramp tick (100 ms apart, and behind the
+    /// press guard anyway) is never swallowed by it.
+    ///
+    /// ponytail: a time window, not a delivery-order contract — SwiftUI does
+    /// not offer one. If a future SwiftUI documents the order, this collapses
+    /// back to the guard alone.
+    @State private var lastCoarseStep = Date.distantPast
+    private static let coalesce: TimeInterval = 0.06
+
+    private func coarseStep() {
+        let now = Date()
+        guard now.timeIntervalSince(lastCoarseStep) > Self.coalesce else { return }
+        lastCoarseStep = now
+        _ = apply(sign * coarse)
+    }
+
     private func press(_ isDown: Bool) {
         guard isDown else { return release() }
         // UNCONDITIONALLY, and first. A `Task` is not cancelled when its last
@@ -1533,7 +1997,7 @@ private struct StepControl: View {
         // second, with nothing left holding a handle to cancel it.
         cancelRamp()
         pressGeneration += 1
-        _ = apply(sign * coarse)
+        coarseStep()
         // The detent, once per press. It used to live on the row and be bumped
         // by every ramp tick, which is ten selection haptics a second — a buzz
         // rather than a detent, and the opposite of what §3.4 asks for.
@@ -1692,6 +2156,34 @@ private struct NumericField: View {
             .fixedSize(horizontal: !fills, vertical: false)
             .focused($focused)
             .accessibilityLabel(unit)
+            // ── A TAP SELECTS THE NUMBER, IT DOES NOT PLACE A CURSOR ────────
+            // The field opens with the caret at the end of a number you are
+            // about to replace, because you are standing in front of a machine
+            // that says 47 and the field says 40. Typing then appends: `4012`.
+            // So the actual gesture was tap, hold to get the loupe or press
+            // Done, tap again, backspace twice — four interactions to change a
+            // load, mid-set, with one hand.
+            //
+            // A `TextField` has no selection API in SwiftUI, and the two
+            // alternatives are worse: clearing the text on focus makes the
+            // value nil the moment you tap, so tapping away without typing
+            // DELETES the load, and a `UIViewRepresentable` re-implements a
+            // field that already works. `textDidBeginEditing` carries the
+            // `UITextField` that just became first responder — selecting all
+            // of it is the whole fix, and it is the same one UIKit apps have
+            // always used.
+            //
+            // The async hop is load-bearing: UIKit sets the caret AFTER this
+            // notification, so a selection made synchronously is overwritten
+            // in the same run loop.
+            .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { note in
+                guard let field = note.object as? UITextField else { return }
+                DispatchQueue.main.async {
+                    field.selectedTextRange = field.textRange(
+                        from: field.beginningOfDocument, to: field.endOfDocument
+                    )
+                }
+            }
             .onAppear { text = Self.render(value) }
             // Guarded, because `onAppear` seeds `text` and that fires this on
             // the same cycle — so every row scrolling into view wrote its own

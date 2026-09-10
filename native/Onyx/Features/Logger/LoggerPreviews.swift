@@ -52,6 +52,87 @@ enum LoggerPreviews {
             .onyxScreen(.train)
             .environment(AppEnvironment.preview)
             .preferredColorScheme(.dark)
+        case "set-row-split":
+            // ── THE PAIR, IN ALL THREE OF ITS LAYOUTS ──────────────────────
+            // A unilateral movement's set box is one box whatever the two
+            // sides say, and how much of it splits depends on how much they
+            // disagree (`SetPairLayout`). All three states have to be in one
+            // photograph or the shot reviews a rule by showing one third of
+            // it: set 1 agrees and draws as an ordinary row, set 2 differs
+            // only in effort and splits the rating alone, set 3 differs in
+            // load and reps and draws two sub-lines under one badge.
+            //
+            // The card is a real deck card driven by the real model, so the
+            // ordinals in the photograph are the ordinals `LoggerModel.groups`
+            // produces — which is the whole thing being reviewed.
+            let split = LoggerModel.previewUpperB(logged: true)
+            let arm = split.exercises.first { split.canSplit($0) }!
+            let _ = {
+                while LoggerModel.physical(arm.rows) < 3 { split.addSet(to: arm) }
+                let sets = LoggerModel.groups(arm.rows)
+                // 1 · both arms the same, and both logged.
+                for row in sets[0] {
+                    row.weightKg = 7.5; row.reps = 15; row.rpe = 8
+                    if !row.isDone { split.toggleDone(row, in: arm) }
+                }
+                // 2 · same numbers, and the left one was harder.
+                for (i, row) in sets[1].enumerated() {
+                    row.weightKg = 10; row.reps = 12; row.rpe = i == 0 ? 9.5 : 8.5
+                    if !row.isDone { split.toggleDone(row, in: arm) }
+                }
+                // 3 · the weaker side, unlogged: two lines, two loads.
+                for (i, row) in sets[2].enumerated() {
+                    row.weightKg = i == 0 ? 12.5 : 10
+                    row.reps = i == 0 ? 10 : 8
+                }
+                split.stopRest()
+            }()
+            ScrollView {
+                ExerciseCardView(exercise: arm, model: split, position: (0, split.exercises.count))
+                    .padding(.horizontal, OnyxSpace.m)
+            }
+            .onyxScreen(.train)
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
+        case "set-row-records":
+            // The sheet the trophy opens — what the record actually was and
+            // what it beat. Presented by the harness for the same reason the
+            // finish sheet is: a screen that ships its own way to open a sheet
+            // for a screenshot is a state nobody can reach and nobody
+            // maintains. The records are the LIVE ones: the pulldown's second
+            // set takes two axes through `toggleDone` in the preview data, so
+            // this is the real engine's answer and not a fixture.
+            let won = LoggerModel.previewUpperB(logged: true)
+            let lift = won.exercises.first { $0.name == "Neutral-Grip Lat Pulldown" }!
+            let best = LoggerModel.groups(lift.rows).first { group in
+                group.contains(where: \.isRecord)
+            } ?? []
+            NavigationStack {
+                LiveLoggerView(model: won)
+                    .sheet(isPresented: .constant(true)) {
+                        PrRecordSheet(
+                            exerciseName: lift.name,
+                            setLabel: "Set 2",
+                            records: won.records(for: best, in: lift)
+                        )
+                    }
+            }
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
+        case "set-row-cardio":
+            // The treadmill block, which asked for kilograms and reps until
+            // this wave and now asks for the two numbers a walk actually has.
+            // Its own screen because the deck's first page is the only place
+            // it appears and a paged deck photographs one page.
+            let cardio = LoggerModel.previewUpperB(logged: true)
+            let bout = cardio.exercises.first { $0.rows.contains(where: \.isCardio) }!
+            ScrollView {
+                ExerciseCardView(exercise: bout, model: cardio, position: (0, cardio.exercises.count))
+                    .padding(.horizontal, OnyxSpace.m)
+            }
+            .onyxScreen(.train)
+            .environment(AppEnvironment.preview)
+            .preferredColorScheme(.dark)
         case "effort-picker":
             // Over a set that was SEEDED and then out-grown — the pip state the
             // sheet exists to explain. A picker shot with nothing chosen
