@@ -309,7 +309,7 @@ private struct SettingsForm: View {
 enum OnyxLinks {
     static let privacyPolicy = URL(string: "https://helix-health-fitness.netlify.app/privacy")!
 
-    /// `1.0 (12)` — what a review note or a bug report needs to identify a build.
+    /// `1.3.0 (10300)` — what a review note or a bug report needs to identify a build.
     static var versionString: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "—"

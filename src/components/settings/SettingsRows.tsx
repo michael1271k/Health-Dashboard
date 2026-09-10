@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { ZoneRow } from '@/components/ui/Zone'
 
 /**
- * The three row shapes a settings list needs.
+ * The four row shapes a settings list needs.
  *
  * Settings was a page of cards, each inventing its own label/description/control
  * layout — a `flex items-center justify-between gap-4` with two `<div>`s, copied
@@ -101,3 +101,26 @@ export function ToggleRow({ label, hint, on, onToggle }: {
   )
 }
 
+
+/**
+ * A row that only reports — no control, no destination.
+ *
+ * `SettingRow` renders a chevron and a tap target, which promises a screen that
+ * does not exist for a build number. This is the same 52px row with the promise
+ * removed.
+ */
+export function ValueRow({ label, hint, value }: {
+  label: string
+  hint?: string
+  value: string
+}) {
+  return (
+    <ZoneRow className="flex items-center gap-3 min-h-[52px]">
+      <span className="min-w-0 flex-1">
+        <span className="block text-fluid-sm text-text font-medium">{label}</span>
+        {hint && <span className="block text-[11px] text-muted leading-snug">{hint}</span>}
+      </span>
+      <span className="helix-num text-fluid-xs text-muted shrink-0 tabular-nums">{value}</span>
+    </ZoneRow>
+  )
+}

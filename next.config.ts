@@ -1,4 +1,6 @@
 import type { NextConfig } from 'next'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import withSerwistInit from '@serwist/next'
 import withBundleAnalyzer from '@next/bundle-analyzer'
 
@@ -20,9 +22,18 @@ const withSerwist = withSerwistInit({
 // per-build timestamp.
 const BUILD_ID = process.env.COMMIT_REF ?? `dev-${Date.now()}`
 
+// Marketing version — read from the SINGLE place it is edited. The same
+// string is written into both Xcode projects by `npm run version:sync`, so a
+// bug report that says "1.3.0" means the same release on the web and on the
+// phone. It is a build-time read: the deployed bundle carries the version the
+// deploy was cut from, not whatever package.json says at request time.
+const APP_VERSION = JSON.parse(
+  readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
+).version as string
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID, NEXT_PUBLIC_APP_VERSION: APP_VERSION },
   images: {
     remotePatterns: [],
   },

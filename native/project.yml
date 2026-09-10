@@ -38,6 +38,21 @@ packages:
   OnyxUI:
     path: Packages/OnyxUI
 
+# ── VERSION ──────────────────────────────────────────────────────────────────
+# WRITTEN BY `npm run version:sync` FROM package.json — do not hand-edit.
+#
+# Project-level, so the app, the widget extension and the watch app all carry
+# the SAME numbers. They did not: the watch app had drifted to 1.1 while the
+# phone it must pair with still said 1.0, and a watch app whose version does not
+# match its companion is an upload the validator rejects.
+#
+# Every Info.plist below reads these through $(MARKETING_VERSION) /
+# $(CURRENT_PROJECT_VERSION) rather than restating them.
+settings:
+  base:
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "10300"
+
 targets:
   Onyx:
     type: application
@@ -108,8 +123,8 @@ targets:
       path: Onyx/Support/Info.plist
       properties:
         CFBundleDisplayName: Onyx
-        CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
         # Dark only, matching the web app — which pins `defaultTheme="dark"` and
         # ships no toggle anywhere. A light palette is not a port, it is a design
@@ -180,8 +195,6 @@ targets:
         # target has no icon at all: a blank Home Screen tile, and an upload the
         # validator rejects for a missing marketing icon.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "1"
         # Automatic signing with the free personal team. The 7-day provisioning
         # expiry is a property of that team, not of this setting.
         CODE_SIGN_STYLE: Automatic
@@ -232,16 +245,14 @@ targets:
       path: OnyxWidgets/Support/Info.plist
       properties:
         CFBundleDisplayName: Onyx Activity
-        CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native.widgets
-        MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: W9UMPV973P
         SWIFT_VERSION: "6.0"
@@ -301,8 +312,8 @@ targets:
       path: OnyxWatch/Support/Info.plist
       properties:
         CFBundleDisplayName: Onyx
-        CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         # The modern single-target watch app. Without it the build is treated
         # as a legacy WatchKit extension host and will not launch.
         WKApplication: true
@@ -329,8 +340,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.onyx.health.michael.native.watchkitapp
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: W9UMPV973P
         SWIFT_VERSION: "6.0"
