@@ -454,7 +454,9 @@ struct SyncEngineTests {
         // And the backoff holds it back until its time, rather than burning the
         // radio on the same 400 at every drain.
         #expect(try db.claimOutbox(now: now.addingTimeInterval(1)).isEmpty)
-        #expect(try db.claimOutbox(now: now.addingTimeInterval(SyncBackoff.base + 1)).count == 1)
+        // The retry is spaced by `base` plus up to a quarter of jitter, so the
+        // claim waits for the widest step the backoff can hand out.
+        #expect(try db.claimOutbox(now: now.addingTimeInterval(SyncBackoff.base * (1 + SyncBackoff.jitterFraction) + 1)).count == 1)
     }
 
     @Test("one unresolvable movement costs its own rows and nothing else")

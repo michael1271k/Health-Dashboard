@@ -222,6 +222,10 @@ struct RowPushTests {
         #expect(await push.sent.map(\.table) == ["daily_metrics"])
     }
 
+    /// Coverage, not a regression test: `pushRows` never acknowledged any error,
+    /// so this passed before W1 too. The regression test for the PGRST205 drop
+    /// is `SyncEngineTests.schemaCacheMissHoldsTheItem` (set_events), which
+    /// fails on the pre-W1 `isMissingRelation`. Keep both.
     @Test("a PostgREST schema-cache miss on a mirrored row is held, attempts counted, nothing dropped")
     func schemaCacheMissIsHeld() async throws {
         let db = try store()

@@ -92,6 +92,18 @@ generator is gone and the fixtures are frozen test resources:
    by `invariant-auditor` before the number is edited.
 3. **Any domain module without a fixture does not ship.**
 
+If a fixture's `input` is a partial object, write the **full** object: Swift's
+synthesized `Decodable` requires every non-optional key, and a fixture the
+domain cannot decode is a fixture that tests nothing.
+
+### `jsRound`, and why it exists
+
+`Math.round` rounds a half towards **positive infinity**; Swift's `rounded()`
+rounds **away from zero**. They disagree on every negative half. The fixtures
+were computed under the first rule and the stored scores on the server still
+are, so `Rounding.swift` keeps the shim: use `jsRound`, never `rounded()`, in
+domain arithmetic.
+
 ## Free-team constraints, and where they show up
 
 Everything here is built to work without a paid Apple Developer Program, and to

@@ -26,11 +26,15 @@ public enum VitalsGate {
     /// A flat history has MAD 0 and would flag a 1 ms move; the band is never
     /// narrower than this.
     public static let hrvMadFloorMs: Double = 2
-    /// And never narrower than half the median either way. A night after
-    /// alcohol, a fever or a hard block can sit 30–40 % under the athlete's
-    /// median, and a tight fortnight (MAD 2–3 ms) would call that a strap
-    /// fault. The band is for readings no BODY produces, not for bad nights.
-    public static let hrvRelativeFloor: Double = 0.5
+    /// And never narrower than a fraction of the median, ASYMMETRIC because
+    /// SDNN is right-skewed: a night after alcohol, a fever or a hard block
+    /// sits 30–40 % under the median, and a rebound after a deload can sit
+    /// 60–90 % over it. A tight fortnight (MAD 2–3 ms) would call either a
+    /// strap fault. The band is for readings no BODY produces, not for
+    /// unusual nights — so it reaches half the median down and a whole
+    /// median up.
+    public static let hrvRelativeFloorBelow: Double = 0.5
+    public static let hrvRelativeFloorAbove: Double = 1.0
     private static let madToSigma: Double = 1.4826
 
     /// `history` is the athlete's prior readings — `Readiness.constants.baselineDays`
@@ -43,9 +47,10 @@ public enum VitalsGate {
         guard prior.count >= hrvMinHistory else { return nil }
         let median = Effort.median(prior)
         let sigma = Swift.max(Effort.median(prior.map { abs($0 - median) }) * madToSigma, hrvMadFloorMs)
-        let band = Swift.max(hrvOutlierZ * sigma, hrvRelativeFloor * median)
+        let floor = (value < median ? hrvRelativeFloorBelow : hrvRelativeFloorAbove) * median
+        let band = Swift.max(hrvOutlierZ * sigma, floor)
         guard abs(value - median) > band else { return nil }
-        return "beyond ±\(jsRound(band)) ms of the \(prior.count)-night median \(jsRound(median)) ms"
+        return "beyond \(value < median ? "−" : "+")\(jsRound(band)) ms of the \(prior.count)-night median \(jsRound(median)) ms"
     }
 
     // MARK: Body percentages

@@ -84,7 +84,7 @@ the numbers were quietly getting wrong stop being wrong.
 ### Removed
 - `docs/sql/w1-cleanup.sql` (founder pastes) drops `widget_tokens`,
   `notion_credentials`, `notion_exports`, `body_measurements`,
-  `_bak_20260723` and the `exercise_history()` RPC.
+  the `_bak_20260723` backup schema and the `exercise_history()` RPC.
 
 ---
 
