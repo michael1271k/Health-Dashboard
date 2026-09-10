@@ -460,18 +460,28 @@ public actor SyncEngine {
         }
     }
 
-    /// True when PostgREST is saying the TABLE or a COLUMN is not there, which
-    /// no retry can fix, as opposed to a 5xx, a timeout or a dropped socket,
-    /// which a retry usually does.
+    /// True when POSTGRES is saying the table is not there — `42P01`, the one
+    /// answer no retry can change.
     ///
-    /// Matched on `PostgrestError.code` rather than on a status or a message:
-    /// PostgREST answers a missing relation with `PGRST205` (not in the schema
-    /// cache) or Postgres's own `42P01`, and a missing column with `PGRST204`
-    /// — `DayEditing` already leans on that last one. A `URLError`, a
-    /// `CancellationError` or a 503 carries none of them and is held.
+    /// ── WHY THE POSTGREST CODES ARE NOT HERE ANY MORE ───────────────────────
+    /// This used to match `PGRST205` and `PGRST204` too, reading them as "the
+    /// table / column does not exist". They mean "not in MY schema cache" —
+    /// and PostgREST's cache is stale during a reload or a restart, the same
+    /// window that produces the 503s the item is held for. In that window an
+    /// existing table answers PGRST205, the event was acknowledged as
+    /// undeliverable, and it was gone for good the moment the cache warmed.
+    /// A silent permanent loss on a transient condition, on the one table
+    /// whose rows only ever exist as events.
+    ///
+    /// `42703` (undefined column) goes for the same reason in the other
+    /// direction: a column the SQL has not added yet is the pasted-by-hand
+    /// case, and it appears the day the founder pastes. Held, backed off, and
+    /// delivered then. The cost of holding a genuinely missing table is an
+    /// outbox that grows by one row per set until the SQL is run, retried at
+    /// most once an hour (`SyncBackoff.cap`) — the cost of dropping a real
+    /// event is the workout.
     private static func isMissingRelation(_ error: any Error) -> Bool {
-        guard let code = (error as? PostgrestError)?.code else { return false }
-        return ["PGRST205", "PGRST204", "42P01", "42703"].contains(code)
+        (error as? PostgrestError)?.code == "42P01"
     }
 
     // MARK: - Mirrored rows

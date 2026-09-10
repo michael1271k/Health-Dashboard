@@ -300,5 +300,11 @@ struct SyncBackoffTests {
         // not infinite.
         #expect(SyncBackoff.delay(attempts: 40) == SyncBackoff.cap)
         #expect(SyncBackoff.delay(attempts: 400) == SyncBackoff.cap)
+        // Jitter stretches a step by up to a quarter and never past the cap:
+        // two devices that failed together must not knock again together.
+        #expect(SyncBackoff.delay(attempts: 1, jitter: 1) == SyncBackoff.base * 1.25)
+        #expect(SyncBackoff.delay(attempts: 2, jitter: 0.5) == SyncBackoff.base * 2 * 1.125)
+        #expect(SyncBackoff.delay(attempts: 40, jitter: 1) == SyncBackoff.cap)
+        #expect(SyncBackoff.delay(attempts: 0, jitter: 1) == 0)
     }
 }

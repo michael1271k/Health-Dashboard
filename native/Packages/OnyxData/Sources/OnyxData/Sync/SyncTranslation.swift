@@ -73,20 +73,25 @@ public struct SessionRef: Codable, Sendable, Equatable {
 /// ten seconds to an hour spends almost nothing on a permanent failure and
 /// still recovers a transient one within a minute.
 ///
-/// No jitter. Jitter exists to stop a fleet of clients retrying in lockstep;
-/// this app has one user and, at most, two of their devices.
+/// A quarter-step of jitter. Two devices is not a fleet, but the two of them
+/// DO fail together — a PostgREST restart, a schema-cache reload — and then
+/// they knock again together, on the same second, against a server that is
+/// still coming up. The caller passes a random fraction; the tests pass zero.
 public enum SyncBackoff {
     public static let base: TimeInterval = 10
     public static let cap: TimeInterval = 3600
+    /// The most a step may stretch: `jitter == 1` is a step and a quarter.
+    public static let jitterFraction: Double = 0.25
 
     /// `attempts` is the count AFTER the failure being recorded, so the first
-    /// failure waits `base`.
-    public static func delay(attempts: Int) -> TimeInterval {
+    /// failure waits `base`. `jitter` is a fraction in `0...1`.
+    public static func delay(attempts: Int, jitter: Double = 0) -> TimeInterval {
         guard attempts > 0 else { return 0 }
         // Shifting rather than `pow`: the exponent is bounded below the cap
         // check anyway, and 2^63 is not a number this should ever compute.
         let steps = min(attempts - 1, 32)
-        return min(base * TimeInterval(1 << steps), cap)
+        let stretch = 1 + jitterFraction * min(max(jitter, 0), 1)
+        return min(base * TimeInterval(1 << steps) * stretch, cap)
     }
 }
 
@@ -402,9 +407,16 @@ public struct RemoteSetRow: Codable, Sendable, Equatable {
     /// on `workout_sets.quality`. `nil` means the phone has NOTHING to say
     /// about this set, and a nil is never encoded: see `encode(to:)`.
     public var quality: String?
+    /// `created_at` — the server's clock for the row's arrival. READ ONLY:
+    /// decoded from a pull so `seedEventLog` can stamp the seed with the time
+    /// the set was actually logged, never encoded (`NOT NULL DEFAULT now()`,
+    /// and the server's clock is the better one). The local `workout_sets`
+    /// has no column for it; the seed's `created_at` is where it lives.
+    public var createdAt: Date?
 
     public enum CodingKeys: String, CodingKey {
         case id
+        case createdAt = "created_at"
         case sessionId = "session_id"
         case exerciseId = "exercise_id"
         case userId = "user_id"

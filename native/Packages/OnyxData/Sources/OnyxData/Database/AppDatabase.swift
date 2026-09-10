@@ -1512,7 +1512,9 @@ extension AppDatabase {
             item.attempts += 1
             item.lastError = error
             item.status = .failed
-            item.nextAttemptAt = now.addingTimeInterval(SyncBackoff.delay(attempts: item.attempts))
+            item.nextAttemptAt = now.addingTimeInterval(
+                SyncBackoff.delay(attempts: item.attempts, jitter: Double.random(in: 0...1))
+            )
             try item.update(db)
         }
     }

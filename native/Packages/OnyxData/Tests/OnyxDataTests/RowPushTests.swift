@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import Supabase
 import OnyxCore
 import Testing
 @testable import OnyxData
@@ -10,10 +11,13 @@ private actor RecordingPush: MirrorPushRemote {
     var sent: [(table: String, conflict: String, json: String, nulls: [String])] = []
     var deleted: [RowDeleteRef] = []
     var failing: Set<String> = []
+    var errors: [String: any Error] = [:]
+    func fail(_ table: String, with error: any Error) { errors[table] = error }
 
     func fail(_ table: String) { failing.insert(table) }
 
     func upsertRow<T: Encodable & Sendable>(_ row: T, table: String, conflict: String, nulls: [String]) async throws {
+        if let error = errors[table] { throw error }
         if failing.contains(table) { throw URLError(.notConnectedToInternet) }
         let data = try OnyxJSON.encoder.encode(row)
         sent.append((table, conflict, String(decoding: data, as: UTF8.self), nulls))
@@ -216,6 +220,26 @@ struct RowPushTests {
         #expect(report.pushed == 1)
         #expect(report.failed == 1)
         #expect(await push.sent.map(\.table) == ["daily_metrics"])
+    }
+
+    @Test("a PostgREST schema-cache miss on a mirrored row is held, attempts counted, nothing dropped")
+    func schemaCacheMissIsHeld() async throws {
+        let db = try store()
+        try seedGoals(db, calorieGoal: 1955)
+        try db.enqueueRowUpsert(table: "user_goals", id: "g1")
+
+        let push = RecordingPush()
+        await push.fail("user_goals", with: PostgrestError(
+            details: nil, hint: nil, code: "PGRST205",
+            message: "Could not find the table 'public.user_goals' in the schema cache"
+        ))
+        let report = try await engine(db, push).drain()
+
+        #expect(report.pushed == 0 && report.failed == 1)
+        let item = try #require(try db.pendingOutbox().first)
+        #expect(item.attempts == 1)
+        #expect(item.lastError?.contains("PGRST205") == true)
+        #expect(item.nextAttemptAt != nil, "and it backs off rather than spinning")
     }
 
     @Test("nothing is left reserved after a drain")

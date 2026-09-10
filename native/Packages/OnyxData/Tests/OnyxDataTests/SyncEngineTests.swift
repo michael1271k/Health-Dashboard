@@ -118,10 +118,16 @@ private struct CardinalityViolation: Error {}
 /// `PGRST102`, as PostgREST raises it on a bulk body of two shapes.
 private struct AllObjectKeysMustMatch: Error {}
 
-/// What PostgREST answers when `set_events` has never been created — the state
-/// of every install where `docs/sql/wave-10-set-events.sql` has not been run.
-/// Permanent: no retry makes a table appear.
+/// Postgres's own word that the relation does not exist. Permanent: no retry
+/// makes a table appear.
 private func missingTable() -> PostgrestError {
+    PostgrestError(details: nil, hint: nil, code: "42P01", message: "relation \"public.set_events\" does not exist")
+}
+
+/// What PostgREST answers while its schema cache is stale — during a reload,
+/// a restart, the same window that produces 503s. The table exists; the cache
+/// has not caught up. TRANSIENT, whatever the message says.
+private func schemaCacheMiss() -> PostgrestError {
     PostgrestError(
         details: nil, hint: nil, code: "PGRST205",
         message: "Could not find the table 'public.set_events' in the schema cache"
@@ -540,6 +546,29 @@ struct SyncEngineTests {
         let second = try await SyncEngine(database: db, remote: remote).drain(now: Date().addingTimeInterval(3600))
         #expect(second.pushed == 1)
         #expect(await remote.events.count == 1)
+        #expect(try db.pendingOutbox().isEmpty)
+    }
+
+    @Test("a schema-cache miss on set_events is HELD: PGRST205 is what a reloading PostgREST says about a table it has")
+    func schemaCacheMissHoldsTheItem() async throws {
+        let db = try store()
+        let remote = FakeRemote(catalogue: Self.catalogue)
+        await remote.setEventFailure(schemaCacheMiss())
+        try db.appendSet(sessionId: "s1", setId: "set-1", squat(1))
+
+        let report = try await SyncEngine(database: db, remote: remote).drain()
+
+        // This used to be acknowledged as "the table does not exist" — and the
+        // event was gone for good the moment the cache caught up.
+        #expect(await remote.sets["set-1"] != nil, "the set row still uploads")
+        #expect(report.failed == 1)
+        let queued = try #require(try db.pendingOutbox().first)
+        #expect(queued.attempts == 1)
+        #expect(queued.lastError?.contains("PGRST205") == true)
+
+        await remote.setEventFailure(nil)
+        _ = try await SyncEngine(database: db, remote: remote).drain(now: Date().addingTimeInterval(3600))
+        #expect(await remote.events.count == 1, "and it lands once the cache is warm")
         #expect(try db.pendingOutbox().isEmpty)
     }
 
