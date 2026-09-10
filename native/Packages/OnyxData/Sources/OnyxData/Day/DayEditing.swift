@@ -87,6 +87,15 @@ public extension AppDatabase {
         _ change: @Sendable (inout DailyLogRow) -> Void
     ) throws {
         try writer.write { db in
+            // The store is the trust boundary, not the form: a percentage no
+            // body has is refused before either row is touched, so the reading
+            // the athlete DID take stays exactly as it was.
+            var probe = try Self.existingDailyLog(db, userId: userId, date: date, now: now)
+            change(&probe)
+            if let v = probe.bodyFatPct, let why = VitalsGate.bodyFatArtifact(v) { throw BodyMetricError.outOfRange("body fat", v, why) }
+            if let v = probe.musclePercent, let why = VitalsGate.musclePercentArtifact(v) { throw BodyMetricError.outOfRange("muscle", v, why) }
+            if let v = probe.visceralFat, let why = VitalsGate.visceralFatArtifact(v) { throw BodyMetricError.outOfRange("visceral fat", v, why) }
+
             let day = try Self.patchDailyLog(db, userId: userId, date: date, now: now, clearing: [], change)
 
             let scope = BodyCompositionRow.filter(Column("user_id") == userId && Column("date") == date)
@@ -428,9 +437,14 @@ public extension AppDatabase {
             }
 
             let minutes = row.durationMin
+            // The same artifact gate the ingest runs; a re-read that finds a
+            // strap artifact leaves the stored figure alone.
+            let accepted = try hrvMs.flatMap { v in
+                try VitalsGate.hrvArtifact(v, history: Self.hrvHistory(db, userId: userId, before: date)) == nil ? v : nil
+            }
             _ = try Self.patchDailyLog(db, userId: userId, date: date, now: now, clearing: []) {
                 $0.sleepMinutes = minutes
-                if let hrvMs { $0.hrvMs = hrvMs }
+                if let accepted { $0.hrvMs = accepted }
             }
             return row
         }
@@ -736,6 +750,14 @@ public extension AppDatabase {
 }
 
 /// Why a sleep edit was refused before it touched the store.
+public enum BodyMetricError: Error, Equatable, Sendable, CustomStringConvertible {
+    /// A typed scale reading outside what a body can report — field, value, why.
+    case outOfRange(String, Double, String)
+    public var description: String {
+        switch self { case .outOfRange(let field, let v, let why): "\(field) \(v) is \(why)" }
+    }
+}
+
 public enum SleepEditError: Error, Equatable, Sendable {
     /// `end` was not after `start`.
     case emptyWindow

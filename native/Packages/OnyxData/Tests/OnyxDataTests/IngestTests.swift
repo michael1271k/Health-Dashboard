@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import Testing
+import OnyxCore
 @testable import OnyxData
 
 /// A Health store that answers from a script.
@@ -311,6 +312,38 @@ struct IngestTests {
         // `muscle_mass_kg` is MUSCLE mass and HealthKit has no such type. Handing
         // it LeanBodyMass is what put two quantities ~2.6 kg apart in one column.
         #expect(row.muscleMassKg == nil)
+    }
+
+    @Test("an HRV reading far outside the athlete's own 42-day band is declined, not stored")
+    func hrvArtifactIsDeclined() throws {
+        let db = try store()
+        // A fortnight of nights around 60 ms, before the day.
+        try db.writer.write { conn in
+            for (i, hrv) in ([58, 61, 55, 64, 60, 57, 63, 59, 66, 54, 62, 60, 58, 65] as [Double]).enumerated() {
+                try DailyLogRow(id: "h\(i)", userId: user, date: ISODate.addDays(day, -(i + 1))!, createdAt: Date(), updatedAt: Date(),
+                                hrvMs: hrv, nutritionEstimated: false, sleepOnsetTrouble: false).insert(conn)
+            }
+        }
+        let report = try db.ingest(payload([.hrv: 182.0, .steps: 4000]), userId: user)
+        #expect(try dailyLog(db)?.hrvMs == nil, "the artifact never lands")
+        #expect(try dailyLog(db)?.steps == 4000, "the rest of the day does")
+        #expect(report.declined.contains { $0.contains("hrv") })
+        #expect(!report.hrvOvernight)
+
+        // A plausible reading on the same day stores.
+        try db.ingest(payload([.hrv: 44.0]), userId: user)
+        #expect(try dailyLog(db)?.hrvMs == 44.0)
+    }
+
+    @Test("a body-fat percentage no body has is declined on both rows")
+    func bodyFatBoundsOnIngest() throws {
+        let db = try store()
+        let report = try db.ingest(payload([.weight: 77.0, .bodyFat: 0.9]), userId: user)
+        #expect(try dailyLog(db)?.weightKg == 77.0)
+        #expect(try dailyLog(db)?.bodyFatPct == nil)
+        let ledger = try #require(try db.writer.read { conn in try BodyCompositionRow.fetchOne(conn) })
+        #expect(ledger.bodyFatPct == nil)
+        #expect(report.declined.contains { $0.contains("body fat") })
     }
 
     @Test("the night lands inside its own window, not on the calendar day")
