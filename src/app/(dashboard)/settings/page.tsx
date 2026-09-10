@@ -7,7 +7,7 @@ import { EMBER, STEEL } from '@/lib/theme/palette'
 import { PROGRAMS } from '@/lib/programs'
 import { LANDMARK_MUSCLES } from '@/lib/training/landmarks'
 import { Zone } from '@/components/ui/Zone'
-import { SettingRow, ChoiceRow, ToggleRow } from '@/components/settings/SettingsRows'
+import { SettingRow, ChoiceRow, ToggleRow, ValueRow } from '@/components/settings/SettingsRows'
 import { CrashRecorderRow } from '@/components/settings/CrashRecorderRow'
 import { LEVERS, type LeverId } from '@/lib/nutrition/levers'
 import { useSettingsGoals, applyPrefsToDevice } from '@/lib/hooks/useSettingsGoals'
@@ -144,6 +144,21 @@ export default function SettingsPage() {
 
       {/* Renders nothing at all when there is no crash to report. */}
       <CrashRecorderRow />
+
+      {/* ── ABOUT ──
+          The app shipped for four waves saying nothing about which build you
+          were looking at. A screenshot of a bug is worth much less without it,
+          and "the web one" and "the phone one" were the same claim of 1.0 from
+          two codebases that had drifted apart. Both numbers now come from
+          package.json — see `scripts/sync-version.mjs`. */}
+      <Zone label="About" accent={STEEL}>
+        <ValueRow
+          label="Version"
+          hint="This build of the web app"
+          value={`${process.env.NEXT_PUBLIC_APP_VERSION ?? '—'} (${(process.env.NEXT_PUBLIC_BUILD_ID ?? '—').slice(0, 7)})`}
+        />
+      </Zone>
+
 
       {status && (
         <p className={`text-sm px-1 ${status.type === 'success' ? 'text-success' : 'text-danger'}`}>{status.msg}</p>
