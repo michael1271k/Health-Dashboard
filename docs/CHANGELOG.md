@@ -47,6 +47,53 @@ _Nothing yet._
 
 ---
 
+## [1.4.1] — 2026-09-10 · What The Summary Says Happened
+
+Four defects on the post-workout page, and every one of them turned out to be
+about something other than what it looked like. A grayed-out Edit button that
+had nothing to do with dates, a duration delta that was a claim about a
+different workout, an internal key printed as a movement's name, and half of
+every set row belonging to another day.
+
+### Fixed
+- **Any past session can be edited again** (native, History → session → Edit).
+  The button was disabled for every session containing a unilateral L/R pair —
+  which is every Delts & Arms day — so the whole split had been uncorrectable
+  and the symptom read as a date lock. The gate was written when the logger
+  could not carry a `side`; it has carried one for some time
+  (`restoreLoggedSets`, `snapshot`, and `ExerciseState.volumeKg` all handle a
+  pair), and the gate was never lifted with it. Sessions with no `day_key` — the
+  74 Notion-era workouts — are editable now too: the deck is built from the
+  session's own movements when the program cannot name the day.
+- **"74 min, +72" is gone** (native, session summary). The 2026-09-03 Upper B
+  session recorded twelve sets as two minutes, and the page printed the
+  difference as if it were a fact about Thursday. The stored figure is repaired
+  and, so the next corrupt clock cannot do it again, a duration delta is now
+  suppressed when the session it is measured against recorded less than 20
+  seconds per set — a reserved blank line rather than an invented number.
+- **The treadmill is called Treadmill** (native, session summary), not
+  `helix5-treadmill`. `WarmupCardio` is deliberately outside `Program.onyx5`, so
+  the slug the deck stamps on the bout was in no name table and the page fell
+  back to printing the key. The same one-line miss meant a treadmill logged on
+  the phone threw `unknownExercise` on push and could not be uploaded at all —
+  the one movement the deck adds for you was the one the sync refused. The
+  `helix5-` prefix itself stays: it is a key written into local rows, and
+  renaming it would file every unsynced set under a second identity.
+- **The summary shows only the sets you just did** (native, session ledger).
+  Each row carried the positionally-matched set from the last time that
+  movement was trained, so a four-set Single Arm Lateral Raise drew eight
+  numbers. The comparison stays where it means something — the header's
+  `vs 30 Aug` capsule, which reads the previous session whole rather than
+  row by row.
+- **2026-09-08 "Delts & Arms" now reads 3,680.75 kg**, reconciled set by set
+  against the Hevy record: one rep on Seated Incline DB Curl (16 × 13 → 16 × 12,
+  which was the entire tonnage gap), the treadmill's distance (0.370 → 0.4 km),
+  and a scrambled `exercise_order` that had been drawing two cards each for the
+  curl and the lateral raise. Ratings, quality flags and PR marks untouched.
+  `docs/sql/hotfix-data-ui.sql` and `scripts/repair-sep-2026-data.mjs`.
+
+---
+
 ## [1.4.0] — 2026-09-10 · Submittable
 
 The wave that makes the binary uploadable. Two pages App Review opens before it

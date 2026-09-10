@@ -159,10 +159,33 @@ public enum ExerciseSlug {
     /// the merge this whole file exists to prevent. (They do not today:
     /// `Crunch Machine` and the catalogue's `Crunch (Machine)` collide under
     /// this slug, but only one of the pair is in the program.)
+    ///
+    /// ── AND THE TREADMILL, WHICH IS NOT A PROGRAM ENTRY ─────────────────────
+    /// `WarmupCardio` is deliberately outside `Program.onyx5` — a five-minute
+    /// walk has no sets, no reps and no load, and putting it in the program
+    /// would make `plannedSets` count it and the progression engine grade it
+    /// (`SessionSeed.swift` states the case). But the deck PREPENDS it on both
+    /// clients, so `LoggerModel.exerciseId` stamps `helix5-treadmill` on the
+    /// row the moment it is ticked — and this table, built from the program
+    /// alone, had never heard of it. Two failures, one cause:
+    ///
+    ///   · `SessionAnalysis.displayName` falls back to the slug when the
+    ///     coalesce and this map both miss, so the post-workout page titled
+    ///     the block `helix5-treadmill`. `Ceilings`, `MuscleMap` and the PR
+    ///     key were reading that same string and answering nil.
+    ///   · `id(forSlug:)` throws `unknownExercise` above, so a treadmill
+    ///     logged on the phone could not be pushed AT ALL — the one movement
+    ///     the deck adds for you was the one the sync refused.
+    ///
+    /// The catalogue has held a `Treadmill` row since `hotfix-polish.sql § 4`,
+    /// so the name resolves the moment it is offered. The slug stays
+    /// `helix5-`-prefixed for the reason stated above `id(_:)`: it is a KEY
+    /// written into local rows, and renaming it would file every unsynced set
+    /// under a second identity — the silent SPLIT this file exists to prevent.
+    /// What the reader sees is the NAME, and the name is "Treadmill".
     public static let nameBySlug: [String: String] = Dictionary(
-        Program.onyx5.days
-            .flatMap(\.exercises)
-            .map { (id($0.name), $0.name) },
+        (Program.onyx5.days.flatMap(\.exercises).map(\.name) + [WarmupCardio.name])
+            .map { (id($0), $0) },
         uniquingKeysWith: { first, _ in first }
     )
 }

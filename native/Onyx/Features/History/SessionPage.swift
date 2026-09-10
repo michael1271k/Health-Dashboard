@@ -108,8 +108,17 @@ extension SessionAnalysis {
             return report.sets - previous.sets
         }
 
+        /// Minutes against the previous same-split session — and nil rather
+        /// than a number when that session's clock cannot be believed.
+        ///
+        /// `credibleDurationMin` is the test and states the case. The shape
+        /// here matches `tonnageDelta` one line up, which has always refused
+        /// to divide by a previous session that recorded no tonnage: a delta
+        /// is only as good as the thing it is measured from, and the reserved
+        /// line is the honest output when that thing is missing.
         var durationDelta: Double? {
-            guard let previous, let was = previous.durationMin, let now = report.session.durationMin else { return nil }
+            guard let previous, let was = previous.credibleDurationMin,
+                  let now = report.session.durationMin else { return nil }
             return now - was
         }
 

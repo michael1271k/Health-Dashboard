@@ -33,7 +33,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # per-size folder rather than over the committed visual-diff set.
 OUT="${SHOT_OUT:-$ROOT/native/__screenshots__}"
 BUNDLE_ID="app.onyx.health.michael.native"
-DERIVED="$HOME/Library/Caches/onyx-swift/shot-derived"
+# `SHOT_DERIVED` moves the build products, for the same reason `SHOT_OUT` moves
+# the PNGs — and for one more.
+#
+# ── TWO WORKTREES, ONE CACHE ────────────────────────────────────────────────
+# This path used to be fixed, and it is OUTSIDE the worktree, so two waves
+# shooting at once point two builds at one `build.db`. The second one fails
+# with "database is locked", and the failure mode after that is worse than the
+# error: a shot run that cannot rebuild INSTALLS WHAT IS ALREADY THERE, so the
+# screenshots come out plausible and photograph the other worktree's code.
+# A review then passes or fails on a build that does not contain the change.
+#
+# Pass `SHOT_DERIVED=$HOME/Library/Caches/onyx-swift/shot-<wave>` when another
+# wave may be shooting. The default is unchanged.
+DERIVED="${SHOT_DERIVED:-$HOME/Library/Caches/onyx-swift/shot-derived}"
 
 mkdir -p "$OUT"
 

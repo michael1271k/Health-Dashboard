@@ -32,6 +32,43 @@ enum SessionAnalysis {
         let sets: Int
         let tonnageKg: Double
         let prCount: Int
+
+        /// `durationMin`, but only when the clock can be believed.
+        ///
+        /// ── WHY A STORED DURATION NEEDS A SANITY TEST AT ALL ────────────────
+        /// `duration_min` is derived at close from `ended_at − started_at −
+        /// paused`, and a close that ran against a clock that had already been
+        /// stopped writes a number with no relationship to the workout. The
+        /// 2026-09-03 Upper B session is the case: twelve sets and 3,108 kg,
+        /// stored as TWO MINUTES, with `ended_at` 120 s after `started_at` — so
+        /// cross-checking the timestamps does not catch it either, they are
+        /// corrupt together.
+        ///
+        /// What that cost was not a wrong duration on its own page (which is at
+        /// least visibly absurd) but a wrong DELTA on the next one: 2026-09-10
+        /// read "74 min, +72", and a reader has no way to tell that the +72 is
+        /// an artefact of the session before rather than a claim about this
+        /// one. A number that is silently wrong somewhere else is worse than a
+        /// reserved blank line, which is what the page draws for a nil.
+        ///
+        /// The test is the one physical constraint available from data already
+        /// on the row: a recorded set takes time. Sessions on record run
+        /// 46–76 minutes over 12–22 sets — 150 s per set at the tightest — so
+        /// a floor of 20 s clears every real session by a factor of seven and
+        /// still rejects twelve sets in two minutes.
+        ///
+        /// ponytail: one constant, chosen against the whole ledger. If a
+        /// genuinely fast session ever trips it, raise the seconds-per-set
+        /// here — do not add a second rule beside it.
+        var credibleDurationMin: Double? {
+            guard let durationMin, durationMin > 0 else { return nil }
+            guard durationMin * 60 >= Double(sets) * Self.minSecondsPerSet else { return nil }
+            return durationMin
+        }
+
+        /// The tightest seconds-per-set any real session has come to, divided
+        /// by seven. See `credibleDurationMin`.
+        static let minSecondsPerSet: Double = 20
     }
 
     struct ExerciseReport: Identifiable {
@@ -39,7 +76,29 @@ enum SessionAnalysis {
         let detail: DetailExercise
         let canonical: String
         let timed: Bool
-        let rows: [RowWithPrev]
+        /// This session's sets, and ONLY this session's.
+        ///
+        /// ── WHY THIS IS NO LONGER `[RowWithPrev]` ───────────────────────────
+        /// Each row used to carry the positionally-matched set from the last
+        /// time this movement was trained, and `SetRow` printed it inline as
+        /// `prev 5kg × 15`. On the post-workout page that is the wrong fact in
+        /// the wrong place: the reader has just finished the workout and is
+        /// looking at what they did, and half of every row was about a
+        /// different day. It also read as a set that had been performed today
+        /// — most visibly on Single Arm Lateral Raise, where a four-set
+        /// movement showed eight numbers.
+        ///
+        /// The comparison itself is not lost, it moves to where it was always
+        /// the point: the header's `vs 30 Aug` capsule, which is computed from
+        /// `previousSets` — the previous session's WHOLE list, so a cut set
+        /// changes the verdict. That is the honest comparison; the positional
+        /// one never was (`rowsWithPrev` drops any previous set past this
+        /// session's count).
+        ///
+        /// `SessionDetail.rowsWithPrev` stays in OnyxCore: the web ledger is
+        /// still built on it and the golden vectors still hold the two to each
+        /// other. This screen simply no longer calls it.
+        let rows: [DetailRow]
         let prevDate: String?
         /// The previous session's WORKING sets, whole.
         ///
@@ -216,7 +275,7 @@ enum SessionAnalysis {
 
             exercises.append(ExerciseReport(
                 detail: detail, canonical: canonical, timed: timed,
-                rows: SessionDetail.rowsWithPrev(SessionDetail.toRows(sets), prev: prev),
+                rows: SessionDetail.toRows(sets),
                 prevDate: prevRows.first?.date,
                 previousSets: prev,
                 cue: cue, stats: SessionDetail.exerciseStats(detail), window: window,
