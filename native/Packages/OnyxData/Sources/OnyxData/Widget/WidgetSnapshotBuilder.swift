@@ -469,7 +469,18 @@ public struct WidgetSnapshotBuilder: Sendable {
                 weights: try BodyCompositionRow.filter(user).order(Column("date").desc).limit(30).fetchAll(db),
                 sessions: totals,
                 sets: sets,
-                exerciseNames: Dictionary(try Exercise.fetchAll(db).map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a }),
+                // ── THE CATALOGUE, PLUS THE SLUGS THE PHONE WRITES ──────────
+                // `exercises` holds server uuids only. A set logged on the phone
+                // is stamped `helix5-<slug>` (`LoggerModel.exerciseId`) and keeps
+                // that id for as long as the session has local events, which is
+                // forever for the device that logged it. Naming only the
+                // catalogue dropped every phone-logged set from muscle credit —
+                // "Side delts 0/7" after an Upper B was exactly this. The same
+                // chain `LoggerModel.restoreLoggedSets` already walks.
+                exerciseNames: Dictionary(
+                    try Exercise.fetchAll(db).map { ($0.id, $0.name) } + ExerciseSlug.nameBySlug.map { ($0.key, $0.value) },
+                    uniquingKeysWith: { a, _ in a }
+                ),
                 ledger: ledger,
                 cardio: try CardioLogRow
                     .filter(user && Column("date") >= cardioFrom && Column("date") <= date)
