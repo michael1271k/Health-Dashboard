@@ -18,13 +18,15 @@ import OnyxUI
 /// The content types above are enough for iOS to OFFER to save a credential and
 /// to fill one already associated with this app. Filling the credential saved
 /// against the WEBSITE — the one the browser holds — needs two more things, and
-/// as of U7 both are in the repo: the `Associated Domains` entitlement
-/// (`com.apple.developer.associated-domains` in `native/project.yml`, claiming
-/// `webcredentials:` on the same host `OnyxLinks` serves from) and the
-/// `apple-app-site-association` file at `public/.well-known/`, which names this
-/// App ID.
+/// only ONE of them is in the repo right now: the `apple-app-site-association`
+/// file at `public/.well-known/`, which names this App ID under
+/// `webcredentials`. The other half — the `Associated Domains` entitlement —
+/// is PARKED in `native/project.yml` (see the comment where it used to be),
+/// because a free Personal Development Team cannot sign it and Xcode refuses
+/// the profile outright. So website-credential fill does nothing until the
+/// paid Developer Program lands and the key goes back.
 ///
-/// The third half is not code: the capability has to be enabled on the App ID
+/// When it does go back, the capability also has to be enabled on the App ID
 /// in the developer portal, or signing fails on the entitlement. If AutoFill
 /// offers nothing from the website, check the portal before checking this file
 /// — the two sides fail silently when they disagree.

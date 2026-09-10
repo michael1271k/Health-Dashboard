@@ -118,27 +118,15 @@ targets:
         # and Xcode refuses the profile for the target as a whole — so on-device
         # Health still waits on Gate 0 (buy the Developer Program).
         com.apple.developer.healthkit: true
-        # ── Associated Domains ───────────────────────────────────────────────
-        # `webcredentials` ONLY, and that is the whole feature: it lets iOS
-        # Password AutoFill offer the credential the browser already holds for
-        # the website, instead of treating the app and the site as two unrelated
-        # places to keep a password. `applinks` is deliberately absent — the app
-        # claims no URLs and opening one in it would be a behaviour nobody asked
-        # for.
-        #
-        # The domain matches the one `OnyxLinks` serves /privacy and /support
-        # from, and `public/.well-known/apple-app-site-association` already
-        # names this App ID under `webcredentials`. Both halves have to agree or
-        # the association silently never forms.
-        #
-        # ── THIS ONE NEEDS THE PORTAL FIRST ──────────────────────────────────
-        # W-GATE left it out on purpose: Associated Domains has to be enabled on
-        # the App ID in the developer portal before a provisioning profile will
-        # carry it, and a build signed against a profile that does not have it
-        # fails at the signing step rather than at compile. The founder has
-        # enabled it; if a signing error names this key, that is what regressed.
-        com.apple.developer.associated-domains:
-          - webcredentials:helix-health-fitness.netlify.app
+        # ── Associated Domains — PARKED ──────────────────────────────────────
+        # `com.apple.developer.associated-domains: [webcredentials:
+        # helix-health-fitness.netlify.app]` lived here and is temporarily out:
+        # a free Personal Development Team cannot sign that entitlement, so
+        # Xcode refuses the profile and the build fails at the signing step.
+        # `public/.well-known/apple-app-site-association` still names this App
+        # ID under `webcredentials`, so restoring the key is the only edit
+        # needed once the paid Developer Program is in place (Gate 0). Until
+        # then Password AutoFill just treats the app and the site as unrelated.
 
     info:
       path: Onyx/Support/Info.plist
