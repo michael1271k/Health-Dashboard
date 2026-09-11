@@ -31,6 +31,20 @@ import OnyxCore
 // account trips every one of those checks.
 // ─────────────────────────────────────────────────────────────────────────────
 
+public enum AccountSeedError: Error, LocalizedError, Equatable {
+    /// The account acquired rows between the flow opening and Finish being
+    /// tapped — a slow pull that landed, a realtime row, or a sync that had
+    /// failed silently and then succeeded.
+    case alreadySetUp
+
+    public var errorDescription: String? {
+        switch self {
+        case .alreadySetUp:
+            "This account already has data in it, so nothing was changed. Close and reopen Onyx."
+        }
+    }
+}
+
 /// One program a new account can start with, already shaped as rows.
 public struct SeedPlan: Sendable {
     public var programId: String
@@ -111,16 +125,40 @@ public extension AppDatabase {
     /// ANY evidence of a person here", and any one of them answering yes means
     /// onboarding must not run.
     func needsOnboarding(userId: String) throws -> Bool {
-        try writer.read { db in
-            let plans = try PlanRow.filter(Column("user_id") == userId).fetchAll(db)
-            // A `plans` row the sign-up trigger made carries NO `program_id`
-            // ("My Plan"). That is a placeholder, not evidence of setup.
-            if plans.contains(where: { ($0.programId ?? "").isEmpty == false }) { return false }
-            if try RoutineRow.filter(Column("user_id") == userId).fetchCount(db) > 0 { return false }
-            if try Exercise.fetchCount(db) > 0 { return false }
-            if try WorkoutSession.filter(Column("user_id") == userId).fetchCount(db) > 0 { return false }
-            return true
+        try writer.read { db in try Self.needsOnboarding(db, userId: userId) }
+    }
+
+    /// The same question, inside a caller's transaction.
+    ///
+    /// ── EVERY HALF OF THE APP COUNTS, NOT ONLY THE TRAINING HALF ────────────
+    /// The first version asked about plans, routines, the catalogue and
+    /// sessions — and a person who had used Helix only for food, water and
+    /// weigh-ins tripped none of them. The sign-up trigger's `plans` row has no
+    /// `program_id`, so they read as brand new and would have had a seed
+    /// written over their `user_goals`. The rule the header states is "any
+    /// evidence of a person here", and that has to include the evidence they
+    /// left on the other four tabs.
+    static func needsOnboarding(_ db: Database, userId: String) throws -> Bool {
+        let user = Column("user_id") == userId
+        // A `plans` row the sign-up trigger made carries NO `program_id`
+        // ("My Plan"). That is a placeholder, not evidence of setup.
+        if try PlanRow.filter(user).fetchAll(db).contains(where: { ($0.programId ?? "").isEmpty == false }) {
+            return false
         }
+        if try RoutineRow.filter(user).fetchCount(db) > 0 { return false }
+        if try Exercise.fetchCount(db) > 0 { return false }
+        if try WorkoutSession.filter(user).fetchCount(db) > 0 { return false }
+        // The non-training half.
+        if try DailyLogRow.filter(user).fetchCount(db) > 0 { return false }
+        if try NutritionEntryRow.filter(user).fetchCount(db) > 0 { return false }
+        if try BodyCompositionRow.filter(user).fetchCount(db) > 0 { return false }
+        // And targets somebody has actually set. The trigger does not write
+        // these; a row with a calorie goal in it is a person who has been to
+        // the Levers screen.
+        if try UserGoalRow.filter(user).fetchAll(db).contains(where: { $0.calorieGoal != nil }) {
+            return false
+        }
+        return true
     }
 
     /// Write the whole account. One transaction; see the file header.
@@ -132,6 +170,22 @@ public extension AppDatabase {
     @discardableResult
     func seedAccount(_ seed: AccountSeed, now: Date = Date()) throws -> [String] {
         try writer.write { db in
+            // ── THE GATE IS INSIDE THE TRANSACTION, NOT ONLY AT THE DOOR ────
+            // `AppEnvironment` asks `needsOnboarding` before it puts the flow
+            // up, and that answer is minutes old by the time anyone taps
+            // Finish — the realtime socket subscribes to `routines`,
+            // `exercises` and the sessions while the user is on step three, so
+            // an account that was empty when the cover went up can be full when
+            // it comes down. A pull that failed silently (`MirrorPuller.refresh`
+            // collects per-table failures and returns normally) produces the
+            // same empty store on an account that has years in it.
+            //
+            // Asking again here, in the transaction that would do the writing,
+            // is the only check that cannot go stale. It closes the retry path,
+            // the realtime path and every future caller at once.
+            guard try Self.needsOnboarding(db, userId: seed.userId) else {
+                throw AccountSeedError.alreadySetUp
+            }
             // ── 1. The catalogue ────────────────────────────────────────────
             // First, because the payloads below name its ids.
             for draft in seed.exercises {

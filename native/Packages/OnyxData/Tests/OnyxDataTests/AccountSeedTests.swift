@@ -387,14 +387,19 @@ struct AccountSeedTests {
         }
     }
 
-    /// Re-running must not double anything — the screen can be backgrounded
-    /// mid-save and the gate re-checked.
-    @Test("seeding twice writes the same rows, not twice as many")
-    func idempotent() throws {
+    /// A second seed is REFUSED, not merged.
+    ///
+    /// The gate is re-asked inside the transaction that would do the writing,
+    /// because the answer taken when the flow opened is minutes old by the time
+    /// anyone taps Finish — realtime streams rows in while the user is on step
+    /// three, and a pull that failed silently produces an empty store on an
+    /// account that has years in it. Refusing leaves the account as it was.
+    @Test("an account that has acquired rows refuses a second seed")
+    func refusesASecondSeed() throws {
         let db = try store()
         let s = seed(plan: SeedPlan(programId: "onyx5", label: "Onyx-5", days: sampleDays()))
         try db.seedAccount(s)
-        try db.seedAccount(s)
+        #expect(throws: AccountSeedError.alreadySetUp) { try db.seedAccount(s) }
 
         #expect(try db.exercises().count == 3)
         #expect(try db.routineDays(userId: user, programId: "onyx5").count == 2)
@@ -402,5 +407,44 @@ struct AccountSeedTests {
         #expect(plans.count == 1)
         let records = try db.writer.write { conn in try PersonalRecordRow.fetchAll(conn) }
         #expect(records.count == 1)
+    }
+
+    /// The half of the app the first version of the gate could not see.
+    ///
+    /// A person who used Helix only for food, water and weigh-ins has no plan,
+    /// no routine, no catalogue and no session — the sign-up trigger's `plans`
+    /// row carries no `program_id` — so they read as brand new and would have
+    /// had a seed written over their `user_goals`.
+    @Test("evidence on the other four tabs closes the gate too")
+    func nonTrainingEvidenceCounts() throws {
+        let cases: [(String, @Sendable (Database) throws -> Void)] = [
+            ("a logged day", { conn in
+                try DailyLogRow(
+                    id: "d1", userId: user, date: "2026-09-01",
+                    createdAt: Date(), updatedAt: Date(),
+                    nutritionEstimated: false, sleepOnsetTrouble: false
+                ).insert(conn)
+            }),
+            ("a body reading", { conn in
+                try BodyCompositionRow(
+                    id: "b1", userId: user, measuredAt: Date(), date: "2026-09-01",
+                    weightKg: 80, createdAt: Date()
+                ).insert(conn)
+            }),
+            ("targets somebody set", { conn in
+                try UserGoalRow(
+                    id: "g1", userId: user, calorieGoal: 2_400, contextMode: "normal",
+                    createdAt: Date(), updatedAt: Date(), autoLogSupplements: false,
+                    activeProgram: "", dayCutoffHour: 0, unitSystem: "metric",
+                    reduceMotion: false, timezone: "UTC", trackRpe: true
+                ).insert(conn)
+            }),
+        ]
+        for (name, write) in cases {
+            let db = try store()
+            #expect(try db.needsOnboarding(userId: user) == true)
+            try db.writer.write { conn in try write(conn) }
+            #expect(try db.needsOnboarding(userId: user) == false, "\(name) did not close the gate")
+        }
     }
 }

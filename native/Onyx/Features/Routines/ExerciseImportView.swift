@@ -151,7 +151,9 @@ struct ExerciseImportView: View {
             } header: {
                 OnyxSectionHeader("What Onyx read", .train)
             } footer: {
-                if parsed.unclassified > 0 {
+                if parsed.wasTruncated {
+                    Text("That file has more than \(ExerciseCSV.maxRows) rows and only the first \(ExerciseCSV.maxRows) were read. If it is a workout history rather than a movement list, start over.")
+                } else if parsed.unclassified > 0 {
                     Text("A movement with no muscle recorded still logs, but it won't count towards your weekly sets for any muscle. Add a muscle column to the file to fix that.")
                 } else if parsed.duplicates > 0 {
                     Text("Movements already in your list are left exactly as they are — never merged, never duplicated.")

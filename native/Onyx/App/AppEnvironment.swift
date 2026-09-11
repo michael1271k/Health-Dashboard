@@ -417,15 +417,23 @@ public final class AppEnvironment {
             } else {
                 await self.syncNow(reason: .launch)
             }
-            // ── ONBOARDING GOES AFTER THE PULL, NEVER BEFORE IT (W5) ────────
+            // ── ONBOARDING GOES AFTER A PULL THAT LANDED (W5) ───────────────
             // "Has this account been set up" is a question about ROWS, and on a
-            // new device the rows have not arrived yet. Asking first would
-            // offer onboarding to anyone reinstalling the app, and the seed
-            // would then write a second plan over a real one.
+            // new device the rows have not arrived yet.
             //
-            // Waiting also means the sign-up trigger's placeholder `plans` row
-            // is local by the time the seed wants to claim it.
-            self.offerOnboardingIfNeeded(userId: userId)
+            // "After the pull" is NOT enough on its own, because a pull that
+            // fails does not say so: `MirrorPuller.refresh` collects every
+            // per-table error into its report and returns normally, and
+            // `runBackfill` then clears its sheet with no error on screen. A
+            // reinstall on a dead network therefore reaches this line with an
+            // empty store and an account that has years in it — and the seed's
+            // `user_goals` upsert conflicts on `user_id`, so it would merge
+            // onboarding's defaults straight over the real row.
+            //
+            // So the offer is gated on the SYNC LEDGER, which is stamped only
+            // by a table that actually landed, and `seedAccount` asks the
+            // question again inside the transaction that would do the writing.
+            await self.offerOnboardingIfNeeded(userId: userId, coordinator: coordinator)
             // A no-op if sign-out stopped this coordinator meanwhile.
             await coordinator.startRealtime(client: supabase)
             #if ONYX_ADP
@@ -461,15 +469,26 @@ public final class AppEnvironment {
 
     /// Put the onboarding flow up, if this account has never been set up.
     ///
-    /// `needsOnboarding` is the gate and it is deliberately conservative (see
-    /// `AccountSeed`): any plan with a programme, any routine, any catalogue row
-    /// at all means somebody has been here. The founder's account trips every
-    /// one of those, which is the property this whole wave has to preserve.
+    /// Three conditions, and all three are load-bearing:
+    ///
+    /// 1. **The backfill sheet is down.** Its failure path leaves `backfill`
+    ///    non-nil, and two `fullScreenCover`s racing on one view means either
+    ///    the error is buried under a flow nobody can dismiss, or the flow is
+    ///    silently dropped and reappears later over a populated account.
+    /// 2. **A pull actually landed.** `needsBackfill` reads the sync ledger,
+    ///    which is stamped per table only on success — so it is still `true`
+    ///    after a failure that reported nothing, and the offer is withheld.
+    ///    This is the check that keeps a reinstall on a dead network from being
+    ///    offered a fresh start on an account full of history.
+    /// 3. **The store has no evidence of a person.** `needsOnboarding` is
+    ///    deliberately conservative (see `AccountSeed`) and now counts food,
+    ///    water and weigh-ins as well as training.
     ///
     /// A throw is NOT an offer. A store that will not open is a reason to show
     /// the app, not a reason to re-seed an account that may be full of data.
-    func offerOnboardingIfNeeded(userId: String) {
-        guard onboarding == nil else { return }
+    func offerOnboardingIfNeeded(userId: String, coordinator: SyncCoordinator) async {
+        guard onboarding == nil, backfill == nil else { return }
+        guard (try? await coordinator.needsBackfill()) == false else { return }
         guard (try? database.needsOnboarding(userId: userId)) == true else { return }
         onboarding = OnboardingModel(database: database, userId: userId)
     }

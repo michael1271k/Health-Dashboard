@@ -15,9 +15,21 @@ struct RoutineDayEditor: View {
     let dayKey: String
 
     @State private var picking = false
+    /// ── THE TEXT FIELDS KEEP THEIR OWN COPY ────────────────────────────────
+    /// They used to bind straight through to `rename`/`setSub`, which trim,
+    /// write, and reload `days` — so the binding's `get` handed back the
+    /// TRIMMED string on the very next frame and the field reset. Typing
+    /// "Upper" then a space gave back "Upper": a day could not be called
+    /// "Upper A" and a focus could not be "Chest + Back".
+    ///
+    /// It also wrote a row, queued an outbox item and re-indexed the catalogue
+    /// on every keystroke. Local state, committed on focus loss, fixes both.
+    @State private var label = ""
+    @State private var sub = ""
     @FocusState private var focus: Field?
 
     enum Field: Hashable {
+        case label, sub
         case sets(Int), cutSets(Int), rest(Int), load(Int)
     }
 
@@ -36,14 +48,27 @@ struct RoutineDayEditor: View {
         }
         .navigationTitle(day?.label ?? "Day")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            label = day?.label ?? ""
+            sub = day?.sub ?? ""
+        }
+        // Committed on focus loss as well as on Done, exactly as every numeric
+        // field in this app commits (`OnyxNumberField`) — a decimal pad has no
+        // return key and a name field can be left by tapping elsewhere.
+        .onChange(of: focus) { old, _ in
+            if old == .label { model.rename(dayKey, to: label) }
+            if old == .sub { model.setSub(dayKey, sub) }
+        }
+        .onDisappear {
+            model.rename(dayKey, to: label)
+            model.setSub(dayKey, sub)
+        }
         .toolbar {
             if day != nil { EditButton() }
         }
         .toolbar { OnyxKeyboardDone { focus = nil } }
         .sheet(isPresented: $picking) {
-            if let day {
-                ExercisePickerSheet(model: model, day: day)
-            }
+            ExercisePickerSheet(model: model, dayKey: dayKey)
         }
     }
 
@@ -51,24 +76,24 @@ struct RoutineDayEditor: View {
         List {
             Section {
                 LabeledContent("Name") {
-                    TextField("Upper A", text: Binding(
-                        get: { day.label },
-                        set: { model.rename(day, to: $0) }
-                    ))
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(Color.onyx.textPrimary)
+                    TextField("Upper A", text: $label)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(Color.onyx.textPrimary)
+                        .focused($focus, equals: .label)
+                        .submitLabel(.done)
+                        .onSubmit { model.rename(dayKey, to: label) }
                 }
                 LabeledContent("Focus") {
-                    TextField("Chest + Back", text: Binding(
-                        get: { day.sub ?? "" },
-                        set: { model.setSub(day, $0) }
-                    ))
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(Color.onyx.textPrimary)
+                    TextField("Chest + Back", text: $sub)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(Color.onyx.textPrimary)
+                        .focused($focus, equals: .sub)
+                        .submitLabel(.done)
+                        .onSubmit { model.setSub(dayKey, sub) }
                 }
                 Picker("Weekday", selection: Binding(
                     get: { day.weekday },
-                    set: { model.setWeekday(day, $0) }
+                    set: { model.setWeekday(dayKey, $0) }
                 )) {
                     ForEach(0..<7, id: \.self) { index in
                         Text(RoutineBuilderView.weekdayNames[index]).tag(index)
@@ -84,10 +109,10 @@ struct RoutineDayEditor: View {
 
             Section {
                 ForEach(Array(day.payload.exercises.enumerated()), id: \.offset) { index, exercise in
-                    row(exercise, at: index, in: day)
+                    row(exercise, at: index)
                 }
-                .onDelete { model.removeExercises(at: $0, in: day) }
-                .onMove { model.moveExercises(from: $0, to: $1, in: day) }
+                .onDelete { model.removeExercises(at: $0, in: dayKey) }
+                .onMove { model.moveExercises(from: $0, to: $1, in: dayKey) }
             } header: {
                 OnyxSectionHeader("Movements", .train)
             } footer: {
@@ -114,7 +139,7 @@ struct RoutineDayEditor: View {
     /// per movement would be thirty-two pushes to write one session, and the
     /// whole reason people abandon routine builders. The fields are small and
     /// wrap, so AX5 stacks them rather than truncating.
-    private func row(_ exercise: RoutineExercise, at index: Int, in day: RoutineDay) -> some View {
+    private func row(_ exercise: RoutineExercise, at index: Int) -> some View {
         VStack(alignment: .leading, spacing: OnyxSpace.s) {
             Text(exercise.name)
                 .onyxType(.body).fontWeight(.semibold)
@@ -124,7 +149,7 @@ struct RoutineDayEditor: View {
                 field("Sets", exercise.sets, .sets(index), 1...12) { value in
                     var updated = exercise
                     updated.sets = value
-                    model.updateExercise(updated, at: index, in: day)
+                    model.updateExercise(updated, at: index, in: dayKey)
                 }
                 // A cut drops assistance volume, and a deck that cannot say so
                 // is a deck that has to be rewritten every phase change. `nil`
@@ -134,12 +159,12 @@ struct RoutineDayEditor: View {
                 optionalField("On a cut", exercise.cutSets, .cutSets(index), 0...12) { value in
                     var updated = exercise
                     updated.cutSets = value
-                    model.updateExercise(updated, at: index, in: day)
+                    model.updateExercise(updated, at: index, in: dayKey)
                 }
                 optionalField("Rest", exercise.restSec, .rest(index), 0...600, unit: "s") { value in
                     var updated = exercise
                     updated.restSec = value
-                    model.updateExercise(updated, at: index, in: day)
+                    model.updateExercise(updated, at: index, in: dayKey)
                 }
             }
 
@@ -150,7 +175,7 @@ struct RoutineDayEditor: View {
                         set: { new in
                             var updated = exercise
                             updated.reps = new
-                            model.updateExercise(updated, at: index, in: day)
+                            model.updateExercise(updated, at: index, in: dayKey)
                         }
                     ))
                     .multilineTextAlignment(.trailing)
@@ -165,7 +190,7 @@ struct RoutineDayEditor: View {
                     set: { new in
                         var updated = exercise
                         updated.wk1Kg = new
-                        model.updateExercise(updated, at: index, in: day)
+                        model.updateExercise(updated, at: index, in: dayKey)
                     }
                 ),
                 field: Field.load(index), focus: $focus,
@@ -227,7 +252,7 @@ struct RoutineDayEditor: View {
 /// exists — a SPLIT is the silent failure `ExerciseIndex` exists to prevent.
 private struct ExercisePickerSheet: View {
     let model: RoutinesModel
-    let day: RoutineDay
+    let dayKey: String
 
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
@@ -252,7 +277,7 @@ private struct ExercisePickerSheet: View {
                 if let creatable {
                     Section {
                         Button {
-                            model.createAndAdd(creatable, to: day)
+                            model.createAndAdd(creatable, to: dayKey)
                             dismiss()
                         } label: {
                             Label("Add “\(creatable)”", systemImage: "plus.circle")
@@ -264,7 +289,7 @@ private struct ExercisePickerSheet: View {
                 Section {
                     ForEach(matches, id: \.id) { exercise in
                         Button {
-                            model.addExercise(exercise.name, to: day)
+                            model.addExercise(exercise.name, to: dayKey)
                             dismiss()
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {

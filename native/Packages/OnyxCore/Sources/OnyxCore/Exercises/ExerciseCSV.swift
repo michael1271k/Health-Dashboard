@@ -47,7 +47,8 @@ public struct ExerciseImportRow: Equatable, Sendable {
     public var isUnclassified: Bool
     /// A catalogue row of this name already exists. Skipped, never merged.
     public var isDuplicate: Bool
-    /// 1-based line in the source, for an error a person can go and look at.
+    /// 1-based position among the file's NON-BLANK lines. Close enough to point
+    /// a person at the row; not a byte offset.
     public var line: Int
 
     public init(
@@ -72,9 +73,17 @@ public struct ExerciseImport: Equatable, Sendable {
     public var skipped: [Int]
     /// The header this file turned out to have, for the screen to show back.
     public var columns: [String]
+    /// The file had more rows than `maxRows` and the rest were not read.
+    ///
+    /// Reported rather than silent: a paste that comes back "500 movements" off
+    /// a five-thousand-line file is almost certainly somebody's workout
+    /// HISTORY, and importing five hundred junk exercises without a word is the
+    /// failure this whole screen exists to prevent.
+    public var wasTruncated: Bool
 
-    public init(rows: [ExerciseImportRow], skipped: [Int], columns: [String]) {
+    public init(rows: [ExerciseImportRow], skipped: [Int], columns: [String], wasTruncated: Bool = false) {
         self.rows = rows; self.skipped = skipped; self.columns = columns
+        self.wasTruncated = wasTruncated
     }
 
     public var importable: [ExerciseImportRow] { rows.filter(\.isImportable) }
@@ -126,10 +135,11 @@ public enum ExerciseCSV {
         var out: [ExerciseImportRow] = []
         var skipped: [Int] = []
         var seen = Set<String>()
+        var truncated = false
 
         for (offset, fields) in body.enumerated() where !isBlank(fields) {
             let line = firstLine + offset
-            guard out.count < maxRows else { break }
+            guard out.count < maxRows else { truncated = true; break }
 
             let name = clean(index.value(fields, index.name))
             guard !name.isEmpty else { skipped.append(line); continue }
@@ -157,7 +167,7 @@ public enum ExerciseCSV {
                 line: line
             ))
         }
-        return ExerciseImport(rows: out, skipped: skipped, columns: header)
+        return ExerciseImport(rows: out, skipped: skipped, columns: header, wasTruncated: truncated)
     }
 
     // MARK: - Muscles

@@ -401,9 +401,22 @@ struct OnboardingFlow: View {
         _ range: ClosedRange<Double>
     ) -> some View {
         OnyxNumberRow(
-            label: label, value: value, field: field, focus: $focus,
-            unit: unit, range: range, fractionLength: 0,
-            onCommit: model.markTargetsTouched
+            label: label,
+            // ── MARKED ON THE VALUE, NOT ON `onCommit` ──────────────────────
+            // `OnyxNumberField` fires `onCommit` from `onChange(of: focus)`, so
+            // a person who types 2,000 kcal and taps Back without dismissing
+            // the keyboard leaves `targetsTouched` false — and changing the
+            // goal on the previous step would then silently overwrite the
+            // number they had just chosen.
+            value: Binding(
+                get: { value.wrappedValue },
+                set: { new in
+                    if new != value.wrappedValue { model.markTargetsTouched() }
+                    value.wrappedValue = new
+                }
+            ),
+            field: field, focus: $focus,
+            unit: unit, range: range, fractionLength: 0
         )
     }
 

@@ -127,62 +127,68 @@ final class RoutinesModel {
         }
     }
 
-    func rename(_ day: RoutineDay, to label: String) {
-        var updated = day
+    /// Change one day, by KEY, reading it at call time.
+    ///
+    /// ── WHY NOT TAKE THE `RoutineDay` THE VIEW IS HOLDING ───────────────────
+    /// Because the view is holding a VALUE, captured when its body ran. Two
+    /// edits in one render pass, or an edit made after a `routines` row arrived
+    /// from another device, would each write a stale whole-day payload over a
+    /// newer one — which is precisely the class of bug `RoutineDayEditor`'s
+    /// header claims to avoid by holding a key. Holding the key protects the
+    /// screen; this protects the WRITE.
+    private func mutate(_ dayKey: String, _ change: (inout RoutineDay) -> Void) {
+        guard var current = day(dayKey) else { return }
+        change(&current)
+        write(current)
+    }
+
+    func rename(_ dayKey: String, to label: String) {
         // The KEY never changes on a rename. It is what `workout_sessions.day_key`
         // stamped on every session already logged against this day, and changing
         // it would orphan every one of them.
-        updated.label = label.trimmingCharacters(in: .whitespaces)
-        write(updated)
+        mutate(dayKey) { $0.label = label.trimmingCharacters(in: .whitespaces) }
     }
 
-    func setWeekday(_ day: RoutineDay, _ weekday: Int) {
-        var updated = day
-        updated.weekday = weekday
-        write(updated)
+    func setWeekday(_ dayKey: String, _ weekday: Int) {
+        mutate(dayKey) { $0.weekday = weekday }
     }
 
-    func setSub(_ day: RoutineDay, _ sub: String) {
-        var updated = day
+    func setSub(_ dayKey: String, _ sub: String) {
         let trimmed = sub.trimmingCharacters(in: .whitespaces)
-        updated.sub = trimmed.isEmpty ? nil : trimmed
-        write(updated)
+        mutate(dayKey) { $0.sub = trimmed.isEmpty ? nil : trimmed }
     }
 
     // MARK: - Exercises inside a day
 
-    func addExercise(_ name: String, to day: RoutineDay) {
-        var updated = day
-        updated.payload.exercises.append(
+    func addExercise(_ name: String, to dayKey: String) {
+        mutate(dayKey) { day in
+            day.payload.exercises.append(
             RoutineExercise(
-                name: name,
-                // A starting prescription rather than blanks: three sets of
-                // 8–12 with two minutes' rest is what most people would have
-                // typed, and a row of empty fields is a row of decisions.
-                sets: 3, reps: "8–12", restSec: 120,
-                compound: MuscleMap.resolveMovers(name).secondary.isEmpty == false
+                    name: name,
+                    // A starting prescription rather than blanks: three sets of
+                    // 8–12 with two minutes' rest is what most people would
+                    // have typed, and a row of empty fields is a row of
+                    // decisions.
+                    sets: 3, reps: "8–12", restSec: 120,
+                    compound: MuscleMap.resolveMovers(name).secondary.isEmpty == false
+                )
             )
-        )
-        write(updated)
+        }
     }
 
-    func updateExercise(_ exercise: RoutineExercise, at index: Int, in day: RoutineDay) {
-        var updated = day
-        guard updated.payload.exercises.indices.contains(index) else { return }
-        updated.payload.exercises[index] = exercise
-        write(updated)
+    func updateExercise(_ exercise: RoutineExercise, at index: Int, in dayKey: String) {
+        mutate(dayKey) { day in
+            guard day.payload.exercises.indices.contains(index) else { return }
+            day.payload.exercises[index] = exercise
+        }
     }
 
-    func removeExercises(at offsets: IndexSet, in day: RoutineDay) {
-        var updated = day
-        updated.payload.exercises.remove(atOffsets: offsets)
-        write(updated)
+    func removeExercises(at offsets: IndexSet, in dayKey: String) {
+        mutate(dayKey) { $0.payload.exercises.remove(atOffsets: offsets) }
     }
 
-    func moveExercises(from source: IndexSet, to destination: Int, in day: RoutineDay) {
-        var updated = day
-        updated.payload.exercises.move(fromOffsets: source, toOffset: destination)
-        write(updated)
+    func moveExercises(from source: IndexSet, to destination: Int, in dayKey: String) {
+        mutate(dayKey) { $0.payload.exercises.move(fromOffsets: source, toOffset: destination) }
     }
 
     /// Every movement named across every day, counting a name once.
@@ -203,13 +209,13 @@ final class RoutinesModel {
     /// The create goes through `createExercise`, which refuses to make a second
     /// row for a name already present — so "add" on a name that exists resolves
     /// to the existing row rather than splitting its history.
-    func createAndAdd(_ name: String, to day: RoutineDay) {
+    func createAndAdd(_ name: String, to dayKey: String) {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         do {
             _ = try database.createExercise(userId: userId, name: trimmed)
             catalogue = try database.exercises()
-            addExercise(trimmed, to: day)
+            addExercise(trimmed, to: dayKey)
         } catch {
             failure = "Could not add \(trimmed). \(error.localizedDescription)"
         }
@@ -242,7 +248,13 @@ final class RoutinesModel {
             .replacingOccurrences(of: "[^a-z0-9]+", with: "_", options: .regularExpression)
             .trimmingCharacters(in: CharacterSet(charactersIn: "_"))
         let stem = base.isEmpty ? "day" : base
+        // ── DELETED DAYS STILL OWN THEIR KEY ────────────────────────────────
+        // `workout_sessions.day_key` keeps pointing at a day after it is
+        // deleted — the delete dialog promises exactly that. So a key taken
+        // only from the LIVE days would let "Day 1", deleted and re-added, mint
+        // `day_1` a second time and adopt every session the first one logged.
         let taken = Set(days.map(\.dayKey))
+            .union((try? database.loggedDayKeys(userId: userId)) ?? [])
         guard taken.contains(stem) else { return stem }
         var n = 2
         while taken.contains("\(stem)_\(n)") { n += 1 }

@@ -148,14 +148,15 @@ struct NewAccountPathTests {
         #expect((goals?.calorieGoal ?? 0) > 0)
     }
 
-    /// A person who taps Finish twice, or backgrounds the app mid-write and
-    /// comes back to a re-offered flow.
-    @Test("finishing twice does not double the account")
-    func idempotent() async throws {
+    /// A person who taps Finish twice, or whose account filled up behind the
+    /// flow. The second write is REFUSED and the account is left alone.
+    @Test("finishing twice refuses rather than doubling the account")
+    func finishingTwiceIsRefused() async throws {
         let database = try store()
         let model = flow(database)
         #expect(await model.finish())
-        #expect(await model.finish())
+        #expect(await model.finish() == false)
+        #expect(model.failure != nil, "a refused seed must say so")
 
         let context = try database.scheduleContext(userId: Self.user)
         #expect(context.plans.count == 1)

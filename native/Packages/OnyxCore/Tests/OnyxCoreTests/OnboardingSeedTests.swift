@@ -257,10 +257,14 @@ struct ExerciseCSVTests {
 
     /// A 5,000-line paste is someone's workout history, not their movement
     /// list.
-    @Test func anAbsurdPasteIsTruncated() {
+    @Test func anAbsurdPasteIsTruncatedAndSaysSo() {
         let body = (1...(ExerciseCSV.maxRows + 50)).map { "Movement \($0)" }.joined(separator: "\n")
         let out = ExerciseCSV.parse("name\n" + body)
         #expect(out.rows.count == ExerciseCSV.maxRows)
+        // Silence here is the failure: "500 movements" off a five-thousand-line
+        // file is a workout history being imported as a catalogue.
+        #expect(out.wasTruncated)
+        #expect(ExerciseCSV.parse("name\nHip Thrust\n").wasTruncated == false)
     }
 
     @Test func anEmptyPasteIsEmptyAndNotACrash() {

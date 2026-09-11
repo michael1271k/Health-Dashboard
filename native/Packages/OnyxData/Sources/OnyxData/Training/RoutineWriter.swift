@@ -94,6 +94,22 @@ public extension AppDatabase {
         }
     }
 
+    /// Every `day_key` this account has ever logged a session against.
+    ///
+    /// A deleted routine day keeps its sessions — the delete only takes it out
+    /// of the schedule — so its key is still SPOKEN FOR. A builder that minted
+    /// keys from the live days alone would let a re-added day adopt a deleted
+    /// one's history.
+    func loggedDayKeys(userId: String) throws -> Set<String> {
+        try writer.read { db in
+            try Set(String.fetchAll(
+                db,
+                sql: "SELECT DISTINCT day_key FROM workout_sessions WHERE user_id = ? AND day_key IS NOT NULL",
+                arguments: [userId]
+            ))
+        }
+    }
+
     /// Every routine day of one program, in the order the logger reads them.
     func routineDays(userId: String, programId: String) throws -> [RoutineDay] {
         try writer.read { db in
