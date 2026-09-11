@@ -49,6 +49,7 @@ struct AtlasSheet: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .body) private var valueWidth: CGFloat = 34
+    @ScaledMetric(relativeTo: .body) private var dotMetric: CGFloat = 8
 
     /// Degrees of turn that have been COMMITTED. `live` is what the finger is
     /// adding right now, and it is folded in on release rather than reset —
@@ -400,7 +401,7 @@ struct AtlasSheet: View {
                 HStack(spacing: OnyxSpace.s) {
                     Circle()
                         .fill(Color.onyx.muscle(picked.muscle))
-                        .frame(width: 8, height: 8)
+                        .frame(width: dot, height: dot)
                     Text(picked.muscle.displayName)
                         .onyxType(.body).fontWeight(.semibold)
                         .foregroundStyle(Color.onyx.textPrimary)
@@ -434,6 +435,13 @@ struct AtlasSheet: View {
 
     // MARK: - The ranking
 
+    /// The legend's colour dot, scaled with the body type and capped.
+    ///
+    /// A fixed 8 pt bullet is about 47 % of cap height at the default size and
+    /// about 15 % at AX5 — it shrinks, relatively, exactly where the reader
+    /// needs it most. Capped at 16 because past that it stops being a bullet.
+    private var dot: CGFloat { min(dotMetric, 16) }
+
     private var legend: some View {
         VStack(spacing: 0) {
             ForEach(Array(ranked.enumerated()), id: \.element.muscle) { i, entry in
@@ -447,23 +455,35 @@ struct AtlasSheet: View {
 
     private func row(_ entry: (muscle: LandmarkMuscle, sets: Double)) -> some View {
         let tint = Color.onyx.muscle(entry.muscle)
+        let stacked = typeSize.isAccessibilitySize
         return Button { pick(entry.muscle) } label: {
-            HStack(spacing: OnyxSpace.grid) {
-                Circle().fill(tint).frame(width: 8, height: 8)
-                Text(entry.muscle.displayName)
-                    .onyxType(.body)
-                    .foregroundStyle(Color.onyx.textPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: OnyxSpace.s)
-                if !typeSize.isAccessibilitySize { share(entry.sets, tint: tint) }
-                Text(OnyxFormat.sets(entry.sets))
-                    .onyxType(.body).fontWeight(.semibold).onyxNumeral()
-                    .foregroundStyle(Color.onyx.textPrimary)
-                    .lineLimit(1)
-                    // A fixed 34 pt column holds "4.5" at the default size and
-                    // wraps it at AX5. The column scales with the type it is
-                    // sized for.
-                    .frame(width: valueWidth, alignment: .trailing)
+            // ── THE BAR MOVES AT AX5, IT DOES NOT LEAVE ─────────────────────
+            // It used to be dropped outright at accessibility sizes, which made
+            // this the one list in the app where colour identification got WORSE
+            // as the type got bigger: the 72 pt sample went and the 8 pt dot
+            // stayed, beside 53 pt text. Since W3 the dot is one of sixteen
+            // landmark hues rather than one of four accents, and the bar is also
+            // the redundant, non-colour channel a deuteranomalous reader is
+            // using — so at AX5 it goes full width UNDER the row instead.
+            VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+                HStack(spacing: OnyxSpace.grid) {
+                    Circle().fill(tint).frame(width: dot, height: dot)
+                    Text(entry.muscle.displayName)
+                        .onyxType(.body)
+                        .foregroundStyle(Color.onyx.textPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: OnyxSpace.s)
+                    if !stacked { share(entry.sets, tint: tint) }
+                    Text(OnyxFormat.sets(entry.sets))
+                        .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+                        .foregroundStyle(Color.onyx.textPrimary)
+                        .lineLimit(1)
+                        // A fixed 34 pt column holds "4.5" at the default size and
+                        // wraps it at AX5. The column scales with the type it is
+                        // sized for.
+                        .frame(width: valueWidth, alignment: .trailing)
+                }
+                if stacked { share(entry.sets, tint: tint, width: nil) }
             }
             .frame(minHeight: 44)
             .contentShape(.rect)
@@ -473,7 +493,8 @@ struct AtlasSheet: View {
         .accessibilityHint("Selects it on the body")
     }
 
-    private func share(_ value: Double, tint: Color) -> some View {
+    /// `width: nil` fills the row instead of taking a fixed 72 pt column.
+    private func share(_ value: Double, tint: Color, width: CGFloat? = 72) -> some View {
         let peak = ranked.first?.sets ?? value
         return GeometryReader { proxy in
             ZStack(alignment: .leading) {
@@ -483,7 +504,8 @@ struct AtlasSheet: View {
                     .frame(width: proxy.size.width * (peak > 0 ? value / peak : 0))
             }
         }
-        .frame(width: 72, height: 4)
+        .frame(width: width, height: 4)
+        .frame(maxWidth: width == nil ? .infinity : nil)
         .accessibilityHidden(true)
     }
 }

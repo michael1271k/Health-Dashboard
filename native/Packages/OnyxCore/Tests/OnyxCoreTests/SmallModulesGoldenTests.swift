@@ -213,25 +213,10 @@ struct ChartsGoldenTests {
         }
     }
 
-    struct MapOut: Decodable { let map: [[String]]; let groups: [String] }
-    struct AggIn: Decodable { let rows: [MuscleSetRow]; let todayISO: String }
-    struct AggOut: Decodable { let stats: [MuscleStat]; let weekly: [[String: JSONValue]] }
-    @Test("the muscle map and aggregate match")
-    func aggregate() throws {
-        let table = try GoldenFixture<JSONValue?, MapOut>.load("muscle-map").cases[0].expected
-        #expect(MuscleAggregator.map.map { [$0.0, $0.1] } == table.map)
-        #expect(MuscleAggregator.groups == table.groups)
-        for c in try GoldenFixture<AggIn, AggOut>.load("muscle-aggregate").cases {
-            let a = MuscleAggregator.aggregate(c.input.rows, todayISO: c.input.todayISO)
-            #expect(a.stats == c.expected.stats, "stats — \(c.name)")
-            #expect(a.weekly.count == c.expected.weekly.count, "weekly count — \(c.name)")
-            for (row, e) in zip(a.weekly, c.expected.weekly) {
-                #expect(row.week == e["week"]?.string, "week — \(c.name)")
-                for (g, n) in row.counts { #expect(Double(n) == e[g]?.number, "\(g) in \(row.week) — \(c.name)") }
-                #expect(e.count == row.counts.count + 1, "weekly keys — \(c.name)")
-            }
-        }
-    }
+    // `aggregate()` tested `MuscleAggregator`, deleted in W3 along with its
+    // `muscle-aggregate.json` and the `muscle-map.json` table case it read.
+    // What replaced it is `family()` in the widget suite below: one
+    // accumulator, checked at the landmark grain it now counts in.
 
     struct Nice: Decodable { let padPct: Double?; let zeroBased: Bool?; let hardMin: Double? }
     struct Tight: Decodable { let padPct: Double?; let hardMin: Double?; let minSpanPct: Double? }
@@ -370,14 +355,34 @@ struct WidgetGoldenTests {
     }
 
     struct FamIn: Decodable { let muscle: String }
-    struct FamVolIn: Decodable { let sets: [WidgetSetRow] }
-    @Test("the family fold and volume by family match")
+    struct CreditIn: Decodable { let sets: [WidgetSetRow] }
+    struct CreditOut: Decodable { let landmarks: [String: Double]; let families: [String: Double] }
+    @Test("the family fold and the one accumulator match")
     func family() throws {
         for c in try GoldenFixture<FamIn, String>.load("muscle-family").cases {
             #expect(MuscleFamily.of(LandmarkMuscle(rawValue: c.input.muscle)!).rawValue == c.expected, "\(c.name)")
         }
-        for c in try GoldenFixture<FamVolIn, [WidgetFamilyVolume]>.load("widget-family").cases {
-            #expect(WidgetDerive.volumeByFamily(c.input.sets) == c.expected, "family volume — \(c.name)")
+        for c in try GoldenFixture<CreditIn, CreditOut>.load("widget-family").cases {
+            let got = MuscleCredit.weightedSets(
+                exerciseNames: c.input.sets.filter { $0.setType != "ghost" }.map(\.exercise)
+            )
+            let named = Dictionary(got.map { ($0.key.rawValue, $0.value) }, uniquingKeysWith: { a, _ in a })
+            #expect(named.count == c.expected.landmarks.count, "credit keys — \(c.name)")
+            for (muscle, sets) in c.expected.landmarks {
+                expectClose(named[muscle], sets, "\(muscle) — \(c.name)")
+            }
+            // …and the eight-family rollup the payload computes from exactly
+            // these sixteen. One accumulator, two grains: the pair is the claim.
+            let rolled = Dictionary(
+                OnyxSnapshot.familyRollup(named.map {
+                    OnyxSnapshot.MuscleVolume(muscle: $0.key, sets: $0.value, target: 0)
+                }).map { ($0.family.rawValue, $0.sets) },
+                uniquingKeysWith: { a, _ in a }
+            )
+            #expect(rolled.count == c.expected.families.count, "family keys — \(c.name)")
+            for (family, sets) in c.expected.families {
+                expectClose(rolled[family], sets, "\(family) — \(c.name)")
+            }
         }
     }
 

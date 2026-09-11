@@ -106,6 +106,14 @@ public enum OnyxChart {
     /// legible, and the hairline grid would spread until it read as empty.
     public static let plotHeight: CGFloat = 180
 
+    /// A chart card's own inset — between `OnyxSpace.m` and `.l`, and the one
+    /// value in the system that is neither. It is named rather than typed
+    /// because a card that is NOT an `OnyxChartCard` but sits beside one (the
+    /// Trends muscle atlas, whose content is a figure and a legend rather than a
+    /// plot) has to match it exactly, and a second `14` in a view is a number
+    /// nobody can tell was deliberate.
+    public static let cardPadding: CGFloat = 14
+
     /// Read once per draw; a chart has no ambient motion, so this only decides
     /// whether a data change cross-fades or cuts.
     static var reduceMotion: Bool {
@@ -344,7 +352,7 @@ public struct OnyxChartCard<Content: View>: View {
             content
                 .frame(height: plotHeight)
         }
-        .padding(14)
+        .padding(OnyxChart.cardPadding)
         .onyxGlass(.tile)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(headline.map { "\(title), \($0)" } ?? title)

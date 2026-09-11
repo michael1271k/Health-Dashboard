@@ -12,25 +12,25 @@ import OnyxCore
 /// help. The web version used sixteen uncontrolled text inputs remounted by a
 /// React `key` to reset them — the shape of that control was a workaround.
 ///
-/// ── AND WHY THEY ARE GROUPED BY DOMAIN ──────────────────────────────────────
-/// Sixteen ungrouped rows is a wall. The four accents already say which family a
-/// muscle belongs to everywhere else in the app, so the sections use the same
-/// mapping: the colour of the header is the colour that muscle draws in.
+/// ── AND WHY THEY ARE GROUPED BY FAMILY ──────────────────────────────────────
+/// Sixteen ungrouped rows is a wall. Grouping them by the eight families is the
+/// same grouping every chart in the app now uses, and the header wears the
+/// family's own colour — which is the colour those muscles draw in. It was
+/// grouped by the four DOMAIN accents until W3, where "Chest, shoulders & arms"
+/// was one indigo section of seven muscles: the grouping existed, but it was the
+/// palette's collapse rather than the taxonomy.
 struct VolumeTargetsView: View {
     let model: SettingsModel
 
     var body: some View {
         Form {
-            ForEach(OnyxDomain.allCases, id: \.self) { domain in
-                let muscles = LandmarkMuscle.allCases.filter { OnyxDomain.forMuscle($0) == domain }
-                if !muscles.isEmpty {
-                    Section {
-                        ForEach(muscles, id: \.self) { muscle in
-                            row(muscle)
-                        }
-                    } header: {
-                        OnyxSectionHeader(heading(domain), domain)
+            ForEach(MuscleFamily.allCases, id: \.self) { family in
+                Section {
+                    ForEach(family.members, id: \.self) { muscle in
+                        row(muscle)
                     }
+                } header: {
+                    OnyxSectionHeader(family.rawValue, color: Color.onyx.muscleFamily(family))
                 }
             }
         }
@@ -70,17 +70,6 @@ struct VolumeTargetsView: View {
         .accessibilityValue("\(value) sets a week")
     }
 
-    /// The domains, named for what they mean on THIS screen. "Train" is every
-    /// pushing and pulling muscle here, which is not a useful heading for a list
-    /// of them.
-    private func heading(_ domain: OnyxDomain) -> String {
-        switch domain {
-        case .train:   "Chest, shoulders & arms"
-        case .body:    "Back & legs"
-        case .recover: "Core"
-        case .fuel:    "Other"
-        }
-    }
 }
 
 #if DEBUG

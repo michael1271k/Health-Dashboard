@@ -56,18 +56,27 @@ extension View {
 /// colour is what says which domain the section belongs to.
 struct OnyxSectionHeader: View {
     let title: String
-    let domain: OnyxDomain
+    let color: Color
 
     init(_ title: String, _ domain: OnyxDomain) {
         self.title = title
-        self.domain = domain
+        self.color = domain.accent
+    }
+
+    /// A section whose colour is not a DOMAIN's — the weekly-volume form groups
+    /// by muscle family, and a family's colour is its own (`Color.onyx.muscle`),
+    /// not one of the four accents. Keeping it as a domain is what made every
+    /// arm section indigo in the first place.
+    init(_ title: String, color: Color) {
+        self.title = title
+        self.color = color
     }
 
     var body: some View {
         Text(title)
             .font(.footnote.weight(.semibold))
             .tracking(12 * 0.01)
-            .foregroundStyle(domain.accent)
+            .foregroundStyle(color)
     }
 }
 

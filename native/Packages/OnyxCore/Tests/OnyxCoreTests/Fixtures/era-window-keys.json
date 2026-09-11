@@ -1,7 +1,7 @@
 {
   "module": "era/eraWindow",
   "fn": "eraWindowFromKey",
-  "note": "A picker binds to the key, so a stored key that no longer names a mode must read as null rather than as the default — the caller decides the fallback.",
+  "note": "A picker binds to the key, so a stored key that no longer names a mode must read as null rather than as the default \u2014 the caller decides the fallback. W3: fromKey walks EVERY keyed window, not just the screen picker's six \u2014 a key that serialises and reads back nil is a preference that silently reverts.",
   "cases": [
     {
       "name": "currentPhase",
@@ -127,6 +127,24 @@
         "key": "nonsense"
       },
       "expected": null
+    },
+    {
+      "name": "thisWeek",
+      "input": {
+        "key": "thisWeek"
+      },
+      "expected": {
+        "kind": "thisWeek"
+      }
+    },
+    {
+      "name": "currentProgram",
+      "input": {
+        "key": "currentProgram"
+      },
+      "expected": {
+        "kind": "currentProgram"
+      }
     }
   ]
 }

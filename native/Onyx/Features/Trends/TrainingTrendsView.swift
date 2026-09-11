@@ -13,6 +13,13 @@ import OnyxData
 /// `MuscleAggregator`). All that is left is slicing rows into marks, and a
 /// `@State` array is the honest home for that — a model would be a struct
 /// holding one array and four computed properties.
+/// Everything the screen's `.task(id:)` must re-read on. See the note there.
+private struct TrendsRead: Hashable {
+    let generation: Int
+    let plan: String?
+    let phase: String?
+}
+
 struct TrainingTrendsView: View {
     @Environment(AppEnvironment.self) private var environment
 
@@ -28,6 +35,12 @@ struct TrainingTrendsView: View {
     /// Which weeks were maintenance weeks, resolved once for both charts that
     /// draw them. See `MaintenanceLens`.
     @State private var lens: MaintenanceLens = .schedule
+    /// This phase's per-muscle weekly set targets (`plan_phase_volume`), for the
+    /// atlas card — through `AppDatabase.volumeTargets`, which is the read the
+    /// Today sheet and the widget tile already make. A fourth read of this table
+    /// with a fourth policy about `user_id` is how the three accumulators W3
+    /// deleted came to exist.
+    @State private var volumeTargets: [LandmarkMuscle: Double] = [:]
     /// The generation this screen's data was read at.
     ///
     /// `.task(id:)` also fires on APPEAR, and this screen's whole point is that
@@ -43,6 +56,15 @@ struct TrainingTrendsView: View {
             VStack(spacing: OnyxSpace.l) {
                 if let sessions, let input {
                     let resolved = window.resolve(input)
+                    // ── THE ATLAS CARD OWNS ITS OWN WINDOW ──────────────────
+                    // It sits ABOVE the screen picker on purpose. Its question
+                    // is "what has my body had", whose natural answer is a
+                    // TRAINING WEEK against the week's targets — and the picker
+                    // below governs three trend series whose natural answer is a
+                    // phase. One control driving both would have to be wrong for
+                    // one of them, so the card carries its own four windows and
+                    // the picker visibly starts the section under it.
+                    MuscleFocusAtlasCard(sessions: sessions, input: input, targets: volumeTargets)
                     EraWindowPicker(selection: $window, input: input)
                     // The window decides which sessions EXIST for this screen;
                     // each card still owns its own display span (the intensity
@@ -54,7 +76,6 @@ struct TrainingTrendsView: View {
                     VolumeStreamCard(sessions: visible, era: resolved.era(cutStartISO: input.planStartISO), today: today, lens: lens, schedule: environment.targets?.schedule ?? ScheduleContext(programId: "", phase: .cut))
                     IntensityCard(sessions: visible, today: today)
                     StrengthTrendsCard(sessions: visible, today: today)
-                    MuscleFocusCard(sessions: visible, today: today)
                 } else {
                     ProgressView().controlSize(.large)
                 }
@@ -65,7 +86,33 @@ struct TrainingTrendsView: View {
         }
         .onyxScreen(.train)
         .navigationTitle("Trends")
-        .task(id: environment.rescoreGeneration) {
+        // ── WHY THE SCHEDULE IS IN THE TASK ID ──────────────────────────────
+        // `environment.targets` is nil until sign-in installs the resolver, and
+        // a `.task` body does not observe. Keyed on the generation alone, a cold
+        // open that lands before the resolver resolved read no targets and kept
+        // none — the card would grade the week against nothing and say nothing
+        // about it. The phase moving at a day boundary is the same bug with a
+        // slower fuse: the generation does not change, so the week would be
+        // graded against the phase before last.
+        .task(id: TrendsRead(
+            generation: environment.rescoreGeneration,
+            plan: environment.targets?.schedule.programId,
+            phase: environment.targets?.schedule.phase.rawValue
+        )) {
+            // Sixteen small rows, re-read whenever any of those three move —
+            // they are also the one input here the athlete can change without a
+            // rescore, by editing weekly set volume in Settings.
+            if let schedule = environment.targets?.schedule {
+                volumeTargets = (try? environment.database.volumeTargets(
+                    userId: environment.database.localUserId(),
+                    planId: schedule.programId,
+                    phase: schedule.phase
+                )) ?? [:]
+            } else {
+                // Cleared, not left behind: keeping the previous phase's numbers
+                // after a switch is the staleness this key exists to prevent.
+                volumeTargets = [:]
+            }
             guard loadedAt != environment.rescoreGeneration else { return }
             loadedAt = environment.rescoreGeneration
             // ponytail: the whole history in one read (~5k sets today); page by
@@ -407,64 +454,166 @@ private struct StrengthTrendsCard: View {
     }
 }
 
-// MARK: - D. Muscle focus
+// MARK: - D. Muscle focus · the body, and what landed on it
 
-/// Sets per muscle family over the last four weeks, primary and assisting alike
-/// (`MuscleAggregator`: a unilateral pair is one set, a family tagged twice on a
-/// row is credited once).
-private struct MuscleFocusCard: View {
+/// The week on the body: the atlas at full size, and every landmark's weighted
+/// set count under it.
+///
+/// ── WHAT THIS REPLACED ──────────────────────────────────────────────────────
+/// A horizontal bar chart of six families over a hard-coded trailing 28 days,
+/// fed by `MuscleAggregator` — the third of the three accumulators F7 found, and
+/// the one that credited no assistance and started its weeks on a Sunday
+/// whatever the athlete had chosen. It could disagree with the tile on the
+/// dashboard and with the sheet that tile opens, about the same session, and it
+/// did. It is gone; this card calls `MuscleCredit.weightedSets(exerciseNames:)`
+/// like both of them.
+///
+/// ── AND WHY THE FIGURE, NOT BARS ────────────────────────────────────────────
+/// Sixteen bars ranked by count tell you Legs was the biggest number, which you
+/// knew. The body tells you the week was all on the FRONT of you, which no
+/// ranked list can — the sheet's own note (`MuscleFocusSheetBody`) makes the
+/// same argument for the same reason, and this card is that sheet's answer over
+/// a window you choose.
+private struct MuscleFocusAtlasCard: View {
     let sessions: [TrendSession]
-    let today: String
+    let input: EraWindowInput
+    /// `plan_phase_volume` for the current (plan, phase).
+    let targets: [LandmarkMuscle: Double]
 
-    private var stats: [MuscleStat] {
-        let from = ISODate.addDays(today, -27) ?? today
-        var rows: [MuscleSetRow] = []
-        for s in sessions where s.date >= from {
-            for t in s.sets where t.set.setType != "ghost" {
-                let movers = MuscleMap.resolveMovers(t.exerciseName)
-                var groups: [String] = []
-                for token in movers.primary + movers.secondary {
-                    if let g = MuscleAggregator.map.first(where: { $0.0 == token.lowercased() })?.1, !groups.contains(g) { groups.append(g) }
-                }
-                rows.append(MuscleSetRow(
-                    id: t.set.id, weightKg: t.set.weightKg, reps: Double(t.set.reps),
-                    pairId: t.set.pairId, side: Self.side(t.set.side), groups: groups, date: s.date
-                ))
-            }
-        }
-        return MuscleAggregator.aggregate(rows, todayISO: today).stats
+    /// This week / 30 d / All / the plan's own name.
+    ///
+    /// Four and not the screen picker's six: "current lever" is a NUTRITION
+    /// window and means nothing to a set count, and "since cut" is
+    /// `.currentProgram` under a name that is wrong on a bulk.
+    private static let windows: [EraWindow] = [.thisWeek, .days(30), .all, .currentProgram]
+
+    @State private var window: EraWindow = .thisWeek
+
+    private var resolved: ResolvedEraWindow { window.resolve(input) }
+
+    /// Targets are WEEKLY. Over any wider window they are not a bar to clear, so
+    /// the legend drops them rather than grading a month against seven days.
+    ///
+    /// …and an athlete who has set NONE has no targets to grade against either.
+    /// Without the second clause the figure and every rail grade against a peak
+    /// target of zero and come out blank — a week with work in it, drawn as a
+    /// week with none, which is the one thing this card may never do.
+    private var showsTargets: Bool {
+        window == .thisWeek && targets.values.contains { $0 > 0 }
     }
 
-    /// The aggregator compares `"L"`/`"R"`; the local row stores the long form.
-    private static func side(_ stored: String?) -> String? {
-        switch stored?.lowercased() {
-        case "left", "l": "L"
-        case "right", "r": "R"
-        default: nil
+
+    private var rows: [MuscleFocusRow] {
+        let credit = MuscleCredit.weightedSets(
+            exerciseNames: sessions
+                .filter { resolved.contains($0.date) }
+                .flatMap(\.sets)
+                .filter { $0.set.setType != "ghost" }
+                .map(\.exerciseName)
+        )
+        return LandmarkMuscle.allCases.map { muscle in
+            MuscleFocusRow(
+                muscle: muscle,
+                // One decimal: the credit is halves, and a raw Double prints
+                // 8.500000000000002 often enough to matter.
+                sets: ((credit[muscle] ?? 0) * 10).rounded() / 10,
+                target: showsTargets ? Int(targets[muscle] ?? 0) : 0
+            )
         }
     }
 
     var body: some View {
-        let stats = stats
-        OnyxChartCard("Muscle focus", domain: .train, caption: "Sets per family, last 4 weeks") {
-            if stats.allSatisfy({ $0.sets == 0 }) {
-                OnyxChartEmpty("Nothing in the last 4 weeks.")
+        let rows = rows
+        let done = rows.reduce(0) { $0 + $1.sets }
+        VStack(alignment: .leading, spacing: 10) {
+            header(done: done)
+            picker
+            if done == 0 {
+                OnyxChartEmpty("No sets logged in this window.")
             } else {
-                Chart(stats, id: \.group) { stat in
-                    BarMark(x: .value("Sets", stat.sets), y: .value("Family", stat.group))
-                        .foregroundStyle(OnyxDomain.forFamily(stat.group).accent)
-                        .cornerRadius(3)
-                        .annotation(position: .trailing, spacing: 4) {
-                            Text("\(stat.sets)")
-                                .font(.system(.caption2, design: .rounded).weight(.semibold))
-                                .monospacedDigit()
-                                .foregroundStyle(Color.onyx.textPrimary)
-                        }
-                }
-                .chartYScale(domain: MuscleAggregator.groups)
-                .onyxChart(.train)
+                AtlasFigure(side: .both, worked: worked(rows))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 260)
+                MuscleFocusLegend(rows: rows, showsTargets: showsTargets)
             }
         }
+        .padding(OnyxChart.cardPadding)
+        .onyxGlass(.tile)
+    }
+
+    /// The card's own header, in `OnyxChartCard`'s language — but not that card:
+    /// it hands its content a FIXED plot height, and a 260 pt figure with
+    /// sixteen legend rows under it is not a plot.
+    @ViewBuilder private func header(done: Double) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline) { title; Spacer(minLength: 8); headline(done) }
+            VStack(alignment: .leading, spacing: 4) { title; headline(done) }
+        }
+        Text(resolved.label)
+            .font(.footnote)
+            .foregroundStyle(Color.onyx.textSecondary)
+    }
+
+    private var title: some View {
+        Text("MUSCLE FOCUS")
+            .font(.caption.weight(.semibold))
+            .tracking(0.6)
+            .foregroundStyle(OnyxDomain.train.accent)
+    }
+
+    /// The window's weighted sets — the sum over all SIXTEEN landmarks, so a
+    /// leg-press week reads about double its physical set count. That is the
+    /// currency, not a double count: see "WHY A SUM AND NOT A SET COUNT" on
+    /// `OnyxSnapshot.FamilyVolume`. It agrees exactly with the Today sheet's
+    /// "sets done", which reduces the same sixteen.
+    private func headline(_ done: Double) -> some View {
+        Text("\(OnyxFormat.sets(done)) sets")
+            .font(.system(.title3, design: .rounded).weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(Color.onyx.textPrimary)
+            .contentTransition(.numericText())
+    }
+
+    /// Segmented while four labels fit, a menu when they do not.
+    ///
+    /// Not a type-size threshold: the fourth label is the PLAN's name and can be
+    /// anything from "PPL" to "Onyx-5 Lean Bulk", so whether the row fits is a
+    /// question about this athlete's data and not about the body font.
+    private var picker: some View {
+        ViewThatFits(in: .horizontal) {
+            Picker("Window", selection: $window) { options }
+                .pickerStyle(.segmented)
+            Picker("Window", selection: $window) { options }
+                .pickerStyle(.menu)
+                .tint(Color.onyx.textSecondary)
+        }
+    }
+
+    @ViewBuilder private var options: some View {
+        ForEach(Self.windows, id: \.key) { w in
+            Text(label(w)).tag(w)
+        }
+    }
+
+    private func label(_ w: EraWindow) -> String {
+        switch w {
+        case .thisWeek: "Week"
+        case .days(let n): "\(n) d"
+        case .all: "All"
+        case .currentProgram: input.planLabel
+        default: w.resolve(input).label
+        }
+    }
+
+    /// Landmark → 0…1 for the figure. `rows` already zeroes every target outside
+    /// a week window, and `MuscleCredit.worked(sets:targets:)` grades against the
+    /// busiest muscle when there is no target to grade against — so this is the
+    /// same one call the widget tile and the Today sheet make, in both windows.
+    private func worked(_ rows: [MuscleFocusRow]) -> [LandmarkMuscle: Double] {
+        MuscleCredit.worked(
+            sets: Dictionary(rows.map { ($0.muscle, $0.sets) }, uniquingKeysWith: { a, _ in a }),
+            targets: Dictionary(rows.map { ($0.muscle, $0.target) }, uniquingKeysWith: { a, _ in a })
+        )
     }
 }
 

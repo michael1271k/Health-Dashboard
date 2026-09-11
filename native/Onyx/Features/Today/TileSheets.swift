@@ -245,40 +245,20 @@ struct StepsSheetBody: View {
 struct MuscleFocusSheetBody: View {
     let focus: MuscleFocusSummary
 
-    /// Ranked by what is LEFT, not by what was done.
-    ///
-    /// The sheet's question is "what is still owed this week", so the muscle
-    /// with six sets outstanding belongs at the top even though the one with
-    /// twelve done is the bigger number. Ties break on the landmark's own order
-    /// so the list cannot reshuffle between two redraws.
-    private var ranked: [MuscleFocusRow] {
-        focus.rows.enumerated().sorted { a, b in
-            if a.element.remaining != b.element.remaining { return a.element.remaining > b.element.remaining }
-            if a.element.sets != b.element.sets { return a.element.sets > b.element.sets }
-            return a.offset < b.offset
-        }.map(\.element)
-    }
-
-    /// Muscles the plan does not ask for AND the week did not touch. Drawn last
-    /// and quietly: Adductors sits at a target of 0 on a cut, and ranking it
-    /// beside a muscle that is genuinely behind would be a false alarm.
-    private var untargeted: [MuscleFocusRow] { ranked.filter { $0.target == 0 && $0.sets == 0 } }
-    private var active: [MuscleFocusRow] { ranked.filter { $0.target > 0 || $0.sets > 0 } }
-
     var body: some View {
         ScrollView {
             VStack(spacing: OnyxSpace.l) {
                 counts
                 AtlasFigure(side: .both, worked: focus.worked)
                     .frame(maxHeight: 300)
-                if active.isEmpty {
+                if focus.rows.allSatisfy({ $0.sets == 0 && $0.target == 0 }) {
                     ContentUnavailableView(
                         "Nothing logged this week",
                         systemImage: "figure.strengthtraining.traditional",
                         description: Text("Log a set and the body fills in.")
                     )
                 } else {
-                    legend
+                    MuscleFocusLegend(rows: focus.rows)
                 }
                 Text("Direct work counts 1.0, assistance 0.5. Targets are this phase's, or your own override where you set one.")
                     .onyxType(.caption)
@@ -291,20 +271,36 @@ struct MuscleFocusSheetBody: View {
 
     /// Done, planned, left. Three figures and not two, because "12 of 40" makes
     /// the reader do the subtraction that the week is actually about.
+    ///
+    /// ── AND WHY IT STOPS BEING A ROW ────────────────────────────────────────
+    /// Three tiles across 375 pt is 105 pt each, which at AX5 is narrower than
+    /// the word "PLANNED": the labels came apart into "PLA / NN / ED" and "SETS
+    /// DONE" into four lines of one syllable. `ViewThatFits` and not a type-size
+    /// threshold, because what decides this is whether the WORDS fit the width —
+    /// a longer label or a narrower device breaks the row at the default size
+    /// too, and a threshold would keep the row right up until it did.
     private var counts: some View {
-        HStack(spacing: OnyxSpace.grid) {
-            countTile(OnyxFormat.sets(focus.doneSets), "Sets done", Color.onyx.accent(.train))
-            countTile("\(focus.targetSets)", "Planned", Color.onyx.textPrimary)
-            countTile(OnyxFormat.sets(focus.remainingSets), "Left",
-                      focus.remainingSets > 0 ? Color.onyx.textPrimary : Color.onyx.good)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: OnyxSpace.grid) { countTiles }
+            VStack(spacing: OnyxSpace.grid) { countTiles }
         }
+    }
+
+    @ViewBuilder private var countTiles: some View {
+        countTile(OnyxFormat.sets(focus.doneSets), "Sets done", Color.onyx.accent(.train))
+        countTile("\(focus.targetSets)", "Planned", Color.onyx.textPrimary)
+        countTile(OnyxFormat.sets(focus.remainingSets), "Left",
+                  focus.remainingSets > 0 ? Color.onyx.textPrimary : Color.onyx.good)
     }
 
     private func countTile(_ value: String, _ label: String, _ color: Color) -> some View {
         VStack(alignment: .leading, spacing: OnyxSpace.xs) {
             Text(value).onyxHero().onyxNumeral().foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.5)
-            Text(label).onyxMicro()
+            // `fixedSize` on the horizontal axis: the label is what `ViewThatFits`
+            // measures, and a `Text` that is willing to wrap reports a tiny ideal
+            // width — so without this the HStack always "fits" and always breaks.
+            Text(label).onyxMicro().fixedSize(horizontal: true, vertical: false)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(OnyxSpace.m)
@@ -312,8 +308,92 @@ struct MuscleFocusSheetBody: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var legend: some View {
-        VStack(spacing: 0) {
+}
+
+// MARK: - Muscle focus · the shared legend
+
+/// The landmarks as a ranked list: a dot in the muscle's OWN colour, the count,
+/// and — when the window is a week — what the phase still asks for.
+///
+/// ── WHY THIS IS ITS OWN VIEW SINCE W3 ───────────────────────────────────────
+/// It was `private var legend` inside the muscle-focus sheet. The Trends atlas
+/// card draws the same list under the same figure, and the alternative to
+/// sharing it was a second list that agrees by inspection — which is precisely
+/// how the three accumulators F7 found came to exist.
+///
+/// `showsTargets` is off for every window WIDER than a week. A per-muscle target
+/// is weekly, so "24 / 10" over a month is not an achievement, it is a category
+/// error; with it off the rows rank by what was done and the rail scales against
+/// the busiest muscle in the window instead.
+struct MuscleFocusLegend: View {
+    let rows: [MuscleFocusRow]
+    var showsTargets = true
+
+    /// The colour dot, scaled with the body type and capped at 16.
+    ///
+    /// A fixed 8 pt bullet is about 47 % of cap height at the default size and
+    /// about 15 % at AX5 — it shrinks, relatively, exactly where the reader
+    /// needs it most. It is now one of sixteen landmark hues rather than one of
+    /// four accents, so it is carrying more.
+    @ScaledMetric(relativeTo: .body) private var dotMetric: CGFloat = 8
+    private var dot: CGFloat { min(dotMetric, 16) }
+
+    /// Ranked by what is LEFT, not by what was done.
+    ///
+    /// The sheet's question is "what is still owed this week", so the muscle
+    /// with six sets outstanding belongs at the top even though the one with
+    /// twelve done is the bigger number. Ties break on the landmark's own order
+    /// so the list cannot reshuffle between two redraws.
+    static func ranked(_ rows: [MuscleFocusRow]) -> [MuscleFocusRow] {
+        rows.enumerated().sorted { a, b in
+            if a.element.remaining != b.element.remaining { return a.element.remaining > b.element.remaining }
+            if a.element.sets != b.element.sets { return a.element.sets > b.element.sets }
+            return a.offset < b.offset
+        }.map(\.element)
+    }
+
+    /// Without targets there is no "left" to rank by, so the order is what the
+    /// window actually holds.
+    private var ordered: [MuscleFocusRow] {
+        guard showsTargets else {
+            return rows.enumerated().sorted { a, b in
+                if a.element.sets != b.element.sets { return a.element.sets > b.element.sets }
+                return a.offset < b.offset
+            }.map(\.element)
+        }
+        return Self.ranked(rows)
+    }
+
+    /// Muscles the window did not touch and the plan does not ask for. Drawn
+    /// last and quietly: Adductors sits at a target of 0 on a cut, and ranking
+    /// it beside a muscle that is genuinely behind would be a false alarm.
+    private var untargeted: [MuscleFocusRow] {
+        ordered.filter { $0.sets == 0 && (!showsTargets || $0.target == 0) }
+    }
+    private var active: [MuscleFocusRow] {
+        let quiet = Set(untargeted.map(\.id))
+        return ordered.filter { !quiet.contains($0.id) }
+    }
+
+    /// What a rail is drawn against — the same three-way rule
+    /// `MuscleCredit.worked(sets:targets:)` states for the FIGURE.
+    ///
+    /// The third clause is the one that matters: with `showsTargets` on and no
+    /// `plan_phase_volume` row anywhere, the biggest target is zero, every rail
+    /// came out empty, and the sixteen of them sat directly under a body the
+    /// same data had lit. One sheet cannot say the week both happened and did
+    /// not.
+    private var peak: Double {
+        let target = Double(rows.map(\.target).max() ?? 0)
+        return showsTargets && target > 0 ? target : (rows.map(\.sets).max() ?? 0)
+    }
+
+    var body: some View {
+        // Hoisted: `active` computes `untargeted` computes `ordered`, which
+        // sorts — and `body` touches it once per row plus once for `last`.
+        let active = active
+        let untargeted = untargeted
+        return VStack(spacing: 0) {
             ForEach(active) { row in
                 muscleRow(row)
                 if row.id != active.last?.id || !untargeted.isEmpty {
@@ -331,25 +411,30 @@ struct MuscleFocusSheetBody: View {
 
     private func muscleRow(_ row: MuscleFocusRow) -> some View {
         let tint = Color.onyx.muscle(row.muscle)
-        let met = row.target > 0 && row.sets >= Double(row.target)
+        let graded = showsTargets && row.target > 0
+        let met = graded && row.sets >= Double(row.target)
         return VStack(alignment: .leading, spacing: OnyxSpace.xs) {
             HStack(spacing: OnyxSpace.grid) {
-                Circle().fill(tint).frame(width: 8, height: 8)
+                Circle().fill(tint).frame(width: dot, height: dot)
                 Text(row.muscle.displayName)
                     .onyxType(.body)
-                    .foregroundStyle(row.target == 0 && row.sets == 0 ? Color.onyx.textTertiary : Color.onyx.textPrimary)
+                    // `!showsTargets` greys on sets alone: without it a zero-set
+                    // muscle that HAS a target drew in primary while being filed
+                    // in the quiet list below.
+                    .foregroundStyle(row.sets == 0 && (!showsTargets || row.target == 0)
+                                     ? Color.onyx.textTertiary : Color.onyx.textPrimary)
                     .lineLimit(1)
                 Spacer(minLength: OnyxSpace.s)
                 // "8 / 10", or just the count when the plan asks for nothing —
                 // "8 / 0" reads as a failure and is the opposite of one.
-                Text(row.target > 0 ? "\(OnyxFormat.sets(row.sets)) / \(row.target)" : OnyxFormat.sets(row.sets))
+                Text(graded ? "\(OnyxFormat.sets(row.sets)) / \(row.target)" : OnyxFormat.sets(row.sets))
                     .onyxType(.body).fontWeight(.semibold).onyxNumeral()
                     .foregroundStyle(met ? Color.onyx.good : Color.onyx.textPrimary)
                 if met {
                     Image(systemName: "checkmark")
                         .onyxType(.caption).foregroundStyle(Color.onyx.good)
                         .frame(width: 14)
-                } else if row.remaining > 0 {
+                } else if graded, row.remaining > 0 {
                     Text("\(OnyxFormat.sets(row.remaining)) left")
                         .onyxType(.caption).onyxNumeral()
                         .foregroundStyle(Color.onyx.textSecondary)
@@ -377,15 +462,17 @@ struct MuscleFocusSheetBody: View {
 
     /// A muscle with no target grades against the plan's biggest target, so the
     /// bar still says something rather than sitting empty or full at random.
+    /// With no targets at all it grades against the busiest muscle in the window.
     private func progress(_ row: MuscleFocusRow) -> Double {
-        let against = row.target > 0
-            ? Double(row.target)
-            : Double(focus.rows.map(\.target).max() ?? 0)
+        let against = (showsTargets && row.target > 0) ? Double(row.target) : peak
         guard against > 0 else { return 0 }
         return min(1, row.sets / against)
     }
 
     private func label(_ row: MuscleFocusRow) -> String {
+        guard showsTargets else {
+            return "\(row.muscle.displayName), \(OnyxFormat.sets(row.sets)) sets"
+        }
         guard row.target > 0 else {
             return "\(row.muscle.displayName), \(OnyxFormat.sets(row.sets)) sets, no target this phase"
         }

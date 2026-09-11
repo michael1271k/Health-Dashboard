@@ -100,14 +100,10 @@ public struct MuscleFocusSummary: Sendable, Equatable {
     /// target in the plan instead — it still HAPPENED, and fading it out
     /// would report trained work as untrained.
     public var worked: [LandmarkMuscle: Double] {
-        let fallback = Double(rows.map(\.target).max() ?? 0)
-        var out: [LandmarkMuscle: Double] = [:]
-        for row in rows where row.sets > 0 {
-            let against = row.target > 0 ? Double(row.target) : fallback
-            guard against > 0 else { continue }
-            out[row.muscle] = min(1, max(0.15, row.sets / against))
-        }
-        return out
+        MuscleCredit.worked(
+            sets: Dictionary(rows.map { ($0.muscle, $0.sets) }, uniquingKeysWith: { a, _ in a }),
+            targets: Dictionary(rows.map { ($0.muscle, $0.target) }, uniquingKeysWith: { a, _ in a })
+        )
     }
 }
 
@@ -245,12 +241,13 @@ public struct TodayFeedBuilder: Sendable {
 
     /// The week's weighted sets per landmark, against the week's targets.
     ///
-    /// ── THE SAME CREDIT RULE AS THE TILE, ONE LEVEL FINER ───────────────────
-    /// `WidgetDerive.volumeByFamily` is what the `muscle` tile draws: a primary
-    /// mover earns a full set, a secondary earns half, and a family never earns
-    /// both for one set. This is that function keyed on the landmark instead of
-    /// its family, so the sheet and the tile it opens from cannot disagree about
-    /// how much work a session was.
+    /// ── ONE ACCUMULATOR, THREE SURFACES (F7) ────────────────────────────────
+    /// A primary mover earns a full set, a secondary earns half, and a muscle
+    /// never earns both for one set — `MuscleCredit.weightedSets`, which the
+    /// widget tile and the Trends atlas card also call. Before W3 each of the
+    /// three counted the week for itself, in a different currency, at a
+    /// different grain, off a different week start; the tile and the sheet it
+    /// opened could show a different number for the same session, and did.
     ///
     /// A ghost set counts for nothing, here as everywhere. Warm-ups DO count —
     /// see `MuscleDistribution`, which states the same rule for a live session.
@@ -258,24 +255,12 @@ public struct TodayFeedBuilder: Sendable {
         weekStart: String, sets: [WorkoutSet], names: [String: String],
         phase: ProgramPhase, overrides: [String: Int]
     ) -> MuscleFocusSummary {
-        var credit: [LandmarkMuscle: Double] = [:]
-        for set in sets where set.setType != "ghost" {
-            guard let name = names[set.exerciseId], !name.isEmpty else { continue }
-            let movers = MuscleMap.resolveMovers(name)
-            func landmarks(_ tokens: [String]) -> [LandmarkMuscle] {
-                var out: [LandmarkMuscle] = []
-                for t in tokens {
-                    guard let m = LandmarkMuscle.from(token: t), !out.contains(m) else { continue }
-                    out.append(m)
-                }
-                return out
-            }
-            let primary = landmarks(movers.primary)
-            for m in primary { credit[m] = (credit[m] ?? 0) + 1 }
-            for m in landmarks(movers.secondary) where !primary.contains(m) {
-                credit[m] = (credit[m] ?? 0) + MuscleCredit.secondarySetCredit
-            }
-        }
+        let credit = MuscleCredit.weightedSets(
+            exerciseNames: sets
+                .filter { $0.setType != "ghost" }
+                .compactMap { names[$0.exerciseId] }
+                .filter { !$0.isEmpty }
+        )
         // The targets are `plan_phase_volume` rows and nothing else since W2:
         // a muscle with no row has no target, and the sheet says 0 rather than
         // borrowing another athlete's MEV.

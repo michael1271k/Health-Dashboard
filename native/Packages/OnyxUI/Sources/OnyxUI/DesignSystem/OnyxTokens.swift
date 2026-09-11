@@ -85,41 +85,21 @@ public enum OnyxDomain: String, CaseIterable, Sendable {
         start.mix(with: end, by: min(max(t, 0), 1))
     }
 
-    /// Which domain owns a muscle FAMILY by its display name — "Chest", "Back",
-    /// "Shoulders", "Arms", "Legs", "Core" — as `volumeByFamily` reports them.
-    /// The same collapse as `forMuscle`, keyed on the string the payload carries.
-    public static func forFamily(_ name: String) -> OnyxDomain {
-        switch name {
-        case "Chest", "Shoulders", "Arms": .train
-        case "Back", "Legs":               .body
-        case "Core":                       .recover
-        default:                           .train
-        }
-    }
-
     /// The gradient both the mesh bleed and any tinted fill are built from.
     public var ramp: LinearGradient {
         LinearGradient(colors: [start, end], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
-
-    /// Which domain owns a tracked muscle.
-    ///
-    /// §3.2 of the plan: chest/arms/shoulders → Ion, back/legs → Tide, core →
-    /// Lunar. The atlas GEOMETRY does not change; only the hue family it is
-    /// keyed to. Six families collapsing to three is the point — the old ramp
-    /// separated cells that never needed separating and cost the palette its
-    /// meaning everywhere else.
-    public static func forMuscle(_ muscle: LandmarkMuscle) -> OnyxDomain {
-        switch muscle {
-        case .chest, .frontDelts, .sideDelts, .rearDelts, .biceps, .triceps, .forearms:
-            .train
-        case .lats, .upperBack, .lowerBack, .quads, .hamstrings, .glutes, .adductors, .calves:
-            .body
-        case .absCore:
-            .recover
-        }
-    }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `OnyxDomain.forMuscle` and `OnyxDomain.forFamily` lived here until W3 and are
+// deliberately GONE. They answered "which of the four domain accents owns this
+// muscle", which collapsed chest, three delts and three arm muscles onto one
+// indigo — so a legend of eight families drew four colours, and "Side delts 0/7"
+// looked exactly like "Chest 18/18". A muscle's colour is now the muscle's own
+// (`Color.onyx.muscle`), keyed to its family (`Color.onyx.muscleFamily`).
+// Nothing reads a domain for a muscle any more; do not re-add the fold.
+// ─────────────────────────────────────────────────────────────────────────────
 
 // MARK: - Semantic colours
 
@@ -225,7 +205,7 @@ extension Color {
 
         /// The colour of a ROUTINE DAY — what tints a calendar ring, a session
         /// chip and the This-week panel — keyed onto the domains by what the day
-        /// TRAINS, the same way `OnyxDomain.forMuscle` keys a muscle.
+        /// TRAINS, the same way `MuscleFamily.of` keys a muscle.
         ///
         /// §3.2: upper A/B are Ion at 0.35 / 0.65, legs A/B are Tide at the same
         /// two steps, and Delts & Arms takes Ion's end stop. Two steps in from
@@ -338,20 +318,90 @@ extension Color {
             }
         }
 
-        /// A muscle's colour: its family's accent, stepped so the ORDER inside
-        /// the family still carries meaning.
+        // ── THE MUSCLE PALETTE ───────────────────────────────────────────────
+        //
+        // Eight family hues, sixteen landmark shades (founder decision 4). This
+        // is the only categorical palette in ONYX, and it is deliberately a
+        // LOUDER register than the four domain accents above.
+        //
+        // ── WHY IT IS ALLOWED TO BE LOUDER THAN THE CHROME ───────────────────
+        // The four accents are desaturated because they are chrome: they say
+        // which screen you are on, and a screen where the furniture shouts has
+        // nothing left to point with. These sixteen are DATA. Their whole job is
+        // to be told apart from one another at 8 pt in a legend and at 56 pt on
+        // a widget figure, and a category palette that cannot be told apart is
+        // not quiet, it is broken — which is what the four-accent collapse made
+        // it: chest, three delts and three arm muscles all drew `#6B78F0`.
+        //
+        // ── HOW THESE SIXTEEN WERE CHOSEN ────────────────────────────────────
+        // Generated in OKLCH at a fixed L 0.70 / C 0.17, with the eight family
+        // hues solved by coordinate ascent to MAXIMISE the smallest CIEDE2000
+        // distance between any two landmarks of different families — scored on
+        // the sixteen and not the eight, because a family's darkest step can
+        // collide with a neighbour's darkest step while the two anchors sit
+        // comfortably apart. The result, measured:
+        //
+        //   · closest cross-family pair   ΔE 22.8  (Side delts / Forearms)
+        //   · closest of the W3 gate four ΔE 22.9  (Biceps / Triceps)
+        //   · lowest contrast on black     4.99:1  (Calves)
+        //
+        // Inside a family the hue is FIXED and only lightness steps, light →
+        // dark in `LandmarkMuscle` declaration order, so three teals read as
+        // three back muscles rather than as three unrelated colours. Adjacent
+        // steps sit at ΔE 5–9: a visible step, and no more, on purpose.
+        //
+        // A number here is a measurement, not a taste. Re-run
+        // `scratchpad/palette.py` before changing one.
+
+        /// A muscle FAMILY's colour — what a chart grouping by the eight draws.
         ///
-        /// Step is an index within the family, not an arbitrary shade — the
-        /// caller passes where the muscle sits in the list it is drawing, so a
-        /// list of eight back muscles ramps rather than repeating one teal.
-        public static func muscle(_ muscle: LandmarkMuscle, step: Int = 0, of count: Int = 1) -> Color {
-            let domain = OnyxDomain.forMuscle(muscle)
-            guard count > 1 else { return domain.accent }
-            // 0 … 1 across the family, then a fixed 35 % of the ramp's distance.
-            // A full sweep would put the last muscle of a family on the NEXT
-            // family's hue, which is exactly the confusion the four accents fix.
-            let t = Double(step) / Double(count - 1) * 0.35
-            return domain.start.mix(with: domain.end, by: t)
+        /// Its MIDDLE landmark's, not a ninth through sixteenth hex of its own.
+        /// The ramp is centred on the family's hue, so the middle step already
+        /// is the family: Back reads as Upper back's teal, Shoulders as Side
+        /// delts' amber, Legs as Glutes' green. Spelling the eight out again
+        /// would be eight more numbers that have to be kept equal to eight of
+        /// the sixteen by hand — which is the same bookkeeping the single
+        /// accumulator exists to abolish, in a palette instead of a count.
+        public static func muscleFamily(_ family: MuscleFamily) -> Color {
+            // `first` and not `members[count / 2]`: the invariant that every
+            // family owns a landmark lives in a `switch` in another module, and
+            // a ninth family added without one would trap at draw time in four
+            // places rather than fail where the mistake was made.
+            let members = family.members
+            guard !members.isEmpty else { return textTertiary }
+            return muscle(members[members.count / 2])
+        }
+
+        /// A LANDMARK's colour: its family's hue, at its own step of the ramp.
+        ///
+        /// ── WHERE `step:` AND `of:` WENT ─────────────────────────────────────
+        /// This used to take "where the muscle sits in the list you happen to be
+        /// drawing" and ramp from it, which made Lats one teal in a session that
+        /// trained three back muscles and a different teal in a session that
+        /// trained one — the same muscle in two colours on two screens of one
+        /// app. The step is intrinsic now (`MuscleFamily.step(of:)`), which is
+        /// what makes a legend dot and a body region the same colour, so the two
+        /// parameters were not merely unused: keeping them would have left the
+        /// call site claiming a ramp the function no longer performs.
+        public static func muscle(_ muscle: LandmarkMuscle) -> Color {
+            switch muscle {
+            case .chest:      Color(hex: 0xF66D64)
+            case .lats:       Color(hex: 0x00D4CE)
+            case .upperBack:  Color(hex: 0x00B6B0)
+            case .lowerBack:  Color(hex: 0x009894)
+            case .frontDelts: Color(hex: 0xFF9F46)
+            case .sideDelts:  Color(hex: 0xE68100)
+            case .rearDelts:  Color(hex: 0xC26C00)
+            case .biceps:     Color(hex: 0x998BFF)
+            case .triceps:    Color(hex: 0x0EA6FF)
+            case .forearms:   Color(hex: 0xB49F00)
+            case .quads:      Color(hex: 0x8AE171)
+            case .hamstrings: Color(hex: 0x76CC5C)
+            case .glutes:     Color(hex: 0x61B647)
+            case .adductors:  Color(hex: 0x4DA230)
+            case .calves:     Color(hex: 0x388D15)
+            case .absCore:    Color(hex: 0xE66DB6)
+            }
         }
     }
 }

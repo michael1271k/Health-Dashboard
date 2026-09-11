@@ -1,17 +1,20 @@
 {
-  "module": "widget/derive",
-  "fn": "volumeByFamily",
-  "note": "resolveMovers(name) by NAME only (no stored fallback in this fixture); toLandmarkMuscle then familyOf. Primary full, secondary half (SECONDARY_SET_CREDIT), never both for one family. Warm-ups COUNT. kg is Math.round, sets one place. Sorted kg desc then sets desc; families with nothing are dropped.",
+  "module": "training/landmarks",
+  "fn": "MuscleCredit.weightedSets(exerciseNames:)",
+  "note": "THE one accumulator (F7), at the landmark grain. One entry per physical set; resolveMovers by NAME. Secondary at 0.5 first, primary at 1.0 second, `max` on overlap \u2014 so a muscle named in both lists is paid ONCE, in full. Warm-ups count; a ghost set is the caller's to drop and counts for nothing. Tonnage is not part of the currency: `kg` left this fixture with `WidgetDerive.volumeByFamily` in W3. `families` is the eight-family rollup `OnyxSnapshot.volumeByFamily` computes \u2014 a plain sum, so one leg press is 2.0 weighted sets of Legs.",
   "cases": [
     {
       "name": "empty",
       "input": {
         "sets": []
       },
-      "expected": []
+      "expected": {
+        "landmarks": {},
+        "families": {}
+      }
     },
     {
-      "name": "a leg press credits Legs once in full",
+      "name": "a leg press: quads in full, glutes and hamstrings at a half",
       "input": {
         "sets": [
           {
@@ -22,16 +25,19 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Legs",
-          "kg": 1600,
-          "sets": 1
+      "expected": {
+        "landmarks": {
+          "Quads": 1.0,
+          "Hamstrings": 0.5,
+          "Glutes": 0.5
+        },
+        "families": {
+          "Legs": 2.0
         }
-      ]
+      }
     },
     {
-      "name": "a lat pulldown — Back primary, Arms half",
+      "name": "a lat pulldown credits three arm muscles separately, not one 'Arms'",
       "input": {
         "sets": [
           {
@@ -42,21 +48,22 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Back",
-          "kg": 700,
-          "sets": 1
+      "expected": {
+        "landmarks": {
+          "Lats": 1.0,
+          "Upper back": 0.5,
+          "Biceps": 0.5,
+          "Forearms": 0.5
         },
-        {
-          "family": "Arms",
-          "kg": 350,
-          "sets": 0.5
+        "families": {
+          "Back": 1.5,
+          "Biceps": 0.5,
+          "Forearms": 0.5
         }
-      ]
+      }
     },
     {
-      "name": "an unloaded set counts a set with no tonnage",
+      "name": "an unloaded set still counts a set",
       "input": {
         "sets": [
           {
@@ -67,13 +74,14 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Core",
-          "kg": 0,
-          "sets": 1
+      "expected": {
+        "landmarks": {
+          "Abs/core": 1.0
+        },
+        "families": {
+          "Core": 1.0
         }
-      ]
+      }
     },
     {
       "name": "a warm-up counts",
@@ -88,26 +96,39 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Chest",
-          "kg": 480,
-          "sets": 1
+      "expected": {
+        "landmarks": {
+          "Chest": 1.0,
+          "Front delts": 0.5,
+          "Triceps": 0.5
         },
-        {
-          "family": "Arms",
-          "kg": 240,
-          "sets": 0.5
-        },
-        {
-          "family": "Shoulders",
-          "kg": 240,
-          "sets": 0.5
+        "families": {
+          "Chest": 1.0,
+          "Shoulders": 0.5,
+          "Triceps": 0.5
         }
-      ]
+      }
     },
     {
-      "name": "unknown lift contributes nothing",
+      "name": "a ghost set counts for nothing",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Chest Press",
+            "day": "2026-08-05",
+            "weightKg": 40,
+            "reps": 12,
+            "setType": "ghost"
+          }
+        ]
+      },
+      "expected": {
+        "landmarks": {},
+        "families": {}
+      }
+    },
+    {
+      "name": "an unknown lift contributes nothing",
       "input": {
         "sets": [
           {
@@ -118,7 +139,131 @@
           }
         ]
       },
-      "expected": []
+      "expected": {
+        "landmarks": {},
+        "families": {}
+      }
+    },
+    {
+      "name": "tonnage is not credit: a heavy set and a light set are one set each",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Pec Deck",
+            "day": "2026-08-05",
+            "weightKg": 100,
+            "reps": 10
+          },
+          {
+            "exercise": "Pec Deck",
+            "day": "2026-08-05",
+            "weightKg": 0,
+            "reps": 10
+          }
+        ]
+      },
+      "expected": {
+        "landmarks": {
+          "Chest": 2.0
+        },
+        "families": {
+          "Chest": 2.0
+        }
+      }
+    },
+    {
+      "name": "a row names Upper back twice and is paid once",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Seated Cable Row (Wide Grip)",
+            "day": "2026-08-02",
+            "weightKg": 55,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": {
+        "landmarks": {
+          "Lats": 0.5,
+          "Upper back": 1.0,
+          "Biceps": 0.5,
+          "Forearms": 0.5
+        },
+        "families": {
+          "Back": 1.5,
+          "Biceps": 0.5,
+          "Forearms": 0.5
+        }
+      }
+    },
+    {
+      "name": "the three delt heads are three muscles: a lateral raise credits only the side",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Lateral Raise",
+            "day": "2026-08-02",
+            "weightKg": 10,
+            "reps": 15
+          },
+          {
+            "exercise": "Shoulder Press",
+            "day": "2026-08-02",
+            "weightKg": 16,
+            "reps": 10
+          },
+          {
+            "exercise": "Face Pull",
+            "day": "2026-08-02",
+            "weightKg": 20,
+            "reps": 15
+          }
+        ]
+      },
+      "expected": {
+        "landmarks": {
+          "Front delts": 1.0,
+          "Side delts": 1.0,
+          "Rear delts": 1.0,
+          "Biceps": 0.5,
+          "Triceps": 0.5
+        },
+        "families": {
+          "Shoulders": 3.0,
+          "Biceps": 0.5,
+          "Triceps": 0.5
+        }
+      }
+    },
+    {
+      "name": "biceps and triceps are separate families, not one Arms",
+      "input": {
+        "sets": [
+          {
+            "exercise": "Preacher Curl",
+            "day": "2026-08-03",
+            "weightKg": 20,
+            "reps": 10
+          },
+          {
+            "exercise": "Triceps Pushdown",
+            "day": "2026-08-03",
+            "weightKg": 30,
+            "reps": 12
+          }
+        ]
+      },
+      "expected": {
+        "landmarks": {
+          "Biceps": 1.0,
+          "Triceps": 1.0
+        },
+        "families": {
+          "Biceps": 1.0,
+          "Triceps": 1.0
+        }
+      }
     },
     {
       "name": "a full Upper A",
@@ -174,73 +319,33 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Chest",
-          "kg": 1740,
-          "sets": 3
+      "expected": {
+        "landmarks": {
+          "Chest": 3.0,
+          "Lats": 2.0,
+          "Upper back": 2.0,
+          "Lower back": 0.5,
+          "Front delts": 2.0,
+          "Rear delts": 1.0,
+          "Biceps": 1.5,
+          "Triceps": 1.5,
+          "Forearms": 1.5,
+          "Hamstrings": 1.0,
+          "Glutes": 0.5
         },
-        {
-          "family": "Arms",
-          "kg": 1600,
-          "sets": 3.5
-        },
-        {
-          "family": "Back",
-          "kg": 1480,
-          "sets": 2.5
-        },
-        {
-          "family": "Shoulders",
-          "kg": 1030,
-          "sets": 3
-        },
-        {
-          "family": "Legs",
-          "kg": 240,
-          "sets": 1
+        "families": {
+          "Chest": 3.0,
+          "Back": 4.5,
+          "Shoulders": 3.0,
+          "Biceps": 1.5,
+          "Triceps": 1.5,
+          "Forearms": 1.5,
+          "Legs": 1.5
         }
-      ]
+      }
     },
     {
-      "name": "a tie on kg is broken by sets",
-      "input": {
-        "sets": [
-          {
-            "exercise": "Leg Extension",
-            "day": "2026-08-05",
-            "weightKg": 50,
-            "reps": 10
-          },
-          {
-            "exercise": "Leg Extension",
-            "day": "2026-08-05",
-            "weightKg": 0,
-            "reps": 10
-          },
-          {
-            "exercise": "Pec Deck",
-            "day": "2026-08-05",
-            "weightKg": 50,
-            "reps": 10
-          }
-        ]
-      },
-      "expected": [
-        {
-          "family": "Legs",
-          "kg": 500,
-          "sets": 2
-        },
-        {
-          "family": "Chest",
-          "kg": 500,
-          "sets": 1
-        }
-      ]
-    },
-    {
-      "name": "null weight and reps",
+      "name": "null weight and reps still credit the muscle",
       "input": {
         "sets": [
           {
@@ -251,13 +356,16 @@
           }
         ]
       },
-      "expected": [
-        {
-          "family": "Legs",
-          "kg": 0,
-          "sets": 1
+      "expected": {
+        "landmarks": {
+          "Quads": 1.0,
+          "Hamstrings": 0.5,
+          "Glutes": 0.5
+        },
+        "families": {
+          "Legs": 2.0
         }
-      ]
+      }
     }
   ]
 }

@@ -212,17 +212,28 @@ public struct StepsView: View {
 
 // MARK: - Muscle focus
 //
-// The week's sets on the body. `volumeByFamily` is per FAMILY, so every muscle
-// in a family wears the same intensity — the tile says where the week went,
-// not which head of the delt.
+// The week's sets on the body, against what the phase asked for.
+//
+// ── WHAT W3 CHANGED, AND WHY IT MATTERED ────────────────────────────────────
+// The payload used to be per FAMILY, so the figure could only paint every
+// muscle of a family at one intensity: an Upper B that hammered the side delts
+// and never touched the front lit all three the same. It now carries the
+// sixteen landmarks (`OnyxSnapshot.muscleFocus`) and the eight bars are a
+// rollup of them, so the head of the delt the week actually trained is the head
+// that lights.
+//
+// The bars also grade against TARGET rather than against the week's busiest
+// family. "Legs 34, Back 21, Chest 18" ranked the week but never said whether
+// any of it was enough, and the sheet this tile opens has always answered
+// exactly that question — two surfaces, one reading, is the whole point of the
+// single accumulator.
 //
 // ── WHY THE FIGURE IS 56 PT AND NOT AS BIG AS IT FITS ───────────────────────
 // It was `maxWidth: .infinity`, which on a medium tile is half the width for a
 // shape whose whole job is "roughly here". The body is a KEY to the bars beside
-// it, not the reading — the reading is "Legs 34, Back 21, Chest 18", and at
-// full width those three were a column of numbers with no bar to compare them
-// against. 56 pt is the smallest figure whose quads are still distinguishable
-// from its calves, and the rest of the tile pays for the ranking (§W12).
+// it, not the reading. 56 pt is the smallest figure whose quads are still
+// distinguishable from its calves, and the rest of the tile pays for the
+// ranking (§W12).
 
 public struct MuscleView: View {
     let entry: OnyxTileEntry
@@ -234,45 +245,51 @@ public struct MuscleView: View {
 
     public init(entry: OnyxTileEntry) { self.entry = entry }
 
+    /// Ranked by what is LEFT, then by what was done — the sheet's order, so the
+    /// tile and the sheet it opens do not disagree about what matters this week.
     private var families: [OnyxSnapshot.FamilyVolume] {
-        (entry.snapshot?.volumeByFamily ?? []).sorted { $0.sets > $1.sets }
+        (entry.snapshot?.volumeByFamily ?? []).enumerated().sorted { a, b in
+            let left = (max(0, Double(a.element.target) - a.element.sets),
+                        max(0, Double(b.element.target) - b.element.sets))
+            if left.0 != left.1 { return left.0 > left.1 }
+            if a.element.sets != b.element.sets { return a.element.sets > b.element.sets }
+            return a.offset < b.offset
+        }.map(\.element)
     }
 
-    /// One family: its name, a bar against the week's busiest, and the count.
+    /// One family: its name, its progress against the phase's target, the count.
     ///
-    /// The bar is relative to the TOP family rather than to a volume landmark,
-    /// because the question this tile answers is "where did the week go", which
-    /// is a comparison between the bars and not between a bar and a target.
+    /// A family the plan asks nothing of draws no rail at all rather than a full
+    /// or empty one — `progress` is nil there, and `Rail` already renders that
+    /// as "unknown". Adductors sits at a target of 0 on a cut, and a full rail
+    /// beside it would read as an achievement.
     @ViewBuilder private func bar(_ f: OnyxSnapshot.FamilyVolume) -> some View {
-        let top = families.first?.sets ?? 0
-        let tint = mono ? Color.white : OnyxDomain.forFamily(f.family).accent
+        // The tint stays the FAMILY's in every state. Swapping it to `good` on a
+        // met target reads as an achievement everywhere except Legs, whose own
+        // colour is a green four ΔE from it — and a bar that changes colour for
+        // seven families and not the eighth is worse than one that never
+        // changes. The filled rail and the "24/32" carry the verdict.
+        let tint = mono ? Color.white : Color.onyx.muscleFamily(f.family)
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
-                Text(f.family)
+                Text(f.family.rawValue)
                     .font(OnyxWidgetType.face(10, weight: .semibold))
                     .foregroundStyle(Color.onyx.textPrimary)
                     .lineLimit(1)
                 Spacer(minLength: 4)
-                Text("\(Int(f.sets.rounded()))")
+                // "12/18", or the bare count when the plan asks for nothing —
+                // "12/0" reads as a failure and is the opposite of one.
+                Text(f.target > 0 ? "\(Int(f.sets.rounded()))/\(f.target)" : "\(Int(f.sets.rounded()))")
                     .font(OnyxWidgetType.figure(10))
                     .foregroundStyle(tint)
             }
-            Rail(progress: top > 0 ? min(1, f.sets / top) : nil, color: tint, height: 3)
+            Rail(progress: f.progress, color: tint, height: 3)
         }
     }
 
-    private var worked: [String: Double] {
-        let top = families.first?.sets ?? 0
-        guard top > 0 else { return [:] }
-        var out: [String: Double] = [:]
-        for muscle in LandmarkMuscle.allCases {
-            let family = MuscleFamily.of(muscle).rawValue
-            if let f = families.first(where: { $0.family == family }) {
-                out[muscle.rawValue] = min(1, f.sets / top)
-            }
-        }
-        return out
-    }
+    /// Per LANDMARK, graded against that muscle's own target — the same rule the
+    /// sheet's figure uses, computed once on the payload.
+    private var worked: [String: Double] { entry.snapshot?.muscleWorked ?? [:] }
 
     public var body: some View {
         face.onyxMarked(monochrome: mono, hidden: entry.isStale)
@@ -286,7 +303,10 @@ public struct MuscleView: View {
                 Spacer(minLength: 0)
                 if entry.isStale { StaleTag(age: entry.age) }
             }
-            if families.isEmpty {
+            // Not `families.isEmpty`: a phase with targets and no sets yet has
+            // eight rows and nothing in them, and "Legs 0/32" on a Monday
+            // morning is a to-do list, not an empty state.
+            if families.allSatisfy({ $0.sets == 0 }) {
                 OnyxChartEmpty("No sets logged this week.", compact: true)
             } else {
                 HStack(alignment: .top, spacing: 10) {

@@ -177,10 +177,27 @@ public extension OnyxSnapshot {
         E1rm(exercise: "Lat Pulldown", kg: 88.5, deltaKg: -0.8, trend: series([89.1, 90.0, 88.9, 89.3, 88.5], step: 6)),
         E1rm(exercise: "Shoulder Press", kg: 27.9, deltaKg: 0.0, trend: series([27.5, 27.9, 28.1, 27.7, 27.9], step: 6)),
       ],
-      volumeByFamily: [
-        FamilyVolume(family: "Chest", kg: 3900, sets: 12), FamilyVolume(family: "Back", kg: 4300, sets: 13),
-        FamilyVolume(family: "Shoulders", kg: 1200, sets: 6), FamilyVolume(family: "Arms", kg: 900, sets: 7),
-        FamilyVolume(family: "Legs", kg: 2600, sets: 4), FamilyVolume(family: "Core", kg: 500, sets: 2),
+      // A real Onyx-5 cut week at Thursday: the sixteen landmarks against the
+      // founder's `plan_phase_volume` targets. Side delts is deliberately short
+      // (the lateral raise lives on Upper B) — it is the reading F2 was hiding,
+      // and every screenshot of this tile should show it behind.
+      muscleFocus: [
+        MuscleVolume(muscle: "Chest", sets: 12, target: 12),
+        MuscleVolume(muscle: "Lats", sets: 10.5, target: 12),
+        MuscleVolume(muscle: "Upper back", sets: 8, target: 10),
+        MuscleVolume(muscle: "Lower back", sets: 3.5, target: 6),
+        MuscleVolume(muscle: "Front delts", sets: 7.5, target: 6),
+        MuscleVolume(muscle: "Side delts", sets: 3, target: 9),
+        MuscleVolume(muscle: "Rear delts", sets: 4, target: 8),
+        MuscleVolume(muscle: "Biceps", sets: 9, target: 10),
+        MuscleVolume(muscle: "Triceps", sets: 11, target: 10),
+        MuscleVolume(muscle: "Forearms", sets: 2.5, target: 4),
+        MuscleVolume(muscle: "Quads", sets: 8, target: 10),
+        MuscleVolume(muscle: "Hamstrings", sets: 6, target: 8),
+        MuscleVolume(muscle: "Glutes", sets: 5.5, target: 8),
+        MuscleVolume(muscle: "Adductors", sets: 0, target: 0),
+        MuscleVolume(muscle: "Calves", sets: 4, target: 6),
+        MuscleVolume(muscle: "Abs/core", sets: 6, target: 6),
       ],
       today: nil,
       streak: Streak(current: 51, best: 51),
@@ -226,7 +243,7 @@ public extension OnyxSnapshot {
       date: s.date, generatedAt: s.generatedAt, scope: s.scope, battery: s.battery, score: s.score,
       sleep: s.sleep, weight: s.weight, macros: s.macros, water: s.water, steps: s.steps,
       workout: s.workout, week: s.week, weekPrev: s.weekPrev, records: s.records, e1rm: s.e1rm,
-      volumeByFamily: [], today: s.today, streak: nil, context: s.context, cardio: s.cardio,
+      muscleFocus: nil, today: s.today, streak: nil, context: s.context, cardio: s.cardio,
       calendar: s.calendar, volumeTrend: s.volumeTrend, body: nil, scores: s.scores,
       readiness: s.readiness, vitals: s.vitals,
       consistency: nil, deficit: nil, trajectory: nil, batteryStack: nil, bodyComp: nil)
@@ -252,7 +269,7 @@ public extension OnyxSnapshot {
         plannedExercises: s.workout.plannedExercises, plannedSets: s.workout.plannedSets,
         lastVolumeKg: s.workout.lastVolumeKg),
       week: s.week, weekPrev: s.weekPrev, records: s.records, e1rm: s.e1rm,
-      volumeByFamily: s.volumeByFamily,
+      muscleFocus: s.muscleFocus,
       // A real Onyx-5 arms session: 68 minutes, an 8 on the ladder, 5.8 t, two
       // records, 412 kcal and a mean of 118. The last two are the readings
       // `workout_sessions` has carried since W2 and no face had ever drawn.

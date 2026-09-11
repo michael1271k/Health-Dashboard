@@ -150,6 +150,65 @@ public enum MuscleCredit {
         return out
     }
 
+    /// **The one accumulator.** Weighted sets per landmark for a bag of
+    /// exercise names, one entry per PHYSICAL set performed.
+    ///
+    /// ── WHY THIS EXISTS (F7) ────────────────────────────────────────────────
+    /// Before W3 the same week was counted three times in three currencies:
+    /// `MuscleAggregator.aggregate` over six families with no assistance credit
+    /// and a hard-coded Sunday week; `WidgetDerive.volumeByFamily` over six
+    /// families with half credit and the athlete's week start; and
+    /// `TodayFeedBuilder.muscleFocus` over sixteen landmarks. The widget tile,
+    /// the sheet it opens and the Trends card could therefore report three
+    /// different numbers for one session, and two of them were right about
+    /// something different. Both of the others are gone; this is what is left,
+    /// and the tile, the sheet and Trends all call it.
+    ///
+    /// Ghost sets are the caller's to drop — the caller is the one that knows
+    /// what a set row looks like. Warm-ups COUNT, for the reason `weightedSets`
+    /// states above.
+    public static func weightedSets(exerciseNames: [String]) -> [LandmarkMuscle: Double] {
+        weightedSets(exerciseNames.map {
+            Contribution(physicalSets: 1, movers: MuscleMap.resolveMovers($0))
+        })
+    }
+
+    /// Set counts to 0…1 tint intensities for the atlas, graded against the
+    /// week's TARGETS.
+    ///
+    /// ── THE THREE-WAY RULE, IN ONE PLACE ────────────────────────────────────
+    /// A muscle grades against its OWN target, because the question a week's
+    /// figure answers is "is the week done": a quad at 10 of 10 and a bicep at
+    /// 8 of 8 must both read full even though one is the bigger number. A muscle
+    /// the plan does not ask for grades against the biggest target in the plan —
+    /// it still HAPPENED, and fading it out reports trained work as untrained.
+    ///
+    /// ── AND WHY THE LAST CLAUSE EXISTS ──────────────────────────────────────
+    /// When there are no targets AT ALL — a fresh account, a phase nobody has
+    /// given volume rows — both of those denominators are zero, and the whole
+    /// figure came out blank for a week with real work in it. That is the one
+    /// thing this drawing may never do, so with no targets it falls back to
+    /// `worked(from:)`'s rule and grades against the busiest muscle instead.
+    /// Three surfaces used to spell this out separately (the widget tile, the
+    /// Today sheet and the Trends card) and two of them were missing the
+    /// fallback; there is now one copy.
+    public static func worked(
+        sets: [LandmarkMuscle: Double], targets: [LandmarkMuscle: Int]
+    ) -> [LandmarkMuscle: Double] {
+        let biggestTarget = Double(targets.values.max() ?? 0)
+        // Not "fall back per muscle": with no target anywhere there is no
+        // target-graded reading to be had, and `worked(from:)` IS the
+        // busiest-muscle rule — including its 0.25 floor, so the session atlas
+        // and this figure do not fade one set to two different alphas.
+        guard biggestTarget > 0 else { return worked(from: sets) }
+        var out: [LandmarkMuscle: Double] = [:]
+        for (muscle, count) in sets where count > 0 {
+            let own = Double(targets[muscle] ?? 0)
+            out[muscle] = Swift.min(1, Swift.max(0.15, count / (own > 0 ? own : biggestTarget)))
+        }
+        return out
+    }
+
     /// Set counts to 0…1 tint intensities for the atlas.
     ///
     /// The floor of 0.25 is load-bearing: a muscle that got one set out of

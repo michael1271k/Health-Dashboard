@@ -1,10 +1,10 @@
 {
   "module": "era/eraWindow",
   "fn": "resolveEraWindow",
-  "note": "Six trailing windows ending on `today`. currentPhase takes the phase table's start and eraTag (plan label when no phase covers the day); currentLever walks back while leverForDate agrees, floored at the schedule's first row; sinceCutStart is HELIX_CUT_START; days clamps its length to at least 1; all is firstDataISO. A start after today clamps to today. `era` is eraForWindow of the same result.",
+  "note": "Six trailing windows ending on `today`. currentPhase takes the phase table's start and eraTag (plan label when no phase covers the day); currentLever walks back while leverForDate agrees, floored at the schedule's first row; sinceCutStart is HELIX_CUT_START; days clamps its length to at least 1; all is firstDataISO. A start after today clamps to today. `era` is eraForWindow of the same result. W3 adds thisWeek (Week.start of today for the athlete's week_end_day, labelled \"This week\") and currentProgram (the sinceCutStart range under the plans row's own label, because \"Since cut\" is wrong on a bulk).",
   "cases": [
     {
-      "name": "today · currentPhase",
+      "name": "today \u00b7 currentPhase",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -26,7 +26,7 @@
       }
     },
     {
-      "name": "today · currentLever",
+      "name": "today \u00b7 currentLever",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -48,7 +48,7 @@
       }
     },
     {
-      "name": "today · sinceCutStart",
+      "name": "today \u00b7 sinceCutStart",
       "input": {
         "mode": {
           "kind": "sinceCutStart"
@@ -70,7 +70,7 @@
       }
     },
     {
-      "name": "today · days:30",
+      "name": "today \u00b7 days:30",
       "input": {
         "mode": {
           "kind": "days",
@@ -93,7 +93,7 @@
       }
     },
     {
-      "name": "today · days:90",
+      "name": "today \u00b7 days:90",
       "input": {
         "mode": {
           "kind": "days",
@@ -116,7 +116,7 @@
       }
     },
     {
-      "name": "today · all",
+      "name": "today \u00b7 all",
       "input": {
         "mode": {
           "kind": "all"
@@ -138,7 +138,7 @@
       }
     },
     {
-      "name": "phase · PPL bulk, first",
+      "name": "phase \u00b7 PPL bulk, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -160,7 +160,7 @@
       }
     },
     {
-      "name": "phase · PPL bulk, mid",
+      "name": "phase \u00b7 PPL bulk, mid",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -182,7 +182,7 @@
       }
     },
     {
-      "name": "phase · PPL bulk, last",
+      "name": "phase \u00b7 PPL bulk, last",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -204,7 +204,7 @@
       }
     },
     {
-      "name": "phase · PPL cut, first",
+      "name": "phase \u00b7 PPL cut, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -226,7 +226,7 @@
       }
     },
     {
-      "name": "phase · PPL cut, last",
+      "name": "phase \u00b7 PPL cut, last",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -248,7 +248,7 @@
       }
     },
     {
-      "name": "phase · PPL peak",
+      "name": "phase \u00b7 PPL peak",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -270,7 +270,7 @@
       }
     },
     {
-      "name": "phase · Thailand deload, first",
+      "name": "phase \u00b7 Thailand deload, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -292,7 +292,7 @@
       }
     },
     {
-      "name": "phase · Thailand deload, last",
+      "name": "phase \u00b7 Thailand deload, last",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -314,7 +314,7 @@
       }
     },
     {
-      "name": "phase · Week 0",
+      "name": "phase \u00b7 Week 0",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -328,7 +328,7 @@
         }
       },
       "expected": {
-        "label": "HELIX · Week 0",
+        "label": "HELIX \u00b7 Week 0",
         "startISO": "2026-07-12",
         "endISO": "2026-07-14",
         "days": 3,
@@ -336,7 +336,7 @@
       }
     },
     {
-      "name": "phase · Onyx cut, first",
+      "name": "phase \u00b7 Onyx cut, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -358,7 +358,7 @@
       }
     },
     {
-      "name": "phase · Onyx cut, mid",
+      "name": "phase \u00b7 Onyx cut, mid",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -380,7 +380,7 @@
       }
     },
     {
-      "name": "phase · Onyx cut, last",
+      "name": "phase \u00b7 Onyx cut, last",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -402,7 +402,7 @@
       }
     },
     {
-      "name": "phase · Transition, first",
+      "name": "phase \u00b7 Transition, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -424,7 +424,7 @@
       }
     },
     {
-      "name": "phase · Lean bulk, first",
+      "name": "phase \u00b7 Lean bulk, first",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -446,7 +446,7 @@
       }
     },
     {
-      "name": "phase · Lean bulk, last",
+      "name": "phase \u00b7 Lean bulk, last",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -468,7 +468,7 @@
       }
     },
     {
-      "name": "phase · before every phase",
+      "name": "phase \u00b7 before every phase",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -490,7 +490,7 @@
       }
     },
     {
-      "name": "phase · after every phase",
+      "name": "phase \u00b7 after every phase",
       "input": {
         "mode": {
           "kind": "currentPhase"
@@ -512,7 +512,7 @@
       }
     },
     {
-      "name": "lever · inside baseline",
+      "name": "lever \u00b7 inside baseline",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -534,7 +534,7 @@
       }
     },
     {
-      "name": "lever · first day of lever 1",
+      "name": "lever \u00b7 first day of lever 1",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -556,7 +556,7 @@
       }
     },
     {
-      "name": "lever · inside lever 1",
+      "name": "lever \u00b7 inside lever 1",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -578,7 +578,7 @@
       }
     },
     {
-      "name": "lever · inside the pinned custom stretch",
+      "name": "lever \u00b7 inside the pinned custom stretch",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -600,7 +600,7 @@
       }
     },
     {
-      "name": "lever · inside the maintenance week",
+      "name": "lever \u00b7 inside the maintenance week",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -622,7 +622,7 @@
       }
     },
     {
-      "name": "lever · first day back on custom",
+      "name": "lever \u00b7 first day back on custom",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -644,7 +644,7 @@
       }
     },
     {
-      "name": "lever · stored rung overrides the schedule",
+      "name": "lever \u00b7 stored rung overrides the schedule",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -666,7 +666,7 @@
       }
     },
     {
-      "name": "lever · stored rung agreeing with the schedule",
+      "name": "lever \u00b7 stored rung agreeing with the schedule",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -688,7 +688,7 @@
       }
     },
     {
-      "name": "lever · a release that has expired",
+      "name": "lever \u00b7 a release that has expired",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -710,7 +710,7 @@
       }
     },
     {
-      "name": "lever · a release still running",
+      "name": "lever \u00b7 a release still running",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -732,7 +732,7 @@
       }
     },
     {
-      "name": "lever · an unknown stored id",
+      "name": "lever \u00b7 an unknown stored id",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -754,7 +754,7 @@
       }
     },
     {
-      "name": "lever · before the cut opened",
+      "name": "lever \u00b7 before the cut opened",
       "input": {
         "mode": {
           "kind": "currentLever"
@@ -776,7 +776,7 @@
       }
     },
     {
-      "name": "days · 1",
+      "name": "days \u00b7 1",
       "input": {
         "mode": {
           "kind": "days",
@@ -799,7 +799,7 @@
       }
     },
     {
-      "name": "days · 7",
+      "name": "days \u00b7 7",
       "input": {
         "mode": {
           "kind": "days",
@@ -822,7 +822,7 @@
       }
     },
     {
-      "name": "days · 30",
+      "name": "days \u00b7 30",
       "input": {
         "mode": {
           "kind": "days",
@@ -845,7 +845,7 @@
       }
     },
     {
-      "name": "days · 90",
+      "name": "days \u00b7 90",
       "input": {
         "mode": {
           "kind": "days",
@@ -868,7 +868,7 @@
       }
     },
     {
-      "name": "days · 180",
+      "name": "days \u00b7 180",
       "input": {
         "mode": {
           "kind": "days",
@@ -891,7 +891,7 @@
       }
     },
     {
-      "name": "days · 400",
+      "name": "days \u00b7 400",
       "input": {
         "mode": {
           "kind": "days",
@@ -914,7 +914,7 @@
       }
     },
     {
-      "name": "days · 0",
+      "name": "days \u00b7 0",
       "input": {
         "mode": {
           "kind": "days",
@@ -937,7 +937,7 @@
       }
     },
     {
-      "name": "days · -5",
+      "name": "days \u00b7 -5",
       "input": {
         "mode": {
           "kind": "days",
@@ -960,7 +960,7 @@
       }
     },
     {
-      "name": "cut · after the anchor",
+      "name": "cut \u00b7 after the anchor",
       "input": {
         "mode": {
           "kind": "sinceCutStart"
@@ -982,7 +982,7 @@
       }
     },
     {
-      "name": "cut · on the anchor",
+      "name": "cut \u00b7 on the anchor",
       "input": {
         "mode": {
           "kind": "sinceCutStart"
@@ -1004,7 +1004,7 @@
       }
     },
     {
-      "name": "cut · before the anchor",
+      "name": "cut \u00b7 before the anchor",
       "input": {
         "mode": {
           "kind": "sinceCutStart"
@@ -1026,7 +1026,7 @@
       }
     },
     {
-      "name": "all · with history",
+      "name": "all \u00b7 with history",
       "input": {
         "mode": {
           "kind": "all"
@@ -1048,7 +1048,7 @@
       }
     },
     {
-      "name": "all · no history",
+      "name": "all \u00b7 no history",
       "input": {
         "mode": {
           "kind": "all"
@@ -1070,7 +1070,7 @@
       }
     },
     {
-      "name": "all · history newer than today",
+      "name": "all \u00b7 history newer than today",
       "input": {
         "mode": {
           "kind": "all"
@@ -1092,7 +1092,7 @@
       }
     },
     {
-      "name": "all · PPL only",
+      "name": "all \u00b7 PPL only",
       "input": {
         "mode": {
           "kind": "all"
@@ -1110,6 +1110,230 @@
         "startISO": "2026-03-08",
         "endISO": "2026-06-01",
         "days": 86,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "2026-09-06 \u00b7 thisWeek \u00b7 no week_end_day stored \u00b7 Sunday start",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-09-06 \u00b7 thisWeek \u00b7 week ends Saturday \u00b7 Sunday start",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08",
+          "weekEndDay": 6
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-09-06",
+        "endISO": "2026-09-06",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-09-06 \u00b7 thisWeek \u00b7 week ends Sunday \u00b7 Monday start, so a Sunday is day seven",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08",
+          "weekEndDay": 0
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-08-31",
+        "endISO": "2026-09-06",
+        "days": 7,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-09-03 \u00b7 thisWeek \u00b7 midweek, Monday start",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-09-03",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08",
+          "weekEndDay": 0
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-08-31",
+        "endISO": "2026-09-03",
+        "days": 4,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-09-03 \u00b7 thisWeek \u00b7 the same Thursday, Sunday start \u2014 four days, not seven",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-09-03",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-08-30",
+        "endISO": "2026-09-03",
+        "days": 5,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-07-15 \u00b7 thisWeek \u00b7 the day the plan opened",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-07-15",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08",
+          "weekEndDay": 0
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-07-13",
+        "endISO": "2026-07-15",
+        "days": 3,
+        "era": "all"
+      }
+    },
+    {
+      "name": "2026-05-09 \u00b7 thisWeek \u00b7 a week wholly before the cut",
+      "input": {
+        "mode": {
+          "kind": "thisWeek"
+        },
+        "input": {
+          "today": "2026-05-09",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "This week",
+        "startISO": "2026-05-03",
+        "endISO": "2026-05-09",
+        "days": 7,
+        "era": "ppl"
+      }
+    },
+    {
+      "name": "2026-09-06 \u00b7 currentProgram \u00b7 inside the plan",
+      "input": {
+        "mode": {
+          "kind": "currentProgram"
+        },
+        "input": {
+          "today": "2026-09-06",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Onyx-5",
+        "startISO": "2026-07-15",
+        "endISO": "2026-09-06",
+        "days": 54,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-07-15 \u00b7 currentProgram \u00b7 on its first day",
+      "input": {
+        "mode": {
+          "kind": "currentProgram"
+        },
+        "input": {
+          "today": "2026-07-15",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Onyx-5",
+        "startISO": "2026-07-15",
+        "endISO": "2026-07-15",
+        "days": 1,
+        "era": "axis"
+      }
+    },
+    {
+      "name": "2026-05-09 \u00b7 currentProgram \u00b7 before it opened \u00b7 clamped to today",
+      "input": {
+        "mode": {
+          "kind": "currentProgram"
+        },
+        "input": {
+          "today": "2026-05-09",
+          "planLabel": "Onyx-5",
+          "storedLever": null,
+          "releaseEndsOn": null,
+          "firstDataISO": "2026-03-08"
+        }
+      },
+      "expected": {
+        "label": "Onyx-5",
+        "startISO": "2026-05-09",
+        "endISO": "2026-05-09",
+        "days": 1,
         "era": "ppl"
       }
     }

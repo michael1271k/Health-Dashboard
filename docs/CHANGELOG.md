@@ -47,6 +47,56 @@ _Nothing yet._
 
 ---
 
+## [1.8.0] — 2026-09-11 · Sixteen Muscles, One Count
+
+Every muscle has its own colour, and the week is counted once.
+
+### Added
+- **Muscle focus on Trends** — a new card at the top of the Trends screen: the
+  body front and back with every landmark tinted by what landed on it, and a
+  ranked list of all sixteen under it. It carries its own window — **Week**,
+  **30 d**, **All** or the current programme — where Week respects the week
+  start you chose (`user_goals.week_end_day`) rather than assuming Sunday.
+- **The widget's Muscle Focus tile grades against your targets.** It used to
+  rank families against the week's own busiest family, which told you where the
+  week went and never whether it was enough. It now reads "Legs 24/32" with a
+  rail, the same question the sheet it opens has always answered.
+
+### Changed
+- **Sixteen muscle colours, in eight families.** Chest, Back, Shoulders,
+  Biceps, Triceps, Forearms, Legs and Core each have a hue; the landmarks inside
+  a family step light to dark, so three back muscles read as three shades of one
+  teal. Before this, chest, all three delt heads and all three arm muscles drew
+  the same indigo — "Side delts 0/7" looked exactly like "Chest 18/18". Measured:
+  any two muscles of different families sit at least ΔE 22.8 apart, and the
+  dimmest clears 4.99:1 on black.
+- **Biceps and triceps are separate families.** They always had separate weekly
+  set targets; now they have separate bars, separate colours and separate rows.
+  Weekly set volume in Settings is grouped the same way.
+- **The week is counted in one place.** The widget tile, the Today sheet and the
+  Trends card each used to count muscle work for themselves — six families or
+  sixteen, with or without credit for assistance, from a Sunday or from your own
+  week start — so the same session could read three ways. All three now call one
+  accumulator: direct work 1.0, assistance 0.5, warm-ups counted, ghost sets not.
+- The muscle atlas legend keeps its colour bar at accessibility text sizes
+  instead of dropping it, and its colour dot scales with the type.
+
+### Fixed
+- **A phone-logged set is credited on Trends too.** Sets logged on the phone
+  carry a slug id rather than a catalogue uuid; the Trends reader named only the
+  catalogue, so those sets silently credited no muscle at all — the same defect
+  that produced "Side delts 0/7" on the tile and the sheet, on the one surface
+  W1 did not reach.
+- A week with no per-muscle targets set — a new account, or a phase never given
+  volume rows — drew an empty body on the tile and the sheet even with work
+  logged. With no target to grade against, the figure now grades against the
+  busiest muscle.
+
+### Removed
+- `MuscleAggregator` and `WidgetDerive.volumeByFamily`, the two accumulators the
+  single one replaced, with their fixtures.
+- `OnyxDomain.forMuscle` and `OnyxDomain.forFamily` — the four-accent collapse.
+
 ## [1.7.0] — 2026-09-11 · The Generic Model
 
 W2 of the epic sprint (`docs/EPIC_SPRINT_PLAN.md` D1–D6). No new screens; the
