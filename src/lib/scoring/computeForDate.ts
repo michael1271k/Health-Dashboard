@@ -19,6 +19,7 @@ import { isMaintenanceDate } from '@/lib/nutrition/maintenance'
 import type { ProgramPhase } from '@/lib/training/landmarks'
 import { isWorkingSet } from '@/lib/training/setTags'
 import { foldFatigueRows, latestFatigue } from '@/lib/recovery/fatigue'
+import { foldDomsSeverity, type SorenessRow } from '@/lib/recovery/soreness'
 import { computeReadinessSignals } from '@/lib/scoring/readiness'
 import { historyStart, readinessHistoryFor, type HistoryRows } from '@/lib/scoring/readinessHistory'
 
@@ -339,13 +340,16 @@ export async function computeForDate(
   // — then through the model.
   const [historyRows, domsRes] = await Promise.all([
     sharedHistory ?? fetchReadinessHistory(supabase, userId, historyStart(date), date),
-    supabase.from('doms_logs').select('severity').eq('user_id', userId).eq('date', date),
+    supabase.from('doms_logs').select('muscle_group, severity').eq('user_id', userId).eq('date', date),
   ])
   const signals = computeReadinessSignals(readinessHistoryFor(date, historyRows))
-  // Mean severity of the day's soreness rows, zeros included — a muscle rated
-  // "not sore" is an answer. No rows is no answer.
-  const domsRows = (domsRes.error ? [] : (domsRes.data ?? [])) as Array<{ severity: number }>
-  const domsSeverity = domsRows.length ? domsRows.reduce((a, r) => a + r.severity, 0) / domsRows.length : null
+  // One number per RECOGNISED muscle, the max across its sides and sub-regions,
+  // then the mean of those. Zeros included — a muscle rated "not sore" is an
+  // answer. No rows is no answer. See `recovery/soreness.ts` for why it stopped
+  // being a mean over rows: laterality would have re-based every historical
+  // battery score, and the demo seed's unreadable rows were already counted.
+  const domsRows = (domsRes.error ? [] : (domsRes.data ?? [])) as SorenessRow[]
+  const domsSeverity = foldDomsSeverity(domsRows)
 
   // isToday comes from the caller (the client knows its own timezone); derive the
   // user's local hour from hoursAwake (07:00 wake convention) instead of a fixed zone.

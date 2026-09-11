@@ -14,15 +14,14 @@ import { programDayByKey } from '@/lib/programs'
  * Tape measurements (waist/arm/thigh) were removed entirely — see the migration
  * that drops `body_measurements`.
  */
-// Standardized display order: upper (Chest → Shoulders), trunk (Abs), then lower
-// (Glutes → Calves).
-// `Inner thighs` is the tenth, added 2026-09-08. The adductors were the one
-// muscle the atlas DREW and soreness could never report: hip adduction is on
-// the deck, it gets sore like anything else, and a rating had nowhere to land.
-// It sits between Hamstrings and Calves so the lower-body block still reads
-// top to bottom.
-export const DOMS_MUSCLES = ['Chest', 'Back', 'Arms', 'Shoulders', 'Abs', 'Glutes', 'Quads', 'Hamstrings', 'Inner thighs', 'Calves'] as const
-export type DomsMuscle = (typeof DOMS_MUSCLES)[number]
+// The vocabulary itself now lives in `lib/recovery/soreness.ts`, beside the fold
+// the SCORER reads — this file is 'use client' and carries a Supabase client, and
+// `computeForDate` should not have to import either to learn the ten names.
+// Re-exported so every existing importer is unaffected; same split as
+// `useFatigue` / `recovery/fatigue.ts`.
+export { DOMS_MUSCLES, DOMS_LEVELS, isDomsMuscle } from '@/lib/recovery/soreness'
+export type { DomsMuscle } from '@/lib/recovery/soreness'
+import { DOMS_MUSCLES, type DomsMuscle } from '@/lib/recovery/soreness'
 
 /** Fold a program muscle token into one of the tracked DOMS muscles (or null). */
 export function domsMuscleOf(token: string): DomsMuscle | null {
@@ -65,12 +64,6 @@ function sessionDomsMuscles(dayKey: string | null, split: string): Set<DomsMuscl
   return out
 }
 
-export const DOMS_LEVELS = [
-  { v: 0, label: 'None' },
-  { v: 1, label: 'Mild' },
-  { v: 2, label: 'Moderate' },
-  { v: 3, label: 'Severe' },
-] as const
 
 /** Today's DOMS ratings, muscle → severity. Empty (not an error) pre-migration. */
 export function useDoms(date = logicalTodayISO()) {

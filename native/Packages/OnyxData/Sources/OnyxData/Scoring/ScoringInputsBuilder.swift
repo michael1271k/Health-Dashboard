@@ -164,11 +164,26 @@ public extension AppDatabase {
             // `readinessHistory` lays the rows on the calendar exactly as the
             // web's `readinessHistoryFor` does; the model is vector-proven.
             let signals = Readiness.signals(try Self.readinessHistory(db, userId: userId, date: date))
-            // Mean severity of the day's soreness rows, zeros included — a
-            // muscle rated "not sore" is an answer. No rows is no answer.
-            let domsSeverity = Self.mean(
+            // One number per RECOGNISED muscle — the max across its sides and
+            // sub-regions — then the mean of those. Zeros included: a muscle
+            // rated "not sore" is an answer. No rows is no answer.
+            //
+            // It was a mean over ROWS, which made the denominator grow with the
+            // number of ways a complaint was described rather than with the
+            // number of complaints. Laterality would have re-based every
+            // historical battery score on that rule, and rows whose muscle_group
+            // is not one of the ten — the demo seed writes 'Quadriceps' and
+            // 'Lats' — were being counted despite never being readable as a
+            // rating. The web applies the identical fold in
+            // `src/lib/recovery/soreness.ts`; a golden vector pins the two.
+            //
+            // ponytail: the LOCAL store still has no side/sub_region columns, so
+            // a phone can only write whole-muscle bilateral rows. The fold is
+            // correct either way; add the GRDB migration when the native logger
+            // grows a side control.
+            let domsSeverity = Self.foldDomsSeverity(
                 try DomsLogRow.filter(Column("user_id") == userId && Column("date") == date)
-                    .fetchAll(db).map { Double($0.severity) }
+                    .fetchAll(db)
             )
 
             let hasAnything = metrics != nil || sleep != nil || nutrition != nil
@@ -395,6 +410,21 @@ extension AppDatabase {
                 side: (try? SyncTranslation.side($0.side)) ?? nil, pairId: $0.pairId, setType: $0.setType
             )
         })
+    }
+
+    /// Mean severity over DISTINCT RECOGNISED muscles, max within each.
+    ///
+    /// A 1:1 port of `foldDomsSeverity` in `src/lib/recovery/soreness.ts`.
+    /// Max rather than mean within a muscle, deliberately: "left quad severe,
+    /// right quad fine" is a severe quad, and averaging it to moderate reports
+    /// a day nobody had.
+    static func foldDomsSeverity(_ rows: [DomsLogRow]) -> Double? {
+        var peak: [String: Int] = [:]
+        for row in rows where DomsMuscles.recognised.contains(row.muscleGroup) {
+            peak[row.muscleGroup] = max(peak[row.muscleGroup] ?? 0, row.severity)
+        }
+        guard !peak.isEmpty else { return nil }
+        return Double(peak.values.reduce(0, +)) / Double(peak.count)
     }
 
     static func mean(_ values: [Double]) -> Double? {

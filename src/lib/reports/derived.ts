@@ -30,6 +30,7 @@ import type { WeeklyExportInput, ExportDay, ExportFatigue, ExportSession, Ledger
 import { SET_QUALITY } from '@/lib/training/setTags'
 import { computeMorningCharge, sleepQualityParts, loadParts, wellnessParts } from '@/lib/scoring/battery'
 import { FATIGUE_SLOTS, SLOT_LABEL, fatigueLevel } from '@/lib/recovery/fatigue'
+import { foldDomsSeverity } from '@/lib/recovery/soreness'
 
 /** Mean of the values that EXIST. Null when none do — never 0. */
 function mean(xs: Array<number | null | undefined>): number | null {
@@ -219,8 +220,13 @@ function progressionWithin(sessions: readonly ExportSession[]): ExerciseProgress
 /**
  * The battery's view of each day. The LATEST fatigue slot wins, as
  * `latestFatigue` decides it — slots are compared by their position in the
- * day, not by their label's alphabet. Soreness is the mean of the day's DOMS
- * rows, zeros included: a muscle rated "not sore" is an answer.
+ * day, not by their label's alphabet.
+ *
+ * Soreness is one number per RECOGNISED muscle — the max across its sides and
+ * sub-regions — then the mean of those, zeros included: a muscle rated "not
+ * sore" is an answer. It has to be the same fold `computeForDate` applies, or
+ * the export's recomputed battery would disagree with the stored one on any day
+ * that carries a left/right pair.
  */
 function batteryDays(input: WeeklyExportInput): BatteryDay[] {
   const slotIndex = (label: string) => FATIGUE_SLOTS.findIndex((s) => SLOT_LABEL[s] === label)
@@ -228,7 +234,9 @@ function batteryDays(input: WeeklyExportInput): BatteryDay[] {
     const latest = (input.fatigue ?? [])
       .filter((f) => f.date === d.date)
       .reduce<ExportFatigue | null>((best, f) => (best == null || slotIndex(f.slot) > slotIndex(best.slot) ? f : best), null)
-    const soreness = mean(input.doms.filter((r) => r.date === d.date).map((r) => r.severity))
+    const soreness = foldDomsSeverity(
+      input.doms.filter((r) => r.date === d.date).map((r) => ({ muscle_group: r.muscle, severity: r.severity })),
+    )
     const r = d.readiness ?? null
     const onsetTrouble = d.sleepOnsetTrouble == null ? null : d.sleepOnsetTrouble === true
     const signals = {
