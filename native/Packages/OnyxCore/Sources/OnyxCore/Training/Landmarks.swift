@@ -57,6 +57,26 @@ public enum LandmarkMuscle: String, CaseIterable, Codable, Sendable, Hashable {
     ///     the one landmark that covers the hip. The atlas draws ONE inner-thigh
     ///     region and the soreness rating asks ONE question about it, so the
     ///     credit lands in one place too.
+    /// The token to STORE when this app is the one writing the muscle down —
+    /// an imported exercise's `primary_muscle`, a CSV row's tags.
+    ///
+    /// ── WHY NOT JUST `rawValue` ─────────────────────────────────────────────
+    /// `rawValue` is the DISPLAY spelling and fifteen of the sixteen happen to
+    /// survive a round trip through `from(token:)`, because it folds spaces and
+    /// hyphens to underscores. `Abs/core` is the sixteenth: the slash is not
+    /// folded, so the token would resolve to nil and every abdominal set logged
+    /// against an imported movement would earn no credit — silently, which is
+    /// the failure mode this whole file is written against.
+    ///
+    /// `LandmarkTokenTests` asserts `from(token: m.token) == m` for all sixteen,
+    /// so a new landmark cannot be added without a token that resolves.
+    public var token: String {
+        switch self {
+        case .absCore: "abs"
+        default:       rawValue
+        }
+    }
+
     public static func from(token: String) -> LandmarkMuscle? {
         switch token.lowercased().replacingOccurrences(
             of: "[\\s-]+", with: "_", options: .regularExpression
