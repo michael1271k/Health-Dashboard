@@ -60,6 +60,8 @@ extension SessionAnalysis {
         /// upper day that happened to precede it turns a tonnage delta into
         /// noise with a sign on it.
         let previous: Summary?
+        /// The deck that owned the session's date — for the day's name.
+        let program: Program?
         /// Active energy, in kcal.
         ///
         /// ── MEASURED WHEN THERE IS A MEASUREMENT ────────────────────────────
@@ -125,7 +127,7 @@ extension SessionAnalysis {
         /// The verdict sentence over the Progression chart.
         var verdict: String {
             guard let previous, previous.tonnageKg > 0 else {
-                return "First \(SessionAnalysis.dayLabel(report.session.dayKey, in: nil) ?? "session") on record."
+                return "First \(SessionAnalysis.dayLabel(report.session.dayKey, in: program) ?? "session") on record."
             }
             let delta = report.tonnageKg - previous.tonnageKg
             let pct = delta / previous.tonnageKg * 100
@@ -193,6 +195,7 @@ extension SessionAnalysis {
             },
             careerIndex: careerIndex,
             previous: index.flatMap { $0 > 0 ? mine[$0 - 1] : nil },
+            program: ctx.program(on: session.date),
             calories: storedKcal ?? estimate?.kcal,
             caloriesEstimated: storedKcal == nil ? true : session.caloriesEstimated,
             calorieBasis: storedKcal == nil ? estimate?.basis : nil,

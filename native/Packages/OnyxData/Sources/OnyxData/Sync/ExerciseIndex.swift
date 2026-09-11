@@ -51,8 +51,8 @@ public struct RemoteExercise: Codable, Sendable, Equatable, Identifiable {
 /// Point 3 is the deliberate difference from the web app, which creates on a
 /// miss. Creating is right for a paste importer taking names from a foreign
 /// vocabulary; it is wrong here, where the only names that can arrive are the
-/// 32 in `Program.onyx5` and every one of them already has a catalogue row. A
-/// miss therefore means the program was edited or the slug function drifted —
+/// ones in the user's `routines` rows, and every one of them names a catalogue
+/// row. A miss therefore means a routine was edited or the slug function drifted —
 /// and in both cases a failed upload that names the movement is worth far more
 /// than a 61st row nobody asked for. The exercise library lands in Wave 3 and
 /// owns creation from then on.
@@ -71,8 +71,11 @@ public struct ExerciseIndex: Sendable {
     /// Every uuid the catalogue holds — a set that already carries one passes
     /// through `id(forSlug:)` untouched.
     private let ids: Set<String>
-    /// `ExerciseSlug.id(row.name)` → id, for a catalogue with no slug column.
-    private let byComputedSlug: [String: String]
+    /// `ExerciseSlug.id(row.name)` → every row whose NAME slugs to it, for a
+    /// catalogue with no slug column. Grouped, like `byNormalised`, so a
+    /// collision (`Crunch Machine` / `Crunch (Machine)`) is detectable and
+    /// refused rather than resolved to whichever row came first — a MERGE.
+    private let byComputedSlug: [String: [RemoteExercise]]
 
     public init(_ catalogue: [RemoteExercise]) {
         byExactName = Dictionary(
@@ -88,10 +91,7 @@ public struct ExerciseIndex: Sendable {
             uniquingKeysWith: { first, _ in first }
         )
         ids = Set(catalogue.map(\.id))
-        byComputedSlug = Dictionary(
-            catalogue.map { (ExerciseSlug.id($0.name), $0.id) },
-            uniquingKeysWith: { first, _ in first }
-        )
+        byComputedSlug = Dictionary(grouping: catalogue, by: { ExerciseSlug.id($0.name) })
     }
 
     /// Resolve one local exercise id to a catalogue uuid.
@@ -109,7 +109,12 @@ public struct ExerciseIndex: Sendable {
         // before that DDL ran (or a test remote) has no column, so the same
         // rule runs here: the row whose NAME slugs to this slug. First wins on
         // a collision, as the backfill's rank does.
-        if let id = byComputedSlug[slug] { return id }
+        if let computed = byComputedSlug[slug] {
+            if computed.count == 1 { return computed[0].id }
+            throw SyncError.ambiguousExercise(
+                name: Self.humanised(Self.slugKey(slug)), candidates: computed.map(\.name).sorted()
+            )
+        }
         // ── THEN THE NORMALISED TIER ────────────────────────────────────────
         // A slug is the movement's name with the parenthesised text and
         // punctuation collapsed — which is what `normalisedKey` does to a
@@ -189,9 +194,10 @@ public struct ExerciseIndex: Sendable {
 /// `LoggerModel.exerciseId` in the app target has the other one. This package
 /// cannot import the app target, and the app target is Track U's to edit, so
 /// the copies stay for now — but they are pinned: `ExerciseSlugTests` asserts
-/// the exact slug string for all 32 ONYX-5 movements, so a drift in either
-/// copy fails a test rather than quietly failing to resolve. When Track U next
-/// touches `LoggerModel`, that function should become a call to this one.
+/// the exact slug string for every movement in the seeded templates, so a
+/// drift in either copy fails a test rather than quietly failing to resolve.
+/// When W5 next touches `LoggerModel`, that function should become a call to
+/// this one.
 ///
 /// The reverse map is built from `Program.onyx5` rather than by un-slugging,
 /// because un-slugging is lossy: `helix5-seated-cable-row-v-grip` cannot be

@@ -1279,9 +1279,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
                     setType: row.kind.rawValue,
                     timed: TimedExercise.isTimed(name),
                     repFloor: floor,
-                    // The session's own day when there is one: `PrSeed` matches
-                    // an asserted record by `(date, name, setNumber)`, and
-                    // today's date on a three-week-old set matches nothing.
+                    // The session's own day when there is one: a record is
+                    // dated by the session it was earned in, and today's date
+                    // on a three-week-old set would file it under the wrong day.
                     date: editing?.date ?? LogicalDay.today(),
                     exerciseName: name,
                     setNumber: i + 1

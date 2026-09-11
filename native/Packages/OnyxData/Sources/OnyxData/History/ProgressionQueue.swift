@@ -68,7 +68,7 @@ public extension AppDatabase {
         // Which plan owns a date, off the catalogue. The local store is ONE
         // user's mirror, so the goals row names the user (the same reading
         // `HistoryWeeks` and `sessionsForSeed` make).
-        let ctx = try scheduleContext(userId: (try read { db in try UserGoalRow.fetchOne(db)?.userId }) ?? "")
+        let ctx = try scheduleContext(userId: localUserId())
         let owner = { (date: String) in Schedule.planId(owning: date, in: ctx) }
         let era = owner(today)
         let allowed = try qualifying

@@ -195,7 +195,7 @@ final class WorkoutWeek {
         // The catalogue with the selection applied — one assembly, shared with
         // every other reader (`AppDatabase.scheduleContext`). The user is the
         // goals row's own, for the reason stated above.
-        var context = (try? database.scheduleContext(userId: goals?.userId ?? "")) ?? ScheduleContext(programId: "", phase: phase)
+        var context = (try? database.scheduleContext(userId: database.localUserId())) ?? ScheduleContext(programId: "", phase: phase)
         context.phase = phase
         let overrides = context.overrides
         out.program = context.activeProgram

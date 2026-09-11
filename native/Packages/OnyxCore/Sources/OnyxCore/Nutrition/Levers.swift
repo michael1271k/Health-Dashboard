@@ -228,6 +228,10 @@ public enum Levers {
         if let id = leverForDate(dateISO, today: today, in: ladder), lever(byId: id, in: ladder) != nil {
             return applyLever(fallback, id, in: ladder)
         }
+        // A keyless period's pin is only ever written when the NEXT change
+        // closes it (`recordLeverChange`), so the stretch that is still open —
+        // today's — reads the live row through the nil below, and every edit
+        // to it lands at once.
         return scheduledPeriod(on: dateISO, in: ladder)?.goals ?? fallback
     }
 

@@ -2,7 +2,7 @@
   "introspected": "2026-09-10",
   "why": [
     "The GRDB mirror is generated from THIS file, and this file is written from a live",
-    "introspection of Supabase (information_schema + pg_catalog) \u2014 never from",
+    "introspection of Supabase (information_schema + pg_catalog) — never from",
     "src/lib/supabase/types.ts, which declares 17 tables while the app queries 29 and",
     "has fourteen call sites silently typed `any`.",
     "",
@@ -12,18 +12,18 @@
     "that gets to erase the distinction.",
     "",
     "FOUR live tables are deliberately absent:",
-    "  \u00b7 body_measurements \u2014 the tape table. HELIX does not do manual waist/limb",
+    "  · body_measurements — the tape table. HELIX does not do manual waist/limb",
     "    measuring; it has been removed from the product twice. Mirroring it would",
     "    put the fields back within reach of the next screen that goes looking.",
-    "  \u00b7 notion_credentials, notion_exports \u2014 the Notion integration was deleted on",
+    "  · notion_credentials, notion_exports — the Notion integration was deleted on",
     "    2026-08-22 and these two are waiting on drop-SQL.",
-    "  \u00b7 widget_tokens \u2014 dies with the token-authenticated snapshot endpoint the",
+    "  · widget_tokens — dies with the token-authenticated snapshot endpoint the",
     "    moment the App Group exists.",
     "That leaves the 29 the app actually reads.",
     "",
     "`bespoke: true` means the table is NOT generated. Three of them already exist",
-    "locally in a DIFFERENT shape that the logger owns \u2014 `workout_sets.set_index` is",
-    "`set_number` here, `workout_sessions.date` does not exist here at all \u2014 so they",
+    "locally in a DIFFERENT shape that the logger owns — `workout_sets.set_index` is",
+    "`set_number` here, `workout_sessions.date` does not exist here at all — so they",
     "are pulled through SyncTranslation into the tables that are already there,",
     "rather than mirrored beside them under a second name.",
     "",
@@ -176,7 +176,7 @@
         "axis"
       ],
       "cursor": "updated_at",
-      "cols": "user_id:uuid,exercise_key:text,axis:text,value:numeric,reps:int4?,weight_kg:numeric?,session_id:uuid?,achieved_on:date,updated_at:timestamptz?"
+      "cols": "user_id:uuid,exercise_key:text,axis:text,value:numeric,reps:int4?,weight_kg:numeric?,session_id:uuid?,achieved_on:date,updated_at:timestamptz?,floor_value:numeric?"
     },
     "routine_templates": {
       "group": "training",

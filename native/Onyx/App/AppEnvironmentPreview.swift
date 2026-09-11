@@ -17,7 +17,14 @@ import OnyxData
 ///
 /// `#if DEBUG` so none of this is in the shipped binary.
 extension AppEnvironment {
-    static var preview: AppEnvironment {
+    /// ONE instance, not one per access. `.environment(AppEnvironment.preview)`
+    /// is written on every harness screen, and a computed property handed
+    /// SwiftUI a new object on every body evaluation — a new environment, a
+    /// new store, a re-rendered tree, and a model whose observation belonged
+    /// to the previous evaluation. Since W2 the settings screens READ their
+    /// catalogue through that observation, so the churn photographed an empty
+    /// plan. A `static let` is what a preview environment always meant.
+    @MainActor static let preview: AppEnvironment = {
         let environment = AppEnvironment(
             database: try! AppDatabase.inMemory(deviceId: "preview"),
             supabase: OnyxSupabase.makeClient(config: SupabaseConfig(
@@ -35,6 +42,6 @@ extension AppEnvironment {
         PreviewCatalogue.seed(environment.database)
         environment.installPreviewTargets(userId: PreviewCatalogue.userId)
         return environment
-    }
+    }()
 }
 #endif

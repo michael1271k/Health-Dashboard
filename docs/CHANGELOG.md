@@ -87,7 +87,9 @@ empty instead of inheriting the founder's.
 - Legacy `helix5-…` set ids resolve through `exercises.slug` (data), not through
   the deck; new sets carry the catalogue uuid from the routine payload.
 - PR floors are `personal_records` rows with no session; a replay never
-  deletes them.
+  deletes them. A record that beats a floor carries it in `floor_value`
+  (`docs/sql/w2-pr-floor-value.sql`, founder pastes third), and deleting
+  that session hands the axis back to the floor instead of emptying it.
 - The weekly export's programme line names the plan from its row
   ("Onyx-5 Cut").
 

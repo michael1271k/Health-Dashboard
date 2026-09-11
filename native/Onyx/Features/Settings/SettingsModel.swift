@@ -367,9 +367,9 @@ final class SettingsModel {
                 if !isRelease { row.maintenanceUntil = nil }
             }
             // The schedule is rows now (`lever_periods`), and a rung coming on
-            // — or off — is an event the past must keep. Off pins the numbers
-            // the stretch will answer with once the next rung closes it.
-            try database.recordLeverChange(userId: userId, profileKey: id, goals: id == nil ? own : nil, today: today)
+            // — or off — is an event the past must keep. The live numbers pin
+            // whichever keyless stretch this change closes.
+            try database.recordLeverChange(userId: userId, profileKey: id, ownGoals: own, today: today)
         }
     }
 
@@ -390,7 +390,7 @@ final class SettingsModel {
                 row.activeLever = stored
                 row.maintenanceUntil = on ? endsOn : nil
             }
-            try database.recordLeverChange(userId: userId, profileKey: on ? release.id : nil, goals: on ? nil : own, today: today)
+            try database.recordLeverChange(userId: userId, profileKey: on ? release.id : nil, ownGoals: own, today: today)
         }
     }
 

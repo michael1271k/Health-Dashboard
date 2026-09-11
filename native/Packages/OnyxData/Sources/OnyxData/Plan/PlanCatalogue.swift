@@ -187,6 +187,17 @@ extension AppDatabase {
 
 public extension AppDatabase {
 
+    /// Whose mirror this store is — the goals row's user, else the user any
+    /// `plans` row names. The local store holds ONE user's rows, and a reader
+    /// that filters on an id in hand answers "nothing" whenever that id is not
+    /// the one the rows were written under (every preview, every screenshot,
+    /// any read before auth resolves). Empty when the store is empty.
+    func localUserId() -> String {
+        (try? writer.read { db in
+            try UserGoalRow.fetchOne(db)?.userId ?? PlanRow.fetchOne(db)?.userId
+        }) ?? nil ?? ""
+    }
+
     /// The catalogue, for a caller outside a transaction.
     func planCatalogue(userId: String) throws -> PlanCatalogue {
         try writer.read { db in try Self.planCatalogue(db, userId: userId) }
@@ -223,22 +234,46 @@ public extension AppDatabase {
     ///
     /// Idempotent for one day: a second change on the same day replaces the
     /// day's row rather than adding a second one. `profileKey` nil is "back
-    /// to my own numbers", and `goals` pins what those were so the stretch
-    /// keeps answering after the next edit to `user_goals`.
-    func recordLeverChange(userId: String, profileKey: String?, goals: LeverGoals?, today: String) throws {
+    /// to my own numbers".
+    ///
+    /// ── THE PIN GOES ON THE STRETCH BEING CLOSED ────────────────────────────
+    /// A keyless period's `goals` say what "my own numbers" WERE for the days
+    /// it covered, so those days keep grading the same after the next edit to
+    /// `user_goals`. That is only knowable when the stretch ends: pinning the
+    /// numbers at the moment it opens would freeze today's targets at tap
+    /// time, deaf to every edit after (`Levers.goalsForDate` reads the live
+    /// row for today+ for the same reason). So this writes today's row with no
+    /// pin, and pins the PREVIOUS keyless row — if one is still open — with
+    /// `ownGoals`, the live numbers as the stretch closes.
+    func recordLeverChange(userId: String, profileKey: String?, ownGoals: LeverGoals, today: String) throws {
         try writer.write { db in
+            let user = Column("user_id") == userId
+            if var open = try LeverPeriodRow
+                .filter(user && Column("starts_on") < today)
+                .order(Column("starts_on").desc)
+                .fetchOne(db),
+               open.profileKey == nil, open.goals == nil
+            {
+                open.goals = LeverPeriod.json(ownGoals)
+                open.updatedAt = AppDatabase.localWriteTimestamp
+                try open.save(db)
+                try Self.enqueueRowUpsert(
+                    table: LeverPeriodRow.databaseTableName,
+                    id: AppDatabase.rowID([userId, open.startsOn]), nulls: ["profile_key"], in: db
+                )
+            }
             var row = try LeverPeriodRow
-                .filter(Column("user_id") == userId && Column("starts_on") == today)
+                .filter(user && Column("starts_on") == today)
                 .fetchOne(db)
                 ?? LeverPeriodRow(userId: userId, startsOn: today, updatedAt: AppDatabase.localWriteTimestamp)
             row.profileKey = profileKey
-            row.goals = goals.map(LeverPeriod.json)
+            row.goals = nil
             row.updatedAt = AppDatabase.localWriteTimestamp
             try row.save(db)
             try Self.enqueueRowUpsert(
                 table: LeverPeriodRow.databaseTableName,
                 id: AppDatabase.rowID([userId, today]),
-                nulls: (profileKey == nil ? ["profile_key"] : []) + (goals == nil ? ["goals"] : []),
+                nulls: (profileKey == nil ? ["profile_key"] : []) + ["goals"],
                 in: db
             )
         }

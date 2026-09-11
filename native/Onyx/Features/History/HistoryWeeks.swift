@@ -287,7 +287,7 @@ enum HistoryWeeks {
         database: AppDatabase
     ) -> (schedule: ScheduleContext, goals: UserGoalRow?, ladder: LeverLadder, analysis: SessionAnalysis.Context) {
         let goals: UserGoalRow? = (try? database.read { db in try UserGoalRow.fetchOne(db) }) ?? nil
-        let userId = goals?.userId ?? ""
+        let userId = database.localUserId()
         // One assembly of the plan, the phase and the catalogue
         // (`AppDatabase.scheduleContext`), shared with every other reader.
         let schedule = (try? database.scheduleContext(userId: userId)) ?? ScheduleContext(programId: "", phase: .cut)
@@ -302,11 +302,12 @@ enum HistoryWeeks {
     /// Can the schedule speak for this week?
     ///
     /// ── WHY A WEEK CAN HAVE NO PLANNED DAYS ─────────────────────────────────
-    /// `Schedule.scheduleDayIn` answers with the ACTIVE programme's layout — it
-    /// has no memory of what was running last spring. Before Week 0 the block
-    /// was PPL: six days, different splits, none of them in `Program.onyx5`.
-    /// Asking the current schedule about those weeks does not fail, it answers
-    /// confidently and wrongly, and the strip fills with hollow rings claiming
+    /// `Schedule.scheduleDayIn` owns a date by plan (W2), but the weekday
+    /// LAYOUT applies to the active plan only — it has no memory of how last
+    /// spring's block was laid out. Before Week 0 the block was PPL: six days,
+    /// different splits, none of them in the active deck. Asking the current
+    /// layout about those weeks does not fail, it answers confidently and
+    /// wrongly, and the strip fills with hollow rings claiming
     /// five Onyx days were missed in a week the user actually trained six PPL
     /// ones.
     ///

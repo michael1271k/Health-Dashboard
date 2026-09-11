@@ -990,6 +990,7 @@ public final class AppDatabase: Sendable {
                 ("label", .text), ("fiber_g", .integer), ("body_fat_ceiling_pct", .double),
             ])
             try add("target_profiles", [("kind", .text)])
+            try add("personal_records", [("floor_value", .double)])
             try add("custom_supplements", [
                 ("dose_amount", .double), ("dose_unit", .text), ("sort_order", .integer),
             ])
@@ -1217,8 +1218,8 @@ extension AppDatabase {
             // ── AND THE DECK ORDER, WHICH IS THE ONE THING THE SETS CARRY
             // AND THE NEXT SESSION DID NOT ────────────────────────────────
             // `moveExercise` writes `exercise_order` on the rows, so a reorder
-            // reached the session report and stopped there: the next deck is
-            // built from `Program.onyx5`, which is a constant. `save.ts` has
+            // reached the session report and stopped there: the next deck was
+            // built from a compiled constant (rows since W2). `save.ts` has
             // upserted `routine_templates` on every web commit since the day it
             // was written, and this is the phone's half of it. In the same
             // transaction as the close, for the reason the ledger is.

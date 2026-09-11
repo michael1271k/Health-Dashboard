@@ -1032,6 +1032,7 @@ public struct PersonalRecordRow: Codable, FetchableRecord, PersistableRecord, Se
     public var sessionId: String?
     public var achievedOn: String
     public var updatedAt: Date?
+    public var floorValue: Double?
 
     public enum CodingKeys: String, CodingKey {
         case userId = "user_id"
@@ -1043,6 +1044,7 @@ public struct PersonalRecordRow: Codable, FetchableRecord, PersistableRecord, Se
         case sessionId = "session_id"
         case achievedOn = "achieved_on"
         case updatedAt = "updated_at"
+        case floorValue = "floor_value"
     }
 
     public init(
@@ -1054,7 +1056,8 @@ public struct PersonalRecordRow: Codable, FetchableRecord, PersistableRecord, Se
         weightKg: Double? = nil,
         sessionId: String? = nil,
         achievedOn: String,
-        updatedAt: Date? = nil
+        updatedAt: Date? = nil,
+        floorValue: Double? = nil
     ) {
         self.userId = userId
         self.exerciseKey = exerciseKey
@@ -1065,6 +1068,7 @@ public struct PersonalRecordRow: Codable, FetchableRecord, PersistableRecord, Se
         self.sessionId = sessionId
         self.achievedOn = achievedOn
         self.updatedAt = updatedAt
+        self.floorValue = floorValue
     }
 }
 
@@ -2065,6 +2069,7 @@ extension AppDatabase {
                 t.column("session_id", .text)
                 t.column("achieved_on", .text).notNull()
                 t.column("updated_at", .datetime)
+                t.column("floor_value", .double)
                 t.primaryKey(["user_id", "exercise_key", "axis"])
             }
             try db.create(table: "routine_templates") { t in

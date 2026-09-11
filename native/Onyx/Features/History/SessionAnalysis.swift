@@ -14,10 +14,10 @@ import OnyxData
 /// The KEY is the exercise id. Baselines are every earlier set of the session's
 /// own exercises, carrying `set_type`, `side`, `pair_id` and the stored
 /// `est_1rm_kg`; the rep floor is the programmed window for THIS session's
-/// day key; `floorFor` is `PrTruth.floor(for:)` through the canonical name;
-/// `isTimed` is `TimedExercise.isTimed` through the same name. Candidates are
-/// the session's sets in performed order with `date`, `exerciseName` and
-/// `setNumber` so `PrSeed` can find an asserted record. Sides are mapped
+/// day key; `floorFor` is the session-less `personal_records` floor through
+/// the canonical name; `isTimed` is `TimedExercise.isTimed` through the same
+/// name. Candidates are the session's sets in performed order with `date`,
+/// `exerciseName` and `setNumber`. Sides are mapped
 /// `left`/`right` → `L`/`R` at the boundary (`HistorySetRow.lr`).
 enum SessionAnalysis {
 
@@ -452,7 +452,7 @@ enum SessionAnalysis {
     /// The context off the store. Nothing filters on `user_id` beyond the goals
     /// row's own: the local store is ONE user's mirror (see `HistoryWeeks`).
     nonisolated static func context(database: AppDatabase) -> Context {
-        let userId: String = ((try? database.read { db in try UserGoalRow.fetchOne(db)?.userId }) ?? nil) ?? ""
+        let userId = database.localUserId()
         return Context(
             schedule: (try? database.scheduleContext(userId: userId)) ?? Context.empty.schedule,
             floors: (try? database.prFloors()) ?? [:]

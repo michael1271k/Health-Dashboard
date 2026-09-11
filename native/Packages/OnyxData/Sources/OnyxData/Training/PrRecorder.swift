@@ -74,7 +74,7 @@ public enum PrRecorder {
         for exercise in PrEngine.recordSets(candidates, result) {
             let key = name(exercise.key)
             for record in exercise.records {
-                let row = PersonalRecordRow(
+                var row = PersonalRecordRow(
                     userId: userId,
                     exerciseKey: key,
                     axis: record.axis.rawValue,
@@ -94,6 +94,7 @@ public enum PrRecorder {
                     // The delta cursor is the server's to move.
                     updatedAt: AppDatabase.localWriteTimestamp
                 )
+                try carryFloor(db, into: &row)
                 try row.save(db)
                 try AppDatabase.enqueueRowUpsert(
                     table: PersonalRecordRow.databaseTableName,
@@ -207,13 +208,30 @@ public enum PrRecorder {
     /// baseline build: the table is a few dozen rows.
     static func floors(_ db: Database) throws -> [String: PrFloor] {
         var out: [String: PrFloor] = [:]
-        for row in try PersonalRecordRow.filter(Column("session_id") == nil).fetchAll(db) {
-            guard let axis = PrAxis(rawValue: row.axis) else { continue }
+        for row in try PersonalRecordRow.fetchAll(db) {
+            // A floor is a session-less row's value, or the `floor_value` a
+            // session's record carries from the floor row it replaced —
+            // the natural key holds ONE row per axis, so a beaten floor
+            // lives on inside the row that beat it (`carryFloor`).
+            guard let axis = PrAxis(rawValue: row.axis),
+                  let value = row.sessionId == nil ? row.value : row.floorValue
+            else { continue }
             var floor = out[row.exerciseKey] ?? PrFloor()
-            floor.absorb(axis: axis, value: row.value, timed: TimedExercise.isTimed(row.exerciseKey))
+            floor.absorb(axis: axis, value: value, timed: TimedExercise.isTimed(row.exerciseKey))
             out[row.exerciseKey] = floor
         }
         return out
+    }
+
+    /// The floor the row about to be saved stands on: the value of the
+    /// floor row it replaces, or the floor the previous record on this axis
+    /// was already carrying. Nothing to carry when the axis has no row.
+    private static func carryFloor(_ db: Database, into row: inout PersonalRecordRow) throws {
+        guard let existing = try PersonalRecordRow
+            .filter(Column("user_id") == row.userId && Column("exercise_key") == row.exerciseKey && Column("axis") == row.axis)
+            .fetchOne(db)
+        else { return }
+        row.floorValue = existing.sessionId == nil ? existing.value : existing.floorValue
     }
 
     /// The deck the session's date belongs to, for the rep window that gates
@@ -363,7 +381,7 @@ public enum PrRecorder {
             let result = PrEngine.detectSessionPrs(candidates, baselines)
             for exercise in PrEngine.recordSets(candidates, result) {
                 for record in exercise.records {
-                    let row = PersonalRecordRow(
+                    var row = PersonalRecordRow(
                         userId: userId,
                         exerciseKey: exerciseKey,
                         axis: record.axis.rawValue,
@@ -374,6 +392,7 @@ public enum PrRecorder {
                         achievedOn: session.date,
                         updatedAt: AppDatabase.localWriteTimestamp
                     )
+                    try carryFloor(db, into: &row)
                     try row.save(db)
                     try AppDatabase.enqueueRowUpsert(
                         table: PersonalRecordRow.databaseTableName,
@@ -412,6 +431,27 @@ public enum PrRecorder {
             .filter(Column("user_id") == userId && Column("exercise_key") == exerciseKey && Column("session_id") != nil)
             .fetchAll(db)
         for row in rows {
+            // A record that stood on a floor hands the axis BACK to the
+            // floor rather than emptying it: the bar the book asserted is
+            // still true when the set that beat it is gone. The set's own
+            // load and reps go with the set.
+            if let floor = row.floorValue {
+                var back = row
+                back.value = floor
+                back.sessionId = nil
+                back.reps = nil
+                back.weightKg = nil
+                back.floorValue = nil
+                back.updatedAt = AppDatabase.localWriteTimestamp
+                try back.save(db)
+                try AppDatabase.enqueueRowUpsert(
+                    table: PersonalRecordRow.databaseTableName,
+                    id: AppDatabase.rowID([userId, exerciseKey, row.axis]),
+                    nulls: ["session_id", "reps", "weight_kg", "floor_value"],
+                    in: db
+                )
+                continue
+            }
             try row.delete(db)
             try AppDatabase.enqueueRowDelete(
                 table: PersonalRecordRow.databaseTableName,

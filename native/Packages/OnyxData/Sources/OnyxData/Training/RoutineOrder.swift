@@ -10,8 +10,8 @@ import OnyxCore
 /// `workout_sets.exercise_order` on every ticked row, and `SessionAnalysis`
 /// already read it back — so a reorder survived into the session REPORT on both
 /// clients. It did not survive into the next session, because the next
-/// session's deck is built from `Program.onyx5`, a constant, which has never
-/// heard of it.
+/// session's deck was built from a compiled constant (a `routines` row since
+/// W2), which had never heard of it.
 ///
 /// The web solved this in `save.ts`: every commit upserts `routine_templates`,
 /// whose payload carries an `order` per exercise, and `templateDraft.ts` reads

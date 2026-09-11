@@ -113,7 +113,7 @@ enum EraWindowSource {
         firstDataISO: String? = nil
     ) -> EraWindowInput {
         let goals: UserGoalRow? = (try? database.read { db in try UserGoalRow.fetchOne(db) }) ?? nil
-        let userId = goals?.userId ?? ""
+        let userId = database.localUserId()
         return input(
             goals: goals,
             schedule: (try? database.scheduleContext(userId: userId)) ?? ScheduleContext(programId: "", phase: .cut),
