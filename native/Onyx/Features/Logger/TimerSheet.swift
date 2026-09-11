@@ -32,6 +32,39 @@ struct TimerSheet: View {
     /// that change what the session MEANS rather than what is in it.
     @State private var toggles = 0
 
+    /// ── THE STOPWATCH'S STATE IS THE LOGGER'S, NOT THIS SHEET'S ─────────────
+    /// It was `@State` here, and a sheet's `@State` dies with the sheet. The
+    /// whole point of this control is to run THROUGH a hold — and the reader
+    /// swipes the sheet away to look at the deck while the hold is happening,
+    /// which zeroed a running stopwatch and threw the laps away. It is the same
+    /// argument `WorkoutTabView`'s header makes about `LoggerModel` and the
+    /// Live Activity: the thing that must outlive the cover cannot live in it.
+    ///
+    /// So the logger owns all three and lends them. Defaulted to `.constant`
+    /// for the previews and the screenshot harness, which present the sheet
+    /// with nothing behind it.
+    @Binding var watchStart: Date?
+    /// What every PREVIOUS run added up to. Start/stop/start has to read
+    /// continuously, and the anchor date alone cannot remember.
+    @Binding var accumulated: TimeInterval
+    /// Newest first, and each one is a SPLIT — the hold it timed, not the
+    /// running total. See the `Lap` button.
+    @Binding var laps: [TimeInterval]
+
+    init(
+        clock: any PauseControlling,
+        accent: Color,
+        watchStart: Binding<Date?> = .constant(nil),
+        accumulated: Binding<TimeInterval> = .constant(0),
+        laps: Binding<[TimeInterval]> = .constant([])
+    ) {
+        self.clock = clock
+        self.accent = accent
+        _watchStart = watchStart
+        _accumulated = accumulated
+        _laps = laps
+    }
+
     /// Reads and writes the clock directly rather than through a draft.
     ///
     /// A `@State` copy would need re-seeding whenever the elapsed stepper moved
@@ -47,6 +80,16 @@ struct TimerSheet: View {
                 VStack(spacing: OnyxSpace.l) {
                     reading
                     pauseButton
+                    // ── THE SET STOPWATCH SITS ABOVE THE CORRECTIONS ────────
+                    // Two clocks, one sheet, and the order is how often each is
+                    // wanted: the session's own reading and its pause are what
+                    // this sheet was built for, the stopwatch is what you open
+                    // it for DURING a plank, and the two corrections are read
+                    // once a month. A second sheet with its own entry point
+                    // would have cost the hero band a control it has no width
+                    // for (`SetColumn`'s budget is the same argument one screen
+                    // over) and given the reader two places to look for "time".
+                    stopwatch
                     editors
                     footnote
                 }
@@ -54,7 +97,7 @@ struct TimerSheet: View {
             }
             .onyxScreen(.train)
             .foregroundStyle(Color.onyx.textPrimary)
-            .navigationTitle("Session timer")
+            .navigationTitle("Timers")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
@@ -63,7 +106,7 @@ struct TimerSheet: View {
                 }
             }
         }
-        .presentationDetents([.height(460), .large])
+        .presentationDetents([.height(560), .large])
         .presentationDragIndicator(.visible)
         .presentationContentInteraction(.scrolls)
         .sensoryFeedback(.selection, trigger: toggles)
@@ -119,6 +162,159 @@ struct TimerSheet: View {
             .background(Capsule().fill(accent))
             .contentShape(Capsule())
         }
+        .onyxPress()
+    }
+
+    // MARK: - The set stopwatch
+
+    /// A free stopwatch for timing a hold, and nothing else.
+    ///
+    /// ── WHY IT WRITES NOTHING ───────────────────────────────────────────────
+    /// The founder's call (2026-09-11): stop it, read it, type the number into
+    /// the set. The alternative — Stop commits the elapsed seconds to a chosen
+    /// row and ticks it — is one gesture fewer and a great deal more machinery:
+    /// it needs a target row, a rule for which row when the sheet was opened
+    /// from the band rather than from a set, and an answer for a stop that
+    /// lands after the deck has been rebuilt by a watch sync. A stopwatch that
+    /// only tells the time cannot be wrong about which set it belonged to.
+    ///
+    /// ── AND WHY THERE IS NO `Timer` BEHIND IT ───────────────────────────────
+    /// The reading is `Text(_:style: .timer)` over an ANCHOR DATE, which the
+    /// system draws from the same clock the status bar and the watch are drawn
+    /// from. So it cannot drift, it survives the screen locking, backgrounding
+    /// and a scroll that would starve a `Timer`, and coming back to the app
+    /// mid-hold shows the true elapsed rather than the elapsed minus however
+    /// long iOS declined to run us. A repeating timer would have been a
+    /// counter that is CLOSE to the clock, which is exactly what the brief
+    /// ("sync perfectly with the iPhone / Apple Watch clocks") rules out.
+    ///
+    /// `accumulated` is what previous runs added up to, so the anchor is
+    /// `started − accumulated` and start/stop/start reads continuously.
+    private var stopwatch: some View {
+        VStack(spacing: OnyxSpace.s) {
+            HStack {
+                Text("Set stopwatch").onyxMicro()
+                Spacer(minLength: OnyxSpace.s)
+                if !laps.isEmpty {
+                    Text("\(laps.count) lap\(laps.count == 1 ? "" : "s")")
+                        .onyxType(.caption)
+                        .foregroundStyle(Color.onyx.textTertiary)
+                }
+            }
+
+            Group {
+                if let watchStart {
+                    Text(watchStart.addingTimeInterval(-accumulated), style: .timer)
+                } else {
+                    Text(Clock.format(accumulated))
+                }
+            }
+            .onyxClock()
+            .foregroundStyle(watchStart == nil ? Color.onyx.textPrimary : accent)
+            .lineLimit(1)
+            // NOT `fixedSize`, unlike the session reading above it. That one is
+            // laid out once per state change; this one's glyphs are advanced by
+            // the system WITHOUT a SwiftUI layout pass, so a face sized at
+            // `0:00` has four characters of width and clips itself at `10:00`
+            // and again at `1:00:00`. The full tile width below is what it gets
+            // instead, which it is centred in either way.
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Stopwatch")
+            // The `Text` overload, for the same reason: a `String` here is
+            // evaluated once, at the render that started the run, so VoiceOver
+            // read "0:00" for the whole hold — on the one control whose value
+            // IS the reading. A `Text(_:style:)` is re-read on focus.
+            .accessibilityValue(
+                watchStart.map { Text($0.addingTimeInterval(-accumulated), style: .timer) }
+                    ?? Text(Clock.format(accumulated))
+            )
+
+            HStack(spacing: OnyxSpace.s) {
+                watchButton(watchStart == nil ? "Start" : "Stop",
+                            systemImage: watchStart == nil ? "play.fill" : "stop.fill",
+                            filled: true) {
+                    if let started = watchStart {
+                        accumulated += Date().timeIntervalSince(started)
+                        watchStart = nil
+                    } else {
+                        watchStart = Date()
+                    }
+                    toggles += 1
+                }
+                // Lap while running, Reset while stopped. One slot, and never
+                // both: a stopped stopwatch has no lap to take, and a running
+                // one that could be zeroed by a mis-tap is a hold you have to
+                // do again.
+                if watchStart == nil {
+                    watchButton("Reset", systemImage: "arrow.counterclockwise", filled: false) {
+                        accumulated = 0
+                        laps = []
+                        toggles += 1
+                    }
+                    .disabled(accumulated == 0 && laps.isEmpty)
+                } else {
+                    watchButton("Lap", systemImage: "flag.fill", filled: false) {
+                        // The SPLIT, not the running total. A lap list that
+                        // prints cumulative time under the label "Lap 2" is a
+                        // number the reader then types into a set — and two
+                        // 60-second holds would be logged as 60 and 120.
+                        laps.insert(watchElapsed - laps.reduce(0, +), at: 0)
+                        toggles += 1
+                    }
+                }
+            }
+
+            if !laps.isEmpty {
+                // Newest first, and capped: the sheet is 460 pt and a list that
+                // grows without bound pushes the corrections off the bottom of
+                // a screen the reader did not ask to scroll.
+                VStack(spacing: 0) {
+                    ForEach(Array(laps.prefix(4).enumerated()), id: \.offset) { i, lap in
+                        HStack {
+                            Text("Lap \(laps.count - i)")
+                                .onyxType(.caption)
+                                .foregroundStyle(Color.onyx.textSecondary)
+                            Spacer(minLength: OnyxSpace.s)
+                            Text(Clock.format(lap))
+                                .onyxType(.body).fontWeight(.semibold).onyxNumeral()
+                        }
+                        .frame(minHeight: 32)
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+        }
+        .padding(OnyxSpace.m)
+        .frame(maxWidth: .infinity)
+        .onyxGlass(.tile)
+    }
+
+    /// Seconds on the face right now — for VoiceOver and for a lap, both of
+    /// which need the NUMBER rather than the system's own rendering of it.
+    private var watchElapsed: TimeInterval {
+        accumulated + (watchStart.map { Date().timeIntervalSince($0) } ?? 0)
+    }
+
+    private func watchButton(
+        _ title: String, systemImage: String, filled: Bool, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .onyxType(.body).fontWeight(.semibold)
+                .foregroundStyle(filled ? Color.onyx.base : Color.onyx.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .background {
+                    if filled {
+                        Capsule().fill(accent)
+                    } else {
+                        Capsule().strokeBorder(Color.onyx.hairline, lineWidth: 1)
+                    }
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
         .onyxPress()
     }
 

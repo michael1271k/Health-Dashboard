@@ -779,7 +779,24 @@ struct ExerciseCardView: View {
                     if !isWeightless {
                         head("KG").frame(minWidth: SetColumn.weightGroup, maxWidth: .infinity)
                     }
-                    head(isTimed ? "TIME" : "REPS").frame(minWidth: SetColumn.reps)
+                    // ── THE SURVIVING COLUMN TAKES THE VACATED WIDTH ────────
+                    // Dropping the kg track left its width unclaimed: the rep
+                    // group kept its own floor and stayed pinned beside the
+                    // badge, the effort word stayed pinned to the trailing
+                    // edge, and ~90 pt of nothing sat between them. On Side
+                    // Plank and Hanging Knee Raise — the two movements this
+                    // case exists for — the row read as a mistake.
+                    //
+                    // `maxWidth: .infinity` makes the reps group flexible
+                    // exactly as the kg group is when it is present, so the
+                    // leftover is shared between the two tracks that remain
+                    // rather than pooled in the gap. The floor stays, so the
+                    // group can never be squeezed below its two stepper ends
+                    // and its field. Header and row take the SAME change, in
+                    // the same commit: they are a table only as long as they
+                    // squeeze identically (see the note above).
+                    head(isTimed ? "TIME" : "REPS")
+                        .frame(minWidth: SetColumn.reps, maxWidth: isWeightless ? .infinity : nil)
                     head("EFFORT")
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
@@ -1126,7 +1143,18 @@ private struct SetRowView: View {
                     distanceField(targets)
                 } else {
                     if !isWeightless { weightField(targets) }
+                    // Flexible only where the kg track is gone — see the
+                    // matching branch in `columnHeaders`. With a load present
+                    // the reps group must stay at its floor, or it would take
+                    // width from the one column that carries plates.
                     repsField(targets)
+                        // BOTH floors named, as the header's own note demands:
+                        // the group's minimum happens to equal `SetColumn.reps`
+                        // today only because two 32 pt stepper ends plus a
+                        // 32 pt field sum to it, and that is a coincidence the
+                        // next edit to the stepper breaks.
+                        .frame(minWidth: SetColumn.reps,
+                               maxWidth: isWeightless ? .infinity : nil)
                     effort(targets)
                 }
             }
@@ -1289,7 +1317,18 @@ private struct SetRowView: View {
         // a visual distinction and VoiceOver cannot see them.
         if rows.count > 1 {
             parts.append("both sides")
-            if layout != .unified { parts.append("left and right differ") }
+            // ── TESTED ON THE VALUES, NOT ON THE LAYOUT ─────────────────────
+            // This read `layout != .unified`, which was the same question until
+            // a pair stopped ever resolving `.unified` (2026-09-11, so that a
+            // split set is visibly split and each side can be rated). It would
+            // now announce "left and right differ" on every pair, including the
+            // ordinary one where both arms did exactly the same work — a
+            // sighted reader sees one value line and hears the opposite.
+            if layout == .valueSplit {
+                parts.append("left and right differ")
+            } else if Set(rows.map(\.rpe)).count > 1 {
+                parts.append("rated differently")
+            }
         }
         if row.kind != .normal { parts.append(row.kind.label) }
         if let tags = SetQuality.summary(row.qualities) { parts.append(tags) }

@@ -43,6 +43,14 @@ enum HistoryPreviews {
         case "session-atlas":
             NavigationStack { SessionDetailView(sessionId: lastSession, startAtAtlas: true) }
                 .environment(environment())
+        // The trophy's sheet, opened from the summary page. Same sheet the live
+        // deck shows (`set-row-records`) and deliberately so — but reached
+        // through `SessionAnalysis.report`, which is the half this shot exists
+        // to review: the beaten baselines are recomputed from the ledger here,
+        // not read back out of `personal_records`, which no longer holds them.
+        case "session-records":
+            NavigationStack { SessionDetailView(sessionId: lastSession, startAtRecord: true) }
+                .environment(environment())
         // §U4.5's edit mode, re-opened on the logger's own deck. It is the ONLY
         // way to see the edit hero — a shot script can launch a screen and
         // cannot press a toolbar button.
@@ -71,8 +79,20 @@ enum HistoryPreviews {
             // visual diff becomes a diff of the calendar. `2026-09-03` is the
             // Thursday of the seeded week: three sessions behind it, Upper B
             // ahead, and a cardio bout on the Tuesday.
+            // ── AND WHY THE DAY IS `cb_a` AND NOT `cb_b` ────────────────────
+            // Every session this fixture seeds carries `day_key = "cb_a"` (see
+            // the `chestBack` loop below). The plan card now prints the top set
+            // from the last session of the SAME split, so a card seeded as
+            // `cb_b` had no history to draw on and photographed a column of
+            // exercise names with nothing beside them — the empty state, in the
+            // one shot the feature is reviewed from.
+            //
+            // Seeding the split the fixture actually holds is the smaller fix
+            // than teaching the fixture a second one, and the shot loses
+            // nothing: the week strip, the doors and the footer are the same
+            // either way.
             NavigationStack {
-                WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_b"), seededToday: "2026-09-03")
+                WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_a"), seededToday: "2026-09-03")
             }
             .environment(environment())
         case "train-empty":

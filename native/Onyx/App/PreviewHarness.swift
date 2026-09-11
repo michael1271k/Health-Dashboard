@@ -181,7 +181,7 @@ enum PreviewHarness {
             PulsePreviews.view(screen)
         case "fuel", "fuel-over", "fuel-empty", "nutrients", "macro-edit":
             NutritionPreviews.view(screen)
-        case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options",
+        case "logger", "logger-stats", "logger-paused", "logger-finish", "logger-options", "logger-timer",
              "set-row", "set-row-split", "set-row-cardio", "set-row-records", "set-options", "effort-picker":
             LoggerPreviews.view(screen)
         // ── THE CARDIO SHEET, IN BOTH OF ITS STATES ────────────────────────
@@ -210,7 +210,7 @@ enum PreviewHarness {
              "today-weighin", "today-board":
             TodayPreviews.view(screen)
         case "history", "history-week", "session", "session-ledger", "exercise-history",
-             "session-atlas", "session-edit":
+             "session-atlas", "session-edit", "session-records":
             HistoryPreviews.view(screen)
         case "trends", "trends-empty", "trends-maintenance":
             TrendsPreviews.view(screen)

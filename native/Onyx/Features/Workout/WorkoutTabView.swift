@@ -70,6 +70,17 @@ struct WorkoutTabView: View {
     /// stop existing. The tab outlives both, so it is the only place that can
     /// put the summary on screen and leave it there.
     @State private var summary: String?
+    /// The previous session being reviewed in a sheet, from the plan card's
+    /// door. A different verb from `summary`, which PUSHES the session you just
+    /// finished onto the stack: this one is a look backwards that the plan you
+    /// are about to perform has to survive, so it comes back to exactly where
+    /// it was opened from.
+    @State private var reviewing: Review?
+
+    /// A session id the sheet can be presented BY. `String` is not
+    /// `Identifiable` and making it so retroactively would reach every string
+    /// in the app; this reaches one property.
+    struct Review: Identifiable { let id: String }
     /// Bumped when a dismissal turns out to have finished the session. The
     /// haptic lived on the finish button, which was torn down in the same
     /// transaction that fired it, so it very likely never played.
@@ -108,6 +119,23 @@ struct WorkoutTabView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
         .navigationDestination(item: $summary) { id in
             SessionDetailView(sessionId: id)
+        }
+        // The whole page, in its own stack so its toolbar and its own
+        // navigation still work inside the sheet.
+        .sheet(item: $reviewing) { review in
+            NavigationStack {
+                SessionDetailView(sessionId: review.id)
+                    // The drag indicator is the only other way out, and it
+                    // needs the page scrolled back to the top to be reachable —
+                    // on a session page that is most of a screen of scrolling.
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { reviewing = nil }
+                        }
+                    }
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         // ── WHY `item:` AND NOT `isPresented:` ──────────────────────────────
         // The boolean form evaluated `if let session` inside its own content
@@ -338,6 +366,24 @@ struct WorkoutTabView: View {
                     .accessibilityHidden(true)
             }
 
+            // ── WHAT EACH ROW SAYS NOW ──────────────────────────────────────
+            // It said `3 × 10-15`: a set count and the programmed rep window.
+            // The window is the one thing on this screen the reader already
+            // knows — it has not moved in eight weeks — and it is asserted by
+            // the plan rather than earned, so it made the card a restatement of
+            // the routine rather than a briefing.
+            //
+            // It now says what was actually done the last time this split was
+            // trained: the top set, its effort, one line. That is the number
+            // you have to beat, and it is the only number a set of double
+            // progression is decided against. `WorkoutWeek.Previous` says why
+            // the source is the same `day_key` and not "the last time you
+            // trained this lift".
+            //
+            // A movement the last session did not hold prints NOTHING rather
+            // than falling back — see `Previous`. A blank row is honest; a
+            // number from a different day is not, and this card is read at a
+            // glance where there is no room to caption the exception.
             VStack(spacing: 2) {
                 ForEach(exercises) { exercise in
                     HStack(spacing: OnyxSpace.s) {
@@ -345,13 +391,21 @@ struct WorkoutTabView: View {
                             .onyxType(.secondary)
                             .lineLimit(1)
                         Spacer(minLength: OnyxSpace.s)
-                        Text("\(exercise.sets(for: phase)) × \(exercise.reps)")
-                            .onyxType(.secondary).onyxNumeral()
-                            .foregroundStyle(Color.onyx.textSecondary)
+                        if let top = week?.snapshot.previous?.top(for: exercise.name) {
+                            Text(Self.lastLine(top))
+                                .onyxType(.secondary).onyxNumeral()
+                                .foregroundStyle(Color.onyx.textSecondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
                     }
                     .frame(minHeight: 36)
                     .accessibilityElement(children: .combine)
                 }
+            }
+
+            if let previous = week?.snapshot.previous {
+                previousDoor(previous)
             }
         }
         .padding(OnyxSpace.m)
@@ -359,6 +413,65 @@ struct WorkoutTabView: View {
         .onyxGlass(.tile)
         .foregroundStyle(Color.onyx.textPrimary)
         .contextMenu { dayMenu }
+    }
+
+    /// `Last: 72.5 kg × 15 @ 8.5` — or `Last: 66s @ 9` for a hold, and
+    /// `Last: 18 reps @ 8.5` where nothing was loaded.
+    ///
+    /// One line, one set. `SetFormat.format` is the app's own spelling of a set
+    /// and is reused rather than re-written here: a card that formats its own
+    /// numbers is how `0 kg × 18` gets printed on a knee raise.
+    static func lastLine(_ top: WorkoutWeek.TopSet) -> String {
+        var line = "Last: " + SetFormat.format(weightKg: top.weightKg, reps: top.reps, timed: top.timed)
+        if let rpe = top.rpe { line += " @ \(jsToFixed1(rpe))" }
+        return line
+    }
+
+    /// The door to the whole of last time.
+    ///
+    /// ── WHY A DOOR AND NOT MORE ROWS ────────────────────────────────────────
+    /// Every set of the previous session is between fourteen and twenty-two
+    /// numbers, and this card is read standing in a gym doorway. The top set is
+    /// the briefing; the session page is the document — and it already exists,
+    /// already has the ledger, the muscle figure, the records and the deltas.
+    /// Pushing the reader there costs one tap and duplicates nothing.
+    ///
+    /// A SHEET rather than a push: the plan you are about to perform stays on
+    /// screen underneath, and the gesture back out is the one the reader's
+    /// thumb is already on. `.large` because the session page is a page.
+    private func previousDoor(_ previous: WorkoutWeek.Previous) -> some View {
+        Button {
+            reviewing = Review(id: previous.id)
+        } label: {
+            HStack(spacing: OnyxSpace.xs) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .onyxType(.caption)
+                Text(Self.previousLabel(previous.date))
+                    .onyxType(.caption)
+                Image(systemName: "chevron.right")
+                    .onyxType(.micro)
+                    .foregroundStyle(Color.onyx.textTertiary)
+            }
+            .foregroundStyle(accent)
+            .padding(.horizontal, OnyxSpace.s)
+            .padding(.vertical, OnyxSpace.xs)
+            .frame(minHeight: 32)
+            .background(accent.opacity(0.12), in: .capsule)
+            // AFTER the capsule, so the whole pill is the target and not just
+            // the glyphs inside it.
+            .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .onyxPress()
+        .accessibilityLabel("Open the previous session")
+        .accessibilityHint("Shows the full summary of \(Self.previousLabel(previous.date))")
+    }
+
+    /// "Open last · Thu 4 Sep". The DATE is the point — "last session" alone
+    /// leaves the reader unable to tell a four-day gap from a fortnight.
+    static func previousLabel(_ iso: String) -> String {
+        guard let date = LogicalDay.date(fromISO: iso) else { return "Open last session" }
+        return "Open last · " + date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
     /// Long-press the card: the three things you can do to a DAY, as against

@@ -284,13 +284,16 @@ final class DayModel {
         let sessions = ((try? database.sessionHistory()) ?? [])
             .filter { $0.date == to && $0.endedAt != nil }
             .map { session -> WorkoutSummary in
-                let rows = ((try? database.historySets(sessionId: session.id)) ?? [])
-                    .filter { SetTags.isWorkingSet($0.setType) }
+                let rows = (try? database.historySets(sessionId: session.id)) ?? []
+                // WORKING sets for the COUNT, every non-ghost row for the
+                // TONNAGE — `SessionTonnage.kg` states why, and it is the same
+                // split `SessionAnalysis.summaries` and `closeSession` make.
+                let working = rows.filter { SetTags.isWorkingSet($0.setType) }
                 return WorkoutSummary(
                     id: session.id,
                     dayKey: session.dayKey,
                     label: SessionAnalysis.dayLabel(session.dayKey, in: program),
-                    sets: SessionDetail.toRows(rows.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
+                    sets: SessionDetail.toRows(working.map(SessionAnalysis.detailSet)).filter { $0.num != nil }.count,
                     tonnageKg: SessionVolume.sessionVolumeKg(rows.map(SessionAnalysis.volumeSet)),
                     durationMin: session.durationMin
                 )

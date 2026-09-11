@@ -61,11 +61,31 @@ const { data: sessions, error: sErr } = await db
   .order('started_at', { ascending: true })
 if (sErr) throw sErr
 
-const { data: sets, error: setErr } = await db
-  .from('workout_sets')
-  .select('id, session_id, user_id, exercise_id, set_number, exercise_order, weight_kg, reps, set_type, side, pair_id, is_pr, exercises(name)')
-  .order('session_id')
-if (setErr) throw setErr
+// PAGED. `workout_sets` passed the 1,000-row PostgREST cap on 2026-09-11 and
+// the preflight below started refusing to run — correctly, because a truncated
+// read PRUNES the ledger of every session it could not see. Ordered by `id` so
+// the pages cannot overlap or skip: `session_id` is not unique and a range
+// boundary inside one session would drop rows silently.
+// KEYSET, not offset, and it stops on an EMPTY page rather than a short one.
+// `data.length < PAGE` would have re-introduced the silent truncation the
+// preflight below exists to catch: it assumes the server's `db-max-rows` is at
+// least `PAGE`, and if it is ever lower, the first page comes back short, the
+// loop stops, and the prune deletes the ledger of every session it never read.
+// Keying on the primary key removes the offset-shift hazard too.
+const PAGE = 1000
+const sets = []
+for (let after = ''; ; ) {
+  const { data, error: setErr } = await db
+    .from('workout_sets')
+    .select('id, session_id, user_id, exercise_id, set_number, exercise_order, weight_kg, reps, set_type, side, pair_id, is_pr, exercises(name)')
+    .order('id')
+    .gt('id', after)
+    .limit(PAGE)
+  if (setErr) throw setErr
+  if (!data?.length) break
+  sets.push(...data)
+  after = data[data.length - 1].id
+}
 
 const bySession = new Map()
 for (const r of sets) {
@@ -83,11 +103,11 @@ console.log(`${sessions.length} sessions · ${sets.length} sets${DRY ? ' · DRY 
 // failure would therefore present as data loss.
 const PGRST_CAP = 1000
 if (!sessions.length || !sets.length) { console.error('Empty read — refusing to run.'); process.exit(1) }
-for (const [label, n] of [['sessions', sessions.length], ['sets', sets.length]]) {
-  if (n % PGRST_CAP === 0) {
-    console.error(`${label} came back at exactly ${n} — that is the PostgREST page cap, so the read is truncated. Refusing to run.`)
-    process.exit(1)
-  }
+// `sets` is paged above and is therefore complete by construction; `sessions`
+// is still one read, so it keeps the cap test.
+if (sessions.length % PGRST_CAP === 0) {
+  console.error(`sessions came back at exactly ${sessions.length} — that is the PostgREST page cap, so the read is truncated. Refusing to run.`)
+  process.exit(1)
 }
 
 // ── replay chronologically ───────────────────────────────────────────────────

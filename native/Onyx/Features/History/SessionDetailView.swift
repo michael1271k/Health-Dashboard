@@ -40,6 +40,10 @@ struct SessionDetailView: View {
     /// Screenshot harness only: open straight into the edit deck (§U4.5), for
     /// the same reason — the button that opens it is in a toolbar.
     var startAtEditor = false
+    /// Screenshot harness only: open with the trophy's record sheet already up.
+    /// The gesture that opens it is a long press, which a shot script cannot
+    /// perform.
+    var startAtRecord = false
 
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -52,6 +56,23 @@ struct SessionDetailView: View {
     @State private var showAtlas = false
     /// The session being edited, presented as a full-screen logger deck.
     @State private var editing: LoggerModel?
+    /// The trophy the reader long-pressed, if any.
+    ///
+    /// Held by the PAGE and not by the row, for the reason
+    /// [[set-row-u2]] records: a sheet presented by a row is destroyed with its
+    /// presenter the moment the list rebuilds under it — and this list rebuilds
+    /// on every rescore generation. The target carries everything the sheet
+    /// needs, so nothing is re-read at presentation time either.
+    @State private var prSheet: PrTarget?
+
+    /// One long-pressed trophy, frozen at the moment of the press.
+    struct PrTarget: Identifiable {
+        let exercise: String
+        let timed: Bool
+        let setLabel: String
+        let records: [LivePrRecord]
+        var id: String { (records.first?.id ?? exercise) + setLabel }
+    }
 
     private var report: SessionAnalysis.Report? { page?.report }
     private var split: Color { Color.onyx.day(report?.session.dayKey) }
@@ -138,6 +159,18 @@ struct SessionDetailView: View {
                 )
             }
         }
+        // The deck's own record sheet, on the deck's own gesture. `PrRecordSheet`
+        // is not re-implemented for this page and must not be: a record read
+        // mid-workout and the same record read afterwards are one fact, and two
+        // sheets is how they start rounding differently.
+        .sheet(item: $prSheet) { target in
+            PrRecordSheet(
+                exerciseName: target.exercise,
+                setLabel: target.setLabel,
+                records: target.records,
+                timed: target.timed
+            )
+        }
         // ── WHY THIS IS `id:`-KEYED AND NOT A ONE-SHOT `.task` ──────────────
         // §U4.5 makes this page's own Edit button rewrite the session it is
         // drawing, and §E1's cascade then rewrites every daily score behind it.
@@ -164,6 +197,12 @@ struct SessionDetailView: View {
             if first, page != nil {
                 if startAtAtlas { showAtlas = true }
                 else if startAtEditor { openEditor() }
+                // The trophy's own sheet, from the first record this session
+                // actually holds. Seeded from the REAL report rather than a
+                // fixture, for the reason `set-row-records` gives one screen
+                // over: a shot of a hand-built sheet reviews the sheet and not
+                // the path that fills it, and the path is the new half.
+                else if startAtRecord { openFirstRecord() }
             }
             #endif
             // `defaultScrollAnchor` is decided at first layout, when the list
@@ -172,6 +211,25 @@ struct SessionDetailView: View {
             if startAtLedger, let first = page?.report.exercises.first {
                 try? await Task.sleep(for: .milliseconds(400))
                 scroller.scrollTo(first.id, anchor: .top)
+            }
+        }
+    }
+
+    /// Harness only: present the sheet for the first record the page holds.
+    private func openFirstRecord() {
+        guard let page else { return }
+        for exercise in page.report.exercises {
+            for row in exercise.rows {
+                let won = [row.set, row.left, row.right]
+                    .compactMap { $0 }
+                    .flatMap { exercise.records[Int($0.setNumber)] ?? [] }
+                guard !won.isEmpty else { continue }
+                prSheet = PrTarget(
+                    exercise: exercise.canonical, timed: exercise.timed,
+                    setLabel: row.num.map { "Set \($0)" } ?? "Warm-up set",
+                    records: won
+                )
+                return
             }
         }
     }
@@ -406,23 +464,70 @@ struct SessionDetailView: View {
         return parts.joined(separator: " · ")
     }
 
-    /// Plan · phase week · lever, each resolved for the session's OWN date.
+    /// Plan · phase week · lever, each resolved for the session's OWN date —
+    /// and then what the session actually TRAINED.
+    ///
+    /// ── THE MUSCLE CAPSULES ARE DERIVED, NEVER DECLARED ─────────────────────
+    /// The band named the plan, the phase and the lever: three facts about the
+    /// calendar, and none about the workout. So a Legs & Core B session that
+    /// held a Side Plank and a Hanging Knee Raise carried no Abs/core tag —
+    /// not because the credit was missing (`report.muscles` had it, and the
+    /// Muscle focus card 300 pt below drew it), but because nothing up here
+    /// ever asked.
+    ///
+    /// The list is `report.muscles`, which is `MuscleCredit.weightedSets` over
+    /// the rows that were actually logged, already dropped to `sets > 0` and
+    /// already sorted by share. So the tags follow the SETS: swap an exercise,
+    /// cut a movement, add a plank — the band changes with it, and there is no
+    /// second table anywhere mapping a `day_key` to a list of muscle names that
+    /// could fall out of step with what was performed.
+    ///
+    /// ── AND WHY NOTHING IS TRUNCATED ────────────────────────────────────────
+    /// A "top four" here is how the Abs/core tag went missing in the first
+    /// place: core work is genuine and is almost always the SMALLEST share of a
+    /// session, so any cap drops exactly the tag this fixes. `FlowRow` wraps,
+    /// the capsules are `micro`, and a six-muscle leg day is two lines.
     private func tags(_ page: SessionAnalysis.Page) -> some View {
-        // Wrapping, not an `HStack`: at AX5 three capsules on one line become
-        // three vertical blobs one letter wide.
-        FlowRow(spacing: OnyxSpace.xs) {
-            tag(page.planLabel, .train)
-            if let week = page.week {
-                // `.short` is already "Cut W7" — the number is in it.
-                tag(week.short, .fuel)
+        let muscles = page.report.muscles
+        return VStack(alignment: .leading, spacing: OnyxSpace.xs) {
+            // Wrapping, not an `HStack`: at AX5 three capsules on one line become
+            // three vertical blobs one letter wide.
+            FlowRow(spacing: OnyxSpace.xs) {
+                tag(page.planLabel, .train)
+                if let week = page.week {
+                    // `.short` is already "Cut W7" — the number is in it.
+                    tag(week.short, .fuel)
+                }
+                if page.maintenance {
+                    tag("Maintenance", .recover)
+                } else if let lever = page.lever {
+                    tag(lever.label, .fuel)
+                }
             }
-            if page.maintenance {
-                tag("Maintenance", .recover)
-            } else if let lever = page.lever {
-                tag(lever.label, .fuel)
+            if !muscles.isEmpty {
+                FlowRow(spacing: OnyxSpace.xs) {
+                    ForEach(Array(muscles.enumerated()), id: \.element.muscle) { i, row in
+                        // The same hue the ramp and the legend give this muscle
+                        // at this rank, so the band, the bar and the figure all
+                        // call one muscle by one colour.
+                        muscleTag(row.muscle, Color.onyx.muscle(row.muscle, step: i, of: muscles.count))
+                    }
+                }
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// A muscle capsule. Named rather than numbered: the share is the Muscle
+    /// focus card's job, and a capsule carrying "Quads 6.5" would put the
+    /// session's longest number in its smallest type.
+    private func muscleTag(_ muscle: LandmarkMuscle, _ tint: Color) -> some View {
+        Text(muscle.displayName)
+            .onyxType(.micro)
+            .foregroundStyle(tint)
+            .padding(.horizontal, OnyxSpace.s)
+            .padding(.vertical, 3)
+            .background(tint.opacity(0.16), in: .capsule)
     }
 
     private func tag(_ text: String, _ domain: OnyxDomain) -> some View {
@@ -768,7 +873,20 @@ struct SessionDetailView: View {
                         // cuts the ordinals off from their own sets.
                         .padding(.leading, OnyxSpace.l)
                 }
-                SetRow(row: row, timed: ex.timed, tint: family)
+                SetRow(
+                    row: row, timed: ex.timed, tint: family,
+                    // The records this row's set(s) won. A pair is two sets
+                    // under one row and either side can be the one that
+                    // completed it, so both are asked and the answers join.
+                    records: [row.set, row.left, row.right]
+                        .compactMap { $0 }
+                        .flatMap { ex.records[Int($0.setNumber)] ?? [] },
+                    onInspect: { records in
+                        prSheet = PrTarget(exercise: ex.canonical, timed: ex.timed,
+                                           setLabel: row.num.map { "Set \($0)" } ?? "Warm-up set",
+                                           records: records)
+                    }
+                )
             }
         }
         .onyxGlass(.tile)
@@ -1163,10 +1281,19 @@ struct SetRow: View {
     /// The movement's muscle hue — what a record row is washed in. Defaulted so
     /// the row keeps working anywhere it is dropped without a family to take.
     var tint: Color = Color.onyx.record
+    /// The records this row's set(s) won, with the values they beat. Empty on
+    /// an ordinary row, and empty on a record row whose axes had no numeric
+    /// bar — the badge still turns gold, and the long press then has nothing
+    /// to open, which is why `onInspect` is only armed when this is not.
+    var records: [LivePrRecord] = []
+    /// Long press on a record row. Nil wherever the row is drawn without a
+    /// presenter — the previews, the screenshot harness.
+    var onInspect: (([LivePrRecord]) -> Void)?
 
     @Environment(\.dynamicTypeSize) private var typeSize
-    /// The record / failure glyph's side — see `markSymbol`.
-    @ScaledMetric(relativeTo: .footnote) private var markSide: CGFloat = 14
+    /// Bumped by the long press, so the haptic goes through the app's own
+    /// trigger rather than a bare `UIImpactFeedbackGenerator`.
+    @State private var inspects = 0
 
     /// ── WHY THE ROW HAS TWO SHAPES ──────────────────────────────────────────
     /// Three things compete for one line: the badge, `42kg × 10` and an effort
@@ -1229,8 +1356,45 @@ struct SetRow: View {
         // rather than against nothing, and the old value stepped far enough to
         // reintroduce the banding the wash exists to remove.
         .background(isRecord ? tint.opacity(0.10) : Color.clear)
+        // ── THE WHOLE ROW, NOT THE 22 pt DISC ───────────────────────────────
+        // The trophy is the affordance and the disc is 22 pt — under the 44 pt
+        // floor, and a long press that has to be landed accurately is a gesture
+        // people stop trying. The row is 33 pt tall and full width, nothing
+        // else on this page is interactive, and a press on an ordinary row
+        // does nothing at all rather than opening an empty sheet.
+        //
+        // `.contentShape` first: the row's content is a badge and two `Text`s,
+        // so without it the gesture only exists where ink was drawn.
+        .contentShape(Rectangle())
+        // NOT guarded on `records` being non-empty. The badge turns gold on
+        // `isRecord` alone, and a record whose axes had no numeric bar carries
+        // no `AxisRecord` — so that guard made a gold row advertise a gesture
+        // that did nothing at all. `PrRecordSheet` already ships the sentence
+        // for the empty case ("This set no longer holds a record."), which is
+        // an answer; silence is not.
+        .onLongPressGesture(minimumDuration: 0.4) {
+            guard isRecord, let onInspect else { return }
+            inspects += 1
+            onInspect(records)
+        }
+        // The app's own haptic, not `UIImpactFeedbackGenerator` directly: every
+        // other surface here goes through the trigger, and a generator with no
+        // `prepare()` spends the first press spinning up the taptic engine.
+        .sensoryFeedback(.impact(flexibility: .rigid), trigger: inspects)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spoken)
+        // VoiceOver cannot long-press, and the rotor is where it looks for what
+        // a row can do. Named for the RESULT, which is what a custom action's
+        // label is read as ("What it beat" → "activate What it beat").
+        //
+        // The builder form, because it can be CONDITIONAL: the `named:` overload
+        // is unconditional, so the rotor offered "What it beat" on all twenty
+        // rows of a session and did nothing on the eighteen holding no record.
+        .accessibilityActions {
+            if isRecord, let onInspect {
+                Button("What it beat") { onInspect(records) }
+            }
+        }
     }
 
     /// The set. The mark it earned now travels with the ORDINAL rather than
@@ -1260,13 +1424,21 @@ struct SetRow: View {
     /// where it has always been said, because a red glyph at the head of the
     /// row would compete with the gold for the same glance and there is only
     /// one fact here worth interrupting a scan for.
+    /// ── THE TROPHY IS NOW THE BADGE, BY REQUEST (2026-09-11) ────────────────
+    /// Everything above describes why the mark sat BESIDE the ordinal, and the
+    /// argument was real: every set on this page is logged, so replacing the
+    /// number costs the reader the one column that places a set in its card.
+    ///
+    /// The founder asked for the swap anyway, and the cost is bought back
+    /// rather than ignored: the ordinal is still spoken in full by `spoken`
+    /// ("Set 3, 72.5 kg × 15, Volume record"), the rows either side of a record
+    /// still number continuously so the position is readable by counting, and
+    /// the trophy is now a CONTROL — long-press it and the sheet names the set
+    /// as its subtitle. A gold disc at the head of the row is also the only
+    /// thing on this page worth interrupting a scroll for, which is the reading
+    /// the original layout was trying to buy with a second glyph.
     private var badgeGroup: some View {
-        HStack(spacing: OnyxSpace.xs) {
-            badge
-            if isRecord {
-                markSymbol("trophy.fill", Color.onyx.record)
-            }
-        }
+        badge
     }
 
     /// Never wrapped, and never scaled below legibility: it is the row.
@@ -1291,21 +1463,6 @@ struct SetRow: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Scaled, and then capped.
-    ///
-    /// A symbol frozen in points is invisible beside a 40 pt value at AX5, and
-    /// one that scales freely is 38 pt of decoration on a row whose numbers are
-    /// the point — and it pushed the value into its own scale factor. So it
-    /// grows with the text and stops at the height of the badge on the other
-    /// side of the row.
-    private func markSymbol(_ name: String, _ tint: Color) -> some View {
-        Image(systemName: name)
-            .resizable()
-            .scaledToFit()
-            .frame(width: min(markSide, 22), height: min(markSide, 22))
-            .foregroundStyle(tint)
-    }
-
     /// The set's number, in the disc the logger's own deck draws it in — `W`
     /// for a warm-up, the ordinal for everything else.
     ///
@@ -1319,12 +1476,23 @@ struct SetRow: View {
     /// beside the value, where the approved layout puts it.
     private var badge: some View {
         ZStack {
-            Circle().fill(Color.onyx.hairline.opacity(0.6))
-            Text(ordinal)
-                .onyxType(.caption).fontWeight(.bold).onyxNumeral()
-                .foregroundStyle(Color.onyx.textTertiary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
+            Circle().fill(isRecord ? Color.onyx.record.opacity(0.18) : Color.onyx.hairline.opacity(0.6))
+            if isRecord {
+                // Inside the 22 pt disc, so it cannot grow the badge column the
+                // way a `ScaledMetric` glyph beside it could. The disc is
+                // already type-capped below; the glyph inherits that.
+                Image(systemName: "trophy.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 11, height: 11)
+                    .foregroundStyle(Color.onyx.record)
+            } else {
+                Text(ordinal)
+                    .onyxType(.caption).fontWeight(.bold).onyxNumeral()
+                    .foregroundStyle(Color.onyx.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
         }
         // The disc is the row's left margin and its height floor; it must not
         // grow with the type size or it takes the width from the value beside
