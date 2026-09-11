@@ -21,7 +21,7 @@ struct UnilateralAndQualityTests {
     /// (`Single Arm Lateral Raise`) beside seven bilateral ones, so both halves
     /// of every rule below are on the same deck.
     private func armsDay() -> LoggerModel {
-        LoggerModel(day: Program.onyx5.day(key: "arms")!, phase: .bulk)
+        LoggerModel(day: PlanTemplates.day("onyx5", "arms"), phase: .bulk)
     }
 
     private func unilateral(_ model: LoggerModel) -> LoggerModel.ExerciseState? {

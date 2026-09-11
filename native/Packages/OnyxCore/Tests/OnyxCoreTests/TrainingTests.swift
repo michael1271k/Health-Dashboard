@@ -52,7 +52,7 @@ struct TrainingTests {
         // `traps` folds to Upper back, where the row's own PRIMARY already
         // pays 1.0 — the `max` is what stops one set of rowing being credited
         // 1.5 sets of upper back.
-        let day = Program.onyx5.day(key: "cb_b")!
+        let day = FounderTables.deck.day(key: "cb_b")!
         let pulldown = day.exercises[1]
         let row = day.exercises[3]
 
@@ -105,8 +105,8 @@ struct TrainingTests {
 
     @Test("cutting drops the two bulk-only lifts and nothing else")
     func cutDropsOnlyTheZeroes() {
-        let arms = Program.onyx5.day(key: "arms")!
-        let legsB = Program.onyx5.day(key: "legs_b")!
+        let arms = FounderTables.deck.day(key: "arms")!
+        let legsB = FounderTables.deck.day(key: "legs_b")!
 
         #expect(arms.exercises(for: .bulk).count == 8)
         #expect(arms.exercises(for: .cut).count == 7)
@@ -118,7 +118,7 @@ struct TrainingTests {
 
     @Test("every day loses volume on a cut, and no day loses its identity")
     func cutIsLighterEverywhere() {
-        for day in Program.onyx5.days {
+        for day in FounderTables.deck.days {
             #expect(day.plannedSets(for: .cut) < day.plannedSets(for: .bulk),
                     "\(day.label) should train less on a cut")
             #expect(day.exercises(for: .cut).isEmpty == false)
@@ -127,7 +127,7 @@ struct TrainingTests {
 
     @Test("the rep window splits on an EN DASH, and a duration is not a window")
     func repWindowParsing() {
-        let legsB = Program.onyx5.day(key: "legs_b")!
+        let legsB = FounderTables.deck.day(key: "legs_b")!
         let rdl = legsB.exercises[0]
         #expect(rdl.repWindow?.floor == 8)
         #expect(rdl.repWindow?.ceiling == 12)
@@ -140,7 +140,7 @@ struct TrainingTests {
 
     @Test("a nil seed load is not a zero seed load")
     func nilIsNotZero() {
-        let legsA = Program.onyx5.day(key: "legs_a")!
+        let legsA = FounderTables.deck.day(key: "legs_a")!
         // Nobody has recorded a hack squat, so there is no seed.
         #expect(legsA.exercises.first { $0.name == "Hack Squat" }?.wk1Kg == nil)
         // A hanging knee raise IS performed, at bodyweight — also nil here,
@@ -150,10 +150,10 @@ struct TrainingTests {
 
     @Test("the five days are the five weekdays the program trains")
     func theWeekIsIntact() {
-        #expect(Program.onyx5.days.map(\.weekday) == [0, 1, 2, 4, 5])
+        #expect(FounderTables.deck.days.map(\.weekday) == [0, 1, 2, 4, 5])
         // Wed (3) and Sat (6) are Zone-2 rest and have no deck at all.
-        #expect(Program.onyx5.day(weekday: 3) == nil)
-        #expect(Program.onyx5.day(weekday: 6) == nil)
+        #expect(FounderTables.deck.day(weekday: 3) == nil)
+        #expect(FounderTables.deck.day(weekday: 6) == nil)
     }
 }
 

@@ -34,6 +34,8 @@ enum PreviewHarness {
     @MainActor
     static func seededModel() -> SettingsModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         let userId = "00000000-0000-0000-0000-000000000001"
         _ = try? database.editUserGoals(userId: userId) { row in
             row.calorieGoal = 1955
@@ -44,7 +46,7 @@ enum PreviewHarness {
             row.activeCalGoal = 500
             row.sleepGoalHours = 8
             row.waterGoalMl = 3000
-            row.activeLever = LeverId.custom.rawValue
+            row.activeLever = "custom"
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.unitSystem = "kg"

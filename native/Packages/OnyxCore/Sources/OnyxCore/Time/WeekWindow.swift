@@ -20,12 +20,15 @@ public struct WeekWindow: Codable, Hashable, Identifiable, Sendable {
     public let start: String
     /// Last day, inclusive — `start + 6`.
     public let end: String
-    /// Programme week number via `Week.number` (Week 0 = 2026-07-12).
+    /// Programme week number via `Week.number` — Week 0 is the week the active
+    /// plan started in (`weekZero`); 0 when the caller has no anchor.
     public let number: Double
     /// Is `today` one of `days`?
     public let isCurrent: Bool
     /// The seven dates, in order. Empty when the date does not parse.
     public let days: [String]
+    /// The anchor `number` was counted from, carried so `shifted(by:)` keeps it.
+    public let weekZero: String?
 
     public var id: String { start }
     /// The cut this window was made on, 0 = Sunday — read back off `start`.
@@ -34,20 +37,21 @@ public struct WeekWindow: Codable, Hashable, Identifiable, Sendable {
     /// Inclusive on both ends: a Saturday session belongs to THIS capsule.
     public func contains(_ dateISO: String) -> Bool { dateISO >= start && dateISO <= end }
 
-    public init(containing dateISO: String, startDay: Int, today: String) {
+    public init(containing dateISO: String, startDay: Int, today: String, weekZero: String? = nil) {
         let start = Week.start(of: dateISO, startDay: startDay)
         let days = (0..<7).compactMap { ISODate.addDays(start, $0) }
         self.start = start
         self.end = days.last ?? start
-        self.number = Week.number(ofWeekStart: start)
+        self.number = Week.number(ofWeekStart: start, anchor: weekZero)
         self.isCurrent = days.contains(today)
         self.days = days
+        self.weekZero = weekZero
     }
 
     /// The week `days` before or after this one. Nil when this window has no
     /// days to step from.
     public func shifted(by weeks: Int, today: String) -> WeekWindow? {
         guard let date = ISODate.addDays(start, weeks * 7), !days.isEmpty else { return nil }
-        return WeekWindow(containing: date, startDay: startDay, today: today)
+        return WeekWindow(containing: date, startDay: startDay, today: today, weekZero: weekZero)
     }
 }

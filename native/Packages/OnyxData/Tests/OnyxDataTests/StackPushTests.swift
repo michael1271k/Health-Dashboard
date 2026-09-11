@@ -176,17 +176,31 @@ struct StackPushTests {
 
     // MARK: - The reader both tabs ask
 
+    /// The night slot as rows. There is no compiled seed since W2: a stack
+    /// is `custom_supplements` rows or it is empty, so the reader tests seed
+    /// the two items they assert on.
+    private func seedNightStack(_ db: AppDatabase) throws {
+        _ = try db.addCustomSupplement(
+            userId: user, name: "Magnesium Glycinate", dose: "300 mg", color: "#8A6FA8", form: nil, time: "22:00",
+            schedule: CustomSchedule(key: "magnesium", slot: "Before Bed"), micros: ["magnesium": 300]
+        )
+        _ = try db.addCustomSupplement(
+            userId: user, name: "Creatine Monohydrate", dose: "5 g", color: "#3D7AB8", form: nil, time: "15:00",
+            schedule: CustomSchedule(key: "creatine", slot: "Lunch / Post-Workout"), micros: ["creatine": 5000]
+        )
+    }
+
     @Test("a past day has had every slot; today's late slots have not come")
     func readerHonoursTheClock() throws {
         let db = try store()
+        try seedNightStack(db)
         try db.editUserGoals(userId: user) { $0.activePlan = "onyx5"; $0.activePhase = ProgramPhase.cut.rawValue }
         // 08:00 on the selected day.
         let morning = Date(timeIntervalSince1970: 1_756_368_000)
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC")!
 
-        // No customs: the seed protocol stands in, which is exactly the state a
-        // user who has never edited the stack is in.
+        // Rows, never a seed (W2): the stack is what `custom_supplements` says.
         let past = try db.stackCredit(userId: user, date: "2026-09-01", today: "2026-09-05", now: morning, calendar: calendar)
         #expect(past.doses.allSatisfy { $0.state == .due })
         #expect((past.nutrients["magnesium"] ?? 0) > 0)
@@ -199,6 +213,7 @@ struct StackPushTests {
     @Test("a skip at 21:00 takes that dose's micros out of the day")
     func readerHonoursASkip() throws {
         let db = try store()
+        try seedNightStack(db)
         try db.editUserGoals(userId: user) { $0.activePlan = "onyx5"; $0.activePhase = ProgramPhase.cut.rawValue }
         let before = try db.stackCredit(userId: user, date: "2026-09-01", today: "2026-09-05")
         #expect((before.nutrients["magnesium"] ?? 0) == 300)

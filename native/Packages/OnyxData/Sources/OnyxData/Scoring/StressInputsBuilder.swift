@@ -74,6 +74,17 @@ public extension AppDatabase {
         )
         let fatigueDayMean = Fatigue.dayMean(Fatigue.foldRows(fatigueRows, isTraining: isTraining))
 
+        // ── THE SECOND SELF-REPORT (D6) ─────────────────────────────────────
+        // `stress_logs` has no slot vocabulary to fold: every row of the day
+        // is one answer, and the mean of them is the day's stress. Nil when
+        // nothing was logged, so a day with only fatigue reads as it did
+        // before the table existed.
+        let stressLevels = try StressLogRow
+            .filter(Column("user_id") == userId && Column("date") == date)
+            .fetchAll(db)
+            .map { Double($0.level) }
+        let stressDayMean: Double? = stressLevels.isEmpty ? nil : stressLevels.reduce(0, +) / Double(stressLevels.count)
+
         return StressInputs(
             hrvZ: signals.hrv.z,
             rhrZ: signals.rhr.z,
@@ -82,6 +93,7 @@ public extension AppDatabase {
             // statement as an unticked night, as the scorer reads it.
             sleepOnsetTrouble: log?.sleepOnsetTrouble ?? false,
             fatigueDayMean: fatigueDayMean,
+            stressDayMean: stressDayMean,
             acwr: signals.load.acwr,
             strainZ: signals.load.strainZ
         )

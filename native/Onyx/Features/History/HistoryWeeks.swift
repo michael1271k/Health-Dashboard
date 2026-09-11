@@ -128,11 +128,10 @@ enum HistoryWeeks {
         let startDay = WeekWindow.startDay(from: goals)
         // An empty string is not a selection — the same read `WeeklyExportBuilder`
         // makes, because `isLeverId("")` would say otherwise.
-        let storedLever = (goals?.activeLever?.isEmpty == false) ? goals?.activeLever : nil
 
         let sessions = (try? database.sessionHistory()) ?? []
         let ledger = (try? database.historySets()) ?? []
-        let summaries = SessionAnalysis.summaries(sessions, ledger: ledger)
+        let summaries = SessionAnalysis.summaries(sessions, ledger: ledger, in: context.analysis)
         let byDate = Dictionary(summaries.map { ($0.date, $0) }, uniquingKeysWith: { first, _ in first })
         let finishedIds = Set(sessions.filter { $0.endedAt != nil }.map(\.id))
 
@@ -156,7 +155,7 @@ enum HistoryWeeks {
 
         while window.start <= last.start {
             let dates = window.days
-            let plannable = isPlannable(window)
+            let plannable = isPlannable(window, in: context.schedule)
             let cells = dates.map { date -> DayCell in
                 let summary = byDate[date]
                 let planned = plannable ? Schedule.scheduleDayIn(context.schedule, date) : nil
@@ -180,10 +179,10 @@ enum HistoryWeeks {
             // parameter to `leverForDate` and never a clock, so a capsule
             // built for a screenshot says the same thing every run.
             let maintenanceDays = dates.filter {
-                Maintenance.leverOn($0, stored: storedLever, until: goals?.maintenanceUntil, today: today)
+                Maintenance.leverOn($0, today: today, ladder: context.ladder)
             }.count
 
-            let phase = window.phase
+            let phase = window.phase(in: context.schedule.phases)
             out.append(Capsule(
                 window: window,
                 cells: cells,
@@ -211,13 +210,13 @@ enum HistoryWeeks {
         let sessions = (try? database.sessionHistory()) ?? []
         let ledger = (try? database.historySets()) ?? []
         let byDate = Dictionary(
-            SessionAnalysis.summaries(sessions, ledger: ledger).map { ($0.date, $0) },
+            SessionAnalysis.summaries(sessions, ledger: ledger, in: context.analysis).map { ($0.date, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let finishedIds = Set(sessions.filter { $0.endedAt != nil }.map(\.id))
 
         let dates = window.days
-        let plannable = isPlannable(window)
+        let plannable = isPlannable(window, in: context.schedule)
         let range = Set(dates)
         let logs = dailyLogs(database).filter { range.contains($0.date) }
         let logsByDate = Dictionary(logs.map { ($0.date, $0) }, uniquingKeysWith: { _, last in last })
@@ -231,7 +230,7 @@ enum HistoryWeeks {
             return DayRow(
                 date: date,
                 dayKey: key,
-                label: SessionAnalysis.dayLabel(key) ?? planned?.label,
+                label: SessionAnalysis.dayLabel(key, in: context.schedule.activeProgram) ?? planned?.label,
                 sessionId: summary.map(\.id).flatMap { finishedIds.contains($0) ? $0 : nil },
                 tonnageKg: summary?.tonnageKg ?? 0,
                 sets: summary?.sets ?? 0,
@@ -286,23 +285,17 @@ enum HistoryWeeks {
     /// screenshot, and any read that lands before auth resolves.
     private nonisolated static func scheduleContext(
         database: AppDatabase
-    ) -> (schedule: ScheduleContext, goals: UserGoalRow?) {
+    ) -> (schedule: ScheduleContext, goals: UserGoalRow?, ladder: LeverLadder, analysis: SessionAnalysis.Context) {
         let goals: UserGoalRow? = (try? database.read { db in try UserGoalRow.fetchOne(db) }) ?? nil
-        let programId = goals?.activePlan ?? Program.onyx5.id
-        let overrides: [String: String] = (try? database.read { db in
-            let rows = try ScheduleOverrideRow.fetchAll(db)
-            return Dictionary(rows.map { ($0.date, $0.dayKey) }, uniquingKeysWith: { _, last in last })
-        }) ?? [:]
-        let layoutRow: ProgramDayLayoutRow? = (try? database.read { db in
-            try ProgramDayLayoutRow.filter(Column("program_id") == programId).fetchOne(db)
-        }) ?? nil
-        let layout = ScheduleLayout.parseLayout(
-            layoutRow.flatMap { try? JSONSerialization.jsonObject(with: Data($0.layout.raw.utf8)) }
-        )
-        let phase = ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset)
+        let userId = goals?.userId ?? ""
+        // One assembly of the plan, the phase and the catalogue
+        // (`AppDatabase.scheduleContext`), shared with every other reader.
+        let schedule = (try? database.scheduleContext(userId: userId)) ?? ScheduleContext(programId: "", phase: .cut)
         return (
-            ScheduleContext(programId: programId, phase: phase, overrides: overrides, layout: layout),
-            goals
+            schedule,
+            goals,
+            (try? database.leverLadder(userId: userId)) ?? .empty,
+            SessionAnalysis.Context(schedule: schedule, floors: (try? database.prFloors()) ?? [:])
         )
     }
 
@@ -320,8 +313,8 @@ enum HistoryWeeks {
     /// So the schedule is consulted from Week 0 forward and nowhere else. An
     /// earlier week draws what was LOGGED and leaves the rest blank, which is
     /// the whole of what this app can honestly say about it.
-    private nonisolated static func isPlannable(_ window: WeekWindow) -> Bool {
-        window.start >= Week.week0Start
+    private nonisolated static func isPlannable(_ window: WeekWindow, in schedule: ScheduleContext) -> Bool {
+        Schedule.isPlannable(window.start, in: schedule)
     }
 
     private nonisolated static func dailyLogs(_ database: AppDatabase) -> [DailyLogRow] {

@@ -105,7 +105,7 @@ struct TilesGoldenTests {
     func ledger() throws {
         for c in try GoldenFixture<LedgerIn, LedgerWindow>.load("ledger-window").cases {
             #expect(Tiles.ledgerFloorDays == c.input.floor && Tiles.ledgerMaxDays == c.input.max)
-            #expect(Tiles.ledgerWindow(c.input.todayISO) == c.expected, "\(c.name)")
+            #expect(Tiles.ledgerWindow(c.input.todayISO, phases: FounderTables.phases) == c.expected, "\(c.name)")
         }
     }
 

@@ -5,9 +5,8 @@ import Foundation
 ///
 /// ── THE STACK LIVES IN THE DATABASE ──────────────────────────────────────────
 /// `custom_supplements` is the whole protocol, one row per item, editable in
-/// the app. `Supplements.protocolSeed` is only the SEED — what a fresh table is
-/// initialised with, and the fallback rendered when the table is empty or
-/// unreachable. Editing the seed no longer changes a seeded app.
+/// the app. There is no compiled seed since W2; W5's onboarding offers a
+/// starter stack from a bundled template, as rows.
 ///
 /// `key` is the identity that must survive everything: `supplement_log.item_key`
 /// and the nutrient table are both keyed by it, so seeded rows carry these
@@ -197,56 +196,17 @@ public struct DayClock: Codable, Equatable, Sendable {
 
 public enum Supplements {
 
-    /// `SUPPLEMENT_PROTOCOL` — the seed, with the doses this athlete started from.
-    public static let protocolSeed: [SupplementSlot] = [
-        SupplementSlot(key: "morning", time: "10:30", label: "Morning", accent: "#3E9E7A", items: [
-            Supplement(key: "multivitamin", name: "Two Per Day Multivitamin", dose: "1 tab", notes: "2 tabs on Monday & Friday (Leg Days)"),
-            Supplement(key: "d3k2", name: "Vitamin D3 + K2", dose: "125 mcg"),
-        ]),
-        SupplementSlot(key: "pre", time: "11:45", label: "Pre-Workout", accent: "#8E9AAC", items: [
-            Supplement(key: "citrulline", name: "L-Citrulline", dose: "3 g", trainingOnly: true),
-            Supplement(key: "caffeine", name: "Nutricost Caffeine", dose: "200 mg", trainingOnly: true),
-        ]),
-        SupplementSlot(key: "post", time: "15:00", label: "Lunch / Post-Workout", accent: "#3D7AB8", items: [
-            Supplement(key: "creatine", name: "Creatine Monohydrate", dose: "5 g"),
-            // Two caps — the nutrient payload is PER cap, so this is EPA 1000 / DHA 500.
-            Supplement(key: "omega3", name: "Omega-3 Fish Oil", dose: "2 caps"),
-        ]),
-        SupplementSlot(key: "night", time: "22:00", label: "Before Bed", accent: "#8A6FA8", items: [
-            // 300 mg elemental across three tablets — one checkbox, the full dose.
-            Supplement(key: "magnesium", name: "Magnesium Glycinate", dose: "300 mg"),
-            Supplement(key: "glycine", name: "Glycine", dose: "5 g"),
-            Supplement(key: "theanine", name: "L-Theanine", dose: "200 mg"),
-        ]),
-    ]
-
-    /// `ALL_SUPPLEMENT_KEYS`.
-    public static let allKeys: [String] = protocolSeed.flatMap { $0.items.map(\.key) }
-
-    /// The SEED protocol for a day — the fallback, not the source. On rest days
-    /// the training-only stimulants are dropped and any slot left empty is
-    /// removed. The multivitamin is 1 tab daily EXCEPT Monday & Friday (2 tabs).
-    public static func protocolForDate(isTraining: Bool, weekday: Int) -> [SupplementSlot] {
-        let multiDose = weekday == 1 || weekday == 5 ? "2 tabs" : "1 tab"
-        return protocolSeed.compactMap { slot in
-            var s = slot
-            // `!i.trainingOnly` — unset and false both survive a rest day.
-            if !isTraining { s.items = s.items.filter { $0.trainingOnly != true } }
-            s.items = s.items.map { i in
-                var i = i
-                if i.key == "multivitamin" { i.dose = multiDose }
-                return i
-            }
-            return s.items.isEmpty ? nil : s
-        }
-    }
-
-    /// The day's stack: the user's own rows when there are any, the seed
-    /// otherwise. ONE resolver, so the checklist, the micro totals, the Stack
-    /// tile's denominator and the export cannot disagree. An empty `dbSlots`
-    /// means the table is unseeded or unreadable, and the seed beats an empty list.
+    /// The day's stack: the user's own rows, and nothing else.
+    ///
+    /// ── THE SEED IS GONE (W2) ───────────────────────────────────────────────
+    /// `protocolSeed` was the founder's nine items compiled in, and the
+    /// fallback rendered when the table was empty. An empty table now IS an
+    /// empty stack: the founder's rows have existed since 2026-08-06, and a
+    /// second account was being shown a protocol it never wrote. ONE resolver
+    /// still, so the checklist, the micro totals, the Stack tile's denominator
+    /// and the export cannot disagree.
     public static func stackForDate(_ dbSlots: [SupplementSlot], isTraining: Bool, weekday: Int) -> [SupplementSlot] {
-        dbSlots.isEmpty ? protocolForDate(isTraining: isTraining, weekday: weekday) : dbSlots
+        dbSlots
     }
 
     /// `supplementCountForDate` — the denominator for the Stack tile. The web

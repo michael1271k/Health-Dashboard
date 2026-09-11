@@ -26,6 +26,11 @@
 -- PR FLOORS are `PrTruth.floor(for:)` — the book's excess over what Onyx's own
 -- history already reached, NOT the raw book — written as `personal_records`
 -- rows with no session, and only where they exceed the row already there.
+-- A live row BELOW the floor is replaced by it, session and all (2 of 68 were,
+-- 2026-09-11: Shoulder Press e1rm 41 → 42.25 and one more): the set behind
+-- such a row was a return to a load the book had already seen, which is the
+-- false record the floor exists to refuse — the widget used to hide those rows
+-- (`topRecords` dropped anything under the floor); now the ledger says so.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 begin;

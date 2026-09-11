@@ -79,6 +79,17 @@ public final class AppEnvironment {
     /// signed out.
     private(set) var targets: TargetResolver?
 
+    #if DEBUG
+    /// The preview environment's resolver, over its seeded in-memory store —
+    /// so a preview reads the same live catalogue (decks, plans, phases,
+    /// rungs) a signed-in screen does. Never called outside `.preview`.
+    func installPreviewTargets(userId: String) {
+        let resolver = TargetResolver(database: database, userId: userId)
+        resolver.start()
+        targets = resolver
+    }
+    #endif
+
     /// The logical day, republished at local midnight (§6.4). A model that
     /// holds its own `today` re-reads it on change; nothing is written for a
     /// rollover, and a `WeekWindow` cut from this re-cuts itself on the first

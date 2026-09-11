@@ -155,6 +155,7 @@ private struct BodyTrendsScreen: View {
 
                 CompositionSection(
                     readings: readings, goals: slice.goals, windowDays: resolved.days,
+                    ladder: input.ladder, phases: input.phases,
                     seededSelection: seededSelection
                 )
                 StepsSection(
@@ -304,6 +305,10 @@ private struct CompositionSection: View {
     let goals: UserGoalRow?
     /// The resolved window's span, so the scroll domain matches the picker.
     let windowDays: Int
+    /// The rungs and the phases — what decides whether a delta fell inside a
+    /// maintenance week (rows since W2, carried by the era-window input).
+    let ladder: LeverLadder
+    let phases: [PhaseDef]
     /// Harness only — see `BodyTrendsView.seededSelection`.
     var seededSelection: String?
 
@@ -436,10 +441,7 @@ private struct CompositionSection: View {
         return DeltaVerdict.verdict(
             metric, delta: delta,
             phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-            maintenance: Maintenance.isMaintenanceDate(
-                date, stored: goals?.activeLever, until: goals?.maintenanceUntil,
-                today: LogicalDay.today()
-            )
+            maintenance: Maintenance.isMaintenanceDate(date, today: LogicalDay.today(), ladder: ladder, phases: phases)
         )
     }
 

@@ -27,11 +27,19 @@ extension WeekWindow {
         self.init(containing: dateISO, startDay: Self.startDay(from: goals))
     }
 
-    /// `Week 7`, or the phase's own label for a week before Week 0.
-    var label: String { Week.label(ofWeekStart: start) }
+    /// `Week 7`, or the phase's own label for a week before Week 0. The
+    /// anchor is the window's own (`weekZero`); the phases are the caller's.
+    func label(phases: [PhaseDef]) -> String { Week.label(ofWeekStart: start, anchor: weekZero, phases: phases) }
+
+    /// The same, off the live catalogue a view holds (`environment.targets`):
+    /// the active plan's week-0 anchor and its phase table. With none, the
+    /// window's own anchor and no phases.
+    func label(in schedule: ScheduleContext?) -> String {
+        Week.label(ofWeekStart: start, anchor: schedule?.weekZeroStart ?? weekZero, phases: schedule?.phases ?? [])
+    }
 
     /// The phase this week sits in, and with it the era (Onyx or PPL).
-    var phase: WeekPhase? { Phases.weekPhase(weekStart: start) }
+    func phase(in phases: [PhaseDef]) -> WeekPhase? { Phases.weekPhase(weekStart: start, in: phases) }
 
     /// The window `count` weeks after this one — negative walks back.
     func offset(byWeeks count: Int) -> WeekWindow? { shifted(by: count, today: LogicalDay.today()) }

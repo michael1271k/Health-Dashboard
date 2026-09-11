@@ -26,13 +26,15 @@ public extension DailyTarget {
 
 public extension TargetProfile {
     /// A stored profile missing its two required figures is skipped rather
-    /// than shown as a 0 kcal day.
+    /// than shown as a 0 kcal day. `kind` nil (a row pulled before the W2 DDL
+    /// ran) is a day shape, which is what every row was until then.
     init?(_ r: TargetProfileRow) {
         guard let kcal = r.kcal, let protein = r.proteinG else { return nil }
         self.init(
             key: r.key, label: r.label, summary: r.summary ?? "", sort: r.sort,
             kcal: Double(kcal), proteinG: Double(protein),
-            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init), stepsGoal: r.stepsGoal.map(Double.init)
+            carbsG: r.carbsG.map(Double.init), fatG: r.fatG.map(Double.init), stepsGoal: r.stepsGoal.map(Double.init),
+            kind: r.kind.flatMap(ProfileKind.init(rawValue:)) ?? .day
         )
     }
 }
@@ -41,7 +43,7 @@ public extension TargetSources {
     /// The sources a `user_goals` row supplies, with a day override chosen by
     /// the caller — the Nutrition tab hands in the row it is editing so a save
     /// never snaps back for the one hop the observation takes.
-    init(goals: UserGoalRow?, dayTarget: DailyTarget?, profiles: [TargetProfile]) {
+    init(goals: UserGoalRow?, dayTarget: DailyTarget?, profiles: [TargetProfile], periods: [LeverPeriod] = []) {
         self.init(
             own: LeverGoals(
                 calorie: Double(goals?.calorieGoal ?? 0),
@@ -55,7 +57,8 @@ public extension TargetSources {
             activeLever: goals?.activeLever,
             maintenanceUntil: goals?.maintenanceUntil,
             dayTarget: dayTarget,
-            profiles: profiles
+            profiles: profiles,
+            periods: periods
         )
     }
 }
@@ -76,27 +79,43 @@ public struct TargetSnapshot: Sendable, Equatable {
     /// a swap and a lever tick the same readers; `Targets` itself has no plan
     /// in it.
     public var overrides: [String: String]
+    /// `lever_periods` — when each rung came into force (W2).
+    public var periods: [LeverPeriodRow]
+    /// The plan catalogue, the phase, the layout — the same context every
+    /// store-side reader resolves (`AppDatabase.scheduleContext`). Carried
+    /// here so the app's screens read ONE live catalogue and tick together.
+    public var schedule: ScheduleContext
 
     public init(
         goals: UserGoalRow? = nil, dailyTargets: [String: DailyTargetRow] = [:],
-        profiles: [TargetProfileRow] = [], overrides: [String: String] = [:]
+        profiles: [TargetProfileRow] = [], overrides: [String: String] = [:],
+        periods: [LeverPeriodRow] = [], schedule: ScheduleContext = ScheduleContext(programId: "", phase: .cut)
     ) {
         self.goals = goals
         self.dailyTargets = dailyTargets
         self.profiles = profiles
         self.overrides = overrides
+        self.periods = periods
+        self.schedule = schedule
     }
 
-    /// The user's stored profiles, translated; `Targets.profiles(stored:)`
-    /// fills the built-ins in behind them.
+    /// The user's stored profiles, translated — every kind.
     public var storedProfiles: [TargetProfile] { profiles.compactMap(TargetProfile.init) }
+
+    /// The rungs, the schedule and the selection.
+    public var ladder: LeverLadder {
+        LeverLadder(
+            profiles: storedProfiles, periods: periods.map(LeverPeriod.init),
+            stored: goals?.activeLever, releaseEndsOn: goals?.maintenanceUntil
+        )
+    }
 
     /// The date's override, or nil.
     public func dayTarget(for date: String) -> DailyTarget? { dailyTargets[date].map(DailyTarget.init) }
 
     /// Sources with a caller-chosen day override (see `TargetSources.init`).
     public func sources(dayTarget: DailyTarget?) -> TargetSources {
-        TargetSources(goals: goals, dayTarget: dayTarget, profiles: storedProfiles)
+        TargetSources(goals: goals, dayTarget: dayTarget, profiles: storedProfiles, periods: periods.map(LeverPeriod.init))
     }
 
     public func sources(for date: String) -> TargetSources { sources(dayTarget: dayTarget(for: date)) }
@@ -127,11 +146,14 @@ public extension AppDatabase {
         for r in try DailyTargetRow.filter(user).fetchAll(db) { targets[r.date] = r }
         var overrides: [String: String] = [:]
         for r in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[r.date] = r.dayKey }
+        let goals = try UserGoalRow.filter(user).fetchOne(db)
         return TargetSnapshot(
-            goals: try UserGoalRow.filter(user).fetchOne(db),
+            goals: goals,
             dailyTargets: targets,
             profiles: try TargetProfileRow.filter(user).order(Column("sort")).fetchAll(db),
-            overrides: overrides
+            overrides: overrides,
+            periods: try LeverPeriodRow.filter(user).order(Column("starts_on")).fetchAll(db),
+            schedule: try scheduleContext(db, userId: userId, goals: .some(goals))
         )
     }
 }
@@ -197,8 +219,14 @@ public final class TargetResolver {
         snapshot.targets(for: date, today: today)
     }
 
-    /// The week containing `date`, cut on the athlete's own start day.
+    /// The week containing `date`, cut on the athlete's own start day and
+    /// numbered from the active plan's first week.
     public func weekWindow(containing date: String, today: String) -> WeekWindow {
-        WeekWindow(containing: date, startDay: snapshot.weekStartDay, today: today)
+        WeekWindow(containing: date, startDay: snapshot.weekStartDay, today: today, weekZero: snapshot.schedule.weekZeroStart)
     }
+
+    /// The live catalogue — decks, plans, phases — with the selection applied.
+    public var schedule: ScheduleContext { snapshot.schedule }
+    /// The rungs and the schedule of rungs.
+    public var ladder: LeverLadder { snapshot.ladder }
 }

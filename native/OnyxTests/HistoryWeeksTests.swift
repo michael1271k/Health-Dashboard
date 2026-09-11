@@ -179,24 +179,30 @@ struct HistoryWeeksTests {
         try database.editUserGoals(userId: Self.userId) { row in
             row.calorieGoal = 1955
             row.proteinGoalG = 170
-            row.activeLever = LeverId.custom.rawValue
+            row.activeLever = "custom"
+        }
+        // The rung is a row since W2.
+        let user = Self.userId
+        try database.seedRows { conn in
+            try TargetProfileRow(userId: user, key: "lever-1", label: "Lever 1", sort: 11, kcal: 1885, proteinG: 170, carbsG: 182, fatG: 53, stepsGoal: 10000, updatedAt: Date(), kind: "deficit").insert(conn)
         }
 
         var iterator = database.userGoalsStream(userId: Self.userId).makeAsyncIterator()
         let before = try #require(try await iterator.next() ?? nil)
-        #expect(before.activeLever == LeverId.custom.rawValue)
+        #expect(before.activeLever == "custom")
         let ownKcal = TargetSnapshot(goals: before).targets(for: "2026-09-05", today: "2026-09-05").kcal
         #expect(ownKcal == 1955)
 
-        model.pickLever(.lever1)
+        model.pickLever("lever-1")
 
         // The observation fires because the row was committed, not because
         // anything here invalidated a cache.
         let after = try #require(try await iterator.next() ?? nil)
-        #expect(after.activeLever == LeverId.lever1.rawValue)
+        #expect(after.activeLever == "lever-1")
 
-        let held = try #require(Levers.lever(byId: LeverId.lever1.rawValue))
-        let republished = TargetSnapshot(goals: after).targets(for: "2026-09-05", today: "2026-09-05")
+        let snapshot = try database.targetSnapshot(userId: Self.userId)
+        let held = try #require(Levers.lever(byId: "lever-1", in: snapshot.ladder))
+        let republished = snapshot.targets(for: "2026-09-05", today: "2026-09-05")
         #expect(republished.kcal == held.calorieGoal)
         #expect(republished.kcal != ownKcal)
 

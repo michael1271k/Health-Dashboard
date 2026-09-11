@@ -28,7 +28,7 @@ public enum RestTargets {
     /// The PLAN's rest target for an exercise. The day wins when known; with
     /// an unknown day, the LONGEST programmed rest — too much rest costs time,
     /// too little costs the set.
-    public static func programRestSec(for exerciseName: String, dayKey: String?, program: Program = .onyx5, phase: ProgramPhase = .cut) -> Double? {
+    public static func programRestSec(for exerciseName: String, dayKey: String?, program: Program, phase: ProgramPhase = .cut) -> Double? {
         let target = Ceilings.normalize(exerciseName)
         let match = { (e: ProgramExercise) in Ceilings.normalize(e.name) == target }
         if let dayKey, !dayKey.isEmpty, let onDay = program.day(key: dayKey)?.exercises(for: phase).first(where: match),

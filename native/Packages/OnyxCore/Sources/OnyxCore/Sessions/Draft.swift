@@ -256,8 +256,8 @@ public enum Draft {
 
     /// The workout's NAME, without its strapline: the program day's own label,
     /// else the title up to its first `·`, else the split. Never empty.
-    public static func cleanTitle(title: String?, dayKey: String?, splitDay: String, program: Program = .onyx5) -> String {
-        if let dayKey, !dayKey.isEmpty, let label = program.day(key: dayKey)?.label { return label }
+    public static func cleanTitle(title: String?, dayKey: String?, splitDay: String, program: Program?) -> String {
+        if let dayKey, !dayKey.isEmpty, let label = program?.day(key: dayKey)?.label { return label }
         let head = title?.components(separatedBy: "·").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !head.isEmpty { return head }
         return splitDay.isEmpty ? "Workout" : splitDay

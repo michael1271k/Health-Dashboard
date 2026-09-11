@@ -844,7 +844,7 @@ struct WorkoutTabView: View {
 #if DEBUG
 #Preview("Workout") {
     NavigationStack {
-        WorkoutTabView(seededDay: Program.onyx5.day(key: "cb_b"))
+        WorkoutTabView(seededDay: PlanTemplates.program("onyx5")?.day(key: "cb_b"))
     }
     .environment(AppEnvironment.preview)
     .preferredColorScheme(.dark)

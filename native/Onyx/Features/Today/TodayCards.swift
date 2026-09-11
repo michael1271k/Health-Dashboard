@@ -148,6 +148,7 @@ enum ReadinessColor {
 // MARK: - Weekly summary CTA
 
 struct WeeklySummaryCTA: View {
+    @Environment(AppEnvironment.self) private var environment
     let weekStart: String
     let onOpen: () -> Void
 
@@ -163,7 +164,7 @@ struct WeeklySummaryCTA: View {
                     .frame(width: 36, height: 36)
                     .background(Circle().fill(Color.onyx.record.opacity(0.14)))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Week \(Int(Week.number(ofWeekStart: weekStart))) is complete")
+                    Text("Week \(Int(Week.number(ofWeekStart: weekStart, anchor: environment.targets?.schedule.weekZeroStart))) is complete")
                         .onyxType(.secondary).fontWeight(.semibold)
                         .foregroundStyle(Color.onyx.textPrimary)
                     Text("Every session logged. Review the week.")

@@ -13,16 +13,9 @@ struct DayPlan {
     var isMaintenance: Bool
 
     static func resolve(
-        goals: UserGoalRow?, overrides: [String: String], layout: DayLayout,
+        goals: UserGoalRow?, schedule: ScheduleContext, profiles: [TargetProfileRow], periods: [LeverPeriodRow],
         dayTarget: DailyTargetRow?, date: String, todayISO: String
     ) -> DayPlan {
-        let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-        let schedule = ScheduleContext(
-            programId: programId,
-            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-            overrides: overrides,
-            layout: layout
-        )
         let program = Schedule.programForContext(schedule, date).program
         let day = Schedule.scheduleDayIn(schedule, date)
         let planned: (exercises: Int, sets: Int)? = day?.dayKey.flatMap { key in
@@ -30,8 +23,11 @@ struct DayPlan {
         }
 
         // One chain for the scorer, the widget and the tabs (§6.2).
-        let resolved = TargetSnapshot(goals: goals, dailyTargets: dayTarget.map { [$0.date: $0] } ?? [:], overrides: overrides)
-            .targets(for: date, today: todayISO)
+        let snapshot = TargetSnapshot(
+            goals: goals, dailyTargets: dayTarget.map { [$0.date: $0] } ?? [:], profiles: profiles,
+            overrides: schedule.overrides, periods: periods, schedule: schedule
+        )
+        let resolved = snapshot.targets(for: date, today: todayISO)
         return DayPlan(
             isTraining: Schedule.isTrainingDayIn(schedule, date),
             dayKey: day?.dayKey,
@@ -40,7 +36,7 @@ struct DayPlan {
                 calorie: resolved.kcal, protein: resolved.protein ?? 0, carbs: resolved.carbs ?? 0,
                 fat: resolved.fat ?? 0, steps: resolved.steps ?? Double(goals?.stepsGoal ?? 0)
             ),
-            isMaintenance: Maintenance.isMaintenanceDate(date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: todayISO)
+            isMaintenance: Maintenance.isMaintenanceDate(date, today: todayISO, ladder: snapshot.ladder, phases: schedule.phases)
         )
     }
 
@@ -76,13 +72,11 @@ public extension AppDatabase {
         let plan = try writer.read { db -> DayPlan in
             let user = Column("user_id") == userId
             let goals = try UserGoalRow.filter(user).fetchOne(db)
-            let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-            var overrides: [String: String] = [:]
-            for r in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[r.date] = r.dayKey }
-            let layoutRaw = try ProgramDayLayoutRow.filter(user && Column("program_id") == programId).fetchOne(db)?.layout.raw
-            let layout = ScheduleLayout.parseLayout(layoutRaw.flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) })
             return DayPlan.resolve(
-                goals: goals, overrides: overrides, layout: layout,
+                goals: goals,
+                schedule: try Self.scheduleContext(db, userId: userId, goals: .some(goals)),
+                profiles: try TargetProfileRow.filter(user).order(Column("sort")).fetchAll(db),
+                periods: try LeverPeriodRow.filter(user).order(Column("starts_on")).fetchAll(db),
                 dayTarget: try DailyTargetRow.filter(user && Column("date") == date).fetchOne(db),
                 date: date, todayISO: todayISO
             )

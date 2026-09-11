@@ -36,6 +36,7 @@ struct StressGoldenTests {
         #expect(a.terms.sleep.answered == e.terms.sleep.answered, "sleep.answered — \(name)")
         expectClose(a.terms.selfReport.z, e.terms.selfReport.z, "self.z — \(name)")
         expectClose(a.terms.selfReport.fatigueDayMean, e.terms.selfReport.fatigueDayMean, "self.fatigueDayMean — \(name)")
+        expectClose(a.terms.selfReport.stressDayMean, e.terms.selfReport.stressDayMean, "self.stressDayMean — \(name)")
         #expect(a.terms.selfReport.answered == e.terms.selfReport.answered, "self.answered — \(name)")
         expectClose(a.terms.load.z, e.terms.load.z, "load.z — \(name)")
         expectClose(a.terms.load.acwrTerm, e.terms.load.acwrTerm, "load.acwrTerm — \(name)")

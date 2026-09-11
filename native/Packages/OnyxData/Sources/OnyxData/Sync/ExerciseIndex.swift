@@ -5,10 +5,13 @@ import OnyxCore
 public struct RemoteExercise: Codable, Sendable, Equatable, Identifiable {
     public var id: String
     public var name: String
+    /// `exercises.slug` — the legacy local id this row answers for (D3).
+    public var slug: String?
 
-    public init(id: String, name: String) {
+    public init(id: String, name: String, slug: String? = nil) {
         self.id = id
         self.name = name
+        self.slug = slug
     }
 }
 
@@ -60,6 +63,16 @@ public struct ExerciseIndex: Sendable {
     /// are what makes ambiguity detectable; a plain `[String: String]` would
     /// silently keep one and discard the rest.
     private let byNormalised: [String: [RemoteExercise]]
+    /// `exercises.slug` → id. The legacy `helix5-…` ids, answered by DATA
+    /// since W2 (D3): the column is backfilled from the catalogue name with
+    /// the same expression `ExerciseSlug.id` uses, and the seed corrected the
+    /// founder's where a deck spelled a movement differently.
+    private let bySlug: [String: String]
+    /// Every uuid the catalogue holds — a set that already carries one passes
+    /// through `id(forSlug:)` untouched.
+    private let ids: Set<String>
+    /// `ExerciseSlug.id(row.name)` → id, for a catalogue with no slug column.
+    private let byComputedSlug: [String: String]
 
     public init(_ catalogue: [RemoteExercise]) {
         byExactName = Dictionary(
@@ -70,14 +83,64 @@ public struct ExerciseIndex: Sendable {
             uniquingKeysWith: { first, _ in first }
         )
         byNormalised = Dictionary(grouping: catalogue, by: { Self.normalisedKey($0.name) })
+        bySlug = Dictionary(
+            catalogue.compactMap { row in row.slug.map { ($0, row.id) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+        ids = Set(catalogue.map(\.id))
+        byComputedSlug = Dictionary(
+            catalogue.map { (ExerciseSlug.id($0.name), $0.id) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 
-    /// Resolve one local slug to a catalogue uuid.
+    /// Resolve one local exercise id to a catalogue uuid.
+    ///
+    /// Three shapes arrive here: a uuid the logger stamped from the routine
+    /// payload (W2 onward — passes through), a legacy `helix5-…` slug the
+    /// catalogue's `slug` column claims, or a slug nothing claims — which
+    /// throws, exactly as before, because creating a row is not this file's job.
     public func id(forSlug slug: String) throws -> String {
-        guard let name = ExerciseSlug.nameBySlug[slug] else {
-            throw SyncError.unknownExercise(slug: slug, name: nil)
+        if ids.contains(slug) { return slug }
+        if let id = bySlug[slug] { return id }
+        // ── THE COLUMN'S OWN RULE, COMPUTED ─────────────────────────────────
+        // `exercises.slug` is backfilled server-side from the catalogue name
+        // with the same expression `ExerciseSlug.id` uses. A catalogue pulled
+        // before that DDL ran (or a test remote) has no column, so the same
+        // rule runs here: the row whose NAME slugs to this slug. First wins on
+        // a collision, as the backfill's rank does.
+        if let id = byComputedSlug[slug] { return id }
+        // ── THEN THE NORMALISED TIER ────────────────────────────────────────
+        // A slug is the movement's name with the parenthesised text and
+        // punctuation collapsed — which is what `normalisedKey` does to a
+        // catalogue name. So `helix5-romanian-deadlift` matches the one row
+        // that normalises to "romanian deadlift", and refuses when two do:
+        // picking one would split a movement's history down the middle.
+        let key = Self.slugKey(slug)
+        let candidates = byNormalised[key] ?? []
+        switch candidates.count {
+        case 1: return candidates[0].id
+        case 0: throw SyncError.unknownExercise(slug: slug, name: Self.humanised(key))
+        default:
+            throw SyncError.ambiguousExercise(
+                name: Self.humanised(key),
+                candidates: candidates.map(\.name).sorted()
+            )
         }
-        return try id(forName: name, slug: slug)
+    }
+
+    /// `romanian deadlift` → `Romanian Deadlift`, for an error a person reads.
+    static func humanised(_ key: String) -> String {
+        key.split(separator: " ").map(\.capitalized).joined(separator: " ")
+    }
+
+    /// `helix5-romanian-deadlift` → `romanian deadlift`: the slug body with
+    /// its hyphens back as spaces, which is `normalisedKey` of the name minus
+    /// anything in parentheses.
+    static func slugKey(_ slug: String) -> String {
+        var body = slug
+        if body.hasPrefix("helix5-") { body = String(body.dropFirst("helix5-".count)) }
+        return body.replacingOccurrences(of: "-", with: " ").trimmingCharacters(in: .whitespaces)
     }
 
     /// Resolve a movement's NAME to a catalogue uuid — rules 1–3 of the type
@@ -158,41 +221,19 @@ public enum ExerciseSlug {
             .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
-    /// Slug → the movement's name, as `Program.onyx5` spells it.
+    /// Slug → name, off the catalogue rows that claim a slug.
     ///
-    /// Built once. `uniquingKeysWith` keeps the first, and `ExerciseSlugTests`
-    /// asserts that no two program movements share a slug — because if two ever
-    /// did, one of them would resolve to the other's catalogue row, which is
-    /// the merge this whole file exists to prevent. (They do not today:
-    /// `Crunch Machine` and the catalogue's `Crunch (Machine)` collide under
-    /// this slug, but only one of the pair is in the program.)
-    ///
-    /// ── AND THE TREADMILL, WHICH IS NOT A PROGRAM ENTRY ─────────────────────
-    /// `WarmupCardio` is deliberately outside `Program.onyx5` — a five-minute
-    /// walk has no sets, no reps and no load, and putting it in the program
-    /// would make `plannedSets` count it and the progression engine grade it
-    /// (`SessionSeed.swift` states the case). But the deck PREPENDS it on both
-    /// clients, so `LoggerModel.exerciseId` stamps `helix5-treadmill` on the
-    /// row the moment it is ticked — and this table, built from the program
-    /// alone, had never heard of it. Two failures, one cause:
-    ///
-    ///   · `SessionAnalysis.displayName` falls back to the slug when the
-    ///     coalesce and this map both miss, so the post-workout page titled
-    ///     the block `helix5-treadmill`. `Ceilings`, `MuscleMap` and the PR
-    ///     key were reading that same string and answering nil.
-    ///   · `id(forSlug:)` throws `unknownExercise` above, so a treadmill
-    ///     logged on the phone could not be pushed AT ALL — the one movement
-    ///     the deck adds for you was the one the sync refused.
-    ///
-    /// The catalogue has held a `Treadmill` row since `hotfix-polish.sql § 4`,
-    /// so the name resolves the moment it is offered. The slug stays
-    /// `helix5-`-prefixed for the reason stated above `id(_:)`: it is a KEY
-    /// written into local rows, and renaming it would file every unsynced set
-    /// under a second identity — the silent SPLIT this file exists to prevent.
-    /// What the reader sees is the NAME, and the name is "Treadmill".
-    public static let nameBySlug: [String: String] = Dictionary(
-        (Program.onyx5.days.flatMap(\.exercises).map(\.name) + [WarmupCardio.name])
-            .map { (id($0), $0) },
-        uniquingKeysWith: { first, _ in first }
-    )
+    /// ── THE REVERSE MAP IS DATA NOW (W2) ────────────────────────────────────
+    /// It used to be built from `Program.onyx5` — the deck's 32 names plus the
+    /// treadmill — because un-slugging is lossy (`helix5-seated-cable-row-v-grip`
+    /// cannot be turned back into `Seated Cable Row (V-Grip)`). `exercises.slug`
+    /// is that map as a column, backfilled by the W2 DDL and corrected by the
+    /// seed, so it answers for every account and every movement the catalogue
+    /// holds, not just the founder's deck.
+    public static func nameBySlug(_ exercises: [Exercise]) -> [String: String] {
+        Dictionary(
+            exercises.compactMap { e in e.slug.map { ($0, e.name) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
 }

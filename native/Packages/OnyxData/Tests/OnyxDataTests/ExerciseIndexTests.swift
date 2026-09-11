@@ -55,30 +55,29 @@ struct ExerciseIndexTests {
         // If two ever did, one would resolve to the other's catalogue row and
         // two movements' histories would merge — with the PR baselines.
         var seen: [String: String] = [:]
-        for exercise in Program.onyx5.days.flatMap(\.exercises) {
+        for exercise in SampleDeck.onyx5.days.flatMap(\.exercises) {
             let slug = ExerciseSlug.id(exercise.name)
             if let clash = seen[slug], clash != exercise.name {
                 Issue.record("\(exercise.name) and \(clash) both slug to \(slug)")
             }
             seen[slug] = exercise.name
         }
-        // The program's movements PLUS the treadmill, which is deliberately
-        // not one of them and is still stamped onto rows by both decks.
-        #expect(ExerciseSlug.nameBySlug.count == seen.count + 1)
         #expect(seen[ExerciseSlug.id(WarmupCardio.name)] == nil,
                 "the treadmill must not collide with a program movement's slug")
     }
 
-    @Test("the treadmill resolves by slug — name and catalogue row alike")
+    @Test("the treadmill resolves by slug — through the catalogue's slug column")
     func treadmillResolves() throws {
-        // Two bugs, one cause, both fixed by `nameBySlug` knowing the bout:
-        // the post-workout page titled the block `helix5-treadmill`, and the
-        // push threw `unknownExercise` on the one movement the deck adds for
-        // you — so a treadmill logged on the phone could not be uploaded.
+        // The reverse map is DATA since W2: `exercises.slug` names the legacy
+        // id a row answers for, and both the name and the push resolve
+        // through it.
         #expect(ExerciseSlug.id(WarmupCardio.name) == "helix5-treadmill")
-        #expect(ExerciseSlug.nameBySlug["helix5-treadmill"] == "Treadmill")
-        let catalogue = [RemoteExercise(id: "uuid-treadmill", name: "Treadmill")]
+        let rows = [Exercise(id: "uuid-treadmill", name: "Treadmill", slug: "helix5-treadmill")]
+        #expect(ExerciseSlug.nameBySlug(rows)["helix5-treadmill"] == "Treadmill")
+        let catalogue = [RemoteExercise(id: "uuid-treadmill", name: "Treadmill", slug: "helix5-treadmill")]
         #expect(try ExerciseIndex(catalogue).id(forSlug: "helix5-treadmill") == "uuid-treadmill")
+        // A set that already carries the uuid passes straight through (D3).
+        #expect(try ExerciseIndex(catalogue).id(forSlug: "uuid-treadmill") == "uuid-treadmill")
     }
 
     @Test("the slug is byte-identical to LoggerModel's copy")
@@ -95,20 +94,25 @@ struct ExerciseIndexTests {
         #expect(ExerciseSlug.id("Reverse EZ-Bar Curl") == "helix5-reverse-ez-bar-curl")
     }
 
-    @Test("every slug maps back to the name the program spells")
+    @Test("every slug maps back to the name the program spells, off the column")
     func slugRoundTrips() {
-        for exercise in Program.onyx5.days.flatMap(\.exercises) {
-            #expect(ExerciseSlug.nameBySlug[ExerciseSlug.id(exercise.name)] == exercise.name)
+        let rows = SampleDeck.onyx5.days.flatMap(\.exercises).map {
+            Exercise(id: "id-\($0.name)", name: $0.name, slug: ExerciseSlug.id($0.name))
+        }
+        let bySlug = ExerciseSlug.nameBySlug(rows)
+        for exercise in SampleDeck.onyx5.days.flatMap(\.exercises) {
+            #expect(bySlug[ExerciseSlug.id(exercise.name)] == exercise.name)
         }
     }
 
     // MARK: Resolution
 
-    @Test("every movement in the program resolves to a catalogue row")
+    @Test("every movement in the program resolves to a catalogue row by name")
     func wholeProgramResolves() throws {
-        // The real coverage check: if this fails, sync stalls on a real workout.
-        for exercise in Program.onyx5.days.flatMap(\.exercises) {
-            let id = try index().id(forSlug: ExerciseSlug.id(exercise.name))
+        // The real coverage check: if this fails, the routine payload cannot
+        // name its catalogue rows and the seed's `exerciseId`s would be nil.
+        for exercise in SampleDeck.onyx5.days.flatMap(\.exercises) {
+            let id = try index().id(forName: exercise.name)
             #expect(!id.isEmpty, "\(exercise.name) did not resolve")
         }
     }
@@ -173,7 +177,8 @@ struct ExerciseIndexTests {
 
     @Test("a slug the program does not know throws and names itself")
     func unknownSlugThrows() {
-        #expect(throws: SyncError.unknownExercise(slug: "helix5-zercher-squat", name: nil)) {
+        // The error names the movement a person can read, off the slug.
+        #expect(throws: SyncError.unknownExercise(slug: "helix5-zercher-squat", name: "Zercher Squat")) {
             _ = try index().id(forSlug: "helix5-zercher-squat")
         }
     }

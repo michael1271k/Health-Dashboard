@@ -1,7 +1,7 @@
 {
   "module": "scoring/stress",
   "fn": "stressBreakdown",
-  "note": "S = round(clamp(50 + 20·Σwz/Σw over ANSWERED terms, 10, 90)); w = auto .35 · sleep .25 · self .25 · load .15. auto = mean{−hrvZ, rhrZ}; sleep = mean{fragZ (±2), onset 0|1}; self = clamp(fatigue day mean − 3, ±2); load = clamp(½(max(0, strainZ) + 2·max(0, min(acwr, 2) − 1.3)/0.7), 0, 2). Nothing answered → index null. Bands: <30 calm · ≤50 baseline · ≤62 elevated · ≤75 high · else overreached.",
+  "note": "S = round(clamp(50 + 20·Σwz/Σw over ANSWERED terms, 10, 90)); w = auto .35 · sleep .25 · self .25 · load .15. auto = mean{−hrvZ, rhrZ}; sleep = mean{fragZ (±2), onset 0|1}; self = clamp(fatigue day mean − 3, ±2); load = clamp(½(max(0, strainZ) + 2·max(0, min(acwr, 2) − 1.3)/0.7), 0, 2). Nothing answered → index null. Bands: <30 calm · ≤50 baseline · ≤62 elevated · ≤75 high · else overreached. W2 (D6) appended three hand-computed `stressDayMean` cases: the self term is the mean of the answered {fatigue−3, stress−3}, each clamped ±2, weights unchanged.",
   "cases": [
     {
       "name": "nothing answered",
@@ -1177,6 +1177,138 @@
         "composite": 0.5,
         "index": 60,
         "band": "elevated"
+      }
+    },
+    {
+      "name": "D6 · stress only, no fatigue — the second self-report stands alone",
+      "input": {
+        "stressDayMean": 5
+      },
+      "expected": {
+        "version": 1,
+        "terms": {
+          "auto": {
+            "z": null,
+            "weight": 0.35,
+            "answered": 0,
+            "hrv": null,
+            "rhr": null
+          },
+          "sleep": {
+            "z": null,
+            "weight": 0.25,
+            "answered": 0,
+            "frag": null,
+            "onset": null
+          },
+          "self": {
+            "z": 2,
+            "weight": 0.25,
+            "answered": 1,
+            "fatigueDayMean": null,
+            "stressDayMean": 5
+          },
+          "load": {
+            "z": null,
+            "weight": 0.15,
+            "answered": 0,
+            "acwrTerm": 0,
+            "strainTerm": 0
+          }
+        },
+        "weightSum": 0.25,
+        "composite": 2,
+        "index": 90,
+        "band": "overreached"
+      }
+    },
+    {
+      "name": "D6 · fatigue 1 and stress 5 cancel — two answers, one term",
+      "input": {
+        "fatigueDayMean": 1,
+        "stressDayMean": 5
+      },
+      "expected": {
+        "version": 1,
+        "terms": {
+          "auto": {
+            "z": null,
+            "weight": 0.35,
+            "answered": 0,
+            "hrv": null,
+            "rhr": null
+          },
+          "sleep": {
+            "z": null,
+            "weight": 0.25,
+            "answered": 0,
+            "frag": null,
+            "onset": null
+          },
+          "self": {
+            "z": 0,
+            "weight": 0.25,
+            "answered": 2,
+            "fatigueDayMean": 1,
+            "stressDayMean": 5
+          },
+          "load": {
+            "z": null,
+            "weight": 0.15,
+            "answered": 0,
+            "acwrTerm": 0,
+            "strainTerm": 0
+          }
+        },
+        "weightSum": 0.25,
+        "composite": 0,
+        "index": 50,
+        "band": "baseline"
+      }
+    },
+    {
+      "name": "D6 · fatigue 4, stress 5 and a low HRV — weights unchanged",
+      "input": {
+        "hrvZ": -1,
+        "fatigueDayMean": 4,
+        "stressDayMean": 5
+      },
+      "expected": {
+        "version": 1,
+        "terms": {
+          "auto": {
+            "z": 1,
+            "weight": 0.35,
+            "answered": 1,
+            "hrv": 1,
+            "rhr": null
+          },
+          "sleep": {
+            "z": null,
+            "weight": 0.25,
+            "answered": 0,
+            "frag": null,
+            "onset": null
+          },
+          "self": {
+            "z": 1.5,
+            "weight": 0.25,
+            "answered": 2,
+            "fatigueDayMean": 4,
+            "stressDayMean": 5
+          },
+          "load": {
+            "z": null,
+            "weight": 0.15,
+            "answered": 0,
+            "acwrTerm": 0,
+            "strainTerm": 0
+          }
+        },
+        "weightSum": 0.6,
+        "composite": 1.2083333333333333,
+        "index": 74,
+        "band": "high"
       }
     }
   ]

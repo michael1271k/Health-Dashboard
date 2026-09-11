@@ -95,8 +95,10 @@ struct EraWindowPicker: View {
 /// cannot have data before.
 enum EraWindowSource {
     /// The first day any phase covers — the honest floor for "All" on a screen
-    /// whose read is ranged.
-    static var programStart: String { Phases.all.first?.start ?? Era.onyxCutStart }
+    /// whose read is ranged — else the plan's start, else today.
+    static func programStart(_ schedule: ScheduleContext, today: String) -> String {
+        schedule.phases.first?.start ?? schedule.planStartISO ?? today
+    }
 
     /// One read of `user_goals`, off the main actor's way.
     ///
@@ -111,25 +113,36 @@ enum EraWindowSource {
         firstDataISO: String? = nil
     ) -> EraWindowInput {
         let goals: UserGoalRow? = (try? database.read { db in try UserGoalRow.fetchOne(db) }) ?? nil
-        return input(goals: goals, today: today, firstDataISO: firstDataISO)
+        let userId = goals?.userId ?? ""
+        return input(
+            goals: goals,
+            schedule: (try? database.scheduleContext(userId: userId)) ?? ScheduleContext(programId: "", phase: .cut),
+            ladder: (try? database.leverLadder(userId: userId)) ?? .empty,
+            today: today, firstDataISO: firstDataISO
+        )
     }
 
-    /// The same, for a caller that already holds the row.
+    /// The same, for a caller that already holds the rows.
     static func input(
         goals: UserGoalRow?,
+        schedule: ScheduleContext,
+        ladder: LeverLadder,
         today: String = LogicalDay.today(),
         firstDataISO: String? = nil
     ) -> EraWindowInput {
-        let plan = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-        return EraWindowInput(
+        EraWindowInput(
             today: today,
-            planLabel: Programs.plan(id: plan)?.label ?? plan,
+            planLabel: schedule.plans.first { $0.id == schedule.programId }?.label ?? schedule.programId,
             // An empty string is not a selection — `WeeklyExportBuilder` reads
             // the column the same way, because a blank there means "nothing
             // stored" and `isLeverId("")` would say otherwise.
             storedLever: (goals?.activeLever?.isEmpty == false) ? goals?.activeLever : nil,
             releaseEndsOn: goals?.maintenanceUntil,
-            firstDataISO: firstDataISO ?? programStart
+            firstDataISO: firstDataISO ?? programStart(schedule, today: today),
+            planStartISO: schedule.planStartISO,
+            phases: schedule.phases,
+            rungs: ladder.rungs,
+            periods: ladder.periods
         )
     }
 }

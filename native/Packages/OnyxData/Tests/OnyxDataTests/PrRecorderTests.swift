@@ -18,13 +18,14 @@ struct PrRecorderTests {
     private func store() throws -> AppDatabase { try AppDatabase.inMemory(deviceId: "device-a") }
 
     /// `helix5-hack-squat` is the slug the logger mints, so every case here is
-    /// also the not-yet-synced path — the one where no catalogue row claims the
-    /// id and the name has to come from the program deck.
+    /// also the not-yet-synced path — the one where the catalogue row claims
+    /// the id through its `slug` column (W2), never through a compiled deck.
     private func log(
         _ db: AppDatabase, id: String, date: String, weights: [Double], reps: Int = 8,
         exercise: String = "helix5-hack-squat", dayKey: String = "legs_a"
     ) throws {
         try db.writer.write { conn in
+            try Exercise(id: "ex-hack", name: "Hack Squat", slug: "helix5-hack-squat").save(conn)
             try WorkoutSession(id: id, userId: user, dayKey: dayKey, date: date, startedAt: Date()).insert(conn)
             for (i, w) in weights.enumerated() {
                 try WorkoutSet(

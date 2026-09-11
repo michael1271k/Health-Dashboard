@@ -227,8 +227,10 @@ public extension AppDatabase {
                 let candidates = prior
                     .map { (date: $0.date, volume: Self.volume(bySession[$0.id] ?? [])) }
                     .filter { $0.volume > 0 }
+                let ladder = try Self.leverLadder(db, userId: userId, goals: .some(goals))
+                let phases = try Self.planCatalogue(db, userId: userId).phases
                 let fullEffort = candidates.filter {
-                    !Maintenance.isMaintenanceDate($0.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: todayISO)
+                    !Maintenance.isMaintenanceDate($0.date, today: todayISO, ladder: ladder, phases: phases)
                 }
                 let trailing = (fullEffort.isEmpty ? candidates : fullEffort).map(\.volume)
                 trailingAvgVolumeKg = trailing.isEmpty ? 0 : trailing.reduce(0, +) / Double(trailing.count)

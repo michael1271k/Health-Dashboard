@@ -22,14 +22,14 @@ public struct ResolvedTargets: Codable, Equatable, Sendable {
     public var steps: Double?
     public var waterMl: Double?
     public var sleepHours: Double?
-    /// The rung in force on the date, or nil before the cut opened.
-    public var leverId: LeverId?
+    /// The rung in force on the date (a `target_profiles` key), or nil.
+    public var leverId: String?
     /// The profile the day's figures MATCH — not the stamp — or nil.
     public var profileKey: String?
 
     public init(
         kcal: Double, protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, steps: Double? = nil,
-        waterMl: Double? = nil, sleepHours: Double? = nil, leverId: LeverId? = nil, profileKey: String? = nil
+        waterMl: Double? = nil, sleepHours: Double? = nil, leverId: String? = nil, profileKey: String? = nil
     ) {
         self.kcal = kcal; self.protein = protein; self.carbs = carbs; self.fat = fat; self.steps = steps
         self.waterMl = waterMl; self.sleepHours = sleepHours; self.leverId = leverId; self.profileKey = profileKey
@@ -53,37 +53,43 @@ public struct TargetSources: Codable, Equatable, Sendable {
     public var maintenanceUntil: String?
     /// The date's `daily_targets` row, or nil.
     public var dayTarget: DailyTarget?
-    /// The user's STORED profiles; the built-ins fill in behind them.
+    /// The user's stored profiles, EVERY kind: the day shapes and the rungs.
     public var profiles: [TargetProfile]
+    /// `lever_periods` — when each rung came into force.
+    public var periods: [LeverPeriod]
 
     public init(
         own: LeverGoals, waterMl: Double? = nil, sleepHours: Double? = nil,
         activeLever: String? = nil, maintenanceUntil: String? = nil,
-        dayTarget: DailyTarget? = nil, profiles: [TargetProfile] = []
+        dayTarget: DailyTarget? = nil, profiles: [TargetProfile] = [], periods: [LeverPeriod] = []
     ) {
         self.own = own; self.waterMl = waterMl; self.sleepHours = sleepHours
         self.activeLever = activeLever; self.maintenanceUntil = maintenanceUntil
-        self.dayTarget = dayTarget; self.profiles = profiles
+        self.dayTarget = dayTarget; self.profiles = profiles; self.periods = periods
+    }
+
+    /// The rungs, the schedule and the selection, as `Levers` reads them.
+    public var ladder: LeverLadder {
+        LeverLadder(profiles: profiles, periods: periods, stored: activeLever, releaseEndsOn: maintenanceUntil)
     }
 }
 
 public enum Targets {
-    /// The user's saved profiles first, then the built-ins they have not
-    /// replaced (by key).
+    /// The day shapes the picker offers — stored rows only (W2: no built-ins).
     public static func profiles(stored: [TargetProfile]) -> [TargetProfile] {
-        let known = Set(stored.map(\.key))
-        return stored + TargetProfiles.builtin.filter { !known.contains($0.key) }
+        TargetProfiles.days(stored)
     }
 
     public static func resolve(_ s: TargetSources, date: String, today: String) -> ResolvedTargets {
+        let ladder = s.ladder
         let goals = DailyTargets.apply(
-            Levers.goalsForDate(date, stored: s.activeLever, today: today, fallback: s.own, releaseEndsOn: s.maintenanceUntil),
+            Levers.goalsForDate(date, today: today, fallback: s.own, in: ladder),
             s.dayTarget
         )
         return ResolvedTargets(
             kcal: goals.calorie, protein: goals.protein, carbs: goals.carbs, fat: goals.fat, steps: goals.steps,
             waterMl: s.waterMl, sleepHours: s.sleepHours,
-            leverId: Levers.leverForDate(date, stored: s.activeLever, today: today, releaseEndsOn: s.maintenanceUntil),
+            leverId: Levers.leverForDate(date, today: today, in: ladder),
             profileKey: profiles(stored: s.profiles).first { TargetProfiles.matches(s.dayTarget, $0) }?.key
         )
     }

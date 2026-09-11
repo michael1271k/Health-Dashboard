@@ -98,7 +98,7 @@ public struct HistorySetRow: Codable, FetchableRecord, Sendable, Equatable, Iden
 public extension AppDatabase {
     private static let setSelect = """
         SELECT s.id, s.session_id, s.exercise_id,
-               COALESCE(e.name, s.exercise_id) AS exercise_name,
+               COALESCE(e.name, es.name, s.exercise_id) AS exercise_name,
                s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                s.side, s.pair_id, s.est_1rm_kg, s.rpe,
                s.duration_sec, s.incline, s.distance_km, s.elevation_m, s.exercise_order,
@@ -106,6 +106,7 @@ public extension AppDatabase {
         FROM workout_sets s
         JOIN workout_sessions sess ON sess.id = s.session_id
         LEFT JOIN exercises e ON e.id = s.exercise_id
+            LEFT JOIN exercises es ON es.slug = s.exercise_id
         """
 
     /// Ledger order: by day, then by session start, then as the fold arrived.
@@ -229,6 +230,9 @@ public extension AppDatabase {
             let goals = try userId
                 .map { try UserGoalRow.filter(Column("user_id") == $0).fetchOne(db) }
                 ?? UserGoalRow.fetchOne(db)
+            let owner = goals?.userId ?? userId ?? ""
+            let ladder = try Self.leverLadder(db, userId: owner, goals: .some(goals))
+            let ctx = try Self.scheduleContext(db, userId: owner, goals: .some(goals))
             let instant = Self.instantFormatter()
             let all = try WorkoutSession
                 .filter(Column("day_key") == dayKey)
@@ -240,13 +244,11 @@ public extension AppDatabase {
                         // no `started_at` sorts to the top of its own day, which
                         // is where a row that never recorded one belongs.
                         startedAt: s.startedAt.map(instant) ?? "",
-                        maintenance: Maintenance.leverOn(
-                            s.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: today
-                        )
+                        maintenance: Maintenance.leverOn(s.date, today: today, ladder: ladder)
                     )
                 }
 
-            let qualifying = SessionSeedBuilder.sessionsForSeed(all, dayKey: dayKey, today: today)
+            let qualifying = SessionSeedBuilder.sessionsForSeed(all, dayKey: dayKey, today: today) { Schedule.planId(owning: $0, in: ctx) }
             guard !qualifying.isEmpty else { return SeedHistory.empty }
 
             let name = try PrRecorder.nameResolver(db)
@@ -288,9 +290,10 @@ public extension AppDatabase {
     /// landed in between.
     func sessionSeed(
         dayKey: String, userId: String, phase: ProgramPhase,
-        program: Program = .onyx5, today: String = LogicalDay.today()
+        program: Program, today: String = LogicalDay.today()
     ) throws -> SeededDeck {
         let history = try sessionsForSeed(dayKey: dayKey, userId: userId, today: today)
+        let ctx = try scheduleContext(userId: userId)
         // The qualifying ids are handed over rather than re-derived: without
         // this, `progressionQueue` folds the same sessions and re-reads all of
         // their sets a second time, on the main actor, inside `LoggerModel
@@ -306,7 +309,8 @@ public extension AppDatabase {
             ready: alerts
                 .filter { $0.state == .ready }
                 .map { SeedProgression(name: $0.name, suggestKg: $0.suggestKg) },
-            program: program
+            program: program,
+            planOwning: { Schedule.planId(owning: $0, in: ctx) }
         )
         return SeededDeck(seed: seed, alerts: alerts)
     }

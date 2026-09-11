@@ -108,7 +108,7 @@ extension EraWindow: Codable {
 public struct EraWindowInput: Codable, Sendable, Equatable {
     /// The logical day the window ends on.
     public var today: String
-    /// The active plan's display name — `Programs.plan(id:)?.label`.
+    /// The active plan's display name — the `plans` row's.
     public var planLabel: String
     /// `user_goals.active_lever`, verbatim.
     public var storedLever: String?
@@ -119,16 +119,51 @@ public struct EraWindowInput: Codable, Sendable, Equatable {
     /// and every candidate is either months of empty axis or the cut start —
     /// which is what "Since cut" already says.
     public var firstDataISO: String?
+    /// `plans.started_on` of the active plan — what "Since cut" opens on.
+    public var planStartISO: String?
+    /// The dated blocks (`plan_phases`) — what "Current phase" walks.
+    public var phases: [PhaseDef]
+    /// The rungs and the schedule — what "Current lever" walks. `storedLever`
+    /// and `releaseEndsOn` above are the ladder's selection, kept as fields
+    /// because the fixtures set them by name.
+    public var rungs: [NutritionLever]
+    public var periods: [LeverPeriod]
 
     public init(
         today: String, planLabel: String, storedLever: String? = nil,
-        releaseEndsOn: String? = nil, firstDataISO: String? = nil
+        releaseEndsOn: String? = nil, firstDataISO: String? = nil,
+        planStartISO: String? = nil, phases: [PhaseDef] = [], rungs: [NutritionLever] = [], periods: [LeverPeriod] = []
     ) {
         self.today = today
         self.planLabel = planLabel
         self.storedLever = storedLever
         self.releaseEndsOn = releaseEndsOn
         self.firstDataISO = firstDataISO
+        self.planStartISO = planStartISO
+        self.phases = phases
+        self.rungs = rungs
+        self.periods = periods
+    }
+
+    public var ladder: LeverLadder {
+        LeverLadder(rungs: rungs, periods: periods, stored: storedLever, releaseEndsOn: releaseEndsOn)
+    }
+
+    enum CodingKeys: String, CodingKey { case today, planLabel, storedLever, releaseEndsOn, firstDataISO, planStartISO, phases, rungs, periods }
+
+    /// The W2 table fields are optional on the wire: an input written before
+    /// them (the golden fixtures) decodes with empty tables, never as a failure.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        today = try c.decode(String.self, forKey: .today)
+        planLabel = try c.decode(String.self, forKey: .planLabel)
+        storedLever = try c.decodeIfPresent(String.self, forKey: .storedLever)
+        releaseEndsOn = try c.decodeIfPresent(String.self, forKey: .releaseEndsOn)
+        firstDataISO = try c.decodeIfPresent(String.self, forKey: .firstDataISO)
+        planStartISO = try c.decodeIfPresent(String.self, forKey: .planStartISO)
+        phases = try c.decodeIfPresent([PhaseDef].self, forKey: .phases) ?? []
+        rungs = try c.decodeIfPresent([NutritionLever].self, forKey: .rungs) ?? []
+        periods = try c.decodeIfPresent([LeverPeriod].self, forKey: .periods) ?? []
     }
 }
 
@@ -165,10 +200,13 @@ public extension EraWindow {
         return Swift.max(1, b - a + 1)
     }
 
-    /// How far back the lever walk may go: the first row of the schedule.
-    /// Before it there was no rung and every day answers the same nil, so an
-    /// unfloored walk would step to the epoch one day at a time.
-    static var leverFloor: String { Levers.schedule.first?.from ?? Era.onyxCutStart }
+    /// How far back the lever walk may go: the first row of the schedule, else
+    /// the plan's start, else today. Before it there was no rung and every day
+    /// answers the same nil, so an unfloored walk would step to the epoch one
+    /// day at a time.
+    static func leverFloor(_ input: EraWindowInput) -> String {
+        input.periods.first?.from ?? input.planStartISO ?? input.today
+    }
 
     /// The first day of the run ending on `today` that shares today's rung.
     ///
@@ -180,11 +218,12 @@ public extension EraWindow {
     /// fortnight had been eaten under a rung chosen at breakfast.
     static func leverRunStart(_ input: EraWindowInput) -> String {
         let today = input.today
-        let id = Levers.leverForDate(today, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn)
-        let floor = leverFloor
+        let ladder = input.ladder
+        let id = Levers.leverForDate(today, today: today, in: ladder)
+        let floor = leverFloor(input)
         var start = today
         while let prev = ISODate.addDays(start, -1), prev >= floor {
-            guard Levers.leverForDate(prev, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn) == id
+            guard Levers.leverForDate(prev, today: today, in: ladder) == id
             else { break }
             start = prev
         }
@@ -209,21 +248,21 @@ public extension EraWindow {
         case .currentPhase:
             // No phase covers the day — the gap around the Thailand trip is a
             // real one. The plan is still a true name for what is running.
-            guard let span = Phases.span(for: today) else {
+            guard let span = Phases.span(for: today, in: input.phases) else {
                 return clamp(input.firstDataISO ?? today, "\(input.planLabel) Era")
             }
             return clamp(span.start, span.def.eraTag ?? span.def.name)
 
         case .currentLever:
-            let id = Levers.leverForDate(
-                today, stored: input.storedLever, today: today, releaseEndsOn: input.releaseEndsOn
-            )
-            // `lever(byId:)` is nil for `custom` and for a day before the cut
-            // opened, which is the point: it names the ABSENCE of a rung.
-            return clamp(EraWindow.leverRunStart(input), Levers.lever(byId: id?.rawValue)?.label ?? "Custom")
+            let ladder = input.ladder
+            let id = Levers.leverForDate(today, today: today, in: ladder)
+            // `lever(byId:)` is nil for no rung and for a day before the first
+            // period, which is the point: it names the ABSENCE of a rung.
+            return clamp(EraWindow.leverRunStart(input), Levers.lever(byId: id, in: ladder)?.label ?? "Custom")
 
         case .sinceCutStart:
-            return clamp(Era.onyxCutStart, "Since cut")
+            // The active plan's first day. A plan never started has no "since".
+            return clamp(input.planStartISO ?? input.firstDataISO ?? today, "Since cut")
 
         case .days(let n):
             let span = Swift.max(1, n)
@@ -242,9 +281,13 @@ public extension ResolvedEraWindow {
     /// sessions differently — a PPL week has Push/Pull/Legs and an Onyx week
     /// has none of them. A window that starts before the cut and ends today
     /// spans both, so it gets both.
-    var era: String {
-        if startISO >= Era.onyxCutStart { return Era.axis.rawValue }
-        if endISO < Era.onyxCutStart { return Era.ppl.rawValue }
+    ///
+    /// `cutStartISO` is the active plan's `started_on`; with none, every window
+    /// is the current era.
+    func era(cutStartISO: String?) -> String {
+        guard let cut = cutStartISO else { return "axis" }
+        if startISO >= cut { return "axis" }
+        if endISO < cut { return "ppl" }
         return "all"
     }
 }

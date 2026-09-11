@@ -20,6 +20,8 @@ enum PulsePreviews {
     @MainActor
     static func model(_ seed: (AppDatabase) throws -> Void = { _ in }) -> DayModel {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         _ = try? database.editUserGoals(userId: userId) { row in
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue

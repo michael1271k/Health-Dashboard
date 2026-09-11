@@ -3,10 +3,13 @@ import Foundation
 /// Week boundaries and the ONE programme week counter — ports of
 /// `weekStartOf` (`src/lib/utils/week.ts`) and `src/lib/reports/weekNumber.ts`.
 ///
-/// Week 0 is the week containing Jul 15–18 2026 (Sunday-anchored start
-/// 2026-07-12). It is a real, PARTIAL week: the block opened on a Wednesday.
+/// ── WEEK 0 IS THE PLAN'S, NOT THE PACKAGE'S (W2) ─────────────────────────────
+/// `week0Start = "2026-07-12"` was the Sunday of the week the founder's cut
+/// opened, compiled in. The anchor is `plans.started_on` now — the week
+/// containing the active plan's first day — and every counter takes it as a
+/// parameter (`ScheduleContext.weekZeroStart` derives it). With no anchor
+/// there is no programme week, and the label falls back to the phase.
 public enum Week {
-    public static let week0Start = "2026-07-12"
 
     /// `weekStartDayFromEndDay` — `user_goals.week_end_day` → the start day
     /// `start(of:startDay:)` wants. A week ending Sunday starts Monday; nil is
@@ -26,21 +29,30 @@ public enum Week {
         return ISODate.iso(dayNumber: day - offset)
     }
 
-    /// Programme week number for a week start — Week 0 = 2026-07-12, then +1 a
-    /// week. 0 rather than NaN for an unparseable date.
-    public static func number(ofWeekStart weekStartISO: String) -> Double {
-        guard let a = ISODate.dayNumber(week0Start), let b = ISODate.dayNumber(weekStartISO) else { return 0 }
+    /// The week-0 anchor for a plan that started on `startedOn`: the Sunday
+    /// (or the athlete's start day) of the week that day fell in. Week 0 is a
+    /// real, PARTIAL week when a block opens mid-week — the founder's did, on
+    /// a Wednesday.
+    public static func anchor(planStartedOn startedOn: String?, startDay: Int = 0) -> String? {
+        startedOn.map { start(of: $0, startDay: startDay) }
+    }
+
+    /// Programme week number for a week start — Week 0 = `anchor`, then +1 a
+    /// week. 0 rather than NaN for an unparseable date, and 0 with no anchor.
+    public static func number(ofWeekStart weekStartISO: String, anchor: String?) -> Double {
+        guard let anchor, let a = ISODate.dayNumber(anchor), let b = ISODate.dayNumber(weekStartISO) else { return 0 }
         return jsRound(Double(b - a) / 7)
     }
 
-    public static func number(forDate dateISO: String, startDay: Int = 0) -> Double {
-        number(ofWeekStart: start(of: dateISO, startDay: startDay))
+    public static func number(forDate dateISO: String, startDay: Int = 0, anchor: String?) -> Double {
+        number(ofWeekStart: start(of: dateISO, startDay: startDay), anchor: anchor)
     }
 
-    /// "Week 3" for a Onyx-era week; a pre-Week-0 week draws its label from the phase.
-    public static func label(ofWeekStart weekStartISO: String) -> String {
-        let n = number(ofWeekStart: weekStartISO)
-        if n >= 0 { return "Week \(jsIntegerString(n))" }
-        return Phases.weekPhase(weekStart: weekStartISO)?.label ?? "Week \(jsIntegerString(n))"
+    /// "Week 3" for a week on or after the anchor; a week before it draws its
+    /// label from the phase table, and a week neither knows is "Week −n".
+    public static func label(ofWeekStart weekStartISO: String, anchor: String?, phases: [PhaseDef]) -> String {
+        let n = number(ofWeekStart: weekStartISO, anchor: anchor)
+        if anchor != nil, n >= 0 { return "Week \(jsIntegerString(n))" }
+        return Phases.weekPhase(weekStart: weekStartISO, in: phases)?.label ?? "Week \(jsIntegerString(n))"
     }
 }

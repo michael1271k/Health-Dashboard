@@ -42,12 +42,13 @@ struct WeekNumberGoldenTests {
 
     @Test("weekStartOf, weekNumberOf and weekLabelOf match")
     func matches() throws {
+        let anchor = Week.anchor(planStartedOn: FounderTables.planStartISO)
         for c in try GoldenFixture<In, Out>.load("week-number").cases {
             let ws = Week.start(of: c.input.date, startDay: c.input.startDay)
             #expect(ws == c.expected.weekStart, "weekStartOf — \(c.name)")
-            expectClose(Week.number(ofWeekStart: ws), c.expected.weekNumber, "weekNumberOf — \(c.name)")
-            #expect(Week.label(ofWeekStart: ws) == c.expected.label, "weekLabelOf — \(c.name)")
-            expectClose(Week.number(forDate: c.input.date, startDay: c.input.startDay), c.expected.weekNumberForDate, "weekNumberForDate — \(c.name)")
+            expectClose(Week.number(ofWeekStart: ws, anchor: anchor), c.expected.weekNumber, "weekNumberOf — \(c.name)")
+            #expect(Week.label(ofWeekStart: ws, anchor: anchor, phases: FounderTables.phases) == c.expected.label, "weekLabelOf — \(c.name)")
+            expectClose(Week.number(forDate: c.input.date, startDay: c.input.startDay, anchor: anchor), c.expected.weekNumberForDate, "weekNumberForDate — \(c.name)")
         }
     }
 }

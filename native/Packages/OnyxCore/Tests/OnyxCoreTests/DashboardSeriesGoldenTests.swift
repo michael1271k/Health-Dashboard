@@ -159,7 +159,7 @@ struct TrajectoryGoldenTests {
             let actual = TrajectorySeries.build(
                 c.input.readings, today: c.input.today, targetWeightKg: c.input.targetWeightKg,
                 rateMinKgWk: c.input.rateMinKgWk, rateMaxKgWk: c.input.rateMaxKgWk,
-                energy: c.input.energy, halfLifeDays: c.input.halfLifeDays
+                energy: c.input.energy, halfLifeDays: c.input.halfLifeDays, phases: FounderTables.phases
             )
             expectPoints(actual.points, c.expected.points, c.name)
             #expect(actual.board == c.expected.board, "board — \(c.name)")

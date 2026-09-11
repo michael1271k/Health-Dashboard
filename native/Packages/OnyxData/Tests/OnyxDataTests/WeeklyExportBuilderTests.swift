@@ -37,6 +37,7 @@ struct WeeklyExportBuilderTests {
             try PlanPhaseVolumeRow(userId: user, planId: "onyx5", phase: "cut", muscle: "Quads", targetSets: 12).insert(conn)
 
             try Exercise(id: "ex-lp", name: "Leg Press").insert(conn)
+            try SampleDeck.seedCatalogue(conn, userId: user)
             try Exercise(id: "ex-rc", name: "Reverse Crunch").insert(conn)
             try Exercise(id: "ex-lr", name: "Single Arm Lateral Raise (Cable)").insert(conn)
 
@@ -188,7 +189,7 @@ struct WeeklyExportBuilderTests {
 
         let markdown = WeeklyExport.build(got)
         #expect(markdown.contains("Legs & Core A"))
-        #expect(markdown.hasPrefix("# ONYX Week 6 \u{00B7} 2026-08-23\u{2192}2026-08-29 \u{00B7} Onyx Cut \u{00B7} Cut \u{00B7} lever=mixed"))
+        #expect(markdown.hasPrefix("# ONYX Week 6 \u{00B7} 2026-08-23\u{2192}2026-08-29 \u{00B7} Onyx-5 Cut \u{00B7} Cut \u{00B7} lever=mixed"))
     }
 
     /// The whole payload, by hand — every field the web's `weekPayload` would
@@ -196,13 +197,13 @@ struct WeeklyExportBuilderTests {
     static let expected = #"""
     {
       "weekStart": "2026-08-23", "weekEnd": "2026-08-29", "weekLabel": "Week 6",
-      "programLabel": "Onyx Cut", "phaseLabel": "Cut",
+      "programLabel": "Onyx-5 Cut", "phaseLabel": "Cut",
       "calorieGoal": 1999, "proteinGoalG": 170, "stepsGoal": 10000, "sleepGoalHours": 8, "waterGoalMl": 3000,
       "targetPeriods": [
-        {"leverId": "custom", "label": "Custom", "goals": {"calorie": 1999, "protein": 170, "carbs": 206, "fat": 55, "steps": 10000},
+        {"leverId": null, "label": "Custom", "goals": {"calorie": 1999, "protein": 170, "carbs": 206, "fat": 55, "steps": 10000},
          "dates": ["2026-08-23", "2026-08-24", "2026-08-25", "2026-08-26"]},
-        {"leverId": "custom", "label": "Custom", "goals": {"calorie": 2400, "protein": 170, "steps": 10000}, "dates": ["2026-08-27"]},
-        {"leverId": "custom", "label": "Custom", "goals": {"calorie": 1999, "protein": 170, "carbs": 206, "fat": 55, "steps": 10000},
+        {"leverId": null, "label": "Custom", "goals": {"calorie": 2400, "protein": 170, "steps": 10000}, "dates": ["2026-08-27"]},
+        {"leverId": null, "label": "Custom", "goals": {"calorie": 1999, "protein": 170, "carbs": 206, "fat": 55, "steps": 10000},
          "dates": ["2026-08-28", "2026-08-29"]}
       ],
       "days": [

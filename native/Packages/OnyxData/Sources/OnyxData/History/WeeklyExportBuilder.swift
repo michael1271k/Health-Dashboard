@@ -42,8 +42,8 @@ public struct WeeklyExportBuilder: Sendable {
     public func input(weekStart: String, today: String = LogicalDay.today()) throws -> WeeklyExportInput {
         let weekEnd = ISODate.addDays(weekStart, 6) ?? weekStart
         let rows = try fetch(weekStart: weekStart, weekEnd: weekEnd)
-        let phase: ProgramPhase = Phases.weekPhase(weekStart: weekStart)?.kind == .bulk ? .bulk : .cut
-        let ctx = ScheduleContext(programId: rows.programId, phase: phase, overrides: rows.overrides, layout: rows.layout)
+        let ctx = rows.schedule
+        let phase = ctx.phase
         let program = Schedule.programForContext(ctx, weekStart).program
         let goals = rows.goals
 
@@ -53,7 +53,6 @@ public struct WeeklyExportBuilder: Sendable {
         let dates = days.map(\.date)
         let targetPeriods = Levers.leverPeriods(
             dates,
-            stored: (goals?.activeLever?.isEmpty == false) ? goals?.activeLever : nil,
             today: today,
             fallback: LeverGoals(
                 calorie: Double(goals?.calorieGoal ?? 0),
@@ -62,7 +61,7 @@ public struct WeeklyExportBuilder: Sendable {
                 fat: goals?.fatGoalG.map(Double.init),
                 steps: goals?.stepsGoal.map(Double.init)
             ),
-            releaseEndsOn: goals?.maintenanceUntil,
+            in: rows.ladder,
             dailyTargets: rows.dailyTargets.map(DailyTarget.init)
         )
 
@@ -98,8 +97,8 @@ public struct WeeklyExportBuilder: Sendable {
 
         return try make([
             "weekStart": weekStart, "weekEnd": weekEnd,
-            "weekLabel": Week.label(ofWeekStart: weekStart),
-            "programLabel": Era.forDate(weekStart) == .axis ? "Onyx \(phase == .cut ? "Cut" : "Bulk")" : "PPL (legacy)",
+            "weekLabel": Week.label(ofWeekStart: weekStart, anchor: ctx.weekZeroStart, phases: ctx.phases),
+            "programLabel": Self.programLabel(ctx, weekStart: weekStart, phase: phase),
             "calorieGoal": j(goals?.calorieGoal.map(Double.init)),
             "proteinGoalG": j(goals?.proteinGoalG.map(Double.init)),
             "stepsGoal": j(goals?.stepsGoal.map(Double.init)),
@@ -137,22 +136,32 @@ public struct WeeklyExportBuilder: Sendable {
         }
     }
 
+    /// The context, with the PHASE the exported week ran under rather than
+    /// the one selected today — a bulk week exported during a cut is a bulk.
     func schedule(_ db: Database, goals: UserGoalRow?, weekStart: String) throws -> ScheduleContext {
-        let user = Column("user_id") == userId
-        let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-        var overrides: [String: String] = [:]
-        for r in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[r.date] = r.dayKey }
-        let layoutRaw = try ProgramDayLayoutRow.filter(user && Column("program_id") == programId).fetchOne(db)?.layout.raw
-        let layout = ScheduleLayout.parseLayout(layoutRaw.flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) })
-        let phase: ProgramPhase = Phases.weekPhase(weekStart: weekStart)?.kind == .bulk ? .bulk : .cut
-        return ScheduleContext(programId: programId, phase: phase, overrides: overrides, layout: layout)
+        var ctx = try AppDatabase.scheduleContext(db, userId: userId, goals: .some(goals))
+        ctx.phase = Phases.weekPhase(weekStart: weekStart, in: ctx.phases)?.kind == .bulk ? .bulk : .cut
+        return ctx
+    }
+
+    /// "Onyx-5 Cut" / "Push/Pull/Legs (legacy)" — the plan that owned the
+    /// week, by its own name. Until W2 this compared the week against the
+    /// compiled cut start.
+    static func programLabel(_ ctx: ScheduleContext, weekStart: String, phase: ProgramPhase) -> String {
+        let owner = Schedule.planId(owning: weekStart, in: ctx)
+        let plan = ctx.plans.first { $0.id == owner }
+        if plan?.isLegacy == true { return "\(plan!.label) (legacy)" }
+        return "\(plan?.label ?? owner) \(phase == .cut ? "Cut" : "Bulk")"
     }
 
     struct Rows {
         var goals: UserGoalRow?
-        var programId: String
-        var overrides: [String: String]
-        var layout: DayLayout
+        var schedule: ScheduleContext
+        var ladder: LeverLadder
+        var profiles: [TargetProfile]
+        var programId: String { schedule.programId }
+        var overrides: [String: String] { schedule.overrides }
+        var layout: DayLayout { schedule.layout }
         var logs: [DailyLogRow]
         var nutrition: [NutritionEntryRow]
         var sessions: [WorkoutSession]
@@ -190,12 +199,16 @@ public struct WeeklyExportBuilder: Sendable {
     func fetch(weekStart: String, weekEnd: String) throws -> Rows {
         let user = Column("user_id") == userId
         let inWeek = user && Column("date") >= weekStart && Column("date") <= weekEnd
-        let ledgerFrom = min(Week.start(of: Week.week0Start), weekStart)
-        let inLedger = user && Column("date") >= ledgerFrom && Column("date") <= weekEnd
         return try database.read { db in
             let goals = try UserGoalRow.filter(user).fetchOne(db)
             let ctx = try schedule(db, goals: goals, weekStart: weekStart)
-            let (programId, overrides, layout) = (ctx.programId, ctx.overrides, ctx.layout)
+            let programId = ctx.programId
+            let ladder = try AppDatabase.leverLadder(db, userId: userId, goals: .some(goals))
+            let profiles = try TargetProfileRow.filter(user).order(Column("sort")).fetchAll(db).compactMap(TargetProfile.init)
+            // The trend ledger runs from the plan's Week 0; with no dated
+            // plan, from the exported week alone.
+            let ledgerFrom = min(ctx.weekZeroStart ?? weekStart, weekStart)
+            let inLedger = user && Column("date") >= ledgerFrom && Column("date") <= weekEnd
 
             let ledgerLogs = try DailyLogRow.filter(inLedger).order(Column("date")).fetchAll(db)
             let ledgerNutrition = try NutritionEntryRow.filter(inLedger && Column("meal_type") == "daily").order(Column("date"), Column("logged_at")).fetchAll(db)
@@ -208,13 +221,14 @@ public struct WeeklyExportBuilder: Sendable {
             let marks = Array(repeating: "?", count: ids.count).joined(separator: ",")
             let allSets: [HistorySetRow] = ids.isEmpty ? [] : try HistorySetRow.fetchAll(db, sql: """
                 SELECT s.id, s.session_id, s.exercise_id,
-                       COALESCE(e.name, s.exercise_id) AS exercise_name,
+                       COALESCE(e.name, es.name, s.exercise_id) AS exercise_name,
                        s.set_index, s.fold_order, s.weight_kg, s.reps, s.set_type,
                        s.side, s.pair_id, s.est_1rm_kg, s.rpe,
                        sess.date, sess.day_key
                 FROM workout_sets s
                 JOIN workout_sessions sess ON sess.id = s.session_id
                 LEFT JOIN exercises e ON e.id = s.exercise_id
+                LEFT JOIN exercises es ON es.slug = s.exercise_id
                 WHERE s.session_id IN (\(marks))
                 ORDER BY sess.date, sess.started_at, s.session_id, s.fold_order, s.set_index
                 """, arguments: StatementArguments(ids))
@@ -236,7 +250,7 @@ public struct WeeklyExportBuilder: Sendable {
             let sleepTo = Self.utc("\(ISODate.addDays(weekEnd, 1) ?? weekEnd)T12:00:00Z")
 
             return Rows(
-                goals: goals, programId: programId, overrides: overrides, layout: layout,
+                goals: goals, schedule: ctx, ladder: ladder, profiles: profiles,
                 logs: ledgerLogs.filter { $0.date >= weekStart },
                 nutrition: ledgerNutrition.filter { $0.date >= weekStart },
                 sessions: sessions, sets: sets,
@@ -287,7 +301,7 @@ public struct WeeklyExportBuilder: Sendable {
         var shapeByDate: [String: (label: String?, carbs: Bool, fat: Bool)] = [:]
         for r in d.dailyTargets {
             let label: String? = r.profileKey.map { key in
-                TargetProfiles.builtin.first { $0.key == key }?.label ?? (key.prefix(1).uppercased() + key.dropFirst())
+                d.profiles.first { $0.key == key }?.label ?? (key.prefix(1).uppercased() + key.dropFirst())
             }
             shapeByDate[r.date] = (label, r.trackCarbs, r.trackFat)
         }
@@ -615,15 +629,9 @@ public struct WeeklyExportBuilder: Sendable {
 
     // MARK: - Supplements
 
-    /// The stack as rows — the DATABASE verbatim, the seed only when unseeded.
+    /// The stack as rows — the DATABASE verbatim. An empty table is an empty
+    /// stack since W2; there is no compiled seed to fall back to.
     func supplementStack(_ customs: [CustomSupplement]) -> [[String: Any]] {
-        if customs.isEmpty {
-            return Supplements.protocolSeed.flatMap { slot in
-                slot.items.map { i in
-                    ["time": slot.time, "name": i.name, "dose": i.dose, "trainingOnly": j(i.trainingOnly), "notes": j(i.notes)]
-                }
-            }
-        }
         return customs.map { c in
             [
                 "time": j(c.time), "name": c.name, "dose": c.dose,
@@ -678,7 +686,7 @@ public struct WeeklyExportBuilder: Sendable {
         }
 
         var out: [LedgerWeek] = []
-        var ws = Week.start(of: Week.week0Start)
+        var ws = ctx.weekZeroStart ?? weekStart
         while ws <= weekStart {
             let dates = (0..<7).map { ISODate.addDays(ws, $0) ?? ws }
             let days: [ExportDay] = try dates.enumerated().map { i, date in
@@ -697,7 +705,7 @@ public struct WeeklyExportBuilder: Sendable {
                 try make(["date": "", "kind": "", "durationMin": $0])
             }
             out.append(try make([
-                "label": Week.label(ofWeekStart: ws), "weekStart": ws,
+                "label": Week.label(ofWeekStart: ws, anchor: ctx.weekZeroStart, phases: ctx.phases), "weekStart": ws,
                 "totals": Self.encodeToJSON(WeeklyExport.trendTotals(days: days, sessions: sessions, cardio: cardio)),
             ]))
             guard let next = ISODate.addDays(ws, 7) else { break }

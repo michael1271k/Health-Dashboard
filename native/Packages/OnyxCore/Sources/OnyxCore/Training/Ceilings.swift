@@ -186,7 +186,7 @@ public enum Ceilings {
     /// STRICTEST window across the deck — highest ceiling, keeping its own
     /// floor — so an ambiguous match can only under-trigger the badge. Nil for
     /// exercises not in the program and for timed holds.
-    public static func repWindow(for exerciseName: String, dayKey: String?, program: Program = .onyx5, phase: ProgramPhase = .cut) -> RepWindow? {
+    public static func repWindow(for exerciseName: String, dayKey: String?, program: Program, phase: ProgramPhase = .cut) -> RepWindow? {
         let target = normalize(exerciseName)
         let match = { (e: ProgramExercise) in normalize(e.name) == target }
         if let dayKey, !dayKey.isEmpty, let onDay = program.day(key: dayKey)?.exercises(for: phase).first(where: match) {
@@ -199,7 +199,7 @@ public enum Ceilings {
 
     /// The programmed HOLD target in seconds for a timed movement, or nil. With
     /// no day, the LONGEST target so an ambiguous match only under-triggers.
-    public static func holdTarget(for exerciseName: String, dayKey: String?, program: Program = .onyx5, phase: ProgramPhase = .cut) -> Double? {
+    public static func holdTarget(for exerciseName: String, dayKey: String?, program: Program, phase: ProgramPhase = .cut) -> Double? {
         let target = normalize(exerciseName)
         let match = { (e: ProgramExercise) in normalize(e.name) == target }
         if let dayKey, !dayKey.isEmpty, let onDay = program.day(key: dayKey)?.exercises(for: phase).first(where: match),

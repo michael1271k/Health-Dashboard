@@ -453,7 +453,7 @@ public enum WeeklyExport {
         let rung: String
         if periods.count == 1 {
             let g = periods[0].goals
-            rung = "lever=\(periods[0].leverId.rawValue) \(n(g.calorie))kcal"
+            rung = "lever=\(periods[0].leverId ?? "custom") \(n(g.calorie))kcal"
                 + " \(n(g.protein))P \(n(g.carbs))C"
                 + " \(n(g.fat))F \(n(g.steps))st"
         } else {
@@ -479,7 +479,7 @@ public enum WeeklyExport {
             L.append("## LEVERS" + sep + ["id", "label", "kcal", "P", "C", "F", "steps", "dates"].joined(separator: sep))
             for p in periods {
                 L.append(fields([
-                    p.leverId.rawValue, p.label, n(p.goals.calorie), n(p.goals.protein),
+                    p.leverId ?? "custom", p.label, n(p.goals.calorie), n(p.goals.protein),
                     n(p.goals.carbs), n(p.goals.fat), n(p.goals.steps),
                     p.dates.isEmpty ? dash : "\(p.dates[0])…\(p.dates[p.dates.count - 1])",
                 ]))

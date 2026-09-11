@@ -30,6 +30,8 @@ enum NutritionPreviews {
     @MainActor
     static func model(_ screen: String) -> NutritionModel? {
         let database = try! AppDatabase.inMemory(deviceId: "shot")
+        // The catalogue as rows (W2): decks, plans, phases, rungs.
+        PreviewCatalogue.seed(database)
         let date = LogicalDay.today()
         _ = try? database.editUserGoals(userId: userId) { row in
             row.calorieGoal = 1955
@@ -38,7 +40,7 @@ enum NutritionPreviews {
             row.fatGoalG = 55
             row.stepsGoal = 10000
             row.waterGoalMl = 3000
-            row.activeLever = LeverId.custom.rawValue
+            row.activeLever = "custom"
             row.activePlan = "onyx5"
             row.activePhase = ProgramPhase.cut.rawValue
             row.goalPreset = ProgramPhase.cut.rawValue

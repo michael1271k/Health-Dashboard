@@ -95,7 +95,7 @@ struct ProgressionQueueGoldenTests {
         let fixture = try GoldenFixture<QueueIn, [ProgressionQueue.Alert]>.load("progression-queue")
         #expect(fixture.cases.contains { !$0.expected.isEmpty })
         for c in fixture.cases {
-            let actual = ProgressionQueue.alerts(targets: c.input.targets, rows: c.input.rows.map(\.set), program: .onyx5, phase: c.input.phase)
+            let actual = ProgressionQueue.alerts(targets: c.input.targets, rows: c.input.rows.map(\.set), program: FounderTables.deck, phase: c.input.phase)
             #expect(actual == c.expected, "progressionAlerts — \(c.name)")
         }
     }

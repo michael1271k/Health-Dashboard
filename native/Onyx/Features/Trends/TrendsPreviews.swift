@@ -75,9 +75,12 @@ enum TrendsPreviews {
     private static var maintenanceLens: MaintenanceLens {
         let today = LogicalDay.today()
         let weekStart = ISODate.addDays(Week.start(of: today), -21) ?? today
+        let release = NutritionLever(
+            id: "maintenance-week", kind: .release, label: "Maintenance Week", summary: "",
+            calorieGoal: 2151, proteinGoalG: 170, carbsGoalG: 244, fatGoalG: 55, stepsGoal: 7500
+        )
         return MaintenanceLens(
-            stored: LeverId.maintenanceWeek.rawValue,
-            until: ISODate.addDays(weekStart, 6),
+            ladder: LeverLadder(rungs: [release], stored: release.id, releaseEndsOn: ISODate.addDays(weekStart, 6)),
             today: weekStart
         )
     }

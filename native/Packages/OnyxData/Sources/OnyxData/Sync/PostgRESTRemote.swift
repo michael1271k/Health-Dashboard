@@ -28,7 +28,7 @@ public struct PostgRESTRemote: SyncRemote {
     public func exerciseCatalogue() async throws -> [RemoteExercise] {
         try await client
             .from("exercises")
-            .select("id,name")
+            .select("id,name,slug")
             .eq("user_id", value: userId)
             .execute()
             .value

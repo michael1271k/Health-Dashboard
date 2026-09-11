@@ -63,11 +63,12 @@ public enum PrRecorder {
 
         let name = try nameResolver(db)
         let exerciseIds = Set(sets.map(\.exerciseId))
+        let program = try programOwning(db, userId: userId, date: date)
 
         let baselines = try baselines(
-            db, exerciseIds: exerciseIds, excluding: sessionId, dayKey: dayKey, name: name
+            db, exerciseIds: exerciseIds, excluding: sessionId, dayKey: dayKey, program: program, name: name
         )
-        let candidates = Self.candidates(sets, dayKey: dayKey, date: date, name: name)
+        let candidates = Self.candidates(sets, dayKey: dayKey, date: date, program: program, name: name)
         let result = PrEngine.detectSessionPrs(candidates, baselines)
         var written = 0
         for exercise in PrEngine.recordSets(candidates, result) {
@@ -112,14 +113,14 @@ public enum PrRecorder {
     /// the ledger written on close and the count stored on the session row can
     /// never be built from differently-shaped inputs.
     static func candidates(
-        _ sets: [WorkoutSet], dayKey: String?, date: String, name: (String) -> String
+        _ sets: [WorkoutSet], dayKey: String?, date: String, program: Program, name: (String) -> String
     ) -> [PrCandidateSet] {
         sets.enumerated().map { i, s in
             let canonical = name(s.exerciseId)
             return PrCandidateSet(
                 key: s.exerciseId, weightKg: s.weightKg, reps: Double(s.reps), setType: s.setType,
                 timed: TimedExercise.isTimed(canonical),
-                repFloor: Ceilings.repWindow(for: canonical, dayKey: dayKey)?.floor,
+                repFloor: Ceilings.repWindow(for: canonical, dayKey: dayKey, program: program)?.floor,
                 pairId: s.pairId, side: s.side, date: date,
                 exerciseName: canonical, setNumber: s.setIndex > 0 ? s.setIndex : i + 1
             )
@@ -138,12 +139,14 @@ public enum PrRecorder {
     ) throws -> Int {
         guard let sessionId = sets.first?.sessionId else { return 0 }
         let name = try nameResolver(db)
+        let userId = try WorkoutSession.fetchOne(db, key: sessionId)?.userId ?? ""
+        let program = try programOwning(db, userId: userId, date: date)
         let baselines = try baselines(
             db, exerciseIds: Set(sets.map(\.exerciseId)), excluding: sessionId,
-            dayKey: dayKey, name: name
+            dayKey: dayKey, program: program, name: name
         )
         return PrEngine.detectSessionPrs(
-            candidates(sets, dayKey: dayKey, date: date, name: name), baselines
+            candidates(sets, dayKey: dayKey, date: date, program: program, name: name), baselines
         ).prCount
     }
 
@@ -172,9 +175,10 @@ public enum PrRecorder {
     static func baselines(
         _ db: Database, exerciseIds: Set<String>, excluding sessionId: String?,
         before: String? = nil,
-        dayKey: String?, name: @escaping (String) -> String
+        dayKey: String?, program: Program, name: @escaping (String) -> String
     ) throws -> PrBaselines {
         guard !exerciseIds.isEmpty else { return .empty }
+        let floors = try floors(db)
         var query = WorkoutSet.filter(exerciseIds.contains(Column("exercise_id")))
         if let sessionId { query = query.filter(Column("session_id") != sessionId) }
         if let before {
@@ -189,13 +193,35 @@ public enum PrRecorder {
                 BaselineSetRow(
                     key: $0.exerciseId, weightKg: $0.weightKg, reps: Double($0.reps),
                     est1rm: $0.est1rmKg, setType: $0.setType,
-                    repFloor: Ceilings.repWindow(for: name($0.exerciseId), dayKey: dayKey)?.floor,
+                    repFloor: Ceilings.repWindow(for: name($0.exerciseId), dayKey: dayKey, program: program)?.floor,
                     pairId: $0.pairId, side: $0.side
                 )
             },
             isTimed: { TimedExercise.isTimed(name($0)) },
-            floorFor: { PrTruth.floor(for: name($0)) }
+            floorFor: { floors[name($0)] }
         )
+    }
+
+    /// The asserted floors — every `personal_records` row with NO session,
+    /// folded per exercise key (W2; `PrTruth.swift` says why). Read once per
+    /// baseline build: the table is a few dozen rows.
+    static func floors(_ db: Database) throws -> [String: PrFloor] {
+        var out: [String: PrFloor] = [:]
+        for row in try PersonalRecordRow.filter(Column("session_id") == nil).fetchAll(db) {
+            guard let axis = PrAxis(rawValue: row.axis) else { continue }
+            var floor = out[row.exerciseKey] ?? PrFloor()
+            floor.absorb(axis: axis, value: row.value, timed: TimedExercise.isTimed(row.exerciseKey))
+            out[row.exerciseKey] = floor
+        }
+        return out
+    }
+
+    /// The deck the session's date belongs to, for the rep window that gates
+    /// the e1RM axis. An account with no routines gets an empty program and
+    /// no gate — which is what "no prescription" means.
+    static func programOwning(_ db: Database, userId: String, date: String) throws -> Program {
+        let ctx = try AppDatabase.scheduleContext(db, userId: userId)
+        return Schedule.programForContext(ctx, date).program
     }
 
     /// Replay every session this device holds, oldest first.
@@ -298,7 +324,10 @@ public enum PrRecorder {
         var seen: [BaselineSetRow] = []
         var written = 0
         let timed = TimedExercise.isTimed(exerciseKey)
-        let floor = PrTruth.floor(for: exerciseKey)
+        // Read BEFORE the retract below: the floor rows live in the same
+        // table, and `retract` leaves them alone precisely so this can.
+        let floor = try floors(db)[exerciseKey]
+        let ctx = try AppDatabase.scheduleContext(db, userId: userId)
 
         // Clear the slate — locally AND on the wire. Every axis is queued for
         // deletion up front; each one the replay wins back drops its own
@@ -317,7 +346,9 @@ public enum PrRecorder {
             // day key — the same lift has a different floor on a leg day and an
             // upper day. `Ceilings.repWindow`'s phase default is untouched, so
             // this gates the e1RM axis exactly as `record` does.
-            let repFloor = Ceilings.repWindow(for: exerciseKey, dayKey: session.dayKey)?.floor
+            let repFloor = Ceilings.repWindow(
+                for: exerciseKey, dayKey: session.dayKey, program: Schedule.programForContext(ctx, session.date).program
+            )?.floor
             let baselines = PrEngine.buildBaselines(
                 seen, isTimed: { _ in timed }, floorFor: { _ in floor }
             )
@@ -369,11 +400,16 @@ public enum PrRecorder {
     /// An upsert cannot say "there is no record here any more" — only a delete
     /// can, and a local row going quiet would leave the web showing a record
     /// for a lift with no qualifying set left in the history.
+    ///
+    /// Rows with NO session are the asserted floors (W2): they were never
+    /// written by a set and no replay can win them back, so they stay — and
+    /// the replay reads them first (`floors`) as the bar every session is
+    /// judged against.
     private static func retract(
         _ db: Database, userId: String, exerciseKey: String
     ) throws {
         let rows = try PersonalRecordRow
-            .filter(Column("user_id") == userId && Column("exercise_key") == exerciseKey)
+            .filter(Column("user_id") == userId && Column("exercise_key") == exerciseKey && Column("session_id") != nil)
             .fetchAll(db)
         for row in rows {
             try row.delete(db)
@@ -394,13 +430,13 @@ public enum PrRecorder {
     /// lands — `nameBySlug` is what stops those sets filing their records under
     /// a raw slug for the minutes in between.
     static func nameResolver(_ db: Database) throws -> (String) -> String {
-        let catalogue = Dictionary(
-            try Exercise.fetchAll(db).map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first }
-        )
+        let exercises = try Exercise.fetchAll(db)
+        let catalogue = Dictionary(exercises.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        let bySlug = ExerciseSlug.nameBySlug(exercises)
         var memo: [String: String] = [:]
         return { id in
             if let hit = memo[id] { return hit }
-            let raw = catalogue[id] ?? ExerciseSlug.nameBySlug[id] ?? id
+            let raw = catalogue[id] ?? bySlug[id] ?? id
             let canonical = ExerciseAliases.canonicalName(raw)
             memo[id] = canonical
             return canonical
@@ -420,13 +456,14 @@ extension AppDatabase {
     /// record anyway. Matching `record` exactly is the requirement; being
     /// cleverer than it would light a trophy the close then refuses to file.
     public func livePrBaselines(
-        exerciseIds: [String], excluding sessionId: String?, before: String? = nil, dayKey: String?
+        exerciseIds: [String], excluding sessionId: String?, before: String? = nil, dayKey: String?,
+        program: Program
     ) throws -> PrBaselines {
         try writer.read { db in
             let name = try PrRecorder.nameResolver(db)
             return try PrRecorder.baselines(
                 db, exerciseIds: Set(exerciseIds), excluding: sessionId,
-                before: before, dayKey: dayKey, name: name
+                before: before, dayKey: dayKey, program: program, name: name
             )
         }
     }

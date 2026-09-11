@@ -165,7 +165,7 @@ struct DomsTile: View {
     /// empty soreness map has to say.
     private var caption: String {
         let credited = model.doms.compactMap(\.sourceDayKey).first
-        if let credited, let label = SessionAnalysis.dayLabel(credited) {
+        if let credited, let label = SessionAnalysis.dayLabel(credited, in: model.program) {
             return "Credited to \(label)"
         }
         return "Tap a muscle · swipe to turn"

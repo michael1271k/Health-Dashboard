@@ -30,6 +30,10 @@ extension AppEnvironment {
         // one state where the caption is absent by design, which is the state
         // least worth having a picture of.
         environment.sync.seedForPreview(secondsAgo: 12)
+        // The catalogue as rows (W2) and a resolver over it, so week labels,
+        // day labels and the rungs read the same way they do signed in.
+        PreviewCatalogue.seed(environment.database)
+        environment.installPreviewTargets(userId: PreviewCatalogue.userId)
         return environment
     }
 }

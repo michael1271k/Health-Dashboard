@@ -158,13 +158,8 @@ public struct TodayFeedBuilder: Sendable {
         // training day" over last week.
         let rows = try widgets.fetch(date: today, trendFrom: today)
         let goals = rows.goals
-        let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-        let schedule = ScheduleContext(
-            programId: programId,
-            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-            overrides: rows.overrides,
-            layout: rows.layout
-        )
+        let schedule = rows.schedule
+        let programId = schedule.programId
 
         let weekStart = WeekWindow(containing: today, startDay: Week.startDay(fromEndDay: goals?.weekEndDay), today: today).start
         let lastWeekStart = ISODate.addDays(weekStart, -7) ?? weekStart
@@ -223,7 +218,7 @@ public struct TodayFeedBuilder: Sendable {
 
         let weekSoFar = WeekSoFarSummary(
             weekStart: weekStart,
-            weekNumber: Int(Week.number(ofWeekStart: weekStart)),
+            weekNumber: Int(Week.number(ofWeekStart: weekStart, anchor: schedule.weekZeroStart)),
             dayOfWeek: ((ISODate.dayNumber(today) ?? 0) - (ISODate.dayNumber(weekStart) ?? 0)) + 1,
             current: weekCur,
             previous: weekPrev,
@@ -281,14 +276,16 @@ public struct TodayFeedBuilder: Sendable {
                 credit[m] = (credit[m] ?? 0) + MuscleCredit.secondarySetCredit
             }
         }
-        let defaults = Programs.weeklySetTargets(phase)
+        // The targets are `plan_phase_volume` rows and nothing else since W2:
+        // a muscle with no row has no target, and the sheet says 0 rather than
+        // borrowing another athlete's MEV.
         let rows = LandmarkMuscle.allCases.map { muscle in
             MuscleFocusRow(
                 muscle: muscle,
                 // One decimal: the credit is halves, and a raw Double prints
                 // 8.500000000000002 often enough to matter.
                 sets: ((credit[muscle] ?? 0) * 10).rounded() / 10,
-                target: overrides[muscle.rawValue] ?? Int(defaults[muscle] ?? 0)
+                target: overrides[muscle.rawValue] ?? 0
             )
         }
         return MuscleFocusSummary(weekStart: weekStart, rows: rows)

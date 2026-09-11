@@ -116,7 +116,7 @@ struct NightWindowGoldenTests {
 
 // MARK: - Schedule
 
-private let onyx5 = Program.onyx5
+private let onyx5 = FounderTables.deck
 
 private func dayOf(_ key: String) -> ScheduleDay? {
     onyx5.days.first { $0.key == key }.map { ScheduleDay(label: $0.label, sub: $0.sub, dayKey: $0.key) }
@@ -322,7 +322,7 @@ struct WidgetGoldenTests {
             let cal = WidgetDerive.calendarDays(i.days, sessions: i.sessions) { i.schedule[$0] ?? ScheduledDay(dayKey: nil, scheduled: false) }
             #expect(cal == c.expected.calendar, "calendar — \(c.name)")
             #expect(Streak.from(cal.map { StreakDay(d: $0.d, scheduled: $0.scheduled, logged: $0.logged) }, todayISO: i.todayISO) == c.expected.streak, "streak — \(c.name)")
-            #expect(Streak.programDayCount(i.todayISO) == c.expected.programDay, "programDay — \(c.name)")
+            #expect(Streak.programDayCount(i.todayISO, startISO: FounderTables.planStartISO) == c.expected.programDay, "programDay — \(c.name)")
             #expect(WidgetDerive.weeklyVolume(i.sessions, weekStartOfDate: { Week.start(of: $0, startDay: i.weekStartDay) }, limit: i.limit) == c.expected.weekly, "weekly — \(c.name)")
         }
     }
@@ -343,12 +343,19 @@ struct WidgetGoldenTests {
     struct RecIn: Decodable { let rows: [LedgerRow]; let limit: Int? }
     struct Floor: Decodable { let key: String; let floor: PrFloor? }
     struct RecOut: Decodable { let records: [WidgetRecord]; let floors: [Floor] }
-    @Test("top records match and the floors agree with the book")
+    @Test("top records match and the floors agree with the founder's floor rows")
     func records() throws {
         for c in try GoldenFixture<RecIn, RecOut>.load("widget-records").cases {
-            let r = c.input.limit.map { WidgetDerive.topRecords(c.input.rows, limit: $0) } ?? WidgetDerive.topRecords(c.input.rows)
+            // `topRecords` used to drop rows under `PrTruth.floor`; the floors
+            // are `personal_records` rows the store nets out before the widget
+            // reads, so the test plays the store on the vector's input.
+            let rows = c.input.rows.filter { r in
+                guard let v = r.value, let f = FounderTables.floors[r.exerciseKey]?.value(axis: r.axis) else { return true }
+                return v >= f
+            }
+            let r = c.input.limit.map { WidgetDerive.topRecords(rows, limit: $0) } ?? WidgetDerive.topRecords(rows)
             #expect(r == c.expected.records, "records — \(c.name)")
-            for f in c.expected.floors { #expect(PrTruth.floor(for: f.key) == f.floor, "floor \(f.key)") }
+            for f in c.expected.floors { #expect(FounderTables.floors[f.key] == f.floor, "floor \(f.key)") }
         }
     }
 
@@ -427,30 +434,7 @@ struct ExerciseGoldenTests {
     }
 }
 
-// MARK: - Supplements, presets, formatters
-
-@Suite("Item #10 — supplements and nutrition presets")
-struct SupplementsGoldenTests {
-    struct PresetIn: Decodable { let planId: String; let mode: NutritionMode }
-    struct Tables: Decodable { let presets: [String: NutritionPreset]; let planPhases: [String: [String: PresetOverride]]; let splits: [String: [String: String]]; let modes: [[JSONValue]] }
-    @Test("the presets and the phase-goal merge match")
-    func presets() throws {
-        let cases = try GoldenFixture<PresetIn?, JSONValue>.load("nutrition-presets").cases
-        let tables = try cases[0].expected.decode(Tables.self)
-        #expect(tables.presets["cut"] == NutritionPresets.cut && tables.presets["bulk"] == NutritionPresets.bulk)
-        #expect(tables.planPhases.count == NutritionPresets.planPhases.count)
-        for (plan, byMode) in tables.planPhases {
-            for (mode, o) in byMode { #expect(NutritionPresets.planPhases[plan]?[NutritionMode(rawValue: mode)!] == o, "override \(plan) \(mode)") }
-        }
-        #expect(tables.splits.count == NutritionPresets.splitLabels.count)
-        for (k, v) in tables.splits { #expect(NutritionPresets.splitLabels[k]?.label == v["label"] && NutritionPresets.splitLabels[k]?.labelHe == v["labelHe"], "split \(k)") }
-        for pair in tables.modes { #expect(NutritionMode.from(pair[0].string).rawValue == pair[1].string, "mode \(pair[0])") }
-        for c in cases.dropFirst() {
-            let i = c.input!
-            #expect(NutritionPresets.phaseGoals(planId: i.planId, mode: i.mode) == (try c.expected.decode(NutritionPreset.self)), "\(c.name)")
-        }
-    }
-}
+// MARK: - Formatters
 
 @Suite("Item #10 — small formatters and measures")
 struct FormatGoldenTests {

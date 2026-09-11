@@ -125,7 +125,7 @@ extension SessionAnalysis {
         /// The verdict sentence over the Progression chart.
         var verdict: String {
             guard let previous, previous.tonnageKg > 0 else {
-                return "First \(SessionAnalysis.dayLabel(report.session.dayKey) ?? "session") on record."
+                return "First \(SessionAnalysis.dayLabel(report.session.dayKey, in: nil) ?? "session") on record."
             }
             let delta = report.tonnageKg - previous.tonnageKg
             let pct = delta / previous.tonnageKg * 100
@@ -144,15 +144,17 @@ extension SessionAnalysis {
               let sessions = try? database.sessionHistory()
         else { return nil }
 
+        let ctx = context(database: database)
+        let ladder = (try? database.leverLadder(userId: session.userId)) ?? .empty
         let rows = ledger.filter { $0.sessionId == sessionId }
         let ids = Set(rows.map(\.exerciseId))
         let history = ledger.filter { ids.contains($0.exerciseId) }
-        let built = report(session, rows: rows, history: history)
+        let built = report(session, rows: rows, history: history, in: ctx)
 
         // The split's line, oldest first. `summaries` replays the whole ledger
         // in order, so a record beaten last month still counts on the session
         // that set it — which is exactly what a gold point on the chart means.
-        let everything = summaries(sessions, ledger: ledger)
+        let everything = summaries(sessions, ledger: ledger, in: ctx)
             .sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
         let mine = everything.filter { $0.dayKey == session.dayKey }
         let index = mine.firstIndex { $0.id == session.id }
@@ -166,9 +168,7 @@ extension SessionAnalysis {
         let goals: UserGoalRow? = (try? database.read { db in
             try UserGoalRow.filter(Column("user_id") == session.userId).fetchOne(db)
         }) ?? nil
-        let lens = MaintenanceLens(
-            stored: goals?.activeLever, until: goals?.maintenanceUntil, today: LogicalDay.today()
-        )
+        let lens = MaintenanceLens(ladder: ladder, today: LogicalDay.today())
         let bodyweight: Double? = ((try? database.latestBodyReading(userId: session.userId, before: session.date)) ?? nil)?.weightKg
         let today = LogicalDay.today()
 
@@ -198,14 +198,14 @@ extension SessionAnalysis {
             calorieBasis: storedKcal == nil ? estimate?.basis : nil,
             avgBpm: session.avgBpm.map(Double.init),
             avgBpmEstimated: session.avgBpmEstimated,
-            planLabel: Programs.plan(id: goals?.activePlan ?? "")?.label ?? Program.onyx5.label,
-            week: Phases.weekPhase(weekStart: Week.start(of: session.date, startDay: Week.startDay(fromEndDay: goals?.weekEndDay))),
-            lever: Levers.leverForDate(
-                session.date, stored: goals?.activeLever, today: today, releaseEndsOn: goals?.maintenanceUntil
-            ).flatMap { Levers.lever(byId: $0.rawValue) },
-            maintenance: Maintenance.isMaintenanceDate(
-                session.date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: today
-            )
+            planLabel: ctx.schedule.plans.first { $0.id == Schedule.planId(owning: session.date, in: ctx.schedule) }?.label
+                ?? ctx.schedule.programId,
+            week: Phases.weekPhase(
+                weekStart: Week.start(of: session.date, startDay: Week.startDay(fromEndDay: goals?.weekEndDay)),
+                in: ctx.schedule.phases
+            ),
+            lever: Levers.leverForDate(session.date, today: today, in: ladder).flatMap { Levers.lever(byId: $0, in: ladder) },
+            maintenance: Maintenance.isMaintenanceDate(session.date, today: today, ladder: ladder, phases: ctx.schedule.phases)
         )
     }
 

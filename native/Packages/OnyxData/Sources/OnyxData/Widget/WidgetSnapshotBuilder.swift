@@ -49,8 +49,15 @@ public struct WidgetSnapshotBuilder: Sendable {
 
     struct Rows {
         var goals: UserGoalRow?
-        var overrides: [String: String]
-        var layout: DayLayout
+        /// The plan, phase, overrides, layout AND the catalogue — one assembly
+        /// (`AppDatabase.scheduleContext`), so the widget, the feed and the
+        /// watch cannot resolve the plan differently.
+        var schedule: ScheduleContext
+        var overrides: [String: String] { schedule.overrides }
+        var layout: DayLayout { schedule.layout }
+        /// `target_profiles` and `lever_periods`, for the rung in force.
+        var profiles: [TargetProfileRow]
+        var periods: [LeverPeriodRow]
         var dayTarget: DailyTargetRow?
         var storedScore: DailyScoreRow?
         var logs: [DailyLogRow]
@@ -73,8 +80,8 @@ public struct WidgetSnapshotBuilder: Sendable {
         // cheaper mistake.
         var ledgerLogs: [DailyLogRow]
         var ledgerNutrition: [NutritionEntryRow]
-        /// The phase's own rate band and target weight, when the athlete has
-        /// edited them; `Programs.goals` is the fallback.
+        /// The phase's own rate band and target weight — the `plan_phase_goals`
+        /// row. No compiled fallback since W2: no row, no destination.
         var phaseGoals: PlanPhaseGoalRow?
     }
 
@@ -101,13 +108,8 @@ public struct WidgetSnapshotBuilder: Sendable {
         // Stored layout and overrides, never a default plan (see the
         // "Server-side plan resolution" rule): a widget that guesses from the
         // weekday announces the wrong session after every swap.
-        let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-        let schedule = ScheduleContext(
-            programId: programId,
-            phase: ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset),
-            overrides: rows.overrides,
-            layout: rows.layout
-        )
+        let schedule = rows.schedule
+        let programId = schedule.programId
         let program = Schedule.programForContext(schedule, date).program
         func prescribed(_ dayKey: String?) -> (exercises: Int, sets: Int)? {
             guard let dayKey, let day = program.day(key: dayKey) else { return nil }
@@ -115,8 +117,10 @@ public struct WidgetSnapshotBuilder: Sendable {
         }
 
         // ── The targets this day is graded against ────────────────────────
-        let resolved = TargetSnapshot(goals: goals, dailyTargets: rows.dayTarget.map { [$0.date: $0] } ?? [:], overrides: rows.overrides)
-            .targets(for: date, today: date)
+        let resolved = TargetSnapshot(
+            goals: goals, dailyTargets: rows.dayTarget.map { [$0.date: $0] } ?? [:], profiles: rows.profiles,
+            overrides: rows.overrides, periods: rows.periods, schedule: schedule
+        ).targets(for: date, today: date)
         let resolvedGoals = resolved.goals
 
         // ── Today, picked out of the week ─────────────────────────────────
@@ -160,7 +164,9 @@ public struct WidgetSnapshotBuilder: Sendable {
         let live = try liveScore(
             date: date, hoursAwake: hoursAwake, isRestDay: !isTraining,
             todaySessions: todaySessions, allSessions: allSessions,
-            goals: goals, resolvedGoals: resolvedGoals, prescribed: prescribed
+            goals: goals, resolvedGoals: resolvedGoals,
+            schedule: schedule, ladder: TargetSnapshot(goals: goals, profiles: rows.profiles, periods: rows.periods, schedule: schedule).ladder,
+            prescribed: prescribed
         )
         let stored = rows.storedScore
         let battery = live?.battery ?? stored?.batteryPct
@@ -198,7 +204,7 @@ public struct WidgetSnapshotBuilder: Sendable {
             return OnyxSnapshot.DayContext(mode: mode.rawValue, label: meta.label)
         }()
 
-        let streak = Streak.programDayCount(date)
+        let streak = Streak.programDayCount(date, startISO: schedule.planStartISO)
 
         // ── The scoped slices ─────────────────────────────────────────────
         let stepsTrend: [OnyxSnapshot.Point]? = wantsLifestyle ? Self.points(stepsTrend(rows, date: date)) : nil
@@ -261,13 +267,13 @@ public struct WidgetSnapshotBuilder: Sendable {
             : []
         let trajectory: Trajectory? = wantsBody
             ? {
-                let preset = Programs.goals(planId: programId, phase: schedule.phase)
+                let phaseGoals = rows.phaseGoals.map(PhaseGoals.init)
                 return TrajectorySeries.build(
                     bodyReadings.map { GoalBoard.Reading(date: $0.date, weightKg: $0.weight) },
                     today: date,
-                    targetWeightKg: rows.phaseGoals?.targetWeightKg ?? preset.targetWeightKg,
-                    rateMinKgWk: rows.phaseGoals?.rateMinKgWk ?? preset.rateMinKgWk,
-                    rateMaxKgWk: rows.phaseGoals?.rateMaxKgWk ?? preset.rateMaxKgWk,
+                    targetWeightKg: phaseGoals?.targetWeightKg,
+                    rateMinKgWk: phaseGoals?.rateMinKgWk,
+                    rateMaxKgWk: phaseGoals?.rateMaxKgWk,
                     energy: ledgerDays(rows).filter { $0.date >= weekStart }.map {
                         GoalBoard.EnergyDay(
                             date: $0.date, intakeKcal: $0.intakeKcal,
@@ -414,17 +420,11 @@ public struct WidgetSnapshotBuilder: Sendable {
             let historyStart = ISODate.addDays(weekStart, -7 * (Self.volumeWeeks - 1)) ?? weekStart
             let calendarStart = ISODate.addDays(date, -(Self.calendarDays - 1)) ?? date
             let sessionsFrom = min(historyStart, calendarStart)
-            let programId = Programs.normalizePlanId(goals?.activePlan ?? goals?.activeProgram) ?? Programs.defaultPlanId
-            // The SAME expression `build` puts on its `ScheduleContext`, off the
-            // same `goals` row. Named rather than repeated a third time: spelled
-            // out twice it reads as two different phases, and the row the phase
-            // goals are keyed on has to be the phase the preset falls back for.
-            let phase = ProgramPhase.stored(goals?.activePhase ?? goals?.goalPreset)
-
-            var overrides: [String: String] = [:]
-            for r in try ScheduleOverrideRow.filter(user).fetchAll(db) { overrides[r.date] = r.dayKey }
-            let layoutRaw = try ProgramDayLayoutRow.filter(user && Column("program_id") == programId).fetchOne(db)?.layout.raw
-            let layout = ScheduleLayout.parseLayout(layoutRaw.flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) })
+            // ONE assembly of the plan, the phase and the catalogue — the
+            // same value every other reader resolves.
+            let schedule = try AppDatabase.scheduleContext(db, userId: userId, goals: .some(goals))
+            let programId = schedule.programId
+            let phase = schedule.phase
 
             let sessions = try WorkoutSession
                 .filter(user && Column("date") >= sessionsFrom && Column("date") < weekEndExclusive)
@@ -452,8 +452,9 @@ public struct WidgetSnapshotBuilder: Sendable {
 
             return Rows(
                 goals: goals,
-                overrides: overrides,
-                layout: layout,
+                schedule: schedule,
+                profiles: try TargetProfileRow.filter(user).order(Column("sort")).fetchAll(db),
+                periods: try LeverPeriodRow.filter(user).order(Column("starts_on")).fetchAll(db),
                 dayTarget: try DailyTargetRow.filter(user && Column("date") == date).fetchOne(db),
                 storedScore: try DailyScoreRow.filter(user && Column("date") == date).fetchOne(db),
                 logs: try DailyLogRow.filter(user && Column("date") >= vitalsFrom && Column("date") <= date).fetchAll(db),
@@ -477,10 +478,13 @@ public struct WidgetSnapshotBuilder: Sendable {
                 // catalogue dropped every phone-logged set from muscle credit —
                 // "Side delts 0/7" after an Upper B was exactly this. The same
                 // chain `LoggerModel.restoreLoggedSets` already walks.
-                exerciseNames: Dictionary(
-                    try Exercise.fetchAll(db).map { ($0.id, $0.name) } + ExerciseSlug.nameBySlug.map { ($0.key, $0.value) },
-                    uniquingKeysWith: { a, _ in a }
-                ),
+                exerciseNames: try {
+                    let exercises = try Exercise.fetchAll(db)
+                    return Dictionary(
+                        exercises.map { ($0.id, $0.name) } + ExerciseSlug.nameBySlug(exercises).map { ($0.key, $0.value) },
+                        uniquingKeysWith: { a, _ in a }
+                    )
+                }(),
                 ledger: ledger,
                 cardio: try CardioLogRow
                     .filter(user && Column("date") >= cardioFrom && Column("date") <= date)
@@ -516,6 +520,7 @@ public struct WidgetSnapshotBuilder: Sendable {
         date: String, hoursAwake: Double, isRestDay: Bool,
         todaySessions: [SessionTotals], allSessions: [SessionTotals],
         goals: UserGoalRow?, resolvedGoals: LeverGoals,
+        schedule: ScheduleContext, ladder: LeverLadder,
         prescribed: (String?) -> (exercises: Int, sets: Int)?
     ) throws -> LiveScore? {
         let dayKey = todaySessions.first { $0.session.dayKey != nil }?.session.dayKey
@@ -525,7 +530,7 @@ public struct WidgetSnapshotBuilder: Sendable {
                 calorie: resolvedGoals.calorie, protein: resolvedGoals.protein ?? 0, carbs: resolvedGoals.carbs ?? 0,
                 fat: resolvedGoals.fat ?? 0, steps: resolvedGoals.steps ?? Double(goals?.stepsGoal ?? 0)
             ),
-            isMaintenance: Maintenance.isMaintenanceDate(date, stored: goals?.activeLever, until: goals?.maintenanceUntil, today: date),
+            isMaintenance: Maintenance.isMaintenanceDate(date, today: date, ladder: ladder, phases: schedule.phases),
             plannedExercises: planned.map { Double($0.exercises) },
             plannedSets: planned.map { Double($0.sets) }
         )
@@ -559,7 +564,7 @@ public struct WidgetSnapshotBuilder: Sendable {
         var out: [ConsistencyDayIn] = []
         var d = from
         while d <= to {
-            let plannable = d >= Week.week0Start
+            let plannable = Schedule.isPlannable(d, in: schedule)
             let day = plannable ? Schedule.scheduleDayIn(schedule, d) : nil
             out.append(ConsistencyDayIn(
                 date: d,
@@ -609,7 +614,7 @@ public struct WidgetSnapshotBuilder: Sendable {
         var d = ISODate.addDays(date, -(Self.batteryStackDays - 1)) ?? date
         while d <= date {
             let plan = DayPlan.resolve(
-                goals: rows.goals, overrides: rows.overrides, layout: rows.layout,
+                goals: rows.goals, schedule: rows.schedule, profiles: rows.profiles, periods: rows.periods,
                 dayTarget: d == date ? rows.dayTarget : nil, date: d, todayISO: date
             )
             let hoursAwake = d == date ? Battery.hoursAwake(at: now, calendar: calendar) : Battery.defaults.maxAwake

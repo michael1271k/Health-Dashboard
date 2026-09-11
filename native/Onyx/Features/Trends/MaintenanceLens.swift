@@ -21,21 +21,18 @@ import OnyxData
 /// deloads the phase table carries (Thailand, the Transition) are already
 /// visible as the absence of sessions. Same rule `HistoryWeeks.Capsule` uses.
 struct MaintenanceLens {
-    let stored: String?
-    let until: String?
+    /// The rungs, the schedule of rungs and the selection — rows since W2.
+    let ladder: LeverLadder
     let today: String
 
-    /// No STORED lever — which is not the same as no maintenance.
-    ///
-    /// `Levers.leverForDate` falls back to `scheduledLever` for any date in the
-    /// past, and the schedule puts a maintenance week on 30 August 2026. So
-    /// this is "nobody has pulled a lever", and the programme's own weeks still
-    /// resolve — which is the right answer for a signed-out store and for the
-    /// screenshot harness, where the schedule is the only truth there is.
-    static let schedule = MaintenanceLens(stored: nil, until: nil, today: LogicalDay.today())
+    /// No rows at all — which is not the same as no maintenance once a ladder
+    /// exists: `Levers.leverForDate` falls back to the schedule of periods for
+    /// any past date. With an empty ladder nothing is ever maintenance, which
+    /// is the right answer for a signed-out store.
+    static let schedule = MaintenanceLens(ladder: .empty, today: LogicalDay.today())
 
     func callsIt(_ dateISO: String) -> Bool {
-        Maintenance.leverOn(dateISO, stored: stored, until: until, today: today)
+        Maintenance.leverOn(dateISO, today: today, ladder: ladder)
     }
 
     /// A WEEK is a maintenance week when most of its days are — the same
@@ -48,12 +45,7 @@ struct MaintenanceLens {
     }
 
     static func read(database: AppDatabase, userId: String, today: String = LogicalDay.today()) -> MaintenanceLens {
-        let goals: UserGoalRow? = (try? database.read { db in
-            try UserGoalRow.filter(Column("user_id") == userId).fetchOne(db)
-        }) ?? nil
-        return MaintenanceLens(
-            stored: goals?.activeLever, until: goals?.maintenanceUntil, today: today
-        )
+        MaintenanceLens(ladder: (try? database.leverLadder(userId: userId)) ?? .empty, today: today)
     }
 }
 

@@ -65,7 +65,12 @@ public extension AppDatabase {
         // from a list that excludes it, would put a `ready` chip on a load the
         // seed never proposed.
         //
-        let era = Era.forDate(today)
+        // Which plan owns a date, off the catalogue. The local store is ONE
+        // user's mirror, so the goals row names the user (the same reading
+        // `HistoryWeeks` and `sessionsForSeed` make).
+        let ctx = try scheduleContext(userId: (try read { db in try UserGoalRow.fetchOne(db)?.userId }) ?? "")
+        let owner = { (date: String) in Schedule.planId(owning: date, in: ctx) }
+        let era = owner(today)
         let allowed = try qualifying
             ?? Set(sessionsForSeed(dayKey: dayKey, today: today).sessions.map(\.id))
         // The session instant, for ordering two sessions of one lift: the
@@ -75,7 +80,7 @@ public extension AppDatabase {
         var instant: [String: String] = [:]
         var rows: [ProgressionQueue.SetRow] = []
         for r in try historySets(exerciseIds: Array(fold.keys))
-        where r.dayKey == dayKey && Era.forDate(r.date) == era && allowed.contains(r.sessionId) {
+        where r.dayKey == dayKey && owner(r.date) == era && allowed.contains(r.sessionId) {
             if instant[r.sessionId] == nil {
                 instant[r.sessionId] = "\(r.date)|\(String(format: "%06d", instant.count))"
             }
