@@ -415,6 +415,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// `routine_templates` — see `AppDatabase.deckOrder(dayKey:userId:)`.
     /// Empty until a session has been finished on this day.
     private let storedDeckOrder: [String]
+    /// Whether this athlete's catalogue knows the warm-up's movement — see
+    /// `catalogueHasWarmupCardio`. False for every account W5 creates.
+    private let opensWithWarmupCardio: Bool
     /// When the session began.
     ///
     /// `var`, because the timer sheet can correct it (`setStart`, `setElapsed`)
@@ -665,6 +668,10 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
         // live deck is this week's; re-reading it on a phase switch would let a
         // week-old template argue with a card the athlete has just dragged.
         self.storedDeckOrder = (try? store?.deckOrder(dayKey: day.key, userId: userId)) ?? []
+        // Read once, like the deck order above, and for the same reason: it
+        // cannot change mid-session and a per-rebuild query would be a
+        // catalogue read on every phase switch.
+        self.opensWithWarmupCardio = Self.catalogueHasWarmupCardio(store)
         rebuildForPhase()
     }
 
@@ -759,7 +766,9 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
             return previous
         }
         exercises = Self.inDeckOrder(exercises, stored: storedDeckOrder, current: liveOrder.isEmpty ? nil : liveOrder)
-        exercises = Self.withWarmupCardio(exercises, existing: existing)
+        if opensWithWarmupCardio {
+            exercises = Self.withWarmupCardio(exercises, existing: existing)
+        }
     }
 
     /// Put the deck in the order the athlete last left it.
@@ -798,6 +807,41 @@ final class LoggerModel: Identifiable, PauseControlling, LivePrProviding {
     /// handed back untouched. Minting a fresh one would replace a row that has
     /// an id in `set_events` with one that does not, and the tick would be lost
     /// with the log still holding it.
+    /// Does this athlete's catalogue know the movement the warm-up prescribes?
+    ///
+    /// ── WHY THIS GUARD EXISTS (W5) ──────────────────────────────────────────
+    /// `WarmupCardio` is a FOUNDER HARDCODE that F8 missed and W5's new-account
+    /// gate caught: a named movement, a distance, an incline and a pace note,
+    /// prepended to every session of every account. A person who has never
+    /// owned a treadmill opened their first session to five minutes of one,
+    /// with a note about a pace rising from 4.3 to 5.0 that means nothing to
+    /// them — and because the row carries no catalogue id, the set it logs
+    /// cannot resolve on upload either.
+    ///
+    /// The rule is the smallest one that is both correct and provably invisible
+    /// to the founder: prescribe a movement only to an athlete whose catalogue
+    /// holds it. His does — his phone-logged treadmill sets upload, and that
+    /// REQUIRES `ExerciseIndex.id(forSlug: "helix5-treadmill")` to resolve
+    /// against a catalogue row, or every one of them would have thrown
+    /// `unknownExercise` instead of landing in the ledger.
+    ///
+    /// ponytail: the real fix is for a warm-up to be an ordinary movement in
+    /// `routines.payload`, which needs the payload to carry `durationSec`,
+    /// `inclinePct` and `distanceKm` — a schema-shaped change, and D5 froze the
+    /// schema after W2. Until then this keeps the founder's opener working and
+    /// keeps it off everybody else's deck.
+    private static func catalogueHasWarmupCardio(_ store: AppDatabase?) -> Bool {
+        // No store is a PREVIEW, not an athlete — `LoggerPreviews` and the shot
+        // harness build one, and every real path has a database. The question
+        // "does this catalogue know the movement" has no answer without one, and
+        // a fixture whose job is to draw the deck the design intends should
+        // draw all of it.
+        guard let store else { return true }
+        guard let rows = try? store.exercises() else { return false }
+        let wanted = ExerciseSlug.id(WarmupCardio.name)
+        return rows.contains { $0.slug == wanted || ExerciseSlug.id($0.name) == wanted }
+    }
+
     private static func withWarmupCardio(
         _ exercises: [ExerciseState], existing: [String: ExerciseState]
     ) -> [ExerciseState] {

@@ -119,6 +119,29 @@ private struct SignedInTabs: View {
         .fullScreenCover(isPresented: Binding(get: { environment.backfill != nil }, set: { _ in })) {
             if let model = environment.backfill { BackfillSheet(model: model) }
         }
+        // Setting up a brand-new account (W5). A cover for the same reasons the
+        // backfill is one — the tabs mount underneath and observe the store, so
+        // by the time the last step's write commits they are already showing the
+        // plan it wrote.
+        //
+        // It is offered strictly after a pull that LANDED
+        // (`offerOnboardingIfNeeded`), because "has this account been set up" is
+        // a question about rows and on a fresh install the rows have not
+        // arrived yet.
+        //
+        // ── AND ONLY WHEN THE BACKFILL IS DOWN ──────────────────────────────
+        // Two covers on one view is a race SwiftUI resolves by dropping one,
+        // and the backfill's FAILURE path leaves its model in place — so
+        // without this condition a failed first sync could bury its own Retry
+        // button under a flow that cannot be dismissed.
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { environment.onboarding != nil && environment.backfill == nil },
+                set: { _ in }
+            )
+        ) {
+            if let model = environment.onboarding { OnboardingFlow(model: model) }
+        }
     }
 
     private static var batteryLevel: Double {

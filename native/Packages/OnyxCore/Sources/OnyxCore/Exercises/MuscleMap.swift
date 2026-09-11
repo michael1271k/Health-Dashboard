@@ -114,6 +114,19 @@ public enum MuscleMap {
         Entry(["incline", "bench", "press", "dumbbell"], primary: ["chest"], secondary: ["triceps", "front_delts"]),
         Entry(["incline", "db", "press"], primary: ["chest"], secondary: ["triceps", "front_delts"]),
         Entry(["chest", "press"], primary: ["chest"], secondary: ["triceps", "front_delts"]),
+        // ── THE FLAT BENCH, ADDED IN W5 ─────────────────────────────────────
+        // The most common barbell lift in the world resolved to NOTHING here
+        // until a generic-user test asked it to. This table grew around the
+        // founder's own deck, which presses on an incline and on machines and
+        // never once wrote the words "Bench Press" — so the gap was invisible
+        // for as long as his was the only account.
+        //
+        // Two tokens, so the four-token incline-dumbbell entry above still
+        // wins on specificity for its own spelling, and "Decline Bench Press"
+        // lands here rather than nowhere. It cannot move an existing number:
+        // no row in the live catalogue is named this, which is exactly why it
+        // was missing.
+        Entry(["bench", "press"], primary: ["chest"], secondary: ["triceps", "front_delts"]),
         // ── A FLY IS NOT A TRICEPS MOVEMENT ─────────────────────────────────
         // The elbow angle is fixed, so the triceps never shorten under load.
         // Tagging pec deck and crossovers `triceps` — as this file and the DB

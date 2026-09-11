@@ -41,10 +41,22 @@ struct CardioLogSheet: View {
     /// hand this screen a fixed set. A screenshot of a live HealthKit query is a
     /// screenshot of whatever the simulator's Health app happens to hold, which
     /// is nothing — which is most of how this screen went a year without one.
-    var bouts: @Sendable () async -> [WorkoutSample] = { [] }
+    ///
+    /// OPTIONAL since W5, and the nil case is the fix: `QuickLogSheet` presented
+    /// this screen without passing it, so the whole Pulse route offered no
+    /// import at all and nobody noticed, because the screen looks identical on a
+    /// day Health has nothing. A default of `{ [] }` made "no bouts" and "no
+    /// caller wired it up" the same picture. Nil now means "ask the
+    /// environment", so every presenter gets the import and only the harness
+    /// overrides it.
+    var bouts: (@Sendable () async -> [WorkoutSample])?
+    /// Resting kilocalories over a window — the other half of a TOTAL energy
+    /// figure. Injected for the same reason and nil-defaulted the same way.
+    var restingKcal: (@Sendable (Date, Date) async -> Double?)?
     /// The last bout on record, ghosted behind the empty state.
     var lastBout: CardioLogRow?
 
+    @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
 
     @State private var kind = CardioImport.walk
@@ -52,15 +64,22 @@ struct CardioLogSheet: View {
     @State private var minutes: Double?
     @State private var incline: Double?
     @State private var kcal: Double?
+    /// Active + resting over the bout's own window. The figure Apple's Fitness
+    /// app shows, and the one a person compares a treadmill console against.
+    @State private var totalKcal: Double?
+    @State private var elevation: Double?
     @State private var avgHr: Double?
     @State private var effort: Int?
     /// Health's bouts for this date, minus the ones already in the ledger.
     @State private var available: [WorkoutSample] = []
     @State private var didRead = false
     @State private var detailOpen = false
+    /// Which offered bout is currently IN the form. The card reads as the
+    /// source of the numbers below it rather than as a button that did nothing.
+    @State private var taken: Date?
     @FocusState private var focus: Field?
 
-    private enum Field: Hashable { case km, minutes, incline, kcal, avgHr }
+    private enum Field: Hashable { case km, minutes, incline, kcal, totalKcal, elevation, avgHr }
 
     private var pace: String {
         CardioMetrics.formatPace(CardioMetrics.paceMinPerKm(distanceM: km.map { $0 * 1000 }, durationMin: minutes))
@@ -68,23 +87,37 @@ struct CardioLogSheet: View {
 
     private var canSave: Bool { km != nil || minutes != nil }
 
+    /// The bout's start, once a card has been tapped — the provenance the row's
+    /// `from_healthkit` and `created_at` both read (`CardioImport` states why
+    /// `created_at` doubles as the start on an imported row).
+    @State private var importedStart: Date?
+
     /// Nothing from Health, and nothing typed yet.
     private var isEmpty: Bool { didRead && available.isEmpty && !canSave }
 
     var body: some View {
-        DaySheet("Log cardio", domain: .body, glass: false, primary: ("Save", canSave, { save() })) {
+        DaySheet(
+            "Log cardio", domain: .body, glass: false,
+            primary: ("Save", canSave, { save(imported: importedStart) })
+        ) {
             Form {
                 if !available.isEmpty {
                     Section {
                         ForEach(available, id: \.start) { bout in
-                            ImportCard(bout: bout) { take(bout) }
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
+                            ImportCard(bout: bout, isTaken: taken == bout.start) {
+                                Task { await take(bout) }
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
                         }
                     } header: {
                         OnyxSectionHeader("From Apple Health", .body)
                     } footer: {
-                        Text("Tap a bout to log it. Every figure stays editable afterwards.")
+                        Text(
+                            taken == nil
+                                ? "Tap a bout to fill the form. Nothing is saved until you tap Save."
+                                : "Filled from Apple Health. Every figure is editable — check them, then Save."
+                        )
                     }
                 }
 
@@ -116,6 +149,10 @@ struct CardioLogSheet: View {
                                        unit: "%", range: 0...40, fractionLength: 1)
                         OnyxNumberRow(label: "Active energy", value: $kcal, field: Field.kcal, focus: $focus,
                                        unit: "kcal", range: 0...5000, fractionLength: 0)
+                        OnyxNumberRow(label: "Total energy", value: $totalKcal, field: Field.totalKcal, focus: $focus,
+                                       unit: "kcal", range: 0...5000, fractionLength: 0)
+                        OnyxNumberRow(label: "Ascent", value: $elevation, field: Field.elevation, focus: $focus,
+                                       unit: "m", range: 0...5000, fractionLength: 0)
                         OnyxNumberRow(label: "Average heart rate", value: $avgHr, field: Field.avgHr, focus: $focus,
                                        unit: "bpm", range: 0...250, fractionLength: 0)
                         Picker("Effort", selection: $effort) {
@@ -127,11 +164,22 @@ struct CardioLogSheet: View {
             }
             .toolbar { OnyxKeyboardDone { focus = nil } }
         }
+        // ── THE PREFILL (W5) ────────────────────────────────────────────────
+        // With exactly one unimported bout there is nothing to disambiguate, so
+        // the form is filled from it on open — which is what "prefills on open"
+        // has to mean on a screen whose subject is a single bout. With several,
+        // the cards are the question and a tap is the answer.
+        //
+        // Filling is NOT saving, since W5. `take` used to write the row and
+        // dismiss in one move, so an imported figure could only be corrected
+        // afterwards, from the day's list, by someone who noticed.
         .task {
             guard !didRead else { return }
-            let found = await bouts()
+            let found: [WorkoutSample]
+            if let bouts { found = await bouts() } else { found = await environment.cardioBouts(on: date) }
             available = CardioLogSheet.unimported(found, existing: existing, date: date)
             didRead = true
+            if let only = available.first, available.count == 1 { await take(only) }
         }
     }
 
@@ -226,21 +274,44 @@ struct CardioLogSheet: View {
 
     // MARK: - Taking a bout from Health
 
-    /// Fill the form from a Health bout and save it in one move.
+    /// Fill the form from a Health bout. Does NOT save.
     ///
-    /// It fills the form as well as saving, rather than saving silently,
-    /// because the sheet stays open when a write fails and because an imported
-    /// bout is editable: the figures have to land somewhere they can be
-    /// corrected, and this is that somewhere.
-    private func take(_ bout: WorkoutSample) {
+    /// ── WHY THE IMMEDIATE SAVE WENT AWAY (W5) ───────────────────────────────
+    /// This used to write the row and dismiss in one move, and the footer
+    /// promised the figures stayed editable "afterwards" — which was true only
+    /// in the sense that the day's list can be opened again by someone who
+    /// noticed the number was wrong. An import that lands unreviewed is an
+    /// import nobody checks, and Health's energy figure in particular is one
+    /// people want to correct.
+    ///
+    /// So it fills, and Save is a second, deliberate tap on figures the person
+    /// has actually looked at.
+    ///
+    /// Async because TOTAL energy is a second read: the bout carries its active
+    /// kilocalories, and resting has to be summed over the bout's own window.
+    private func take(_ bout: WorkoutSample) async {
         kind = bout.cardioKind ?? kind
         km = bout.distanceM.map { $0 / 1000 }
         minutes = (bout.durationMin * 10).rounded() / 10
         kcal = bout.activeKcal.map { $0.rounded() }
         avgHr = bout.avgHr.map { $0.rounded() }
-        // Ascent is shown on the card and cannot be stored — `cardio_logs` has
-        // no column for it. See `WorkoutSample.elevationM`.
-        save(imported: bout.start)
+        elevation = bout.elevationM.map { $0.rounded() }
+        taken = bout.start
+        importedStart = bout.start
+
+        // Resting is additive to active and never a replacement: a nil read
+        // leaves total nil rather than quietly equal to active, because "we
+        // could not ask Health" and "this walk cost nothing at rest" are
+        // different facts and only one of them is possible.
+        let resting: Double?
+        if let restingKcal {
+            resting = await restingKcal(bout.start, bout.end)
+        } else {
+            resting = await environment.restingEnergy(from: bout.start, to: bout.end)
+        }
+        if let active = bout.activeKcal, let resting {
+            totalKcal = (active + resting).rounded()
+        }
     }
 
     /// Bouts Health knows about that the ledger does not.
@@ -268,7 +339,8 @@ struct CardioLogSheet: View {
     // MARK: - The write
 
     /// - Parameter start: the bout's START when this came from Health, nil when
-    ///   a person typed it.
+    ///   a person typed it. Taken from `importedStart`, which `take` stamps, so
+    ///   the toolbar's Save carries the provenance a tap on a card established.
     private func save(imported start: Date? = nil) {
         let rows = existing.map(CardioImport.Existing.init)
         // An import overwrites the row it matches; a hand-typed bout is always
@@ -289,7 +361,8 @@ struct CardioLogSheet: View {
             // the session page already orders bouts by — where a start is
             // strictly the better value. `CardioImport` states the whole trick.
             fromHealthkit: start != nil, createdAt: start ?? Date(),
-            activeKcal: kcal, avgHr: avgHr, effort: effort.map(Double.init), inclinePct: incline
+            activeKcal: kcal, totalKcal: totalKcal, avgHr: avgHr,
+            effort: effort.map(Double.init), inclinePct: incline, elevationM: elevation
         )
         if onSave(row) { dismiss() }
     }
@@ -316,6 +389,10 @@ extension CardioImport.Existing {
 /// it, and a person cannot tap what they cannot tell apart from a text field.
 private struct ImportCard: View {
     let bout: WorkoutSample
+    /// This bout's figures are the ones in the form below. The card is the
+    /// SOURCE of what is on screen, so it says so — otherwise a tap that fills
+    /// a collapsed "Detail" group looks like a tap that did nothing.
+    var isTaken: Bool = false
     let take: () -> Void
 
     private var kind: CardioKind { CardioKind(bout.cardioKind ?? "") }
@@ -362,9 +439,9 @@ private struct ImportCard: View {
                             .foregroundStyle(Color.onyx.textSecondary)
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: isTaken ? "checkmark.circle.fill" : "plus.circle.fill")
                         .onyxType(.display)
-                        .foregroundStyle(accent)
+                        .foregroundStyle(isTaken ? Color.onyx.textSecondary : accent)
                 }
                 // Wrapping, not an `HStack`: six figures do not fit 402 pt at an
                 // accessibility size, and a fixed row would character-wrap each
@@ -384,7 +461,8 @@ private struct ImportCard: View {
         .onyxPress(scale: 0.98)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(kind.label) at \(bout.start.formatted(date: .omitted, time: .shortened))")
-        .accessibilityHint("Logs this bout.")
+        .accessibilityValue(isTaken ? "In the form below" : "")
+        .accessibilityHint(isTaken ? "Already filled in below." : "Fills the form from this bout.")
         .accessibilityAddTraits(.isButton)
     }
 

@@ -95,7 +95,14 @@ public actor SyncEngine {
         database: AppDatabase,
         remote: any SyncRemote,
         rows: (any MirrorPushRemote)? = nil,
-        catalogue: [String: MirrorTable] = MirrorCatalogue.byName
+        // `pushable`, not `byName`: the generated catalogue plus the tables
+        // whose wire shape is hand-written because the local and remote columns
+        // differ. `exercises` is the only one, and without it a movement a
+        // person creates on the phone has nowhere to go — the row sits in the
+        // outbox failing `unmirroredTable` forever, and every set logged
+        // against it is rejected by the foreign key. See
+        // `ExerciseCatalogueWriter`.
+        catalogue: [String: MirrorTable] = MirrorCatalogue.pushable
     ) {
         self.database = database
         self.remote = remote

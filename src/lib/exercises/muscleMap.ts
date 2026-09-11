@@ -105,6 +105,11 @@ export const MUSCLE_DICT: Array<{ tokens: string[]; muscles: MuscleEntry }> = [
   { tokens: ['incline', 'bench', 'press', 'dumbbell'], muscles: { primary: ['chest'], secondary: ['triceps', 'front_delts'] } },
   { tokens: ['incline', 'db', 'press'], muscles: { primary: ['chest'], secondary: ['triceps', 'front_delts'] } },
   { tokens: ['chest', 'press'], muscles: { primary: ['chest'], secondary: ['triceps', 'front_delts'] } },
+  // The flat bench, added in W5. This table grew around a deck that presses on
+  // an incline and on machines and never once wrote the words "Bench Press", so
+  // the most common barbell lift in the world resolved to nothing. Two tokens,
+  // so the four-token incline-dumbbell entry above still wins its own spelling.
+  { tokens: ['bench', 'press'], muscles: { primary: ['chest'], secondary: ['triceps', 'front_delts'] } },
   // A FLY IS NOT A TRICEPS MOVEMENT. The elbow angle is fixed, so the triceps
   // never shorten under load; tagging pec deck and crossovers `triceps` (as this
   // file and the DB both did) credited an isolation movement to a muscle that

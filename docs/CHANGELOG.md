@@ -47,6 +47,77 @@ _Nothing yet._
 
 ---
 
+## [2.0.0] — 2026-09-11 · Somebody Else's First Day
+
+Onyx has had one user, and every screen quietly assumed it. Sign-up asked for an
+e-mail and a password and then dropped you into somebody else's training plan,
+somebody else's calorie target, and a five-minute treadmill warm-up with a note
+about a pace rising from 4.3 to 5.0. This wave is the other person's first
+launch: a new account now sets itself up, writes its own routine, and brings its
+own movements.
+
+**MAJOR because the new-user path is new.** Nothing about an existing account
+changes — the founder's plan, deck, targets, levers and history are untouched,
+and onboarding is never offered to an account that has any of them.
+
+### Added
+- **Onboarding** — eight steps after sign-up: bodyweight, week start, goal,
+  daily macros, weekly sets per muscle, optional one-rep maxes, and a routine.
+  Every step opens with a working answer already in it, and the two that ask for
+  something optional say so in a button. Nothing is written until the last tap,
+  so quitting halfway leaves an account that is still, correctly, brand new.
+- **Your targets, from your bodyweight** — calories, protein, carbohydrate, fat
+  and fibre worked out from what you weigh and what you are training for, and
+  editable on the spot. The four numbers always add up to each other, so the
+  app's own consistency warning cannot fire on the numbers it just produced.
+  It does not ask for your sex, age or height, and does not need them.
+- **Weekly set targets from published volume landmarks** — a starting point for
+  all sixteen muscles rather than the founder's own tuned numbers. A cut holds
+  at the minimum effective volume; a bulk reaches for the productive middle.
+- **A routine builder** (Settings → Plan → Routines) — days you can add,
+  rename, reorder, duplicate and delete, and inside each one the movements with
+  their sets, cut sets, rest, rep window and starting load. The movement picker
+  doubles as the new-movement field, so a machine Onyx has never heard of is one
+  line of typing rather than a dead end.
+- **Import exercises from a CSV** (Settings → Plan) — from Hevy, Strong or a
+  spreadsheet, by file or paste. It shows you what it read before it writes
+  anything: what will be added, what you already have, and — the one that
+  matters — which movements it could not work out a muscle for, because those
+  log fine but count towards nothing until you tell it.
+- **Optional one-rep maxes at setup** — so the first month of sessions does not
+  read as a personal record every week.
+
+### Changed
+- **The cardio sheet fills itself in.** Opening it on a day Apple Health has a
+  single bout fills the whole form from it — distance, duration, active energy,
+  **total energy** (active plus resting, the figure your watch and every
+  treadmill console show), **ascent** and average heart rate. Tapping a bout no
+  longer logs it: it fills the form, and Save is a second, deliberate tap on
+  figures you have actually looked at. Ascent and total energy are now stored.
+- **The weigh-in sheet fills itself in** — "Fill from Apple Health" takes your
+  latest weight, BMI and body fat into the empty fields, never over something
+  you have typed. Every percentage now prints its own **"= xx.x kg"** live as
+  you type the weight, because 18.4 % of a body is not a quantity anyone can
+  reason about and 14.2 kg is.
+
+### Fixed
+- **Quick Log's cardio sheet offered no Health import at all.** It never passed
+  the day's bouts, and because that screen looks identical on a day Health has
+  nothing, nobody noticed. Every route into the sheet now reads Health.
+- **A flat bench press counted towards nothing.** The muscle dictionary grew
+  around a training plan that presses on an incline and on machines and never
+  once wrote the words "Bench Press", so the most common barbell lift in the
+  world resolved to no muscle at all.
+- **Resting energy came back as a raw count, not kilocalories** — it was
+  authorised to be read and had no unit, so any sum of it was silently wrong by
+  a factor nobody could see.
+- **The treadmill opener is no longer prescribed to everyone.** It is one
+  person's Zone-2 warm-up — a named machine, a distance, an incline and a pace
+  note — and it was prepended to every session of every account.
+
+### Removed
+- Nothing. Every existing screen, number and row is where it was.
+
 ## [1.10.0] — 2026-09-11 · What You Say About the Day
 
 Five of the six things this app asks you about yourself were behind a form. A

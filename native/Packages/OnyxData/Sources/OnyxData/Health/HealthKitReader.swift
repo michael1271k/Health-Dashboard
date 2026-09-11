@@ -237,6 +237,14 @@ public struct HealthKitReader: HealthReading {
         case "HKQuantityTypeIdentifierDistanceWalkingRunning":
             return .meter()                                   // `distance_m`
         case "HKQuantityTypeIdentifierActiveEnergyBurned",
+             // Basal is READ-ONLY here and has no `HealthKey`: nothing ingests
+             // it into `daily_logs`. It is summed over one bout's window so the
+             // cardio sheet can offer a TOTAL energy figure (active + resting),
+             // which is the number Apple's own Fitness app shows and the one a
+             // person compares against. Without this case it fell to the
+             // `default` below — not a `Dietary` prefix, so `.count()` — and a
+             // kilocalorie sum came back as a raw count with no error.
+             "HKQuantityTypeIdentifierBasalEnergyBurned",
              "HKQuantityTypeIdentifierDietaryEnergyConsumed":
             return .kilocalorie()
         case "HKQuantityTypeIdentifierAppleExerciseTime",
