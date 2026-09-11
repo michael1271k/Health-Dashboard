@@ -279,6 +279,89 @@ describe('gaps that used to be invisible because the row was simply omitted', ()
     expect(dayRow(out, '2026-08-23').doms).toBe('Quads:1:Legs A')
   })
 
+  /**
+   * v2 — laterality and sub-regions.
+   *
+   * The bargain the token grammar makes: a whole-muscle, both-sides rating is
+   * spelled EXACTLY as v1 spelled it, so a week of pre-migration rows
+   * re-exports byte-identically. The three tests above are that guarantee, and
+   * they are deliberately left untouched.
+   */
+  it('marks a side without touching the bilateral spelling', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      doms: [
+        { date: '2026-08-23', muscle: 'Arms', severity: 3, subRegion: 'Biceps', side: 'left' },
+        { date: '2026-08-23', muscle: 'Chest', severity: 1, side: 'both', subRegion: '' },
+      ],
+    })
+    expect(dayRow(out, '2026-08-23').doms).toBe('Arms/Biceps@L:3;Chest:1')
+  })
+
+  it('carries a sub-region, a side and the attribution in one token', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      doms: [{
+        date: '2026-08-23', muscle: 'Inner thighs', severity: 1,
+        subRegion: 'Abductors', side: 'right',
+        sourceLabel: 'Legs B', sourceDate: '2026-09-09',
+      }],
+    })
+    expect(dayRow(out, '2026-08-23').doms).toBe('Inner thighs/Abductors@R:1:Legs B:2026-09-09')
+  })
+
+  it('does not let a sub-region beginning with L read as a left side', () => {
+    // The reason the side marker is an `@` suffix and not the `L`/`R` PREFIX
+    // the SESSIONS section uses for unilateral sets: `Lats` starts with an L,
+    // and a prefix rule would make this token ambiguous to any parser.
+    const out = buildWeeklyExport({
+      ...base,
+      doms: [{ date: '2026-08-23', muscle: 'Back', severity: 2, subRegion: 'Lats', side: 'both' }],
+    })
+    expect(dayRow(out, '2026-08-23').doms).toBe('Back/Lats:2')
+  })
+
+  it('keeps both sides of one muscle in the same cell', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      doms: [
+        { date: '2026-08-23', muscle: 'Quads', severity: 3, side: 'left' },
+        { date: '2026-08-23', muscle: 'Quads', severity: 1, side: 'right' },
+      ],
+    })
+    expect(dayRow(out, '2026-08-23').doms).toBe('Quads@L:3;Quads@R:1')
+  })
+
+  it('flags a joint, with and without the wearer\u2019s words', () => {
+    const out = buildWeeklyExport({
+      ...base,
+      joints: [
+        { date: '2026-08-23', joint: 'Knee', side: 'left' },
+        { date: '2026-08-23', joint: 'Wrist', side: 'right', note: 'tight after pressing' },
+      ],
+    })
+    expect(dayRow(out, '2026-08-23').joints).toBe('Knee@L;Wrist@R:tight after pressing')
+    // A day with no flag is an em-dash, exactly as `doms` and `fatigue` are.
+    expect(dayRow(out, '2026-08-24').joints).toBe(DASH)
+  })
+
+  it('strips every separator out of a note before it reaches the document', () => {
+    // A note is the only free text in a grammar where ` \u00b7 ` divides fields,
+    // `;` divides items and `:` divides an item's parts. One of them inside a
+    // note would split the cell into things that look like data.
+    const out = buildWeeklyExport({
+      ...base,
+      joints: [{
+        date: '2026-08-23', joint: 'Elbow',
+        note: 'sore \u00b7 on; press: since Tuesday',
+      }],
+    })
+    const cell = dayRow(out, '2026-08-23').joints
+    expect(cell).toBe('Elbow:sore on press since Tuesday')
+    expect(cell).not.toContain('\u00b7')
+    expect(cell).not.toContain(';')
+  })
+
   it('keeps the export’s own slot vocabulary identical to the app’s', () => {
     // The labels are duplicated in `weeklyExport` on purpose — importing the
     // hook would drag React Query into a pure module — so the copy is pinned

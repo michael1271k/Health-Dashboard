@@ -32,6 +32,7 @@ public enum WeekJson {
             "cardio": try json(input.cardio ?? []),
             "bodyComp": try json(input.bodyComp ?? []),
             "doms": try json(input.doms),
+            "joints": try json(input.joints ?? []),
             "fatigue": try json(input.fatigue ?? []),
             "volumeByMuscle": try json(input.volumeByMuscle),
             "tonnageByMuscle": try json(input.tonnageByMuscle ?? []),

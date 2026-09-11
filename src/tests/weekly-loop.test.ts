@@ -422,7 +422,7 @@ describe('buildWeeklyExport', () => {
       'kcal', 'P', 'C', 'F', 'water_l',
       'supp', 'supp_log', 'supp_skipped',
       'weight_kg', 'fat_pct', 'smm_kg', 'bmr_kcal',
-      'fatigue', 'doms', 'tags',
+      'fatigue', 'doms', 'joints', 'tags',
     ])
 
     const sun = dayRow(out, '2026-07-19')

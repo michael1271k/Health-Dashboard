@@ -70,6 +70,7 @@ export function weekJsonBlock(input: WeeklyExportInput): string[] {
     cardio: input.cardio ?? [],
     bodyComp: input.bodyComp ?? [],
     doms: input.doms,
+    joints: input.joints ?? [],
     fatigue: input.fatigue ?? [],
     volumeByMuscle: input.volumeByMuscle,
     tonnageByMuscle: input.tonnageByMuscle ?? [],

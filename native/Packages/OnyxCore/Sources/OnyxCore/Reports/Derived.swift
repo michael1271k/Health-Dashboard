@@ -160,7 +160,12 @@ public enum Derived {
             for f in (input.fatigue ?? []) where f.date == d.date {
                 if latest == nil || slotIndex(f.slot) > slotIndex(latest!.slot) { latest = f }
             }
-            let soreness = meanOf(input.doms.filter { $0.date == d.date }.map { Optional($0.severity) })
+            // One number per RECOGNISED muscle — the max across its sides and
+            // sub-regions — then the mean of those. It has to be the fold the
+            // scorer applies (`DomsMuscles` / `foldDomsSeverity`), or the
+            // export's recomputed battery would disagree with the stored one on
+            // any day carrying a left/right pair.
+            let soreness = Self.foldDomsSeverity(input.doms.filter { $0.date == d.date })
             let r = d.readiness
             let onsetTrouble: Bool? = d.sleepOnsetTrouble.map { $0 == true }
             let signals = ScoringInputs(
@@ -264,6 +269,20 @@ public enum Derived {
             restDayKcal: intakeOn(days, training: false)
         )
     }
+
+    /// Mean severity over DISTINCT RECOGNISED muscles, max within each.
+    ///
+    /// The same fold `ScoringInputsBuilder` and `src/lib/recovery/soreness.ts`
+    /// apply. Max rather than mean within a muscle: "left quad severe, right
+    /// quad fine" is a severe quad, and averaging it reports a day nobody had.
+    static func foldDomsSeverity(_ rows: [ExportDoms]) -> Double? {
+        var peak: [String: Double] = [:]
+        for row in rows where DomsMuscles.recognised.contains(row.muscle) {
+            peak[row.muscle] = Swift.max(peak[row.muscle] ?? 0, row.severity)
+        }
+        guard !peak.isEmpty else { return nil }
+        return peak.values.reduce(0, +) / Double(peak.count)
+    }
 }
 
 /// `String.prototype.localeCompare` as the web's ICU root collation orders the
@@ -289,4 +308,5 @@ func icuCompare(_ a: String, _ b: String) -> Int {
         return x.isLowercase ? -1 : 1
     }
     return 0
+
 }
