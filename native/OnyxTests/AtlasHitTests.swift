@@ -150,10 +150,12 @@ struct SubjectiveRampTests {
                 #expect(DomsMap.group(of: landmark) == group)
             }
         }
-        // The nine rated groups cover every landmark the atlas can be tapped
-        // on, minus the two nothing rates (adductors are not a DOMS group).
+        // EQUALITY, not subset. A subset assertion passes when a landmark has
+        // no group at all, which is the shape the adductors hole had for months:
+        // the atlas drew a muscle no rating could ever light, and every gate
+        // stayed green. Equality is what makes that a failure.
         let mapped = Set(DomsMap.landmarks.values.flatMap { $0 })
-        #expect(mapped.isSubset(of: Set(LandmarkMuscle.allCases)))
+        #expect(mapped == Set(LandmarkMuscle.allCases))
         #expect(DomsMap.group(of: .quads) == "Quads")
     }
 }
