@@ -19,6 +19,7 @@ import { programDayByKey } from '@/lib/programs'
 // `computeForDate` should not have to import either to learn the ten names.
 // Re-exported so every existing importer is unaffected; same split as
 // `useFatigue` / `recovery/fatigue.ts`.
+import type { SorenessSide } from '@/lib/body/subRegions'
 export { DOMS_MUSCLES, DOMS_LEVELS, isDomsMuscle } from '@/lib/recovery/soreness'
 export type { DomsMuscle } from '@/lib/recovery/soreness'
 import { DOMS_MUSCLES, type DomsMuscle } from '@/lib/recovery/soreness'
@@ -65,23 +66,97 @@ function sessionDomsMuscles(dayKey: string | null, split: string): Set<DomsMuscl
 }
 
 
-/** Today's DOMS ratings, muscle → severity. Empty (not an error) pre-migration. */
+/**
+ * One row of soreness: a muscle, optionally narrowed to a sub-region and a side.
+ *
+ * `side` is `'both'` and `sub_region` is `''` for a whole-muscle rating, which
+ * is what every row written before 2026-09-12 means and what the database
+ * defaults to — so a pre-migration row reads back correctly without a backfill.
+ */
+export interface DomsRow {
+  muscle_group: string
+  severity: number
+  side: SorenessSide
+  sub_region: string
+}
+
+/** The row key a rating replaces. Mirrors the unique index exactly. */
+export const domsRowKey = (r: Pick<DomsRow, 'muscle_group' | 'side' | 'sub_region'>) =>
+  `${r.muscle_group}\u0000${r.side}\u0000${r.sub_region}`
+
+/**
+ * Today's soreness rows, one per (muscle, side, sub-region).
+ *
+ * Degrades twice, because this hook has to work against three shapes of the
+ * table: fully migrated, `side`/`sub_region` missing, and missing entirely.
+ * A tracker that throws takes the whole day page with it.
+ */
+export function useDomsRows(date = logicalTodayISO()) {
+  return useQuery({
+    queryKey: ['doms_logs', date],
+    staleTime: 30_000,
+    queryFn: async (): Promise<DomsRow[]> => {
+      const wide = await supabase.from('doms_logs')
+        .select('muscle_group, severity, side, sub_region').eq('date', date)
+      if (!wide.error) return (wide.data ?? []).map(normaliseDomsRow)
+      // Pre-migration: the two v2 columns do not exist yet. Every row is a
+      // whole-muscle, both-sides rating, which is exactly the default.
+      const narrow = await supabase.from('doms_logs')
+        .select('muscle_group, severity').eq('date', date)
+      if (narrow.error) return []   // table not migrated at all → degrade quietly
+      return (narrow.data ?? []).map(normaliseDomsRow)
+    },
+  })
+}
+
+function normaliseDomsRow(r: unknown): DomsRow {
+  const row = r as Partial<DomsRow>
+  return {
+    muscle_group: String(row.muscle_group ?? ''),
+    severity: Number(row.severity ?? 0),
+    side: (row.side ?? 'both') as SorenessSide,
+    sub_region: row.sub_region ?? '',
+  }
+}
+
+/**
+ * Today's DOMS ratings, muscle → severity — the PEAK across that muscle's sides
+ * and sub-regions.
+ *
+ * The figure paints one intensity per muscle and the summary row counts sore
+ * muscles, so both need the same collapse the scorer applies (`foldDomsSeverity`
+ * in `lib/recovery/soreness.ts`). Rating a left bicep severe must light the arm,
+ * and rating the right one mild must not dim it back down.
+ *
+ * Same query key as `useDomsRows`, selected down — one fetch, one cache entry,
+ * and no way for the two readings to disagree.
+ */
 export function useDoms(date = logicalTodayISO()) {
   return useQuery({
     queryKey: ['doms_logs', date],
     staleTime: 30_000,
-    queryFn: async (): Promise<Record<string, number>> => {
-      const { data, error } = await supabase.from('doms_logs')
+    queryFn: async (): Promise<DomsRow[]> => {
+      const wide = await supabase.from('doms_logs')
+        .select('muscle_group, severity, side, sub_region').eq('date', date)
+      if (!wide.error) return (wide.data ?? []).map(normaliseDomsRow)
+      const narrow = await supabase.from('doms_logs')
         .select('muscle_group, severity').eq('date', date)
-      if (error) return {}   // table not migrated yet → degrade quietly
+      if (narrow.error) return []
+      return (narrow.data ?? []).map(normaliseDomsRow)
+    },
+    select: (rows): Record<string, number> => {
       const out: Record<string, number> = {}
-      for (const r of (data ?? []) as Array<{ muscle_group: string; severity: number }>) {
-        out[r.muscle_group] = r.severity
+      for (const r of rows) {
+        out[r.muscle_group] = Math.max(out[r.muscle_group] ?? 0, r.severity)
       }
       return out
     },
   })
 }
+
+/** The row key, and the key one column narrower — the v1 shape. */
+const WIDE_CONFLICT = 'user_id,date,muscle_group,side,sub_region'
+const NARROW_CONFLICT = 'user_id,date,muscle_group'
 
 /** The leg session a day's soreness is attributable to, and how long ago it was. */
 export interface DomsSource {
@@ -147,44 +222,66 @@ export function useDomsSources(date = logicalTodayISO()) {
 }
 
 /**
- * Rate (or re-rate) a muscle. Upserts on (user_id, date, muscle_group), so the
- * rating stays editable all day — tapping a different level replaces it rather
- * than stacking rows.
+ * Rate (or re-rate) a muscle, optionally one side of it or one sub-region.
+ *
+ * Upserts on (user_id, date, muscle_group, side, sub_region) — the full row key —
+ * so a rating stays editable all day while a left and a right rating coexist.
+ * Under the old three-column key the second side simply overwrote the first,
+ * which is why laterality needed a migration and not just a column.
  *
  * `source` ties the rating to the session that caused it. The write self-heals
- * if `source_session_id` / `source_day_key` aren't migrated yet: it retries
- * without them, so ratings keep working until the SQL is run.
+ * against an unmigrated database TWICE: without `side`/`sub_region` (narrow
+ * conflict key, v1 behaviour), and without `source_session_id`/`source_day_key`.
+ * Ratings keep working until the SQL is run; they just lose the detail the
+ * columns would have carried.
  */
 export function useLogDoms(date = logicalTodayISO()) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ muscle, severity, source }: {
+    mutationFn: async ({ muscle, severity, source, side = 'both', subRegion = '' }: {
       muscle: string; severity: number; source?: DomsSource | null
+      side?: SorenessSide; subRegion?: string
     }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
-      const base = { user_id: user.id, date, muscle_group: muscle, severity }
-      const full = source
-        ? { ...base, source_session_id: source.sessionId, source_day_key: source.dayKey }
-        : base
+      const narrow = { user_id: user.id, date, muscle_group: muscle, severity }
+      const withSource = source
+        ? { ...narrow, source_session_id: source.sessionId, source_day_key: source.dayKey }
+        : narrow
+      const full = { ...withSource, side, sub_region: subRegion }
+
       const { error } = await supabase.from('doms_logs').upsert(
-        full as never, { onConflict: 'user_id,date,muscle_group' },
+        full as never, { onConflict: WIDE_CONFLICT },
       )
       if (!error) return
-      if (source && /source_session_id|source_day_key|column|schema cache|PGRST204/i.test(error.message)) {
+
+      // Unmigrated database. A left/right distinction cannot be stored, so the
+      // rating lands as a whole-muscle one rather than being lost — and the
+      // caller is told, because silently recording a different fact is worse
+      // than failing.
+      if (/side|sub_region|column|schema cache|PGRST204|constraint|conflict/i.test(error.message)) {
         const { error: retry } = await supabase.from('doms_logs').upsert(
-          base as never, { onConflict: 'user_id,date,muscle_group' },
+          withSource as never, { onConflict: NARROW_CONFLICT },
         )
-        if (retry) throw new Error(retry.message)
-        return
+        if (!retry) return
+        if (source && /source_session_id|source_day_key|column|schema cache|PGRST204/i.test(retry.message)) {
+          const { error: bare } = await supabase.from('doms_logs').upsert(
+            narrow as never, { onConflict: NARROW_CONFLICT },
+          )
+          if (bare) throw new Error(bare.message)
+          return
+        }
+        throw new Error(retry.message)
       }
       throw new Error(error.message)
     },
-    onMutate: async ({ muscle, severity }) => {
+    onMutate: async ({ muscle, severity, side = 'both', subRegion = '' }) => {
       const key = ['doms_logs', date]
       await qc.cancelQueries({ queryKey: key })
-      const prev = qc.getQueryData<Record<string, number>>(key)
-      qc.setQueryData(key, { ...(prev ?? {}), [muscle]: severity })
+      const prev = qc.getQueryData<DomsRow[]>(key)
+      const next: DomsRow = { muscle_group: muscle, severity, side, sub_region: subRegion }
+      const rest = (prev ?? []).filter((r) => domsRowKey(r) !== domsRowKey(next))
+      qc.setQueryData(key, [...rest, next])
       return { prev }
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['doms_logs', date], ctx.prev) },
