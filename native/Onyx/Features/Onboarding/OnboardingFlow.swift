@@ -23,6 +23,7 @@ struct OnboardingFlow: View {
     @Bindable var model: OnboardingModel
     @Environment(AppEnvironment.self) private var environment
 
+    @Environment(\.dynamicTypeSize) private var typeSize
     @FocusState private var focus: Field?
 
     enum Field: Hashable {
@@ -105,11 +106,22 @@ struct OnboardingFlow: View {
                     .foregroundStyle(Color.onyx.danger)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            HStack(spacing: OnyxSpace.m) {
+            // ── THE TWO BUTTONS STACK AT AX5 ────────────────────────────────
+            // Side by side, "Continue" is hyphen-wrapped to "Con-tinue" at the
+            // largest accessibility size — the first shot of this screen said
+            // exactly that. A threshold on the type size rather than
+            // `ViewThatFits`: the fitting view would TRUNCATE the label rather
+            // than fall through to the stacked one, which is the trap W4 hit on
+            // the stack tile.
+            AnyLayout(
+                typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: OnyxSpace.s))
+                    : AnyLayout(HStackLayout(spacing: OnyxSpace.m))
+            ) {
                 if model.step != .welcome && !model.isSaving {
                     Button("Back") { model.back() }
                         .buttonStyle(.bordered)
-                        .frame(minHeight: 44)
+                        .frame(maxWidth: typeSize.isAccessibilitySize ? .infinity : nil, minHeight: 44)
                 }
                 Button(action: primary) {
                     HStack(spacing: 6) {

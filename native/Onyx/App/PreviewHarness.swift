@@ -141,6 +141,33 @@ enum PreviewHarness {
         return database
     }
 
+    /// An empty store, run through the real onboarding flow.
+    ///
+    /// Returns the environment it produced and the day the schedule says to
+    /// train — which for a five-day split is a real training day four times out
+    /// of seven and a rest day otherwise, so the day is pinned to the first of
+    /// the routine rather than left to the calendar. The shot is of a DECK, not
+    /// of whether today happens to be a Wednesday.
+    @MainActor
+    static func newAccount() -> (AppEnvironment, ProgramDay?) {
+        let database = try! AppDatabase.inMemory(deviceId: "shot-new-account")
+        let model = OnboardingModel(database: database, userId: previewUser)
+        model.planId = "onyx5"
+        // The flow's own value, written synchronously. `finish()` is async only
+        // because a button calls it; `seedValue()` is the same answer and
+        // `seedAccount` is one transaction, so the rows are there when this
+        // returns.
+        _ = try? database.seedAccount(model.seedValue())
+        let context = try? database.scheduleContext(userId: previewUser)
+        let environment = AppEnvironment(
+            database: database,
+            supabase: OnyxSupabase.makeClient(
+                config: SupabaseConfig(url: URL(string: "https://preview.invalid")!, anonKey: "preview")
+            )
+        )
+        return (environment, context?.activeProgram.days.first)
+    }
+
     /// The routine builder over the seeded catalogue — a real five-day split.
     ///
     /// Built fresh per shot and NOT shared: `RoutineBuilderView` and
@@ -232,6 +259,31 @@ enum PreviewHarness {
                 ))
             }
             .environment(AppEnvironment.preview)
+        // ── W5'S GATE, ON A SIMULATOR ───────────────────────────────────────
+        // A brand-new account, set up by the REAL `OnboardingModel.finish()`
+        // over an empty store, and then the screens it lands on. Nothing here
+        // is a fixture of the finished state: the plan, the deck, the targets
+        // and the catalogue are all written by the same code a person's first
+        // launch runs, so a shot of these is a shot of the wave's gate.
+        //
+        // The auth leg is the only part left out — it needs a confirmed e-mail
+        // and a network, and it is W4-era code this wave did not touch.
+        case "new-account-train", "new-account-logger":
+            let (environment, day) = newAccount()
+            if screen == "new-account-train" {
+                NavigationStack { WorkoutTabView(seededDay: day) }
+                    .environment(environment)
+                    .preferredColorScheme(.dark)
+            } else {
+                NavigationStack {
+                    LiveLoggerView(model: LoggerModel(
+                        day: day ?? PlanTemplates.day("onyx5", "cb_a"), phase: .cut,
+                        store: environment.database, userId: previewUser
+                    ))
+                }
+                .environment(environment)
+                .preferredColorScheme(.dark)
+            }
         case "import-exercises":
             NavigationStack {
                 ExerciseImportView(

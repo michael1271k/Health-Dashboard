@@ -205,8 +205,26 @@ final class OnboardingModel {
         isSaving = true
         defer { isSaving = false }
 
+        do {
+            _ = try database.seedAccount(seedValue())
+            didSeed = true
+            failure = nil
+            return true
+        } catch {
+            failure = "Could not set up your account. \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    /// Everything the flow collected, as the value `seedAccount` takes.
+    ///
+    /// Split out of `finish()` so the screenshot harness can write the SAME
+    /// account synchronously — a shot of a fixture of the finished state would
+    /// photograph what someone believed the seed produces rather than what it
+    /// does.
+    func seedValue() -> AccountSeed {
         let template = plan
-        let seed = AccountSeed(
+        return AccountSeed(
             userId: userId,
             goal: goal,
             targets: targets,
@@ -236,16 +254,6 @@ final class OnboardingModel {
             .sorted { $0.exerciseName < $1.exerciseName },
             startedOn: LogicalDay.today()
         )
-
-        do {
-            _ = try database.seedAccount(seed)
-            didSeed = true
-            failure = nil
-            return true
-        } catch {
-            failure = "Could not set up your account. \(error.localizedDescription)"
-            return false
-        }
     }
 
     /// The catalogue rows to create.
