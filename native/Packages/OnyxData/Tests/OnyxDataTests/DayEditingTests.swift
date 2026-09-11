@@ -151,6 +151,10 @@ struct DayEditingTests {
         // The refused write touched neither row.
         let log = try db.writer.read { try DailyLogRow.fetchOne($0) }
         #expect(log?.bodyFatPct == 14.1 && log?.musclePercent == nil && log?.visceralFat == nil)
+
+        // ...but a lean InBody muscle reading is NOT an artifact and lands.
+        try db.saveBodyMetrics(userId: user, date: date) { $0.musclePercent = 80.2 }
+        #expect(try db.writer.read { try DailyLogRow.fetchOne($0) }?.musclePercent == 80.2)
         #expect(try db.writer.read { try BodyCompositionRow.fetchOne($0) }?.bodyFatPct == 14.1)
     }
 

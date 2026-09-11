@@ -56,7 +56,23 @@ public enum VitalsGate {
     // MARK: Body percentages
 
     public static let bodyFatRange: ClosedRange<Double> = 2...70
-    public static let musclePercentRange: ClosedRange<Double> = 10...70
+
+    /// ── WHY 85 AND NOT 70 ───────────────────────────────────────────────────
+    /// `muscle_percent` is the scale's MUSCLE MASS percentage — lean SOFT
+    /// TISSUE over bodyweight — and NOT skeletal muscle, which is its own
+    /// entered column (`skeletal_muscle_mass_kg`) precisely because the two are
+    /// ~20 kg apart and neither derives the other (`Composition.swift`).
+    ///
+    /// 70 was the skeletal figure's ceiling applied to the soft-tissue one, and
+    /// it refused readings a real InBody prints: fat-free mass is 100 − body
+    /// fat before bone and water are taken out of it, so at 15 % body fat an
+    /// athlete reads high-70s to low-80s here every time. This app's OWN
+    /// preview fixtures use 77.6 % — a number the gate would not have stored.
+    ///
+    /// 85 still catches what this gate exists for: a mass typed into a percent
+    /// field, a percent sent in the wrong unit, a scale that mis-read.
+    public static let musclePercentRange: ClosedRange<Double> = 10...85
+
     public static let visceralFatRange: ClosedRange<Double> = 1...30
 
     public static func bodyFatArtifact(_ pct: Double) -> String? { outside(pct, bodyFatRange, "%") }
